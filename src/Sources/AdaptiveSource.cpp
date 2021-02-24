@@ -21,6 +21,9 @@
 
 #include <Util/ThreadNaming.hpp>
 #include <cassert>
+#include <chrono>
+#include <limits>
+#include <thread>
 #include <unistd.h>
 
 namespace NES {
@@ -28,8 +31,8 @@ namespace NES {
 AdaptiveSource::AdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                NodeEngine::QueryManagerPtr queryManager, uint64_t initialGatheringInterval, OperatorId operatorId)
     : DataSource(schema, bufferManager, queryManager, operatorId) {
-    NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval);
-    this->gatheringInterval = initialGatheringInterval;
+    NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval << "ms");
+    this->gatheringInterval = std::chrono::milliseconds(initialGatheringInterval);
 }
 
 SourceType AdaptiveSource::getType() const { return ADAPTIVE_SOURCE; }
@@ -65,10 +68,17 @@ void AdaptiveSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, 
     NES_DEBUG("AdaptiveSource " << this->operatorId << ": Running Data Source of type=" << this->getType());
     uint64_t cnt = 0;
 
+    auto zeroSecInMillis = std::chrono::milliseconds(0);
+
     while (this->isRunning()) {
-        uint64_t currentTime = time(NULL);
-        if (gatheringInterval == 0 || (lastGatheringTimeStamp != currentTime && currentTime % this->gatheringInterval == 0)) {
-            lastGatheringTimeStamp = currentTime;
+        auto tsNow = std::chrono::system_clock::now();
+        std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
+
+        if (gatheringInterval == zeroSecInMillis
+            || (lastGatheringTimeStamp != nowInMillis
+                && (nowInMillis - lastGatheringTimeStamp <= this->gatheringInterval
+                    || (nowInMillis - lastGatheringTimeStamp % this->gatheringInterval).count() == 0))) {
+            lastGatheringTimeStamp = nowInMillis;
             if (cnt < numBuffersToProcess) {
                 auto optBuf = this->receiveData();
                 if (optBuf.has_value()) {
@@ -84,7 +94,7 @@ void AdaptiveSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, 
             NES_DEBUG("AdaptiveSource::runningRoutine running " << this);
         } else {
             NES_DEBUG("AdaptiveSource::runningRoutine sleep " << this);
-            sleep(this->gatheringInterval);
+            std::this_thread::sleep_for(this->gatheringInterval);
             continue;
         }
     }

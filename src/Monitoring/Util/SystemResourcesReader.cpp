@@ -56,16 +56,16 @@ CpuMetrics SystemResourcesReader::ReadCPUStats() {
             name[len] = '\0';
 
             auto cpuStats = CpuValues();
-            cpuStats.USER = std::stoul(tokens[1]);
-            cpuStats.NICE = std::stoul(tokens[2]);
-            cpuStats.SYSTEM = std::stoul(tokens[3]);
-            cpuStats.IDLE = std::stoul(tokens[4]);
-            cpuStats.IOWAIT = std::stoul(tokens[5]);
-            cpuStats.IRQ = std::stoul(tokens[6]);
-            cpuStats.SOFTIRQ = std::stoul(tokens[7]);
-            cpuStats.STEAL = std::stoul(tokens[8]);
-            cpuStats.GUEST = std::stoul(tokens[9]);
-            cpuStats.GUESTNICE = std::stoul(tokens[10]);
+            cpuStats.user = std::stoul(tokens[1]);
+            cpuStats.nice = std::stoul(tokens[2]);
+            cpuStats.system = std::stoul(tokens[3]);
+            cpuStats.idle = std::stoul(tokens[4]);
+            cpuStats.iowait = std::stoul(tokens[5]);
+            cpuStats.irq = std::stoul(tokens[6]);
+            cpuStats.softirq = std::stoul(tokens[7]);
+            cpuStats.steal = std::stoul(tokens[8]);
+            cpuStats.guest = std::stoul(tokens[9]);
+            cpuStats.guestnice = std::stoul(tokens[10]);
             if (i == 0) {
                 totalCpu = cpuStats;
             } else {

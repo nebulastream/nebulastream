@@ -19,5 +19,10 @@ add_source_nes(
         StacktraceLoader.cpp
         ThreadNaming.cpp
 )
+if (NES_USE_MQTT)
+    add_source_nes(
+        MQTTClientWrapper.cpp
+    )
+endif ()
 add_subdirectory(yaml)
 

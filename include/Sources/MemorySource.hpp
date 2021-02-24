@@ -40,15 +40,7 @@ class MemorySource : public DataSource {
      */
     explicit MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                           NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                          OperatorId operatorId);
-
-    /**
-     * @brief Overridden runningRoutine that scans the memoryArea and creates memoryAreaSize/bufferSize buffers
-     * @param bufferManager
-     * @param queryManager
-     */
-    void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) override;
-
+                          uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
@@ -70,6 +62,7 @@ class MemorySource : public DataSource {
   private:
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
+    uint64_t currentPositionInBytes;
 };
 
 typedef std::shared_ptr<MemorySource> MemorySourcePtr;

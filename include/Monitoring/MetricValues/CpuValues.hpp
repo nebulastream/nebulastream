@@ -19,6 +19,7 @@
 
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <string>
 
 namespace NES {
 
@@ -45,16 +46,24 @@ class CpuValues {
      */
     static CpuValues fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
-    uint64_t USER;
-    uint64_t NICE;
-    uint64_t SYSTEM;
-    uint64_t IDLE;
-    uint64_t IOWAIT;
-    uint64_t IRQ;
-    uint64_t SOFTIRQ;
-    uint64_t STEAL;
-    uint64_t GUEST;
-    uint64_t GUESTNICE;
+    /**
+     * @brief Stream operator to convert the object to string
+     * @param os
+     * @param values
+     * @return the stream
+     */
+    friend std::ostream& operator<<(std::ostream& os, const CpuValues& values);
+
+    uint64_t user;
+    uint64_t nice;
+    uint64_t system;
+    uint64_t idle;
+    uint64_t iowait;
+    uint64_t irq;
+    uint64_t softirq;
+    uint64_t steal;
+    uint64_t guest;
+    uint64_t guestnice;
 };
 
 /**
@@ -65,7 +74,7 @@ class CpuValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const CpuValues& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void writeToBuffer(const CpuValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 

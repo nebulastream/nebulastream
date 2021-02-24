@@ -70,7 +70,12 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
         field->updateFieldName(existingField->getName());
     } else {
         //Since this is a new field add the stream name from schema
-        field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+        //Check if field name is already fully qualified
+        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+            field->updateFieldName(fieldName);
+        } else {
+            field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
+        }
     }
 
     if (field->getStamp()->isUndefined()) {

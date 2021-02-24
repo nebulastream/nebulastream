@@ -25,6 +25,7 @@
 #include <Util/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>
+#include <chrono>
 
 namespace NES {
 
@@ -33,7 +34,7 @@ MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatal
                                    const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId)
     : DefaultSource(Schema::create(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId),
       monitoringPlan(monitoringPlan), metricGroup(monitoringPlan->createMetricGroup(metricCatalog)) {
-    schema = metricGroup->createGroupSchema();
+    schema = metricGroup->createSchema();
     NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());
 }
 
@@ -43,7 +44,7 @@ std::optional<NodeEngine::TupleBuffer> MonitoringSource::receiveData() {
     NES_DEBUG("MonitoringSource:" << this << " got buffer");
 
     NES_DEBUG("MonitoringSource: Filling buffer with 1 monitoring tuple.");
-    metricGroup->getSample(Schema::create(), buf);
+    metricGroup->getSample(buf);
 
     buf.setNumberOfTuples(1);
     NES_DEBUG("MonitoringSource: Generated buffer with 1 tuple and size " << schema->getSchemaSizeInBytes());

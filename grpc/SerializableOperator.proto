@@ -111,6 +111,14 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 7;
     }
 
+    message SerializableMQTTSourceDescriptor {
+      string serverAddress = 1;
+      string clientId = 2;
+      string user = 3;
+      string topic = 4;
+      SerializableSchema sourceSchema = 5;
+    }
+
     message SerializableNetworkSourceDescriptor {
       SerializableSchema sourceSchema = 1;
       NesPartition nesPartition = 2;
@@ -138,6 +146,9 @@ message SerializableOperator{
     message SerializablePrintSinkDescriptor {
     }
 
+    message SerializableNullOutputSinkDescriptor {
+    }
+
     message SerializableZMQSinkDescriptor {
       string host = 1;
       uint32 port = 2;
@@ -151,6 +162,28 @@ message SerializableOperator{
       uint32 identifierType = 4;
       string user = 5;
       string password = 6;
+    }
+
+    message SerializableMQTTSinkDescriptor {
+      enum TimeUnits{
+        nanoseconds=0;
+        milliseconds=1;
+        seconds=2;
+      };
+      enum ServiceQualities{
+        atMostOnce=0;
+        atLeastOnce=1;
+        exactlyOnce=2;
+      };
+      string address = 1;
+      string clientId = 2;
+      string topic = 3;
+      string user = 4;
+      uint64 maxBufferedMSGs = 5;
+      TimeUnits timeUnit = 6;
+      uint64 msgDelay = 7;
+      ServiceQualities qualityOfService = 8;
+      bool asynchronousClient = 9;
     }
 
     message SerializableNetworkSinkDescriptor {
@@ -194,9 +227,9 @@ message SerializableOperator{
 
   }
   /**
-   Merge Details contains properties for the merge operator, which is empty currently.
+   Union Details contains properties for the union operator, which is empty currently.
    */
-  message MergeDetails {}
+  message UnionDetails {}
 
   /**
    Broadcast details contains properties for the broadcast operator

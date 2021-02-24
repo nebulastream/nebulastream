@@ -22,6 +22,7 @@
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/Util/SystemResourcesReader.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -36,7 +37,7 @@ Gauge<NetworkMetrics> MetricUtils::NetworkStats() { return Gauge<NetworkMetrics>
 Gauge<uint64_t> MetricUtils::CPUIdle(unsigned int cpuNo) {
     auto gaugeIdle = Gauge<uint64_t>([cpuNo]() {
         NES_DEBUG("MetricUtils: Reading CPU Idle for cpu " << cpuNo);
-        return SystemResourcesReader::ReadCPUStats().getValues(cpuNo).IDLE;
+        return SystemResourcesReader::ReadCPUStats().getValues(cpuNo).idle;
     });
     return gaugeIdle;
 }

@@ -27,7 +27,8 @@ then
       -DBoost_INCLUDE_DIR="/opt/sysroots/aarch64-linux-gnu/usr/include/" \
       -DBoost_LIBRARY_DIR="/opt/sysroots/aarch64-linux-gnu/usr/lib/" \
       -DCPPRESTSDK_DIR="/usr/lib/aarch64-linux-gnu/cmake/" \
-      -DNES_USE_OPC=0 \
+      -DNES_USE_OPC=1 \
+      -DNES_USE_MQTT=1 \
       -DNES_USE_ADAPTIVE=0
     make -j4
     cd /nebulastream/build

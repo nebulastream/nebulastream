@@ -60,8 +60,8 @@ class ZmqSource : public DataSource {
     const std::string toString() const override;
 
     /**
-     * @brief The host address for the ZMQ
-     * @return ZMQ host
+     * @brief The address address for the ZMQ
+     * @return ZMQ address
      */
     const std::string& getHost() const;
 
@@ -83,7 +83,7 @@ class ZmqSource : public DataSource {
     ZmqSource();
 
     /**
-     * @brief method to connect zmq using the host and port specified before
+     * @brief method to connect zmq using the address and port specified before
      * check if already connected, if not connect try to connect, if already connected return
      * @return bool indicating if connection could be established
      */

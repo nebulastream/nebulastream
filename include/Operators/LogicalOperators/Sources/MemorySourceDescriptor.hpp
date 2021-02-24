@@ -31,7 +31,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryArea a non-null pointer to the area of memory to use in the source
      * @param memoryAreaSize the size of the area of memory
      */
-    explicit MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize);
+    explicit MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
+                                    uint64_t numBuffersToProcess, std::chrono::milliseconds frequency);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -41,7 +42,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @return a correctly initialized shared ptr to MemorySourceDescriptor
      */
     static std::shared_ptr<MemorySourceDescriptor> create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
-                                                          size_t memoryAreaSize);
+                                                          size_t memoryAreaSize, uint64_t numBuffersToProcess,
+                                                          std::chrono::milliseconds frequency);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -68,9 +70,14 @@ class MemorySourceDescriptor : public SourceDescriptor {
      */
     size_t getMemoryAreaSize() const;
 
+    uint64_t getNumBuffersToProcess() const;
+    std::chrono::milliseconds getFrequency() const;
+
   private:
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
+    uint64_t numBuffersToProcess;
+    std::chrono::milliseconds frequency;
 };
 }// namespace NES
 

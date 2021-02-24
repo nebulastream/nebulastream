@@ -17,6 +17,7 @@
 #ifndef NES_TYPEINFERENCEEXCEPTION_HPP
 #define NES_TYPEINFERENCEEXCEPTION_HPP
 
+#include <Plans/Query/QueryId.hpp>
 #include <stdexcept>
 #include <string>
 
@@ -26,7 +27,13 @@ namespace NES {
  */
 class TypeInferenceException : public std::runtime_error {
   public:
-    explicit TypeInferenceException(std::string message);
+    TypeInferenceException(std::string message);
+    TypeInferenceException(QueryId queryId, std::string message);
+
+    QueryId getQueryId();
+
+  private:
+    QueryId queryId;
 };
 }// namespace NES
 

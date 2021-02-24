@@ -94,7 +94,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithSingleExecutionNodeWi
     NES_DEBUG("GlobalQueryPlanTest: Adding a query plan without to the global query plan");
     auto printSinkDescriptor = PrintSinkDescriptor::create();
     auto subQuery = Query::from("car");
-    auto query = Query::from("truck").merge(&subQuery).sink(printSinkDescriptor);
+    auto query = Query::from("truck").unionWith(&subQuery).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     QuerySubPlanId querySubPlanId = PlanIdGenerator::getNextQuerySubPlanId();
@@ -360,7 +360,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
     //create execution node
-    TopologyNodePtr topologyNode1 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode1 = TopologyNode::create(UtilityFunctions::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
@@ -375,7 +375,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     executionNode1->addNewQuerySubPlan(queryId1, plan1);
 
     //create execution node
-    TopologyNodePtr topologyNode2 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode2 = TopologyNode::create(UtilityFunctions::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
@@ -433,7 +433,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
 
     //create execution node 1
-    TopologyNodePtr topologyNode1 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode1 = TopologyNode::create(UtilityFunctions::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topologyNode1);
 
     //Add sub plan
@@ -448,7 +448,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     executionNode1->addNewQuerySubPlan(queryId1, plan1);
 
     //create execution node 2
-    TopologyNodePtr topologyNode2 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode2 = TopologyNode::create(UtilityFunctions::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topologyNode2);
 
     //Add sub plan
@@ -462,7 +462,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     executionNode2->addNewQuerySubPlan(queryId2, plan2);
 
     //create execution node 3
-    TopologyNodePtr topologyNode3 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode3 = TopologyNode::create(UtilityFunctions::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode3 = ExecutionNode::createExecutionNode(topologyNode3);
 
     //Add sub plan
@@ -480,7 +480,7 @@ TEST_F(GlobalExecutionPlanTest, testGlobalExecutionPlanWithTwoExecutionNodesEach
     globalExecutionPlan->addExecutionNode(executionNode3);
 
     //create execution node 4
-    TopologyNodePtr topologyNode4 = TopologyNode::create(UtilityFunctions::getNextNodeId(), "localhost", 3200, 3300, 10);
+    TopologyNodePtr topologyNode4 = TopologyNode::create(UtilityFunctions::getNextTopologyNodeId(), "localhost", 3200, 3300, 10);
     const ExecutionNodePtr executionNode4 = ExecutionNode::createExecutionNode(topologyNode4);
 
     //Add sub plan

@@ -115,14 +115,20 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     switch (context->arity) {
         case PipelineContext::Unary: {
             code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTuple", inputSchema));
+            NES_DEBUG("arity unary generate scan for input=" << inputSchema->toString()
+                                                             << " output=" << outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryLeft: {
             code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
+            NES_DEBUG("arity binaryleft generate scan for input=" << inputSchema->toString()
+                                                                  << " output=" << outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryRight: {
             code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
+            NES_DEBUG("arity binaryright generate scan for input=" << inputSchema->toString()
+                                                                   << " output=" << outputSchema->toString());
             break;
         }
     }
@@ -183,10 +189,12 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
                                               (++VarRef(code->varDeclarationRecordIndex)).copy());
 
     code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
+    if (context->arity != PipelineContext::Unary) {
+        NES_DEBUG("adding in scan for schema=" << inputSchema->toString() << " context=" << context->inputSchema->toString());
+    }
 
     auto recordHandler = context->getRecordHandler();
     for (AttributeFieldPtr field : inputSchema->fields) {
-
         auto variable = getVariableDeclarationForField(code->structDeclaratonInputTuples[0], field);
 
         auto fieldRefStatement =
@@ -687,6 +695,16 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration), Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
+    // lock slice
+    // auto lock = std::unique_lock(stateVariable->mutex());
+    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+    auto stateMutex = FunctionCallStatement("mutex");
+    uniqueLockCtor.addParameter(
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
+
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
@@ -765,9 +783,12 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
     return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, windowOperatorId);
 }
 
-uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context) {
-    auto tf = getTypeFactory();
+uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id) {
+    if (context->arity == PipelineContext::BinaryLeft) {
+        return 0;
+    }
 
+    auto tf = getTypeFactory();
     NES_ASSERT(join, "invalid join definition");
     NES_ASSERT(!join->getLeftJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
     NES_ASSERT(!join->getRightJoinKey()->getStamp()->isUndefined(), "right join key is undefined");
@@ -827,6 +848,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
     }
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
     auto action = join->getTriggerAction();
     auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
@@ -834,6 +856,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         auto createTriggerActionCall = call("Join::ExecutableNestedLoopJoinTriggerAction<" + keyType->getCode()->code_
                                             + ", InputTupleLeft, InputTupleRight>::create");
         createTriggerActionCall->addParameter(VarRef(joinDefDeclaration));
+        createTriggerActionCall->addParameter(VarRef(idParam));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
@@ -848,6 +871,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     createAggregationWindowHandlerCall->addParameter(VarRef(joinDefDeclaration));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTrigger));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTriggerAction));
+    createAggregationWindowHandlerCall->addParameter(VarRef(idParam));
+
     auto windowHandlerStatement = VarDeclStatement(joinHandler).assign(createAggregationWindowHandlerCall);
     setupScope->addStatement(windowHandlerStatement.copy());
 
@@ -869,7 +894,9 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
 
 bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
                                          uint64_t operatorHandlerIndex) {
-    //    std::cout << joinDef << context << std::endl;
+    NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << context->arity
+                            << " out=" << joinDef->getOutputSchema()->toString());
+
     auto tf = getTypeFactory();
 
     if (context->arity == PipelineContext::BinaryLeft) {
@@ -936,7 +963,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         keyVariableDeclaration =
             VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
 
-        NES_ASSERT(recordHandler->hasAttribute(joinKeyFieldName), "join key is not defined on iput tuple");
+        NES_ASSERT2_FMT(recordHandler->hasAttribute(joinKeyFieldName),
+                        "join key is not defined on input tuple << " << joinKeyFieldName);
 
         auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
 
@@ -982,20 +1010,29 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
         //      auto current_ts = inputTuples[recordIndex].time //the time value of the key
-
+        //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
         if (context->arity == PipelineContext::BinaryRight) {
+            NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
+
             //Extract the schema of the right side
             auto rightSchema = joinDef->getRightStreamType();
             //Extract the field name without attribute name resolution
             auto trimmedWindowFieldName = windowTimeStampFieldName.substr(
                 windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR), windowTimeStampFieldName.length());
             //Extract the first field from right schema and trim it to find the schema qualifier for the right side
-            std::string firstRightField = rightSchema->fields[0]->getName();
-            auto schemaQualifierName = firstRightField.substr(0, firstRightField.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
-            //Construct window field name after adding schema qualifier
-            windowTimeStampFieldName = schemaQualifierName + trimmedWindowFieldName;
+            //TODO: I know I know this is really not nice but we will fix in with the other issue above
+            bool found = false;
+            for (auto& field : rightSchema->fields) {
+                if (field->getName().find(trimmedWindowFieldName) != std::string::npos) {
+                    windowTimeStampFieldName = field->getName();
+                    found = true;
+                }
+            }
+            NES_ASSERT(found, " right schema does not contain a timestamp attribute");
+        } else {
+            NES_DEBUG("windowTimeStampFieldName bin left=" << windowTimeStampFieldName);
         }
 
         auto tsVariableReference = recordHandler->getAttribute(windowTimeStampFieldName);
@@ -1197,6 +1234,16 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto getCurrentCntStatement = VarDeclStatement(currentCntVariable).assign(recordCntFieldRef);
     context->code->currentCodeInsertionPoint->addStatement(getCurrentCntStatement.copy());
 
+    // lock slice
+    // auto lock = std::unique_lock(stateVariable->mutex());
+    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+    auto stateMutex = FunctionCallStatement("mutex");
+    uniqueLockCtor.addParameter(
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
+
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
@@ -1272,8 +1319,9 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 }
 
 uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                             PipelineContextPtr context) {
+                                             PipelineContextPtr context, uint64_t id) {
     auto tf = getTypeFactory();
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(window, windowOutputSchema);
@@ -1356,6 +1404,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
         createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
+        createTriggerActionCall->addParameter(VarRef(idParam));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else if (action->getActionType() == Windowing::SliceAggregationTriggerAction) {
@@ -1366,6 +1415,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
         createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
+        createTriggerActionCall->addParameter(VarRef(idParam));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
@@ -1382,6 +1432,8 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     createAggregationWindowHandlerCall->addParameter(VarRef(executableAggregation));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTrigger));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTriggerAction));
+    createAggregationWindowHandlerCall->addParameter(VarRef(idParam));
+
     auto windowHandlerStatement = VarDeclStatement(windowHandler).assign(createAggregationWindowHandlerCall);
     setupScope->addStatement(windowHandlerStatement.copy());
 
@@ -1521,7 +1573,7 @@ NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(Pipeli
         case PipelineContext::BinaryLeft: arity = BinaryLeft; break;
         case PipelineContext::BinaryRight: arity = BinaryRight; break;
     }
-    return CompiledExecutablePipelineStage::create(compiledCode, arity);
+    return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
 }
 
 BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration pipelineContext) {

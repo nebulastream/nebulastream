@@ -54,9 +54,9 @@ std::string Compiler::getFileName() {
     std::mt19937 rng(dev());
     std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000);
 
-    std::ostringstream oss;
-    oss << "gen_query_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
-    return oss.str();
+    std::stringstream ss;
+    ss << "gen_query_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
+    return ss.str();
 }
 
 CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
@@ -66,7 +66,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     std::string filename = basename + ".cpp";
     std::string libraryName = basename + ".so";
     writeSourceToFile(filename, source);
-
+    NES_DEBUG("compiler filename =" << filename);
     // if we are in compile in debugging mode we create print the source file.
     if (debugging) {
         formatAndPrintSource(filename);
@@ -78,6 +78,26 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     //    flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);
     flags->addFlag("-o" + libraryName);
+
+#ifdef NES_LOGGING_TRACE_LEVEL
+    flags->addFlag("-DNES_LOGGING_TRACE_LEVEL=1");
+#endif
+#ifdef NES_LOGGING_DEBUG_LEVEL
+    flags->addFlag("-DNES_LOGGING_DEBUG_LEVEL=1");
+#endif
+#ifdef NES_LOGGING_INFO_LEVEL
+    flags->addFlag("-DNES_LOGGING_INFO_LEVEL=1");
+#endif
+#ifdef NES_LOGGING_WARNING_LEVEL
+    flags->addFlag("-DNES_LOGGING_WARNING_LEVEL=1");
+#endif
+#ifdef NES_LOGGING_ERROR_LEVEL
+    flags->addFlag("-DNES_LOGGING_ERROR_LEVEL=1");
+#endif
+#ifdef NES_LOGGING_NO_LEVEL
+    flags->addFlag("-DNES_LOGGING_NO_LEVEL=1");
+#endif
+
     flags->addFlag(filename);
 
     // call compiler to generate shared lib from source code
@@ -181,20 +201,17 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
 
 std::string Compiler::formatAndPrintSource(const std::string& filename) {
     int ret = system("which clang-format > /dev/null");
-    if (ret != 0) {
-        NES_ERROR("Compiler: Did not find external tool 'clang-format'. "
-                  "Please install 'clang-format' and try again."
-                  "If 'clang-format-X' is installed, try to create a "
-                  "symbolic link.");
-        return "";
-    }
+
+    NES_ASSERT(ret == 0,
+               "Compiler: Did not find external tool 'clang-format'. "
+               "Please install 'clang-format' and try again."
+               "If 'clang-format-X' is installed, try to create a "
+               "symbolic link.");
 
     auto formatCommand = "clang-format -i " + filename;
 
     auto res = popen(formatCommand.c_str(), "r");
-    if (!res) {
-        NES_FATAL_ERROR("Compiler: popen() failed!");
-    }
+    NES_ASSERT(res != nullptr, "Compiler: popen() failed!");
     // wait till command is complete executed.
     pclose(res);
     // read source file in

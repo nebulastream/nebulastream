@@ -86,6 +86,7 @@ TEST_F(SinkTest, testCSVFileSink) {
     TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     const DataSinkPtr csvSink = createCSVFileSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
+
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -251,6 +252,30 @@ TEST_F(SinkTest, testCSVPrintSink) {
     }
     fb.close();
     buffer.release();
+}
+
+TEST_F(SinkTest, testNullOutSink) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = this->nodeEngine;
+
+    std::filebuf fb;
+    fb.open(path_to_osfile_file, std::ios::out);
+    std::ostream os(&fb);
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto nullSink = createNullOutputSink();
+    for (uint64_t i = 0; i < 2; ++i) {
+        for (uint64_t j = 0; j < 2; ++j) {
+            buffer.getBuffer<uint64_t>()[j] = j;
+        }
+    }
+    buffer.setNumberOfTuples(4);
+    cout << "bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema) << endl;
+    write_result = nullSink->writeData(buffer, wctx);
+
+    EXPECT_TRUE(write_result);
+    std::string bufferContent = UtilityFunctions::prettyPrintTupleBuffer(buffer, test_schema);
+    cout << "Buffer Content= " << bufferContent << endl;
 }
 
 TEST_F(SinkTest, testTextPrintSink) {

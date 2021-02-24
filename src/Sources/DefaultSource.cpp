@@ -23,6 +23,7 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <chrono>
 #include <utility>
 
 namespace NES {
@@ -33,7 +34,7 @@ DefaultSource::DefaultSource(SchemaPtr schema, NodeEngine::BufferManagerPtr buff
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce,
                       operatorId) {
     NES_DEBUG("DefaultSource:" << this << " creating");
-    this->gatheringInterval = frequency;
+    this->gatheringInterval = std::chrono::milliseconds(frequency);
 }
 
 std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {

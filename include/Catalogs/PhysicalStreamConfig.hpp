@@ -60,7 +60,7 @@ struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get source frequency
      * @return returns the source frequency
      */
-    uint32_t getSourceFrequency() const;
+    std::chrono::milliseconds getSourceFrequency() const;
 
     /**
      * @brief get the number of tuples to produce in a buffer
@@ -92,14 +92,19 @@ struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
     SourceDescriptorPtr build(SchemaPtr) override;
 
-  private:
+    void setSourceFrequency(uint32_t sourceFrequency);
+    void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
+    void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
+
+  protected:
     explicit PhysicalStreamConfig(SourceConfigPtr sourceConfig);
 
     std::string sourceType;
     std::string sourceConfig;
-    uint32_t sourceFrequency;
+    std::chrono::milliseconds sourceFrequency;
     uint32_t numberOfTuplesToProducePerBuffer;
     uint32_t numberOfBuffersToProduce;
+
     std::string physicalStreamName;
     std::string logicalStreamName;
     bool skipHeader;

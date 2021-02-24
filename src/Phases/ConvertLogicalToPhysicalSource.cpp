@@ -18,6 +18,7 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
@@ -53,7 +54,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const DefaultSourceDescriptorPtr defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         return createDefaultDataSourceWithSchemaForVarBuffers(defaultSourceDescriptor->getSchema(), bufferManager, queryManager,
                                                               defaultSourceDescriptor->getNumbersOfBufferToProduce(),
-                                                              defaultSourceDescriptor->getFrequency(), operatorId);
+                                                              defaultSourceDescriptor->getFrequencyCount(), operatorId);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Binary File source");
         const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
@@ -65,7 +66,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
                                    csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
                                    csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
+                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequencyCount(),
                                    csvSourceDescriptor->getSkipHeader(), operatorId);
 #ifdef ENABLE_KAFKA_BUILD
     } else if (sourceDescriptor->instanceOf<KafkaSourceDescriptor>()) {
@@ -75,6 +76,14 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
                                  kafkaSourceDescriptor->getBrokers(), kafkaSourceDescriptor->getTopic(),
                                  kafkaSourceDescriptor->getGroupId(), kafkaSourceDescriptor->isAutoCommit(),
                                  kafkaSourceDescriptor->getKafkaConnectTimeout());
+#endif
+#ifdef ENABLE_MQTT_BUILD
+    } else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating OPC source");
+        const MQTTSourceDescriptorPtr mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
+        return createMQTTSource(mqttSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                mqttSourceDescriptor->getServerAddress(), mqttSourceDescriptor->getClientId(),
+                                mqttSourceDescriptor->getUser(), mqttSourceDescriptor->getTopic(), operatorId);
 #endif
 #ifdef ENABLE_OPC_BUILD
     } else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
@@ -99,12 +108,14 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         NES_INFO("ConvertLogicalToPhysicalSource: Creating ysb source");
         const YSBSourceDescriptorPtr ysbSourceDescriptor = sourceDescriptor->as<YSBSourceDescriptor>();
         return createYSBSource(bufferManager, queryManager, ysbSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequency(), operatorId);
+                               ysbSourceDescriptor->getNumBuffersToProcess(), ysbSourceDescriptor->getFrequencyCount(),
+                               operatorId);
     } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
         return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager, operatorId,
-                                  memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize());
+                                  memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize(),
+                                  memorySourceDescriptor->getNumBuffersToProcess(), memorySourceDescriptor->getFrequency());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

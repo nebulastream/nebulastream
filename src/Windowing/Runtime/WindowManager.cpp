@@ -14,12 +14,14 @@
     limitations under the License.
 */
 
+#include <Util/UtilityFunctions.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
-
 namespace NES::Windowing {
 
-WindowManager::WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness)
-    : windowType(std::move(windowType)), allowedLateness(allowedLateness) {}
+WindowManager::WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness, uint64_t id)
+    : windowType(std::move(windowType)), allowedLateness(allowedLateness), id(id) {
+    NES_DEBUG("WindowManager() with id=" << id);
+}
 
 Windowing::WindowTypePtr WindowManager::getWindowType() { return windowType; }
 

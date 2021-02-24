@@ -182,7 +182,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
     string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
         + " --dataPort=" + worker1DataPort
         + " --logicalStreamName=QnV --physicalStreamName=test_stream1 --sourceType=CSVSource "
-          "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+          "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000";
     bp::child workerProc1(path2.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
     uint64_t workerPid1 = workerProc1.id();
@@ -192,7 +192,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
     string path3 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker2RPCPort
         + " --dataPort=" + worker2DataPort
         + " --logicalStreamName=QnV --physicalStreamName=test_stream2 --sourceType=CSVSource "
-          "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
+          "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=1 --sourceFrequency=1000";
     bp::child workerProc2(path3.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
     uint64_t workerPid2 = workerProc2.id();
@@ -270,7 +270,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
         + " --dataPort=" + worker1DataPort
         + " --logicalStreamName=QnV --physicalStreamName=test_stream1 --sourceType=CSVSource "
           "--sourceConfig=../tests/test_data/QnV_short_R2000073.csv "
-          "--numberOfBuffersToProduce=1 --sourceFrequency=1";
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1000";
     bp::child workerProc1(path2.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
     uint64_t workerPid1 = workerProc1.id();
@@ -281,7 +281,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
         + " --dataPort=" + worker2DataPort
         + " --logicalStreamName=QnV --physicalStreamName=test_stream2 --sourceType=CSVSource "
           "--sourceConfig=../tests/test_data/QnV_short_R2000070.csv "
-          "--numberOfBuffersToProduce=1 --sourceFrequency=1";
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1000";
     bp::child workerProc2(path3.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
     uint64_t workerPid2 = workerProc2.id();
@@ -375,7 +375,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
         + " --dataPort=" + worker1DataPort
         + " --logicalStreamName=window --physicalStreamName=test_stream_1 --sourceType=CSVSource "
           "--sourceConfig=../tests/test_data/window.csv "
-          "--numberOfBuffersToProduce=1 --sourceFrequency=1";
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1000 --numberOfTuplesToProducePerBuffer=28";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
@@ -385,7 +385,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
         + " --dataPort=" + worker2DataPort
         + " --logicalStreamName=window "
           "--physicalStreamName=test_stream_2 --sourceType=CSVSource --sourceConfig=../tests/test_data/window.csv "
-          "--numberOfBuffersToProduce=1 --sourceFrequency=1";
+          "--numberOfBuffersToProduce=1 --sourceFrequency=1000 --numberOfTuplesToProducePerBuffer=28";
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());
 
@@ -422,12 +422,12 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
-                             "0,10000,1,614\n"
-                             "10000,20000,1,1740\n"
-                             "0,10000,4,12\n"
-                             "0,10000,11,60\n"
-                             "0,10000,12,14\n"
-                             "0,10000,16,24\n";
+                             "0,10000,1,102\n"
+                             "10000,20000,1,290\n"
+                             "0,10000,4,2\n"
+                             "0,10000,11,10\n"
+                             "0,10000,12,2\n"
+                             "0,10000,16,4\n";
 
     NES_INFO("content=" << content);
     NES_INFO("expContent=" << expectedContent);
@@ -540,7 +540,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
         + " --dataPort=" + worker1DataPort
         + " --logicalStreamName=ysb --physicalStreamName=ysb1 --sourceType=YSBSource --numberOfBuffersToProduce="
         + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples)
-        + " --sourceFrequency=1";
+        + " --sourceFrequency=1000";
     bp::child workerProc1(cmdWrk1.c_str());
     NES_INFO("started worker 1 with pid = " << workerProc1.id());
 
@@ -550,7 +550,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingYSBQueryWithFileOutp
         + " --dataPort=" + worker2DataPort
         + " --logicalStreamName=ysb --physicalStreamName=ysb2 --sourceType=YSBSource --numberOfBuffersToProduce="
         + std::to_string(numBuffers) + " --numberOfTuplesToProducePerBuffer=" + std::to_string(numTuples)
-        + " --sourceFrequency=1";
+        + " --sourceFrequency=1000";
 
     bp::child workerProc2(cmdWrk2.c_str());
     NES_INFO("started worker 2 with pid = " << workerProc2.id());

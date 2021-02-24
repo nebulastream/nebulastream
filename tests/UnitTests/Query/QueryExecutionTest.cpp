@@ -325,7 +325,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
 TEST_F(QueryExecutionTest, projectionQuery) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -395,7 +395,7 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 1,
-                                             /*frequency*/ 1, /*varyWatermark*/ true);
+                                             /*frequency*/ 1000, /*varyWatermark*/ true);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -468,7 +468,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1000);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -554,7 +554,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
-                                             /*frequency*/ 1, true, true, 30);
+                                             /*frequency*/ 1000, true, true, 30);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -633,7 +633,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1000);
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. dd window operator:
@@ -891,7 +891,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     // creating P3
     // merge does not change schema
     SchemaPtr ptr = std::make_shared<Schema>(testSchema);
-    auto mergedQuery = query2.merge(&query1).sink(DummySink::create());
+    auto mergedQuery = query2.unionWith(&query1).sink(DummySink::create());
 
     auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
 

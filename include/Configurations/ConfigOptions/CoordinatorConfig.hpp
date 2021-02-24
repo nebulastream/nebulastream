@@ -153,6 +153,48 @@ class CoordinatorConfig {
      */
     void setLogLevel(std::string logLevel);
 
+    /**
+    * @brief gets a ConfigOption object with numWorkerThreads
+    */
+    IntConfigOption getNumWorkerThreads();
+
+    /**
+     * @brief set the value for numWorkerThreads with the appropriate data format
+     */
+    void setNumWorkerThreads(uint16_t numWorkerThreads);
+
+    /**
+* @brief gets a ConfigOption object with buffer size in bytes
+*/
+    IntConfigOption getBufferSizeInBytes();
+
+    /**
+     * @brief set the value for buffer size in bytes with the appropriate data format
+     */
+    void setBufferSizeInBytes(uint64_t sizeInBytes);
+
+    /**
+    * @brief gets a ConfigOption object with number of buffers
+    */
+    IntConfigOption getNumberOfBuffers();
+
+    /**
+     * @brief set the value for number of buffers with the appropriate data format
+     */
+    void setNumberOfBuffers(uint64_t count);
+
+    /**
+     * @brief Get the query batch size
+     * @return query batch size
+     */
+    IntConfigOption getQueryBatchSize();
+
+    /**
+     * @brief Set the number of queries to be processed together
+     * @param batchSize: the batch size
+     */
+    void setQueryBatchSize(uint32_t batchSize);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -164,8 +206,12 @@ class CoordinatorConfig {
     IntConfigOption restPort;
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
+    IntConfigOption numberOfBuffers;
+    IntConfigOption bufferSizeInBytes;
     BoolConfigOption enableQueryMerging;
+    IntConfigOption numWorkerThreads;
     StringConfigOption logLevel;
+    IntConfigOption queryBatchSize;
 };
 
 }// namespace NES

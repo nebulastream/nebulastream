@@ -19,20 +19,20 @@
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <cstring>
 
 namespace NES {
 
-void serialize(uint64_t metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-    auto noFields = schema->getSize();
-    schema->addField(prefix + "uint64", BasicType::UINT64);
+void writeToBuffer(uint64_t metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(uint64_t) < buf.getBufferSize(), "Metric: Content does not fit in TupleBuffer");
+
+    memcpy(tbuffer + byteOffset, &metric, sizeof(uint64_t));
     buf.setNumberOfTuples(1);
-    auto layout = NodeEngine::createRowLayout(schema);
-    layout->getValueField<uint64_t>(0, noFields)->write(buf, metric);
 }
 
-void serialize(const std::string& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer&, const std::string& prefix) {
-    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric + "and schema " + prefix
-                            + schema->toString());
+void writeToBuffer(const std::string& metric, NodeEngine::TupleBuffer&, uint64_t) {
+    NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " + metric);
 }
 
 SchemaPtr getSchema(uint64_t, const std::string& prefix) { return Schema::create()->addField(prefix + "uint64", UINT64); }

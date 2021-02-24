@@ -42,7 +42,7 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
     void SetUp() {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        engine = NodeEngine::NodeEngine::create("127.0.0.1", 9090, streamConf);
+        engine = NodeEngine::NodeEngine::create("127.0.0.1", 9090, streamConf, 1, 4096, 1024);
     }
 
     void TearDown() {
@@ -92,7 +92,7 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogicalToPhysicalS
 
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogicalToPhysicalSource) {
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/ 1);
+    SourceDescriptorPtr sourceDescriptor = DefaultSourceDescriptor::create(schema, /**Number Of Buffers*/ 1, /**Frequency*/ 1000);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(1, sourceDescriptor, engine);
     EXPECT_EQ(senseSource->getType(), DEFAULT_SOURCE);
 }

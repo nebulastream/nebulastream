@@ -19,7 +19,9 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
@@ -36,6 +38,9 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
         return createTextPrintSink(schema, querySubPlanId, nodeEngine, std::cout);
+    } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
+        NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
+        return createNullOutputSink();
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink");
         const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
@@ -56,6 +61,17 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         return createOPCSink(schema, querySubPlanId, nodeEngine, opcSinkDescriptor->getUrl(), opcSinkDescriptor->getNodeId(),
                              opcSinkDescriptor->getUser(), opcSinkDescriptor->getPassword());
+    }
+#endif
+#ifdef ENABLE_MQTT_BUILD
+    else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSink: Creating MQTT sink");
+        const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
+        return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getAddress(),
+                              mqttSinkDescriptor->getClientId(), mqttSinkDescriptor->getTopic(), mqttSinkDescriptor->getUser(),
+                              mqttSinkDescriptor->getMaxBufferedMSGs(), mqttSinkDescriptor->getTimeUnit(),
+                              mqttSinkDescriptor->getMsgDelay(), mqttSinkDescriptor->getQualityOfService(),
+                              mqttSinkDescriptor->getAsynchronousClient());
     }
 #endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {

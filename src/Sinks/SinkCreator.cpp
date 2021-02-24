@@ -24,6 +24,8 @@
 #include <Sinks/Formats/TextFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
+#include <Sinks/Mediums/MQTTSink.hpp>
+#include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/OPCSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -82,6 +84,8 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
 
+const DataSinkPtr createNullOutputSink() { return std::make_shared<NullOutputSink>(); }
+
 const DataSinkPtr createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                      std::ostream& out) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
@@ -111,4 +115,16 @@ const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, N
     return std::make_shared<OPCSink>(format, url, nodeId, user, password);
 }
 #endif
+
+#ifdef ENABLE_MQTT_BUILD
+const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                 const std::string address, const std::string clientId, const std::string topic,
+                                 const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
+                                 uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient) {
+    SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
+    return std::make_shared<MQTTSink>(format, parentPlanId, address, clientId, topic, user, maxBufferedMSGs, timeUnit, msgDelay,
+                                      qualityOfService, asynchronousClient);
+}
+#endif
+
 }// namespace NES

@@ -23,14 +23,14 @@ then
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
 
-    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" -DCPPRESTSDK_DIR="/usr/lib/x86_64-linux-gnu/cmake/" -DNES_USE_OPC=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 -DNES_LOGGING_LEVEL=FATAL_ERROR ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" -DCPPRESTSDK_DIR="/usr/lib/x86_64-linux-gnu/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 -DNES_LOGGING_LEVEL=FATAL_ERROR ..
     make -j`nproc --ignore=2`
     
     cd /nebulastream/benchmark/scripts
     apt-get install python3-pip -y && pip3 install --user argparse datetime matplotlib pandas seaborn numpy
     echo "Executing python script at $(date)..."
-    python3 -u run_and_plot_benchmarks.py -f ../../build/benchmark/ -nc -b "(filter|map)-query-benchmark" -m "Run with docker"
-
+    echo "python3 -u run_and_plot_benchmarks.py ${BENCHMARK_SCRIPT_ARGS}"
+    python3 -u run_and_plot_benchmarks.py ${BENCHMARK_SCRIPT_ARGS}
     result=$?
     rm -rf /nebulastream/build
     exit $result

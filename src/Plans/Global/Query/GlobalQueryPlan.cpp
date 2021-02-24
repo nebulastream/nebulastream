@@ -161,4 +161,12 @@ std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllSharedQueryMetaData()
     NES_TRACE("GlobalQueryPlan: Found " << sharedQueryMetaDataToDeploy.size() << "  Shared Query MetaData.");
     return sharedQueryMetaDataToDeploy;
 }
+
+SharedQueryMetaDataPtr GlobalQueryPlan::getSharedQueryMetaData(SharedQueryId sharedQueryId) {
+    auto found = sharedQueryIdToMetaDataMap.find(sharedQueryId);
+    if (found == sharedQueryIdToMetaDataMap.end()) {
+        return nullptr;
+    }
+    return found->second;
+}
 }// namespace NES

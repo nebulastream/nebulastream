@@ -15,10 +15,10 @@
 */
 
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
+#include <Util/Logger.hpp>
 #include <Util/SharedLibrary.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <iostream>
-
 namespace NES {
 
 SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, const std::string& baseName)
@@ -26,7 +26,7 @@ SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library,
 SystemCompilerCompiledCode::~SystemCompilerCompiledCode() { cleanUp(); }
 
 void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name) {
-    std::cout << baseFileName << std::endl;
+    NES_DEBUG("getFuncPtr for file" << name);
     return library->getSymbol(name);
 }
 

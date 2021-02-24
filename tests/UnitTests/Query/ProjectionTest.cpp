@@ -75,7 +75,7 @@ class ProjectionTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
         auto streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf);
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024);
     }
 
     /* Will be called before a test is executed. */
@@ -577,7 +577,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
-        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1);
+        WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2, /*frequency*/ 1000);
 
     auto query = TestQuery::from(windowSource->getSchema()).project(Attribute("ts"), Attribute("empty"), Attribute("key"));
     // 2. dd window operator:
@@ -635,7 +635,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
             // creating P3
             // merge does not change schema
             SchemaPtr ptr = std::make_shared<Schema>(testSchema);
-            auto mergedQuery = query2.merge(&query1).sink(DummySink::create());
+            auto mergedQuery = query2.unionWith(&query1).sink(DummySink::create());
 
             auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
 
@@ -671,7 +671,7 @@ TEST_F(ProjectionTest, mergeQuery) {
     // creating P3
     // merge does not change schema
     SchemaPtr ptr = std::make_shared<Schema>(testSchema);
-    auto mergedQuery = query2.merge(&query1).project(Attribute("id")).sink(DummySink::create());
+    auto mergedQuery = query2.unionWith(&query1).project(Attribute("id")).sink(DummySink::create());
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(expectedBuf, outputSchema, nodeEngine->getBufferManager());

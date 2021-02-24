@@ -112,7 +112,8 @@ bool JoinLogicalOperatorNode::inferSchema() {
     }
 
     NES_DEBUG("Binary infer left schema=" << leftInputSchema->toString() << " right schema=" << rightInputSchema->toString());
-
+    NES_ASSERT(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
+    NES_ASSERT(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
     //Infer stamp of window definition
     auto windowType = joinDefinition->getWindowType();
     windowType->inferStamp(leftInputSchema);
@@ -135,6 +136,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
         outputSchema->addField(field->getName(), field->getDataType());
     }
 
+    NES_DEBUG("Outputschme for join=" << outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
     return true;
 }

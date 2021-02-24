@@ -171,7 +171,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
@@ -284,8 +284,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 /**
  * Testing testHarness utility for query with a join operator on different streams
  */
-//Enable while fixing #1547
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
+TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -308,7 +307,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     std::string queryWithJoinOperator =
-        R"(Query::from("window1").join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
+        R"(Query::from("window1").joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("window1", window1Schema, "window1");
@@ -379,6 +378,75 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
+
+    testHarness.pushElement<Car>({40, 40, 40}, 0);
+    testHarness.pushElement<Car>({30, 30, 30}, 0);
+    testHarness.pushElement<Car>({71, 71, 71}, 0);
+    testHarness.pushElement<Car>({21, 21, 21}, 0);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
+    };
+
+    std::vector<Output> expectedOutput = {{40, 1600, 40},
+                                          {21, 441, 21},
+                                          {
+                                              30,
+                                              900,
+                                              30,
+                                          },
+                                          {71, 5041, 71}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * Testing testHarness utility for a query with map operator
+ */
+TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator);
+
+    /*
+ * Expected topology:
+ * PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ *  |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ *  |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ *  |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+ */
+
+    testHarness.addNonSourceWorker();
+    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 0: " << testHarness.getWorkerId(0));
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));
+    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 1: " << testHarness.getWorkerId(1));
+    testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));
+    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 2: " << testHarness.getWorkerId(2));
+
+    TopologyPtr topology = testHarness.getTopology();
+    NES_DEBUG("TestHarness: topology:\n" << topology->toString());
+    EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
+    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
 
     testHarness.pushElement<Car>({40, 40, 40}, 0);
     testHarness.pushElement<Car>({30, 30, 30}, 0);
@@ -596,7 +664,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
                            ->addField("value", DataTypeFactory::createUInt32())
                            ->addField("timestamp", DataTypeFactory::createUInt64());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");

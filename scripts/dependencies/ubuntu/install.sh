@@ -33,6 +33,8 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   librdkafka-dev \
   libeigen3-dev \
   libzmqpp-dev \
+  doxygen \
+  graphviz \
   git \
   wget \
   z3 \
@@ -41,6 +43,18 @@ sudo apt-get update -qq && sudo apt-get install -qq \
 sudo add-apt-repository ppa:open62541-team/ppa -qq && \
   sudo apt-get update && \
   sudo apt-get install libopen62541-1-dev -qq
+
+cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
+  cd paho.mqtt.c && git checkout v1.3.8 && \
+  cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF \
+  -DPAHO_BUILD_STATIC=ON \
+  -DPAHO_WITH_SSL=ON \
+  -DPAHO_HIGH_PERFORMANCE=ON && \
+  sudo cmake --build build/ --target install && \
+  sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
+  git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
+  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE && \
+  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
 
 git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \

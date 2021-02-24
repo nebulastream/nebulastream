@@ -145,7 +145,7 @@ class SimpleBenchmarkSink : public SinkMedium {
 
     void setup() override{};
 
-    std::string toString() override { return "Test_Sink"; }
+    std::string toString() { return "Test_Sink"; }
 
     void shutdown() override {
         std::unique_lock lock(m);

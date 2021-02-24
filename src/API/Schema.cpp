@@ -154,13 +154,22 @@ const std::string Schema::toString() const {
     return ss.str();
 }
 
+const std::string Schema::getStreamNameQualifier() const {
+    if (fields.empty()) {
+        return "Unnamed Stream";
+    } else {
+        return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
+    }
+}
+
 AttributeFieldPtr createField(std::string name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
-};
+}
 
 std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() {
     return getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR;
 }
+
 std::string Schema::getQualifierNameForSystemGeneratedFields() {
     if (!fields.empty()) {
         return fields[0]->getName().substr(0, fields[0]->getName().find(ATTRIBUTE_NAME_SEPARATOR));
@@ -170,9 +179,11 @@ std::string Schema::getQualifierNameForSystemGeneratedFields() {
         return "";
     }
 }
+
 bool Schema::contains(const std::string& fieldName) {
     for (const auto& field : this->fields) {
-        if (UtilityFunctions::startsWith(field->getName(), fieldName)) {
+        NES_DEBUG("contain compair field=" << field->getName() << " with other=" << fieldName);
+        if (field->getName() == fieldName) {
             return true;
         }
     }
@@ -197,7 +208,6 @@ uint64_t Schema::getIndex(const std::string& fieldName) {
 }
 
 AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
-
     //Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
     if (fieldName.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos) {
@@ -225,8 +235,10 @@ AttributeFieldPtr Schema::hasFieldName(const std::string& fieldName) {
     if (matchedFields.size() == 1) {
         return matchedFields[0];
     } else if (matchedFields.size() > 1) {
-        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
-        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+        //        NES_ERROR("Schema: Found ambiguous field with name " + fieldName);
+        //        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+        //TODO: workaround we choose the first one to join we will replace this in issue #1543
+        return matchedFields[0];
     }
     return nullptr;
 }

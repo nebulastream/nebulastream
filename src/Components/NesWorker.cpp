@@ -38,7 +38,10 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
       localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
       localWorkerRpcPort(workerConfig->getRpcPort()->getValue()), localWorkerZmqPort(workerConfig->getDataPort()->getValue()),
       numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()) {
+      numberOfBuffers(workerConfig->getNumberOfBuffers()->getValue()),
+      bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
+      topologyNodeId(INVALID_TOPOLOGY_NODE_ID) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
@@ -110,7 +113,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
     try {
-        nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads);
+        nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads, bufferSizeInBytes,
+                                                    numberOfBuffers);
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
@@ -175,6 +179,14 @@ NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
     if (!stopped) {
+        bool successShutdownNodeEngine = nodeEngine->stop();
+        if (!successShutdownNodeEngine) {
+            NES_ERROR("NesWorker::stop node engine stop not successful");
+            throw Exception("NesWorker::stop  error while stopping node engine");
+        } else {
+            NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
+        }
+        nodeEngine.reset();
         //shut down the async queue
         completionQueue->Shutdown();
         NES_DEBUG("NesWorker: stopping rpc server");
@@ -187,14 +199,6 @@ bool NesWorker::stop(bool) {
         rpcServer.reset();
         rpcThread.reset();
 
-        bool successShutdownNodeEngine = nodeEngine->stop();
-        if (!successShutdownNodeEngine) {
-            NES_ERROR("NesWorker::stop node engine stop not successful");
-            throw Exception("NesWorker::stop  error while stopping node engine");
-        } else {
-            NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
-        }
-        nodeEngine.reset();
         stopped = true;
         return successShutdownNodeEngine;
     } else {
@@ -216,6 +220,8 @@ bool NesWorker::connect() {
     auto nodeStats = nodeStatsProvider->getNodeStats();
     bool successPRCRegister =
         coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, type, nodeStats);
+    NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());
+    topologyNodeId = coordinatorRpcClient->getId();
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
@@ -242,7 +248,7 @@ bool NesWorker::disconnect() {
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    assert(con);
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->registerLogicalStream(name, path);
     NES_DEBUG("NesWorker::registerLogicalStream success=" << success);
     return success;
@@ -276,7 +282,7 @@ bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
 bool NesWorker::addParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    assert(con);
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->addParent(parentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
     return success;
@@ -285,7 +291,7 @@ bool NesWorker::addParent(uint64_t parentId) {
 bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    assert(con);
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
     return success;
@@ -294,7 +300,7 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
 bool NesWorker::removeParent(uint64_t parentId) {
     bool con = waitForConnect();
     NES_DEBUG("connected= " << con);
-    assert(con);
+    NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->removeParent(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success);
     return success;
@@ -321,5 +327,7 @@ bool NesWorker::waitForConnect() {
     NES_DEBUG("waitForConnect: not connected after timeout");
     return false;
 }
+
+TopologyNodeId NesWorker::getTopologyNodeId() { return topologyNodeId; }
 
 }// namespace NES

@@ -99,7 +99,6 @@ void QueryPlan::prependOperatorAsLeafNode(OperatorNodePtr operatorNode) {
 }
 
 std::string QueryPlan::toString() {
-    NES_DEBUG("QueryPlan: Get query plan as string.");
     std::stringstream ss;
     auto dumpHandler = ConsoleDumpHandler::create();
     for (auto rootOperator : rootOperators) {

@@ -106,8 +106,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf =
-        MemorySourceStreamConfig::create("MemorySource", "memory_stream_0", "memory_stream", memArea, memAreaSize);
+    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource", "memory_stream_0", "memory_stream",
+                                                                            memArea, memAreaSize, buffersToExpect, 0);
     wrk1->registerPhysicalStream(conf);
 
     // local fs
@@ -206,7 +206,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     }
 
     AbstractPhysicalStreamConfigPtr conf =
-        MemorySourceStreamConfig::create("MemorySource", "memory_stream_0", "memory_stream", memArea, memAreaSize);
+        MemorySourceStreamConfig::create("MemorySource", "memory_stream_0", "memory_stream", memArea, memAreaSize, 1, 0);
     wrk1->registerPhysicalStream(conf);
 
     // local fs
@@ -256,6 +256,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
 
 /// This test checks that a deployed MemorySource can write M records stored in N+1 buffers
 /// with the invariant that the N+1-th buffer is half full
+
 TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -305,8 +306,8 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf =
-        MemorySourceStreamConfig::create("MemorySource", "memory_stream_0", "memory_stream", memArea, memAreaSize);
+    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource", "memory_stream_0", "memory_stream",
+                                                                            memArea, memAreaSize, buffersToExpect + 1, 0);
     wrk1->registerPhysicalStream(conf);
 
     // local fs

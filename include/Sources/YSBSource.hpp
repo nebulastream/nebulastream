@@ -18,6 +18,7 @@
 #define NES_INCLUDE_SOURCES_YSBSOURCE_HPP_
 
 #include <Sources/DefaultSource.hpp>
+#include <chrono>
 
 namespace NES {
 

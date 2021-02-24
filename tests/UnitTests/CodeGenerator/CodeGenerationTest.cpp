@@ -335,7 +335,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf);
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024);
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");

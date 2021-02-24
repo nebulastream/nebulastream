@@ -44,14 +44,9 @@ class ZmqSink : public SinkMedium {
     int getPort();
 
     /**
-     * @brief Get Zmq host name
+     * @brief Get Zmq address name
      */
     const std::string getHost() const;
-
-    /**
-     * @brief Get Sink type
-     */
-    std::string toString() override;
 
     /**
     * @brief method to return the type of medium

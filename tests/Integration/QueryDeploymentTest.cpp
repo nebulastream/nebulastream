@@ -65,9 +65,9 @@ class QueryDeploymentTest : public testing::Test {
 };
 
 /**
- * Test deploying merge query with source on two different worker node using bottom up strategy.
+ * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
-TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -131,7 +131,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query =
-        "Query::from(\"car\").merge(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+        "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -149,7 +149,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -162,7 +162,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -175,7 +175,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -188,7 +188,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -201,7 +201,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -214,7 +214,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -247,9 +247,9 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 }
 
 /**
- * Test deploying merge query with source on two different worker node using top down strategy.
+ * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -313,7 +313,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query =
-        R"(Query::from("car").merge(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
+        R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -331,7 +331,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -344,7 +344,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -357,7 +357,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -370,7 +370,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -383,7 +383,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -396,7 +396,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "|1|1|\n"
         "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|id:UINT32|value:UINT64|\n"
+        "|car$id:UINT32|car$value:UINT64|\n"
         "+----------------------------------------------------+\n"
         "|1|1|\n"
         "|1|1|\n"
@@ -823,6 +823,151 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): content=" << content);
     NES_INFO("QueryDeploymentTest (testDeployOneWorkerFileOutput): expContent=" << expectedContent);
     EXPECT_EQ(content, expectedContent);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+    int response = remove("test.out");
+    EXPECT_TRUE(response == 0);
+}
+
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+    remove("test.out");
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query =
+        "Query::from(\"default_logical\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"test.out\"));";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    ifstream my_file("test.out");
+    EXPECT_TRUE(my_file.good());
+
+    std::ifstream ifs("test.out");
+    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|default_logical$id:UINT32|default_logical$value:UINT64|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "|1|1|\n"
+                             "+----------------------------------------------------+";
+
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): content=" << content);
+    NES_INFO("QueryDeploymentTest(testDeployOneWorkerUsingTopDownStrategy): expContent=" << expectedContent);
+    EXPECT_EQ(content, expectedContent);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+    int response = remove("test.out");
+    EXPECT_TRUE(response == 0);
+}
+
+//TODO: add test when end of stream message is in place
+TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerFileOutputWithFilterWithInProcessTermination) {
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    srcConf->resetSourceOptions();
+    remove("test.out");
+
+    NES_INFO("QueryDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("QueryDeploymentTest: Coordinator started successfully");
+
+    NES_INFO("QueryDeploymentTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("QueryDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    //register logical stream qnv
+    std::string stream =
+        R"(Schema::create()->addField(createField("value", UINT64))->addField(createField("id", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "window.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << stream;
+    out.close();
+    wrk1->registerLogicalStream("stream", testSchemaFileName);
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfBuffersToProduce(10000);
+    srcConf->setSourceFrequency(1);//TODO: change this to 0 if we have the the end of stream
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("stream");
+    srcConf->setSkipHeader(true);
+    //register physical stream
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::create(srcConf);
+    wrk1->registerPhysicalStream(streamConf);
+
+    srcConf->setPhysicalStreamName("test_stream2");
+    PhysicalStreamConfigPtr streamConf2 = PhysicalStreamConfig::create(srcConf);
+    wrk1->registerPhysicalStream(streamConf2);
+
+    NES_INFO("QueryDeploymentTest: Submit query");
+    string query = "Query::from(\"stream\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"test.out\"));";
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    sleep(2);
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1384,7 +1529,7 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 }
 
 /**
- * Test deploying merge query with source on two different worker node using top down strategy.
+ * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     coConf->resetCoordinatorOptions();
@@ -1459,7 +1604,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query =
-        R"(Query::from("window").join(Query::from("window2"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
+        R"(Query::from("window").joinWith(Query::from("window2"), Attribute("id"), Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 

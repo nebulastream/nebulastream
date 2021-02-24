@@ -30,8 +30,8 @@
 
 using namespace NES;
 
-#ifndef LOCAL_HOST
-#define LOCAL_HOST "127.0.0.1"
+#ifndef LOCAL_ADDRESS
+#define LOCAL_ADDRESS "127.0.0.1"
 #endif
 
 #ifndef LOCAL_PORT
@@ -52,12 +52,12 @@ class ZMQTest : public testing::Test {
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 3000, conf);
 
-        address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
+        address = std::string("tcp://") + std::string(LOCAL_ADDRESS) + std::string(":") + std::to_string(LOCAL_PORT);
 
         test_data = {{0, 100, 1, 99, 2, 98, 3, 97}};
         test_data_size = test_data.size() * sizeof(uint32_t);
         tupleCnt = 8;
-        //    test_data_size = 4096;
+        //    testDataSize = 4096;
         test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     }
 
@@ -86,9 +86,9 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_HOST, LOCAL_PORT, 1);
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_ADDRESS, LOCAL_PORT, 1);
     std::cout << zmq_source->toString() << std::endl;
-    // bufferManager->resizeFixedBufferSize(test_data_size);
+    // bufferManager->resizeFixedBufferSize(testDataSize);
 
     // Start thread for receiving the data.
     bool receiving_finished = false;
@@ -135,17 +135,17 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
     //FIXME: this test makes no sense, redo it
     /**
   // Create ZeroMQ Data Sink.
-  auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
+  auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                        UINT32);
-  auto zmq_sink = createBinaryZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
+  auto zmq_sink = createBinaryZmqSink(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
   std::cout << zmq_sink->toString() << std::endl;
 
   // Put test data into a TupleBuffer vector.
-  void *buffer = new char[test_data_size];
-  //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
+  void *buffer = new char[testDataSize];
+  //  auto tuple_buffer = TupleBuffer(buffer, testDataSize, sizeof(uint32_t) * 2, test_data.size() / 2);
   auto tuple_buffer = bufferManager->getFixedSizeBuffer();
 
-  std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
+  std::memcpy(tuple_buffer->getBuffer(), &test_data, testDataSize);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
   tuple_buffer_vec.push_back(tuple_buffer);
 
@@ -167,7 +167,7 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkSendData) {
 
     // Test received data.
     uint32_t *tuple = (uint32_t*) new_data.data();
-    for (uint64_t i = 0; i != new_data.size() / test_schema->getSchemaSizeInBytes(); ++i) {
+    for (uint64_t i = 0; i != new_data.size() / testSchema->getSchemaSizeInBytes(); ++i) {
   EXPECT_EQ(*(tuple++), i);
   uint64_t expected = 100 - i;
   EXPECT_EQ(*(tuple++), expected);
@@ -194,20 +194,20 @@ TEST_F(ZMQTest, DISABLED_testZmqSinkToSource) {
     /**
   //FIXME: this test makes no sense, redo it
   // Put test data into a TupleBuffer vector.
-  void *buffer = new char[test_data_size];
-  //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
+  void *buffer = new char[testDataSize];
+  //  auto tuple_buffer = TupleBuffer(buffer, testDataSize, sizeof(uint32_t) * 2, test_data.size() / 2);
   auto tuple_buffer = bufferManager->getFixedSizeBuffer();
 
-  std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
+  std::memcpy(tuple_buffer->getBuffer(), &test_data, testDataSize);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
   tuple_buffer_vec.push_back(tuple_buffer);
 
   // Create ZeroMQ Data Sink.
-  auto zmq_sink = createBinaryZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
+  auto zmq_sink = createBinaryZmqSink(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
   std::cout << zmq_sink->toString() << std::endl;
 
   // Create ZeroMQ Data Source.
-  auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
+  auto zmq_source = createZmqSource(testSchema, LOCAL_ADDRESS, LOCAL_PORT);
   std::cout << zmq_source->toString() << std::endl;
 
   // Start thread for receivingh the data.

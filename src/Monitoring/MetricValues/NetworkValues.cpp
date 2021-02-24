@@ -20,6 +20,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <cstring>
 
 namespace NES {
 
@@ -84,30 +85,11 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     return output;
 }
 
-void serialize(const NetworkValues& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-    auto noFields = schema->getSize();
-    schema->copyFields(NetworkValues::getSchema(prefix));
+void writeToBuffer(const NetworkValues& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    NES_ASSERT(byteOffset + sizeof(NetworkValues) < buf.getBufferSize(), "NetworkValues: Content does not fit in TupleBuffer");
 
-    auto layout = NodeEngine::createRowLayout(schema);
-    //get buffer location to write to from the layout and write the specific value to it
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rBytes);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rPackets);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rErrs);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rDrop);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFifo);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rFrame);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rCompressed);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.rMulticast);
-
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tBytes);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tPackets);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tErrs);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tDrop);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tFifo);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tColls);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCarrier);
-    layout->getValueField<uint64_t>(0, noFields++)->write(buf, metric.tCompressed);
-
+    memcpy(tbuffer + byteOffset, &metric, sizeof(NetworkValues));
     buf.setNumberOfTuples(1);
 }
 

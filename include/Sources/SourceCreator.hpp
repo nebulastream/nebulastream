@@ -21,7 +21,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/KafkaSourcee.hpp>
-
+#include <chrono>
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
@@ -114,7 +114,8 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
  */
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
-                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize);
+                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
+                                       std::chrono::milliseconds frequency);
 
 /**
  * @brief function to create a ysb source
@@ -187,11 +188,27 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManage
  * @param nodeId the node id of the desired node
  * @param user name if connecting with a server with authentication
  * @param password for authentication if needed
- * @return
+ * @return a const data source pointer
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId, std::string user,
                                     std::string password, OperatorId operatorId);
+#endif
+
+#ifdef ENABLE_MQTT_BUILD
+
+/**
+ * @brief Create MQTT source
+ * @param schema schema of the elements
+ * @param serverAddress the serverAddress of the MQTT server
+ * @param clientId the client id of the data, we want to obtain
+ * @param user name to connect to the server
+ * @param topic the topic needed for a subscription
+ * @return a const data source pointer
+ */
+const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                     NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId,
+                                     std::string user, std::string topic, OperatorId operatorId);
 #endif
 
 }// namespace NES

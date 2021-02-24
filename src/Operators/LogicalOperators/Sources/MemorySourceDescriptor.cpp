@@ -19,16 +19,19 @@
 
 namespace NES {
 
-MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize)
-    : SourceDescriptor(std::move(schema)), memoryArea(memoryArea), memoryAreaSize(memoryAreaSize) {
+MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
+                                               uint64_t numBuffersToProcess, std::chrono::milliseconds frequency)
+    : SourceDescriptor(std::move(schema)), memoryArea(memoryArea), memoryAreaSize(memoryAreaSize),
+      numBuffersToProcess(numBuffersToProcess), frequency(frequency) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }
 
 std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
-                                                                       size_t memoryAreaSize) {
+                                                                       size_t memoryAreaSize, uint64_t numBuffersToProcess,
+                                                                       std::chrono::milliseconds frequency) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
-    return std::make_shared<MemorySourceDescriptor>(schema, memoryArea, memoryAreaSize);
+    return std::make_shared<MemorySourceDescriptor>(schema, memoryArea, memoryAreaSize, numBuffersToProcess, frequency);
 }
 std::string MemorySourceDescriptor::toString() { return "MemorySourceDescriptor"; }
 
@@ -43,4 +46,6 @@ bool MemorySourceDescriptor::equal(SourceDescriptorPtr other) {
 std::shared_ptr<uint8_t> MemorySourceDescriptor::getMemoryArea() { return memoryArea; }
 
 size_t MemorySourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize; }
+uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
+std::chrono::milliseconds MemorySourceDescriptor::getFrequency() const { return frequency; }
 }// namespace NES

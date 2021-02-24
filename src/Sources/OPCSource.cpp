@@ -51,8 +51,7 @@ OPCSource::~OPCSource() {
     if (success) {
         NES_DEBUG("OPCSOURCE  " << this << ": Destroy OPC Source");
     } else {
-        NES_ERROR("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
-        assert(0);
+        NES_FATAL_ERROR("OPCSOURCE  " << this << ": Destroy OPC Source failed cause it could not be disconnected");
     }
 }
 
@@ -79,7 +78,6 @@ std::optional<NodeEngine::TupleBuffer> OPCSource::receiveData() {
         }
 
     } else {
-
         NES_ERROR("OPCSOURCE::receiveData(): Not connected!");
         return std::nullopt;
     }

@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <atomic>
 #include <bitset>
+#include <chrono>
 #include <cstring>
 #include <iostream>
 #include <memory>

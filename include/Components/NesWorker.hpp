@@ -22,6 +22,7 @@
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Topology/TopologyNodeId.hpp>
 #include <future>
 
 namespace NES {
@@ -147,6 +148,12 @@ class NesWorker {
      */
     NodeEngine::NodeEnginePtr getNodeEngine();
 
+    /**
+     * @brief method to get the id of the worker
+     * @return id of the worker
+     */
+    TopologyNodeId getTopologyNodeId();
+
   private:
     /**
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
@@ -174,9 +181,11 @@ class NesWorker {
     uint16_t localWorkerZmqPort;
     uint16_t numberOfSlots;
     uint16_t numWorkerThreads;
+    uint64_t numberOfBuffers;
+    uint64_t bufferSizeInBytes;
     NodeType type;
     std::atomic<bool> stopped;
-
+    TopologyNodeId topologyNodeId;
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions
      * @return

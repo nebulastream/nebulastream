@@ -30,7 +30,7 @@ template<typename T>
  */
 class Gauge {
   public:
-    explicit Gauge(std::function<T()>&& probingFunc) : probingFunc(probingFunc) { NES_DEBUG("Gauge: Initializing"); }
+    explicit Gauge(std::function<T()>&& probingFunc) : probingFunc(probingFunc) {}
 
     /**
      * @brief Calculates and returns the measured value.
@@ -48,8 +48,8 @@ MetricType getMetricType(const Gauge<T>&) {
 }
 
 template<typename T>
-void serialize(Gauge<T>& metric, std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-    serialize(metric.measure(), schema, buf, prefix);
+void writeToBuffer(Gauge<T>& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    writeToBuffer(metric.measure(), buf, byteOffset);
 }
 
 template<typename T>

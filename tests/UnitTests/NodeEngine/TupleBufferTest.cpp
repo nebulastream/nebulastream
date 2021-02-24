@@ -90,8 +90,8 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
 
     std::string result = UtilityFunctions::prettyPrintTupleBuffer(buf, s);
     std::cout << "RES=" << result << std::endl;
-    NES_DEBUG("Reference size=" << reference.size() << " content=" << std::endl << reference);
-    NES_DEBUG("Result size=" << result.size() << " content=" << std::endl << result);
+    NES_DEBUG("Reference size=" << reference.size() << " content=\n" << reference);
+    NES_DEBUG("Result size=" << result.size() << " content=\n" << result);
     NES_DEBUG("----");
     EXPECT_EQ(reference.size(), result.size());
     //    EXPECT_EQ(reference, result);//TODO fix bug

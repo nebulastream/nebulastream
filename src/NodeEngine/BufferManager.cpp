@@ -15,6 +15,7 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
@@ -73,17 +74,21 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
         if (ptr == nullptr) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
         }
-        allBuffers.emplace_back(ptr, bufferSize, [this](detail::MemorySegment* segment) {
-            recyclePooledBuffer(segment);
+        allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+            recycler->recyclePooledBuffer(segment);
         });
         availableBuffers.emplace_back(&allBuffers.back());
     }
     isConfigured = true;
+    NES_DEBUG("BufferManager configuration bufferSize=" << this->bufferSize << " numOfBuffers=" << this->numOfBuffers);
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    //TODO: remove this
+
     while (availableBuffers.empty()) {
+        NES_ERROR("WE HAVE TO WAIT");
         availableBuffersCvar.wait(lock);
     }
     auto memSegment = availableBuffers.front();
@@ -153,9 +158,10 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
-    auto memSegment = std::make_unique<detail::MemorySegment>(ptr, bufferSize, [this](detail::MemorySegment* segment) {
-        recycleUnpooledBuffer(segment);
-    });
+    auto memSegment = std::make_unique<detail::MemorySegment>(ptr, bufferSize, this,
+                                                              [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+                                                                  recycler->recycleUnpooledBuffer(segment);
+                                                              });
     auto leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
     if (leakedMemSegment->controlBlock->prepare()) {
@@ -228,5 +234,17 @@ BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail
 }
 
 void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
+
+LocalBufferManagerPtr BufferManager::createLocalBufferManager(size_t numberOfReservedBuffers) {
+    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    std::deque<detail::MemorySegment*> buffers;
+    NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
+    for (auto i = 0; i < numberOfReservedBuffers; ++i) {
+        auto memSegment = availableBuffers.front();
+        availableBuffers.pop_front();
+        buffers.emplace_back(memSegment);
+    }
+    return std::make_shared<LocalBufferManager>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+}
 
 }// namespace NES::NodeEngine

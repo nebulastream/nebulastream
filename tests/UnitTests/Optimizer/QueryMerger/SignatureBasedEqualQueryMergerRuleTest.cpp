@@ -314,23 +314,29 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSo
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with merge operators
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
  */
 //TODO: To be fixed by #1502
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
-    Query query1 =
-        Query::from("car").merge(&subQuery1).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query1 = Query::from("car")
+                       .unionWith(&subQuery1)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -385,7 +391,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with different order of merge operator children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
  */
 //TODO: To be fixed by #1502
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorChildrenOrder) {
@@ -393,7 +399,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
     Query query1 = Query::from("truck")
-                       .merge(&subQuery1)
+                       .unionWith(&subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -403,8 +409,11 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -459,7 +468,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with merge operators but different children
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
  */
 //TODO: To be fixed by #1502
 TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
@@ -467,7 +476,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
     Query query1 = Query::from("truck")
-                       .merge(&subQuery1)
+                       .unionWith(&subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -477,8 +486,11 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -1526,7 +1538,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWa
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queries with merge operators.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queries with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
 //TODO: To be fixed by #1502
@@ -1536,7 +1548,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .merge(&subQuery1)
+                       .unionWith(&subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1548,7 +1560,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .merge(&subQuery2)
+                       .unionWith(&subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1606,7 +1618,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queries with merge operator.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with Same queries with unionWith operator.
  * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy.
  */
@@ -1619,7 +1631,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest,
         Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .merge(&subQuery1)
+                       .unionWith(&subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1632,7 +1644,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest,
         Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .merge(&subQuery2)
+                       .unionWith(&subQuery2)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -1690,7 +1702,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest,
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queries with merge operator.
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with distinct queries with unionWith operator.
  * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
@@ -1701,7 +1713,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingDistinctQueriesWithMer
         Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
-                       .merge(&subQuery1)
+                       .unionWith(&subQuery1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1712,7 +1724,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingDistinctQueriesWithMer
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
                            Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()))
-                       .merge(&subQuery2)
+                       .unionWith(&subQuery2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1778,7 +1790,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 
     Query subQuery1 = Query::from("truck");
     Query query1 =
-        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+        Query::from("car").joinWith(subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -1789,7 +1801,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 
     Query subQuery2 = Query::from("truck");
     Query query2 =
-        Query::from("car").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+        Query::from("car").joinWith(subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1856,7 +1868,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithJo
 
     Query subQuery1 = Query::from("truck");
     Query query1 =
-        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+        Query::from("car").joinWith(subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -1867,7 +1879,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithJo
 
     Query subQuery2 = Query::from("car");
     Query query2 =
-        Query::from("truck").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+        Query::from("truck").joinWith(subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1933,7 +1945,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 
     Query subQuery1 = Query::from("truck");
     Query query1 =
-        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+        Query::from("car").joinWith(subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -1944,7 +1956,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 
     Query subQuery2 = Query::from("truck");
     Query query2 =
-        Query::from("car").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+        Query::from("car").joinWith(subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -2010,7 +2022,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 
     Query subQuery1 = Query::from("truck");
     Query query1 =
-        Query::from("car").join(&subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
+        Query::from("car").joinWith(subQuery1, Attribute("value"), Attribute("value"), windowType1).sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -2021,7 +2033,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 
     Query subQuery2 = Query::from("truck");
     Query query2 =
-        Query::from("car").join(&subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
+        Query::from("car").joinWith(subQuery2, Attribute("value"), Attribute("value"), windowType2).sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];

@@ -160,6 +160,12 @@ class Schema {
     const std::string toString() const;
 
     /**
+     * @brief Method to return the stream name qualifier, thus everything that is before $
+     * @return string
+     */
+    const std::string getStreamNameQualifier() const;
+
+    /**
      * @brief method to get the qualifier of the stream without $
      * @return qualifier without $
      */

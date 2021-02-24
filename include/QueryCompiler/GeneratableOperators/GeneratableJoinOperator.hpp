@@ -27,7 +27,7 @@ class GeneratableJoinOperator : public JoinLogicalOperatorNode, public Generatab
   public:
     /**
      * @brief Create sharable instance of GeneratableJoinOperator
-     * @param logicalJoinOperator: the merge logical operator
+     * @param logicalJoinOperator: the unionWith logical operator
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableJoinOperator
      */

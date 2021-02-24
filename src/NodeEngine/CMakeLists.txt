@@ -23,6 +23,7 @@ add_source_nes(
         QueryStatistics.cpp
         NesThread.cpp
         WorkerContext.cpp
+        LocalBufferManager.cpp
 )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)

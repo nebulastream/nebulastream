@@ -26,7 +26,7 @@
 namespace NES {
 
 QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient)
-    : globalExecutionPlan(globalExecutionPlan), workerRPCClient(workerRpcClient) {
+    : workerRPCClient(workerRpcClient), globalExecutionPlan(globalExecutionPlan) {
     NES_DEBUG("QueryDeploymentPhase()");
 }
 
@@ -43,7 +43,8 @@ bool QueryDeploymentPhase::execute(QueryId queryId) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     if (executionNodes.empty()) {
         NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query " << queryId);
-        throw QueryDeploymentException("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query " + queryId);
+        throw QueryDeploymentException(
+            queryId, "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query " + std::to_string(queryId));
     }
 
     bool successDeploy = deployQuery(queryId, executionNodes);
@@ -51,7 +52,7 @@ bool QueryDeploymentPhase::execute(QueryId queryId) {
         NES_DEBUG("QueryDeploymentPhase: deployment for query " + std::to_string(queryId) + " successful");
     } else {
         NES_ERROR("QueryDeploymentPhase: Failed to deploy query " << queryId);
-        throw QueryDeploymentException("QueryDeploymentPhase: Failed to deploy query " + queryId);
+        throw QueryDeploymentException(queryId, "QueryDeploymentPhase: Failed to deploy query " + std::to_string(queryId));
     }
 
     NES_DEBUG("QueryService: start query");
@@ -60,7 +61,7 @@ bool QueryDeploymentPhase::execute(QueryId queryId) {
         NES_DEBUG("QueryDeploymentPhase: Successfully started deployed query " << queryId);
     } else {
         NES_ERROR("QueryDeploymentPhase: Failed to start the deployed query " << queryId);
-        throw QueryDeploymentException("QueryDeploymentPhase: Failed to deploy query " + queryId);
+        throw QueryDeploymentException(queryId, "QueryDeploymentPhase: Failed to deploy query " + std::to_string(queryId));
     }
     return true;
 }

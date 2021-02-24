@@ -63,12 +63,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     typedef virtual_enable_shared_from_this<NodeEngine> inherited1;
     typedef ErrorListener inherited2;
 
-    static constexpr auto DEFAULT_NUM_BUFFERS = 1024;
-    static constexpr auto DEFAULT_NUM_THREADS = 1;
-
   public:
-    static constexpr auto DEFAULT_BUFFER_SIZE = 4096;
-
     enum NodeEngineQueryStatus { started, stopped, registered };
 
     /**
@@ -81,9 +76,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return
      */
 
-    static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config,
-                                uint16_t numThreads = DEFAULT_NUM_THREADS, uint64_t bufferSize = DEFAULT_BUFFER_SIZE,
-                                uint64_t numBuffers = DEFAULT_NUM_BUFFERS);
+    static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads,
+                                uint64_t bufferSize, uint64_t numBuffers);
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool

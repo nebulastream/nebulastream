@@ -30,6 +30,7 @@ sudo apt-get update -qq && sudo DEBIAN_FRONTEND="noninteractive" apt-get install
   libncurses5-dev \
   libxml2-dev \
   libedit-dev \
+  libmbedtls-dev \
   swig \
   doxygen \
   graphviz \
@@ -176,6 +177,19 @@ cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   -DCMAKE_INSTALL_PREFIX=/opt/sysroot/aarch64-linux-gnu/grpc_install \
   && sudo make -j2 install && cd ../.. && sudo rm -rf grpc && \
 
+cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
+  cd paho.mqtt.c && git checkout v1.3.8 && \
+  cmake -Bbuild -H. -DPAHO_ENABLE_TESTING=OFF \
+  -DPAHO_BUILD_STATIC=ON \
+  -DPAHO_WITH_SSL=ON \
+  -DPAHO_HIGH_PERFORMANCE=ON && \
+  sudo cmake --build build/ --target install && \
+  sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.c && \
+  git clone https://github.com/eclipse/paho.mqtt.cpp && cd paho.mqtt.cpp && \
+  cmake -Bbuild -H. -DPAHO_BUILD_STATIC=ON -DPAHO_BUILD_DOCUMENTATION=TRUE -DPAHO_BUILD_SAMPLES=TRUE \
+  -DCMAKE_TOOLCHAIN_FILE=/opt/toolchain/toolchain-aarch64-gcc.cmake && \
+  sudo cmake --build build/ --target install && sudo ldconfig && cd ${HOME} && rm -rf paho.mqtt.cpp
+
 sudo cd /opt/sysroots/aarch64-linux-gnu/usr && \
 sudo cp -r -v -L /usr/aarch64-linux-gnu/include /usr/aarch64-linux-gnu/lib . && cd lib && \
 sudo cp -r -v -L /usr/include/z3* /opt/sysroots/aarch64-linux-gnu/include/ && \
@@ -188,6 +202,8 @@ sudo cp -r -v -L /usr/include/cpprest* /opt/sysroots/aarch64-linux-gnu/include/ 
 sudo cp -r -v -L /usr/include/pplx* /opt/sysroots/aarch64-linux-gnu/include/ && \
 sudo cp -r -v -L /usr/include/aarch64-linux-gnu/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
 sudo cp -r -v -L /usr/include/openssl* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/include/ && \
+sudo cp -r -v -L /usr/include/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/include/ && \
 
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libzmq* /opt/sysroots/aarch64-linux-gnu/lib/ && \
@@ -200,6 +216,8 @@ sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/cmake/cpprestsdk* /opt/sysroots/aarc
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcrypto* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libssl* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libcpprest* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/lib/ && \
+sudo cp -r -v -L /usr/lib/aarch64-linux-gnu/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/lib/ && \
 sudo sed -i -- 's|/usr/lib/aarch64-linux-gnu/cmake/cpprestsdk|/opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \
 sudo sed -i -- 's|/lib/aarch64-linux-gnu/|/aarch64-linux-gnu/lib/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets-none.cmake && \
 sudo sed -i -- 's|/include/|/aarch64-linux-gnu/include/|g' /opt/sysroots/aarch64-linux-gnu/lib/cmake/cpprestsdk/cpprestsdk-targets.cmake && \

@@ -32,11 +32,14 @@ CoordinatorConfig::CoordinatorConfig() {
     rpcPort = ConfigOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Coordinator");
     restPort = ConfigOption<uint32_t>::create("restPort", 8081, "Port exposed for rest endpoints");
     dataPort = ConfigOption<uint32_t>::create("dataPort", 3001, "NES data server port");
-    numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", std::thread::hardware_concurrency(),
-                                                   "Number of computing slots for NES Coordinator");
+    numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for NES Coordinator");
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
+    numberOfBuffers = ConfigOption<uint32_t>::create("numberOfBuffers", 1024, "Number of buffers.");
+    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
+    numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
+    queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -54,6 +57,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setNumberOfSlots(config["numberOfSlots"].As<uint16_t>());
             setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             setLogLevel(config["logLevel"].As<std::string>());
+            setQueryBatchSize(config["queryBatchSize"].As<uint32_t>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -84,6 +88,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setEnableQueryMerging((it->second == "true"));
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else if (it->first == "--queryBatchSize") {
+                setQueryBatchSize(stoi(it->second));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -104,6 +110,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setNumberOfSlots(numberOfSlots->getDefaultValue());
     setEnableQueryMerging(enableQueryMerging->getDefaultValue());
     setLogLevel(logLevel->getDefaultValue());
+    setQueryBatchSize(queryBatchSize->getDefaultValue());
 }
 
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
@@ -130,6 +137,10 @@ IntConfigOption CoordinatorConfig::getNumberOfSlots() { return numberOfSlots; }
 
 void CoordinatorConfig::setNumberOfSlots(uint16_t numberOfSlotsValue) { numberOfSlots->setValue(numberOfSlotsValue); }
 
+void CoordinatorConfig::setNumWorkerThreads(uint16_t numWorkerThreadsValue) { numWorkerThreads->setValue(numWorkerThreadsValue); }
+
+IntConfigOption CoordinatorConfig::getNumWorkerThreads() { return numWorkerThreads; }
+
 BoolConfigOption CoordinatorConfig::getEnableQueryMerging() { return enableQueryMerging; }
 
 void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
@@ -139,4 +150,17 @@ void CoordinatorConfig::setEnableQueryMerging(bool enableQueryMergingValue) {
 StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
 
 void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
+
+IntConfigOption CoordinatorConfig::getNumberOfBuffers() { return numberOfBuffers; }
+
+void CoordinatorConfig::setNumberOfBuffers(uint64_t count) { numberOfBuffers->setValue(count); }
+
+IntConfigOption CoordinatorConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
+
+void CoordinatorConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeInBytes->setValue(sizeInBytes); }
+
+IntConfigOption CoordinatorConfig::getQueryBatchSize() { return queryBatchSize; }
+
+void CoordinatorConfig::setQueryBatchSize(uint32_t batchSize) { queryBatchSize->setValue(batchSize); }
+
 }// namespace NES

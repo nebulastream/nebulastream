@@ -74,11 +74,6 @@ class FileSink : public SinkMedium {
     const std::string getFilePath() const;
 
     /**
-     * @brief Get sink type
-     */
-    std::string toString() override;
-
-    /**
     * @brief method to return the type of medium
     * @return type of medium
     */

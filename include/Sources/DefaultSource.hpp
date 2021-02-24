@@ -18,6 +18,7 @@
 #define INCLUDE_SOURCESINK_DEFAULTSOURCE_HPP_
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
+#include <chrono>
 
 namespace NES {
 

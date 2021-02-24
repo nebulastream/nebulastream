@@ -41,7 +41,7 @@ namespace NES::NodeEngine {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return NodeEngine::create(hostname, port, config);
+    return NodeEngine::create(hostname, port, config, 1, 4096, 1024);
 }
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
@@ -217,10 +217,10 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
         }
         if (queryManager->registerQuery(queryExecutionPlan)) {
             deployedQEPs[querySubPlanId] = queryExecutionPlan;
-            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " succeeded");
+            NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " succeeded");
             return true;
         } else {
-            NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " failed");
+            NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " failed");
             return false;
         }
     } else {
@@ -317,7 +317,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
             if (queryManager->stopQuery(deployedQEPs[querySubPlanId])) {
                 NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
             } else {
-                NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " failed");
+                NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");
                 return false;
             }
         }
@@ -492,11 +492,16 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
     NES_ERROR("onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack);
     std::cerr << "NodeEngine failed fatally" << std::endl;// it's necessary for testing and it wont harm us to write to stderr
     std::cerr << "Error: " << strerror(errno) << std::endl;
+    std::cerr << "Signal: " << std::to_string(signalNumber) << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
     NES_ERROR("onFatalException: exception=" << exception->what() << " callstack=\n" << callstack);
+    std::cerr << "NodeEngine failed fatally" << std::endl;
+    std::cerr << "Error: " << strerror(errno) << std::endl;
+    std::cerr << "Exception: " << exception->what() << std::endl;
+    std::cerr << "Callstack:\n " << callstack << std::endl;
 }
 
 }// namespace NES::NodeEngine

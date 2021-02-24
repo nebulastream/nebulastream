@@ -353,7 +353,8 @@ class TestUtils {
                 return true;
             }
             NES_DEBUG("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer="
-                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks());
+                      << statistics[0]->getProcessedBuffers() << " procTasks=" << statistics[0]->getProcessedTasks()
+                      << " expected=" << expectedResult);
 
             sleep(1);
         }
@@ -412,6 +413,12 @@ class TestUtils {
                 if (expectedLines.size() != count) {
                     NES_DEBUG("checkOutputOrTimeout: number of expected lines "
                               << expectedLines.size() << " not reached yet with " << count << " lines content=" << content);
+                    continue;
+                }
+
+                if (content.size() != expectedContent.size()) {
+                    NES_DEBUG("checkOutputOrTimeout: number of chars "
+                              << expectedContent.size() << " not reached yet with chars content=" << content.size());
                     continue;
                 }
 
@@ -543,10 +550,9 @@ class TestUtils {
             NES_DEBUG("CoordinatorService::registerNode: register worker node");
             nodePtr = TopologyNode::create(id, address, 4004, 4006, cpu);
         } else {
-            NES_ERROR("CoordinatorService::registerNode: type not supported " << type);
-            assert(0);
+            NES_FATAL_ERROR("CoordinatorService::registerNode: type not supported " << type);
         }
-        assert(nodePtr);
+        NES_ASSERT(nodePtr, "pointer not vaild");
 
         if (nodeProperties.IsInitialized()) {
             nodePtr->setNodeStats(nodeProperties);
