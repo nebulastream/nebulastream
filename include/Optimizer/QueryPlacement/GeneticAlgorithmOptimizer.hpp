@@ -51,6 +51,10 @@ class GeneticAlgorithmOptimizer {
 
     Placement getOptimizedPlacement(uint32_t numberOfGeneration);
 
+    static std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>> getOperatorAssignmentFromPlacement(Placement placement);
+
+    static std::string getOperatorAssignmentAsString(Placement placement);
+
   private:
 
     uint32_t populationSize;

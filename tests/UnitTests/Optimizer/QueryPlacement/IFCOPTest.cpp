@@ -142,7 +142,7 @@ class IFCOPTest : public testing::Test {
     void setupSmallTopologyAndStreamCatalog() {
         topology = Topology::create();
 
-        // creater workers
+        // create workers
         std::vector<TopologyNodePtr> topologyNodes;
         topologyNodes.push_back(TopologyNode::create(0, "localhost", 4000, 4000, 2));
         topologyNodes.push_back(TopologyNode::create(1, "localhost", 4002, 4002, 1));
@@ -243,7 +243,7 @@ TEST_F(IFCOPTest, geneticAlgorithmTest) {
     auto tupleSizeModifier = IFCOPStrategy::getTupleSizeModifier(queryPlan);
     auto ingestionRateModifier = IFCOPStrategy::getIngestionRateModifier(queryPlan);
 
-    GeneticAlgorithmOptimizer geneticAlgorithmOptimizer = GeneticAlgorithmOptimizer(queryPlan, topology, 5, 0.5, 0.99, 2,
+    GeneticAlgorithmOptimizer geneticAlgorithmOptimizer = GeneticAlgorithmOptimizer(queryPlan, topology, 10, 0.5, 0.15, 2,
                                                                                     tupleSizeModifier,ingestionRateModifier);
 
     auto placement0 = geneticAlgorithmOptimizer.population[0];
@@ -255,7 +255,9 @@ TEST_F(IFCOPTest, geneticAlgorithmTest) {
 
     geneticAlgorithmOptimizer.getCost(placement1);
 
-    auto bestPlacement = geneticAlgorithmOptimizer.getOptimizedPlacement(1);
+    auto bestPlacement = geneticAlgorithmOptimizer.getOptimizedPlacement(10);
+
+    NES_DEBUG("Best placement found: \n" << GeneticAlgorithmOptimizer::getOperatorAssignmentAsString(bestPlacement));
 
     NES_DEBUG("IFCOPTest: geneticAlgorithmTest()");
 }

@@ -182,13 +182,10 @@ float IFCOPStrategy::getTotalCost(QueryPlanPtr queryPlan, TopologyPtr topology, 
             isValid = isValid && isReachable;
         }
     }
-
-    NES_DEBUG(topology->toString());
-    NES_DEBUG(operatorAssignment.size());
-    NES_DEBUG(topology->getRoot()->getId());
-
     // if the placement is valid, continue computing the cost
-    float networkCost = std::numeric_limits<float>::max();
+    float networkCost = 9999.99;
+//    float networkCost = std::numeric_limits<float>::max();
+
     if (isValid) {
         networkCost = getNetworkCost(executionPath, operatorAssignment, ingestionRateModifiers, tupleSizeModifiers);
         NES_DEBUG("IFCOP: networkCost=" << networkCost);

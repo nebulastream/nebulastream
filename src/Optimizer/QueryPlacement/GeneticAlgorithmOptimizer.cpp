@@ -126,8 +126,25 @@ GeneticAlgorithmOptimizer::Placement GeneticAlgorithmOptimizer::crossOver(Geneti
     return offspring;
 }
 float GeneticAlgorithmOptimizer::getCost(GeneticAlgorithmOptimizer::Placement placement) {
+    std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>> operatorAssignment = getOperatorAssignmentFromPlacement(placement);
+
+    NES_DEBUG("GeneticAlgorithmOptimizer: operatorAssignment size=" << operatorAssignment.size());
+
+    float cost = IFCOPStrategy::getTotalCost(queryPlan,
+                                             topology,
+                                             topology->getRoot(),
+                                             operatorAssignment,
+                                             ingestionRateModifiers,
+                                             tupleSizeModifiers);
+    NES_DEBUG("GeneticAlgorithmOptimizer: network cost=" << cost);
+
+    return cost;
+}
+
+std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>
+GeneticAlgorithmOptimizer::getOperatorAssignmentFromPlacement(Placement placement) {
     // Build operator assignment from the placement
-    std::map<TopologyNodePtr,std::vector<LogicalOperatorNodePtr>> operatorAssignment;
+    std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>> operatorAssignment;
 
     for (PlacementItem placementItem: placement) {
         // add only if the current operator is placed in the current topology node
@@ -147,48 +164,50 @@ float GeneticAlgorithmOptimizer::getCost(GeneticAlgorithmOptimizer::Placement pl
                 assignedOperators.push_back(placementItem.operatorNode);
             }
         }
-    }
+    };
 
-    NES_DEBUG("GeneticAlgorithmOptimizer: operatorAssignment size=" << operatorAssignment.size());
-
-    float cost = IFCOPStrategy::getTotalCost(queryPlan,
-                                             topology,
-                                             topology->getRoot(),
-                                             operatorAssignment,
-                                             ingestionRateModifiers,
-                                             tupleSizeModifiers);
-    NES_DEBUG("GeneticAlgorithmOptimizer: network cost=" << cost);
-
-    return cost;
+    return operatorAssignment;
 }
+
+
+
 GeneticAlgorithmOptimizer::Placement GeneticAlgorithmOptimizer::getOptimizedPlacement(uint32_t numberOfGeneration) {
-    std::vector<float> costs;
     // cross over and mutate offspring
     for (int i = 0; i < numberOfGeneration; i++) {
         // cross over placements from the current generation
-        for (int j = 0; j < 9; j++) {
-            for (int k=0; k < 9; k++) {
+        for (int j = 0; j < population.size(); j++) {
+            for (int k=0; k < population.size(); k++) {
                 Placement currentOffspring = mutate(crossOver(population[i], population[j]));
                 float currentCost = getCost(currentOffspring);
                 auto pos = std::find_if(population.begin(), population.end(), [currentCost, this](auto s) {
-                  return getCost(s) > currentCost;
+                  return getCost(s) < currentCost;
                 });
                 // insert the current offspring to the population
                 population.insert(pos, currentOffspring);
 
-                auto poscost = std::find_if(costs.begin(), costs.end(), [currentCost](auto s) {
-                  return s > currentCost;
-                });
-                costs.insert(poscost, currentCost);
-
-//                // pop out the worst candidate
-//                population.pop_back();
-//                costs.pop_back();
+                population.pop_back();
             }
         }
     }
     NES_DEBUG("GeneticAlgorithmOptimizer best cost=" << getCost(population[0]));
+    std::vector<float> costs;
+    for (Placement placement : population){
+        costs.push_back(getCost(placement));
+    }
     return population[0];
+}
+std::string
+GeneticAlgorithmOptimizer::getOperatorAssignmentAsString(Placement placement) {
+    std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>> operatorAssignment = getOperatorAssignmentFromPlacement(placement);
+    std::stringstream ss;
+    for (std::map<TopologyNodePtr, std::vector<LogicalOperatorNodePtr>>::iterator iter = operatorAssignment.begin(); iter != operatorAssignment.end(); ++iter){
+        ss << "TopologyNode id=" << iter->first->getId() << " OperatorIds:";
+        for (LogicalOperatorNodePtr logicalOperatorNode: iter->second){
+            ss << logicalOperatorNode->getId() << " " ;
+        }
+        ss << "\n";
+    }
+    return ss.str();
 }
 
 }// namespace NES
