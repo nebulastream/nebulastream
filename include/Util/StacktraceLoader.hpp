@@ -20,6 +20,8 @@
 #include <string>
 
 namespace NES {
+namespace NodeEngine {
 std::string collectAndPrintStacktrace();
 }
+}// namespace NES
 #endif//NES_INCLUDE_UTIL_STACKTRACELOADER_HPP_
