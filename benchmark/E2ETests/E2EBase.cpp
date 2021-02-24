@@ -17,7 +17,7 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
 
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//600000
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 3;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
@@ -156,11 +156,11 @@ void E2EBase::setupSources() {
             auto* records = reinterpret_cast<Record*>(memArea);
             size_t recordSize = schema->getSchemaSizeInBytes();
             size_t numRecords = memAreaSize / recordSize;
-            for (auto i = 0u; i < numRecords; ++i) {
-                records[i].id = i;
+            for (auto u = 0u; u < numRecords; ++u) {
+                records[u].id = i;
                 //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-                records[i].value = i % 10;
-                records[i].timestamp = i;
+                records[u].value = u % 10;
+                records[u].timestamp = u;
             }
 
             NES::AbstractPhysicalStreamConfigPtr conf = NES::MemorySourceStreamConfig::create(
@@ -181,12 +181,12 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-
+                auto ts = time(0);
                 for (auto i = 0u; i < numberOfTuplesToProduce; ++i) {
                     records[i].id = i;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[i].value = i % 10;
-                    records[i].timestamp = i;
+                    records[i].timestamp = ts;
                 }
                 return;
             };
@@ -301,7 +301,7 @@ void E2EBase::tearDown() {
     std::cout << "E2EBase: Remove query" << std::endl;
     NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
     std::cout << "E2EBase: wait for stop" << std::endl;
-    NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
+    NES_ASSERT(NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog), "stopping was not possible");
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
     bool retStopWrk1 = wrk1->stop(true);
