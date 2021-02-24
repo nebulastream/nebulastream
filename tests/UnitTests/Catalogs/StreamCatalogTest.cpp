@@ -63,7 +63,7 @@ TEST_F(StreamCatalogTest, testAddGetLogStream) {
 
     map<std::string, SchemaPtr> allLogicalStream = streamCatalog->getAllLogicalStream();
     string exp = "id:INTEGER value:INTEGER ";
-    EXPECT_EQ(allLogicalStream.size(), 4);
+    EXPECT_EQ(allLogicalStream.size(), 3);
 
     SchemaPtr testSchema = allLogicalStream["test_stream"];
     EXPECT_EQ("", testSchema->toString());
@@ -175,9 +175,9 @@ TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
 
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
-    EXPECT_EQ(allLogicalStream.size(), 3);
+    EXPECT_EQ(allLogicalStream.size(), 2);
     for (auto const [key, value] : allLogicalStream) {
-        bool cmp = key != defaultLogicalStreamName && key != "exdra" && key != "ysb";
+        bool cmp = key != defaultLogicalStreamName && key != "exdra";
         EXPECT_EQ(cmp, false);
     }
 }
@@ -187,7 +187,7 @@ TEST_F(StreamCatalogTest, testAddLogicalStream) {
 
     streamCatalog->addLogicalStream("test", testSchema);
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
-    EXPECT_EQ(allLogicalStream.size(), 4);
+    EXPECT_EQ(allLogicalStream.size(), 3);
 }
 
 TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
