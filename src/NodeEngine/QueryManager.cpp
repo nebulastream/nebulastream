@@ -235,9 +235,12 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         //TODO: change this static rule a better one
         //Rule: Only add a new task only if half of the buffers are free
         //TODO: write a paper about the best condition here
-        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() / 2) {
+        //TODO: here we can run in a deadlock such that we cannot stop the sources because we are trapped in this while loop
+        auto tryCnt = 0;
+        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() / (bufferManager->getNumOfPooledBuffers() * 0.1) && tryCnt != 10 ) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             waitCounter++;
+            tryCnt++;
         }
 
         //TODO: this is a problem now as it can become the bottleneck
@@ -392,12 +395,13 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
                 }
             }
         }
-        NES_DEBUG("QueryManager::stopQuery: query finished " << qep);
+        NES_WARNING("QueryManager::stopQuery: query finished " << qep);
     }
+
     if (!qep->stop()) {
         NES_FATAL_ERROR("QueryManager: QEP could not be stopped");
         ret = false;
-    };
+    }
 
     auto sinks = qep->getSinks();
     for (const auto& sink : sinks) {
