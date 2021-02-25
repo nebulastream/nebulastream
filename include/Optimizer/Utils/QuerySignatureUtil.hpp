@@ -94,6 +94,21 @@ class QuerySignatureUtil {
     static QuerySignaturePtr buildQuerySignatureForChildren(z3::ContextPtr context, std::vector<NodePtr> children);
 
     /**
+     * @brief Compute query signature for Source operator
+     * @param context: z3 context
+     * @param sourceOperator: the source operator
+     * @return Signature based on source operator
+     */
+    static QuerySignaturePtr createQuerySignatureForSource(z3::ContextPtr context, SourceLogicalOperatorNodePtr sourceOperator);
+
+    /**
+     * @brief Compute query signature for Project operator
+     * @param projectOperator: the project operator
+     * @return Signature based on project operator and its children signatures
+     */
+    static QuerySignaturePtr createQuerySignatureForProject(ProjectionLogicalOperatorNodePtr projectOperator);
+
+    /**
      * @brief Compute query signature for Map operator
      * @param context: z3 context
      * @param mapOperator: the map operator
@@ -105,7 +120,7 @@ class QuerySignatureUtil {
      * @brief Compute query signature for Filter operator
      * @param context: z3 context
      * @param filterOperator: the Filter operator
-     * @return Signature based on window operator and its children signatures
+     * @return Signature based on filter operator and its children signatures
      */
     static QuerySignaturePtr createQuerySignatureForFilter(z3::ContextPtr context, FilterLogicalOperatorNodePtr filterOperator);
 
@@ -143,15 +158,6 @@ class QuerySignatureUtil {
     static QuerySignaturePtr createQuerySignatureForUnion(z3::ContextPtr context, UnionLogicalOperatorNodePtr unionOperator);
 
     /**
-     * @brief Compute signature for RenameStream operator
-     * @param context: z3 context
-     * @param renameStreamOperator: the rename stream operator
-     * @return Signature based on rename stream and its child signature
-     */
-    static QuerySignaturePtr createQuerySignatureForRenameStream(z3::ContextPtr context,
-                                                                 RenameStreamOperatorNodePtr renameStreamOperator);
-
-    /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
      * operators and stored in column map of the child operator
      * @param context: the z3 context
@@ -161,8 +167,8 @@ class QuerySignatureUtil {
      * @return the updated expression with substituted operands
      */
     static std::vector<z3::ExprPtr> substituteIntoInputExpression(z3::ContextPtr context, z3::ExprPtr inputExpr,
-                                                           std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                           std::map<std::string, OperatorTupleSchemaMapPtr>& columns);
+                                                                  std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                                  std::map<std::string, OperatorTupleSchemaMapPtr>& columns);
 
     /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
