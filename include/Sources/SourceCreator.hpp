@@ -81,11 +81,11 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Nod
  * @param generationFunction
  * @param operatorId
  * @return a const data source pointer */
-const DataSourcePtr createLambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                       uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
-                                       std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-                                       OperatorId operatorId);
-
+const DataSourcePtr createLambdaSource(
+    SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    OperatorId operatorId);
 
 /**
  * @brief function to create an empty zmq source
@@ -158,9 +158,9 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
  * @return
  */
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                       NodeEngine::QueryManagerPtr queryManager,
-                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                       std::chrono::milliseconds frequency, OperatorId operatorId);
+                                       NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
+                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
+                                       OperatorId operatorId);
 
 /**
  * @brief function to create a network source

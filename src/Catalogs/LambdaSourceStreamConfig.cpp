@@ -50,8 +50,8 @@ AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
     std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     uint64_t numBuffersToProcess, uint64_t frequency) {
-    return std::make_shared<LambdaSourceStreamConfig>(sourceType, physicalStreamName, logicalStreamName, std::move(generationFunction),
-                                                      numBuffersToProcess, frequency);
+    return std::make_shared<LambdaSourceStreamConfig>(sourceType, physicalStreamName, logicalStreamName,
+                                                      std::move(generationFunction), numBuffersToProcess, frequency);
 }
 
 }// namespace NES
