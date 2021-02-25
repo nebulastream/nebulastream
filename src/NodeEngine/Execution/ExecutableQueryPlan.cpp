@@ -16,6 +16,7 @@
 
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <utility>
@@ -27,8 +28,12 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySu
                                          QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created) {
+      qepStatus(Created), numOfProducers(this->sources.size()) {
     // nop
+}
+
+void ExecutableQueryPlan::pin() {
+    numOfProducers++;
 }
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
@@ -45,23 +50,8 @@ ExecutableQueryPlan::~ExecutableQueryPlan() {
     pipelines.clear();
 }
 
-bool ExecutableQueryPlan::stop() {
-    bool ret = true;
-    auto expected = Running;
-    if (qepStatus.compare_exchange_strong(expected, Stopped)) {
-        NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
-        for (auto& stage : pipelines) {
-            if (!stage->stop()) {
-                NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
-                ret = false;
-            }
-        }
-    }
-
-    if (!ret) {
-        qepStatus.store(ErrorState);
-    }
-    return ret;
+std::future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture() {
+    return qepTerminationStatusFuture.get_future();
 }
 
 bool ExecutableQueryPlan::fail() {
@@ -133,5 +123,60 @@ std::vector<DataSourcePtr> ExecutableQueryPlan::getSources() const { return sour
 std::vector<DataSinkPtr> ExecutableQueryPlan::getSinks() const { return sinks; }
 
 ExecutablePipelinePtr ExecutableQueryPlan::getPipeline(uint64_t index) const { return pipelines[index]; }
+
+void ExecutableQueryPlan::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
+    Reconfigurable::reconfigure(task, context);
+    for (auto& stage : pipelines) {
+        stage->reconfigure(task, context);
+    }
+    for (auto& sink : sinks) {
+        sink->reconfigure(task, context);
+    }
+}
+
+bool ExecutableQueryPlan::stop() {
+    bool ret = true;
+    auto expected = Running;
+    NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
+    if (qepStatus.compare_exchange_strong(expected, Stopped)) {
+        NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
+        for (auto& stage : pipelines) {
+            if (!stage->stop()) {
+                NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
+                ret = false;
+            }
+        }
+        qepTerminationStatusFuture.set_value(ExecutableQueryPlanResult::Ok);
+        return true;
+    }
+    if (!ret) {
+        qepStatus.store(ErrorState);
+        qepTerminationStatusFuture.set_value(ExecutableQueryPlanResult::Error);
+    }
+    return false;
+}
+
+void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationTask& task) {
+    Reconfigurable::postReconfigurationCallback(task);
+    switch (task.getType()) {
+        case EndOfStream: {
+            if (numOfProducers.fetch_sub(1) == 1) {
+                stop();
+            } else {
+                return; // we must not invoke end of stream on stages and sinks if the qep was not stopped
+            }
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    for (auto& stage : pipelines) {
+        stage->postReconfigurationCallback(task);
+    }
+    for (auto& sink : sinks) {
+        sink->postReconfigurationCallback(task);
+    }
+}
 
 }// namespace NES::NodeEngine::Execution

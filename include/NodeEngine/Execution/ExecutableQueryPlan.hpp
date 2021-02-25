@@ -18,22 +18,31 @@
 #define INCLUDE_NODEENGINE_QUERYEXECUTIONPLAN_H_
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/ReconfigurationTask.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwaredRefs.hpp>
 #include <atomic>
+#include <future>
 #include <map>
 #include <vector>
 
 namespace NES::NodeEngine::Execution {
+
+
+enum class ExecutableQueryPlanResult : uint8_t {
+    Ok,
+    Error
+};
 
 /**
  * @brief Represents an executable plan of an particular query.
  * Each executable query plan contains of at least one pipeline.
  * This class is thread-safe.
  */
-class ExecutableQueryPlan {
+class ExecutableQueryPlan : public Reconfigurable {
 
   public:
     explicit ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
@@ -41,6 +50,11 @@ class ExecutableQueryPlan {
                                  QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
     ~ExecutableQueryPlan();
+
+    /**
+     * @brief Increment the number of producers for this qep
+     */
+    void pin();
 
     /**
      * @brief Setup the query plan, e.g., instantiate state variables.
@@ -56,6 +70,14 @@ class ExecutableQueryPlan {
      * @brief Stop the query plan and free all associated resources.
      */
     bool stop();
+
+    /**
+     * @brief
+     * @return
+     */
+    std::future<ExecutableQueryPlanResult> getTerminationFuture();
+
+  public:
 
     /**
      * @brief Fail the query plan and free all associated resources.
@@ -107,6 +129,10 @@ class ExecutableQueryPlan {
      */
     QuerySubPlanId getQuerySubPlanId() const;
 
+    void reconfigure(ReconfigurationTask& task, WorkerContext& context) override;
+
+    void postReconfigurationCallback(ReconfigurationTask& task) override;
+
   protected:
     const QueryId queryId;
     const QuerySubPlanId querySubPlanId;
@@ -116,6 +142,9 @@ class ExecutableQueryPlan {
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
+    /// number of producers that provide data to this qep
+    std::atomic<uint32_t> numOfProducers;
+    std::promise<ExecutableQueryPlanResult> qepTerminationStatusFuture;
 };
 
 }// namespace NES::NodeEngine::Execution

@@ -106,4 +106,17 @@ const SchemaPtr& ExecutablePipeline::getInputSchema() const { return inputSchema
 
 const SchemaPtr& ExecutablePipeline::getOutputSchema() const { return outputSchema; }
 
+void ExecutablePipeline::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
+    Reconfigurable::reconfigure(task, context);
+    if (nextPipeline != nullptr) {
+        nextPipeline->reconfigure(task, context);
+    }
+}
+void ExecutablePipeline::postReconfigurationCallback(ReconfigurationTask& task) {
+    Reconfigurable::postReconfigurationCallback(task);
+    if (nextPipeline != nullptr) {
+        nextPipeline->postReconfigurationCallback(task);
+    }
+}
+
 }// namespace NES::NodeEngine::Execution

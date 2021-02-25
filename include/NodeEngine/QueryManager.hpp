@@ -41,6 +41,7 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::NodeEngine {
 
@@ -54,7 +55,9 @@ namespace NES::NodeEngine {
  * @Limitations:
  *    - statistics do not cover intermediate buffers
  */
-class QueryManager : public std::enable_shared_from_this<QueryManager>, public Reconfigurable {
+class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager>, public Reconfigurable {
+    typedef NES::detail::virtual_enable_shared_from_this<QueryManager> inherited0;
+    typedef Reconfigurable inherited1;
   public:
     enum ExecutionResult : uint8_t { Ok = 0, Error, Finished };
 
@@ -110,7 +113,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      */
     void addWorkForNextPipeline(TupleBuffer& buffer, Execution::ExecutablePipelinePtr nextPipeline);
 
-    void destroyCallback(ReconfigurationTask& task) override;
+    void postReconfigurationCallback(ReconfigurationTask& task) override;
 
     void reconfigure(ReconfigurationTask&, WorkerContext& context) override;
 
@@ -177,6 +180,14 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      */
     bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor,
                                 bool blocking = false);
+
+    /**
+     * @brief
+     * @param sourceId
+     * @param graceful
+     * @return
+     */
+    bool addEndOfStream(OperatorId sourceId, bool graceful = true);
 
     /**
      * @return true if thread pool is running

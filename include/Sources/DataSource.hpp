@@ -190,6 +190,8 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::mutex startStopMutex;
     std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
+
+    std::atomic<bool> wasGracefullyStopped{true};
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;

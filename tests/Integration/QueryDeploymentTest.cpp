@@ -50,7 +50,6 @@ class QueryDeploymentTest : public testing::Test {
     }
 
     void SetUp() {
-
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
         coConf = CoordinatorConfig::create();
