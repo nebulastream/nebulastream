@@ -21,7 +21,7 @@ namespace NES {
     public:
         /* Called before any test in this class is started. */
         static void SetUpTestCase() {
-        NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
+            NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
             NES_INFO("Setup KafkaTest class.");
         }
         /* Called before a single test is started. */
@@ -48,8 +48,6 @@ namespace NES {
         NodeEngine::BufferManagerPtr bufferManager;
         NodeEngine::NodeEnginePtr nodeEngine{nullptr};
         std::ifstream input;
-        bool fileEnded = false;
-
 
     };
 
@@ -72,37 +70,26 @@ namespace NES {
     TEST_F(KafkaSinkUnitTest, KafkaSinkCreate)
     {
         uint64_t generated_tuples_this_pass;
-        std::string path_to_csv_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+        bool write_result;
+        std::string path_to_csv_file = "/home/djordjije/Desktop/nebulastream/tests/test_data/ysb5MB.csv";
         char* path = realpath(path_to_csv_file.c_str(), NULL);
-        NES_DEBUG("CSVSource: Opening path " << path);
+        NES_DEBUG("KafkaSinkTest: Opening path " << path);
         input.open(path);
+        ASSERT_TRUE(input.is_open());
 
-        //auto test_schema = Schema::create()->addField("VALUE", UINT32);
-
-        // do we add the schema as logical stream?
-//        constexpr auto memAreaSize = 1 * 1024 * 1024;// 1 MB
-//        constexpr auto bufferSizeInNodeEngine = 4096;// TODO load this from config!
-//        constexpr auto buffersToExpect = memAreaSize / bufferSizeInNodeEngine;
-//        auto recordsToExpect = memAreaSize / schema->getSchemaSizeInBytes();
-//        auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
-//        auto* records = reinterpret_cast<Record*>(memArea);
-//        size_t recordSize = schema->getSchemaSizeInBytes();
-//        size_t numRecords = memAreaSize / recordSize;
 
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-
 //        bufferManager = std::make_shared<NodeEngine::BufferManager>(1024, 1024);
 
         TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking(); // empty tuple buffer
         NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId()); // worker context
 
-
-        struct Record {
-            uint64_t key;
-            uint64_t timestamp;
-        };
-        static_assert(sizeof(Record) == 16);
+//        struct Record {
+//            uint64_t key;
+//            uint64_t timestamp;
+//        };
+//        static_assert(sizeof(Record) == 16);
 //        auto schema = Schema::create()
 //                ->addField("key", DataTypeFactory::createUInt64())
 //                ->addField("timestamp", DataTypeFactory::createUInt64());
@@ -114,16 +101,18 @@ namespace NES {
                 ->addField("event_type", DataTypeFactory::createFixedChar(9))
                 ->addField("current_ms", DataTypeFactory::createUInt64())
                 ->addField("ip", DataTypeFactory::createUInt64());
-//        ASSERT_EQ(schema->getSchemaSizeInBytes(), sizeof(Record));
 
         uint64_t tupleSize = schema->getSchemaSizeInBytes();
         NES_DEBUG("Schema in bytes: " << tupleSize);
         auto buf = buffer;
+        KafkaConnectorConfiguration* connectorConfiguration = new KafkaConnectorConfiguration(KafkaConnectorConfiguration::SINK);
+        connectorConfiguration->setProperty("bootstrap.servers", "localhost:29092");
 
-//        auto my_array = buf.getBufferAs<Record>();
+        const DataSinkPtr kafkaSink = createKafkaSink(schema,0,nodeEngine,{"bar"},{{1,2}}, *connectorConfiguration);
 
         generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
         uint64_t tupCnt = 0;
+        uint64_t totalTupCnt = 0;
         std::vector<PhysicalTypePtr> physicalTypes;
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
         for (auto field : schema->fields) {
@@ -131,25 +120,7 @@ namespace NES {
             physicalTypes.push_back(physicalField);
         }
         for (std::string line; std::getline(input, line);) {
-//        while (tupCnt < generated_tuples_this_pass) {
-//            if (input.tellg() >= fileSize || input.tellg() == -1) {
-//                NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
-//                input.clear();
-//                input.seekg(0, input.beg);
-//                if (!loopOnFile) {
-//                    NES_DEBUG("CSVSource::fillBuffer: break because file ended");
-//                    fileEnded = true;
-//                    break;
-//                }
-//                if (skipHeader) {
-//                    NES_DEBUG("CSVSource: Skipping header");
-//                    std::getline(input, line);
-//                    currentPosInFile = input.tellg();
-//                }
-//            }
-
-//            std::getline(input, line);
-            NES_DEBUG("CSVSource line=" << tupCnt << " val=" << line);
+            NES_DEBUG("KafkaSink line=" << totalTupCnt << " val=" << line);
             std::vector<std::string> tokens;
             boost::algorithm::split(tokens, line, boost::is_any_of(","));
             uint64_t offset = 0;
@@ -160,10 +131,10 @@ namespace NES {
                 if (field->isBasicType()) {
                     auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
                     /*
-                 * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
-                 * TODO: this requires underflow/overflow checks
-                 * TODO: our types need their own sto/strto methods
-                 */
+                     * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
+                     * TODO: this requires underflow/overflow checks
+                     * TODO: our types need their own sto/strto methods
+                     */
                     if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
                         uint64_t val = std::stoull(tokens[j].c_str());
                         memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
@@ -206,34 +177,32 @@ namespace NES {
                 }
 
                 offset += fieldSize;
+                std::cout<< "Offset: ";
+                std::cout<<offset;
+                std::cout<<" field size: ";
+                std::cout<<fieldSize<<std::endl;
+
             }
             tupCnt++;
-        }//end of while
-        buf.setNumberOfTuples(tupCnt);
-        NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
-//        std::cout << "buffer size "<< buf.getBufferSize()<<std::endl; // 4096
-//        ASSERT_EQ(generated_tuples_this_pass, tupCnt); //generated = 70, tupCnt = 100 ???????
-
-
-//        for (std::string line; std::getline(input, line);) {
-//            std::cout << "Writing line: " << line << std::endl;
-//        }
-//        for (unsigned int i = 0; i < 5; ++i) {
-//            my_array[i] = Record {i, i};
-//            std::cout << my_array[i].key << "|" << my_array[i].timestamp;
-//        }
-//        buf.setNumberOfTuples(5);
-
-//        for (auto i = 0u; i < numRecords; ++i) {
-//            records[i].key = i;
-//            records[i].timestamp = i;
-//        }
-
-        KafkaConnectorConfiguration* connectorConfiguration = new KafkaConnectorConfiguration(KafkaConnectorConfiguration::SINK);
-        connectorConfiguration->setProperty("bootstrap.servers", "localhost:29092");
-
-        const DataSinkPtr kafkaSink = createKafkaSink(schema,0,nodeEngine,{"bar"},{{1,2}}, *connectorConfiguration);
-        kafkaSink->writeData(buffer,wctx);
+            totalTupCnt++;
+            if(generated_tuples_this_pass==tupCnt)
+            {
+                buf.setNumberOfTuples(tupCnt);
+                NES_DEBUG("KafkaSinkTest buffer content EXPECTED: \n" << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+                write_result = kafkaSink->writeData(buffer,wctx);
+                offset = 0;
+                tupCnt = 0;
+            }
+        }
+        // if the reading of the csv file finished and the buffer was not completely full, spill it now to Kafka Cluster
+        if(tupCnt < generated_tuples_this_pass)
+        {
+            buf.setNumberOfTuples(tupCnt);
+            NES_DEBUG("KafkaSinkTest buffer content EXPECTED: \n" << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+            write_result = kafkaSink->writeData(buffer,wctx);
+        }
+        EXPECT_TRUE(write_result);
+        buf.release();
 
         SUCCEED();
     }
