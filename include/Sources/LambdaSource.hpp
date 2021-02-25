@@ -16,11 +16,10 @@
 
 #ifndef INCLUDE_SOURCESINK_LambdaSource_HPP_
 #define INCLUDE_SOURCESINK_LambdaSource_HPP_
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <chrono>
-#include <NodeEngine/TupleBuffer.hpp>
-
 
 namespace NES {
 
@@ -35,8 +34,9 @@ class LambdaSource : public GeneratorSource {
    * @param operatorId the valid id of the source
    */
     LambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                  uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
-                 std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction, OperatorId operatorId);
+                 uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+                 std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+                 OperatorId operatorId);
 
     SourceType getType() const override;
 

@@ -18,14 +18,14 @@
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <functional>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <functional>
 namespace NES {
 
 /**
  * @brief A stream config for a lambda source
  */
-class LambdaSourceStreamConfig : public PhysicalStreamConfig{
+class LambdaSourceStreamConfig : public PhysicalStreamConfig {
   public:
     /**
      * @brief Create a LambdaSourceStreamConfig using a set of parameters
@@ -35,9 +35,10 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig{
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      */
-    explicit LambdaSourceStreamConfig(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
-                                      std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-                                      uint64_t numBuffersToProcess, uint64_t frequency);
+    explicit LambdaSourceStreamConfig(
+        std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+        std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        uint64_t numBuffersToProcess, uint64_t frequency);
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -78,10 +79,10 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig{
      * @param lambda function that produces the buffer
      * @return a constructed LambdaSourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName,
-                                                  std::string logicalStreamName,
-                                                  std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-                                                  uint64_t numBuffersToProcess, uint64_t frequency);
+    static AbstractPhysicalStreamConfigPtr
+    create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+           std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+           uint64_t numBuffersToProcess, uint64_t frequency);
 
   private:
     std::string sourceType;

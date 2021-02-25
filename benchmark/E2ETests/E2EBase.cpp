@@ -77,8 +77,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             if (currentStat->getProcessedTuple() == 0) {
                 NES_ERROR("we already consumed all data size=" << statisticsVec.size());
             } else {
-                if(statisticsVec.size() > 1)
-                {
+                if (statisticsVec.size() > 1) {
                     auto prev = statisticsVec.back();
                     std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
                               << " processedBuffers=" << currentStat->getProcessedBuffers() - prev->getProcessedBuffers()
@@ -264,19 +263,16 @@ void E2EBase::runQuery(std::string query) {
 }
 
 struct dotted : std::numpunct<char> {
-    char do_thousands_sep()   const { return '.'; }  // separate with dots
-    std::string do_grouping() const { return "\3"; } // groups of 3 digits
-    static void imbue(std::ostream &os) {
-        os.imbue(std::locale(os.getloc(), new dotted));
-    }
+    char do_thousands_sep() const { return '.'; }   // separate with dots
+    std::string do_grouping() const { return "\3"; }// groups of 3 digits
+    static void imbue(std::ostream& os) { os.imbue(std::locale(os.getloc(), new dotted)); }
 };
 
 std::string E2EBase::getResult() {
     std::stringstream out;
     out.precision(1);
     std::cout << "aggregate " << statisticsVec.size() << " measurements" << std::endl;
-    if(statisticsVec.size() == 0)
-    {
+    if (statisticsVec.size() == 0) {
         NES_ERROR("result is empty");
         return "X,X,X,X \n";
     }
@@ -289,9 +285,9 @@ std::string E2EBase::getResult() {
     auto tasksProcessed = statisticsVec[statisticsVec.size() - 1]->getProcessedTasks() - statisticsVec[0]->getProcessedTasks();
 
     out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
-        << tuplesProcessed * schema->getSchemaSizeInBytes() << ","
-        << std::fixed <<tuplesProcessed * 1'000'000'000.0 / runtime.count() << ","
-        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024 << std::endl;
+        << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed
+        << tuplesProcessed * 1'000'000'000.0 / runtime.count() << "," << std::fixed
+        << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024 << std::endl;
 
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
     return out.str();

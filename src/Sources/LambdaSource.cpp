@@ -28,9 +28,11 @@
 
 namespace NES {
 
-LambdaSource::LambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                           uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
-                           std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction, OperatorId operatorId)
+LambdaSource::LambdaSource(
+    SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    OperatorId operatorId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId),
       generationFunction(std::move(generationFunction)) {
     NES_DEBUG("LambdaSource:" << this << " creating");
@@ -49,7 +51,7 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     generatedBuffers++;
 
     NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
-              << " outOrgID=" << buffer.getOriginId());
+                                                                     << " outOrgID=" << buffer.getOriginId());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
