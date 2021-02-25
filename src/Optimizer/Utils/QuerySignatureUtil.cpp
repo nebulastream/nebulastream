@@ -597,11 +597,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
                                                                    UnionLogicalOperatorNodePtr unionOperator) {
 
     NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
-
     auto children = unionOperator->getChildren();
     auto leftSchema = unionOperator->getLeftInputSchema();
-    auto rightSchema = unionOperator->getRightInputSchema();
 
+    //Identify the left and right schema
     QuerySignaturePtr leftSignature;
     QuerySignaturePtr rightSignature;
     for (auto& child : children) {
@@ -613,64 +612,29 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
         }
     }
 
-    std::map<std::string, std::vector<z3::ExprPtr>> columns = leftSignature->getColumns();
-    std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
-    //    std::map<std::string, std::vector<std::string>> attributeMap = leftSignature->getAttributeMap();
-    //    std::vector<std::string> sources = leftSignature->getSources();
+    std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
+    std::vector<std::string> leftColumns = leftSignature->getColumns();
+    auto leftOperatorTupleSchemaMap = leftSignature->getOperatorTupleSchemaMap();
+    std::vector<std::string> rightColumns = rightSignature->getColumns();
+    auto rightOperatorTupleSchemaMap = rightSignature->getOperatorTupleSchemaMap();
 
-    //Fetch signature of the child operator
-    //    auto childSignature = child->as<LogicalOperatorNode>()->getSignature();
-    //
-    //    if (sources.empty()) {
-    //        sources = childSignature->getSources();
-    //    } else {
-    //        auto childSources = childSignature->getSources();
-    //
-    //        //Check if sources and sources from child signature have common stream source name
-    //        // This is done to prevent from creating conflicting attribute names
-    //        std::vector<std::string> commonSources;
-    //        std::sort(sources.begin(), sources.end());
-    //        std::sort(childSources.begin(), childSources.end());
-    //        //We use std intersection api to compute intersection between two vectors
-    //        std::set_intersection(sources.begin(), sources.end(), childSources.begin(), childSources.end(),
-    //                              back_inserter(commonSources));
-    //
-    //        if (!commonSources.empty()) {
-    //            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Can not compute signature for query with children upstreams based "
-    //                                    "on source with same logical name");
-    //        }
-    //        sources.insert(sources.end(), childSources.begin(), childSources.end());
-    //    }
-
-    //    auto leftAttributeMap = leftSignature->getAttributeMap();
-    //    auto rightAttributeMap = rightSignature->getAttributeMap();
-    //
-    //    for (uint32_t i = 0; i < leftSchema->getSize(); i++) {
-    //        auto leftAttribute = leftSchema->get(i)->getName();
-    //        auto rightAttribute = rightSchema->get(i)->getName();
-    //        z3::expr_vector allConditions(*context);
-    //         leftAttributeMap[leftAttribute];
-    //    }
-
-    //    for (auto [originalAttributeName, derivedAttributeNames] : childSignature->getAttributeMap()) {
-    //        if (attributeMap.find(originalAttributeName) == attributeMap.end()) {
-    //            attributeMap[originalAttributeName] = derivedAttributeNames;
-    //        } else {
-    //            auto existingDerivedAttributes = attributeMap[originalAttributeName];
-    //            existingDerivedAttributes.insert(existingDerivedAttributes.end(), derivedAttributeNames.begin(),
-    //                                             derivedAttributeNames.end());
-    //            attributeMap[originalAttributeName] = existingDerivedAttributes;
-    //        }
-    //    }
-    //
-    //    //Merge the columns from different children signatures together
-    //    if (columns.empty()) {
-    //        columns = childSignature->getColumns();
-    //    } else {
-    //        columns.merge(childSignature->getColumns());
-    //    }
+    //Compute Operator Tuple Schema Map
+    auto leftSchemaMaps = leftOperatorTupleSchemaMap->getSchemaMaps();
+    schemaMaps.insert(schemaMaps.end(), leftSchemaMaps.begin(), leftSchemaMaps.end());
+    auto rightSchemaMaps = rightOperatorTupleSchemaMap->getSchemaMaps();
+    for (auto rightSchemaMap : rightSchemaMaps) {
+        std::map<std::string, z3::ExprPtr> updatedSchemaMap;
+        for (uint32_t i = 0; i < leftColumns.size(); i++) {
+            auto rightFieldName = rightColumns[i];
+            auto rightExpr = rightSchemaMap[rightFieldName];
+            updatedSchemaMap[leftColumns[i]] = rightExpr;
+        }
+        schemaMaps.push_back(updatedSchemaMap);
+    }
+    auto operatorTupleSchemaMap = OperatorTupleSchemaMap::create(schemaMaps);
 
     //Merge the window definitions together
+    std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
     for (auto [windowKey, windowExpression] : rightSignature->getWindowsExpressions()) {
         if (windowExpressions.find(windowKey) != windowExpressions.end()) {
             //FIXME: when we receive more than one window expressions for same window in issue #1272
@@ -687,7 +651,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
-    return QuerySignature::create(conditions, columns, windowExpressions);
+    return QuerySignature::create(conditions, leftColumns, operatorTupleSchemaMap, windowExpressions);
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForRenameStream(z3::ContextPtr, RenameStreamOperatorNodePtr) {
