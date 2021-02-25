@@ -297,7 +297,7 @@ void E2EBase::tearDown() {
     std::cout << "E2EBase: Remove query" << std::endl;
     NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
     std::cout << "E2EBase: wait for stop" << std::endl;
-    NES_ASSERT(NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog), "stopping was not possible");
+    NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
 
     std::cout << "E2EBase: Stop worker 1" << std::endl;
     bool retStopWrk1 = wrk1->stop(true);
