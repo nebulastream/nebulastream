@@ -17,5 +17,5 @@ add_source_nes(
         QuerySignatureUtil.cpp
         DataTypeToZ3ExprUtil.cpp
         Z3ExprAndFieldMap.cpp
-        ColumnExpressions.cpp
+        OperatorTupleSchemaMap.cpp
 )

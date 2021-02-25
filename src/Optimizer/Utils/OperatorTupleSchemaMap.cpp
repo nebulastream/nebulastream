@@ -14,14 +14,16 @@
     limitations under the License.
 */
 
-#include <Optimizer/Utils/ColumnExpressions.hpp>
+#include <Optimizer/Utils/OperatorTupleSchemaMap.hpp>
 
 namespace NES::Optimizer {
 
-ColumnExpressions::ColumnExpressions(uint32_t id, std::vector<z3::ExprPtr> colExpressions)
-    : id(id), colExpressions(colExpressions) {}
+OperatorTupleSchemaMap::OperatorTupleSchemaMap(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps)
+    : schemaMaps(schemaMaps) {}
 
-ColumnExpressionsPtr ColumnExpressions::create(uint32_t id, std::vector<z3::ExprPtr> colExpressions) {
-    return std::make_unique<ColumnExpressions>(ColumnExpressions(id, colExpressions));
+OperatorTupleSchemaMapPtr OperatorTupleSchemaMap::create(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps) {
+    return std::make_shared<OperatorTupleSchemaMap>(OperatorTupleSchemaMap(schemaMaps));
 }
+
+const std::vector<std::map<std::string, z3::ExprPtr>>& OperatorTupleSchemaMap::getSchemaMaps() const { return schemaMaps; }
 }// namespace NES::Optimizer

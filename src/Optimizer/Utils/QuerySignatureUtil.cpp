@@ -30,6 +30,7 @@
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
+#include <Optimizer/Utils/OperatorTupleSchemaMap.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -69,11 +70,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         SourceLogicalOperatorNodePtr sourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
 
         //Compute the column expressions for the source
-        std::map<std::string, std::vector<z3::ExprPtr>> columns;
+        std::map<std::string, OperatorTupleSchemaMapPtr> columns;
         for (auto& field : outputSchema->fields) {
             auto attributeName = field->getName();
             auto column = DataTypeToZ3ExprUtil::createForField(attributeName, field->getDataType(), context)->getExpr();
-            columns[attributeName] = {column};
+            columns[attributeName] = OperatorTupleSchemaMap::create(sourceOperator->getId(), {column});
         }
 
         //Create an equality expression for example: <logical stream name>.streamName == "<logical stream name>"
@@ -114,7 +115,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
 
         //Extract projected columns
         auto columns = childQuerySignature->getColumns();
-        std::map<std::string, std::vector<z3::ExprPtr>> updatedColumns;
+        std::map<std::string, OperatorTupleSchemaMapPtr> updatedColumns;
         for (auto& field : outputSchema->fields) {
             auto attributeName = field->getName();
             if (columns.find(attributeName) == columns.end()) {
@@ -147,14 +148,15 @@ QuerySignaturePtr QuerySignatureUtil::buildQuerySignatureForChildren(z3::Context
 
     NES_DEBUG("QuerySignatureUtil: Computing Signature from children signatures");
     z3::expr_vector allConditions(*context);
-    std::map<std::string, std::vector<z3::ExprPtr>> columns;
+    std::map<std::string, OperatorTupleSchemaMapPtr> columns;
     std::map<std::string, z3::ExprPtr> windowExpressions;
 
     //Iterate over all children query signatures for computing the column values
     for (auto& child : children) {
 
         //Fetch signature of the child operator
-        auto childSignature = child->as<LogicalOperatorNode>()->getSignature();
+        const auto& childOperator = child->as<LogicalOperatorNode>();
+        auto childSignature = childOperator->getSignature();
 
         //Merge the columns from different children signatures together
         if (columns.empty()) {
@@ -166,9 +168,10 @@ QuerySignaturePtr QuerySignatureUtil::buildQuerySignatureForChildren(z3::Context
                 if (columns.find(columnName) != columns.end()) {
                     //Insert the columns expressions from child into existing expression list
                     auto existingColumnExpressions = columns[columnName];
-                    existingColumnExpressions.insert(existingColumnExpressions.end(), columnExpressions.begin(),
-                                                     columnExpressions.end());
-                    columns[columnName] = existingColumnExpressions;
+                    auto colExpressions = existingColumnExpressions->getColExpressions();
+                    auto childColExpressions = columnExpressions->getColExpressions();
+                    colExpressions.insert(colExpressions.end(), childColExpressions.begin(), childColExpressions.end());
+                    columns[columnName] = OperatorTupleSchemaMap::create(existingColumnExpressions->getId(), colExpressions);
                 } else {
                     columns[columnName] = columnExpressions;
                 }
@@ -496,15 +499,16 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
         rightKeyExpressions = columns[rightKeyName];
     }
 
-    NES_ASSERT(leftKeyExpressions.empty() || rightKeyExpressions.empty(), "Unexpected behaviour! Unable to find right or left join key ");
+    NES_ASSERT(leftKeyExpressions.empty() || rightKeyExpressions.empty(),
+               "Unexpected behaviour! Unable to find right or left join key ");
 
     //Compute the equi join condition
     z3::expr_vector joinConditions(*context);
 
-    for(auto& leftKeyExpr : leftKeyExpressions) {
-        for(auto& rightKeyExpr : rightKeyExpressions){
-           auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
-           joinConditions.push_back(joinCondition);
+    for (auto& leftKeyExpr : leftKeyExpressions) {
+        for (auto& rightKeyExpr : rightKeyExpressions) {
+            auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
+            joinConditions.push_back(joinCondition);
         }
     }
 
@@ -731,10 +735,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForRenameStream(z3::Co
     return nullptr;
 }
 
-std::vector<z3::ExprPtr>
-QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr context, const z3::ExprPtr inputExpr,
-                                                  std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                  std::map<std::string, std::vector<z3::ExprPtr>>& columns) {
+std::vector<z3::ExprPtr> QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr context,
+                                                                           const z3::ExprPtr inputExpr,
+                                                                           std::map<std::string, z3::ExprPtr>& operandFieldMap,
+                                                                           std::map<std::string, OperatorTupleSchemaMapPtr>& columns) {
     std::vector<z3::ExprPtr> outputExpr;
     //Loop over the Operand Fields contained in the input expression
 
@@ -769,11 +773,17 @@ QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr context, 
 
 z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpressionFilter(z3::ContextPtr context, z3::ExprPtr inputExpr,
                                                                     std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                                    std::map<std::string, std::vector<z3::ExprPtr>>& columns) {
+                                                                    std::map<std::string, OperatorTupleSchemaMapPtr>& columns) {
     z3::ExprPtr outputExpr;
     //Loop over the Operand Fields contained in the input expression
 
-    auto size = columns.begin()->second.size();
+    auto size = columns.begin()->second->getColExpressions().size();
+
+    for (auto [operandExprName, operandExpr] : operandFieldMap) {
+        if (columns.find(operandExprName) == columns.end()) {
+            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName + " that doesn't exists");
+        }
+    }
 
     z3::expr_vector filterExpressions(*context);
 

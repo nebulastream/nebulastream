@@ -15,29 +15,32 @@
 */
 
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/Utils/OperatorTupleSchemaMap.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
                                          std::map<std::string, z3::ExprPtr> windowsExpressions/*,
                                          std::map<std::string, std::vector<std::string>> attributeMap,
                                          std::vector<std::string> sources*/) {
-    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, windowsExpressions));
+    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, operatorTupleSchemaMap, windowsExpressions));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr conditions, std::map<std::string, std::vector<z3::ExprPtr>> columns,
+QuerySignature::QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
                                std::map<std::string, z3::ExprPtr> windowsExpressions/*,
                                std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources*/)
-    : conditions(conditions), columns(columns), windowsExpressions(windowsExpressions)/*, attributeMap(attributeMap),
+    : conditions(conditions), columns(columns), operatorTupleSchemaMap(operatorTupleSchemaMap), windowsExpressions(windowsExpressions)/*, attributeMap(attributeMap),
       sources(sources)*/ {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
-std::map<std::string, std::vector<z3::ExprPtr>> QuerySignature::getColumns() { return columns; }
+std::vector<std::string> QuerySignature::getColumns() { return columns; }
 
 std::map<std::string, z3::ExprPtr> QuerySignature::getWindowsExpressions() { return windowsExpressions; }
+
+const OperatorTupleSchemaMapPtr& QuerySignature::getOperatorTupleSchemaMap() const { return operatorTupleSchemaMap; }
 
 bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
@@ -62,7 +65,7 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     //Convert columns from both the signatures into equality conditions.
     //If column from one signature doesn't exists in other signature then they are not equal.
     z3::expr_vector allConditions(context);
-/*    for (auto columnEntry : columns) {
+    /*    for (auto columnEntry : columns) {
         if (otherColumns.find(columnEntry.first) == otherColumns.end()) {
             NES_WARNING("Column " << columnEntry.first << " doesn't exists in column list of other signature");
             return false;
