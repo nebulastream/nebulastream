@@ -48,6 +48,9 @@ class TupleBuffer;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
+class LocalBufferManager;
+typedef std::shared_ptr<LocalBufferManager> LocalBufferManagerPtr;
+
 class WorkerContext;
 typedef WorkerContext& WorkerContextRef;
 
@@ -83,6 +86,24 @@ class PipelineExecutionContext;
 typedef std::shared_ptr<PipelineExecutionContext> PipelineExecutionContextPtr;
 
 }// namespace Execution
+
+namespace DynamicMemoryLayout {
+class DynamicRowLayoutBuffer;
+typedef std::unique_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
+
+class DynamicColumnLayoutBuffer;
+typedef std::unique_ptr<DynamicColumnLayoutBuffer> DynamicColumnLayoutBufferPtr;
+
+class DynamicMemoryLayout;
+typedef std::shared_ptr<DynamicMemoryLayout> DynamicMemoryLayoutPtr;
+
+class DynamicColumnLayout;
+typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
+
+class DynamicRowLayout;
+typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
+
+}// namespace DynamicMemoryLayout
 
 }// namespace NodeEngine
 

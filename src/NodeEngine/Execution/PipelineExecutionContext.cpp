@@ -16,23 +16,27 @@
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <utility>
 
 namespace NES::NodeEngine::Execution {
 
+static constexpr auto NUM_BUFFERS_PER_PIPELINE = 64;
+
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                                    std::vector<OperatorHandlerPtr> operatorHandlers)
-    : queryId(queryId), bufferManager(std::move(bufferManager)), emitFunctionHandler(std::move(emitFunction)),
+    : queryId(queryId), localBufferPool(bufferManager->createLocalBufferManager(NUM_BUFFERS_PER_PIPELINE)),
+      emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
       operatorHandlers(std::move(operatorHandlers)) {
     // nop
 }
 
-TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return bufferManager->getBufferBlocking(); }
+TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return localBufferPool->getBuffer(); }
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext) {
     // call the function handler

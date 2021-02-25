@@ -26,11 +26,11 @@
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -71,7 +71,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
     }
 
     bool pattern = queryCodeSnippet.find("Pattern::") != std::string::npos;
-    bool merge = queryCodeSnippet.find(".merge") != std::string::npos;
+    bool merge = queryCodeSnippet.find(".unionWith") != std::string::npos;
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
         std::stringstream code;
@@ -82,6 +82,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
+        code << "#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>" << std::endl;
         code << "#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
         code << "#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
         code << "#include <Sources/DataSource.hpp>" << std::endl;
@@ -96,13 +97,13 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         std::string newQuery = queryCodeSnippet;
 
         if (merge) {//if contains merge
-            auto pos1 = queryCodeSnippet.find("merge(");
+            auto pos1 = queryCodeSnippet.find("unionWith(");
             std::string tmp = queryCodeSnippet.substr(pos1);
             auto pos2 = tmp.find(")).");//find the end bracket of merge query
-            std::string subquery = tmp.substr(6, pos2 - 5);
+            std::string subquery = tmp.substr(10, pos2 - 9);
             NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
-            newQuery.replace(pos1, pos2 + 1, "merge(&subQuery");
+            newQuery.replace(pos1, pos2 + 1, "unionWith(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
         }
 
@@ -246,7 +247,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
         auto physicalType = physicalDataTypeFactory.getPhysicalType(schema->get(i)->getDataType());
         offsets.push_back(physicalType->size());
         types.push_back(physicalType);
-        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
+        NES_TRACE("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ")
                   + std::to_string(physicalType->size()));
     }
 
@@ -255,7 +256,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString()
+        NES_TRACE("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schema->get(i)->toString()
                   + std::string(": ") + std::to_string(offsets[i]));
     }
 
@@ -372,11 +373,6 @@ uint64_t UtilityFunctions::getNextNodeEngineId() {
 }
 
 uint64_t UtilityFunctions::getNextTaskId() {
-    static std::atomic_uint64_t id = 0;
-    return ++id;
-}
-
-uint64_t UtilityFunctions::getGlobalId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

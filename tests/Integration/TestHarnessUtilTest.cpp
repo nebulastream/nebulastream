@@ -171,7 +171,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Truck), truckSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
@@ -284,8 +284,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 /**
  * Testing testHarness utility for query with a join operator on different streams
  */
-//Enable while fixing #1547
-TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
+TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -308,7 +307,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessWithJoinOperator) {
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     std::string queryWithJoinOperator =
-        R"(Query::from("window1").join(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
+        R"(Query::from("window1").joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("window1", window1Schema, "window1");
@@ -665,7 +664,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
                            ->addField("value", DataTypeFactory::createUInt32())
                            ->addField("timestamp", DataTypeFactory::createUInt64());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").merge(Query::from("truck")))";
+    std::string queryWithFilterOperator = R"(Query::from("car").unionWith(Query::from("truck")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");

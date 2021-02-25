@@ -82,7 +82,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @brief replace an old node with new now
      * 1) old node is the child of current node, remove old node
      *    from current nodes's children and add new node to current noed's
-     *    children. If old node has children, merge the children of old nodes
+     *    children. If old node has children, unionWith the children of old nodes
      *    and new nodes's children. If there's duplicated children among old nodes and
      *    new nodes's children, the children in new noeds will overwrite that
      *    inside old noeds's.

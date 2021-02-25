@@ -103,11 +103,6 @@ class OPCSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType();
 
     /**
-     * @brief to string method
-     * @return string of OPC Sink
-     */
-    std::string toString() override;
-    /**
      * @brief saves the current status code
      * @return status code of OPCServer
      */

@@ -30,6 +30,7 @@ sudo apt-get update -qq && sudo DEBIAN_FRONTEND="noninteractive" apt-get install
   libncurses5-dev \
   libxml2-dev \
   libedit-dev \
+  libmbedtls-dev \
   swig \
   doxygen \
   graphviz \

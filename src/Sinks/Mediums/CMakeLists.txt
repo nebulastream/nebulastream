@@ -17,6 +17,7 @@ add_source_nes(
         ZmqSink.cpp
         SinkMedium.cpp
         PrintSink.cpp
+        NullOutputSink.cpp
 )
 
 if(NES_USE_KAFKA)
@@ -28,5 +29,11 @@ endif()
 if (NES_USE_OPC)
     add_source_nes(
         OPCSink.cpp
+    )
+endif ()
+
+if (NES_USE_MQTT)
+    add_source_nes(
+            MQTTSink.cpp
     )
 endif ()

@@ -57,7 +57,7 @@ class NetworkMetrics {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const NetworkMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void writeToBuffer(const NetworkMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief Class specific getSchema() method for NetworkMetrics

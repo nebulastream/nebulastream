@@ -32,7 +32,9 @@ namespace NES {
 
 namespace NodeEngine {
 class BufferManager;
+class LocalBufferManager;
 class TupleBuffer;
+class BufferRecycler;
 
 namespace detail {
 
@@ -50,13 +52,16 @@ void revertEndianness(TupleBuffer& buffer, SchemaPtr schema);
  */
 class BufferControlBlock {
   public:
-    explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback);
+    explicit BufferControlBlock(MemorySegment* owner, BufferRecycler* recycler,
+                                std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
     BufferControlBlock(const BufferControlBlock&);
 
     BufferControlBlock& operator=(const BufferControlBlock&);
 
     MemorySegment* getOwner();
+
+    void resetBufferRecycler(BufferRecycler* recycler);
 
     /**
      * @brief This method must be called before the BufferManager hands out a TupleBuffer. It ensures that the internal
@@ -130,7 +135,8 @@ class BufferControlBlock {
 
   private:
     MemorySegment* owner;
-    std::function<void(MemorySegment*)> recycleCallback;
+    std::atomic<BufferRecycler*> owningBufferRecycler;
+    std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
   private:
@@ -176,7 +182,7 @@ class BufferControlBlock {
  */
 class MemorySegment {
     friend class NES::NodeEngine::TupleBuffer;
-
+    friend class NES::NodeEngine::LocalBufferManager;
     friend class NES::NodeEngine::BufferManager;
 
   public:
@@ -186,7 +192,8 @@ class MemorySegment {
 
     MemorySegment();
 
-    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction);
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
+                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction);
 
     ~MemorySegment();
 

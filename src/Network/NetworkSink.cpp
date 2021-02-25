@@ -33,8 +33,6 @@ NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkM
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());
 }
 
-std::string NetworkSink::toString() { return "NETWORK_SINK"; }
-
 SinkMediumTypes NetworkSink::getSinkMediumType() { return NETWORK_SINK; }
 
 NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesPartition); }
@@ -49,7 +47,7 @@ void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
     //    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Created, "Setup : parent plan not running on net sink " << nesPartition);
     queryManager->addReconfigurationTask(parentPlanId,
-                                         NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this));
+                                         NodeEngine::ReconfigurationTask(parentPlanId, NodeEngine::Initialize, this), false);
 }
 
 void NetworkSink::shutdown() {

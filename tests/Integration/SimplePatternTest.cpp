@@ -175,7 +175,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$QnV$PatternId:INT32|\n"
+        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
         "+----------------------------------------------------+\n"
         "|R2000073|1543624020000|102.629631|8|1|\n"
         "|R2000070|1543625280000|108.166664|5|1|\n"
@@ -199,7 +199,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
 /* 3.Test
  * Here, we test the translation of a simple pattern (1 Stream) into a query using a real data set (QnV) and check the output
  */
-TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkers) {
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -376,13 +376,12 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
 
     //TODO Patternname waiting for String support in map operator
 
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$QnV$PatternId:INT32|\n"
-        "+----------------------------------------------------+\n"
-        "|1543622400000|1543623300000|2000073|107|1|\n"
-        "|1543623600000|1543624500000|2000073|107|1|\n"
-        "+----------------------------------------------------+";
+    string expectedContent = "+----------------------------------------------------+\n"
+                             "|QnV$start:UINT64|QnV$end:UINT64|QnV$sensor_id:UINT64|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
+                             "+----------------------------------------------------+\n"
+                             "|1543622400000|1543623300000|2000073|107|1|\n"
+                             "|1543623600000|1543624500000|2000073|107|1|\n"
+                             "+----------------------------------------------------+";
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -488,7 +487,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
 /* 6.Test
  * Here, we test if we can use merge operator for patterns and create complex events with it
  */
-TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge) {
+TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkerMerge) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -548,9 +547,9 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge)
     std::string outputFilePath = "testPatternWithTestStream.out";
     remove(outputFilePath.c_str());
 
-    NES_INFO("SimplePatternTest: Submit merge pattern");
+    NES_INFO("SimplePatternTest: Submit unionWith pattern");
     std::string query =
-        R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).merge(Pattern::from("QnV1").filter(Attribute("velocity") > 100)).sink(FileSinkDescriptor::create(")"
+        R"(Pattern::from("QnV").filter(Attribute("velocity") > 100).unionWith(Pattern::from("QnV1").filter(Attribute("velocity") > 100)).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\"));";
 
     QueryServicePtr queryService = crd->getQueryService();

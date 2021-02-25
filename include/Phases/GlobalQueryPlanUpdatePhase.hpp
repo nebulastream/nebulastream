@@ -30,6 +30,21 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 class GlobalQueryPlanUpdatePhase;
 typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
 
+class TypeInferencePhase;
+typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+
+class QueryRewritePhase;
+typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
+
+class QueryMergerPhase;
+typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
 /**
  * @brief This class is responsible for accepting a batch of query requests and then updating the Global Query Plan accordingly.
  */
@@ -37,10 +52,14 @@ class GlobalQueryPlanUpdatePhase {
   public:
     /**
      * @brief Create an instance of the GlobalQueryPlanUpdatePhase
+     * @param queryCatalog: the catalog of queries
+     * @param streamCatalog: the catalog of streams
      * @param globalQueryPlan: the input global query plan
+     * @param enableQueryMerging: enable or disable query merging
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
-    static GlobalQueryPlanUpdatePhasePtr create(GlobalQueryPlanPtr globalQueryPlan);
+    static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
+                                                GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -50,9 +69,16 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr execute(const std::vector<QueryCatalogEntry> queryRequests);
 
   private:
-    explicit GlobalQueryPlanUpdatePhase(GlobalQueryPlanPtr globalQueryPlan);
+    explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
+                                        GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging);
 
+    bool enableQueryMerging;
+    QueryCatalogPtr queryCatalog;
+    StreamCatalogPtr streamCatalog;
     GlobalQueryPlanPtr globalQueryPlan;
+    TypeInferencePhasePtr typeInferencePhase;
+    QueryRewritePhasePtr queryRewritePhase;
+    QueryMergerPhasePtr queryMergerPhase;
 };
 }// namespace NES
 

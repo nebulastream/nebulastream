@@ -74,7 +74,7 @@ class NetworkValues {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(const NetworkValues& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void writeToBuffer(const NetworkValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
 
 }// namespace NES
 

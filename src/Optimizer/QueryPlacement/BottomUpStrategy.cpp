@@ -16,10 +16,10 @@
 
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
@@ -45,40 +45,43 @@ BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, T
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
-
     const QueryId queryId = queryPlan->getQueryId();
-    NES_INFO("BottomUpStrategy: Performing placement of the input query plan with id " << queryId);
-    NES_INFO("BottomUpStrategy: And query plan \n" << queryPlan->toString());
+    try {
+        NES_INFO("BottomUpStrategy: Performing placement of the input query plan with id " << queryId);
+        NES_INFO("BottomUpStrategy: And query plan \n" << queryPlan->toString());
 
-    NES_DEBUG("BottomUpStrategy: Get all source operators");
-    const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-    if (sourceOperators.empty()) {
-        NES_ERROR("BottomUpStrategy: No source operators found in the query plan wih id: " << queryId);
-        throw QueryPlacementException("BottomUpStrategy: No source operators found in the query plan wih id: " + queryId);
+        NES_DEBUG("BottomUpStrategy: Get all source operators");
+        const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
+        if (sourceOperators.empty()) {
+            NES_ERROR("BottomUpStrategy: No source operators found in the query plan wih id: " << queryId);
+            throw Exception("BottomUpStrategy: No source operators found in the query plan wih id: " + std::to_string(queryId));
+        }
+
+        NES_DEBUG("BottomUpStrategy: map pinned operators to the physical location");
+        mapPinnedOperatorToTopologyNodes(queryId, sourceOperators);
+
+        NES_DEBUG("BottomUpStrategy: Get all sink operators");
+        const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
+        if (sinkOperators.empty()) {
+            NES_ERROR("BottomUpStrategy: No sink operators found in the query plan wih id: " << queryId);
+            throw Exception("BottomUpStrategy: No sink operators found in the query plan wih id: " + std::to_string(queryId));
+        }
+
+        NES_DEBUG("BottomUpStrategy: place query plan with id : " << queryId);
+        placeQueryPlanOnTopology(queryPlan);
+        NES_DEBUG("BottomUpStrategy: Add system generated operators for query with id : " << queryId);
+        addNetworkSourceAndSinkOperators(queryPlan);
+        NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
+        operatorToExecutionNodeMap.clear();
+        pinnedOperatorLocationMap.clear();
+        NES_DEBUG("BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : "
+                  << queryId);
+
+        NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
+        return runTypeInferencePhase(queryId);
+    } catch (Exception& ex) {
+        throw QueryPlacementException(queryId, ex.what());
     }
-
-    NES_DEBUG("BottomUpStrategy: map pinned operators to the physical location");
-    mapPinnedOperatorToTopologyNodes(queryId, sourceOperators);
-
-    NES_DEBUG("BottomUpStrategy: Get all sink operators");
-    const std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
-    if (sinkOperators.empty()) {
-        NES_ERROR("BottomUpStrategy: No sink operators found in the query plan wih id: " << queryId);
-        throw QueryPlacementException("BottomUpStrategy: No sink operators found in the query plan wih id: " + queryId);
-    }
-
-    NES_DEBUG("BottomUpStrategy: place query plan with id : " << queryId);
-    placeQueryPlanOnTopology(queryPlan);
-    NES_DEBUG("BottomUpStrategy: Add system generated operators for query with id : " << queryId);
-    addNetworkSourceAndSinkOperators(queryPlan);
-    NES_DEBUG("BottomUpStrategy: clear the temporary map : " << queryId);
-    operatorToExecutionNodeMap.clear();
-    pinnedOperatorLocationMap.clear();
-    NES_DEBUG(
-        "BottomUpStrategy: Run type inference phase for query plans in global execution plan for query with id : " << queryId);
-
-    NES_DEBUG("BottomUpStrategy: Update Global Execution Plan : \n" << globalExecutionPlan->getAsString());
-    return runTypeInferencePhase(queryId);
 }
 
 void BottomUpStrategy::placeQueryPlanOnTopology(QueryPlanPtr queryPlan) {
@@ -91,8 +94,10 @@ void BottomUpStrategy::placeQueryPlanOnTopology(QueryPlanPtr queryPlan) {
         TopologyNodePtr candidateTopologyNode = getTopologyNodeForPinnedOperator(sourceOperator->getId());
         if (candidateTopologyNode->getAvailableResources() == 0) {
             NES_ERROR("BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
-            throw QueryPlacementException(
-                "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator");
+            throw Exception(
+
+                "BottomUpStrategy: Unable to find resources on the physical node for placement of source operator"
+                + std::to_string(queryId));
         }
         placeOperatorOnTopologyNode(queryId, sourceOperator, candidateTopologyNode);
     }
@@ -122,8 +127,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
         }
         if (!candidateTopologyNode) {
             NES_ERROR("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
-            throw QueryPlacementException(
-                "BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
+            throw Exception("BottomUpStrategy: Unable to find a common ancestor topology node to place the binary operator");
         }
 
         if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
@@ -136,14 +140,14 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
             } else {
                 NES_ERROR(
                     "BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be placed.");
-                throw QueryPlacementException(
+                throw Exception(
+
                     "BottomUpStrategy: Unexpected behavior. Could not find Topology node where sink operator is to be placed.");
             }
 
             if (candidateTopologyNode->getAvailableResources() == 0) {
                 NES_ERROR("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
-                throw QueryPlacementException(
-                    "BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
+                throw Exception("BottomUpStrategy: Topology node where sink operator is to be placed has no capacity.");
             }
         }
     }
@@ -164,7 +168,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
 
     if (!candidateTopologyNode || candidateTopologyNode->getAvailableResources() == 0) {
         NES_ERROR("BottomUpStrategy: No node available for further placement of operators");
-        throw QueryPlacementException("BottomUpStrategy: No node available for further placement of operators");
+        throw Exception("BottomUpStrategy: No node available for further placement of operators");
     }
 
     NES_TRACE("BottomUpStrategy: Get the candidate execution node for the candidate topology node.");
@@ -177,8 +181,8 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
     NES_TRACE("BottomUpStrategy: Add the query plan to the candidate execution node.");
     if (!candidateExecutionNode->addNewQuerySubPlan(queryId, candidateQueryPlan)) {
         NES_ERROR("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query " << queryId);
-        throw QueryPlacementException("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
-                                      + queryId);
+        throw Exception("BottomUpStrategy: failed to create a new QuerySubPlan execution node for query "
+                        + std::to_string(queryId));
     }
     NES_TRACE("BottomUpStrategy: Update the global execution plan with candidate execution node");
     globalExecutionPlan->addExecutionNode(candidateExecutionNode);

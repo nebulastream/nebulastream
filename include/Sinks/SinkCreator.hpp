@@ -29,6 +29,9 @@
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
 #endif
+#ifdef ENABLE_MQTT_BUILD
+#include <Sinks/Mediums/MQTTSink.hpp>
+#endif
 
 namespace NES {
 /**
@@ -140,6 +143,12 @@ const DataSinkPtr createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPla
                                       std::ostream& out);
 
 /**
+ * @brief create a print that does not output something
+ * @return a data sink pointer
+ */
+const DataSinkPtr createNullOutputSink();
+
+/**
  * @brief create a print test sink with a schema
  * @param schema of sink
  * @param parentPlanId id of the parent qep
@@ -176,5 +185,28 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanI
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const uint64_t kafkaProducerTimeout);
 #endif
+
+#ifdef ENABLE_MQTT_BUILD
+/**
+ * @brief create MQTT sink
+ * @param schema: schema of the data
+ * @param parentPlanId: the Id of the parent plan
+ * @param nodeEngine: a node engine pointer, e.g. for access to the buffer manager
+ * @param address: address of a MQTT broker
+ * @param clientID: ID that identifies the MQTT client
+ * @param topic: broker topic/path to which the MQTT messages are published
+ * @param user: used to identify client at broker
+ * @param maxBufferedMSGs: maximal number for how many messages can be buffered at client
+ * @param timeUnit: unit used to interpret the msgDelay value (seconds vs milliseconds vs nanoseconds)
+ * @param msgDelay: how long to wait before sending the next message from client
+ * @param asynchronousClient: 1 if client should be asynchronous, else 0
+ * @return a data sink pointer
+ */
+const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
+                                 const std::string address, const std::string clientID, const std::string topic,
+                                 const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
+                                 uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
+#endif
+
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */

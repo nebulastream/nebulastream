@@ -21,6 +21,8 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <cstring>
+
 namespace NES {
 
 NetworkValues NetworkMetrics::getNetworkValue(uint64_t interfaceNo) const {
@@ -69,19 +71,22 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
     return output;
 }
 
-void serialize(const NetworkMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-    auto noFields = schema->getSize();
-    schema->addField(prefix + "INTERFACE_NO", BasicType::UINT16);
-    buf.setNumberOfTuples(1);
+void writeToBuffer(const NetworkMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    auto intNum = metrics.getInterfaceNum();
 
-    auto layout = NodeEngine::createRowLayout(schema);
-    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getInterfaceNum());
+    uint64_t totalSize = byteOffset + sizeof(uint64_t) + sizeof(NetworkValues) * intNum;
+    NES_ASSERT(totalSize < buf.getBufferSize(), "NetworkMetrics: Content does not fit in TupleBuffer");
 
-    for (uint64_t i = 0; i < metrics.getInterfaceNum(); i++) {
-        serialize(metrics.getNetworkValue(i), schema, buf,
-                  prefix + "Intfs[" + std::to_string(i + 1) + "]_"
-                      + UtilityFunctions::trim(metrics.getNetworkValue(i).interfaceName) + "_");
+    memcpy(tbuffer + byteOffset, &intNum, sizeof(uint64_t));
+    byteOffset += sizeof(uint64_t);
+
+    for (uint64_t i = 0; i < intNum; i++) {
+        writeToBuffer(metrics.getNetworkValue(i), buf, byteOffset);
+        byteOffset += sizeof(NetworkValues);
     }
+
+    buf.setNumberOfTuples(1);
 }
 
 SchemaPtr getSchema(const NetworkMetrics& metrics, const std::string& prefix) {

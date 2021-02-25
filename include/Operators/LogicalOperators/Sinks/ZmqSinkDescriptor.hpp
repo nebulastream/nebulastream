@@ -29,7 +29,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
   public:
     /**
      * @brief Creates the ZMQ sink description
-     * @param host: host name for connecting to zmq
+     * @param host: address name for connecting to zmq
      * @param port: port number for connecting to zmq
      * @param internal: defines if the zmq should send the message schema as a first message
      * @return descriptor for ZMQ sink
@@ -37,7 +37,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     static SinkDescriptorPtr create(std::string host, uint16_t port, bool internal = false);
 
     /**
-     * @brief Get the zmq host where the data is to be written
+     * @brief Get the zmq address where the data is to be written
      */
     const std::string& getHost() const;
 
@@ -55,8 +55,8 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     bool isInternal() const;
     void setInternal(bool internal);
 
-    std::string toString() override;
     bool equal(SinkDescriptorPtr other) override;
+    std::string toString() override;
 
   private:
     explicit ZmqSinkDescriptor(std::string host, uint16_t port, bool internal);

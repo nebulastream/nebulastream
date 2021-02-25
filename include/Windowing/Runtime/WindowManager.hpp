@@ -30,7 +30,13 @@ namespace NES::Windowing {
 class WindowManager {
 
   public:
-    explicit WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness = 0);
+    /**
+     * @brief constructor of window manager
+     * @param windowType type of the window
+     * @param allowedLateness in ms
+     * @param id of the window manager
+     */
+    explicit WindowManager(Windowing::WindowTypePtr windowType, uint64_t allowedLateness, uint64_t id);
 
     /**
      * @brief Get the window type for the window manager
@@ -152,6 +158,7 @@ class WindowManager {
             store->nextEdge = nextEdge;
             store->appendSlice(SliceMetaData(newStart, nextEdge));
         }
+        (void(key));
     }
 
   private:

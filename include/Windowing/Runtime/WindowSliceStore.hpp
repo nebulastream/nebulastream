@@ -115,12 +115,15 @@ class WindowSliceStore {
      */
     inline std::vector<PartialAggregateType>& getPartialAggregates() { return partialAggregates; }
 
+    std::mutex& mutex() const { return storeMutex; }
+
     const PartialAggregateType defaultValue;
     uint64_t nextEdge = 0;
 
   private:
     std::vector<SliceMetaData> sliceMetaData;
     std::vector<PartialAggregateType> partialAggregates;
+    mutable std::mutex storeMutex;
 };
 
 }// namespace NES::Windowing

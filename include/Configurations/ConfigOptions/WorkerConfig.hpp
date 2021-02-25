@@ -126,6 +126,26 @@ class WorkerConfig {
     void setNumWorkerThreads(uint16_t numWorkerThreads);
 
     /**
+    * @brief gets a ConfigOption object with buffer size in bytes
+    */
+    IntConfigOption getBufferSizeInBytes();
+
+    /**
+     * @brief set the value for buffer size in bytes with the appropriate data format
+     */
+    void setBufferSizeInBytes(uint64_t sizeInBytes);
+
+    /**
+    * @brief gets a ConfigOption object with number of buffers
+    */
+    IntConfigOption getNumberOfBuffers();
+
+    /**
+     * @brief set the value for number of buffers with the appropriate data format
+     */
+    void setNumberOfBuffers(uint64_t count);
+
+    /**
      * @brief gets a ConfigOption object with parentId
      */
     StringConfigOption getParentId();
@@ -157,6 +177,8 @@ class WorkerConfig {
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
     IntConfigOption numWorkerThreads;
+    IntConfigOption numberOfBuffers;
+    IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;
 };

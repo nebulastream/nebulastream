@@ -63,13 +63,15 @@ class ReconfigurationTaskEntryPointPipelineStage : public Execution::ExecutableP
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
     : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
-      nodeEngineId(nodeEngineId), numThreads(numThreads) {
+      nodeEngineId(nodeEngineId), numThreads(numThreads), waitCounter(0) {
     NES_DEBUG("Init QueryManager::QueryManager");
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationTaskEntryPointPipelineStage>();
 }
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()");
+    NES_WARNING("QueryManager waitCnt=" << waitCounter);
+    NES_VERIFY(waitCounter == 0, "buffer manager stalled this should not happen");
     destroy();
 }
 
@@ -229,6 +231,16 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         }
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
+
+        //TODO: change this static rule a better one
+        //Rule: Only add a new task only if half of the buffers are free
+        //TODO: write a paper about the best condition here
+        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() / 2) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            waitCounter++;
+        }
+
+        //TODO: this is a problem now as it can become the bottleneck
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
 
         NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
@@ -261,6 +273,7 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
             NES_DEBUG("QueryManager: source " << source << " started successfully");
         }
     }
+
     {
         std::unique_lock lock(queryMutex);
         runningQEPs.emplace(qep->getQuerySubPlanId(), qep);

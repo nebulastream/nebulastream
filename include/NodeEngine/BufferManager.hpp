@@ -17,6 +17,8 @@
 #ifndef _BUFFER_MANAGER_H
 #define _BUFFER_MANAGER_H
 
+#include <NodeEngine/BufferRecycler.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -25,7 +27,6 @@
 #include <mutex>
 #include <optional>
 #include <vector>
-
 namespace NES {
 
 namespace NodeEngine {
@@ -53,7 +54,7 @@ class MemorySegment;
  * been returned to the BufferManager by some component.
  *
  */
-class BufferManager {
+class BufferManager : public std::enable_shared_from_this<BufferManager>, public BufferRecycler {
     friend class TupleBuffer;
     friend class detail::MemorySegment;
 
@@ -142,11 +143,31 @@ class BufferManager {
 
     void printStatistics();
 
+    /**
+     * tells if the buffer is configured: only for legacy support
+     * @return true if the buffer manager is configured
+     * @deprecated
+     */
     bool isReady() const { return isConfigured; }
 
-  private:
-    void recyclePooledBuffer(detail::MemorySegment* buffer);
-    void recycleUnpooledBuffer(detail::MemorySegment* buffer);
+    /**
+     * @brief Create a local buffer manager that is assigned to one pipeline or thread
+     * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
+     * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
+     */
+    LocalBufferManagerPtr createLocalBufferManager(size_t numberOfReservedBuffers);
+
+    /**
+     * @brief Recycle a pooled buffer by making it available to others
+     * @param buffer
+     */
+    void recyclePooledBuffer(detail::MemorySegment* buffer) override;
+
+    /**
+    * @brief Recycle an unpooled buffer by making it available to others
+    * @param buffer
+    */
+    void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
   private:
     std::vector<detail::MemorySegment> allBuffers;

@@ -37,8 +37,8 @@ MetricType getMetricType(const T&) {
  * @param the TupleBuffer
  * @param the prefix as std::string
  */
-void serialize(uint64_t metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
-void serialize(const std::string& metric, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
+void writeToBuffer(uint64_t metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
+void writeToBuffer(const std::string& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset);
 
 /**
  * @brief class specific getSchema() methods
@@ -96,8 +96,8 @@ class Metric {
      * @param the metric
      * @return the type of the metric
      */
-    friend void serialize(const Metric& x, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-        x.self->serializeC(schema, buf, prefix);
+    friend void writeToBuffer(const Metric& x, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+        x.self->writeToBufferConcept(buf, byteOffset);
     }
 
     /**
@@ -118,7 +118,7 @@ class Metric {
         /**
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
          */
-        virtual void serializeC(std::shared_ptr<Schema>, NodeEngine::TupleBuffer&, std::string) = 0;
+        virtual void writeToBufferConcept(NodeEngine::TupleBuffer&, uint64_t byteOffset) = 0;
 
         virtual SchemaPtr getSchemaConcept(const std::string& prefix) = 0;
     };
@@ -135,8 +135,8 @@ class Metric {
 
         MetricType getType() const override { return getMetricType(data); }
 
-        void serializeC(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf, std::string prefix) override {
-            serialize(data, schema, buf, prefix);
+        void writeToBufferConcept(NodeEngine::TupleBuffer& buf, uint64_t byteOffset) override {
+            writeToBuffer(data, buf, byteOffset);
         }
 
         SchemaPtr getSchemaConcept(const std::string& prefix) override { return getSchema(data, prefix); };

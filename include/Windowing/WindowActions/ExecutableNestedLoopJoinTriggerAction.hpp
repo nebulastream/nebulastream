@@ -41,14 +41,14 @@ template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<KeyType, InputTypeLeft, InputTypeRight> {
   public:
     static ExecutableNestedLoopJoinTriggerActionPtr<KeyType, InputTypeLeft, InputTypeRight>
-    create(LogicalJoinDefinitionPtr joinDefintion) {
+    create(LogicalJoinDefinitionPtr joinDefintion, uint64_t id) {
         return std::make_shared<Join::ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>(
-            joinDefintion);
+            joinDefintion, id);
     }
 
-    explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition) : joinDefinition(joinDefinition) {
+    explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition, uint64_t id)
+        : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
-        id = UtilityFunctions::getGlobalId();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
         windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
     }
@@ -217,9 +217,10 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                                                    << " slideSize=" << slideSize);
 
                 //TODO: we have to re-activate the deletion once we are sure that it is working again
+                largestClosedWindow = largestClosedWindow > slideSize ? largestClosedWindow - slideSize : 0;
                 if (largestClosedWindow != 0) {
-                    //                    leftStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
-                    //                    rightStore->removeSlicesUntil(std::abs(largestClosedWindow - (int64_t) slideSize));
+                    leftStore->removeSlicesUntil(largestClosedWindow);
+                    rightStore->removeSlicesUntil(largestClosedWindow);
                 }
             }
         }

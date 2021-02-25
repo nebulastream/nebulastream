@@ -53,8 +53,6 @@ class NetworkSink : public SinkMedium {
     void setup() override;
     void shutdown() override;
 
-    std::string toString() override;
-
     /**
     * @brief method to return the type of medium
     * @return type of medium

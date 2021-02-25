@@ -22,6 +22,7 @@
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Operators/OperatorId.hpp>
 #include <atomic>
+#include <chrono>
 #include <mutex>
 #include <optional>
 #include <thread>
@@ -41,7 +42,8 @@ enum SourceType {
     ADAPTIVE_SOURCE,
     MONITORING_SOURCE,
     YSB_SOURCE,
-    MEMORY_SOURCE
+    MEMORY_SOURCE,
+    MQTT_SOURCE
 };
 
 /**
@@ -145,7 +147,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * @note the source will sleep for interval seconds and then produce the next buffer
      * @param interal to gather
      */
-    void setGatheringInterval(uint64_t interval);
+    void setGatheringInterval(std::chrono::milliseconds interval);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -161,7 +163,12 @@ class DataSource : public NodeEngine::Reconfigurable {
     /**
      * @brief Get frequency of gathering the data
      */
-    uint64_t getGatheringInterval() const;
+    std::chrono::milliseconds getGatheringInterval() const;
+
+    /**
+     * @brief Get frequency of gathering the data
+     */
+    uint64_t getGatheringIntervalCount() const;
 
     OperatorId getOperatorId();
     void setOperatorId(OperatorId operatorId);
@@ -171,7 +178,7 @@ class DataSource : public NodeEngine::Reconfigurable {
     uint64_t generatedTuples;
     uint64_t generatedBuffers;
     uint64_t numBuffersToProcess;
-    std::atomic<uint64_t> gatheringInterval;
+    std::chrono::milliseconds gatheringInterval;
     OperatorId operatorId;
     SourceType type;
     NodeEngine::BufferManagerPtr bufferManager;

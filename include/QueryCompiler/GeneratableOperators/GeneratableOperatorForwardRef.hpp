@@ -29,8 +29,8 @@ typedef std::shared_ptr<GeneratableFilterOperator> GeneratableFilterOperatorPtr;
 class GeneratableMapOperator;
 typedef std::shared_ptr<GeneratableMapOperator> GeneratableMapOperatorPtr;
 
-class GeneratableMergeOperator;
-typedef std::shared_ptr<GeneratableMergeOperator> GeneratableMergeOperatorPtr;
+class GeneratableUnionOperator;
+typedef std::shared_ptr<GeneratableUnionOperator> GeneratableMergeOperatorPtr;
 
 class GeneratableJoinOperator;
 typedef std::shared_ptr<GeneratableJoinOperator> GeneratableJoinOperatorPtr;

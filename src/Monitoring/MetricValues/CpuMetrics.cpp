@@ -22,6 +22,8 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <cstring>
+
 namespace NES {
 
 CpuMetrics::CpuMetrics(CpuValues total, unsigned int size, std::vector<CpuValues>&& arr) : total(total), numCores(size) {
@@ -67,22 +69,24 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf
     }
 }
 
-void serialize(const CpuMetrics& metrics, SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
-    // extend the schema with the core number
-    auto noFields = schema->getSize();
-    schema->addField(prefix + "CORE_NO", BasicType::UINT16);
-    // the buffer contains only one metric tuple
-    buf.setNumberOfTuples(1);
+void writeToBuffer(const CpuMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
+    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    uint64_t totalSize = byteOffset + sizeof(uint16_t) + sizeof(CpuValues) * (metrics.getNumCores() + 1);
+    NES_ASSERT(totalSize < buf.getBufferSize(), "CpuMetrics: Content does not fit in TupleBuffer");
 
-    auto layout = NodeEngine::createRowLayout(schema);
-    layout->getValueField<uint16_t>(0, noFields)->write(buf, metrics.getNumCores());
-    // call serialize for the total metrics over all cores
-    serialize(metrics.getTotal(), schema, buf, prefix + "CPU[TOTAL]_");
+    auto coreNum = metrics.getNumCores();
+    memcpy(tbuffer + byteOffset, &coreNum, sizeof(uint16_t));
+    byteOffset += sizeof(uint16_t);
 
-    for (int i = 0; i < metrics.getNumCores(); i++) {
-        //call serialize method for the metrics for each cpu
-        serialize(metrics.getValues(i), schema, buf, prefix + "CPU[" + std::to_string(i + 1) + "]_");
+    writeToBuffer(metrics.getTotal(), buf, byteOffset);
+    byteOffset += sizeof(CpuValues);
+
+    for (unsigned int i = 0; i < coreNum; i++) {
+        writeToBuffer(metrics.getValues(i), buf, byteOffset);
+        byteOffset += sizeof(CpuValues);
     }
+
+    buf.setNumberOfTuples(1);
 }
 
 SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix) {

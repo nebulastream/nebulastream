@@ -33,7 +33,7 @@ namespace NES {
 
 class TestHarness {
   public:
-    /*
+    /**
          * @brief The constructor of TestHarness
          * @param numWorkers number of worker (each for one physical source) to be used in the test
          * @param queryWithoutSink query string to test (without the sink operator)
@@ -55,7 +55,7 @@ class TestHarness {
 
     ~TestHarness() { NES_DEBUG("TestHarness: ~TestHarness()"); };
 
-    /*
+    /**
          * @brief push a single element/tuple to specific source
          * @param element element of Record to push
          * @param sourceIdx index of the source to which the element is pushed
@@ -79,18 +79,13 @@ class TestHarness {
         records[sourceIdx].push_back(memArea);
     }
 
-    /*
+    /**
          * @brief check the schema size of the logical stream and if it already exists
          * @param logical stream name
          * @param schema schema of the source
          * @param physical stream name
          */
     void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
-        // check if record may span multiple buffers
-        NES_ASSERT2(bufferSize % schema->getSchemaSizeInBytes() == 0,
-                    "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
-                        << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
-
         // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
@@ -122,7 +117,7 @@ class TestHarness {
         workerPtrs.push_back(wrk);
     }
 
-    /*
+    /**
          * @brief add a memory source to be used in the test and connect to parent with specific parent id
          * @param logical stream name
          * @param schema schema of the source
@@ -131,6 +126,10 @@ class TestHarness {
          */
     void addMemorySource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
         NES_ASSERT(parentId != INVALID_TOPOLOGY_NODE_ID, "The provided ParentId is an INVALID_TOPOLOGY_NODE_ID");
+        // check if record may span multiple buffers
+        NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
+                        "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
+                            << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
         checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
 
         sourceTypes.push_back(MemorySource);
@@ -138,7 +137,7 @@ class TestHarness {
         records.push_back(currentSourceRecords);
     }
 
-    /*
+    /**
          * @brief add a memory source to be used in the test
          * @param logical stream name
          * @param schema schema of the source
@@ -149,7 +148,7 @@ class TestHarness {
         addMemorySource(logicalStreamName, schema, physicalStreamName, crdTopologyNodeId);
     }
 
-    /*
+    /**
          * @brief add a csv source to be used in the test and connect to parent with specific parent id
          * @param schema schema of the source
          * @param csvSourceConf physical stream configuration for the csv source
@@ -165,7 +164,7 @@ class TestHarness {
         records.push_back(currentSourceRecords);
     }
 
-    /*
+    /**
       * @brief add a csv source to be used in the test
       * @param schema schema of the source
       * @param csvSourceConf physical stream configuration for the csv source
@@ -175,7 +174,7 @@ class TestHarness {
         addCSVSource(csvSourceConf, schema, crdTopologyNodeId);
     }
 
-    /*
+    /**
      * @brief add non source worker and connect to parent with specific parent id
      * @param parentId id of the parent to connect
      */
@@ -190,7 +189,7 @@ class TestHarness {
         workerPtrs.push_back(wrk);
     }
 
-    /*
+    /**
          * @brief add non source worker
          */
     void addNonSourceWorker() {
@@ -200,7 +199,7 @@ class TestHarness {
 
     uint64_t getWorkerCount() { return workerPtrs.size(); }
 
-    /*
+    /**
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
          * then return the result of the query execution
          * @return output string
@@ -209,10 +208,10 @@ class TestHarness {
     std::vector<T> getOutput(uint64_t numberOfContentToExpect) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
-                                    + std::to_string(physicalStreamNames.size())
-                                    + " number of added logical streams = " + std::to_string(logicalStreamNames.size())
-                                    + " number of added workers = " + std::to_string(workerPtrs.size())
-                                    + " number of content to expect = " + std::to_string(numberOfContentToExpect));
+                                    << std::to_string(physicalStreamNames.size())
+                                    << " number of added logical streams = " << std::to_string(logicalStreamNames.size())
+                                    << " number of added workers = " << std::to_string(workerPtrs.size())
+                                    << " number of content to expect = " << std::to_string(numberOfContentToExpect));
         }
 
         QueryServicePtr queryService = crd->getQueryService();
@@ -235,11 +234,13 @@ class TestHarness {
                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
                 }
 
+                //TODO: we have to fix those hard values
                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize);
+                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize,
+                    /** numberOfBuffers*/ 1, /** frequency*/ 0);
                 workerPtrs[i]->registerPhysicalStream(conf);
             } else {
-                NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" + std::to_string(sourceTypes[i]));
+                NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" << std::to_string(sourceTypes[i]));
             }
         }
 
@@ -256,10 +257,24 @@ class TestHarness {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
         }
 
+        // Check if the size of output struct match with the size of output schema
+        // Output struct might be padded, in this case the size is not equal to the total size of its field
+        // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
+        // (e.g., the size is multiple of 8)
+        uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)
+                                               ->getQueryPlan()
+                                               ->getSinkOperators()[0]
+                                               ->getOutputSchema()
+                                               ->getSchemaSizeInBytes();
+        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
+                   "The size of output struct does not match output schema."
+                   " Output struct:"
+                       << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
+
         if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false "
                                     "number of buffers to expect="
-                                    + std::to_string(numberOfContentToExpect));
+                                    << std::to_string(numberOfContentToExpect));
         }
 
         NES_INFO("QueryDeploymentTest: Remove query");
@@ -274,20 +289,6 @@ class TestHarness {
         if (!ifs.good()) {
             NES_WARNING("TestHarness:ifs.good() returns false for query with id " << queryId << " file path=" << filePath);
         }
-
-        // Check if the size of output struct match with the size of output schema
-        // Output struct might be padded, in this case the size is not equal to the total size of its field
-        // Currently, we need to produce a result with the schema that does not cause the associated struct to be padded
-        // (e.g., the size is multiple of 8)
-        uint64_t outputSchemaSizeInBytes = queryCatalog->getQueryCatalogEntry(queryId)
-                                               ->getQueryPlan()
-                                               ->getSinkOperators()[0]
-                                               ->getOutputSchema()
-                                               ->getSchemaSizeInBytes();
-        NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
-                   "The size of output struct does not match output schema."
-                   " Output struct:"
-                       + std::to_string(sizeof(T)) + " Schema:" + std::to_string(outputSchemaSizeInBytes));
 
         // check the length of the output file
         ifs.seekg(0, ifs.end);

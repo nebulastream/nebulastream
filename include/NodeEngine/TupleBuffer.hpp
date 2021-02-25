@@ -48,6 +48,7 @@ namespace NES::NodeEngine {
 class TupleBuffer {
     friend class BufferManager;
     friend class detail::MemorySegment;
+    friend class LocalBufferManager;
 
   public:
     TupleBuffer(const TupleBuffer& other) noexcept;

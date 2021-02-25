@@ -154,7 +154,7 @@ TEST_F(WindowManagerTest, testCheckSlice) {
         aggregation, TumblingWindow::of(EventTime(Attribute("ts")), Seconds(60)),
         DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
 
-    auto windowManager = new WindowManager(windowDef->getWindowType());
+    auto windowManager = new WindowManager(windowDef->getWindowType(), 0, 1);
     uint64_t ts = 10;
 
     windowManager->sliceStream(ts, store, 0);
@@ -179,9 +179,9 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
     auto triggerAction =
         Windowing::ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType,
                                                               FinalAggregateType>::create(windowDefinition, aggregation,
-                                                                                          resultSchema);
+                                                                                          resultSchema, 1);
     return Windowing::AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>::create(
-        windowDefinition, aggregation, trigger, triggerAction);
+        windowDefinition, aggregation, trigger, triggerAction, 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
@@ -391,7 +391,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction = ExecutableCompleteAggregationTriggerAction<int64_t, int64_t, int64_t, int64_t>::create(
-        windowDef, exec, windowOutputSchema);
+        windowDef, exec, windowOutputSchema, 1);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(11, store, windowDef, buf, ts, ts);
     uint64_t tupleCnt = buf.getNumberOfTuples();

@@ -25,7 +25,7 @@
 
 namespace NES {
 
-enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK, OPC_SINK };
+enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK, OPC_SINK, MQTT_SINK, NULL_SINK };
 /**
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
@@ -33,7 +33,7 @@ enum SinkMediumTypes { ZMQ_SINK, PRINT_SINK, KAFKA_SINK, FILE_SINK, NETWORK_SINK
 class SinkMedium : public NodeEngine::Reconfigurable {
 
   public:
-    /**
+    /**FF
      * @brief public constructor for data sink
      */
     explicit SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId);
@@ -93,12 +93,6 @@ class SinkMedium : public NodeEngine::Reconfigurable {
    * @return schema description of the sink
    */
     SchemaPtr getSchemaPtr() const;
-
-    /**
-      * @brief method to return the type
-      * @return type
-      */
-    virtual std::string toString() = 0;
 
     /**
      * @brief method to get the format as string

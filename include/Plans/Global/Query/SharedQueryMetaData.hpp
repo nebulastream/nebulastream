@@ -162,6 +162,12 @@ class SharedQueryMetaData {
     SharedQueryId getSharedQueryId() const;
 
     /**
+     * @brief Get all query ids part of the SharedMetaData
+     * @return vector of query ids
+     */
+    std::vector<QueryId> getQueryIds();
+
+    /**
      * @brief Set the meta data as old
      * An Old metadata is deployed at least once in his life time.
      */

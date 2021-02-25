@@ -23,6 +23,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <boost/algorithm/string.hpp>
+#include <chrono>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -35,18 +36,18 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0), skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
-    this->gatheringInterval = frequency;
+    this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();
 
     char* path = realpath(filePath.c_str(), NULL);
     NES_DEBUG("CSVSource: Opening path " << path);
     input.open(path);
 
-    NES_DEBUG("CSVSource::fillBuffer: read buffer");
+    NES_DEBUG("CSVSource::CSVSource: read buffer");
     input.seekg(0, input.end);
     fileSize = input.tellg();
     if (fileSize == -1) {
-        NES_ERROR("CSVSource::fillBuffer File " + filePath + " is corrupted");
+        NES_ERROR("CSVSource::CSVSource File " + filePath + " is corrupted");
     }
 
     if (numBuffersToProcess != 0) {
@@ -55,7 +56,7 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
         loopOnFile = false;
     }
 
-    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+    NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
                                       << numberOfTuplesToProducePerBuffer << "loopOnFile=" << loopOnFile);
 
@@ -64,19 +65,24 @@ CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
 
 std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called on " << operatorId);
-    auto buf = this->bufferManager->getBufferBlocking();
-    fillBuffer(buf);
-    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
-    if (buf.getNumberOfTuples() == 0) {
+    auto buffer = this->bufferManager->getBufferBlocking();
+    fillBuffer(buffer);
+    NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
+
+    generatedTuples += buffer.getNumberOfTuples();
+    generatedBuffers++;
+
+    if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
-        return buf;
+        return buffer;
     }
 }
 
 const std::string CSVSource::toString() const {
     std::stringstream ss;
-    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval
+    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count()
+       << "ms"
        << " numBuff=" << this->numBuffersToProcess << ")";
     return ss.str();
 }
@@ -114,7 +120,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         currentPosInFile = input.tellg();
     }
 
-    while (tupCnt < generated_tuples_this_pass) {
+    while (tupCnt < generated_tuples_this_pass && this->isRunning()) {
         if (input.tellg() >= fileSize || input.tellg() == -1) {
             NES_DEBUG("CSVSource::fillBuffer: reset tellg()=" << input.tellg() << " file_size=" << fileSize);
             input.clear();
@@ -199,8 +205,6 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
     //update statistics
-    generatedTuples += tupCnt;
-    generatedBuffers++;
 }
 
 SourceType CSVSource::getType() const { return CSV_SOURCE; }

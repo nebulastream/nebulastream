@@ -33,20 +33,22 @@ bool MetricGroup::add(const std::string& desc, const Metric& metric) {
 
 bool MetricGroup::remove(const std::string& name) { return metricMap.erase(name); }
 
-void MetricGroup::getSample(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf) {
+void MetricGroup::getSample(NodeEngine::TupleBuffer& buf) {
     NES_DEBUG("MetricGroup: Collecting sample via serialize(..)");
+    uint64_t offset = 0;
     for (auto const& x : metricMap) {
-        serialize(x.second, schema, buf, x.first);
-        NES_DEBUG("MetricGroup: Serialized " + x.first + ". New schema for buffer " + schema->toString());
+        NES_DEBUG("MetricGroup: Writing metric to buffer " + x.first + " with offset " + std::to_string(offset));
+        writeToBuffer(x.second, buf, offset);
+        offset += getSchema(x.second, x.first)->getSchemaSizeInBytes();
     }
 }
 
-SchemaPtr MetricGroup::createGroupSchema() {
-    auto outputSchema = Schema::create();
+SchemaPtr MetricGroup::createSchema() {
+    auto schema = Schema::create();
     for (auto const& x : metricMap) {
-        outputSchema->copyFields(getSchema(x.second, x.first));
+        schema->copyFields(getSchema(x.second, x.first));
     }
-    return outputSchema;
+    return schema;
 }
 
 }// namespace NES

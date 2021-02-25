@@ -181,6 +181,8 @@ class NesWorker {
     uint16_t localWorkerZmqPort;
     uint16_t numberOfSlots;
     uint16_t numWorkerThreads;
+    uint64_t numberOfBuffers;
+    uint64_t bufferSizeInBytes;
     NodeType type;
     std::atomic<bool> stopped;
     TopologyNodeId topologyNodeId;

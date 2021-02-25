@@ -99,7 +99,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     /**
      * @brief Reference to the buffer manager to enable buffer allocation
      */
-    BufferManagerPtr bufferManager;
+    LocalBufferManagerPtr localBufferPool;
     /**
      * @brief The emit function handler to react on an emitted tuple buffer.
      */

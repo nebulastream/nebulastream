@@ -54,7 +54,10 @@ namespace NES {
 NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
-      numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()), inherited0(), inherited1() {
+      numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
+      numberOfBuffers(coordinatorConfig->getNumberOfBuffers()->getValue()),
+      bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
+      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()), inherited0(), inherited1() {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
     stopped = false;
@@ -64,7 +67,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    queryRequestQueue = std::make_shared<QueryRequestQueue>();
+    queryRequestQueue = std::make_shared<QueryRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(
         globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
@@ -116,6 +119,8 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
 }
 
+NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
+
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
@@ -151,6 +156,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     workerConfig->setRpcPort(rpcPort + 1);
     workerConfig->setDataPort(rpcPort + 2);
     workerConfig->setNumberOfSlots(numberOfSlots);
+    workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
+    workerConfig->setBufferSizeInBytes(bufferSizeInBytes);
+    workerConfig->setNumberOfBuffers(numberOfBuffers);
     worker = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 

@@ -143,16 +143,16 @@ class LogicalOperatorFactory {
                                                OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
-     * @brief Create a specialized merge operator.
+     * @brief Create a specialized union operator.
      * @param id: the id of the operator if not defined then next free operator id is used.
-     * @return UnaryOperatorNodePtr
+     * @return BinaryOperatorNode
      */
-    static BinaryOperatorNodePtr createMergeOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
+    static BinaryOperatorNodePtr createUnionOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Create a specialized join operator.
     * @param id: the id of the operator if not defined then next free operator id is used.
-    * @return BinaryOperatorNodePtr
+    * @return BinaryOperatorNode
     */
     static BinaryOperatorNodePtr createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition,
                                                     OperatorId id = UtilityFunctions::getNextOperatorId());

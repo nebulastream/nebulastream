@@ -460,10 +460,10 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
-        auto merge = LogicalOperatorFactory::createMergeOperator();
-        auto serializedOperator = OperatorSerializationUtil::serializeOperator(merge, new SerializableOperator());
-        auto mergeOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(merge->equal(mergeOperator));
+        auto unionOp = LogicalOperatorFactory::createUnionOperator();
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(unionOp, new SerializableOperator());
+        auto unionOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        ASSERT_TRUE(unionOp->equal(unionOperator));
     }
 
     {

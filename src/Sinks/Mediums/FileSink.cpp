@@ -17,6 +17,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <filesystem>
 #include <iostream>
 #include <string>
 #include <utility>
@@ -25,8 +26,6 @@ using Clock = std::chrono::high_resolution_clock;
 
 namespace NES {
 
-std::string FileSink::toString() { return "FILE_SINK"; }
-
 SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
 
 FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append, QuerySubPlanId parentPlanId)
@@ -34,8 +33,10 @@ FileSink::FileSink(SinkFormatPtr format, const std::string filePath, bool append
     this->filePath = filePath;
     this->append = append;
     if (!append) {
-        int success = std::remove(filePath.c_str());
-        NES_DEBUG("FileSink: remove existing file=" << success);
+        if (std::filesystem::exists(filePath.c_str())) {
+            bool success = std::filesystem::remove(filePath.c_str());
+            NES_ASSERT2_FMT(success, "cannot remove file " << filePath.c_str());
+        }
     }
     NES_DEBUG("FileSink: open file=" << filePath);
     if (!outputFile.is_open()) {
@@ -53,7 +54,8 @@ FileSink::~FileSink() {
 const std::string FileSink::toString() const {
     std::stringstream ss;
     ss << "FileSink(";
-    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
+    ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
+    ss << ")";
     return ss.str();
 }
 

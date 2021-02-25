@@ -266,22 +266,28 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSourc
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with merge operators
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
  */
 TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
-    Query query1 =
-        Query::from("car").merge(&subQuery1).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query1 = Query::from("car")
+                       .unionWith(&subQuery1)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -327,14 +333,14 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with different order of merge operator children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
  */
 TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
     Query query1 = Query::from("truck")
-                       .merge(&subQuery1)
+                       .unionWith(&subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -344,8 +350,11 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorC
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
@@ -391,14 +400,14 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorC
 }
 
 /**
- * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with merge operators but different children
+ * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
  */
 TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
     Query query1 = Query::from("truck")
-                       .merge(&subQuery1)
+                       .unionWith(&subQuery1)
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 45)
                        .sink(printSinkDescriptor);
@@ -408,8 +417,11 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators
     queryPlan1->setQueryId(queryId1);
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").merge(&subQuery2).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .unionWith(&subQuery2)
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("id") < 45)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();

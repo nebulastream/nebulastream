@@ -83,10 +83,10 @@ class Query {
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
-    * @param subQuery is the query to be merged
+    * @param subQuery is the query to be unioned
     * @return
     */
-    Query& merge(Query* subQuery);
+    Query& unionWith(Query* subQuery);
 
     /**
      * @brief this call projects out the attributes in the parameter list
@@ -113,11 +113,11 @@ class Query {
 
     /**
      * @brief This methods add the join operator to a query
-     * @param subQuery is the query to be merged
+     * @param subQueryRhs is the query to be merged
      * @return
      */
-    Query& join(const Query& subQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey,
-                const Windowing::WindowTypePtr windowType);
+    Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+                    const Windowing::WindowTypePtr windowType);
 
     /**
      * @brief Create Query using queryPlan

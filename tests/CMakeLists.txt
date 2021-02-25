@@ -21,8 +21,8 @@ if (CMAKE_CROSSCOMPILING)
             -DBoost_NO_SYSTEM_PATHS=TRUE
             -DBoost_INCLUDE_DIR=/opt/sysroots/aarch64-linux-gnu/usr/include/
             -DBoost_LIBRARY_DIR=/opt/sysroots/aarch64-linux-gnu/usr/lib/
-    )
-else()
+            )
+else ()
     set(CMAKE_ARGS_CROSS "")
 endif ()
 
@@ -124,7 +124,7 @@ add_test(NAME zmq-tests COMMAND zmq-tests)
 ### Source Tests ###
 add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
 target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
-add_test(NAME source-tests COMMAND source-tests)
+#add_test(NAME source-tests COMMAND source-tests)
 
 ### Sink Tests ###
 add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
@@ -140,19 +140,34 @@ if (NES_USE_KAFKA)
 endif (NES_USE_KAFKA)
 
 ### OPC Tests ###
-if(NES_USE_OPC)
+if (NES_USE_OPC)
     add_executable(opc-source-tests "UnitTests/Source/OPCSourceTest.cpp" UnitTests/Source/OPCSourceTest.cpp)
     target_link_libraries(opc-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-source-tests COMMAND opc-source-tests)
     add_executable(opc-sink-tests "UnitTests/Sink/OPCSinkTest.cpp" UnitTests/Sink/OPCSinkTest.cpp)
     target_link_libraries(opc-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME opc-sink-tests COMMAND opc-sink-tests)
-endif(NES_USE_OPC)
+endif (NES_USE_OPC)
+
+### MQTT Tests ###
+if(NES_USE_MQTT)
+    add_executable(mqtt-source-tests "UnitTests/Source/MQTTSourceTest.cpp" UnitTests/Source/MQTTSourceTest.cpp)
+    add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
+    target_link_libraries(mqtt-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    target_link_libraries(mqtt-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
+    add_test(NAME mqtt-source-tests COMMAND mqtt-source-tests)
+    add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
+endif(NES_USE_MQTT)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
 target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
+
+### Dynamic Memory Layout Tests ###
+add_executable(dynamic-memory-layout-tests "UnitTests/DynamicMemoryLayoutTest.cpp")
+target_link_libraries(dynamic-memory-layout-tests nes ${GTEST_LIBRARIES})
+add_test(NAME dynamic-memory-layout-tests COMMAND dynamic-memory-layout-tests)
 
 ### Stream Catalog Tests ###
 add_executable(stream-catalog-test "UnitTests/Catalogs/StreamCatalogTest.cpp")
@@ -329,10 +344,20 @@ add_executable(attribute-sort-rule-test "UnitTests/Optimizer/QueryRewrite/Attrib
 target_link_libraries(attribute-sort-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME attribute-sort-rule-test COMMAND attribute-sort-rule-test)
 
-### Attribute Sort Rule Test ###
+### Rename Stream To Project Operator Rule Test ###
 add_executable(rename-stream-to-project-operator-rule-test "UnitTests/Optimizer/QueryRewrite/RenameStreamToProjectOperatorRuleTest.cpp")
 target_link_libraries(rename-stream-to-project-operator-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME rename-stream-to-project-operator-rule-test COMMAND rename-stream-to-project-operator-rule-test)
+
+### Project Before Union Operator Rule Test ###
+add_executable(project-before-union-operator-rule-test "UnitTests/Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRuleTest.cpp")
+target_link_libraries(project-before-union-operator-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME project-before-union-operator-rule-test COMMAND project-before-union-operator-rule-test)
+
+### Millisecond Interval Tests ###
+add_executable(millisecond-interval-tests "UnitTests/Source/MillisecondIntervalTest.cpp")
+target_link_libraries(millisecond-interval-tests nes ${GTEST_LIBRARIES})
+add_test(NAME millisecond-interval-tests COMMAND millisecond-interval-tests)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
@@ -376,10 +401,14 @@ add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
 target_link_libraries(assignment-watermark-test nes ${GTEST_LIBRARIES})
 add_test(NAME assignment-watermark-test COMMAND assignment-watermark-test)
 
+add_executable(allowed-lateness-test "Integration/AllowedLatenessTest.cpp")
+target_link_libraries(allowed-lateness-test nes ${GTEST_LIBRARIES})
+add_test(NAME allowed-lateness-test COMMAND allowed-lateness-test)
+
 ### mergeDeploymentTest ###
-add_executable(merge-deployment-test "Integration/MergeDeploymentTest.cpp")
-target_link_libraries(merge-deployment-test nes ${GTEST_LIBRARIES})
-add_test(NAME merge-deployment-test COMMAND merge-deployment-test)
+add_executable(union-deployment-test "Integration/UnionDeploymentTest.cpp")
+target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
+add_test(NAME union-deployment-test COMMAND union-deployment-test)
 
 ### ContiniousSourceTest ###
 add_executable(continious-source-test "Integration/ContinuousSourceTest.cpp")
@@ -422,9 +451,9 @@ target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
 
 ### MemorySourceIntegrationTest ###
-add_executable(memory-source-test "Integration/MemorySourceIntegrationTest.cpp")
-target_link_libraries(memory-source-test nes ${GTEST_LIBRARIES})
-add_test(NAME memory-source-test COMMAND memory-source-test)
+add_executable(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp")
+target_link_libraries(memory-source-integration-test nes ${GTEST_LIBRARIES})
+add_test(NAME memory-source-integration-test COMMAND memory-source-integration-test)
 
 ### TestHarnessUtilTest ###
 add_executable(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")

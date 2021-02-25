@@ -59,19 +59,19 @@ Query& Query::as(const std::string newStreamName) {
     return *this;
 }
 
-Query& Query::merge(Query* subQuery) {
-    NES_DEBUG("Query: merge the subQuery to current query");
-    OperatorNodePtr op = LogicalOperatorFactory::createMergeOperator();
+Query& Query::unionWith(Query* subQuery) {
+    NES_DEBUG("Query: unionWith the subQuery to current query");
+    OperatorNodePtr op = LogicalOperatorFactory::createUnionOperator();
     queryPlan->addRootOperator(subQuery->getQueryPlan()->getRootOperators()[0]);
     queryPlan->appendOperatorAsNewRoot(op);
     return *this;
 }
 
-Query& Query::join(const Query& subQueryRhsConst, ExpressionItem onLeftKey, ExpressionItem onRightKey,
-                   const Windowing::WindowTypePtr windowType) {
-    NES_DEBUG("Query: join the subQuery to current query");
+Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+                       const Windowing::WindowTypePtr windowType) {
+    NES_DEBUG("Query: joinWith the subQuery to current query");
 
-    auto subQueryRhs = const_cast<Query&>(subQueryRhsConst);
+    auto subQuery = const_cast<Query&>(subQueryRhs);
 
     auto leftKeyExpression = onLeftKey.getExpressionNode();
     if (!leftKeyExpression->instanceOf<FieldAccessExpressionNode>()) {
@@ -95,7 +95,7 @@ Query& Query::join(const Query& subQueryRhsConst, ExpressionItem onLeftKey, Expr
     // we use a complete window type as we currently do not have a distributed join
     auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
 
-    auto rightQueryPlan = subQueryRhs.getQueryPlan();
+    auto rightQueryPlan = subQuery.getQueryPlan();
     NES_ASSERT(rightQueryPlan && rightQueryPlan->getRootOperators().size() > 0, "invalid right query plan");
     auto rootOperatorRhs = rightQueryPlan->getRootOperators()[0];
     auto leftJoinType = getQueryPlan()->getRootOperators()[0]->getOutputSchema();

@@ -18,6 +18,7 @@
 #define NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_DEFAULTSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <chrono>
 
 namespace NES {
 
@@ -27,9 +28,9 @@ namespace NES {
 class DefaultSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
+    static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency);
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                      uint32_t frequency);
+                                      uint64_t frequency);
 
     /**
      * @brief Get number of buffers to be produced
@@ -39,17 +40,22 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     /**
      * @brief Get the frequency to produce the buffers
      */
-    uint32_t getFrequency() const;
+    std::chrono::milliseconds getFrequency() const;
+
+    /**
+     * @brief Get the frequency as number of times units
+     */
+    uint64_t getFrequencyCount() const;
 
     bool equal(SourceDescriptorPtr other) override;
     std::string toString() override;
 
   private:
-    explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
+    explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency);
     explicit DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                     uint32_t frequency);
+                                     uint64_t frequency);
     const uint64_t numbersOfBufferToProduce;
-    const uint32_t frequency;
+    const std::chrono::milliseconds frequency;
 };
 
 typedef std::shared_ptr<DefaultSourceDescriptor> DefaultSourceDescriptorPtr;

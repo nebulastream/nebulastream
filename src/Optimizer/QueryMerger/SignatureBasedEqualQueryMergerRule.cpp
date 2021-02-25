@@ -60,14 +60,14 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
             auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
             auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
 
-            // Prepare a map of matching host and target sink global query nodes
+            // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<uint64_t, uint64_t> targetHostSinkNodeMap;
             bool areEqual;
             for (auto hostSink : hostQueryPlan->getSinkOperators()) {
                 areEqual = false;
                 for (auto targetSink : targetQueryPlan->getSinkOperators()) {
-                    //Check if the host and target sink signatures match each other
+                    //Check if the address and target sink signatures match each other
                     if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
                         targetHostSinkNodeMap[targetSink->getId()] = hostSink->getId();
                         areEqual = true;
@@ -90,10 +90,10 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
             std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkGlobalQueryNodes();
             //Iterate over all target sink global query node
             for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkGlobalQueryNodes()) {
-                //Check for the target sink global query node the corresponding host sink global query node id in the map
+                //Check for the target sink global query node the corresponding address sink global query node id in the map
                 uint64_t hostSinkOperatorId = targetHostSinkNodeMap[targetSinkGQN->getOperator()->getId()];
 
-                // Find the host sink global query node with the matching id
+                // Find the address sink global query node with the matching id
                 auto found =
                     std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(), [hostSinkOperatorId](GlobalQueryNodePtr hostSinkGQN) {
                         return hostSinkGQN->getOperator()->getId() == hostSinkOperatorId;
@@ -106,19 +106,19 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                 //Remove all children of target sink global query node
                 targetSinkGQN->removeChildren();
 
-                //Add children of matched host sink global query node to the target sink global query node
+                //Add children of matched address sink global query node to the target sink global query node
                 for (auto hostChild : (*found)->getChildren()) {
                     hostChild->addParent(targetSinkGQN);
                 }
             }
 
-            NES_TRACE("SignatureBasedEqualQueryMergerRule: Merge target Shared metadata into host metadata");
+            NES_TRACE("SignatureBasedEqualQueryMergerRule: Merge target Shared metadata into address metadata");
             hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
             //Clear the target shared query metadata
             targetSharedQueryMetaData->clear();
             //Update the shared query meta data
             globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
-            // exit the for loop as we found a matching host shared query meta data
+            // exit the for loop as we found a matching address shared query meta data
             break;
         }
     }

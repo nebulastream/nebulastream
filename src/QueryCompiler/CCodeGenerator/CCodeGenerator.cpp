@@ -695,6 +695,16 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         IF(VarRef(currentTimeVariableDeclaration) < VarRef(minWatermarkVariableDeclaration), Continue());
     context->code->currentCodeInsertionPoint->addStatement(ifStatementSmallerMinWatermark.createCopy());
 
+    // lock slice
+    // auto lock = std::unique_lock(stateVariable->mutex());
+    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+    auto stateMutex = FunctionCallStatement("mutex");
+    uniqueLockCtor.addParameter(
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
+
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
@@ -773,7 +783,7 @@ bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefini
     return generateCodeForCompleteWindow(window, generatableWindowAggregation, context, windowOperatorId);
 }
 
-uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context) {
+uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id) {
     if (context->arity == PipelineContext::BinaryLeft) {
         return 0;
     }
@@ -838,6 +848,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
     }
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
     auto action = join->getTriggerAction();
     auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
@@ -845,6 +856,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         auto createTriggerActionCall = call("Join::ExecutableNestedLoopJoinTriggerAction<" + keyType->getCode()->code_
                                             + ", InputTupleLeft, InputTupleRight>::create");
         createTriggerActionCall->addParameter(VarRef(joinDefDeclaration));
+        createTriggerActionCall->addParameter(VarRef(idParam));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
@@ -859,6 +871,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     createAggregationWindowHandlerCall->addParameter(VarRef(joinDefDeclaration));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTrigger));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTriggerAction));
+    createAggregationWindowHandlerCall->addParameter(VarRef(idParam));
+
     auto windowHandlerStatement = VarDeclStatement(joinHandler).assign(createAggregationWindowHandlerCall);
     setupScope->addStatement(windowHandlerStatement.copy());
 
@@ -949,8 +963,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
         keyVariableDeclaration =
             VariableDeclaration::create(tf->createDataType(joinDef->getLeftJoinKey()->getStamp()), joinKeyFieldName);
 
-        NES_ASSERT2(recordHandler->hasAttribute(joinKeyFieldName),
-                    "join key is not defined on input tuple << " << joinKeyFieldName);
+        NES_ASSERT2_FMT(recordHandler->hasAttribute(joinKeyFieldName),
+                        "join key is not defined on input tuple << " << joinKeyFieldName);
 
         auto joinKeyReference = recordHandler->getAttribute(joinKeyFieldName);
 
@@ -1220,6 +1234,16 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     auto getCurrentCntStatement = VarDeclStatement(currentCntVariable).assign(recordCntFieldRef);
     context->code->currentCodeInsertionPoint->addStatement(getCurrentCntStatement.copy());
 
+    // lock slice
+    // auto lock = std::unique_lock(stateVariable->mutex());
+    auto uniqueLockVariable = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "lock");
+    auto uniqueLockCtor = FunctionCallStatement("std::unique_lock");
+    auto stateMutex = FunctionCallStatement("mutex");
+    uniqueLockCtor.addParameter(
+        std::make_shared<BinaryOperatorStatement>(VarRef(windowStateVariableDeclaration).accessPtr(stateMutex)));
+    context->code->currentCodeInsertionPoint->addStatement(
+        std::make_shared<BinaryOperatorStatement>(VarDeclStatement(uniqueLockVariable).assign(uniqueLockCtor)));
+
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
     sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
@@ -1295,8 +1319,9 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 }
 
 uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                             PipelineContextPtr context) {
+                                             PipelineContextPtr context, uint64_t id) {
     auto tf = getTypeFactory();
+    auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(window, windowOutputSchema);
@@ -1379,6 +1404,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
         createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
+        createTriggerActionCall->addParameter(VarRef(idParam));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else if (action->getActionType() == Windowing::SliceAggregationTriggerAction) {
@@ -1389,6 +1415,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
         createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
+        createTriggerActionCall->addParameter(VarRef(idParam));
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {
@@ -1405,6 +1432,8 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     createAggregationWindowHandlerCall->addParameter(VarRef(executableAggregation));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTrigger));
     createAggregationWindowHandlerCall->addParameter(VarRef(executableTriggerAction));
+    createAggregationWindowHandlerCall->addParameter(VarRef(idParam));
+
     auto windowHandlerStatement = VarDeclStatement(windowHandler).assign(createAggregationWindowHandlerCall);
     setupScope->addStatement(windowHandlerStatement.copy());
 

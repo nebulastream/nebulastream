@@ -29,8 +29,8 @@ namespace NES {
 
 ZmqSource::ZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                      const std::string& host, const uint16_t port, OperatorId operatorId)
-    : DataSource(schema, bufferManager, queryManager, operatorId), host(host.substr(0, host.find(":"))), port(port),
-      connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
+    : DataSource(schema, bufferManager, queryManager, operatorId), host(host), port(port), connected(false),
+      context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
 }
 
@@ -40,8 +40,7 @@ ZmqSource::~ZmqSource() {
     if (success) {
         NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
     } else {
-        NES_ERROR("ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
-        assert(0);
+        NES_THROW_RUNTIME_ERROR("ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected");
     }
     NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source");
 }

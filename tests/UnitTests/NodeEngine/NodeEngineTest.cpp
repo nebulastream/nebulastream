@@ -184,7 +184,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
  */
 class EngineTest : public testing::Test {
   public:
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("EngineTest.log", NES::LOG_DEBUG);
         remove(filePath.c_str());
         NES_INFO("Setup EngineTest test class.");

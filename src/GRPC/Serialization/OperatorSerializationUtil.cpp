@@ -23,9 +23,9 @@
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MergeLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -38,6 +38,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
@@ -77,9 +78,14 @@
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #endif
+#ifdef ENABLE_MQTT_BUILD
+#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#endif
+#ifdef ENABLE_MQTT_BUILD
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#endif
 
 namespace NES {
-
 SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodePtr operatorNode,
                                                                    SerializableOperator* serializedOperator) {
     NES_TRACE("OperatorSerializationUtil:: serialize operator " << operatorNode->toString());
@@ -111,13 +117,13 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
             ExpressionSerializationUtil::serializeExpression(exp, mutableExpression);
         }
         serializedOperator->mutable_details()->PackFrom(projectionDetail);
-    } else if (operatorNode->instanceOf<MergeLogicalOperatorNode>()) {
-        // serialize merge operator
-        NES_TRACE("OperatorSerializationUtil:: serialize to MergeLogicalOperatorNode");
-        auto mergeDetails = SerializableOperator_MergeDetails();
-        serializedOperator->mutable_details()->PackFrom(mergeDetails);
+    } else if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
+        // serialize union operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to UnionLogicalOperatorNode");
+        auto unionDetails = SerializableOperator_UnionDetails();
+        serializedOperator->mutable_details()->PackFrom(unionDetails);
     } else if (operatorNode->instanceOf<BroadcastLogicalOperatorNode>()) {
-        // serialize merge operator
+        // serialize broadcast operator
         NES_TRACE("OperatorSerializationUtil:: serialize to BroadcastLogicalOperatorNode");
         auto broadcastDetails = SerializableOperator_BroadcastDetails();
         serializedOperator->mutable_details()->PackFrom(broadcastDetails);
@@ -238,13 +244,12 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             exps.push_back(projectExpression);
         }
         operatorNode = LogicalOperatorFactory::createProjectionOperator(exps, serializedOperator->operatorid());
-    } else if (details.Is<SerializableOperator_MergeDetails>()) {
-        // de-serialize merge operator
-        NES_TRACE("OperatorSerializationUtil:: de-serialize to MergeLogicalOperator");
-        auto serializedMergeDescriptor = SerializableOperator_MergeDetails();
-        details.UnpackTo(&serializedMergeDescriptor);
-        // de-serialize merge descriptor
-        operatorNode = LogicalOperatorFactory::createMergeOperator(serializedOperator->operatorid());
+    } else if (details.Is<SerializableOperator_UnionDetails>()) {
+        // de-serialize union operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");
+        auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
+        details.UnpackTo(&serializedUnionDescriptor);
+        operatorNode = LogicalOperatorFactory::createUnionOperator(serializedOperator->operatorid());
     } else if (details.Is<SerializableOperator_BroadcastDetails>()) {
         // de-serialize broadcast operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to BroadcastLogicalOperator");
@@ -819,6 +824,23 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
                                                  zmqSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails->mutable_sourcedescriptor()->PackFrom(zmqSerializedSourceDescriptor);
     }
+#ifdef ENABLE_MQTT_BUILD
+    else if (sourceDescriptor->instanceOf<MQTTSourceDescriptor>()) {
+        // serialize MQTT source descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
+        auto mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
+        auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
+        mqttSerializedSourceDescriptor.set_serveraddress(mqttSourceDescriptor->getServerAddress());
+        mqttSerializedSourceDescriptor.set_clientid(mqttSourceDescriptor->getClientId());
+        mqttSerializedSourceDescriptor.set_topic(mqttSourceDescriptor->getTopic());
+        mqttSerializedSourceDescriptor.set_user(mqttSourceDescriptor->getUser());
+        // serialize source schema
+        SchemaSerializationUtil::serializeSchema(mqttSourceDescriptor->getSchema(),
+                                                 mqttSerializedSourceDescriptor.mutable_sourceschema());
+        sourceDetails->mutable_sourcedescriptor()->PackFrom(mqttSerializedSourceDescriptor);
+    }
+#endif
 #ifdef ENABLE_OPC_BUILD
     else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
         // serialize opc source descriptor
@@ -866,7 +888,7 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
                   "SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor");
         auto defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         auto defaultSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableDefaultSourceDescriptor();
-        defaultSerializedSourceDescriptor.set_frequency(defaultSourceDescriptor->getFrequency());
+        defaultSerializedSourceDescriptor.set_frequency(defaultSourceDescriptor->getFrequencyCount());
         defaultSerializedSourceDescriptor.set_numbufferstoprocess(defaultSourceDescriptor->getNumbersOfBufferToProduce());
         // serialize source schema
         SchemaSerializationUtil::serializeSchema(defaultSourceDescriptor->getSchema(),
@@ -890,7 +912,7 @@ OperatorSerializationUtil::serializeSourceSourceDescriptor(SourceDescriptorPtr s
         auto csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         csvSerializedSourceDescriptor.set_filepath(csvSourceDescriptor->getFilePath());
-        csvSerializedSourceDescriptor.set_frequency(csvSourceDescriptor->getFrequency());
+        csvSerializedSourceDescriptor.set_frequency(csvSourceDescriptor->getFrequencyCount());
         csvSerializedSourceDescriptor.set_delimiter(csvSourceDescriptor->getDelimiter());
         csvSerializedSourceDescriptor.set_numberoftuplestoproduceperbuffer(
             csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer());
@@ -946,6 +968,20 @@ OperatorSerializationUtil::deserializeSourceDescriptor(SerializableOperator_Sour
             ZmqSourceDescriptor::create(schema, zmqSerializedSourceDescriptor.host(), zmqSerializedSourceDescriptor.port());
         return ret;
     }
+#ifdef ENABLE_MQTT_BUILD
+    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor>()) {
+        // de-serialize mqtt source descriptor
+        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as MQTTSourceDescriptor");
+        auto mqttSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor();
+        serializedSourceDescriptor.UnpackTo(&mqttSerializedSourceDescriptor);
+        // de-serialize source schema
+        auto schema = SchemaSerializationUtil::deserializeSchema(mqttSerializedSourceDescriptor.release_sourceschema());
+        auto ret = MQTTSourceDescriptor::create(schema, mqttSerializedSourceDescriptor.serveraddress(),
+                                                mqttSerializedSourceDescriptor.clientid(), mqttSerializedSourceDescriptor.user(),
+                                                mqttSerializedSourceDescriptor.topic());
+        return ret;
+    }
+#endif
 #ifdef ENABLE_OPC_BUILD
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableOPCSourceDescriptor>()) {
         // de-serialize opc source descriptor
@@ -1043,6 +1079,12 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
                   "SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializablePrintSinkDescriptor();
         sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
+    } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
+        // serialize print sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
+                  "SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor");
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor();
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
     } else if (sinkDescriptor->instanceOf<ZmqSinkDescriptor>()) {
         // serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
@@ -1073,6 +1115,26 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
         opcSerializedSinkDescriptor.set_user(opcSinkDescriptor->getUser());
         opcSerializedSinkDescriptor.set_password(opcSinkDescriptor->getPassword());
         sinkDetails->mutable_sinkdescriptor()->PackFrom(opcSerializedSinkDescriptor);
+    }
+#endif
+#ifdef ENABLE_MQTT_BUILD
+    else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
+        // serialize MQTT sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
+                  "SerializableOperator_SourceDetails_SerializableMQTTSourceDescriptor");
+        auto mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
+        auto mqttSerializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
+        mqttSerializedSinkDescriptor.set_address(mqttSinkDescriptor->getAddress());
+        mqttSerializedSinkDescriptor.set_clientid(mqttSinkDescriptor->getClientId());
+        mqttSerializedSinkDescriptor.set_topic(mqttSinkDescriptor->getTopic());
+        mqttSerializedSinkDescriptor.set_user(mqttSinkDescriptor->getUser());
+        mqttSerializedSinkDescriptor.set_maxbufferedmsgs(mqttSinkDescriptor->getMaxBufferedMSGs());
+        mqttSerializedSinkDescriptor.set_timeunit(
+            (SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor_TimeUnits) mqttSinkDescriptor->getTimeUnit());
+        mqttSerializedSinkDescriptor.set_msgdelay(mqttSinkDescriptor->getMsgDelay());
+        mqttSerializedSinkDescriptor.set_asynchronousclient(mqttSinkDescriptor->getAsynchronousClient());
+
+        sinkDetails->mutable_sinkdescriptor()->PackFrom(mqttSerializedSinkDescriptor);
     }
 #endif
     else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
@@ -1138,6 +1200,10 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
         return PrintSinkDescriptor::create();
+    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor>()) {
+        // de-serialize print sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
+        return NullOutputSinkDescriptor::create();
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableZMQSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as ZmqSinkDescriptor");
@@ -1158,6 +1224,20 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         UA_NodeId nodeId = UA_NODEID_STRING(opcSerializedSinkDescriptor.namespaceindex(), ident);
         return OPCSinkDescriptor::create(opcSerializedSinkDescriptor.url(), nodeId, opcSerializedSinkDescriptor.user(),
                                          opcSerializedSinkDescriptor.password());
+    }
+#endif
+#ifdef ENABLE_MQTT_BUILD
+    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor>()) {
+        // de-serialize MQTT sink descriptor
+        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MQTTSinkDescriptor");
+        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
+        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
+        return MQTTSinkDescriptor::create(
+            serializedSinkDescriptor.address(), serializedSinkDescriptor.clientid(), serializedSinkDescriptor.topic(),
+            serializedSinkDescriptor.user(), serializedSinkDescriptor.maxbufferedmsgs(),
+            (MQTTSink::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
+            (MQTTSink::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
+            serializedSinkDescriptor.asynchronousclient());
     }
 #endif
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {

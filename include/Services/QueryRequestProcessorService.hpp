@@ -33,20 +33,17 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class QueryRewritePhase;
 typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 
-class QueryMergerPhase;
-typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
-
 class QueryPlacementPhase;
 typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
-
-class QueryPlacementRefinementPhase;
-typedef std::shared_ptr<QueryPlacementRefinementPhase> QueryPlacementRefinementPhasePtr;
 
 class QueryDeploymentPhase;
 typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
 
 class QueryUndeploymentPhase;
 typedef std::shared_ptr<QueryUndeploymentPhase> QueryUndeploymentPhasePtr;
+
+class GlobalQueryPlanUpdatePhase;
+typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
@@ -97,13 +94,11 @@ class QueryRequestProcessorService {
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
     QueryPlacementPhasePtr queryPlacementPhase;
-    QueryPlacementRefinementPhasePtr queryPlacementRefinementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     QueryRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    QueryMergerPhasePtr queryMergerPhase;
-    bool enableQueryMerging;
+    GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP

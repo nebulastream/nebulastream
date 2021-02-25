@@ -33,20 +33,22 @@
 #include <Sources/SourceCreator.hpp>
 #include <Sources/YSBSource.hpp>
 #include <Sources/ZmqSource.hpp>
+#include <chrono>
 
 #ifdef ENABLE_OPC_BUILD
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
-
 #endif
-
+#ifdef ENABLE_MQTT_BUILD
+#include <Sources/MQTTSource.hpp>
+#endif
 namespace NES {
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                                   NodeEngine::QueryManagerPtr queryManager,
                                                                   OperatorId operatorId) {
-    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1, operatorId);
+    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1000, operatorId);
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -60,7 +62,7 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(Nod
                                                                              NodeEngine::QueryManagerPtr queryManager,
                                                                              OperatorId operatorId) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager,
-                                           queryManager, /**bufferCnt*/ 1, /*frequency*/ 1, operatorId);
+                                           queryManager, /**bufferCnt*/ 1, /*frequency*/ 1000, operatorId);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -103,8 +105,10 @@ const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferMa
 
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
-                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize) {
-    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, operatorId);
+                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
+                                       std::chrono::milliseconds frequency) {
+    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess,
+                                          frequency, operatorId);
 }
 
 
@@ -136,6 +140,13 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerP
                                     NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId, std::string user,
                                     std::string password, OperatorId operatorId) {
     return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId);
+}
+#endif
+#ifdef ENABLE_MQTT_BUILD
+const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                     NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId,
+                                     std::string user, std::string topic, OperatorId operatorId) {
+    return std::make_shared<MQTTSource>(schema, bufferManager, queryManager, serverAddress, clientId, user, topic, operatorId);
 }
 #endif
 }// namespace NES

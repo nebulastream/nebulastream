@@ -38,3 +38,8 @@ if(NES_USE_OPC)
             OPCSource.cpp
     )
 endif()
+if(NES_USE_MQTT)
+    add_source_nes(
+            MQTTSource.cpp
+    )
+endif()

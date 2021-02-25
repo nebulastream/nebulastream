@@ -87,9 +87,9 @@ TEST_F(MonitoringStackTest, testCPUStats) {
     CpuMetrics cpuMetrics = cpuStats.measure();
     ASSERT_TRUE(cpuMetrics.getNumCores() > 0);
     for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
-        ASSERT_TRUE(cpuMetrics.getValues(i).USER > 0);
+        ASSERT_TRUE(cpuMetrics.getValues(i).user > 0);
     }
-    ASSERT_TRUE(cpuMetrics.getTotal().USER > 0);
+    ASSERT_TRUE(cpuMetrics.getTotal().user > 0);
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
@@ -236,29 +236,36 @@ TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     auto schema = Schema::create();
-    metricGroup->getSample(schema, tupleBuffer);
+    metricGroup->getSample(tupleBuffer);
 
-    ASSERT_EQ(schema->toString(), metricGroup->createGroupSchema()->toString());
+    //TODO: add assert to test that the schema is correct
+    NES_INFO(metricGroup->createSchema()->toString());
 }
 
+//TODO: tests are needed for the serialization of all metrics
 TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
     auto cpuStats = MetricUtils::CPUStats();
-
-    //test serialize method to append to existing schema and buffer
-    auto schema = Schema::create();
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    serialize(cpuStats.measure().getTotal(), schema, tupleBuffer, "TOTAL_");
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
+    auto measuredVal = cpuStats.measure().getTotal();
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
+    NES_DEBUG(measuredVal);
 }
 
 TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
-    NES_INFO("Starting test");
-    auto schema = Schema::create();
+    //TODO: assert missing
+    auto cpuStats = MetricUtils::CPUStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
-    auto cpuStats = MetricUtils::CPUStats();
-    serialize(cpuStats.measure(), schema, tupleBuffer, "");
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    auto measuredVal = cpuStats.measure();
+    writeToBuffer(measuredVal, tupleBuffer, 0);
+
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, getSchema(measuredVal, "")));
+    NES_DEBUG("Total: " << measuredVal.getTotal());
+    NES_DEBUG("CPU1: " << measuredVal.getValues(1));
+    NES_DEBUG("CPU" << measuredVal.getNumCores() << ": " << measuredVal.getValues(measuredVal.getNumCores() - 1));
 }
 
 TEST_F(MonitoringStackTest, testSerializationGroups) {
@@ -285,9 +292,9 @@ TEST_F(MonitoringStackTest, testSerializationGroups) {
     metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = Schema::create();
-    metricGroup->getSample(schema, tupleBuffer);
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+    metricGroup->getSample(tupleBuffer);
+
+    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
 }
 
 TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
@@ -314,17 +321,16 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
     metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
 
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = Schema::create();
+    metricGroup->getSample(tupleBuffer);
 
-    metricGroup->getSample(schema, tupleBuffer);
-
+    auto schema = metricGroup->createSchema();
     auto deserMem = MemoryMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::MEMORY_METRICS_DESC);
     ASSERT_TRUE(deserMem != MemoryMetrics{});
     ASSERT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
 
     auto deserCpu = CpuMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::CPU_METRICS_DESC);
     ASSERT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
-    ASSERT_TRUE(deserCpu.getValues(1).USER > 0);
+    ASSERT_TRUE(deserCpu.getValues(1).user > 0);
 
     auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::NETWORK_METRICS_DESC);
     ASSERT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
@@ -341,19 +347,18 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
     //worker side
     MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = Schema::create();
-    metricGroup->getSample(schema, tupleBuffer);
+    metricGroup->getSample(tupleBuffer);
 
     // coordinator side
+    auto schema = metricGroup->createSchema();
     GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
 
-    ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().USER > 0);
+    ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
     ASSERT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
     ASSERT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
 }
 
 TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
-
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 

@@ -115,7 +115,7 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
         }
         uint64_t cnt = logicalStreamToSchemaMapping.erase(logicalStreamName);
         NES_DEBUG("StreamCatalog: removed " << cnt << " copies of the stream");
-        assert(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName));
+        NES_ASSERT(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName), "log stream should not exist");
         return true;
     }
 }
