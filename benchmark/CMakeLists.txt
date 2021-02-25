@@ -118,19 +118,19 @@ if (NES_BUILD_BENCHMARKS)
     add_test(NAME e2e-select-query-benchmark COMMAND e2e-select-query-benchmark)
 
     ### E2e Benchmark window ###
-    add_executable(e2e-window-benchmark "E2ETests/E2EWindowBenchmark.cpp")
+    add_executable(e2e-window-benchmark "src/E2EBenchmarks/E2EWindowBenchmark.cpp")
     target_link_libraries(e2e-window-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-window-benchmark PUBLIC "E2ETests/E2EBase.cpp")
+    target_sources(e2e-window-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
     target_sources(e2e-window-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME e2e-window-benchmark COMMAND e2e-window-benchmark)
 
     ### Memory Layout Benchmark ###
-    add_executable(memory-layout-benchmark "BenchmarkSuite/BenchmarkMemoryLayout.cpp")
+    add_executable(memory-layout-benchmark "src/BenchmarkSuite/BenchmarkMemoryLayout.cpp")
     target_link_libraries(memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME memory-layout-benchmark COMMAND memory-layout-benchmark --benchmark_out=memory-layout-benchmark.log --benchmark_out_format=json)
 
     ### Dynamic Memory Layout Benchmark ###
-    add_executable(dynamic-memory-layout-benchmark "BenchmarkSuite/BenchmarkDynamicMemoryLayout.cpp")
+    add_executable(dynamic-memory-layout-benchmark "src/BenchmarkSuite/BenchmarkDynamicMemoryLayout.cpp")
     target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
 
