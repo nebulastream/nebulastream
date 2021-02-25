@@ -64,6 +64,9 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 
 namespace NES::Optimizer {
 
+class OperatorTupleSchemaMap;
+typedef std::shared_ptr<OperatorTupleSchemaMap> OperatorTupleSchemaMapPtr;
+
 class QuerySignature;
 typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
@@ -159,7 +162,7 @@ class QuerySignatureUtil {
      */
     static std::vector<z3::ExprPtr> substituteIntoInputExpression(z3::ContextPtr context, z3::ExprPtr inputExpr,
                                                            std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                           std::map<std::string, std::vector<z3::ExprPtr>>& columns);
+                                                           std::map<std::string, OperatorTupleSchemaMapPtr>& columns);
 
     /**
      * @brief substitute the operands within the input expression with the operand's expressions value computed by upstream
@@ -172,7 +175,7 @@ class QuerySignatureUtil {
      */
     static z3::ExprPtr substituteIntoInputExpressionFilter(z3::ContextPtr context, z3::ExprPtr inputExpr,
                                                            std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                           std::map<std::string, std::vector<z3::ExprPtr>>& columns);
+                                                           std::map<std::string, OperatorTupleSchemaMapPtr>& columns);
 };
 }// namespace NES::Optimizer
 
