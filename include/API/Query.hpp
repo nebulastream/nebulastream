@@ -113,7 +113,10 @@ class Query {
 
     /**
      * @brief This methods add the join operator to a query
-     * @param subQueryRhs is the query to be merged
+     * @param subQueryRhs subQuery to be joined
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param windowType Window definition.
      * @return
      */
     Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
