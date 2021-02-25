@@ -36,21 +36,29 @@ NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, Excha
     }
 }
 
+NetworkManager::~NetworkManager() {
+    destroy();
+}
+
 NetworkManagerPtr NetworkManager::create(const std::string& hostname, uint16_t port, Network::ExchangeProtocol&& exchangeProtocol,
                                          NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread) {
     return std::make_shared<NetworkManager>(hostname, port, std::move(exchangeProtocol), bufferManager, numServerThread);
+}
+
+void NetworkManager::destroy() {
+    server->stop();
 }
 
 bool NetworkManager::isPartitionRegistered(NesPartition nesPartition) const {
     return exchangeProtocol.getPartitionManager()->isRegistered(nesPartition);
 }
 
-uint64_t NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition) {
+bool NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition) {
     NES_DEBUG("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString());
     return exchangeProtocol.getPartitionManager()->registerSubpartition(nesPartition);
 }
 
-uint64_t NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) {
+bool NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) {
     NES_INFO("NetworkManager: Unregistering SubpartitionConsumer: " << nesPartition.toString());
     return exchangeProtocol.getPartitionManager()->unregisterSubpartition(nesPartition);
 }

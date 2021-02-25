@@ -380,9 +380,9 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     queryManager.reset();
+    networkManager->destroy();
     networkManager.reset();
     bufferManager.reset();
-    networkManager.reset();
     isReleased = true;
     return !withError;
 }
@@ -428,8 +428,10 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
     }
 }
 
-void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage) {
-    // nop
+void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
+    // propagate EOS to the locally running QEPs that use the network source
+    NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
+    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId());
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {

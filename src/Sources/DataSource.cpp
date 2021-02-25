@@ -80,6 +80,9 @@ bool DataSource::stop() {
         NES_DEBUG("DataSource " << operatorId << " is not running");
         return false;
     }
+    wasGracefullyStopped = true;
+    // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
+    // TODO in general this highlights how our source model has some issues
     running = false;
     bool ret = false;
 
@@ -100,18 +103,20 @@ bool DataSource::stop() {
                 ret = true;
                 thread.reset();
             } else {
-                NES_DEBUG("DataSource " << operatorId << ": Thread is not joinable");
+                NES_ERROR("DataSource " << operatorId << ": Thread is not joinable");
+                wasGracefullyStopped = false;
                 return false;
             }
         }
     } catch (...) {
         NES_ERROR("DataSource::stop error IN CATCH");
         auto expPtr = std::current_exception();
+        wasGracefullyStopped = false;
         try {
-            if (expPtr)
+            if (expPtr) {
                 std::rethrow_exception(expPtr);
-        } catch (const std::exception& e)// it would not work if you pass by value
-        {
+            }
+        } catch (const std::exception& e) {// it would not work if you pass by value
             NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
         }
     }
@@ -206,12 +211,12 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         } else {
             NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
                                     << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
-            return;
+            running = false;
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
-        NES_DEBUG("DataSource::runningRoutine: exist routine " << this);
     }
-    NES_WARNING("DataSource end running and produced buffers=" << cnt);
+    queryManager->addEndOfStream(operatorId, wasGracefullyStopped);
+    NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
 // debugging

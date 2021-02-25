@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
 #define NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
 
+#include <atomic>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
@@ -39,9 +40,23 @@ class ReconfigurationTask {
      * @param type what kind of reconfiguration we want
      * @param instance the target of the reconfiguration
      */
-    explicit ReconfigurationTask(const QuerySubPlanId parentPlanId, ReconfigurationType type, Reconfigurable* instance = nullptr)
-        : parentPlanId(parentPlanId), type(type), instance(instance), syncBarrier(nullptr), postSyncBarrier(nullptr) {
+    explicit ReconfigurationTask(const QuerySubPlanId parentPlanId, ReconfigurationType type, std::shared_ptr<Reconfigurable> instance = nullptr)
+        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr) {
         refCnt.store(0);
+    }
+
+    /**
+     * @brief create a reconfiguration task that will be passed to every running thread
+     * @param other the task we want to issue (created using the other ctor)
+     * @param numThreads number of running threads
+     */
+    explicit ReconfigurationTask(const QuerySubPlanId parentPlanId, ReconfigurationType type, uint64_t numThreads, std::shared_ptr<Reconfigurable> instance, bool blocking = false)
+        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), postSyncBarrier(nullptr) {
+        syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
+        refCnt.store(numThreads + (blocking ? 1 : 0));
+        if (blocking) {
+            postSyncBarrier = std::make_unique<ThreadBarrier>(numThreads + 1);
+        }
     }
 
     /**
@@ -86,7 +101,7 @@ class ReconfigurationTask {
      * @brief get the target instance to reconfigura
      * @return the target instance
      */
-    Reconfigurable* getInstance() const { return instance; };
+    std::shared_ptr<Reconfigurable> getInstance() const { return instance; };
 
     /**
      * @brief issue a synchronization barrier for all threads
@@ -98,7 +113,7 @@ class ReconfigurationTask {
      */
     void postReconfiguration() {
         if (refCnt.fetch_sub(1) == 1) {
-            instance->destroyCallback(*this);
+            instance->postReconfigurationCallback(*this);
             destroy();
         }
     }
@@ -126,7 +141,7 @@ class ReconfigurationTask {
     ReconfigurationType type;
 
     /// pointer to reconfigurable instance
-    Reconfigurable* instance;
+    std::shared_ptr<Reconfigurable> instance;
 
     /// pointer to initial thread barrier
     ThreadBarrierPtr syncBarrier;

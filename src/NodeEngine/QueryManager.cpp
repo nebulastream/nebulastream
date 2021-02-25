@@ -21,6 +21,7 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
@@ -82,7 +83,7 @@ bool QueryManager::startThreadPool() {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     NES_ASSERT(threadPool == nullptr, "thread pool already running");
-    threadPool = std::make_shared<ThreadPool>(nodeEngineId, shared_from_this(), numThreads);
+    threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads);
     return threadPool->start();
 }
 
@@ -188,73 +189,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     }
 #endif
     return true;
-}
-
-void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
-    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
-    std::unique_lock workQueueLock(workMutex);
-#ifdef EXTENDEDDEBUGGING
-    std::stringstream ss;
-    ss << " sourceid=" << operatorId << "map at operatorIdToQueryMap ";
-    for (std::map<uint64_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = operatorIdToQueryMap.begin();
-         it != operatorIdToQueryMap.end(); ++it) {
-        ss << " operatorId=" << it->first;
-        for (auto& a : it->second) {
-            ss << " \t qepID=" << a->getQueryId() << " subqep=" << a->getQuerySubPlanId() << " pipelines=" << a->getStageSize();
-        }
-    }
-
-    std::stringstream ss2;
-    ss2 << " sourceid=" << operatorId << "map at operatorIdToPipelineStage ";
-    for (std::map<uint64_t, uint64_t>::const_iterator it = operatorIdToPipelineStage.begin();
-         it != operatorIdToPipelineStage.end(); ++it) {
-        ss2 << " operatorId=" << it->first << " pipeStage=" << it->second;
-    }
-
-    std::stringstream ss3;
-    ss3 << " sourceid=" << operatorId << "map at queryMapToOperatorId ";
-    for (std::map<uint64_t, std::vector<uint64_t>>::const_iterator it = queryMapToOperatorId.begin();
-         it != queryMapToOperatorId.end(); ++it) {
-        ss3 << " queryID=" << it->first;
-        for (auto& a : it->second) {
-            ss3 << "operatorId=" << a;
-        }
-    }
-
-    NES_TRACE(ss.str());
-    NES_TRACE(ss2.str());
-    NES_TRACE(ss3.str());
-#endif
-    NES_VERIFY(operatorIdToQueryMap[operatorId].size() > 0, "Operator id to query map for operator is empty");
-    for (const auto& qep : operatorIdToQueryMap[operatorId]) {
-        // for each respective source, create new task and put it into queue
-        // TODO: change that in the future that stageId is used properly
-        if (operatorIdToPipelineStage.find(operatorId) == operatorIdToPipelineStage.end()) {
-            NES_THROW_RUNTIME_ERROR("Operator ID=" << operatorId << " not found in mapping table");
-        }
-        uint64_t stageId = operatorIdToPipelineStage[operatorId];
-        NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
-
-        //TODO: here we should maybe reduce slow down the sources
-
-        auto tryCnt = 0;
-        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            waitCounter++;
-            if (tryCnt++ == 100) {
-                //we have to do this because it could be that a source is stuck here and then the shutdown crashes
-                break;
-            }
-        }
-
-        //TODO: this is a problem now as it can become the bottleneck
-        taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
-
-        NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
-                                                         << " for QEP " << qep << " inputBuffer " << buf
-                                                         << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
-    }
-    cv.notify_all();
 }
 
 bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
@@ -370,6 +304,32 @@ bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
 }
 
 bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
+#if 1
+    NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId());
+    bool ret = true;
+    std::unique_lock lock(queryMutex);
+    // here im using COW to avoid keeping the lock for long
+    // however, this is not a long-term fix
+    // because it wont lead to correct behaviour
+    // under heavy query deployment ops
+    auto sources = qep->getSources();
+    auto copiedSources = std::vector(sources.begin(), sources.end());
+    lock.unlock();
+    for (const auto& source : copiedSources) {
+        if (!std::dynamic_pointer_cast<Network::NetworkSourcePtr>(source)) {
+            source->stop();
+        }
+    }
+    if (qep->getTerminationFuture().get() != Execution::ExecutableQueryPlanResult::Ok) {
+        NES_FATAL_ERROR("QueryManager: QEP " << qep->getQuerySubPlanId() << " could not be stopped");
+        ret = false;
+    };
+    if (ret) {
+        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()), true);
+    }
+    NES_DEBUG("QueryManager::stopQuery: query" << qep << " was " << (ret ? "successful" : " not successful"));
+    return ret;
+#else
     NES_DEBUG("QueryManager::stopQuery: query" << qep);
     bool ret = true;
     {
@@ -414,13 +374,70 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
         sink->shutdown();
     }
     if (ret) {
-        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this), true);
+        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()), true);
     }
     return ret;
+#endif
+}
+
+void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
+    std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
+    std::unique_lock workQueueLock(workMutex);
+#ifdef EXTENDEDDEBUGGING
+    std::stringstream ss;
+    ss << " sourceid=" << operatorId << "map at operatorIdToQueryMap ";
+    for (std::map<uint64_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = operatorIdToQueryMap.begin();
+         it != operatorIdToQueryMap.end(); ++it) {
+        ss << " operatorId=" << it->first;
+        for (auto& a : it->second) {
+            ss << " \t qepID=" << a->getQueryId() << " subqep=" << a->getQuerySubPlanId() << " pipelines=" << a->getStageSize();
+        }
+    }
+
+    std::stringstream ss2;
+    ss2 << " sourceid=" << operatorId << "map at operatorIdToPipelineStage ";
+    for (std::map<uint64_t, uint64_t>::const_iterator it = operatorIdToPipelineStage.begin();
+         it != operatorIdToPipelineStage.end(); ++it) {
+        ss2 << " operatorId=" << it->first << " pipeStage=" << it->second;
+    }
+
+    std::stringstream ss3;
+    ss3 << " sourceid=" << operatorId << "map at queryMapToOperatorId ";
+    for (std::map<uint64_t, std::vector<uint64_t>>::const_iterator it = queryMapToOperatorId.begin();
+         it != queryMapToOperatorId.end(); ++it) {
+        ss3 << " queryID=" << it->first;
+        for (auto& a : it->second) {
+            ss3 << "operatorId=" << a;
+        }
+    }
+
+    NES_TRACE(ss.str());
+    NES_TRACE(ss2.str());
+    NES_TRACE(ss3.str());
+#endif
+    NES_VERIFY(operatorIdToQueryMap[operatorId].size() > 0, "Operator id to query map for operator is empty");
+    for (const auto& qep : operatorIdToQueryMap[operatorId]) {
+        // for each respective source, create new task and put it into queue
+        // TODO: change that in the future that stageId is used properly
+        if (operatorIdToPipelineStage.find(operatorId) == operatorIdToPipelineStage.end()) {
+            NES_THROW_RUNTIME_ERROR("Operator ID=" << operatorId << " not found in mapping table");
+        }
+        uint64_t stageId = operatorIdToPipelineStage[operatorId];
+        NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
+
+        //TODO: this is a problem now as it can become the bottleneck
+        taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
+
+        NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
+                                                         << " for QEP " << qep << " inputBuffer " << buf
+                                                         << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
+    }
+    cv.notify_all();
 }
 
 bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask descriptor, bool blocking) {
-    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask begins on plan " << queryExecutionPlanId);
+    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask begins on plan " << queryExecutionPlanId << " blocking=" << blocking <<
+              " type " << descriptor.getType());
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
@@ -446,6 +463,41 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
     if (blocking) {
         task->postWait();
         task->postReconfiguration();
+    }
+    return true;
+}
+
+bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
+    std::shared_lock queryLock(queryMutex);
+    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId);
+    NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
+    for (const auto& qep : operatorIdToQueryMap[sourceId]) {
+        auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
+        NES_ASSERT(!!optBuffer, "invalid buffer");
+        auto buffer = optBuffer.value();
+        auto queryExecutionPlanId = qep->getQuerySubPlanId();
+        new (buffer.getBuffer())
+            ReconfigurationTask(queryExecutionPlanId, EndOfStream, threadPool->getNumberOfThreads(), qep);
+        auto pipelineContext = std::make_shared<Execution::PipelineExecutionContext>(
+            queryExecutionPlanId, bufferManager,
+            [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
+            },
+            [](TupleBuffer&) {
+            },
+            std::vector<Execution::OperatorHandlerPtr>());
+        auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
+                                                              nullptr, nullptr, nullptr, true);
+        {
+            std::unique_lock lock(workMutex);
+            for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+                if (graceful) {
+                    taskQueue.emplace_back(pipeline, buffer);
+                } else {
+                    taskQueue.emplace_front(pipeline, buffer);
+                }
+            }
+            cv.notify_all();
+        }
     }
     return true;
 }
@@ -591,8 +643,8 @@ void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context
     }
 }
 
-void QueryManager::destroyCallback(ReconfigurationTask& task) {
-    Reconfigurable::destroyCallback(task);
+void QueryManager::postReconfigurationCallback(ReconfigurationTask& task) {
+    Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case Destroy: {
             auto qepId = task.getParentPlanId();

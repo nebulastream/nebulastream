@@ -55,6 +55,12 @@ class ZmqServer : public boost::noncopyable {
      */
     bool start();
 
+
+    /**
+    * Start the server. It throws exceptions if the stopping fails.
+    */
+    bool stop();
+
     /**
      * Get the global zmq context
      * @return

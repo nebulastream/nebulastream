@@ -21,6 +21,8 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
 #include <vector>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/ReconfigurationTask.hpp>
 
 namespace NES::NodeEngine::Execution {
 
@@ -29,7 +31,7 @@ namespace NES::NodeEngine::Execution {
  * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
-class ExecutablePipeline {
+class ExecutablePipeline : public Reconfigurable {
   public:
     explicit ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
                                 PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline,
@@ -126,6 +128,9 @@ class ExecutablePipeline {
      * @return string containing the generated code as string
      */
     std::string getCodeAsString();
+
+    void reconfigure(ReconfigurationTask& task, WorkerContext& context) override;
+    void postReconfigurationCallback(ReconfigurationTask& task) override;
 
   private:
     uint32_t pipelineStageId;
