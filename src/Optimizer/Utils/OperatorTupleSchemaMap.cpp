@@ -18,11 +18,17 @@
 
 namespace NES::Optimizer {
 
+OperatorTupleSchemaMap::OperatorTupleSchemaMap() : schemaMaps() {}
+
 OperatorTupleSchemaMap::OperatorTupleSchemaMap(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps)
     : schemaMaps(schemaMaps) {}
 
 OperatorTupleSchemaMapPtr OperatorTupleSchemaMap::create(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps) {
     return std::make_shared<OperatorTupleSchemaMap>(OperatorTupleSchemaMap(schemaMaps));
+}
+
+OperatorTupleSchemaMapPtr OperatorTupleSchemaMap::createEmpty() {
+    return std::make_shared<OperatorTupleSchemaMap>(OperatorTupleSchemaMap());
 }
 
 const std::vector<std::map<std::string, z3::ExprPtr>>& OperatorTupleSchemaMap::getSchemaMaps() const { return schemaMaps; }

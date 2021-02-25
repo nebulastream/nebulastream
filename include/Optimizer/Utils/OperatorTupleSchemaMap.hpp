@@ -44,6 +44,8 @@ class OperatorTupleSchemaMap {
   public:
     static OperatorTupleSchemaMapPtr create(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps);
 
+    static OperatorTupleSchemaMapPtr createEmpty();
+
     /**
      * @brief Get the vector of Schema maps
      * @return a vector of schema maps
@@ -51,6 +53,7 @@ class OperatorTupleSchemaMap {
     const std::vector<std::map<std::string, z3::ExprPtr>>& getSchemaMaps() const;
 
   private:
+    OperatorTupleSchemaMap();
     OperatorTupleSchemaMap(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps);
     std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
 };
