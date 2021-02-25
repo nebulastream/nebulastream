@@ -121,7 +121,7 @@ void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
     serv_addr.sin_port = htons(PORT);
     //172.16.0.254
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    if (inet_pton(AF_INET, "172.16.0.254", &serv_addr.sin_addr) <= 0) {
         NES_ERROR("Invalid address/ Address not supported ");
         return;
     }
