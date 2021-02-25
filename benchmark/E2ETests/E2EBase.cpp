@@ -92,7 +92,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         while (curTime < nextPeriodStartTime) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::seconds(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS));
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
@@ -246,7 +246,7 @@ void E2EBase::runQuery(std::string query) {
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     //give the system some seconds to come to steady mode
-    sleep(1);
+    sleep(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS);
 
     auto start = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(start);
