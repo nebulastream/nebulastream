@@ -65,61 +65,15 @@ namespace NES {
  *
  * @return
  */
-//    std::string KafkaSink::confToString() { return KafkaSink::config->toString(); }
-
-//
-//    void KafkaSink::writeData2222(std::string path)
-//    {
-//        std::string myValue = "Hello World";
-//        std::string msgsFailedToBeSent;
-//
-//        try {
-//            std::ifstream input(path);
-//            //        std::cout << "Topics: " << _topics.size()<<std::endl;
-//            //        std::cout << "Partitions: " << _partitions.size()<<std::endl;
-//            if (_partitions.empty()) {
-//                for (std::string line; getline(input, line);) {
-//                    std::cout << "Writing line: " << line << std::endl;
-//                    for (int i = 0; i < _topics.size(); i++) {
-//                        // writing the same data to all of the topics
-//                        auto record =
-//                            NES_KAFKA::ProducerRecord(_topics[i], NES_KAFKA::Key(), NES_KAFKA::Value(line.c_str(), line.size()));
-//                        this->producer->send(record);
-//                    }
-//                }
-//            } else {
-//                for (std::string line; getline(input, line);) {
-//                    std::cout << "Writing line: " << line << std::endl;
-//                    auto iterator = _partitions.begin();// {{1,2},{1,3}}, first take {1,2} for _topics[0]
-//                    // writing the same data to all of the topics
-//                    for (int i = 0; i < _topics.size(); i++) {
-//                        foreach (auto partition, *iterator) {
-//                            // for now same data to all of the partitions, how to split the data?
-//                            auto record = NES_KAFKA::ProducerRecord(_topics[i], partition, NES_KAFKA::Key(),
-//                                                                    NES_KAFKA::Value(line.c_str(), line.size()));
-//                            this->producer->send(record);
-//                        }
-//                        ++iterator;
-//                    }
-//                }
-//            }
-//
-//        } catch (const NES_KAFKA::KafkaException& e) {
-//            std::cout << "Error" << std::endl;
-//            //        LOG_ERROR("Cannot send out message with err={0}", e.what());
-//            //        msgsFailedToBeSent.emplace(msg); // Push it back to another list to handle with them later
-//        }
-//    }
 
     bool KafkaSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext&)
     {
         NES_ASSERT2(_topics.size() == 1, "Currently we support only 1 topic but provided "<< _topics.size());
         // there is space for improvement, you can specify multiple topics, each with its own specific partitions -> simple change of the logic
-        std::cout << "Topics: " << _topics.size()<<std::endl; // ALWAYS EXPECT ONE TOPIC FOR SIMPLICITY
-        std::cout << "Partitions: " << _partitions[0].size()<<std::endl; // give me number of partitions specified fo the only topic!!!
+        std::cout << "Topics: " << _topics.size()<<std::endl;
+        std::cout << "Partitions: " << _partitions[0].size()<<std::endl; // give me number of partitions specified for the only topic!!!
         auto numberOfPArtitions = _partitions[0].size();
         int round_robin = 0;
-//        std::stringstream ss;
         auto numberOfTuples = inputBuffer.getNumberOfTuples();
         auto buffer = inputBuffer.getBufferAs<char>();
         auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -144,7 +98,6 @@ namespace NES {
                     }
                     offset += fieldSize;
                 }
-//                ss << std::endl;
                 std::cout << "Writing line: " << ss.str();
                 for (int k = 0; k < _topics.size(); k++) {
                     // writing the same data to all of the topics!!!
@@ -180,34 +133,33 @@ namespace NES {
                 auto iterator = _partitions.begin();// {{1,2},{0}}, first take {1,2} for _topics[0]
                 auto partitions_for_first_topic = _partitions[0];
 
-                // writing the same data to all of the topics
                 for (int k = 0; k < _topics.size(); k++) {
                     std::cout << "Topic " << _topics[k]<< std::endl;
                     std::cout << "Partition number: " << iterator->size()<< std::endl;
                     if(iterator->size()==1)
                     {
                         // always write in this partition for the specific topic
-                        foreach (auto partition, *iterator) {
-                                std::cout << "1Partition " << partition << std::endl;
+                                foreach (auto partition, *iterator) {
+                                        std::cout << "1Partition " << partition << std::endl;
                                         auto record = NES_KAFKA::ProducerRecord(_topics[k],
                                                                                 partition,
                                                                                 NES_KAFKA::Key(),
                                                                                 NES_KAFKA::Value(ss.str().c_str(), ss.str().size()));
 //                                        this->producer->send(record);
-                            }
+                                    }
 
                     }
                     else // there are more partitions for a specific topic
                     {
 
 //                        foreach (auto partition, *iterator) {
-                                std::cout<<"Partition " << partitions_for_first_topic[round_robin%numberOfPArtitions]<< std::endl;
+                        std::cout<<"Partition " << partitions_for_first_topic[round_robin%numberOfPArtitions]<< std::endl;
 
-                                  auto record = NES_KAFKA::ProducerRecord(_topics[k],
-                                                                         partitions_for_first_topic[round_robin%numberOfPArtitions],
-                                                                          NES_KAFKA::Key(),
-                                                                        NES_KAFKA::Value(ss.str().c_str(), ss.str().size()));
-//                                  this->producer->send(record);
+                        auto record = NES_KAFKA::ProducerRecord(_topics[k],
+                                                                partitions_for_first_topic[round_robin%numberOfPArtitions],
+                                                                NES_KAFKA::Key(),
+                                                                NES_KAFKA::Value(ss.str().c_str(), ss.str().size()));
+//                        this->producer->send(record);
 //                          }
                     }
                     round_robin++;
@@ -218,50 +170,17 @@ namespace NES {
 
         }
         return true;
-// sudo  docker run \
-//    --net=host \
-//    --rm \
-//    confluentinc/cp-kafka \
-//    kafka-console-consumer --bootstrap-server localhost:29092 --topic bar --from-beginning --max-messages 100
 
 
-
-//    auto dataBuffers = sinkFormat->getData(inputBuffer);
-//    for (auto buffer : dataBuffers)
-//    {
-//        NES_DEBUG("KafkaSink::getData: write buffer of size " << buffer.getNumberOfTuples());
-//        if (sinkFormat->getSinkFormat() == NES_FORMAT)
-//        {
-//            //std::cout<<(char*) buffer.getBuffer()<<std::endl;
-//            for(auto tuple : *buffer.getBufferAs<std::string>())
-//            {
-//                std::cout<<tuple<<std::endl;
-//
-//            }
-//
-////                outputFile.write((char*) buffer.getBuffer(),
-////                                 buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
-//        }
-////            else
-////            {
-//////                outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
-////            }
-        //}
 
     }
 
-// FIXME
     void KafkaSink::shutdown() {}
 
-// FIXME
     void KafkaSink::setup() {}
 
     std::string KafkaSink::toString() { return "KafkaSink"; }
 
-// FIXME
-    const std::string KafkaSink::toString() const { return std::string(); }
-
-// FIXME
-    SinkMediumTypes KafkaSink::getSinkMediumType() { return NETWORK_SINK; }
+    SinkMediumTypes KafkaSink::getSinkMediumType() { return KAFKA_SINK; }
 
 };
