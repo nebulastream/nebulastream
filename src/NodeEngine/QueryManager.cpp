@@ -232,16 +232,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
 
-        //TODO: change this static rule a better one
-        //Rule: Only add a new task only if half of the buffers are free
-        //TODO: write a paper about the best condition here
-        //TODO: here we can run in a deadlock such that we cannot stop the sources because we are trapped in this while loop
-        auto tryCnt = 0;
-        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() / (bufferManager->getNumOfPooledBuffers() * 0.1) && tryCnt != 10 ) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            waitCounter++;
-            tryCnt++;
-        }
+        //TODO: here we should maybe reduce slow down the sources
 
         //TODO: this is a problem now as it can become the bottleneck
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
