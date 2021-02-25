@@ -1,0 +1,10 @@
+- name: Start nebula container
+  docker_container:
+    docker_api_version: "{{docker_api_version}}"
+    name: "{{nebula_build_image_name}}"
+    image:  "{{nebula_build_image_name}}:{{nebula_build_image_tag }}"
+    env:
+      DEBUG: "false"
+    volumes:
+      - "/home/yao/Codes/nebulastream/:{{app_root_dir}}/volume"
+  when: to_run_nebula_container == "y"

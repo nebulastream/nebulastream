@@ -155,6 +155,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         // Compile legacy operators with qep builder.
         auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()
                               .setQueryManager(queryManager)
+                              // .setQueryStatistics(queryStatistics)
                               .setBufferManager(bufferManager)
                               .setCompiler(queryCompiler)
                               .setQueryId(queryId)
@@ -186,7 +187,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             auto sinkDescriptor = sink->getSinkDescriptor();
             auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, self, querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, self, querySubPlanId, queryStatistics);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
@@ -203,6 +204,11 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
+
+    // M2.2
+    // like this?
+    auto queryStatistics = std::make_shared<NodeEngine::QueryStatistics>(0);
+
     NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << queryExecutionPlan << " queryId=" << queryId
                                                              << " querySubPlanId =" << querySubPlanId);
     NES_ASSERT(queryManager->isThreadPoolRunning(), "Registering query but thread pool not running");
@@ -385,6 +391,9 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     queryManager.reset();
+    // TODO: destroy method of queryStatistics needs to be implemented
+    queryStatistics->destroy();
+    queryStatistics.reset();
     networkManager.reset();
     bufferManager.reset();
     networkManager.reset();
@@ -424,7 +433,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
         NES_DEBUG("NodeEngine::onDataBuffer addWork operator=" << nesPartition.getOperatorId() << " buffer=" << buffer
                                                                << " numberOfTuples=" << buffer.getNumberOfTuples()
                                                                << " orid=" << buffer.getOriginId());
-        queryManager->addWork(nesPartition.getOperatorId(), buffer);
+        queryManager->addWork(nesPartition.getOperatorId(), buffer, true);
     } else {
         // partition is not registered, discard the buffer
         buffer.release();

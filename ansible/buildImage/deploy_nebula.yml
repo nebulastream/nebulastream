@@ -1,0 +1,25 @@
+---
+- hosts: "{{host_group}}"
+  remote_user: "{{remote_user}}"
+  vars_prompt:
+    - name: "remote_user"
+      prompt: "Remote User ? [yao,...]"
+      private: no
+    - name: "host_group"
+      prompt: "host group? [localhost, nebula_server]"
+      private: no
+      default: "localhost"
+    - name: "to_build_nebula_image"
+      prompt: "Deploy The nebula_build image ? [y|n]"
+      private: no
+      default: "y"
+    - name: "build_without_cache"
+      prompt: "build Docker images without cache? [y|n]"
+      private: no
+      default: "y"
+
+  vars_files:
+    - group_vars/main.yml
+    - group_vars/private.yml
+  roles:
+    - { role: build_nebula_image, when: to_build_nebula_image == "y" }

@@ -126,7 +126,8 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                 // qep not found in list, add it
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << sourceOperatorID);
                 operatorIdToQueryMap[sourceOperatorID].insert(qep);
-                queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
+                // M4?
+                queryToStatisticsMap.insert(qep->getQuerySubPlanId(), qep->getQueryStatistics());
                 //                NES_DEBUG("QueryManager: Join QEP already found " << qep << " to Source" << source->getOperatorId() << " add pipeline stage 1");
                 //                operatorIdToPipelineStage[source->getOperatorId()] = 1;
             } else {
@@ -138,7 +139,8 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             NES_DEBUG("QueryManager: Source " << sourceOperatorID << " not found. Creating new element with with qep " << qep);
             std::unordered_set<Execution::ExecutableQueryPlanPtr> qepSet = {qep};
             operatorIdToQueryMap[sourceOperatorID] = qepSet;
-            queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
+            // M4?
+            queryToStatisticsMap.insert(qep->getQuerySubPlanId(), qep->getQueryStatistics());
             queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorID);
             if (isBinaryOperator) {
                 NES_ASSERT(executablePipelines.size() >= 2, "Binary operator must have at least two pipelines");
@@ -163,7 +165,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     return true;
 }
 
-void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
+void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf, bool isNetworkBuffer) {
     std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
     std::unique_lock workQueueLock(workMutex);
 #ifdef EXTENDEDDEBUGGING
@@ -202,6 +204,13 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     for (const auto& qep : operatorIdToQueryMap[operatorId]) {
         // for each respective source, create new task and put it into queue
         // TODO: change that in the future that stageId is used properly
+        if (isNetworkBuffer == true)
+        {
+          auto queryStatistics = qep->getQueryStatistics();
+          queryStatistics->incReceivedBuffers();
+          queryStatistics->incReceivedBytes(buf->getBufferSize());
+        }
+
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);

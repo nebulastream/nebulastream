@@ -22,11 +22,12 @@
 
 namespace NES::NodeEngine::Execution {
 
+// M3, in GeneratedQueryExecutionPlanBuilder::build() have the previously-created QueryStatistic object stored inside the ExecutableQueryPlan
 ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
                                          std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& pipelines,
-                                         QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
+                                         QueryManagerPtr&& queryManager, QueryStatisticsPtr&& queryStatistics, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
-      pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
+      pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), queryStatistics(std::move(queryStatistics)), bufferManager(std::move(bufferManager)),
       qepStatus(Created) {
     // nop
 }
@@ -122,6 +123,9 @@ bool ExecutableQueryPlan::start() {
 uint32_t ExecutableQueryPlan::getNumberOfPipelines() { return pipelines.size(); }
 
 QueryManagerPtr ExecutableQueryPlan::getQueryManager() { return queryManager; }
+
+// M3, getter
+QueryStatisticsPtr ExecutableQueryPlan::getQueryStatistics() { return queryStatistics; }
 
 BufferManagerPtr ExecutableQueryPlan::getBufferManager() { return bufferManager; }
 

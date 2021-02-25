@@ -41,6 +41,12 @@ void QueryStatistics::incProcessedTasks() { this->processedTasks++; }
 void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 
+void QueryStatistics::incReceivedBuffers() { this->receivedBuffers++; }
+void QueryStatistics::incSentBuffers() { this->sentBuffers++; }
+void QueryStatistics::incReceivedBytes(uint64_t numBytes) { this->receivedbytes += numBytes; }
+void QueryStatistics::incSentBytes(uint64_t numBytes) { this->sentBytes += numBytes; }
+// getters too later
+
 void QueryStatistics::setProcessedBuffers(const std::atomic<uint64_t>& processedBuffers) {
     this->processedBuffers = processedBuffers.load();
 }
@@ -51,6 +57,19 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedTuple=" << processedTuple;
     ss << " processedBuffers=" << processedBuffers;
     ss << " processedWatermarks=" << processedWatermarks;
+    // add too
     return ss.str();
+}
+
+void QueryStatistics::destroy() {
+    std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
+    // NES_DEBUG("QueryStatistics: Destroy Task Queue " << taskQueue.size());
+    // taskQueue.clear();
+    // NES_DEBUG("QueryStatistics: Destroy queryId_to_query_map " << operatorIdToQueryMap.size());
+    //
+    // operatorIdToQueryMap.clear();
+    // queryToStatisticsMap.clear();
+    //
+    // NES_DEBUG("QueryStatistics::resetQueryManager finished");
 }
 }// namespace NES::NodeEngine

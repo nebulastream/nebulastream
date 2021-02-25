@@ -1,0 +1,20 @@
+---
+- hosts: "{{host_group}}"
+  remote_user: "{{remote_user}}"
+  vars_prompt:
+    - name: "remote_user"
+      prompt: "Remote User ? [yao,...]"
+      private: no
+    - name: "host_group"
+      prompt: "host group? [localhost, nebula_server]"
+      private: no
+      default: "localhost"
+    - name: "to_build_base_image"
+      prompt: "build base image? [y|n]"
+      private: no
+      default: "n"
+  vars_files:
+    - group_vars/main.yml
+    - group_vars/private.yml
+  roles:
+    - { role: build_base_image, when: to_build_base_image == "y" }

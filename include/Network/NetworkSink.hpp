@@ -40,7 +40,7 @@ class NetworkSink : public SinkMedium {
      */
     explicit NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkManagerPtr networkManager,
                          const NodeLocation nodeLocation, NesPartition nesPartition, NodeEngine::BufferManagerPtr bufferManager,
-                         NodeEngine::QueryManagerPtr queryManager, std::chrono::seconds waitTime = std::chrono::seconds(5),
+                         NodeEngine::QueryManagerPtr queryManager, std::chrono::seconds waitTime = std::chrono::seconds(5), NodeEngine::QueryStatisticsPtr queryStatistics,
                          uint8_t retryTimes = 10);
 
     ~NetworkSink();
@@ -66,6 +66,7 @@ class NetworkSink : public SinkMedium {
     NodeEngine::QueryManagerPtr queryManager;
     const NodeLocation nodeLocation;
     NesPartition nesPartition;
+    QueryStatisticsPtr queryStatistics;
 
     const std::chrono::seconds waitTime;
     const uint8_t retryTimes;

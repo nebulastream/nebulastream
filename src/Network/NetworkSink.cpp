@@ -60,13 +60,14 @@ void NetworkSink::shutdown() {
 
 const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
 
+// M6,
 void NetworkSink::reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);
     Reconfigurable::reconfigure(task, workerContext);
     switch (task.getType()) {
         case NodeEngine::Initialize: {
             //            NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Running, "parent plan not running on net sink " << nesPartition);
-            auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
+            auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes, queryStatistics);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
             NES_DEBUG("NetworkSink: reconfigure() stored channel on " << nesPartition.toString() << " Thread "

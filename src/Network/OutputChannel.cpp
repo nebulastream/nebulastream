@@ -26,14 +26,15 @@
 namespace NES {
 namespace Network {
 
-OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string address)
-    : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(address), isClosed(false) {
+OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string address, QueryStatisticsPtr queryStatistics)
+    : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(address), isClosed(false), queryStatistics(queryStatistics) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 
+// M6
 std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> zmqContext, const std::string socketAddr,
                                                      NesPartition nesPartition, ExchangeProtocol& protocol,
-                                                     std::chrono::seconds waitTime, uint8_t retryTimes) {
+                                                     std::chrono::seconds waitTime, uint8_t retryTimes, QueryStatisticsPtr queryStatistics) {
     int linger = -1;
     try {
         ChannelId channelId(nesPartition, NodeEngine::NesThread::getId());
@@ -72,7 +73,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
 
                     if (serverReadyMsg->isOk() && !serverReadyMsg->isPartitionNotFound()) {
                         NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for " << channelId);
-                        return std::make_unique<OutputChannel>(std::move(zmqSocket), channelId, socketAddr);
+                        return std::make_unique<OutputChannel>(std::move(zmqSocket), channelId, socketAddr, queryStatistics);
                     }
                     protocol.onChannelError(Messages::ErrorMessage(channelId, serverReadyMsg->getErrorType()));
                     break;
@@ -121,6 +122,8 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     if (payloadSize == 0) {
         return true;
     }
+    queryStatistics->incSentBuffers();
+    queryStatistics->incSentBytes(payloadSize);
     sendMessage<Messages::DataBufferMessage, kSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark);
     inputBuffer.retain();
     auto sentBytesOpt =

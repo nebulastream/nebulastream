@@ -13,3 +13,7 @@ docker/executableImage/resources/NebulaStream*.deb
 
 # Python virtual environment
 venv
+
+# Ansible vault data
+*vault_pass.txt
+*private.yml

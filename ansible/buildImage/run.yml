@@ -1,0 +1,19 @@
+- hosts: "{{host_group}}"
+  remote_user: "{{remote_user}}"
+  vars_prompt:
+    - name: "remote_user"
+      prompt: "Remote User ? [yao,...]"
+      private: no
+    - name: "host_group"
+      prompt: "host group? [localhost, nebula_server]"
+      private: no
+      default: "localhost"
+    - name: "to_run_nebula_container"
+      prompt: "run the container for the nebula build image? [y|n]"
+      private: no
+      default: "n"
+  vars_files:
+    - group_vars/main.yml
+    - group_vars/private.yml
+  tasks:
+    - include_tasks: tasks/run_containers.yml

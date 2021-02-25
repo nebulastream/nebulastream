@@ -26,6 +26,7 @@ GeneratedQueryExecutionPlanBuilder::GeneratedQueryExecutionPlanBuilder() {
     setBufferManager(nullptr);
     setQueryManager(nullptr);
     setCompiler(nullptr);
+    setQueryStatistics(nullptr);
     setQueryId(0);
 }
 
@@ -53,11 +54,20 @@ GeneratedQueryExecutionPlanBuilder::setQueryManager(NodeEngine::QueryManagerPtr 
     return *this;
 }
 
+GeneratedQueryExecutionPlanBuilder&
+GeneratedQueryExecutionPlanBuilder::setQueryStatistics(NodeEngine::QueryStatisticsPtr queryStatistics) {
+    this->queryStatistics = std::move(queryStatistics);
+    return *this;
+}
+
 NodeEngine::QueryManagerPtr GeneratedQueryExecutionPlanBuilder::getQueryManager() const { return queryManager; }
+// M3, getter
+NodeEngine::QueryStatisticsPtr GeneratedQueryExecutionPlanBuilder::getQueryStatistics() const { return queryStatistics; }
 
 NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder::build() {
     NES_ASSERT(bufferManager, "GeneratedQueryExecutionPlanBuilder: Invalid bufferManager");
     NES_ASSERT(queryManager, "GeneratedQueryExecutionPlanBuilder: Invalid queryManager");
+    NES_ASSERT(queryStatistics, "GeneratedQueryExecutionPlanBuilder: Invalid queryStatistics");
     NES_ASSERT(!sources.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sources");
     NES_ASSERT(!sinks.empty(), "GeneratedQueryExecutionPlanBuilder: Invalid number of sinks");
     NES_ASSERT(queryId != INVALID_QUERY_ID, "GeneratedQueryExecutionPlanBuilder: Invalid Query Id");
@@ -74,7 +84,7 @@ NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder
 
     return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources),
                                                                         std::move(sinks), std::move(pipelines),
-                                                                        std::move(queryManager), std::move(bufferManager));
+                                                                        std::move(queryManager), std::move(queryStatistics), std::move(bufferManager));
 }
 
 std::vector<DataSinkPtr>& GeneratedQueryExecutionPlanBuilder::getSinks() { return sinks; }

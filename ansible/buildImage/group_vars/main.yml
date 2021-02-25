@@ -1,0 +1,14 @@
+app_user: yao
+app_root_dir: "/home/{{ app_user }}/code"
+
+docker_build_dir: /tmp/docker_build
+base_image_name: nebula_build_base_image
+base_image_tag: "1.0"
+
+# nebula build settings
+nebula_build_repo_branch: master
+nebula_build_image_name: nebula_build
+nebula_build_image_tag: "1.0"
+nebula_build_image_state: build
+
+docker_api_version: "1.37"

@@ -1,0 +1,35 @@
+- name: Create build directory
+  file: >
+      dest="{{ item }}"
+      state=directory
+      mode=0700
+  with_items:
+      - "{{ docker_build_dir }}"
+  when: to_build_base_image == "y"
+
+- name: Move templates to build location
+  template: >
+      src="{{ item.src }}"
+      dest="{{ docker_build_dir }}/{{ item.dest }}"
+      mode="{{item.mode}}"
+  with_items:
+      - { src: "Dockerfile", dest: "Dockerfile", mode: "0644" }
+      - { src: "init.sh", dest: "init.sh", mode: "0644" }
+      - { src: "supervisord.conf", dest: "supervisord.conf", mode: "0644" }
+      - { src: ".aliases", dest: ".aliases", mode: "0644" }
+      - { src: ".bashrc", dest: ".bashrc", mode: "0644" }
+      - { src: ".gitattributes", dest: ".gitattributes", mode: "0644" }
+      - { src: ".gitconfig", dest: ".gitconfig", mode: "0644" }
+      - { src: ".gitignore", dest: ".gitignore", mode: "0644" }
+  when: to_build_base_image == "y"
+
+
+- name: create docker image
+  command: docker build --build-arg gittoken={{github_token}} -t {{ base_image_name }}:{{ base_image_tag }} .
+  args:
+      chdir: "{{ docker_build_dir }}"
+  when: to_build_base_image == "y"
+
+- name: Clean build location
+  file: dest={{ docker_build_dir }} state=absent
+  when: to_build_base_image == "y"
