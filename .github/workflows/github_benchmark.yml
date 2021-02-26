@@ -3,7 +3,7 @@ name: NES Benchmark
 on:
   schedule:
     # executes every day at 1:15 am
-    - cron: '15 1 * * *'
+    - cron: '* * * * *'
   workflow_dispatch:
     inputs:
       trigger-value:
@@ -13,7 +13,7 @@ on:
 
 jobs:  
   benchmark-scheduled-job:
-    if: "contains(github.event.inputs.trigger-value, 'No_Value')"
+    if: ${{ !github.event.schedule }}
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
@@ -38,7 +38,7 @@ jobs:
           external_repository: nebulastream/nes-server
           publish_branch: master
   benchmark-triggered-job:
-    if: "!contains(github.event.inputs.trigger-value, 'No_Value')"
+    if: "contains(github.event.inputs.trigger-value, 'trigger benchmark')"
     runs-on: [self-hosted, CI-2]
     timeout-minutes: 60
     steps:
