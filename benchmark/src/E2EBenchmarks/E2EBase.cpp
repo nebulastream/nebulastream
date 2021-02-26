@@ -21,7 +21,7 @@ const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 5;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_NONE;
+const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
@@ -180,7 +180,7 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-//                auto ts = time(0);//TODO activate this later if we really use it
+                //                auto ts = time(0);//TODO activate this later if we really use it
                 for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
