@@ -39,7 +39,7 @@ jobs:
           publish_branch: master
   benchmark-triggered-job:
     if: "contains(github.event.inputs.trigger-value, 'trigger benchmark')"
-    runs-on: [ self-hosted, Benchmark ]
+    runs-on: [self-hosted, linux, X64, Benchmark]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v2
