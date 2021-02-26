@@ -211,7 +211,7 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
         NES_DEBUG("DataSource::runningRoutine: exist routine " << this);
     }
-    NES_WARNING("DataSource end running");
+    NES_WARNING("DataSource end running and produced buffers=" << cnt);
 }
 
 // debugging
