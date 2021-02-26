@@ -70,9 +70,10 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()");
-    if(waitCounter != 0)
-    {
-        NES_ERROR("QueryManager waitCounter=" << waitCounter << " which means the source was blocked and could produce in full-speed this is maybe a problem");
+    if (waitCounter != 0) {
+        NES_ERROR("QueryManager waitCounter="
+                  << waitCounter
+                  << " which means the source was blocked and could produce in full-speed this is maybe a problem");
     }
     destroy();
 }
@@ -240,8 +241,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             waitCounter++;
-            if(tryCnt++ == 100)
-            {
+            if (tryCnt++ == 100) {
                 //we have to do this because it could be that a source is stuck here and then the shutdown crashes
                 break;
             }
