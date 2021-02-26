@@ -14,7 +14,7 @@ on:
 jobs:
   benchmark-scheduled-job:
     if: ${{ github.event.schedule }}
-    runs-on: [ self-hosted, Benchmark ]
+    runs-on: [self-hosted, Benchmark]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v2
