@@ -388,7 +388,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
     //Substitute rhs operands with actual values computed previously
     std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaMaps;
     for (auto schemaMap : schemaMaps) {
-        z3::ExprPtr updatedExpr = mapExpr;
+        z3::ExprPtr updatedMapExpr = mapExpr;
         for (auto [operandExprName, operandExpr] : rhsOperandFieldMap) {
 
             auto found = schemaMap.find(operandExprName);
@@ -407,9 +407,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
             to.push_back(*derivedOperandExpr);
 
             //Perform replacement
-            updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
+            updatedMapExpr = std::make_shared<z3::expr>(updatedMapExpr->substitute(from, to));
         }
-        schemaMap[fieldName] = mapExpr;
+        schemaMap[fieldName] = updatedMapExpr;
         updatedSchemaMaps.push_back(schemaMap);
     }
     auto updatedOperatorTupleSchemaMap = OperatorTupleSchemaMap::create(updatedSchemaMaps);
@@ -440,16 +440,49 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
 
     NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
               "children signatures");
-    //As filter can't have more than 1 children so fetch the only child signature
-    auto columns = childQuerySignature->getColumns();
+    //Fetch the signature of only children and get the column values
+    auto operatorTupleSchemaMap = childQuerySignature->getOperatorTupleSchemaMap();
+    auto schemaMaps = operatorTupleSchemaMap->getSchemaMaps();
 
-    auto filterCondition = substituteIntoInputExpressionFilter(context, filterExpr, filterFieldMap, columns);
+    //Substitute rhs operands with actual values computed previously
+    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaMaps;
+    z3::expr_vector filterExpressions(*context);
+    for (auto schemaMap : schemaMaps) {
+        z3::ExprPtr updatedExpr = filterExpr;
+        for (auto [operandExprName, operandExpr] : filterFieldMap) {
+
+            auto found = schemaMap.find(operandExprName);
+            if (found == schemaMap.end()) {
+                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: " + operandExprName + " doesn't exists");
+            }
+
+            //Change from
+            z3::expr_vector from(*context);
+            from.push_back(*operandExpr);
+
+            //Change to
+            //Fetch the modified operand expression to be substituted
+            auto derivedOperandExpr = found->second;
+            z3::expr_vector to(*context);
+            to.push_back(*derivedOperandExpr);
+
+            //Perform replacement
+            updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
+        }
+        filterExpressions.push_back(*updatedExpr);
+    }
+
+    auto filterConditions = z3::mk_or(filterExpressions);
 
     //Compute a CNF condition using the children and filter conditions
     auto childConditions = childQuerySignature->getConditions();
-    Z3_ast array[] = {*filterCondition, *childConditions};
+    Z3_ast array[] = {filterConditions, *childConditions};
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_and(*context, 2, array)));
-    return QuerySignature::create(conditions, columns, childQuerySignature->getWindowsExpressions());
+
+    auto windowExpressions = childQuerySignature->getWindowsExpressions();
+    auto columns = childQuerySignature->getColumns();
+
+    return QuerySignature::create(conditions, columns, operatorTupleSchemaMap, windowExpressions);
 }
 
 QuerySignaturePtr
@@ -504,8 +537,9 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
     //    auto attributeMap = childQuerySignature->getAttributeMap();
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     auto columns = childQuerySignature->getColumns();
+    auto operatorTupleSchemaMap = childQuerySignature->getOperatorTupleSchemaMap();
 
-    return QuerySignature::create(conditions, columns, windowExpressions);
+    return QuerySignature::create(conditions, columns, operatorTupleSchemaMap, windowExpressions);
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr context,
@@ -516,63 +550,57 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     if (children.size() != 2) {
         NES_THROW_RUNTIME_ERROR("Join operator can have only 2 children. Found " + std::to_string(children.size()));
     }
-    auto intermediateQuerySignature = buildQuerySignatureForChildren(context, children);
+    auto leftSchema = joinOperator->getLeftInputSchema();
 
-    auto conditions = intermediateQuerySignature->getConditions();
-    //    auto attributeMap = intermediateQuerySignature->getAttributeMap();
-    auto columns = intermediateQuerySignature->getColumns();
+    //Identify the left and right schema
+    QuerySignaturePtr leftSignature;
+    QuerySignaturePtr rightSignature;
+    for (auto& child : children) {
+        auto childOperator = child->as<LogicalOperatorNode>();
+        if (childOperator->getOutputSchema()->equals(leftSchema)) {
+            leftSignature = childOperator->getSignature();
+        } else {
+            rightSignature = childOperator->getSignature();
+        }
+    }
 
     //Find the left and right join key
     auto joinDefinition = joinOperator->getJoinDefinition();
     auto leftJoinKey = joinDefinition->getLeftJoinKey();
     auto rightJoinKey = joinDefinition->getRightJoinKey();
-
-    //Find the left key expression
-    auto leftChild = children[0]->as<LogicalOperatorNode>();
     auto leftKeyName = leftJoinKey->getFieldName();
-
-    std::vector<z3::ExprPtr> leftKeyExpressions;
-    //Iterate over left source names and try to find the expression for left join key
-    if (columns.find(leftKeyName) == columns.end()) {
-        NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Left join key " + leftKeyName + " does not exists in the attribute map.");
-    }
-
-    if (columns.find(leftKeyName) != columns.end()) {
-        leftKeyExpressions = columns[leftKeyName];
-    }
-
-    //Find the right key expression
-    auto rightChild = children[1]->as<LogicalOperatorNode>();
     auto rightKeyName = rightJoinKey->getFieldName();
 
-    std::vector<z3::ExprPtr> rightKeyExpressions;
-    if (columns.find(rightKeyName) == columns.end()) {
-        NES_THROW_RUNTIME_ERROR("Unexpected behaviour! Right join key " + rightKeyName
-                                + " does not exists in the attribute map.");
-    }
+    //merge columns from both children
+    std::vector<std::string> columns = leftSignature->getColumns();
+    columns.insert(columns.end(), rightSignature->getColumns().begin(), rightSignature->getColumns().end());
 
-    //Find the expression for the right join key expected attribute name
-    if (columns.find(rightKeyName) != columns.end()) {
-        rightKeyExpressions = columns[rightKeyName];
-    }
+    //Merge the Operator Tuple Schemas
+    std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
+    auto leftOperatorTupleSchemaMap = leftSignature->getOperatorTupleSchemaMap();
+    auto rightOperatorTupleSchemaMap = rightSignature->getOperatorTupleSchemaMap();
 
-    NES_ASSERT(leftKeyExpressions.empty() || rightKeyExpressions.empty(),
-               "Unexpected behaviour! Unable to find right or left join key ");
-
-    //Compute the equi join condition
-    z3::expr_vector joinConditions(*context);
-
-    for (auto& leftKeyExpr : leftKeyExpressions) {
-        for (auto& rightKeyExpr : rightKeyExpressions) {
-            auto joinCondition = z3::to_expr(*context, Z3_mk_eq(*context, *leftKeyExpr, *rightKeyExpr));
-            joinConditions.push_back(joinCondition);
+    z3::expr_vector joinPredicates{*context};
+    for (auto leftSchemaMap : leftOperatorTupleSchemaMap->getSchemaMaps()) {
+        std::map<std::string, z3::ExprPtr> schemaMap = leftSchemaMap;
+        auto leftPredicate = schemaMap[leftKeyName];
+        for (auto rightSchemaMap : rightOperatorTupleSchemaMap->getSchemaMaps()) {
+            schemaMap.insert(rightSchemaMap.begin(), rightSchemaMap.end());
+            auto rightPredicate = schemaMap[rightKeyName];
+            auto joinPredicate = z3::to_expr(*context, Z3_mk_eq(*context, *leftPredicate, *rightPredicate));
+            joinPredicates.push_back(joinPredicate);
         }
+        schemaMaps.push_back(schemaMap);
     }
 
-    auto joinPredicate = z3::mk_and(joinConditions);
-    //CNF the watermark conditions to the original condition
-    Z3_ast andConditions[] = {*conditions, joinPredicate};
-    conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
+    auto operatorTupleSchemaMap = OperatorTupleSchemaMap::create(schemaMaps);
+
+    auto joinCondition = z3::mk_or(joinPredicates);
+
+    //CNF join predicates and conditions from both children
+    Z3_ast andConditions[] = {*leftSignature->getConditions(), *rightSignature->getConditions(), joinCondition};
+    auto conditions =
+        std::make_shared<z3::expr>(z3::to_expr(*context, z3::to_expr(*context, Z3_mk_and(*context, 3, andConditions))));
 
     //Compute the expression for window time key
     auto windowType = joinDefinition->getWindowType();
@@ -610,7 +638,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     z3::expr windowTimeSlideVal = context->int_val(slide);
     auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
     auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
-    auto windowExpressions = intermediateQuerySignature->getWindowsExpressions();
 
     //Compute join window key expression
     auto windowKeyVar = context->constant(context->str_symbol("window-key"), context->string_sort());
@@ -622,14 +649,25 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
                                 windowTimeSizeExpression};
 
+    std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
+
+    for (auto [rightWindowKey, rightWindowExpr] : rightSignature->getWindowsExpressions()) {
+        if (windowExpressions.find(rightWindowKey) == windowExpressions.end()) {
+            windowExpressions[rightWindowKey] = rightWindowExpr;
+        } else {
+            //TODO: as part of #1377
+            NES_NOT_IMPLEMENTED();
+        }
+    }
+
     if (windowExpressions.find(windowKey) == windowExpressions.end()) {
         windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
     } else {
         //TODO: as part of #1377
         NES_NOT_IMPLEMENTED();
     }
-    //    auto sources = intermediateQuerySignature->getSources();
-    return QuerySignature::create(conditions, columns, windowExpressions);
+
+    return QuerySignature::create(conditions, columns, operatorTupleSchemaMap, windowExpressions);
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPtr context,
@@ -692,84 +730,4 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
     return QuerySignature::create(conditions, leftColumns, operatorTupleSchemaMap, windowExpressions);
 }
-
-std::vector<z3::ExprPtr>
-QuerySignatureUtil::substituteIntoInputExpression(const z3::ContextPtr context, const z3::ExprPtr inputExpr,
-                                                  std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                  std::map<std::string, OperatorTupleSchemaMapPtr>& columns) {
-    std::vector<z3::ExprPtr> outputExpr;
-    //Loop over the Operand Fields contained in the input expression
-
-    auto size = columns.begin()->second.size();
-
-    for (uint32_t i = 0; i < size; i++) {
-        z3::ExprPtr updatedExpr = inputExpr;
-        for (auto [operandExprName, operandExpr] : operandFieldMap) {
-
-            if (columns.find(operandExprName) == columns.end()) {
-                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName
-                                        + " that doesn't exists");
-            }
-
-            //Change from
-            z3::expr_vector from(*context);
-            from.push_back(*operandExpr);
-
-            //Change to
-            //Fetch the modified operand expression to be substituted
-            auto derivedOperandExpr = columns[operandExprName][i];
-            z3::expr_vector to(*context);
-            to.push_back(*derivedOperandExpr);
-
-            //Perform replacement
-            updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
-        }
-        outputExpr.push_back(updatedExpr);
-    }
-    return outputExpr;
-}
-
-z3::ExprPtr QuerySignatureUtil::substituteIntoInputExpressionFilter(z3::ContextPtr context, z3::ExprPtr inputExpr,
-                                                                    std::map<std::string, z3::ExprPtr>& operandFieldMap,
-                                                                    std::map<std::string, OperatorTupleSchemaMapPtr>& columns) {
-    z3::ExprPtr outputExpr;
-    //Loop over the Operand Fields contained in the input expression
-
-    auto size = columns.begin()->second->getColExpressions().size();
-
-    for (auto [operandExprName, operandExpr] : operandFieldMap) {
-        if (columns.find(operandExprName) == columns.end()) {
-            NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName + " that doesn't exists");
-        }
-    }
-
-    z3::expr_vector filterExpressions(*context);
-
-    for (uint32_t i = 0; i < size; i++) {
-        z3::ExprPtr updatedExpr = inputExpr;
-        for (auto [operandExprName, operandExpr] : operandFieldMap) {
-
-            if (columns.find(operandExprName) == columns.end()) {
-                NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: We can't assign attribute " + operandExprName
-                                        + " that doesn't exists");
-            }
-
-            //Change from
-            z3::expr_vector from(*context);
-            from.push_back(*operandExpr);
-
-            //Change to
-            //Fetch the modified operand expression to be substituted
-            auto derivedOperandExpr = columns[operandExprName][i];
-            z3::expr_vector to(*context);
-            to.push_back(*derivedOperandExpr);
-
-            //Perform replacement
-            updatedExpr = std::make_shared<z3::expr>(updatedExpr->substitute(from, to));
-        }
-        filterExpressions.push_back(*updatedExpr);
-    }
-    return std::make_shared<z3::expr>(z3::mk_or(filterExpressions));
-}
-
 }// namespace NES::Optimizer
