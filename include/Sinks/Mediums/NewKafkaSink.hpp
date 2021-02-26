@@ -79,7 +79,7 @@ namespace NES {
          *
          * @return
          */
-        std::string toString();
+        std::string toString() override;
 
 
         /**
@@ -87,7 +87,7 @@ namespace NES {
          *
          * @return
          */
-        const std::string toString() const;
+        const std::string toString() const override;
 
 
         /**
