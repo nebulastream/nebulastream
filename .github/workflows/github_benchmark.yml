@@ -13,7 +13,7 @@ on:
 
 jobs:  
   benchmark-scheduled-job:
-    if: ${{ !github.event.schedule }}
+    if: ${{ github.event.schedule }}
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
