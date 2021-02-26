@@ -3,7 +3,7 @@ name: NES Benchmark
 on:
   schedule:
     # executes every day at 1:15 am
-    - cron: '* * * * *'
+    - cron: '15 1 * * *'
   workflow_dispatch:
     inputs:
       trigger-value:
@@ -11,9 +11,9 @@ on:
         required: false
         default: 'No_Value'
 
-jobs:  
+jobs:
   benchmark-scheduled-job:
-    if: ${{ github.event.schedule }}
+    if: ${{ !github.event.schedule }}
     runs-on: self-hosted
     timeout-minutes: 60
     steps:
@@ -39,7 +39,7 @@ jobs:
           publish_branch: master
   benchmark-triggered-job:
     if: "contains(github.event.inputs.trigger-value, 'trigger benchmark')"
-    runs-on: [self-hosted, CI-2]
+    runs-on: [ self-hosted, CI-2 ]
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v2
