@@ -1,14 +1,13 @@
+#include <gtest/gtest.h>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
-#include <gtest/gtest.h>
 #include <KafkaConnectorConfiguration.hpp>
 #include <boost/algorithm/string.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
-
-
+#include <Sinks/Mediums/NewKafkaSink.hpp>
 
 #include <Util/Logger.hpp>
 #include <fstream>
@@ -71,7 +70,7 @@ namespace NES {
     {
         uint64_t generated_tuples_this_pass;
         bool write_result;
-        std::string path_to_csv_file = "/home/djordjije/Desktop/nebulastream/tests/test_data/ysb5MB.csv";
+        std::string path_to_csv_file = "/home/djordjije/Desktop/nebulastream/tests/test_data/ysb-tuples-100-campaign-100.csv";
         char* path = realpath(path_to_csv_file.c_str(), NULL);
         NES_DEBUG("KafkaSinkTest: Opening path " << path);
         input.open(path);
@@ -85,14 +84,6 @@ namespace NES {
         TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking(); // empty tuple buffer
         NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId()); // worker context
 
-//        struct Record {
-//            uint64_t key;
-//            uint64_t timestamp;
-//        };
-//        static_assert(sizeof(Record) == 16);
-//        auto schema = Schema::create()
-//                ->addField("key", DataTypeFactory::createUInt64())
-//                ->addField("timestamp", DataTypeFactory::createUInt64());
         auto schema = Schema::create()
                 ->addField("user_id", DataTypeFactory::createUInt64())
                 ->addField("page_id", DataTypeFactory::createUInt64())
@@ -202,7 +193,6 @@ namespace NES {
             write_result = kafkaSink->writeData(buffer,wctx);
         }
         EXPECT_TRUE(write_result);
-        buf.release();
 
         SUCCEED();
     }

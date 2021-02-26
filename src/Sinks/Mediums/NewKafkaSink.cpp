@@ -45,26 +45,6 @@ namespace NES {
  *
  * @return
  */
-//    KafkaSinkConfiguration& KafkaSink::createConfiguration()
-//    {
-//        config = std::make_unique<KafkaSinkConfiguration>();
-//        return *config;
-//    }
-
-
-/**
- * TODO: comment
- *
- * @return
- */
-//    KafkaSinkConfiguration& KafkaSink::configuration() { return *KafkaSink::config; }
-
-
-/**
- * TODO: comment
- *
- * @return
- */
 
     bool KafkaSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext&)
     {
@@ -145,7 +125,7 @@ namespace NES {
                                                                                 partition,
                                                                                 NES_KAFKA::Key(),
                                                                                 NES_KAFKA::Value(ss.str().c_str(), ss.str().size()));
-                                        this->producer->send(record);
+//                                        this->producer->send(record);
                             }
 
                     }
@@ -159,7 +139,7 @@ namespace NES {
                                                                          partitions_for_first_topic[round_robin%numberOfPArtitions],
                                                                           NES_KAFKA::Key(),
                                                                         NES_KAFKA::Value(ss.str().c_str(), ss.str().size()));
-                                  this->producer->send(record);
+//                                  this->producer->send(record);
 //                          }
                     }
                     round_robin++;
@@ -179,7 +159,13 @@ namespace NES {
 
     void KafkaSink::setup() {}
 
-    std::string KafkaSink::toString() { return "KafkaSink"; }
+    std::string KafkaSink::toString() { return "KAFKA_SINK"; }
+    const std::string KafkaSink::toString() const {
+        std::stringstream ss;
+        ss << "KafkaSink(";
+        ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
+        return ss.str();
+    }
 
     SinkMediumTypes KafkaSink::getSinkMediumType() { return KAFKA_SINK; }
 
