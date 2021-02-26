@@ -3,7 +3,7 @@ name: NES Benchmark
 on:
   schedule:
     # executes every day at 1:15 am
-    - cron: '* * * * *'
+    - cron: '*/1 * * * *'
   workflow_dispatch:
     inputs:
       trigger-value:
