@@ -21,9 +21,6 @@ then
     cd /nebulastream/build
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
-    if test -f *.deb; then
-        rm *.deb
-    fi
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/$($ACTUAL_TRIPLE)" -DCPPRESTSDK_DIR="/usr/lib/$($ACTUAL_TRIPLE)/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make version
     make -j4
@@ -34,7 +31,7 @@ then
     fi
     for i in build/*.deb;
     do
-      [ -f "$i" ] && cp "$i" docker/executableImage/resources/$i.$ACTUAL_TRIPLE;
+      [ -f "$i" ] && cp "$i" docker/executableImage/resources/;
     done
     result=$?
     rm -rf /nebulastream/build
