@@ -41,7 +41,7 @@ int main() {
                                                          E2EBase::InputOutputMode::MemMode};
     //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemMode};
     //            std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
-    //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
+//        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
 
     //roughly 2 out of 3 filds were removed
     string query = "Query::from(\"input\").project(Attribute(\"id\")).sink(NullOutputSinkDescriptor::create());";

@@ -122,7 +122,7 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(e2e-window-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
     target_sources(e2e-window-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
     target_sources(e2e-window-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-window-query-benchmark COMMAND e2e-window-query-benchmark)
+    #add_test(NAME e2e-window-query-benchmark COMMAND e2e-window-query-benchmark)
 
     ### Memory Layout Benchmark ###
     add_executable(memory-layout-benchmark "src/BenchmarkSuite/BenchmarkMemoryLayout.cpp")

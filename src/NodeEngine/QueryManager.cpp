@@ -70,8 +70,10 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()");
-    NES_WARNING("QueryManager waitCnt=" << waitCounter);
-    NES_VERIFY(waitCounter == 0, "buffer manager stalled this should not happen");
+    if(waitCounter != 0)
+    {
+        NES_ERROR("QueryManager waitCounter=" << waitCounter << " which means the source was blocked and could produce in full-speed this is maybe a problem");
+    }
     destroy();
 }
 
@@ -233,6 +235,17 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
 
         //TODO: here we should maybe reduce slow down the sources
+
+        auto tryCnt = 0;
+        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            waitCounter++;
+            if(tryCnt++ == 100)
+            {
+                //we have to do this because it could be that a source is stuck here and then the shutdown crashes
+                break;
+            }
+        }
 
         //TODO: this is a problem now as it can become the bottleneck
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
