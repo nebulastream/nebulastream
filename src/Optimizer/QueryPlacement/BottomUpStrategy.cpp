@@ -119,8 +119,7 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
             return;
         }
 
-        NES_TRACE("BottomUpStrategy: Find a node reachable from all topology nodes where child operators are placed. Child Topology node size ");
-        NES_DEBUG("BottomUpStrategy: childTopologyNodes.size()" << childTopologyNodes.size());
+        NES_TRACE("BottomUpStrategy: Find a node reachable from all topology nodes where child operators are placed.");
         if (childTopologyNodes.size() == 1) {
             candidateTopologyNode = childTopologyNodes[0];
         } else {

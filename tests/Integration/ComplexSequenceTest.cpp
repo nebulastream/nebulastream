@@ -63,7 +63,7 @@ class ComplexSequenceTest : public testing::Test {
 /*
  * @brief Test a query with a single window operator and a single join operator running on a single node
  */
-TEST_F(ComplexSequenceTest, SN_SW_SJ) {
+TEST_F(ComplexSequenceTest, complexTestSingleNodeSingleWindowSingleJoin) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -126,10 +126,9 @@ TEST_F(ComplexSequenceTest, SN_SW_SJ) {
         }
     };
 
-    // TODO #1533: Explain the result
     std::vector<Output> expectedOutput = {{0, 2000, 4, 8},
                                           {0, 2000, 12, 12}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -144,7 +143,7 @@ TEST_F(ComplexSequenceTest, SN_SW_SJ) {
 /*
  * @brief Test a query with a single window operator and a single join operator running on a single node
  */
-TEST_F(ComplexSequenceTest, DN_SW_SJ) {
+TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -179,6 +178,11 @@ TEST_F(ComplexSequenceTest, DN_SW_SJ) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 4);
 
+    // Check if the topology matches the expected hierarchy
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1);
+
     testHarness.pushElement<Window1>({1, 1000}, 2);
     testHarness.pushElement<Window2>({12, 1001}, 2);
     testHarness.pushElement<Window2>({4, 1002}, 2);
@@ -208,10 +212,9 @@ TEST_F(ComplexSequenceTest, DN_SW_SJ) {
         }
     };
 
-    // TODO #1533: Explain the result
     std::vector<Output> expectedOutput = {{1000, 2000, 4, 8},
                                           {1000, 2000, 12, 12}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -248,7 +251,7 @@ TEST_F(ComplexSequenceTest, DN_SW_SJ) {
  *  |  |  SINK(21)
  *  |  |    SOURCE(2,window2)
  */
-TEST_F(ComplexSequenceTest, SN_MW_MJ) {
+TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -365,7 +368,7 @@ TEST_F(ComplexSequenceTest, SN_MW_MJ) {
 /*
  * @brief Test a query with a single window operator and a single join operator running on a single node
  */
-TEST_F(ComplexSequenceTest, DN_MW_MJ) {
+TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoins) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -408,13 +411,19 @@ TEST_F(ComplexSequenceTest, DN_MW_MJ) {
     testHarness.addNonSourceWorker();
     testHarness.addNonSourceWorker();
     testHarness.addNonSourceWorker();
-    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(1));
-    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(2));
-    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(3));
+    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(0));
+    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));
+    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(2));
 
     ASSERT_EQ(testHarness.getWorkerCount(), 6);
 
-    // TODO: assert topology form
+    testHarness.getTopology()->print();
+
+    // Check if the topology matches the expected hierarchy
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 3);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 1);
 
     testHarness.pushElement<Window1>({1, 1000}, 3);
     testHarness.pushElement<Window2>({12, 1001}, 3);
@@ -467,7 +476,9 @@ TEST_F(ComplexSequenceTest, DN_MW_MJ) {
                                           {1000,1010,12,48},
                                           {1010,1020,12,96}};
 
-    // TODO: Change to bottom up
+    // FIXME: This test should use the `BottomUp` placement to demonstrate the orchestration of multiple window and join \
+    //  operators between the topology nodes. However, currently the BottomUp throws error when executed using this query and \
+    //  topology. (Issue #1631)
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
