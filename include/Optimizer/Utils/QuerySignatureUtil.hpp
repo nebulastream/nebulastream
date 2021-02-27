@@ -57,6 +57,9 @@ typedef std::shared_ptr<ProjectionLogicalOperatorNode> ProjectionLogicalOperator
 class WatermarkAssignerLogicalOperatorNode;
 typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
 
+class SourceLogicalOperatorNode;
+typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
