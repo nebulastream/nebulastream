@@ -85,13 +85,6 @@ class QuerySignatureUtil {
     static QuerySignaturePtr createQuerySignatureForOperator(z3::ContextPtr context, OperatorNodePtr operatorNode);
 
   private:
-    /**
-     * @brief Compute a CNF representation of Conds based on signatures from children operators
-     * @param context : z3 context
-     * @param children : immediate children operators
-     * @return Signature based on children signatures
-     */
-    static QuerySignaturePtr buildQuerySignatureForChildren(z3::ContextPtr context, std::vector<NodePtr> children);
 
     /**
      * @brief Compute query signature for Source operator
