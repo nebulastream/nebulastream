@@ -19,6 +19,7 @@
 
 #include <Network/NetworkMessage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <iostream>
 #include <memory>
 #include <zmq.hpp>
