@@ -51,8 +51,8 @@ typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
 class UnionLogicalOperatorNode;
 typedef std::shared_ptr<UnionLogicalOperatorNode> UnionLogicalOperatorNodePtr;
 
-class RenameStreamOperatorNode;
-typedef std::shared_ptr<RenameStreamOperatorNode> RenameStreamOperatorNodePtr;
+class ProjectionLogicalOperatorNode;
+typedef std::shared_ptr<ProjectionLogicalOperatorNode> ProjectionLogicalOperatorNodePtr;
 
 class WatermarkAssignerLogicalOperatorNode;
 typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
@@ -85,7 +85,6 @@ class QuerySignatureUtil {
     static QuerySignaturePtr createQuerySignatureForOperator(z3::ContextPtr context, OperatorNodePtr operatorNode);
 
   private:
-
     /**
      * @brief Compute query signature for Source operator
      * @param context: z3 context

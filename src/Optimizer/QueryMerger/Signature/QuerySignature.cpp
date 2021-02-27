@@ -21,18 +21,17 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
-                                         std::map<std::string, z3::ExprPtr> windowsExpressions/*,
-                                         std::map<std::string, std::vector<std::string>> attributeMap,
-                                         std::vector<std::string> sources*/) {
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::vector<std::string> columns,
+                                         OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
+                                         std::map<std::string, z3::ExprPtr> windowsExpressions) {
     return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, operatorTupleSchemaMap, windowsExpressions));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
-                               std::map<std::string, z3::ExprPtr> windowsExpressions/*,
-                               std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources*/)
-    : conditions(conditions), columns(columns), operatorTupleSchemaMap(operatorTupleSchemaMap), windowsExpressions(windowsExpressions)/*, attributeMap(attributeMap),
-      sources(sources)*/ {}
+QuerySignature::QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns,
+                               OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
+                               std::map<std::string, z3::ExprPtr> windowsExpressions)
+    : conditions(conditions), columns(columns), operatorTupleSchemaMap(operatorTupleSchemaMap),
+      windowsExpressions(windowsExpressions) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
@@ -62,21 +61,32 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
         return false;
     }
 
+    //Check if two columns are identical
+    for (auto& fieldName : columns) {
+        auto found = std::find(otherColumns.begin(), otherColumns.end(), fieldName);
+        if (found == otherColumns.end()) {
+            NES_WARNING("QuerySignature: Both signatures have different column entries");
+            return false;
+        }
+    }
+
     //Convert columns from both the signatures into equality conditions.
     //If column from one signature doesn't exists in other signature then they are not equal.
     z3::expr_vector allConditions(context);
-    /*    for (auto columnEntry : columns) {
-        if (otherColumns.find(columnEntry.first) == otherColumns.end()) {
-            NES_WARNING("Column " << columnEntry.first << " doesn't exists in column list of other signature");
-            return false;
-        }
-        //For each column expression of the column in other signature we try to create a DNF using
-        // each column expression of the same column in this signature.
-        auto otherColumnExpression = otherColumns[columnEntry.first];
-        auto columnExpression = columnEntry.second;
+    auto otherOperatorTupleSchemaMap = other->getOperatorTupleSchemaMap();
 
-        allConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherColumnExpression, *columnExpression)));
-    }*/
+    for (auto schemaMap : operatorTupleSchemaMap->getSchemaMaps()) {
+        for (auto& colField : columns) {
+            z3::expr_vector columnCondition(context);
+            auto colExpr = schemaMap[colField];
+            for (auto otherSchemaMap : otherOperatorTupleSchemaMap->getSchemaMaps()) {
+                auto otherColExpr = otherSchemaMap[colField];
+                columnCondition.push_back(z3::to_expr(context, Z3_mk_eq(context, *colExpr, *otherColExpr)));
+            }
+            //Add DNF of col conditions to all conditions
+            allConditions.push_back(z3::mk_or(columnCondition));
+        }
+    }
 
     //Check the number of window expressions extracted from both queries
     auto otherWindowExpressions = other->windowsExpressions;
@@ -107,9 +117,4 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     NES_DEBUG("Solving: " << solver);
     return solver.check() == z3::unsat;
 }
-
-/*std::vector<std::string> QuerySignature::getSources() { return sources; }
-
-std::map<std::string, std::vector<std::string>> QuerySignature::getAttributeMap() { return attributeMap; }*/
-
 }// namespace NES::Optimizer
