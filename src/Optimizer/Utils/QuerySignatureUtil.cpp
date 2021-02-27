@@ -440,7 +440,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     auto leftOperatorTupleSchemaMap = leftSignature->getOperatorTupleSchemaMap();
     auto rightOperatorTupleSchemaMap = rightSignature->getOperatorTupleSchemaMap();
 
-    z3::expr_vector joinPredicates{*context};
+    z3::expr_vector joinPredicates(*context);
     for (auto leftSchemaMap : leftOperatorTupleSchemaMap->getSchemaMaps()) {
         std::map<std::string, z3::ExprPtr> schemaMap = leftSchemaMap;
         auto leftPredicate = schemaMap[leftKeyName];

@@ -67,15 +67,12 @@ class QuerySignature {
      * @brief Create instance of Query plan signature
      * @param conditions: the predicates involved in the query
      * @param columns: the predicates involving columns to be extracted
+     * @param operatorTupleSchemaMap:
      * @param windowsExpressions: the map containing window expressions
-     * @param attributeMap : the mapping between original to resolved attribute names
-     * @param sources: the set of sources used for building the query
      * @return Shared instance of the query plan signature.
      */
     static QuerySignaturePtr create(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
-                                    std::map<std::string, z3::ExprPtr> windowsExpressions/*,
-                                    std::map<std::string, std::vector<std::string>> attributeMap,
-                                    std::vector<std::string> sources*/);
+                                    std::map<std::string, z3::ExprPtr> windowsExpressions);
 
     /**
      * @brief Get the conditions
@@ -97,18 +94,6 @@ class QuerySignature {
      */
     std::map<std::string, z3::ExprPtr> getWindowsExpressions();
 
-    /*    *//**
-     * @brief Get the sources that are used for computing the signature
-     * @return vector of sources
-     *//*
-    std::vector<std::string> getSources();*/
-
-    /*    *//**
-     * @brief get the map containing key as original attribute and value as a vector of resolved attributes
-     * @return original attribute to resolved attributes map
-     *//*
-    std::map<std::string, std::vector<std::string>> getAttributeMap();*/
-
     /**
      * @brief Validate if this signature is equal to input signature
      * @param other : the signature to be compared against
@@ -118,15 +103,12 @@ class QuerySignature {
 
   private:
     QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
-                   std::map<std::string, z3::ExprPtr> windowsExpressions/*,
-                   std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources*/);
+                   std::map<std::string, z3::ExprPtr> windowsExpressions);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
     OperatorTupleSchemaMapPtr operatorTupleSchemaMap;
     std::map<std::string, z3::ExprPtr> windowsExpressions;
-    /*    std::map<std::string, std::vector<std::string>> attributeMap;
-    std::vector<std::string> sources;*/
 };
 }// namespace NES::Optimizer
 
