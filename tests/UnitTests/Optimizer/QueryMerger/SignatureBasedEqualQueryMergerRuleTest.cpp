@@ -468,8 +468,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperat
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
  */
-//TODO: To be fixed by #1502
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
@@ -1539,8 +1538,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWa
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queries with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
-//TODO: To be fixed by #1502
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMergeOperatorsAndTwoIdenticalWatermarkAssigner) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsAndTwoIdenticalWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
@@ -1620,9 +1618,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithMe
  * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy.
  */
-//TODO: To be fixed by #1502
-TEST_F(SignatureBasedEqualQueryMergerRuleTest,
-       DISABLED_testMergingEqualQueriesWithMergeOperatorsAndMultipleDistinctWatermarkAssigner) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithMergeOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
@@ -1857,8 +1853,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
  */
-//TODO: To be fixed by #1502
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
+TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();

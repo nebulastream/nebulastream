@@ -466,17 +466,19 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     //Compute the expression for window time key
     auto windowType = joinDefinition->getWindowType();
     auto timeCharacteristic = windowType->getTimeCharacteristic();
-    z3::expr windowTimeKeyVal(*context);
-    Windowing::TimeCharacteristic::Type type = timeCharacteristic->getType();
-    if (type == Windowing::TimeCharacteristic::EventTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
-    } else if (type == Windowing::TimeCharacteristic::IngestionTime) {
-        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
-    } else {
-        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
-    }
-    auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
-    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
+    //FIXME: problem is that only one time key is defined during the join definition
+    // fix it as part of #1592
+    //    z3::expr windowTimeKeyVal(*context);
+    //    Windowing::TimeCharacteristic::Type type = timeCharacteristic->getType();
+    //    if (type == Windowing::TimeCharacteristic::EventTime) {
+    //        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
+    //    } else if (type == Windowing::TimeCharacteristic::IngestionTime) {
+    //        windowTimeKeyVal = context->string_val(timeCharacteristic->getField()->getName());
+    //    } else {
+    //        NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unknown window Time Characteristic");
+    //    }
+    //    auto windowTimeKeyVar = context->constant(context->str_symbol("time-key"), context->string_sort());
+    //    auto windowTimeKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeKeyVar, windowTimeKeyVal));
 
     //Compute the expression for window size and slide
     auto multiplier = timeCharacteristic->getTimeUnit().getMultiplier();
@@ -506,9 +508,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     z3::expr windowKeyVal = context->string_val(windowKey);
     auto windowKeyExpression = to_expr(*context, Z3_mk_eq(*context, windowKeyVar, windowKeyVal));
 
-    //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
-    Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
-                                windowTimeSizeExpression};
+    //Compute the CNF based on the window-key, window-size, and window-slide
+    Z3_ast expressionArray[] = {windowKeyExpression, windowTimeSlideExpression, windowTimeSizeExpression};
 
     std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
 
@@ -522,7 +523,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     }
 
     if (windowExpressions.find(windowKey) == windowExpressions.end()) {
-        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 4, expressionArray)));
+        windowExpressions[windowKey] = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 3, expressionArray)));
     } else {
         //TODO: as part of #1377
         NES_NOT_IMPLEMENTED();
