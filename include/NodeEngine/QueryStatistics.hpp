@@ -23,7 +23,8 @@ namespace NES::NodeEngine {
 
 class QueryStatistics {
   public:
-    QueryStatistics() : processedTasks(0), processedTuple(0), processedBuffers(0), processedWatermarks(0){};
+    QueryStatistics() : processedTasks(0), processedTuple(0), processedBuffers(0), processedWatermarks(0),
+    receivedBuffers(0), sentBuffers(0), receivedBytes(0), sentBytes(0){};
 
     /**
      * @brief getter for processedTasks
@@ -48,6 +49,29 @@ class QueryStatistics {
     * @return processedBuffers
     */
     const std::atomic<uint64_t> getProcessedWatermarks() const;
+    /**
+     * @brief getter for receivedBuffers
+     * @return receivedBuffers
+     */
+    const std::atomic<uint64_t> getReceivedBuffers() const;
+
+    /**
+   * @brief getter for sentBuffers
+   * @return sentBuffers
+   */
+    const std::atomic<uint64_t> getSentBuffers() const;
+
+    /**
+   * @brief getter for receivedBytes
+   * @return receivedBytes
+   */
+    const std::atomic<uint64_t> getReceivedBytes() const;
+
+    /**
+    * @brief getter for sentBytes
+    * @return sentBytes
+    */
+    const std::atomic<uint64_t> getSentBytes() const;
 
     /**
     * @brief setter for processedTasks
@@ -82,6 +106,26 @@ class QueryStatistics {
     void incProcessedWatermarks();
 
     /**
+  * @brief increment receivedBuffers
+  */
+    void incReceivedBuffers();
+
+    /**
+    * @brief increment sentBuffers
+    */
+    void incSentBuffers();
+
+    /**
+   * @brief increment receivedBytes
+   */
+    void incReceivedBytes(uint64_t numBytes);
+
+    /**
+    * @brief increment sentBytes
+    */
+    void incSentBytes(uint64_t numBytes);
+
+    /**
   * @brief setter for processedBuffers
   * @return processedBuffers
   */
@@ -94,6 +138,10 @@ class QueryStatistics {
     std::atomic<uint64_t> processedTuple;
     std::atomic<uint64_t> processedBuffers;
     std::atomic<uint64_t> processedWatermarks;
+    std::atomic<uint64_t> receivedBuffers;
+    std::atomic<uint64_t> sentBuffers;
+    std::atomic<uint64_t> receivedBytes;
+    std::atomic<uint64_t> sentBytes;
 };
 
 }// namespace NES::NodeEngine

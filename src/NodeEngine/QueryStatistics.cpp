@@ -26,6 +26,14 @@ const std::atomic<uint64_t> QueryStatistics::getProcessedBuffers() const { retur
 
 const std::atomic<uint64_t> QueryStatistics::getProcessedWatermarks() const { return processedWatermarks.load(); }
 
+const std::atomic<uint64_t> QueryStatistics::getReceivedBuffers() const { return receivedBuffers.load(); }
+
+const std::atomic<uint64_t> QueryStatistics::getSentBuffers() const { return sentBuffers.load(); }
+
+const std::atomic<uint64_t> QueryStatistics::getReceivedBytes() const { return receivedBytes.load(); }
+
+const std::atomic<uint64_t> QueryStatistics::getSentBytes() const { return sentBytes.load(); }
+
 void QueryStatistics::setProcessedTasks(const std::atomic<uint64_t>& processedTasks) {
     this->processedTasks = processedTasks.load();
 }
@@ -43,7 +51,7 @@ void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTupl
 
 void QueryStatistics::incReceivedBuffers() { this->receivedBuffers++; }
 void QueryStatistics::incSentBuffers() { this->sentBuffers++; }
-void QueryStatistics::incReceivedBytes(uint64_t numBytes) { this->receivedbytes += numBytes; }
+void QueryStatistics::incReceivedBytes(uint64_t numBytes) { this->receivedBytes += numBytes; }
 void QueryStatistics::incSentBytes(uint64_t numBytes) { this->sentBytes += numBytes; }
 // getters too later
 
@@ -57,6 +65,10 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedTuple=" << processedTuple;
     ss << " processedBuffers=" << processedBuffers;
     ss << " processedWatermarks=" << processedWatermarks;
+    ss << " receivedBuffers=" << receivedBuffers;
+    ss << " sentBuffers=" << sentBuffers;
+    ss << " receivedBytes=" << receivedBytes;
+    ss << " sentBytes=" << sentBytes;
     // add too
     return ss.str();
 }
