@@ -433,7 +433,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
 
     //merge columns from both children
     std::vector<std::string> columns = leftSignature->getColumns();
-    columns.insert(columns.end(), rightSignature->getColumns().begin(), rightSignature->getColumns().end());
+    std::vector<std::string> rightColumns = rightSignature->getColumns();
+    columns.insert(columns.end(), rightColumns.begin(), rightColumns.end());
 
     //Merge the Operator Tuple Schemas
     std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
@@ -647,16 +648,22 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
     for (auto childSchemaMap : childOperatorTupleSchemaMap->getSchemaMaps()) {
         std::map<std::string, z3::ExprPtr> schemaMap;
-        auto fieldExpr = childSchemaMap[onFieldName];
-        auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
-        schemaMap[asFieldName] = updatedFieldExpr;
         for (auto& outputField : outputSchema->fields) {
             auto originalAttributeName = outputField->getName();
-            if (originalAttributeName == "start" || originalAttributeName == "end") {
+            if (originalAttributeName.find("start") != std::string ::npos
+                || originalAttributeName.find("end") != std::string::npos
+                || originalAttributeName.find("cnt") != std::string::npos) {
                 schemaMap[originalAttributeName] =
                     DataTypeToZ3ExprUtil::createForField(originalAttributeName, outputField->getDataType(), context)->getExpr();
+            } else if (originalAttributeName == asFieldName) {
+                auto fieldExpr = childSchemaMap[onFieldName];
+                auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
+                schemaMap[originalAttributeName] = updatedFieldExpr;
+            } else {
+                schemaMap[originalAttributeName] = childSchemaMap[originalAttributeName];
             }
         }
+
         schemaMaps.push_back(schemaMap);
     }
     auto operatorTupleSchemaMap = OperatorTupleSchemaMap::create(schemaMaps);
