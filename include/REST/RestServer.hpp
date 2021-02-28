@@ -47,6 +47,9 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
+class MaintenanceService;
+using MaintenanceServicePtr = std::shared_ptr<MaintenanceService> ;
+
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
@@ -77,6 +80,7 @@ class RestServer {
                const GlobalExecutionPlanPtr& globalExecutionPlan,
                const QueryServicePtr& queryService,
                const MonitoringServicePtr& monitoringService,
+               const MaintenanceServicePtr& maintenanceService,
                const GlobalQueryPlanPtr& globalQueryPlan,
                const Catalogs::UdfCatalogPtr& udfCatalog,
                const Runtime::BufferManagerPtr& bufferManager);
