@@ -66,6 +66,9 @@ using QueryServicePtr = std::shared_ptr<QueryService>;
 class MonitoringService;
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
+class MaintenanceService;
+typedef std::shared_ptr<MaintenanceService> MaintenanceServicePtr;
+
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
@@ -154,6 +157,12 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     MonitoringServicePtr getMonitoringService();
 
     /**
+     * @brief Get instance of maintenance service
+     * @return maintenance service pointer
+     */
+    MaintenanceServicePtr getMaintenanceService();
+
+    /**
      * @brief Get the instance of Global Query Plan
      * @return Global query plan
      */
@@ -216,6 +225,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
+    MaintenanceServicePtr maintenanceService;
     WorkerRPCClientPtr workerRpcClient;
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;

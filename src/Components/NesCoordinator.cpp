@@ -47,6 +47,7 @@
 #include <Services/QueryParsingService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/TopologyManagerService.hpp>
+#include <Services/MaintenanceService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -136,6 +137,7 @@ NesCoordinator::~NesCoordinator() {
     queryRequestProcessorService.reset();
     queryService.reset();
     monitoringService.reset();
+    maintenanceService.reset();
     queryRequestProcessorThread.reset();
     worker.reset();
     streamCatalogService.reset();
@@ -221,6 +223,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     worker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
+    NES_DEBUG("NesCoordinator: Initializing maintenance service");
+    maintenanceService =
+            std::make_shared<MaintenanceService>(topology,queryService, globalExecutionPlan);
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     restServer = std::make_shared<RestServer>(restIp,
@@ -339,6 +344,8 @@ Catalogs::UdfCatalogPtr NesCoordinator::getUdfCatalog() { return udfCatalog; }
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
+
+MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
 
 void NesCoordinator::onFatalError(int, std::string) {}
 
