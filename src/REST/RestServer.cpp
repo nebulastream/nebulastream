@@ -29,10 +29,10 @@ namespace NES {
 
 RestServer::RestServer(std::string host, uint16_t port, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
                        StreamCatalogPtr streamCatalog, TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan,
-                       QueryServicePtr queryService, MonitoringServicePtr monitoringService, GlobalQueryPlanPtr globalQueryPlan)
+                       QueryServicePtr queryService, MonitoringServicePtr monitoringService, MaintenanceServicePtr maintenanceService, GlobalQueryPlanPtr globalQueryPlan)
     : host(host), port(port),
       restEngine(std::make_shared<RestEngine>(streamCatalog, coordinator, queryCatalog, topology, globalExecutionPlan,
-                                              queryService, monitoringService, globalQueryPlan)) {}
+                                              queryService, monitoringService, maintenanceService,  globalQueryPlan)) {}
 
 RestServer::~RestServer() { NES_DEBUG("~RestServer()"); }
 

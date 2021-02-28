@@ -30,6 +30,9 @@ namespace NES {
 class MonitoringService;
 typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
+class MaintenanceService;
+typedef std::shared_ptr<MaintenanceService> MaintenanceServicePtr;
+
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
@@ -74,7 +77,7 @@ class RestEngine : public BaseController {
   public:
     RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
                TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService,
-               MonitoringServicePtr monitoringService, GlobalQueryPlanPtr globalQueryPlan);
+               MonitoringServicePtr monitoringService, MaintenanceServicePtr maintenanceService, GlobalQueryPlanPtr globalQueryPlan);
 
     ~RestEngine();
 
