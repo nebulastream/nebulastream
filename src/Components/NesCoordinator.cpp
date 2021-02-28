@@ -40,6 +40,7 @@
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Services/MonitoringService.hpp>
+#include <Services/MaintenanceService.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <grpcpp/health_check_service_interface.h>
@@ -93,6 +94,7 @@ NesCoordinator::~NesCoordinator() {
     queryRequestProcessorService.reset();
     queryService.reset();
     monitoringService.reset();
+    maintenanceService.reset();
     queryRequestProcessorThread.reset();
     worker.reset();
     coordinatorEngine.reset();
@@ -167,10 +169,14 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     monitoringService =
         std::make_shared<MonitoringService>(workerRpcClient, topology, worker->getNodeEngine()->getBufferManager());
 
+    NES_DEBUG("NesCoordinator: Initializing maintenance service");
+    maintenanceService =
+        std::make_shared<MaintenanceService>(topology,queryService, globalExecutionPlan);
+
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
     restServer = std::make_shared<RestServer>(restIp, restPort, this->inherited0::weak_from_this(), queryCatalog, streamCatalog,
-                                              topology, globalExecutionPlan, queryService, monitoringService, globalQueryPlan);
+                                              topology, globalExecutionPlan, queryService, monitoringService, maintenanceService, globalQueryPlan);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking
@@ -275,8 +281,11 @@ MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringS
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
 
+MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
+
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
+
 
 }// namespace NES
