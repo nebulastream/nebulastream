@@ -15,10 +15,10 @@
 */
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
-#include <util/E2EBase.hpp>
-#include <string>
-#include <iostream>
 #include <chrono>
+#include <iostream>
+#include <string>
+#include <util/E2EBase.hpp>
 
 using namespace std;
 const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
@@ -41,7 +41,6 @@ string E2EBase::getTsInRfc3339() {
     ss << put_time(gmtime(&c_now), "%FT%T") << '.' << setfill('0') << setw(3) << millis.count() << 'Z';
     return ss.str();
 }
-
 
 std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {
