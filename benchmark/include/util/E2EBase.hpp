@@ -49,6 +49,7 @@ class E2EBase {
     E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode);
     ~E2EBase();
     static std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode);
+    string getTsInRfc3339();
 
   private:
     /**

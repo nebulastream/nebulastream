@@ -16,7 +16,11 @@
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <util/E2EBase.hpp>
+#include <string>
+#include <iostream>
+#include <chrono>
 
+using namespace std;
 const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 5;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
@@ -26,6 +30,18 @@ const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
 static uint64_t portOffset = 13;
+
+string E2EBase::getTsInRfc3339() {
+    const auto now_ms = time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+    const auto now_s = time_point_cast<std::chrono::seconds>(now_ms);
+    const auto millis = now_ms - now_s;
+    const auto c_now = std::chrono::system_clock::to_time_t(now_s);
+
+    stringstream ss;
+    ss << put_time(gmtime(&c_now), "%FT%T") << '.' << setfill('0') << setw(3) << millis.count() << 'Z';
+    return ss.str();
+}
+
 
 std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {
