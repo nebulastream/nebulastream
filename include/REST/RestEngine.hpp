@@ -60,6 +60,9 @@ typedef std::shared_ptr<ConnectivityController> ConnectivityControllerPtr;
 class MonitoringController;
 typedef std::shared_ptr<MonitoringController> MonitoringControllerPtr;
 
+class MaintenanceController;
+typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
+
 class TopologyController;
 typedef std::shared_ptr<TopologyController> TopologyControllerPtr;
 
@@ -106,6 +109,7 @@ class RestEngine : public BaseController {
     ConnectivityControllerPtr connectivityController;
     MonitoringControllerPtr monitoringController;
     TopologyControllerPtr topologyController;
+    MaintenanceControllerPtr maintenanceController;
 };
 
 typedef std::shared_ptr<RestEngine> RestEnginePtr;

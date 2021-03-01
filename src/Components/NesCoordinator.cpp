@@ -119,6 +119,8 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
+
+    NES_ASSERT(maintenanceService.use_count() == 0, "NesCoordinator maintenanceService leaked");
 }
 
 NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }

@@ -18,3 +18,21 @@
 //
 
 #include "Services/MaintenanceService.hpp"
+#include <Util/Logger.hpp>
+#include <Topology/Topology.hpp>
+
+namespace NES {
+MaintenanceService::MaintenanceService(TopologyPtr topology, QueryServicePtr queryService,
+                                       GlobalExecutionPlanPtr globalExecutionPlan): topology{topology}, queryService{queryService}, globalExecutionPlan{globalExecutionPlan}{
+    NES_DEBUG("MaintenanceService: Initializing");
+};
+MaintenanceService::~MaintenanceService() {
+    NES_DEBUG("Destroying MaintenanceService");
+}
+void MaintenanceService::doStuff(uint64_t nodeId, uint8_t strategy) {
+    NES_DEBUG(nodeId);
+    NES_DEBUG(strategy);
+    topology->print();
+}
+
+}//namespace NES

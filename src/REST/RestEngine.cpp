@@ -22,6 +22,7 @@
 #include "REST/Controller/QueryController.hpp"
 #include "REST/Controller/StreamCatalogController.hpp"
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/MaintenanceController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
@@ -37,6 +38,7 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coo
     connectivityController = std::make_shared<ConnectivityController>();
     monitoringController = std::make_shared<MonitoringController>(monitoringService);
     topologyController = std::make_shared<TopologyController>(topology);
+    maintenanceController = std::make_shared<MaintenanceController>(maintenanceService);
 }
 
 RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
@@ -88,6 +90,7 @@ void RestEngine::handleGet(http_request message) {
         } else if (paths[0] == "topology") {
             topologyController->handleGet(paths, message);
         }
+
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
 }
@@ -107,10 +110,9 @@ void RestEngine::handlePost(http_request message) {
             monitoringController->handlePost(paths, message);
             return;
         }
-        else if(paths[0] == "topology") {
-            topologyController->handlePost(paths, message);
+        else if(paths[0] == "maintenance") {
+            maintenanceController->handlePost(paths, message);
             return;
-
         }
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
