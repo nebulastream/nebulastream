@@ -125,7 +125,7 @@ namespace NES {
                                                                                 partition,
                                                                                 NES_KAFKA::Key(),
                                                                                 NES_KAFKA::Value(ss.str().c_str(), ss.str().size()));
-//                                        this->producer->send(record);
+                                        this->producer->send(record);
                             }
 
                     }
@@ -139,7 +139,7 @@ namespace NES {
                                                                          partitions_for_first_topic[round_robin%numberOfPArtitions],
                                                                           NES_KAFKA::Key(),
                                                                         NES_KAFKA::Value(ss.str().c_str(), ss.str().size()));
-//                                  this->producer->send(record);
+                                this->producer->send(record);
 //                          }
                     }
                     round_robin++;
