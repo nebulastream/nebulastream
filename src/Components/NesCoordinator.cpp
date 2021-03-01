@@ -162,6 +162,8 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(restThread.use_count() == 0, "NesCoordinator restThread leaked");
     NES_ASSERT(streamCatalogService.use_count() == 0, "NesCoordinator streamCatalogService leaked");
     NES_ASSERT(topologyManagerService.use_count() == 0, "NesCoordinator topologyManagerService leaked");
+
+    NES_ASSERT(maintenanceService.use_count() == 0, "NesCoordinator maintenanceService leaked");
 }
 
 NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }

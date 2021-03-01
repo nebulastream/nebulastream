@@ -61,6 +61,9 @@ using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
 class MonitoringController;
 using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
 
+class MaintenanceController;
+typedef std::shared_ptr<MaintenanceController> MaintenanceControllerPtr;
+
 class TopologyController;
 using TopologyControllerPtr = std::shared_ptr<TopologyController>;
 
@@ -148,6 +151,7 @@ class RestEngine {
     MonitoringControllerPtr monitoringController;
     TopologyControllerPtr topologyController;
     UdfCatalogControllerPtr udfCatalogController;
+    MaintenanceControllerPtr maintenanceController;
 };
 
 using RestEnginePtr = std::shared_ptr<RestEngine>;

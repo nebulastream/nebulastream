@@ -22,7 +22,6 @@
 
 #include "Services/MaintenanceService.hpp"
 #include <REST/Controller/BaseController.hpp>
-#include <Topology/Topology.hpp>
 #include <cpprest/http_msg.h>
 
 namespace NES{
@@ -31,7 +30,7 @@ namespace NES{
 class MaintenanceController: public BaseController{
 
   public:
-    explicit MaintenanceController(TopologyPtr topology);
+    explicit MaintenanceController(MaintenanceServicePtr maintenanceService);
 
     /**
      * Handles Post request for marking nodes for maintenance
@@ -41,7 +40,7 @@ class MaintenanceController: public BaseController{
     void handlePost(std::vector<utility::string_t> paths, web::http::http_request message);
 
   private:
-    TopologyPtr topology;
+    MaintenanceServicePtr maintenanceService;
 
 
 };

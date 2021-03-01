@@ -35,7 +35,9 @@ class MaintenanceService {
   public:
     explicit MaintenanceService(TopologyPtr topology, QueryServicePtr queryService, GlobalExecutionPlanPtr globalExecutionPlan);
 
-    void doStuff(std::string maintType, uint64_t nodeId);
+    ~MaintenanceService();
+
+    void doStuff(uint64_t nodeId, uint8_t strategy);
 
   private:
     TopologyPtr topology;

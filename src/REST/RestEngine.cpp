@@ -16,6 +16,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
+#include <REST/Controller/MaintenanceController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/Controller/QueryController.hpp>
@@ -46,6 +47,7 @@ RestEngine::RestEngine(const StreamCatalogPtr& streamCatalog,
     monitoringController = std::make_shared<MonitoringController>(monitoringService, bufferManager);
     topologyController = std::make_shared<TopologyController>(topology);
     udfCatalogController = std::make_shared<UdfCatalogController>(udfCatalog);
+    maintenanceController = std::make_shared<MaintenanceController>(maintenanceService);
 }
 
 RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
@@ -121,6 +123,7 @@ void RestEngine::handleGet(http_request request) {
             udfCatalogController->handleGet(paths, request);
             return;
         }
+
     }
     returnDefaultUnknownEndpointResponse(request);
 }
@@ -147,10 +150,9 @@ void RestEngine::handlePost(http_request request) {
             udfCatalogController->handlePost(paths, request);
             return;
         }
-        else if(paths[0] == "topology") {
-            topologyController->handlePost(paths, message);
+        else if(paths[0] == "maintenance") {
+            maintenanceController->handlePost(paths, message);
             return;
-
         }
     }
     returnDefaultUnknownEndpointResponse(request);
