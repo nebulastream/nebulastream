@@ -63,6 +63,7 @@ class TestHarness {
          */
     template<typename T>
     void pushElement(T element, uint64_t sourceIdx) {
+        // compute the index of the csv/memory source relative to all workers, including nonSource workers
         sourceIdx = sourceIdx - nonSourceWorkerCount;
 
         if (sourceIdx >= sourceSchemas.size()) {
