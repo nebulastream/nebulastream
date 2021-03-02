@@ -17,14 +17,17 @@
 #ifndef NES_INCLUDE_NODEENGINE_EXECUTION_OPERATORHANDLER_HPP_
 #define NES_INCLUDE_NODEENGINE_EXECUTION_OPERATORHANDLER_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES::NodeEngine::Execution {
+namespace NES {
+namespace NodeEngine {
+namespace Execution {
 
 /**
  * @brief Interface to handle specific operator state.
  */
-class OperatorHandler {
+class OperatorHandler : public Reconfigurable {
   public:
     OperatorHandler() = default;
     virtual ~OperatorHandler() { NES_DEBUG("~OperatorHandler()"); }
@@ -42,6 +45,8 @@ class OperatorHandler {
     virtual void stop(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
 };
 
-}// namespace NES::NodeEngine::Execution
+}// namespace Execution
+}// namespace NodeEngine
+}// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_EXECUTION_OPERATORHANDLER_HPP_

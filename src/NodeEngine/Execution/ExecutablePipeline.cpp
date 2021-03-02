@@ -109,13 +109,18 @@ const SchemaPtr& ExecutablePipeline::getOutputSchema() const { return outputSche
 
 void ExecutablePipeline::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
-
+    for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+        operatorHandler->reconfigure(task, context);
+    }
     if (nextPipeline != nullptr) {
         nextPipeline->reconfigure(task, context);
     }
 }
 void ExecutablePipeline::postReconfigurationCallback(ReconfigurationTask& task) {
     Reconfigurable::postReconfigurationCallback(task);
+    for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+        operatorHandler->postReconfigurationCallback(task);
+    }
     if (nextPipeline != nullptr) {
         nextPipeline->postReconfigurationCallback(task);
     }

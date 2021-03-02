@@ -37,7 +37,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         uint64_t id)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
-          id(id) {
+          id(id), isRunning(false) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
@@ -63,16 +63,24 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start() override { return executablePolicyTrigger->start(this->shared_from_this()); }
+    bool start() override {
+        auto expected = false;
+        if (isRunning.compare_exchange_strong(expected, true)) {
+            return executablePolicyTrigger->start(this->AbstractWindowHandler::shared_from_base<AggregationWindowHandler>());
+        }
+        return false;
+    }
 
     /**
      * @brief Stops the window thread.
      * @return
      */
     bool stop() override {
-        executablePolicyTrigger->stop();
-        //StateManager::instance().unRegisterState("window");
-        return true;
+        auto expected = true;
+        if (isRunning.compare_exchange_strong(expected, false)) {
+            return executablePolicyTrigger->stop();
+        }
+        return false;
     }
 
     std::string toString() override {
@@ -92,11 +100,24 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return ss.str();
     }
 
+    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& context) override {
+        AbstractWindowHandler::reconfigure(task, context);
+    }
+
+    void postReconfigurationCallback(NodeEngine::ReconfigurationTask& task) override {
+        AbstractWindowHandler::postReconfigurationCallback(task);
+    }
+
     /**
      * @brief triggers all ready windows.
      */
     void trigger() override {
         std::unique_lock lock(windowMutex);
+//        if (!isRunning) {
+//            NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id
+//                                                  << "): was stopped");
+//            return;
+//        }
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window action "
                                               << executableWindowAction->toString()
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString());
@@ -180,6 +201,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     std::string handlerType;
     uint64_t id;
     mutable std::mutex windowMutex;
+    std::atomic<bool> isRunning;
 };
 
 }// namespace NES::Windowing
