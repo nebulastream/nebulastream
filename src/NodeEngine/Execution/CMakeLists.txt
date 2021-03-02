@@ -17,4 +17,5 @@ add_source_nes(
         PipelineExecutionContext.cpp
         ExecutablePipeline.cpp
         ExecutableQueryPlan.cpp
+        DiscardingExecutablePipelineStage.cpp
 )

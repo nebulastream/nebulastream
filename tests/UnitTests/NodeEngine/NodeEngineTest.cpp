@@ -301,8 +301,8 @@ TEST_F(EngineTest, testStartDeployUndeployStop) {
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
-    pipeline->completedPromise.get_future().get();
     ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    pipeline->completedPromise.get_future().get();
     ASSERT_TRUE(ptr->undeployQuery(testQueryId));
     ASSERT_TRUE(ptr->stop());
 
@@ -316,8 +316,8 @@ TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
     ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep));
     ASSERT_TRUE(ptr->startQuery(testQueryId));
-    pipeline->completedPromise.get_future().get();
     ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    pipeline->completedPromise.get_future().get();
     ASSERT_TRUE(ptr->stopQuery(testQueryId));
 
     ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Stopped);

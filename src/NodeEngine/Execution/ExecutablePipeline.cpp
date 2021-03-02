@@ -16,6 +16,7 @@
 
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/DiscardingExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/OperatorHandler.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
@@ -108,6 +109,7 @@ const SchemaPtr& ExecutablePipeline::getOutputSchema() const { return outputSche
 
 void ExecutablePipeline::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
+
     if (nextPipeline != nullptr) {
         nextPipeline->reconfigure(task, context);
     }

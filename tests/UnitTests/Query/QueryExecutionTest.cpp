@@ -953,7 +953,7 @@ TEST_F(QueryExecutionTest, mergeQuery) {
     }
 
     testSink->shutdown();
-    testSource1->stop();
-    testSource2->stop();
+    testSource1->stop(false);
+    testSource2->stop(false);
     nodeEngine->stop();
 }

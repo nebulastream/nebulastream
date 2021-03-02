@@ -216,6 +216,7 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
+    // inject reconfiguration task containing end of stream
     queryManager->addEndOfStream(operatorId, wasGracefullyStopped);
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
