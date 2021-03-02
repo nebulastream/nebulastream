@@ -34,37 +34,26 @@ static uint64_t rpcPort = 4000;
 
 class MultipleWindowsTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
-    SourceConfigPtr srcConf;
-
-    static void SetUpTestCase() {
-        NES::setupLogging("MultipleWindowsTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup MultipleWindowsTest test class.");
-    }
 
     void SetUp() {
+        NES::setupLogging("MultipleWindowsTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup MultipleWindowsTest test class.");
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
-
-        coordinatorConfig = CoordinatorConfig::create();
-        workerConfig = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-
-        coordinatorConfig->setRpcPort(rpcPort);
-        coordinatorConfig->setRestPort(restPort);
-        workerConfig->setCoordinatorPort(rpcPort);
     }
 
-    void TearDown() { NES_INFO("Tear down MultipleWindowsTest class."); }
+
+       void TearDown() { NES_INFO("Tear down MultipleWindowsTest class."); }
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -145,10 +134,15 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
-    coordinatorConfig->resetCoordinatorOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     coordinatorConfig->setNumberOfSlots(12);
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -167,7 +161,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -249,10 +243,13 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -348,10 +345,13 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -370,7 +370,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -463,10 +463,13 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -563,10 +566,13 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -585,7 +591,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -671,10 +677,13 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
  * @brief Test all three windows in a row
  */
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -693,7 +702,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -812,9 +821,13 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 |  |  |      WATERMARKASSIGNER(7)
 |  |  |        SOURCE(8,window)
      */
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -833,7 +846,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -845,7 +858,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NES_INFO("MultipleWindowsTest: Worker2 started SUCCESSFULLY");
 
     NES_INFO("MultipleWindowsTest: Start worker 3");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
@@ -978,9 +991,13 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 |  |  |      FILTER(11)
 |  |  |        SOURCE(10,window)
      */
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -999,7 +1016,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -1011,7 +1028,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NES_INFO("MultipleWindowsTest: Worker2 started SUCCESSFULLY");
 
     NES_INFO("MultipleWindowsTest: Start worker 3");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);

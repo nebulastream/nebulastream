@@ -39,26 +39,16 @@ static uint64_t rpcPort = 4000;
 
 class UnionDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
-    SourceConfigPtr sourceConfig;
     static void SetUpTestCase() {
         NES::setupLogging("UnionDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup UnionDeploymentTest test class.");
     }
 
     void SetUp() {
+        NES::setupLogging("UnionDeploymentTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup UnionDeploymentTest test class.");
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
-        coordinatorConfig = CoordinatorConfig::create();
-        coordinatorConfig->setRpcPort(rpcPort);
-        coordinatorConfig->setRestPort(restPort);
-
-        workerConfig = WorkerConfig::create();
-        workerConfig->setCoordinatorPort(rpcPort);
-
-        sourceConfig = SourceConfig::create();
     }
 
     void TearDown() { NES_INFO("Tear down UnionDeploymentTest class."); }
@@ -68,9 +58,14 @@ class UnionDeploymentTest : public testing::Test {
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -250,9 +245,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -432,9 +432,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -615,9 +620,14 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
 TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -710,9 +720,14 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
  *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -873,9 +888,14 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
  *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
  */
 TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1005,9 +1025,14 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
  *       Here the filters don't need to be pushed down over an existing unionWith operator.
  */
 TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

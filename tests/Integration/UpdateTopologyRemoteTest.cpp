@@ -31,16 +31,14 @@ namespace NES {
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
 uint64_t rpcPort = 4000;
+uint64_t restPort = 8081;
 
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
-    std::string ipAddress = "127.0.0.1";
 
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();
-
+    std::string ipAddress = "127.0.0.1";
     uint16_t coordinatorNumberOfSlots = processorCount * 2;
     uint16_t workerNumberOfSlots = processorCount;
 
@@ -51,18 +49,19 @@ class UpdateTopologyRemoteTest : public testing::Test {
 
     void SetUp() {
         rpcPort = rpcPort + 30;
-        coordinatorConfig = CoordinatorConfig::create();
-        workerConfig = WorkerConfig::create();
-        coordinatorConfig->setRpcPort(rpcPort);
-        workerConfig->setCoordinatorPort(rpcPort);
     }
 
     static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
 
@@ -135,8 +134,14 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 }
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);

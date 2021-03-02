@@ -36,24 +36,12 @@ static uint64_t rpcPort = 4000;
 
 class DeepHierarchyTopologyTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
-
-    static void SetUpTestCase() {
-        NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup DeepTopologyHierarchyTest test class.");
-    }
 
     void SetUp() {
+        NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("Setup DeepTopologyHierarchyTest test class.");
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-        coConf->setRpcPort(rpcPort);
-        coConf->setRestPort(restPort);
-        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
@@ -70,12 +58,16 @@ class DeepHierarchyTopologyTest : public testing::Test {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -252,13 +244,17 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    coConf->setNumberOfSlots(12);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    crdConf->setNumberOfSlots(12);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -467,12 +463,16 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -640,12 +640,16 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -844,13 +848,17 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    coConf->setNumberOfSlots(12);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    crdConf->setNumberOfSlots(12);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -1137,12 +1145,16 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -1400,12 +1412,16 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -1657,12 +1673,16 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -1949,12 +1969,16 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");

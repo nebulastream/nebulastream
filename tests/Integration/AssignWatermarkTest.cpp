@@ -40,34 +40,14 @@ static uint64_t rpcPort = 4000;
 
 class AssignWatermarkTest : public testing::Test {
   public:
-    CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
-
-    static void SetUpTestCase() {
-        NES::setupLogging("AssignWatermarkTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup AssignWatermarkTest test class.");
-    }
 
     void SetUp() {
+        NES::setupLogging("AssignWatermarkTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup AssignWatermarkTest test class.");
 
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
-        crdConf = CoordinatorConfig::create();
-        crdConf->setRpcPort(rpcPort);
-        crdConf->setRestPort(restPort);
-
-        wrkConf = WorkerConfig::create();
-        wrkConf->setCoordinatorPort(rpcPort);
-
-        srcConf = SourceConfig::create();
-        srcConf->setSourceType("CSVSource");
-        srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
-        srcConf->setNumberOfTuplesToProducePerBuffer(3);
-        srcConf->setNumberOfBuffersToProduce(4);
-        srcConf->setPhysicalStreamName("test_stream");
-        srcConf->setLogicalStreamName("window");
     }
 
     void TearDown() { std::cout << "Tear down AssignWatermarkTest class." << std::endl; }
@@ -79,9 +59,24 @@ class AssignWatermarkTest : public testing::Test {
  * @brief test event time watermark for central tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
 
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -160,9 +155,24 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
  * @brief test event time watermark for distributed tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
 
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -267,9 +277,24 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
  * @brief test event time watermark for central sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
 
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -352,10 +377,24 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
  * @brief test event time watermark for distributed sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
 
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);

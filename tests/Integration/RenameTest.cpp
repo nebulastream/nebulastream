@@ -37,34 +37,27 @@ static uint64_t rpcPort = 4000;
 
 class RenameTest : public testing::Test {
   public:
-    CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
-    static void SetUpTestCase() {
-        NES::setupLogging("RenameTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup RenameTest test class.");
-    }
 
     void SetUp() {
+        NES::setupLogging("RenameTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup RenameTest test class.");
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
-        crdConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-        crdConf->setRpcPort(rpcPort);
-        crdConf->setRestPort(restPort);
-
-        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }
 };
 
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -135,9 +128,14 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -211,9 +209,14 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -274,9 +277,14 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 }
 
 TEST_F(RenameTest, testCentralWindowEventTime) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -363,9 +371,14 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
  * Test deploying join with different streams
  */
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
