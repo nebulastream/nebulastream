@@ -1,19 +1,15 @@
 ### Dependencies:
-- HDFS instance running (I used [this one](https://github.com/big-data-europe/docker-hadoop))
+- HDFS instance running
 - Java openjdk version "1.8.0_275"
 
-### When running NES docker container:
-```sudo docker run -d -v <your-local-hadoop-home>:/home/nes/hadoop -v <your-local-java-home>:/home/nes/java --cap-add sys_ptrace -p127.0.0.1:2222:22 --entrypoint /usr/bin/env --name nebula_dev nebulastream/nes-dev-image:latest /usr/sbin/sshd -D```
-
-for example, mine was: 
-
+### When running NES docker container, mount your HADOOP_HOME and JAVA_HOME directories:
 ```sudo docker run -d -v /home/ricardohb/hadoop:/home/nes/hadoop -v /usr/lib/jvm/java-8-openjdk-amd64:/home/nes/java --cap-add sys_ptrace -p127.0.0.1:2222:22 --entrypoint /usr/bin/env --name nebula_dev nebulastream/nes-dev-image:latest /usr/sbin/sshd -D```
 
 ### Code
 You may need to create the folder testData on your hdfs instance
 `hdfs dfs -mkdir /testData`
-And also create a file containing something:
-`echo "hello world" | hadoop fs -put - /testData/test.csv`
+And also put the test files inside of HDFS:
+`hdfs dfs -put <local-file-path> /testData/`
 
 ### CLion configuration
 In CLion run/debug configuration, add the following 4 environment variables:

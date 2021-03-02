@@ -21,6 +21,9 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <fstream>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES {
 
@@ -103,14 +106,33 @@ bool HdfsCSVSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Wo
     } else {
         NES_DEBUG("HdfsCSVSink::getData: schema already written");
     }
+    auto numberOfTuples = inputBuffer.getNumberOfTuples();
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    auto buffer = inputBuffer.getBufferAs<char>();
 
     NES_DEBUG("HdfsCSVSink::getData: write data to file=" << filePath);
-    auto dataBuffers = sinkFormat->getData(inputBuffer);
+    for(uint64_t i = 0; i < numberOfTuples; i++) {
+        std::stringstream ss;
+        uint64_t offset = 0;
+        // the schema is previously created and given as argument to the createKafkaSink =  SinkFormat
+        SchemaPtr schema = sinkFormat->getSchemaPtr();
+        for (uint64_t j = 0; j < schema->getSize(); j++) {
+            auto field = schema->get(j);
+            auto ptr = field->getDataType();
+            auto physicalType = physicalDataTypeFactory.getPhysicalType(ptr);
+            auto fieldSize = physicalType->size();
+            auto str = physicalType->convertRawToString(buffer + offset + i *  schema->getSchemaSizeInBytes());
+            ss << str.c_str();
+            if (j < schema->getSize() - 1) {
+                ss << ",";
+            }
+            offset += fieldSize;
+        }
+        ss << "\n";
+        char *line = const_cast<char*>(ss.str().c_str());
+        NES_INFO("Writing line: " << ss.str().c_str());
+        hdfsWrite(fs, outputFile, line, ss.str().length() + 1);
 
-    for (auto buffer : dataBuffers) {
-        NES_DEBUG("HdfsCSVSink::writeData: write buffer of size " << buffer.getNumberOfTuples());
-        hdfsWrite(fs, outputFile, (char*) buffer.getBuffer(), buffer.getBufferSize());
-        NES_DEBUG("HdfsCSVSink::writeData: data written: " << (char*) buffer.getBuffer());
     }
     hdfsFlush(fs, outputFile);
     hdfsCloseFile(fs, outputFile);

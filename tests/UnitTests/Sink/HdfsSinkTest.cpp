@@ -17,15 +17,19 @@
 #include "SerializableOperator.pb.h"
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <HDFS/hdfs.h>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
 #include <ostream>
-#include <HDFS/hdfs.h>
+#include <limits.h> /* PATH_MAX */
 
 using namespace std;
 
@@ -42,6 +46,7 @@ class HdfsSinkTest : public testing::Test {
     bool write_result;
     char *path_to_bin_file;
     char *path_to_csv_file;
+    std::ifstream input;
 
     static void SetUpTestCase() {
         NES::setupLogging("HdfsSinkTest.log", NES::LOG_DEBUG);
@@ -71,6 +76,7 @@ class HdfsSinkTest : public testing::Test {
         hdfsDelete(fs, path_to_bin_file, 0);
         hdfsDelete(fs, path_to_csv_file, 0);
     }
+
 };
 
 TEST_F(HdfsSinkTest, testHdfsBinSink) {
@@ -171,7 +177,7 @@ TEST_F(HdfsSinkTest, testHdfsCSVSink) {
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    const DataSinkPtr hdfsSink = createHdfsBinSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
+    const DataSinkPtr hdfsSink = createHdfsCSVSink(test_schema, 0, nodeEngine, path_to_csv_file, true);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
