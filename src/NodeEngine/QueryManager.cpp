@@ -382,7 +382,6 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
 
 void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
-    std::unique_lock workQueueLock(workMutex);
 #ifdef EXTENDEDDEBUGGING
     std::stringstream ss;
     ss << " sourceid=" << operatorId << "map at operatorIdToQueryMap ";
@@ -425,14 +424,27 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
 
+#if 0
+        auto tryCnt = 0;
+        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            waitCounter++;
+            if (tryCnt++ == 100) {
+                //we have to do this because it could be that a source is stuck here and then the shutdown crashes
+                break;
+            }
+        }
+#endif
+
         //TODO: this is a problem now as it can become the bottleneck
+        std::unique_lock workQueueLock(workMutex);
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
 
         NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
                                                          << " for QEP " << qep << " inputBuffer " << buf
                                                          << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
+        cv.notify_all();
     }
-    cv.notify_all();
 }
 
 bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask descriptor, bool blocking) {
