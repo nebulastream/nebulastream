@@ -686,4 +686,60 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
 
     EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), NesRuntimeException);
 }
+
+/*
+ * Testing test harness CSV source
+ */
+TEST_F(TestHarnessUtilTest, testHarnessCsvSourceManyBuffers) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") > 15))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
+
+    //register physical stream
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->setPhysicalStreamName("car");
+    sourceConfig->setSourceConfig("../tests/test_data/benchmark.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfig->setNumberOfBuffersToProduce(170);
+    sourceConfig->setSkipHeader(false);
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    testHarness.addCSVSource(conf, carSchema);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
+    };
+    std::vector<Output> expectedOutput = {{21, 9, 1011},
+                                          {17, 15, 1017},
+                                          {21, 1, 2011},
+                                          {17, 1, 2017},
+                                          {21, 9, 3011},
+                                          {17, 15, 3017}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
 }// namespace NES
