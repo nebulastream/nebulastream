@@ -22,12 +22,10 @@ namespace NES {
 
 class TestHarnessUtilTest : public testing::Test {
   public:
-    static void SetUpTestCase() {
-        NES::setupLogging("TestHarnessUtilTest.log", NES::LOG_DEBUG);
-        NES_INFO("TestHarnessUtilTest test class SetUpTestCase.");
-    }
 
     void SetUp() {
+        NES::setupLogging("TestHarnessUtilTest.log", NES::LOG_DEBUG);
+        NES_INFO("TestHarnessUtilTest test class SetUpTestCase.");
         restPort = restPort + 2;
         rpcPort = rpcPort + 30;
     }
