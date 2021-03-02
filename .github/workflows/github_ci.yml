@@ -98,14 +98,12 @@ jobs:
           fi
       - name: Build and Release NES Executable Image
         run: |
-          echo "Preparing new debian package for NES"
-          docker run -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh nebulastream/nes-build-image:latest
           nes_version="$(grep -o "NES_VERSION.*" include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/.$//')"
           echo "Preparing new executable image with version $nes_version"
           cd docker/executableImage/
           echo "Releasing new executable image with version $nes_version and latest"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --platform=linux/amd64,linux/arm64 --push
+          docker buildx build . -v $GITHUB_WORKSPACE:/nebulastream -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --platform=linux/amd64,linux/arm64 --push
           echo "Pushed the execution image"
           docker logout
       - name: Release new version
