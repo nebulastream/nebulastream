@@ -139,9 +139,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     /**
      * @brief method to start a query
      * @param qep of the query to start
+     * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    bool stopQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful = false);
 
     /**
     * @brief method to fail a query

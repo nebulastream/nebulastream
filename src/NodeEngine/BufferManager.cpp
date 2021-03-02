@@ -88,7 +88,6 @@ TupleBuffer BufferManager::getBufferBlocking() {
     //TODO: remove this
 
     while (availableBuffers.empty()) {
-        NES_ERROR("WE HAVE TO WAIT");
         availableBuffersCvar.wait(lock);
     }
     auto memSegment = availableBuffers.front();
