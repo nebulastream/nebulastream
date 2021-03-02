@@ -154,9 +154,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief method to stop a query
      * @param queryId to stop
+     * @param graceful hard or soft termination
      * @return bool indicating success
      */
-    bool stopQuery(QueryId queryId);
+    bool stopQuery(QueryId queryId, bool graceful = false);
 
     /**
      * @brief release all resource of the node engine

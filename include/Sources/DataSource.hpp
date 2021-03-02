@@ -82,7 +82,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * 1.) check if bool running is false, if false return, if not stop source
      * 2.) stop thread by join
      */
-    virtual bool stop();
+    virtual bool stop(bool graceful);
 
     /**
      * @brief running routine while source is active

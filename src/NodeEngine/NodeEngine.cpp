@@ -298,7 +298,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
     return false;
 }
 
-bool NodeEngine::stopQuery(QueryId queryId) {
+bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
@@ -309,7 +309,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->stopQuery(deployedQEPs[querySubPlanId])) {
+            if (queryManager->stopQuery(deployedQEPs[querySubPlanId], graceful)) {
                 NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
             } else {
                 NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");

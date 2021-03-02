@@ -50,7 +50,7 @@ void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = opera
 SchemaPtr DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
-    stop();
+    stop(false);
     NES_DEBUG("DataSource " << operatorId << ": Destroy Data Source.");
 }
 
@@ -73,21 +73,22 @@ bool DataSource::start() {
     return true;
 }
 
-bool DataSource::stop() {
+bool DataSource::stop(bool graceful) {
     std::unique_lock lock(startStopMutex);
     NES_DEBUG("DataSource " << operatorId << ": Stop called and source is " << (running ? "running" : "not running"));
     if (!running) {
         NES_DEBUG("DataSource " << operatorId << " is not running");
         return false;
     }
-    wasGracefullyStopped = true;
+    wasGracefullyStopped = graceful;
     // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
     // TODO in general this highlights how our source model has some issues
     running = false;
     bool ret = false;
 
     try {
-        if (thread) {
+        NES_ASSERT2_FMT(!!thread, "Thread for source " << operatorId << " is not existing");
+        {
             NES_DEBUG("DataSource::stop try to join threads=" << thread->get_id());
             if (thread->joinable()) {
                 NES_DEBUG("DataSource::stop thread is joinable=" << thread->get_id());

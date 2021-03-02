@@ -303,7 +303,7 @@ bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
 #endif
 }
 
-bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
+bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful) {
 #if 1
     NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId());
     bool ret = true;
@@ -316,8 +316,8 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep) {
     auto copiedSources = std::vector(sources.begin(), sources.end());
     lock.unlock();
     for (const auto& source : copiedSources) {
-        if (!std::dynamic_pointer_cast<Network::NetworkSourcePtr>(source)) {
-            source->stop();
+        if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+            source->stop(graceful);
         }
     }
     if (qep->getTerminationFuture().get() != Execution::ExecutableQueryPlanResult::Ok) {
