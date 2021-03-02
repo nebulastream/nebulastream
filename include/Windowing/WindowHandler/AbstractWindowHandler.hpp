@@ -18,6 +18,7 @@
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
@@ -39,7 +40,9 @@ namespace NES::Windowing {
 /**
  * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindowHandler> {
+class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler>, public NodeEngine::Reconfigurable {
+    typedef detail::virtual_enable_shared_from_this<AbstractWindowHandler> inherited0;
+    typedef NodeEngine::Reconfigurable inherited1;
   public:
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition) : windowDefinition(windowDefinition) {
         // nop
@@ -47,7 +50,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
 
     template<class Type>
     auto as() {
-        return std::dynamic_pointer_cast<Type>(shared_from_this());
+        return std::dynamic_pointer_cast<Type>(inherited0::shared_from_this());
     }
 
     /**
@@ -164,6 +167,19 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
         } else {
             originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
         }
+    }
+
+    template <typename Derived>
+    std::shared_ptr<Derived> shared_from_base() {
+        return std::static_pointer_cast<Derived>(inherited0::shared_from_this());
+    }
+
+    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& context) override {
+        Reconfigurable::reconfigure(task, context);
+    }
+
+    void postReconfigurationCallback(NodeEngine::ReconfigurationTask& task) override {
+        Reconfigurable::postReconfigurationCallback(task);
     }
 
   protected:
