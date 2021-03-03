@@ -26,7 +26,6 @@ namespace NES {
 
 class ComplexSequenceTest : public testing::Test {
   public:
-
     static void SetUpTestCase() {
         NES::setupLogging("ComplexSequenceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup ComplexSequenceTest test class.");
@@ -37,9 +36,7 @@ class ComplexSequenceTest : public testing::Test {
         rpcPort = rpcPort + 30;
     }
 
-    void TearDown() {
-        std::cout << "Tear down ComplexSequenceTest class." << std::endl;
-    }
+    void TearDown() { std::cout << "Tear down ComplexSequenceTest class." << std::endl; }
 
     uint32_t restPort = 8080;
     uint32_t rpcPort = 4000;
@@ -60,12 +57,12 @@ TEST_F(ComplexSequenceTest, complexTestSingleNodeSingleWindowSingleJoin) {
     };
 
     auto window1Schema = Schema::create()
-        ->addField("id1", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id1", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-        ->addField("id2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
@@ -111,8 +108,7 @@ TEST_F(ComplexSequenceTest, complexTestSingleNodeSingleWindowSingleJoin) {
         }
     };
 
-    std::vector<Output> expectedOutput = {{0, 2000, 4, 8},
-                                          {0, 2000, 12, 12}};
+    std::vector<Output> expectedOutput = {{0, 2000, 4, 8}, {0, 2000, 12, 12}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -140,12 +136,12 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
     };
 
     auto window1Schema = Schema::create()
-        ->addField("id1", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id1", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-        ->addField("id2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
@@ -197,8 +193,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
         }
     };
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 4, 8},
-                                          {1000, 2000, 12, 12}};
+    std::vector<Output> expectedOutput = {{1000, 2000, 4, 8}, {1000, 2000, 12, 12}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -253,16 +248,16 @@ TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
     };
 
     auto window1Schema = Schema::create()
-        ->addField("id1", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id1", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-        ->addField("id2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window3Schema = Schema::create()
-        ->addField("id3", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id3", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
@@ -329,16 +324,14 @@ TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
-            return (window1window2window3$start == rhs.window1window2window3$start &&
-                window1window2window3$end == rhs.window1window2window3$end &&
-                window1window2window3$key == rhs.window1window2window3$key &&
-                window1window2$key == rhs.window1window2$key);
+            return (window1window2window3$start == rhs.window1window2window3$start
+                    && window1window2window3$end == rhs.window1window2window3$end
+                    && window1window2window3$key == rhs.window1window2window3$key
+                    && window1window2$key == rhs.window1window2$key);
         }
     };
 
-    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48},
-                                          {1000,1010,12,96},
-                                          {1010,1020,12,192}};
+    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48}, {1000, 1010, 12, 96}, {1010, 1020, 12, 192}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -373,16 +366,16 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     };
 
     auto window1Schema = Schema::create()
-        ->addField("id1", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id1", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-        ->addField("id2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window3Schema = Schema::create()
-        ->addField("id3", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id3", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
@@ -463,9 +456,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
         }
     };
 
-    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48},
-                                          {1000,1010,12,96},
-                                          {1010,1020,12,192}};
+    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48}, {1000, 1010, 12, 96}, {1010, 1020, 12, 192}};
 
     // FIXME: This test should use the `BottomUp` placement to demonstrate the orchestration of multiple window and join \
     //  operators between the topology nodes. However, currently the BottomUp throws error when executed using this query and \
