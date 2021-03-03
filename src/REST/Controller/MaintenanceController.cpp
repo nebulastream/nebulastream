@@ -47,7 +47,7 @@ void MaintenanceController::handlePost(std::vector<utility::string_t> paths, web
                   uint64_t id = req.at("ids").as_integer();
                   uint8_t strategy = req.at("strategy").as_integer();
 
-                  maintenanceService->doStuff(id,strategy);
+                  maintenanceService->submitMaintenanceRequest(id,strategy);
 
                   json::value result{};
 
