@@ -213,7 +213,6 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
     }
     auto updatedOperatorTupleSchemaMap = OperatorTupleSchemaMap::create(updatedSchemaMaps);
 
-    //    std::vector<z3::ExprPtr> updatedExpr = substituteIntoInputExpression(context, mapExpr, rhsOperandFieldMap, columns);
     //Add field to the column list
     auto found = std::find(columns.begin(), columns.end(), fieldName);
     if (found == columns.end()) {
@@ -286,17 +285,17 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
 
 QuerySignaturePtr
 QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
-                                                     WatermarkAssignerLogicalOperatorNodePtr watermarkOperator) {
+                                                     WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator) {
 
     //Fetch query signature of the child operator
-    std::vector<NodePtr> children = watermarkOperator->getChildren();
+    std::vector<NodePtr> children = watermarkAssignerOperator->getChildren();
     NES_ASSERT(children.size() == 1 && children[0], "Map operator should only have one non null children.");
     auto child = children[0];
     auto childQuerySignature = child->as<LogicalOperatorNode>()->getSignature();
 
     auto conditions = childQuerySignature->getConditions();
 
-    auto watermarkDescriptor = watermarkOperator->getWatermarkStrategyDescriptor();
+    auto watermarkDescriptor = watermarkAssignerOperator->getWatermarkStrategyDescriptor();
 
     //Compute conditions based on watermark descriptor
     z3::expr watermarkDescriptorConditions(*context);
@@ -333,7 +332,6 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
     conditions = std::make_shared<z3::expr>(z3::to_expr(*context, Z3_mk_and(*context, 2, andConditions)));
 
     //Extract remaining signature attributes from child query signature
-    //    auto attributeMap = childQuerySignature->getAttributeMap();
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     auto columns = childQuerySignature->getColumns();
     auto operatorTupleSchemaMap = childQuerySignature->getOperatorTupleSchemaMap();
@@ -594,7 +592,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     auto windowTimeSizeExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSizeVar, windowTimeSizeVal));
     auto windowTimeSlideExpression = to_expr(*context, Z3_mk_eq(*context, windowTimeSlideVar, windowTimeSlideVal));
 
-    //FIXME: when count based window is implemented
+    //FIXME: when count based window is implemented #1383
     //    auto windowCountSizeVar = context->int_const("window-count-size");
 
     //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide

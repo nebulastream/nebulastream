@@ -67,7 +67,7 @@ class QuerySignature {
      * @brief Create instance of Query plan signature
      * @param conditions: the predicates involved in the query
      * @param columns: the predicates involving columns to be extracted
-     * @param operatorTupleSchemaMap:
+     * @param operatorTupleSchemaMap: map of tuple schemas expected at the operator
      * @param windowsExpressions: the map containing window expressions
      * @return Shared instance of the query plan signature.
      */

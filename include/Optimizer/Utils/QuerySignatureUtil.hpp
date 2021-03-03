@@ -138,11 +138,11 @@ class QuerySignatureUtil {
     /**
      * @brief compute signature for watermark operator
      * @param context: z3 context
-     * @param watermarkOperator: the watermark operator
+     * @param watermarkAssignerOperator: the watermark operator
      * @return Signature based on watermark operator and its child signature
      */
     static QuerySignaturePtr createQuerySignatureForWatermark(z3::ContextPtr context,
-                                                              WatermarkAssignerLogicalOperatorNodePtr watermarkOperator);
+                                                              WatermarkAssignerLogicalOperatorNodePtr watermarkAssignerOperator);
 
     /**
      * @brief Compute signature for Union operator
