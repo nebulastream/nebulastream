@@ -46,21 +46,6 @@ class ComplexSequenceTest : public testing::Test {
 };
 
 /*
- * Scenario: 1 query with join and window operator
- * FT vs HT
- * MultiJoin SingleWindow, MultiWindow SingleJoin, MultiWindowMultiJoin
- * Test Abbreviations:
- *  Node Configurations:
- *   SN: Single Node
- *   DN: Distributed Nodes
- *  Query Operators:
- *   SW: Single Window
- *   MW: Multiple Windows
- *   SJ: SingleJoin
- *   MJ: Multiple Joins
- */
-
-/*
  * @brief Test a query with a single window operator and a single join operator running on a single node
  */
 TEST_F(ComplexSequenceTest, complexTestSingleNodeSingleWindowSingleJoin) {
@@ -285,10 +270,13 @@ TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
 
     std::string queryWithJoinAndWindowOperator =
         R"(Query::from("window1")
+            .project(Attribute("window1$id1"), Attribute("window1$timestamp"))
+            .filter(Attribute("window1$id1")<16)
             .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
             .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)))
             .windowByKey(Attribute("window1window2window3$key"), SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5)), Sum(Attribute("window1window2$key")))
             .windowByKey(Attribute("window1window2window3$key"), TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10)), Sum(Attribute("window1window2$key")))
+            .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
 
@@ -348,9 +336,9 @@ TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
         }
     };
 
-    std::vector<Output> expectedOutput = {{1090, 1100, 4, 24},
-                                          {1000,1010,12,48},
-                                          {1010,1020,12,96}};
+    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48},
+                                          {1000,1010,12,96},
+                                          {1010,1020,12,192}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -366,7 +354,7 @@ TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
 //|--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
 //|  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
 /*
- * @brief Test a query with a single window operator and a single join operator running on a single node
+ * @brief Test a query with a single window operator and a single join operator running multiple nodes
  */
 TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoins) {
     struct Window1 {
@@ -402,10 +390,13 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
 
     std::string queryWithJoinAndWindowOperator =
         R"(Query::from("window1")
+            .project(Attribute("window1$id1"), Attribute("window1$timestamp"))
+            .filter(Attribute("window1$id1")<16)
             .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
             .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)))
             .windowByKey(Attribute("window1window2window3$key"), SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5)), Sum(Attribute("window1window2$key")))
             .windowByKey(Attribute("window1window2window3$key"), TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10)), Sum(Attribute("window1window2$key")))
+            .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
     testHarness.addNonSourceWorker();
@@ -472,9 +463,9 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
         }
     };
 
-    std::vector<Output> expectedOutput = {{1090, 1100, 4, 24},
-                                          {1000,1010,12,48},
-                                          {1010,1020,12,96}};
+    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48},
+                                          {1000,1010,12,96},
+                                          {1010,1020,12,192}};
 
     // FIXME: This test should use the `BottomUp` placement to demonstrate the orchestration of multiple window and join \
     //  operators between the topology nodes. However, currently the BottomUp throws error when executed using this query and \
