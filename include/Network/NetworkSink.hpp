@@ -49,7 +49,7 @@ class NetworkSink : public SinkMedium {
 
     const std::string toString() const override;
 
-    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& workerContext) override;
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) override;
     void setup() override;
     void shutdown() override;
 

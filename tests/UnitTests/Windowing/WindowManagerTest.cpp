@@ -86,14 +86,14 @@ class MockedExecutablePipelineStage : public NodeEngine::Execution::ExecutablePi
 
 class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager,
+    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager,
                                    NodeEngine::Execution::OperatorHandlerPtr operatorHandler)
-        : MockedPipelineExecutionContext(bufferManager, std::vector<NodeEngine::Execution::OperatorHandlerPtr>{operatorHandler}) {
+        : MockedPipelineExecutionContext(queryManager, bufferManager, std::vector<NodeEngine::Execution::OperatorHandlerPtr>{operatorHandler}) {
     }
-    MockedPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager,
+    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager,
                                    std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
-            0, std::move(bufferManager),
+            0, queryManager, std::move(bufferManager),
             [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
@@ -208,7 +208,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
             windowDef, windowOutputSchema);
 
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
-    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowOperatorHandler);
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(0, 1, MockedExecutablePipelineStage::create(), context,
                                                                           nullptr, windowInputSchema, windowOutputSchema);
     windowHandler->setup(context);
@@ -280,7 +280,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto windowHandler = createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(
         windowDef, windowOutputSchema);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
-    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
         /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,
@@ -354,7 +354,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto windowHandler = createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(
         windowDef, windowOutputSchema);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
-    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
         /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,
@@ -432,7 +432,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDef, windowOutputSchema);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
-    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
         /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,
@@ -510,7 +510,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto windowHandler = createWindowHandler<int64_t, int64_t, int64_t, int64_t, Windowing::ExecutableSumAggregation<int64_t>>(
         windowDef, windowOutputSchema);
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
-    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getBufferManager(), windowOperatorHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowOperatorHandler);
 
     auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(
         /*PipelineStageId*/ 0, /*QueryID*/ 1, MockedExecutablePipelineStage::create(), context, nullptr, windowInputSchema,

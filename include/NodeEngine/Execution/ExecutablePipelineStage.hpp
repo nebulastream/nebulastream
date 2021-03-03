@@ -95,6 +95,7 @@ class ExecutablePipelineStage {
 
   private:
     PipelineStageArity arity;
+
 };
 
 }// namespace NES::NodeEngine::Execution

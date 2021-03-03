@@ -66,7 +66,7 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 class QueryStatistics;
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
-class ReconfigurationTask;
+class ReconfigurationMessage;
 
 namespace Execution {
 

@@ -76,8 +76,8 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     ~WindowOperatorHandler() override { NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count())); }
     LogicalWindowDefinitionPtr getWindowDefinition();
 
-    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& context) override;
-    void postReconfigurationCallback(NodeEngine::ReconfigurationTask& task) override;
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
 
     SchemaPtr getResultSchema();
 

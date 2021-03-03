@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/ReconfigurationTask.hpp>
+#include <NodeEngine/ReconfigurationMessage.hpp>
 
 namespace NES::NodeEngine::Execution {
 
@@ -129,8 +129,11 @@ class ExecutablePipeline : public Reconfigurable {
      */
     std::string getCodeAsString();
 
-    void reconfigure(ReconfigurationTask& task, WorkerContext& context) override;
-    void postReconfigurationCallback(ReconfigurationTask& task) override;
+    void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
+
+    void postReconfigurationCallback(ReconfigurationMessage& task) override;
+
+    void pin();
 
   private:
     uint32_t pipelineStageId;
@@ -141,6 +144,7 @@ class ExecutablePipeline : public Reconfigurable {
     bool reconfiguration;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
+    std::atomic<uint32_t> activeProducers;
 };
 
 }// namespace NES::NodeEngine::Execution

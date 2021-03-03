@@ -353,10 +353,6 @@ TEST_F(NetworkStackTest, testPartitionManager) {
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 1);
 
     partitionManager->unregisterSubpartition(partition1Copy);
-    ASSERT_EQ(partitionManager->isRegistered(partition1), true);
-    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
-
-    partitionManager->unregisterSubpartition(partition1Copy);
     ASSERT_EQ(partitionManager->isRegistered(partition1), false);
 }
 
@@ -594,7 +590,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
-                auto rt = NodeEngine::ReconfigurationTask(0, NodeEngine::Initialize, networkSink);
+                auto rt = NodeEngine::ReconfigurationMessage(0, NodeEngine::Initialize, networkSink);
                 networkSink->reconfigure(rt, workerContext);
                 std::mt19937 rnd;
                 std::uniform_int_distribution gen(50'000, 100'000);
@@ -758,7 +754,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
-                auto rt = NodeEngine::ReconfigurationTask(0, NodeEngine::Initialize, networkSink);
+                auto rt = NodeEngine::ReconfigurationMessage(0, NodeEngine::Initialize, networkSink);
                 networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();

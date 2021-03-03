@@ -117,7 +117,14 @@ class EndOfStreamMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kEndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
+    explicit EndOfStreamMessage(ChannelId channelId, bool graceful = true) : ExchangeMessage(channelId), graceful(graceful) {}
+
+    bool isGraceful() const {
+        return graceful;
+    }
+
+  private:
+    bool graceful;
 };
 
 class ErrorMessage : public ExchangeMessage {

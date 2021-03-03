@@ -236,9 +236,9 @@ void testOutput(std::string path, std::string expectedOutput) {
 
 class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(NodeEngine::BufferManagerPtr bufferManager, DataSinkPtr sink)
+    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager, DataSinkPtr sink)
         : PipelineExecutionContext(
-            0, std::move(bufferManager),
+            0, std::move(queryManager), std::move(bufferManager),
             [sink](TupleBuffer& buffer, NodeEngine::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
             },
@@ -263,7 +263,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     builder.setBufferManager(engine->getBufferManager());
     builder.setCompiler(engine->getCompiler());
 
-    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, queryId, executable, context, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
@@ -344,7 +344,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink1);
+    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr, source1->getSchema(), sch1);
     builder1.addPipeline(pipeline1);
@@ -361,7 +361,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink2);
+    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr, source2->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
@@ -409,7 +409,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink1);
+    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr, source1->getSchema(), sch1);
     builder1.addPipeline(pipeline1);
@@ -426,7 +426,7 @@ TEST_F(EngineTest, testParallelSameSource) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink2);
+    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr, source2->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
@@ -467,7 +467,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink1);
+    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr, source1->getSchema(), sch1);
     builder1.addPipeline(pipeline1);
@@ -483,7 +483,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink1);
+    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr, source2->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
@@ -522,7 +522,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder1.setQueryManager(engine->getQueryManager());
     builder1.setBufferManager(engine->getBufferManager());
     builder1.setCompiler(engine->getCompiler());
-    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink1);
+    auto context1 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
     auto executable1 = std::make_shared<TextExecutablePipeline>();
     auto pipeline1 = ExecutablePipeline::create(0, 1, executable1, context1, nullptr, source1->getSchema(), sch1);
     builder1.addPipeline(pipeline1);
@@ -537,7 +537,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     builder2.setQueryManager(engine->getQueryManager());
     builder2.setBufferManager(engine->getBufferManager());
     builder2.setCompiler(engine->getCompiler());
-    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink1);
+    auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr, source1->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
@@ -652,7 +652,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     builder.setBufferManager(engine->getBufferManager());
     builder.setCompiler(engine->getCompiler());
 
-    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink);
     auto executable = std::make_shared<FailingTextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
@@ -704,7 +704,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     builder.setBufferManager(engine->getBufferManager());
     builder.setCompiler(engine->getCompiler());
 
-    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getBufferManager(), sink);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink);
     auto executable = std::make_shared<FailingTextExecutablePipeline>();
     auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);

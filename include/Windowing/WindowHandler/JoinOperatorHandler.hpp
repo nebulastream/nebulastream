@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINOPERATORHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JOINOPERATORHANDLER_HPP_
 #include <NodeEngine/Execution/OperatorHandler.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 namespace NES::Join {
@@ -70,6 +71,10 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     LogicalJoinDefinitionPtr getJoinDefinition();
 
     SchemaPtr getResultSchema();
+
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
 
   private:
     LogicalJoinDefinitionPtr joinDefinition;

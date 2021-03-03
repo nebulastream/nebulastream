@@ -19,7 +19,7 @@
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/ReconfigurationTask.hpp>
+#include <NodeEngine/ReconfigurationMessage.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
@@ -129,9 +129,9 @@ class ExecutableQueryPlan : public Reconfigurable {
      */
     QuerySubPlanId getQuerySubPlanId() const;
 
-    void reconfigure(ReconfigurationTask& task, WorkerContext& context) override;
+    void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
 
-    void postReconfigurationCallback(ReconfigurationTask& task) override;
+    void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
   protected:
     const QueryId queryId;
