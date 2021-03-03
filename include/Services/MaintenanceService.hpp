@@ -21,6 +21,7 @@
 #ifndef NES_MAINTENANCESERVICE_HPP
 #define NES_MAINTENANCESERVICE_HPP
 #include <memory>
+#include <vector>
 namespace NES {
 
 class Topology;
@@ -30,16 +31,50 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
-
+/**
+ * @brief this class is responsible for handling maintenance requests. Three different strategies are implemented to handle query redeployment due to nodes being taken offline
+ */
 class MaintenanceService {
   public:
     explicit MaintenanceService(TopologyPtr topology, QueryServicePtr queryService, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~MaintenanceService();
-
-    void doStuff(uint64_t nodeId, uint8_t strategy);
+    /**
+     * submit a request to take a node offline for maintenance
+     * @param nodeId
+     * @param strategy
+     */
+    std::vector<uint64_t> submitMaintenanceRequest(uint64_t nodeId, uint8_t strategy);
 
   private:
+    /**
+     * This method represents the first strategy. Here, all queries with subqueries on nodes that are to be taken offline are redeployed in their entirety
+     * @param nodeId
+     * @return true if success or false if failure
+     */
+    std::vector<uint64_t> firstStrat(uint64_t nodeId);
+
+    /**
+     * this method represents the second strategy. Here, data is buffered on the upstream nodes until the subquery on the node to be taken offline is redeployed
+     * @param nodeId
+     * @return
+     */
+    std::vector<uint64_t> secondStrat(uint64_t nodeId);
+
+    /**
+     * This method represents the third strategy. Here, subqueries of nodes are redeployed before marking the node for maintenance. This ensures uninterrupted data proccessing.
+     * @param nodeId
+     * @return
+     */
+    std::vector<uint64_t> thirdStrat(uint64_t nodeId);
+
+    /**
+     * sets maintenanceFlag of node to true
+     * @param nodeId
+     * @return
+     */
+    bool markNodeForMaintenance(uint64_t nodeId);
+
     TopologyPtr topology;
     QueryServicePtr queryService;
     GlobalExecutionPlanPtr globalExecutionPlan;
