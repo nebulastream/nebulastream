@@ -62,32 +62,47 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     }
 
     //Check if two columns are identical
-    for (auto& fieldName : columns) {
-        auto found = std::find(otherColumns.begin(), otherColumns.end(), fieldName);
-        if (found == otherColumns.end()) {
+    //If column from one signature doesn't exists in other signature then they are not equal.
+    auto otherOperatorTupleSchemaMap = other->getOperatorTupleSchemaMap();
+    auto otherSchemaMaps = otherOperatorTupleSchemaMap->getSchemaMaps();
+
+    //Iterate over all distinct schema maps
+    // and identify if there is an equivalent schema map in the other signature
+    for (auto schemaMap : operatorTupleSchemaMap->getSchemaMaps()) {
+        bool schemaExists = false;
+        for(auto otherSchemaMapItr = otherSchemaMaps.begin(); otherSchemaMapItr != otherSchemaMaps.end(); otherSchemaMapItr++) {
+            bool schemaMatched = false;
+            //Iterate over all the field expressions from one schema and other
+            // and check if they are matching
+            for(auto [fieldName, fieldExpr] : schemaMap){
+                bool fieldMatch = false;
+                for(auto [otherFieldName, otherFieldExpr] : *otherSchemaMapItr){
+                    if(z3::eq(*fieldExpr, *otherFieldExpr)){
+                        fieldMatch = true;
+                        break;
+                    }
+                }
+                if(!fieldMatch){
+                    schemaMatched = false;
+                    break;
+                }
+                schemaMatched = true;
+            }
+
+            if(schemaMatched){
+                otherSchemaMaps.erase(otherSchemaMapItr);
+                schemaExists = true;
+                break;
+            }
+        }
+
+        if(!schemaExists){
             NES_WARNING("QuerySignature: Both signatures have different column entries");
             return false;
         }
     }
 
-    //Convert columns from both the signatures into equality conditions.
-    //If column from one signature doesn't exists in other signature then they are not equal.
     z3::expr_vector allConditions(context);
-    auto otherOperatorTupleSchemaMap = other->getOperatorTupleSchemaMap();
-
-    for (auto schemaMap : operatorTupleSchemaMap->getSchemaMaps()) {
-        for (auto& colField : columns) {
-            z3::expr_vector columnCondition(context);
-            auto colExpr = schemaMap[colField];
-            for (auto otherSchemaMap : otherOperatorTupleSchemaMap->getSchemaMaps()) {
-                auto otherColExpr = otherSchemaMap[colField];
-                columnCondition.push_back(z3::to_expr(context, Z3_mk_eq(context, *colExpr, *otherColExpr)));
-            }
-            //Add DNF of col conditions to all conditions
-            allConditions.push_back(z3::mk_or(columnCondition));
-        }
-    }
-
     //Check the number of window expressions extracted from both queries
     auto otherWindowExpressions = other->windowsExpressions;
     if (windowsExpressions.size() != otherWindowExpressions.size()) {
