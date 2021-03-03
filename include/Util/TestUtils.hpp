@@ -472,7 +472,7 @@ class TestUtils {
                 free(buff);
 
                 if (expectedNumberOfContent != currentContentSize) {
-                    if (currentContentSize > expectedNumberOfContent){
+                    if (currentContentSize > expectedNumberOfContent) {
                         NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result");
                         return false;
                     }

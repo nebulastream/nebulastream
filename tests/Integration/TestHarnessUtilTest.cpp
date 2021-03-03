@@ -436,8 +436,8 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
         |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
     */
 
-    testHarness.addNonSourceWorker(); //idx=0
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));//idx=1
+    testHarness.addNonSourceWorker();                                                 //idx=0
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                       //idx=1
     testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));//idx=2
     testHarness.addMemorySource("car", carSchema, "car2", testHarness.getWorkerId(1));//idx=3
 
@@ -468,11 +468,19 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
 
     std::vector<Output> expectedOutput = {{40, 1600, 40},
                                           {21, 441, 21},
-                                          {30,900,30,},
+                                          {
+                                              30,
+                                              900,
+                                              30,
+                                          },
                                           {71, 5041, 71},
                                           {40, 1600, 40},
                                           {21, 441, 21},
-                                          {30, 900, 30,},
+                                          {
+                                              30,
+                                              900,
+                                              30,
+                                          },
                                           {71, 5041, 71}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 

@@ -272,7 +272,9 @@ class TestHarness {
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
-        NES_DEBUG("TestHarness: outputSchema: " << queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString());
+        NES_DEBUG(
+            "TestHarness: outputSchema: "
+            << queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
