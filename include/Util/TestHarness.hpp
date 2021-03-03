@@ -65,7 +65,6 @@ class TestHarness {
     void pushElement(T element, uint64_t sourceIdx) {
         // compute the index of the csv/memory source relative to all workers, including nonSource workers
         sourceIdx = sourceIdx - nonSourceWorkerCount;
-
         if (sourceIdx >= sourceSchemas.size()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
         }
@@ -207,10 +206,12 @@ class TestHarness {
     /**
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
          * then return the result of the query execution
+         * @param placementStrategyName: total number of tuple expected in the query result
+         * @param numberOfContentToExpect: placement strategy name
          * @return output string
          */
     template<typename T>
-    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName="BottomUp") {
+    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
                                     << std::to_string(physicalStreamNames.size())
