@@ -141,7 +141,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 childPipelines.emplace_back(pipelines[childStageId]);
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
-                builder.getQuerySubPlanId(), builder.getBufferManager(),
+                builder.getQuerySubPlanId(), builder.getQueryManager(), builder.getBufferManager(),
                 [childPipelines](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
@@ -161,7 +161,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 NES_THROW_RUNTIME_ERROR("No sinks available in query plan");
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
-                builder.getQuerySubPlanId(), builder.getBufferManager(),
+                builder.getQuerySubPlanId(), builder.getQueryManager(), builder.getBufferManager(),
                 [sinks](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);

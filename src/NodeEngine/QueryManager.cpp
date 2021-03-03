@@ -31,29 +31,30 @@ namespace NES::NodeEngine {
 using std::string;
 namespace detail {
 
-class ReconfigurationTaskEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
+class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
     typedef Execution::ExecutablePipelineStage base;
 
   public:
-    explicit ReconfigurationTaskEntryPointPipelineStage() : base(Unary) {
+    explicit ReconfigurationEntryPointPipelineStage() : base(Unary) {
         // nop
     }
 
-    uint32_t execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext) {
-        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint begin on thread "
+    uint32_t execute(TupleBuffer& buffer, Execution::PipelineExecutionContext& pipelineContext, WorkerContextRef workerContext) {
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread "
                   << workerContext.getId());
-        auto* task = buffer.getBufferAs<ReconfigurationTask>();
-        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to wait on thread "
+        auto queryManager = pipelineContext.getQueryManager();
+        auto* task = buffer.getBufferAs<ReconfigurationMessage>();
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait on thread "
                   << workerContext.getId());
         task->wait();
         NES_TRACE(
-            "QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint going to reconfigure on thread "
+            "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to reconfigure on thread "
             << workerContext.getId());
         task->getInstance()->reconfigure(*task, workerContext);
-        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint post callback on thread "
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint post callback on thread "
                   << workerContext.getId());
         task->postReconfiguration();
-        NES_TRACE("QueryManager: QueryManager::addReconfigurationTask reconfigurationTaskEntryPoint completed on thread "
+        NES_TRACE("QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint completed on thread "
                   << workerContext.getId());
         task->postWait();
         return 0;
@@ -66,7 +67,7 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
     : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
       nodeEngineId(nodeEngineId), numThreads(numThreads), waitCounter(0) {
     NES_DEBUG("Init QueryManager::QueryManager");
-    reconfigurationExecutable = std::make_shared<detail::ReconfigurationTaskEntryPointPipelineStage>();
+    reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
 }
 
 QueryManager::~QueryManager() {
@@ -127,6 +128,23 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
+    // HACK !!!
+    auto qepPipelines = qep->getPipelines();
+    if (isBinaryOperator) {
+        if (qepPipelines.size() > 2) {
+            for (auto it = qepPipelines.begin() + 2; it != qepPipelines.end(); ++it) {
+                (*it)->pin();
+            }
+        }
+        qepPipelines[2]->pin(); // the 3rd pipeline of a binary operator has two producers
+    } else {
+        if (qepPipelines.size() > 1) {
+            for (auto it = qepPipelines.begin() + 1; it != qepPipelines.end(); ++it) {
+                (*it)->pin();
+            }
+        }
+    }
+
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
@@ -138,6 +156,12 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << sourceOperatorId);
                 operatorIdToQueryMap[sourceOperatorId].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
+                if (isBinaryOperator) { // i am not sure if this is ever executed
+                    executablePipelines[0]->pin();
+                    executablePipelines[1]->pin();
+                } else {
+                    executablePipelines[0]->pin();
+                }
             } else {
                 NES_DEBUG("QueryManager: Source " << sourceOperatorId << " and QEP already exist.");
                 return false;
@@ -149,6 +173,8 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             operatorIdToQueryMap[sourceOperatorId] = qepSet;
             queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
             queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorId);
+            // by far the most obscure piece of code that we have so far :D
+            // TODO refactor this using the pipeline concept 2.0
             if (isBinaryOperator) {
                 NES_ASSERT(executablePipelines.size() >= 2, "Binary operator must have at least two pipelines");
                 SchemaPtr sourceSchema = source->getSchema();
@@ -161,6 +187,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                         NES_ASSERT(operatorIdToPipelineStage.count(sourceOperatorId) == 0,
                                    "Found existing entry for the source operator " << sourceOperatorId);
                         operatorIdToPipelineStage[sourceOperatorId] = i;
+                        executablePipelines[i]->pin();
                     } else {
                         NES_TRACE("source not equal");
                     }
@@ -168,6 +195,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             } else {
                 //default fall back, if there is no join, then we always execute the pipeline at id 0
                 operatorIdToPipelineStage[sourceOperatorId] = 0;
+                executablePipelines[0]->pin();
             }
         }
     }
@@ -297,7 +325,7 @@ bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
         sink->shutdown();
     }
     if (ret) {
-        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, this), true);
+        addReconfigurationMessage(qep->getQuerySubPlanId(), ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, this), true);
     }
     return ret;
 #endif
@@ -325,7 +353,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
         ret = false;
     };
     if (ret) {
-        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()), true);
+        addReconfigurationMessage(qep->getQuerySubPlanId(), ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()), true);
     }
     NES_DEBUG("QueryManager::stopQuery: query" << qep << " was " << (ret ? "successful" : " not successful"));
     return ret;
@@ -374,7 +402,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
         sink->shutdown();
     }
     if (ret) {
-        addReconfigurationTask(qep->getQuerySubPlanId(), ReconfigurationTask(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()), true);
+        addReconfigurationMessage(qep->getQuerySubPlanId(), ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()), true);
     }
     return ret;
 #endif
@@ -447,16 +475,16 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     }
 }
 
-bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask descriptor, bool blocking) {
-    NES_DEBUG("QueryManager: QueryManager::addReconfigurationTask begins on plan " << queryExecutionPlanId << " blocking=" << blocking <<
+bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage descriptor, bool blocking) {
+    NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan " << queryExecutionPlanId << " blocking=" << blocking <<
               " type " << descriptor.getType());
-    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
+    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     auto task = new (buffer.getBuffer())
-        ReconfigurationTask(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
+        ReconfigurationMessage(descriptor, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
     auto pipelineContext = std::make_shared<Execution::PipelineExecutionContext>(
-        queryExecutionPlanId, bufferManager,
+        queryExecutionPlanId, inherited0::shared_from_this(), bufferManager,
         [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
         },
         [](TupleBuffer&) {
@@ -481,17 +509,32 @@ bool QueryManager::addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, R
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
-    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId);
+    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
     NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
+    auto reconfigType = graceful ? SoftEndOfStream : HardEndOfStream;
     for (const auto& qep : operatorIdToQueryMap[sourceId]) {
-        auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationTask));
-        NES_ASSERT(!!optBuffer, "invalid buffer");
-        auto buffer = optBuffer.value();
+        TupleBuffer buffer;
         auto queryExecutionPlanId = qep->getQuerySubPlanId();
-        new (buffer.getBuffer())
-            ReconfigurationTask(queryExecutionPlanId, EndOfStream, threadPool->getNumberOfThreads(), qep);
+        if (graceful) {
+            // reconfigure at stage level first
+            auto targetStage = operatorIdToPipelineStage[sourceId];
+            auto weakQep = std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(qep);
+            auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+            NES_ASSERT(!!optBuffer, "invalid buffer");
+            buffer = optBuffer.value();
+            new (buffer.getBuffer())
+                ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep->getPipeline(targetStage), weakQep);
+        } else {
+            // reconfigure at qep level
+            auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+            NES_ASSERT(!!optBuffer, "invalid buffer");
+            buffer = optBuffer.value();
+            new (buffer.getBuffer())
+                ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
+        }
+
         auto pipelineContext = std::make_shared<Execution::PipelineExecutionContext>(
-            queryExecutionPlanId, bufferManager,
+            queryExecutionPlanId, inherited0::shared_from_this(), bufferManager,
             [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
             },
             [](TupleBuffer&) {
@@ -577,10 +620,13 @@ QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerC
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::ExecutablePipelinePtr nextPipeline) {
     std::unique_lock lock(workMutex);
     // dispatch buffer as task
-    taskQueue.emplace_back(std::move(nextPipeline), buffer);
-    NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline "
-                                                             << nextPipeline << " inputBuffer " << buffer);
-    cv.notify_all();
+    auto it = runningQEPs.find(nextPipeline->getQepParentId());
+    if (it != runningQEPs.end() && it->second->getStatus() == Execution::Running) {
+        taskQueue.emplace_back(std::move(nextPipeline), buffer);
+        NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline "
+                                                                 << nextPipeline << " inputBuffer " << buffer);
+        cv.notify_all();
+    }
 }
 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
@@ -643,7 +689,7 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
     return queryToStatisticsMap.find(qepId);
 }
 
-void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context) {
+void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
         case Destroy: {
@@ -655,7 +701,7 @@ void QueryManager::reconfigure(ReconfigurationTask& task, WorkerContext& context
     }
 }
 
-void QueryManager::postReconfigurationCallback(ReconfigurationTask& task) {
+void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case Destroy: {

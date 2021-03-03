@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
+#include <NodeEngine/Reconfigurable.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -100,12 +101,51 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return ss.str();
     }
 
-    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& context) override {
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override {
         AbstractWindowHandler::reconfigure(task, context);
     }
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationTask& task) override {
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
         AbstractWindowHandler::postReconfigurationCallback(task);
+        auto flushInflightWindows = [this]() {
+            // flush in-flight records
+            auto windowType = windowDefinition->getWindowType();
+            int64_t windowLenghtMs;
+            if (windowType->isTumblingWindow()) {
+                auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
+                windowLenghtMs = window->getSize().getTime();
+
+            } else if (windowType->isSlidingWindow()) {
+                auto window = dynamic_cast<SlidingWindow*>(windowType.get());
+                windowLenghtMs = window->getSlide().getTime();
+
+            } else {
+                NES_ASSERT(false, "unknonw windownd");
+            }
+            NES_DEBUG("Going to flush window " << toString());
+            executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
+        };
+
+        auto cleanup = [this]() {
+            // drop window content and cleanup resources
+            // wait for trigger thread to stop
+            stop();
+        };
+
+        switch (task.getType()) {
+            case NodeEngine::SoftEndOfStream: {
+                flushInflightWindows();
+                cleanup();
+                break;
+            }
+            case NodeEngine::HardEndOfStream: {
+                cleanup();
+                break;
+            }
+            default: {
+                break;
+            }
+        }
     }
 
     /**
@@ -113,11 +153,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     void trigger() override {
         std::unique_lock lock(windowMutex);
-//        if (!isRunning) {
-//            NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id
-//                                                  << "): was stopped");
-//            return;
-//        }
+        //        if (!isRunning) {
+        //            NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id
+        //                                                  << "): was stopped");
+        //            return;
+        //        }
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window action "
                                               << executableWindowAction->toString()
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString());

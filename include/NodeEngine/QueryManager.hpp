@@ -22,7 +22,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/ReconfigurationTask.hpp>
+#include <NodeEngine/ReconfigurationMessage.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -113,9 +113,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     void addWorkForNextPipeline(TupleBuffer& buffer, Execution::ExecutablePipelinePtr nextPipeline);
 
-    void postReconfigurationCallback(ReconfigurationTask& task) override;
+    void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    void reconfigure(ReconfigurationTask&, WorkerContext& context) override;
+    void reconfigure(ReconfigurationMessage&, WorkerContext& context) override;
 
     /**
      * @brief retrieve the execution status of a given local query sub plan id.
@@ -179,7 +179,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor,
+    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage reconfigurationDescriptor,
                                 bool blocking = false);
 
     /**

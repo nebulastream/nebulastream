@@ -174,11 +174,11 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
         return std::static_pointer_cast<Derived>(inherited0::shared_from_this());
     }
 
-    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& context) override {
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override {
         Reconfigurable::reconfigure(task, context);
     }
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationTask& task) override {
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
         Reconfigurable::postReconfigurationCallback(task);
     }
 

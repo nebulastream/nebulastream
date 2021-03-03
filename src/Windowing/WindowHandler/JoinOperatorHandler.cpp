@@ -54,5 +54,14 @@ void JoinOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPt
         joinHandler->stop();
     }
 }
+void JoinOperatorHandler::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) {
+    NodeEngine::Execution::OperatorHandler::reconfigure(task, context);
+    joinHandler->reconfigure(task, context);
+}
+
+void JoinOperatorHandler::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
+    NodeEngine::Execution::OperatorHandler::postReconfigurationCallback(task);
+    joinHandler->postReconfigurationCallback(task);
+}
 
 }// namespace NES::Join

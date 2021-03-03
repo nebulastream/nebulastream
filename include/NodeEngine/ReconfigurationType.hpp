@@ -26,7 +26,9 @@ enum ReconfigurationType : uint8_t {
     /// use Destroy for reconfiguration tasks that cleans up a reconfigurable instance
     Destroy,
     /// use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
-    EndOfStream,
+    SoftEndOfStream,
+    /// use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
+    HardEndOfStream,
 };
 }
 
