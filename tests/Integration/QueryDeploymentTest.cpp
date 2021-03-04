@@ -129,107 +129,80 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+    string query = "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
+        + "\", \"CSV_FORMAT\", \"APPEND\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
+
+    string expectedContent = "car$id:INTEGER,car$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
+
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
     ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    string expectedContent =
-        "+----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------++----------------------------------------------------+\n"
-        "|car$id:UINT32|car$value:UINT64|\n"
-        "+----------------------------------------------------+\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "|1|1|\n"
-        "+----------------------------------------------------+";
-
-    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): content=" << content);
-    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingBottomUp): expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -321,13 +294,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
-    NES_INFO("QueryDeploymentTest: Remove query");
-    queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(outputFilePath);
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
     string expectedContent =
         "+----------------------------------------------------+\n"
         "|car$id:UINT32|car$value:UINT64|\n"
@@ -409,9 +375,11 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
         "|1|1|\n"
         "+----------------------------------------------------+";
 
-    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): content=" << content);
-    NES_INFO("QueryDeploymentTest(testDeployTwoWorkerMergeUsingTopDown): expContent=" << expectedContent);
-    EXPECT_EQ(content, expectedContent);
+    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("QueryDeploymentTest: Remove query");
+    queryService->validateAndQueueStopRequest(queryId);
+    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
