@@ -15,31 +15,31 @@
 */
 
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/OperatorTupleSchemaMap.hpp>
+#include <Optimizer/Utils/OperatorSchemas.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
 QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::vector<std::string> columns,
-                                         OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
+                                         OperatorSchemasPtr operatorSchemas,
                                          std::map<std::string, z3::ExprPtr> windowsExpressions) {
-    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, operatorTupleSchemaMap, windowsExpressions));
+    return std::make_shared<QuerySignature>(
+        QuerySignature(std::move(conditions), std::move(columns), std::move(operatorSchemas), std::move(windowsExpressions)));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns,
-                               OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
+QuerySignature::QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorSchemasPtr operatorSchemas,
                                std::map<std::string, z3::ExprPtr> windowsExpressions)
-    : conditions(conditions), columns(columns), operatorTupleSchemaMap(operatorTupleSchemaMap),
-      windowsExpressions(windowsExpressions) {}
+    : conditions(std::move(conditions)), columns(std::move(columns)), operatorTupleSchemaMap(std::move(operatorSchemas)),
+      windowsExpressions(std::move(windowsExpressions)) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
-std::vector<std::string> QuerySignature::getColumns() { return columns; }
+const std::vector<std::string>& QuerySignature::getColumns() { return columns; }
 
-std::map<std::string, z3::ExprPtr> QuerySignature::getWindowsExpressions() { return windowsExpressions; }
+const std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions() { return windowsExpressions; }
 
-const OperatorTupleSchemaMapPtr& QuerySignature::getOperatorTupleSchemaMap() const { return operatorTupleSchemaMap; }
+OperatorSchemasPtr QuerySignature::getOperatorSchemas() { return operatorTupleSchemaMap; }
 
 bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
@@ -63,45 +63,49 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     //Check if two columns are identical
     //If column from one signature doesn't exists in other signature then they are not equal.
-    auto otherOperatorTupleSchemaMap = other->getOperatorTupleSchemaMap();
-    auto otherSchemaMaps = otherOperatorTupleSchemaMap->getSchemaMaps();
+    auto otherOperatorTupleSchemaMap = other->getOperatorSchemas();
+    auto otherSchemaMaps = otherOperatorTupleSchemaMap->getOperatorSchemas();
 
     //Iterate over all distinct schema maps
     // and identify if there is an equivalent schema map in the other signature
-    for (auto schemaMap : operatorTupleSchemaMap->getSchemaMaps()) {
+    for (auto schemaMap : operatorTupleSchemaMap->getOperatorSchemas()) {
         bool schemaExists = false;
-        for(auto otherSchemaMapItr = otherSchemaMaps.begin(); otherSchemaMapItr != otherSchemaMaps.end(); otherSchemaMapItr++) {
+        for (auto otherSchemaMapItr = otherSchemaMaps.begin(); otherSchemaMapItr != otherSchemaMaps.end(); otherSchemaMapItr++) {
             bool schemaMatched = false;
             //Iterate over all the field expressions from one schema and other
             // and check if they are matching
-            for(auto [fieldName, fieldExpr] : schemaMap){
+            for (auto [fieldName, fieldExpr] : schemaMap) {
                 bool fieldMatch = false;
-                for(auto [otherFieldName, otherFieldExpr] : *otherSchemaMapItr){
-                    if(z3::eq(*fieldExpr, *otherFieldExpr)){
+                for (auto [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
+                    if (z3::eq(*fieldExpr, *otherFieldExpr)) {
                         fieldMatch = true;
                         break;
                     }
                 }
-                if(!fieldMatch){
+                //If field is not matched with any of the other's field then schema is mis-matched
+                if (!fieldMatch) {
                     schemaMatched = false;
                     break;
                 }
                 schemaMatched = true;
             }
 
-            if(schemaMatched){
+            //If schema is matched then remove the other schema from the list to avoid duplicate matching
+            if (schemaMatched) {
                 otherSchemaMaps.erase(otherSchemaMapItr);
                 schemaExists = true;
                 break;
             }
         }
 
-        if(!schemaExists){
+        //If a matching schema doesn't exists in other signature then two signatures are different
+        if (!schemaExists) {
             NES_WARNING("QuerySignature: Both signatures have different column entries");
             return false;
         }
     }
 
+    //Compute all CNF conditions for check
     z3::expr_vector allConditions(context);
     //Check the number of window expressions extracted from both queries
     auto otherWindowExpressions = other->windowsExpressions;
