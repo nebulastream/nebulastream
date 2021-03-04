@@ -124,6 +124,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             }
             NES_DEBUG("Going to flush window " << toString());
             executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
+            NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
 
         auto cleanup = [this]() {

@@ -172,8 +172,15 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 },
                 holder.operatorHandlers);
         }
+        uint32_t numOfProducers = holder.producers.size();
+        for (const auto& source : builder.getSources()) {
+            SchemaPtr sourceSchema = source->getSchema();
+            if (holder.inputSchema && holder.inputSchema->equals(sourceSchema)) {
+                ++numOfProducers;
+            }
+        }
         auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(
-            stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext,
+            stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext, numOfProducers,
             pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
 
         NES_TRACE("pipeline code=" << pipeline->getCodeAsString());
