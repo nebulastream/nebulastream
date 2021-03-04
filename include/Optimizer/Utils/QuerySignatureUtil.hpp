@@ -38,9 +38,6 @@ typedef std::shared_ptr<Node> NodePtr;
 
 namespace NES::Optimizer {
 
-class OperatorSchemas;
-typedef std::shared_ptr<OperatorSchemas> OperatorSchemasPtr;
-
 class QuerySignature;
 typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
