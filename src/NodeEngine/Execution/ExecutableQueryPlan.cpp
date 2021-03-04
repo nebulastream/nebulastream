@@ -170,10 +170,10 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             break;
         }
         case SoftEndOfStream: {
-            NES_DEBUG("QueryExecutionPlan: soft stop " << queryId << " " << querySubPlanId);
+            NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan " << querySubPlanId);
             auto expected = Running;
             if (qepStatus.compare_exchange_strong(expected, Stopped)) {
-                NES_DEBUG("QueryExecutionPlan: stop " << queryId << "-" << querySubPlanId << " is marked as stopped now");
+                NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId << " is marked as stopped now");
                 for (auto& sink : sinks) {
                     sink->postReconfigurationCallback(task);
                 }

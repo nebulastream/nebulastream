@@ -174,14 +174,14 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
         }
         uint32_t numOfProducers = holder.producers.size();
         //This is not something to look at, please pass by
-        if (numOfProducers == 0) {
+//        if (numOfProducers == 0) {
             for (const auto& source : builder.getSources()) {
                 SchemaPtr sourceSchema = source->getSchema();
                 if (holder.inputSchema && holder.inputSchema->equals(sourceSchema)) {
                     ++numOfProducers;
                 }
             }
-        }
+//        }
 
         auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(
             stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext, numOfProducers,
