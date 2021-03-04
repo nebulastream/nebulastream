@@ -63,6 +63,83 @@ using namespace NES::Windowing;
 
 static const uint64_t defaultTriggerTimeInMs = 1000;
 
+namespace JoinQueryBuilder {
+
+class JoinWhere;
+class JoinCondition;
+
+class Join {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs and original Query
+     * @param subQueryRhs
+     * @param originalQuery
+     */
+    constexpr Join(const Query& subQueryRhs, const Query& originalQuery);
+
+    /**
+     * @brief sets the left key item, after that it can be compared with the function implemented in Condition
+     * @param onLeftKey
+     * @return object of type JoinWhere on which equalsTo function is defined and can be called.
+     */
+    constexpr JoinWhere where(ExpressionItem onLeftKey);
+
+  private:
+    const Query& subQueryRhs;
+    const Query& originalQuery;
+};
+
+class JoinWhere {
+  public:
+    /**
+     * @brief Constructor. Initialises always subQueryRhs, original Query and onLeftKey
+     * @param subQueryRhs
+     * @param originalQuery
+     * @param onLeftKey
+     */
+    constexpr JoinWhere(const Query& subQueryRhs, const Query& originalQuery, ExpressionItem onLeftKey);
+
+    /**
+     * @brief sets the rightKey item
+     * @param onRightKey
+     * @return object of type JoinCondition on which windowing & the original joinWith function can be called.
+     */
+    constexpr JoinCondition equalsTo(ExpressionItem onRightKey);
+
+  private:
+    const Query& subQueryRhs;
+    const Query& originalQuery;
+    ExpressionItem onLeftKey;
+};
+
+class JoinCondition {
+  public:
+    /**
+    * @brief: Constructor. Initialises always subQueryRhs, originalQuery, onLeftKey and onRightKey
+    * @param subQueryRhs
+    * @param originalQuery
+    * @param onLeftKey
+    * @param onRightKey
+    */
+    constexpr JoinCondition(const Query& subQueryRhs, const Query& originalQuery, ExpressionItem onLeftKey,
+                            ExpressionItem onRightKey);
+
+    /**
+     * @brief: calls internal the original joinWith function with all the gathered parameters.
+     * @param windowType
+     * @return the query with the result of the original joinWith function is returned.
+     */
+    JoinCondition window(const Windowing::WindowTypePtr windowType);
+
+  private:
+    const Query& subQueryRhs;
+    const Query& originalQuery;
+    ExpressionItem onLeftKey;
+    ExpressionItem onRightKey;
+};
+
+}//namespace JoinQueryBuilder
+
 /**
  * User interface to create stream processing queries.
  * The current api exposes method to create queries using all currently supported operators.
@@ -72,6 +149,15 @@ class Query {
     Query(const Query&);
 
     ~Query() = default;
+
+    friend class JoinQueryBuilder::JoinCondition;// we need that because we make the original joinWith() private
+
+    /**
+     * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
+     * @param subQueryRhs
+     * @return object where where() function is defined and can be called by user
+     */
+    JoinQueryBuilder::Join joinWith(const Query& subQueryRhs);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.
@@ -110,17 +196,6 @@ class Query {
      * @return the query
      */
     Query& as(const std::string newStreamName);
-
-    /**
-     * @brief This methods add the join operator to a query
-     * @param subQueryRhs subQuery to be joined
-     * @param onLeftKey key attribute of the left stream
-     * @param onLeftKey key attribute of the right stream
-     * @param windowType Window definition.
-     * @return the query
-     */
-    Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
-                    const Windowing::WindowTypePtr windowType);
 
     /**
      * @brief Create Query using queryPlan
@@ -190,6 +265,20 @@ class Query {
   protected:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
+
+  private:
+    /**
+     * @new change: Now it's private, because we don't want the user to have access to it.
+     * We call it only internal as a last step during the Join operation
+     * @brief This methods add the join operator to a query
+     * @param subQueryRhs subQuery to be joined
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param windowType Window definition.
+     * @return the query
+     */
+    Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+                    const Windowing::WindowTypePtr windowType);
 };
 
 typedef std::shared_ptr<Query> QueryPtr;
