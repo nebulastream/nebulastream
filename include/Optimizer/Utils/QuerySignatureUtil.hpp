@@ -17,8 +17,8 @@
 #ifndef NES_OPTIMIZE_UTILS_OPERATORTOQUERYPLANSIGNATUREUTIL_HPP
 #define NES_OPTIMIZE_UTILS_OPERATORTOQUERYPLANSIGNATUREUTIL_HPP
 
-#include <memory>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <memory>
 
 namespace z3 {
 
