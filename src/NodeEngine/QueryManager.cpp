@@ -524,6 +524,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             buffer = optBuffer.value();
             new (buffer.getBuffer())
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep->getPipeline(targetStage), weakQep);
+            NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful << " to stage " << targetStage);
         } else {
             // reconfigure at qep level
             auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
