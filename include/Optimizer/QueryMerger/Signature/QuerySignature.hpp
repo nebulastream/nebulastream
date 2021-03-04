@@ -104,7 +104,8 @@ class QuerySignature {
     bool isEqual(QuerySignaturePtr other);
 
   private:
-    QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns, std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+    QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                   std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                    std::map<std::string, z3::ExprPtr>&& windowsExpressions);
 
     z3::ExprPtr conditions;

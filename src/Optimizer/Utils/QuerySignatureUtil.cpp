@@ -663,7 +663,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
                 auto fieldExpr = childSchemaMap[onFieldName];
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
                 updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
-            }else {
+            } else {
                 updatedSchemaMap[originalAttributeName] = childSchemaMap[originalAttributeName];
             }
         }
