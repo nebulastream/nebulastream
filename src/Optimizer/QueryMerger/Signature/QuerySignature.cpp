@@ -15,22 +15,22 @@
 */
 
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/OperatorSchemas.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::vector<std::string> columns,
-                                         OperatorSchemasPtr operatorSchemas,
-                                         std::map<std::string, z3::ExprPtr> windowsExpressions) {
-    return std::make_shared<QuerySignature>(
-        QuerySignature(std::move(conditions), std::move(columns), std::move(operatorSchemas), std::move(windowsExpressions)));
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                                         std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions) {
+    return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions), std::move(columns),
+                                                           std::move(schemaFieldToExprMaps), std::move(windowsExpressions)));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorSchemasPtr operatorSchemas,
-                               std::map<std::string, z3::ExprPtr> windowsExpressions)
-    : conditions(std::move(conditions)), columns(std::move(columns)), operatorTupleSchemaMap(std::move(operatorSchemas)),
+QuerySignature::QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                               std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                               std::map<std::string, z3::ExprPtr>&& windowsExpressions)
+    : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
       windowsExpressions(std::move(windowsExpressions)) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
@@ -39,7 +39,9 @@ const std::vector<std::string>& QuerySignature::getColumns() { return columns; }
 
 const std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions() { return windowsExpressions; }
 
-OperatorSchemasPtr QuerySignature::getOperatorSchemas() { return operatorTupleSchemaMap; }
+const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchemaFieldToExprMaps() {
+    return schemaFieldToExprMaps;
+}
 
 bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
@@ -63,14 +65,14 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     //Check if two columns are identical
     //If column from one signature doesn't exists in other signature then they are not equal.
-    auto otherOperatorTupleSchemaMap = other->getOperatorSchemas();
-    auto otherSchemaMaps = otherOperatorTupleSchemaMap->getOperatorSchemas();
+    auto otherSchemaFieldToExprMaps = other->getSchemaFieldToExprMaps();
 
     //Iterate over all distinct schema maps
     // and identify if there is an equivalent schema map in the other signature
-    for (auto schemaMap : operatorTupleSchemaMap->getOperatorSchemas()) {
+    for (auto schemaMap : schemaFieldToExprMaps) {
         bool schemaExists = false;
-        for (auto otherSchemaMapItr = otherSchemaMaps.begin(); otherSchemaMapItr != otherSchemaMaps.end(); otherSchemaMapItr++) {
+        for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
+             otherSchemaMapItr++) {
             bool schemaMatched = false;
             //Iterate over all the field expressions from one schema and other
             // and check if they are matching
@@ -92,7 +94,7 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
             //If schema is matched then remove the other schema from the list to avoid duplicate matching
             if (schemaMatched) {
-                otherSchemaMaps.erase(otherSchemaMapItr);
+                otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
                 schemaExists = true;
                 break;
             }

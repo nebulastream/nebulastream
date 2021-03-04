@@ -16,12 +16,10 @@
 
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -30,7 +28,6 @@
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/ExpressionToZ3ExprUtil.hpp>
-#include <Optimizer/Utils/OperatorSchemas.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -108,15 +105,15 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(z3::ContextP
 
     //Compute the column expressions for the source
     std::vector<std::string> columns;
-    std::map<std::string, z3::ExprPtr> schemaMap;
+    std::map<std::string, z3::ExprPtr> fieldToZ3ExprMap;
     SchemaPtr outputSchema = sourceOperator->getOutputSchema();
     for (auto& field : outputSchema->fields) {
         auto fieldName = field->getName();
         columns.emplace_back(fieldName);
         auto fieldExpr = DataTypeToZ3ExprUtil::createForField(fieldName, field->getDataType(), context)->getExpr();
-        schemaMap[fieldName] = fieldExpr;
+        fieldToZ3ExprMap[fieldName] = fieldExpr;
     }
-    auto operatorTupleSchemaMap = OperatorSchemas::create({schemaMap});
+    auto schemas = {fieldToZ3ExprMap};
 
     //Create an equality expression for example: <logical stream name>.streamName == "<logical stream name>"
     std::string streamName = sourceOperator->getSourceDescriptor()->getStreamName();
@@ -127,7 +124,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForSource(z3::ContextP
     auto conditions = std::make_shared<z3::expr>(to_expr(*context, Z3_mk_eq(*context, streamNameVar, streamNameVal)));
 
     //Compute signature
-    return QuerySignature::create(conditions, columns, operatorTupleSchemaMap, {});
+    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(schemas), {});
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionLogicalOperatorNodePtr projectOperator) {
@@ -137,13 +134,13 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionL
     NES_ASSERT(children.size() == 1, "Project operator should only have one and non null children.");
     auto childQuerySignature = children[0]->as<LogicalOperatorNode>()->getSignature();
     auto columns = childQuerySignature->getColumns();
-    auto operatorTupleSchemaMap = childQuerySignature->getOperatorSchemas();
 
     //Extract projected columns
     std::vector<std::string> updatedColumns;
-    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaMaps;
+    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemas;
     auto outputSchema = projectOperator->getOutputSchema();
-    for (auto schemaMap : operatorTupleSchemaMap->getOperatorSchemas()) {
+    auto schemas = childQuerySignature->getSchemaFieldToExprMaps();
+    for (auto schemaMap : schemas) {
         std::map<std::string, z3::ExprPtr> updatedSchemaMap;
         for (auto& field : outputSchema->fields) {
             auto fieldName = field->getName();
@@ -154,10 +151,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionL
             }
             updatedSchemaMap[fieldName] = found->second;
         }
-        updatedSchemaMaps.emplace_back(updatedSchemaMap);
+        updatedSchemas.emplace_back(updatedSchemaMap);
     }
-
-    auto updatedOperatorTupleSchemaMap = OperatorSchemas::create(std::move(updatedSchemaMaps));
 
     for (auto& field : outputSchema->fields) {
         auto fieldName = field->getName();
@@ -166,7 +161,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionL
 
     auto conditions = childQuerySignature->getConditions();
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
-    return QuerySignature::create(conditions, updatedColumns, updatedOperatorTupleSchemaMap, windowExpressions);
+    return QuerySignature::create(std::move(conditions), std::move(updatedColumns), std::move(updatedSchemas),
+                                  std::move(windowExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr context, MapLogicalOperatorNodePtr mapOperator) {
@@ -183,13 +179,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
 
     //Fetch the signature of only children and get the column values
     auto columns = childQuerySignature->getColumns();
-    auto operatorTupleSchemaMap = childQuerySignature->getOperatorSchemas();
-    auto schemaMaps = operatorTupleSchemaMap->getOperatorSchemas();
+    auto schemas = childQuerySignature->getSchemaFieldToExprMaps();
     std::string fieldName = mapOperator->getMapExpression()->getField()->getFieldName();
 
     //Substitute rhs operands with actual values computed previously
-    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaMaps;
-    for (auto schemaMap : schemaMaps) {
+    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemas;
+    for (auto schemaMap : schemas) {
         z3::ExprPtr updatedMapExpr = mapExpr;
         for (auto [operandExprName, operandExpr] : rhsOperandFieldMap) {
             auto found = schemaMap.find(operandExprName);
@@ -211,9 +206,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
             updatedMapExpr = std::make_shared<z3::expr>(updatedMapExpr->substitute(from, to));
         }
         schemaMap[fieldName] = updatedMapExpr;
-        updatedSchemaMaps.emplace_back(schemaMap);
+        updatedSchemas.emplace_back(schemaMap);
     }
-    auto updatedOperatorTupleSchemaMap = OperatorSchemas::create(std::move(updatedSchemaMaps));
 
     //Add field to the column list
     auto found = std::find(columns.begin(), columns.end(), fieldName);
@@ -221,8 +215,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
         columns.emplace_back(fieldName);
     }
 
-    return QuerySignature::create(childQuerySignature->getConditions(), columns, updatedOperatorTupleSchemaMap,
-                                  childQuerySignature->getWindowsExpressions());
+    auto conditions = childQuerySignature->getConditions();
+    auto windowsExpressions = childQuerySignature->getWindowsExpressions();
+    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(updatedSchemas),
+                                  std::move(windowsExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextPtr context,
@@ -241,13 +237,12 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
               "children signatures");
     //Fetch the signature of only children and get the column values
-    auto operatorTupleSchemaMap = childQuerySignature->getOperatorSchemas();
-    auto schemaMaps = operatorTupleSchemaMap->getOperatorSchemas();
+    auto schemas = childQuerySignature->getSchemaFieldToExprMaps();
 
     //Substitute rhs operands with actual values computed previously
     std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaMaps;
     z3::expr_vector filterExpressions(*context);
-    for (auto schemaMap : schemaMaps) {
+    for (auto schemaMap : schemas) {
         z3::ExprPtr updatedExpr = filterExpr;
         for (auto [operandExprName, operandExpr] : filterFieldMap) {
 
@@ -282,7 +277,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     auto columns = childQuerySignature->getColumns();
 
-    return QuerySignature::create(conditions, columns, operatorTupleSchemaMap, windowExpressions);
+    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(schemas), std::move(windowExpressions));
 }
 
 QuerySignaturePtr
@@ -336,9 +331,10 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
     //Extract remaining signature attributes from child query signature
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     auto columns = childQuerySignature->getColumns();
-    auto operatorTupleSchemaMap = childQuerySignature->getOperatorSchemas();
+    auto operatorTupleSchemaMap = childQuerySignature->getSchemaFieldToExprMaps();
 
-    return QuerySignature::create(conditions, columns, operatorTupleSchemaMap, windowExpressions);
+    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(operatorTupleSchemaMap),
+                                  std::move(windowExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPtr context,
@@ -361,29 +357,26 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
     }
 
     //Compute a vector of different tuple schemas expected at this operator
-    std::vector<std::map<std::string, z3::ExprPtr>> operatorSchemas;
+    std::vector<std::map<std::string, z3::ExprPtr>> schemas;
     //Fetch the Operator schemas and column names from left and right child
     std::vector<std::string> leftColumns = leftSignature->getColumns();
     std::vector<std::string> rightColumns = rightSignature->getColumns();
-    auto leftOperatorSchemas = leftSignature->getOperatorSchemas();
-    auto rightOperatorSchemas = rightSignature->getOperatorSchemas();
+    auto leftOperatorSchemas = leftSignature->getSchemaFieldToExprMaps();
+    auto rightOperatorSchemas = rightSignature->getSchemaFieldToExprMaps();
 
     //Compute Operator Tuple Schema Map
-    auto leftSchemaMaps = leftOperatorSchemas->getOperatorSchemas();
     //Copy all schemas from left child
-    operatorSchemas.insert(operatorSchemas.end(), leftSchemaMaps.begin(), leftSchemaMaps.end());
-    auto rightSchemaMaps = rightOperatorSchemas->getOperatorSchemas();
+    schemas.insert(schemas.end(), leftOperatorSchemas.begin(), leftOperatorSchemas.end());
     //Iterate over right children schemas and
-    for (auto rightSchemaMap : rightSchemaMaps) {
+    for (auto rightSchemaMap : rightOperatorSchemas) {
         std::map<std::string, z3::ExprPtr> updatedSchemaMap;
         for (uint32_t i = 0; i < leftColumns.size(); i++) {
             auto rightFieldName = rightColumns[i];
             auto rightExpr = rightSchemaMap[rightFieldName];
             updatedSchemaMap[leftColumns[i]] = rightExpr;
         }
-        operatorSchemas.emplace_back(updatedSchemaMap);
+        schemas.emplace_back(updatedSchemaMap);
     }
-    auto operatorTupleSchemaMap = OperatorSchemas::create(std::move(operatorSchemas));
 
     //Merge the window definitions together
     std::map<std::string, z3::ExprPtr> windowExpressions = leftSignature->getWindowsExpressions();
@@ -403,7 +396,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
-    return QuerySignature::create(conditions, leftColumns, operatorTupleSchemaMap, windowExpressions);
+    return QuerySignature::create(std::move(conditions), std::move(leftColumns), std::move(schemas),
+                                  std::move(windowExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr context,
@@ -441,24 +435,27 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
     columns.insert(columns.end(), rightColumns.begin(), rightColumns.end());
 
     //Merge the Operator Tuple Schemas
-    std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
-    auto leftOperatorTupleSchemaMap = leftSignature->getOperatorSchemas();
-    auto rightOperatorTupleSchemaMap = rightSignature->getOperatorSchemas();
+    std::vector<std::map<std::string, z3::ExprPtr>> schemas;
+    auto leftSchemas = leftSignature->getSchemaFieldToExprMaps();
+    auto rightSchemas = rightSignature->getSchemaFieldToExprMaps();
 
+    //Iterate over all left and right schemas and compute new join predicates and schemas
     z3::expr_vector joinPredicates(*context);
-    for (auto leftSchemaMap : leftOperatorTupleSchemaMap->getOperatorSchemas()) {
-        std::map<std::string, z3::ExprPtr> schemaMap = leftSchemaMap;
-        auto leftPredicate = schemaMap[leftKeyName];
-        for (auto rightSchemaMap : rightOperatorTupleSchemaMap->getOperatorSchemas()) {
-            schemaMap.insert(rightSchemaMap.begin(), rightSchemaMap.end());
-            auto rightPredicate = schemaMap[rightKeyName];
+    for (auto leftSchemaMap : leftSchemas) {
+        //Iterate over all schemas from right children
+        for (auto rightSchemaMap : rightSchemas) {
+            //Compute the new field to z3 expression map by inserting all fields from left and right children
+            std::map<std::string, z3::ExprPtr> updatedFieldToZ3ExprMap;
+            updatedFieldToZ3ExprMap.insert(leftSchemaMap.begin(), leftSchemaMap.end());
+            updatedFieldToZ3ExprMap.insert(rightSchemaMap.begin(), rightSchemaMap.end());
+            //
+            auto leftPredicate = updatedFieldToZ3ExprMap[leftKeyName];
+            auto rightPredicate = updatedFieldToZ3ExprMap[rightKeyName];
             auto joinPredicate = z3::to_expr(*context, Z3_mk_eq(*context, *leftPredicate, *rightPredicate));
             joinPredicates.push_back(joinPredicate);
+            schemas.emplace_back(updatedFieldToZ3ExprMap);
         }
-        schemaMaps.emplace_back(schemaMap);
     }
-
-    auto operatorTupleSchemaMap = OperatorSchemas::create(std::move(schemaMaps));
 
     auto joinCondition = z3::mk_or(joinPredicates);
 
@@ -533,7 +530,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
         NES_NOT_IMPLEMENTED();
     }
 
-    return QuerySignature::create(conditions, columns, operatorTupleSchemaMap, windowExpressions);
+    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(schemas), std::move(windowExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextPtr context,
@@ -647,36 +644,37 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     auto asField = windowAggregation->as();
     auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
 
-    auto childOperatorTupleSchemaMap = childQuerySignature->getOperatorSchemas();
+    auto childSchemas = childQuerySignature->getSchemaFieldToExprMaps();
     auto outputSchema = windowOperator->getOutputSchema();
 
-    std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
-    for (auto childSchemaMap : childOperatorTupleSchemaMap->getOperatorSchemas()) {
-        std::map<std::string, z3::ExprPtr> schemaMap;
+    //Compute new schemas for this operator
+    std::vector<std::map<std::string, z3::ExprPtr>> schemas;
+    //Iterate over all child schemas
+    for (auto childSchemaMap : childSchemas) {
+        std::map<std::string, z3::ExprPtr> updatedSchemaMap;
         for (auto& outputField : outputSchema->fields) {
             auto originalAttributeName = outputField->getName();
             if (originalAttributeName.find("start") != std::string ::npos
                 || originalAttributeName.find("end") != std::string::npos
                 || originalAttributeName.find("cnt") != std::string::npos) {
-                schemaMap[originalAttributeName] =
+                updatedSchemaMap[originalAttributeName] =
                     DataTypeToZ3ExprUtil::createForField(originalAttributeName, outputField->getDataType(), context)->getExpr();
             } else if (originalAttributeName == asFieldName) {
                 auto fieldExpr = childSchemaMap[onFieldName];
                 auto updatedFieldExpr = std::make_shared<z3::expr>(z3::to_expr(*context, aggregate(*fieldExpr)));
-                schemaMap[originalAttributeName] = updatedFieldExpr;
-            } else {
-                schemaMap[originalAttributeName] = childSchemaMap[originalAttributeName];
+                updatedSchemaMap[originalAttributeName] = updatedFieldExpr;
+            }else {
+                updatedSchemaMap[originalAttributeName] = childSchemaMap[originalAttributeName];
             }
         }
-
-        schemaMaps.emplace_back(schemaMap);
+        schemas.emplace_back(updatedSchemaMap);
     }
-    auto operatorTupleSchemaMap = OperatorSchemas::create(std::move(schemaMaps));
 
     std::vector<std::string> columns;
     for (auto& outputField : outputSchema->fields) {
         columns.emplace_back(outputField->getName());
     }
-    return QuerySignature::create(childQuerySignature->getConditions(), columns, operatorTupleSchemaMap, windowExpressions);
+    auto conditions = childQuerySignature->getConditions();
+    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(schemas), std::move(windowExpressions));
 }
 }// namespace NES::Optimizer

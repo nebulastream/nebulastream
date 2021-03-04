@@ -28,9 +28,6 @@ typedef std::shared_ptr<expr> ExprPtr;
 
 namespace NES::Optimizer {
 
-class OperatorSchemas;
-typedef std::shared_ptr<OperatorSchemas> OperatorSchemasPtr;
-
 class QuerySignature;
 typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
@@ -67,13 +64,13 @@ class QuerySignature {
      * @brief Create instance of Query plan signature
      * @param conditions: the predicates involved in the query
      * @param columns: the predicates involving columns to be extracted
-     * @param operatorSchemas: map of tuple schemas expected at the operator
+     * @param schemaFieldToExprMaps: map of tuple schemas expected at the operator
      * @param windowsExpressions: the map containing window expressions
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr conditions, std::vector<std::string> columns,
-                                    OperatorSchemasPtr operatorSchemas,
-                                    std::map<std::string, z3::ExprPtr> windowsExpressions);
+    static QuerySignaturePtr create(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                                    std::map<std::string, z3::ExprPtr>&& windowsExpressions);
 
     /**
      * @brief Get the conditions
@@ -91,7 +88,7 @@ class QuerySignature {
      * @brief Get vector of schemas for the operator
      * @return pointer to Operator schemas
      */
-    OperatorSchemasPtr getOperatorSchemas();
+    const std::vector<std::map<std::string, z3::ExprPtr>>& getSchemaFieldToExprMaps();
 
     /**
      * @brief Get the window definitions
@@ -107,12 +104,20 @@ class QuerySignature {
     bool isEqual(QuerySignaturePtr other);
 
   private:
-    QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorSchemasPtr operatorSchemas,
-                   std::map<std::string, z3::ExprPtr> windowsExpressions);
+    QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns, std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                   std::map<std::string, z3::ExprPtr>&& windowsExpressions);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
-    OperatorSchemasPtr operatorTupleSchemaMap;
+    /**
+     * This vector contains a collection of unique tuple schemas this operator can expect
+     * For Example:
+     * - A Union operator will experience tuples with 2 distinct schemas.
+     * - A downstream Map operator to a union will also experience tuples with 2 distinct schemas.
+     * - A down stream Union operator to two distinct Union operators will experience 4 distinct schemas (2 from left and 2 from right child).
+     * - A down stream Join operator to two distinct Union operator can experience maximum 2 X 2 distinct schemas.
+     */
+    std::vector<std::map<std::string, z3::ExprPtr>> schemaFieldToExprMaps;
     std::map<std::string, z3::ExprPtr> windowsExpressions;
 };
 }// namespace NES::Optimizer
