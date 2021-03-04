@@ -83,6 +83,11 @@ class GeneratedQueryExecutionPlanBuilder {
     DataSourcePtr getSource(uint64_t index);
 
     /**
+     * @return all data source
+     */
+    const std::vector<DataSourcePtr>& getSources() const;
+
+    /**
     * @param index
     * @return the index-th data sink
     */

@@ -34,7 +34,7 @@ namespace NES::NodeEngine::Execution {
 class ExecutablePipeline : public Reconfigurable {
   public:
     explicit ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
-                                PipelineExecutionContextPtr pipelineContext, ExecutablePipelinePtr nextPipeline,
+                                PipelineExecutionContextPtr pipelineContext,  uint32_t numOfProducingPipelines, ExecutablePipelinePtr nextPipeline,
                                 SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration);
 
     /**
@@ -50,6 +50,7 @@ class ExecutablePipeline : public Reconfigurable {
     static ExecutablePipelinePtr create(uint32_t pipelineId, const QuerySubPlanId querySubPlanId,
                                         ExecutablePipelineStagePtr executablePipelineStage,
                                         PipelineExecutionContextPtr pipelineContext,
+                                        uint32_t numOfProducingPipelines,
                                         const ExecutablePipelinePtr nextPipelineStage, SchemaPtr inputSchema,
                                         SchemaPtr outputSchema, bool reconfiguration = false);
 

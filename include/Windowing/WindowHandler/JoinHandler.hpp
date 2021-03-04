@@ -247,7 +247,9 @@ class JoinHandler : public AbstractJoinHandler {
           } else {
               NES_ASSERT(false, "Invalid window");
           }
+          NES_DEBUG("Going to flush window " << toString());
           executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
+          NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
 
         auto cleanup = [this]() {
