@@ -236,7 +236,7 @@ class JoinHandler : public AbstractJoinHandler {
         auto flushInflightWindows = [this]() {
           // flush in-flight records
           auto windowType = joinDefinition->getWindowType();
-          int64_t windowLenghtMs;
+          int64_t windowLenghtMs = 0;
           if (windowType->isTumblingWindow()) {
               auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
               windowLenghtMs = window->getSize().getTime();
@@ -248,6 +248,7 @@ class JoinHandler : public AbstractJoinHandler {
               NES_ASSERT(false, "Invalid window");
           }
           NES_DEBUG("Going to flush window " << toString());
+          trigger();
           executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
           NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
