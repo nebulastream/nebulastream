@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORTUPLESCHEMAMAP_HPP
-#define NES_OPERATORTUPLESCHEMAMAP_HPP
+#ifndef NES_OPERATORSCHEMAS_HPP
+#define NES_OPERATORSCHEMAS_HPP
 
 #include <map>
 #include <memory>
@@ -27,8 +27,8 @@ typedef std::shared_ptr<expr> ExprPtr;
 }// namespace z3
 
 namespace NES::Optimizer {
-class OperatorTupleSchemaMap;
-typedef std::shared_ptr<OperatorTupleSchemaMap> OperatorTupleSchemaMapPtr;
+class OperatorSchemas;
+typedef std::shared_ptr<OperatorSchemas> OperatorSchemasPtr;
 
 /**
  * @brief This class holds for an operator a collection of schemas for each distinct tuple experienced by it.
@@ -39,23 +39,20 @@ typedef std::shared_ptr<OperatorTupleSchemaMap> OperatorTupleSchemaMapPtr;
  * - A down stream Union operator to two distinct Union operators will experience 4 distinct schemas (2 from left and 2 from right child).
  * - A down stream Join operator to two distinct Union operator can experience maximum 2 X 2 distinct schemas.
  */
-class OperatorTupleSchemaMap {
+class OperatorSchemas {
 
   public:
-    static OperatorTupleSchemaMapPtr create(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps);
-
-    static OperatorTupleSchemaMapPtr createEmpty();
+    static OperatorSchemasPtr create(std::vector<std::map<std::string, z3::ExprPtr>> &&schemaFieldNameToZ3ExpressionMaps);
 
     /**
      * @brief Get the vector of Schema maps
      * @return a vector of schema maps
      */
-    const std::vector<std::map<std::string, z3::ExprPtr>>& getSchemaMaps() const;
+    const std::vector<std::map<std::string, z3::ExprPtr>>& getOperatorSchemas() const;
 
   private:
-    OperatorTupleSchemaMap();
-    OperatorTupleSchemaMap(std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps);
-    std::vector<std::map<std::string, z3::ExprPtr>> schemaMaps;
+    OperatorSchemas(std::vector<std::map<std::string, z3::ExprPtr>> &&schemaFieldNameToZ3ExpressionMaps);
+    std::vector<std::map<std::string, z3::ExprPtr>> schemaFieldNameToZ3ExpressionMaps;
 };
 }// namespace NES::Optimizer
-#endif//NES_OPERATORTUPLESCHEMAMAP_HPP
+#endif//NES_OPERATORSCHEMAS_HPP

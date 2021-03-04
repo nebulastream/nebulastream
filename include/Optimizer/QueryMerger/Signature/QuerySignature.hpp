@@ -28,8 +28,8 @@ typedef std::shared_ptr<expr> ExprPtr;
 
 namespace NES::Optimizer {
 
-class OperatorTupleSchemaMap;
-typedef std::shared_ptr<OperatorTupleSchemaMap> OperatorTupleSchemaMapPtr;
+class OperatorSchemas;
+typedef std::shared_ptr<OperatorSchemas> OperatorSchemasPtr;
 
 class QuerySignature;
 typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
@@ -67,11 +67,12 @@ class QuerySignature {
      * @brief Create instance of Query plan signature
      * @param conditions: the predicates involved in the query
      * @param columns: the predicates involving columns to be extracted
-     * @param operatorTupleSchemaMap: map of tuple schemas expected at the operator
+     * @param operatorSchemas: map of tuple schemas expected at the operator
      * @param windowsExpressions: the map containing window expressions
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
+    static QuerySignaturePtr create(z3::ExprPtr conditions, std::vector<std::string> columns,
+                                    OperatorSchemasPtr operatorSchemas,
                                     std::map<std::string, z3::ExprPtr> windowsExpressions);
 
     /**
@@ -84,15 +85,19 @@ class QuerySignature {
      * @brief Get the column predicates
      * @return map of column name to list of predicates
      */
-    std::vector<std::string> getColumns();
+    const std::vector<std::string>& getColumns();
 
-    const OperatorTupleSchemaMapPtr& getOperatorTupleSchemaMap() const;
+    /**
+     * @brief Get vector of schemas for the operator
+     * @return pointer to Operator schemas
+     */
+    OperatorSchemasPtr getOperatorSchemas();
 
     /**
      * @brief Get the window definitions
      * @return map of window definitions
      */
-    std::map<std::string, z3::ExprPtr> getWindowsExpressions();
+    const std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
 
     /**
      * @brief Validate if this signature is equal to input signature
@@ -102,12 +107,12 @@ class QuerySignature {
     bool isEqual(QuerySignaturePtr other);
 
   private:
-    QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorTupleSchemaMapPtr operatorTupleSchemaMap,
+    QuerySignature(z3::ExprPtr conditions, std::vector<std::string> columns, OperatorSchemasPtr operatorSchemas,
                    std::map<std::string, z3::ExprPtr> windowsExpressions);
 
     z3::ExprPtr conditions;
     std::vector<std::string> columns;
-    OperatorTupleSchemaMapPtr operatorTupleSchemaMap;
+    OperatorSchemasPtr operatorTupleSchemaMap;
     std::map<std::string, z3::ExprPtr> windowsExpressions;
 };
 }// namespace NES::Optimizer
