@@ -265,7 +265,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
 
     auto context = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink);
     auto executable = std::make_shared<TextExecutablePipeline>();
-    auto pipeline = ExecutablePipeline::create(0, queryId, executable, context, nullptr, source->getSchema(), sch);
+    auto pipeline = ExecutablePipeline::create(0, queryId, executable, context, 1, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
     return std::make_tuple(builder.build(), executable);
 }
