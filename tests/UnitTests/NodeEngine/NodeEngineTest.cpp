@@ -363,7 +363,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     builder2.setCompiler(engine->getCompiler());
     auto context2 = std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink2);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
-    auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, nullptr, source2->getSchema(), sch2);
+    auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source2->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
 
     ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
