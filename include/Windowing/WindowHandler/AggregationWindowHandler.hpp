@@ -110,7 +110,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         auto flushInflightWindows = [this]() {
             // flush in-flight records
             auto windowType = windowDefinition->getWindowType();
-            int64_t windowLenghtMs;
+            int64_t windowLenghtMs = 0;
             if (windowType->isTumblingWindow()) {
                 auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
                 windowLenghtMs = window->getSize().getTime();
@@ -123,6 +123,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                 NES_ASSERT(false, "unknonw windownd");
             }
             NES_DEBUG("Going to flush window " << toString());
+            trigger();
             executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
             NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
