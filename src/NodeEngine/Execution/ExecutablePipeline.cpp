@@ -34,7 +34,7 @@ ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId 
                                        SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration)
     : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
       nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)), inputSchema(inputSchema),
-      outputSchema(outputSchema), reconfiguration(reconfiguration), isRunning(false), activeProducers(numOfProducingPipelines) {
+      outputSchema(outputSchema), reconfiguration(reconfiguration), isRunning(reconfiguration), activeProducers(numOfProducingPipelines) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
