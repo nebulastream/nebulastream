@@ -128,23 +128,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
-    // HACK !!!
-//    auto qepPipelines = qep->getPipelines();
-//    if (isBinaryOperator) {
-//        if (qepPipelines.size() > 2) {
-//            for (auto it = qepPipelines.begin() + 2; it != qepPipelines.end(); ++it) {
-//                (*it)->pin();
-//            }
-//        }
-//        qepPipelines[2]->pin(); // the 3rd pipeline of a binary operator has two producers
-//    } else {
-//        if (qepPipelines.size() > 1) {
-//            for (auto it = qepPipelines.begin() + 1; it != qepPipelines.end(); ++it) {
-//                (*it)->pin();
-//            }
-//        }
-//    }
-
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
     for (const auto& source : qep->getSources()) {
@@ -156,12 +139,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << sourceOperatorId);
                 operatorIdToQueryMap[sourceOperatorId].insert(qep);
                 queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
-                if (isBinaryOperator) { // i am not sure if this is ever executed
-                    executablePipelines[0]->pin();
-                    executablePipelines[1]->pin();
-                } else {
-                    executablePipelines[0]->pin();
-                }
             } else {
                 NES_DEBUG("QueryManager: Source " << sourceOperatorId << " and QEP already exist.");
                 return false;
@@ -187,7 +164,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                         NES_ASSERT(operatorIdToPipelineStage.count(sourceOperatorId) == 0,
                                    "Found existing entry for the source operator " << sourceOperatorId);
                         operatorIdToPipelineStage[sourceOperatorId] = i;
-//                        executablePipelines[i]->pin();
                     } else {
                         NES_TRACE("source not equal");
                     }
@@ -195,7 +171,6 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             } else {
                 //default fall back, if there is no join, then we always execute the pipeline at id 0
                 operatorIdToPipelineStage[sourceOperatorId] = 0;
-//                executablePipelines[0]->pin();
             }
         }
     }

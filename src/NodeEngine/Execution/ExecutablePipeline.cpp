@@ -163,8 +163,8 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
 }
 
 void ExecutablePipeline::pin() {
-//    activeProducers++;
-//    NES_DEBUG("ExecutablePipeline " << this << " has refCnt to " << activeProducers);
+    auto oldValue = activeProducers.fetch_add(1);
+    NES_DEBUG("ExecutablePipeline " << this << " has refCnt increased to " << (oldValue + 1));
 }
 
 }// namespace NES::NodeEngine::Execution

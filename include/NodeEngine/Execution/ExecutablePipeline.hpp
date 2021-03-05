@@ -98,6 +98,9 @@ class ExecutablePipeline : public Reconfigurable {
      */
     QuerySubPlanId getQepParentId() const;
 
+    /**
+     * @brief Destructor of an ExecutablePipeline
+     */
     ~ExecutablePipeline();
 
     /**
@@ -130,10 +133,22 @@ class ExecutablePipeline : public Reconfigurable {
      */
     std::string getCodeAsString();
 
+    /**
+     * @brief reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     * @param context the worker context
+     */
     void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
 
+    /**
+     * @brief final reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     */
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
+    /**
+     * @brief atomically increment number of producers for this pipeline
+     */
     void pin();
 
   private:

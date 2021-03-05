@@ -73,7 +73,7 @@ class ExecutableQueryPlan : public Reconfigurable {
 
     /**
      * @brief returns a future that will tell us if the plan was terminated with no errors or with error.
-     * @return
+     * @return a shared future that eventually indicates how the qep terminated
      */
     std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
 
@@ -129,8 +129,17 @@ class ExecutableQueryPlan : public Reconfigurable {
      */
     QuerySubPlanId getQuerySubPlanId() const;
 
+    /**
+     * @brief reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     * @param context the worker context
+     */
     void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
 
+    /**
+     * @brief final reconfigure callback called upon a reconfiguration
+     * @param task the reconfig descriptor
+     */
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
   protected:
@@ -144,7 +153,9 @@ class ExecutableQueryPlan : public Reconfigurable {
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
     /// number of producers that provide data to this qep
     std::atomic<uint32_t> numOfProducers;
+    /// promise that indicates how a qep terminates
     std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
+    /// future that indicates how a qep terminates
     std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
 };
 
