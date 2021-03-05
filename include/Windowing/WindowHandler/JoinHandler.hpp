@@ -63,7 +63,7 @@ class JoinHandler : public AbstractJoinHandler {
    * @return boolean if the window thread is started
    */
     bool start() override {
-        NES_DEBUG("JoinHandler " << id << ": start " << this);
+        NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
         if (isRunning.compare_exchange_strong(expected, true)) {
             return executablePolicyTrigger->start(this->shared_from_base<AbstractJoinHandler>());
@@ -76,7 +76,7 @@ class JoinHandler : public AbstractJoinHandler {
      * @return
      */
     bool stop() override {
-        NES_DEBUG("JoinHandler " << id << ": stop");
+        NES_DEBUG("JoinHandler stop id=" << id << ": stop");
         auto expected = true;
         if (isRunning.compare_exchange_strong(expected, false)) {
             return executablePolicyTrigger->stop();
@@ -98,7 +98,7 @@ class JoinHandler : public AbstractJoinHandler {
         if (!isRunning) {
             return;
         }
-        NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString());
+        NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()  << " forceFlush=" << forceFlush);
 
         if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
             NES_DEBUG("JoinHandler "
@@ -257,7 +257,7 @@ class JoinHandler : public AbstractJoinHandler {
                 NES_ASSERT(false, "Invalid window");
             }
             NES_DEBUG("Going to flush window " << toString());
-            trigger();
+            trigger(true);
             executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
             NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
