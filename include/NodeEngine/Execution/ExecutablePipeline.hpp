@@ -160,6 +160,7 @@ class ExecutablePipeline : public Reconfigurable {
     bool reconfiguration;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
+    std::atomic<bool> isRunning;
     std::atomic<uint32_t> activeProducers;
 };
 

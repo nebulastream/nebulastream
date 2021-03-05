@@ -34,7 +34,7 @@ ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId 
                                        SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration)
     : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
       nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)), inputSchema(inputSchema),
-      outputSchema(outputSchema), reconfiguration(reconfiguration), activeProducers(numOfProducingPipelines) {
+      outputSchema(outputSchema), reconfiguration(reconfiguration), isRunning(false), activeProducers(numOfProducingPipelines) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
@@ -42,6 +42,8 @@ ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId 
 bool ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineStageId);
+    NES_ASSERT2_FMT(isRunning, "Cannot execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
+                                                                 << " stage=" << pipelineStageId);
     uint32_t ret = !executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
     return ret;
 }
@@ -51,18 +53,26 @@ bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
 }
 
 bool ExecutablePipeline::start() {
-    for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
-        operatorHandler->start(pipelineContext);
+    auto expected = false;
+    if (isRunning.compare_exchange_strong(expected, true)) {
+        for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+            operatorHandler->start(pipelineContext);
+        }
+        executablePipelineStage->start(*pipelineContext.get());
+        return true;
     }
-    executablePipelineStage->start(*pipelineContext.get());
-    return true;
+    return false;
 }
 
 bool ExecutablePipeline::stop() {
-    for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
-        operatorHandler->stop(pipelineContext);
+    auto expected = true;
+    if (isRunning.compare_exchange_strong(expected, false)) {
+        for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
+            operatorHandler->stop(pipelineContext);
+        }
+        return executablePipelineStage->stop(*pipelineContext.get()) == 0;
     }
-    return executablePipelineStage->stop(*pipelineContext.get()) == 0;
+    return false;
 }
 
 ExecutablePipelinePtr ExecutablePipeline::getNextPipeline() { return nextPipeline; }
