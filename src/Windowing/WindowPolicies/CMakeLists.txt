@@ -19,4 +19,5 @@ add_source_nes(
         OnBufferTriggerPolicyDescription.cpp
         OnRecordTriggerPolicyDescription.cpp
         ExecutableOnTimeTriggerPolicy.cpp
+        ExecutableOnWatermarkChangeTriggerPolicy.cpp
 )

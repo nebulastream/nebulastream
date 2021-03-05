@@ -51,6 +51,9 @@ typedef std::shared_ptr<BaseExecutableWindowTriggerPolicy> BaseExecutableWindowT
 class ExecutableOnTimeTriggerPolicy;
 typedef std::shared_ptr<ExecutableOnTimeTriggerPolicy> ExecutableOnTimeTriggerPtr;
 
+class ExecutableOnWatermarkChangeTriggerPolicy;
+typedef std::shared_ptr<ExecutableOnWatermarkChangeTriggerPolicy> ExecutableOnWatermarkChangeTriggerPolicyPtr;
+
 class BaseWindowTriggerPolicyDescriptor;
 typedef std::shared_ptr<BaseWindowTriggerPolicyDescriptor> WindowTriggerPolicyPtr;
 

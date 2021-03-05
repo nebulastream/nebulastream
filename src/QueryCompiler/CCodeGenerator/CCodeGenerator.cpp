@@ -1390,6 +1390,11 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerCall->addParameter(constantTriggerTime);
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
+    } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+        auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
+        auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
+        auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
+        setupScope->addStatement(triggerStatement.copy());
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
     }
