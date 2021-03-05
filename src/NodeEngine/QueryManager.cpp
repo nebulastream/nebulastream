@@ -200,11 +200,14 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
+    // TODO do not change the start sequence plz
+    // 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start()) {
         NES_FATAL_ERROR("QueryManager: query execution plan could not started");
         return false;
     }
 
+    // 2. start net sinks
     for (const auto& sink : qep->getSinks()) {
         if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
             NES_DEBUG("QueryManager: start network sink " << sink);
@@ -212,6 +215,7 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
+    // 3. start net sources
     for (const auto& source : qep->getSources()) {
         if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
             NES_DEBUG("QueryManager: start network source " << source << " str=" << source->toString());
@@ -223,12 +227,20 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
         }
     }
 
+    // 4. start data sinks
     for (const auto& sink : qep->getSinks()) {
+        if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
+            continue;
+        }
         NES_DEBUG("QueryManager: start sink " << sink);
         sink->setup();
     }
 
+    // 5. start data sources
     for (const auto& source : qep->getSources()) {
+        if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+            continue;;
+        }
         NES_DEBUG("QueryManager: start source " << source << " str=" << source->toString());
         if (!source->start()) {
             NES_WARNING("QueryManager: source " << source << " could not started as it is already running");
