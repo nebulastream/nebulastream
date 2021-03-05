@@ -323,6 +323,9 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
             source->stop(graceful);
         }
     }
+    // TODO evaluate if we need to have this a wait instead of a get
+    // TODO for instance we could wait N seconds and if the stopped is not succesful by then
+    // TODO we need to trigger a hard local kill of a QEP
     if (qep->getTerminationFuture().get() != Execution::ExecutableQueryPlanResult::Ok) {
         NES_FATAL_ERROR("QueryManager: QEP " << qep->getQuerySubPlanId() << " could not be stopped");
         ret = false;
