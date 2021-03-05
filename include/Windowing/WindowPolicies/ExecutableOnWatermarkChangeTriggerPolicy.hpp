@@ -47,7 +47,6 @@ class ExecutableOnWatermarkChangeTriggerPolicy : public BaseExecutableWindowTrig
     bool stop() override;
 
   private:
-    std::atomic<bool> running;
     std::mutex runningTriggerMutex;
 };
 

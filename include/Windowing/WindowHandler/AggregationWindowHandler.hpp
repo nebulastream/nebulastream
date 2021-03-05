@@ -77,11 +77,14 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     bool stop() override {
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop called");
         auto expected = true;
+        bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
-            return executablePolicyTrigger->stop();
+            result = executablePolicyTrigger->stop();
         }
-        return false;
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop result =" << result);
+        return result;
     }
 
     std::string toString() override {

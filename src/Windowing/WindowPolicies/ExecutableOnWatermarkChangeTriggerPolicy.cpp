@@ -43,7 +43,7 @@ bool ExecutableOnWatermarkChangeTriggerPolicy::stop() {
 }
 
 ExecutableOnWatermarkChangeTriggerPolicy::ExecutableOnWatermarkChangeTriggerPolicy()
-    : running(false), runningTriggerMutex() {}
+    :  runningTriggerMutex() {}
 
 ExecutableOnWatermarkChangeTriggerPolicyPtr ExecutableOnWatermarkChangeTriggerPolicy::create() {
     return std::make_shared<ExecutableOnWatermarkChangeTriggerPolicy>();

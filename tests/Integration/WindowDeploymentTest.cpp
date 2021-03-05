@@ -1407,7 +1407,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
+TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
