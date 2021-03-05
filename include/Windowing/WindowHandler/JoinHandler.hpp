@@ -273,14 +273,24 @@ class JoinHandler : public AbstractJoinHandler {
         switch (message.getType()) {
             case NodeEngine::SoftEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
+                    NES_DEBUG("SoftEndOfStream reduces to zero, shutting down");
                     flushInflightWindows();
                     cleanup();
+                }
+                else
+                {
+                    NES_DEBUG("SoftEndOfStream decrement to " << refCnt.load());
                 }
                 break;
             }
             case NodeEngine::HardEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
+                    NES_DEBUG("HardEndOfStream reduces to zero, shutting down");
                     cleanup();
+                }
+                else
+                {
+                    NES_DEBUG("HardEndOfStream decrement to " << refCnt.load());
                 }
                 break;
             }
