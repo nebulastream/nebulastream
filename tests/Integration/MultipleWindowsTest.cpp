@@ -47,6 +47,7 @@ class MultipleWindowsTest : public testing::Test {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
+
         coordinatorConfig = CoordinatorConfig::create();
         workerConfig = WorkerConfig::create();
         srcConf = SourceConfig::create();

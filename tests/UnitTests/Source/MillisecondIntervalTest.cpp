@@ -79,7 +79,7 @@ class MillisecondIntervalTest : public testing::Test {
 
 };// FractionedIntervalTest
 
-TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
+TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
