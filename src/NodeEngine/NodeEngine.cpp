@@ -431,7 +431,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     // propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
-    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId());
+    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
