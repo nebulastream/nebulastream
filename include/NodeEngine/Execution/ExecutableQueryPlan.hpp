@@ -72,10 +72,10 @@ class ExecutableQueryPlan : public Reconfigurable {
     bool stop();
 
     /**
-     * @brief
+     * @brief returns a future that will tell us if the plan was terminated with no errors or with error.
      * @return
      */
-    std::future<ExecutableQueryPlanResult> getTerminationFuture();
+    std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
 
   public:
 
