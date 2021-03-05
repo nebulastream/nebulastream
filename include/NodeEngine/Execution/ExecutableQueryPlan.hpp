@@ -144,7 +144,8 @@ class ExecutableQueryPlan : public Reconfigurable {
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
     /// number of producers that provide data to this qep
     std::atomic<uint32_t> numOfProducers;
-    std::promise<ExecutableQueryPlanResult> qepTerminationStatusFuture;
+    std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
+    std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
 };
 
 }// namespace NES::NodeEngine::Execution

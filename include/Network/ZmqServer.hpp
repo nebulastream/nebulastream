@@ -57,7 +57,7 @@ class ZmqServer : public boost::noncopyable {
 
 
     /**
-    * Start the server. It throws exceptions if the stopping fails.
+    * Stop the server. It throws exceptions if the stopping fails.
     */
     bool stop();
 
@@ -71,7 +71,7 @@ class ZmqServer : public boost::noncopyable {
      * Checks if the server is running
      * @return
      */
-    bool getIsRunning() { return isRunning; }
+    bool isServerRunning() const { return isRunning; }
 
   private:
     /**
