@@ -728,7 +728,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
                                   ->addField(createField("key", INT64))
                                   ->addField("value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -764,21 +764,28 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     testSink->completed.get_future().get();
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
     // get result buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
     auto& resultBuffer = testSink->get(0);
-
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
                                   "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
                                   "+----------------------------------------------------+\n"
                                   "|0|15|1|10|\n"
+                                  "+----------------------------------------------------+";
+    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+
+    auto& resultBuffer2 = testSink->get(1);
+    NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer2.getNumberOfTuples() << " tuples.");
+    NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
+    std::string expectedContent2 = "+----------------------------------------------------+\n"
+                                  "|start:UINT64|end:UINT64|key:INT64|value:INT64|\n"
+                                  "+----------------------------------------------------+\n"
                                   "|5|20|1|20|\n"
                                   "|10|25|1|10|\n"
                                   "+----------------------------------------------------+";
-    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
+    EXPECT_EQ(expectedContent2, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
+
     nodeEngine->stopQuery(1);
     nodeEngine->stop();
 }
