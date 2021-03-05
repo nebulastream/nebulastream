@@ -93,7 +93,7 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief triggers all ready windows.
     */
-    void trigger() override {
+    void trigger(bool forceFlush = false) override {
         std::unique_lock lock(mutex);
         if (!isRunning) {
             return;
@@ -151,6 +151,14 @@ class JoinHandler : public AbstractJoinHandler {
         lock.lock();
         NES_DEBUG("JoinHandler " << id << ": set lastWatermarkLeft to=" << minMinWatermark);
         lastWatermark = minMinWatermark;
+
+        if (forceFlush) {
+            bool expected = true;
+            if (isRunning.compare_exchange_strong(expected, false)) {
+                executablePolicyTrigger->stop();
+            }
+        }
+
     }
 
     /**
@@ -234,29 +242,30 @@ class JoinHandler : public AbstractJoinHandler {
     void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) override {
         AbstractJoinHandler::postReconfigurationCallback(message);
         auto flushInflightWindows = [this]() {
-          // flush in-flight records
-          auto windowType = joinDefinition->getWindowType();
-          int64_t windowLenghtMs = 0;
-          if (windowType->isTumblingWindow()) {
-              auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
-              windowLenghtMs = window->getSize().getTime();
+            return;
+            // flush in-flight records
+            auto windowType = joinDefinition->getWindowType();
+            int64_t windowLenghtMs = 0;
+            if (windowType->isTumblingWindow()) {
+                auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
+                windowLenghtMs = window->getSize().getTime();
 
-          } else if (windowType->isSlidingWindow()) {
-              auto window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
-              windowLenghtMs = window->getSlide().getTime();
-          } else {
-              NES_ASSERT(false, "Invalid window");
-          }
-          NES_DEBUG("Going to flush window " << toString());
-          trigger();
-          executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
-          NES_DEBUG("Flushed window content after end of stream message " << toString());
+            } else if (windowType->isSlidingWindow()) {
+                auto window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
+                windowLenghtMs = window->getSlide().getTime();
+            } else {
+                NES_ASSERT(false, "Invalid window");
+            }
+            NES_DEBUG("Going to flush window " << toString());
+            trigger();
+            executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
+            NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
 
         auto cleanup = [this]() {
-          // drop window content and cleanup resources
-          // wait for trigger thread to stop
-          stop();
+            // drop window content and cleanup resources
+            // wait for trigger thread to stop
+            stop();
         };
 
         switch (message.getType()) {

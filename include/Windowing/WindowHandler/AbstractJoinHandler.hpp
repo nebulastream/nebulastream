@@ -76,7 +76,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
      * @brief triggers all ready windows.
      * @return
      */
-    virtual void trigger() = 0;
+    virtual void trigger(bool forceFlush = false) = 0;
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
