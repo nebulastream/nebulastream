@@ -128,6 +128,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             auto targetQep = task.getUserData<std::weak_ptr<ExecutableQueryPlan>>();
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1) {
+                NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: " << qepId << " stage id: " << pipelineStageId << " reached prev=1");
                 for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
