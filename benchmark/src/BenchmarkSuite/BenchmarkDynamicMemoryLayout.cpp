@@ -1413,36 +1413,26 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 0: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
+                    field0[recordIndex] = 1;
                 }
             }
             break;
         }
         case 1: {
             for (auto singleState : state) {
-                int32_t tmp0 = 0, tmp1 = 0;
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    tmp0 = field0[recordIndex];
-                    tmp1 = field1[recordIndex];
-
-                    if (tmp0 != 1) {
-                        NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
-                    }
-                    if (tmp1 != 1) {
-                        NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
-                    }
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
                 }
-                ((void)tmp0);
-                ((void)tmp1);
             }
             break;
         }
         case 2: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
                 }
             }
             break;
@@ -1450,10 +1440,10 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 3: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
                 }
             }
             break;
@@ -1461,11 +1451,11 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 4: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
                 }
             }
             break;
@@ -1473,12 +1463,12 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 5: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
                 }
             }
             break;
@@ -1486,13 +1476,13 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 6: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
                 }
             }
             break;
@@ -1500,14 +1490,14 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 7: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
                 }
             }
             break;
@@ -1515,15 +1505,15 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 8: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
                 }
             }
             break;
@@ -1531,16 +1521,16 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 9: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
                 }
             }
             break;
@@ -1548,17 +1538,17 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 10: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
                 }
             }
             break;
@@ -1566,18 +1556,18 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 11: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
                 }
             }
             break;
@@ -1585,19 +1575,19 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 12: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
                 }
             }
             break;
@@ -1605,20 +1595,20 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 13: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
-                    field13[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
+                    field13[recordIndex] = 1;
                 }
             }
             break;
@@ -1626,21 +1616,21 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         case 14: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
-                    field13[recordIndex] += 1;
-                    field14[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
+                    field13[recordIndex] = 1;
+                    field14[recordIndex] = 1;
                 }
             }
             break;
@@ -1649,22 +1639,22 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
             for (auto singleState : state) {
 
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
-                    field13[recordIndex] += 1;
-                    field14[recordIndex] += 1;
-                    field15[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
+                    field13[recordIndex] = 1;
+                    field14[recordIndex] = 1;
+                    field15[recordIndex] = 1;
                 }
             }
             break;
@@ -1715,36 +1705,26 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 0: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
+                    field0[recordIndex] = 1;
                 }
             }
             break;
         }
         case 1: {
             for (auto singleState : state) {
-                int32_t tmp0 = 0, tmp1 = 0;
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    tmp0 = field0[recordIndex];
-                    tmp1 = field1[recordIndex];
-
-                    if (tmp0 != 1) {
-                        NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
-                    }
-                    if (tmp1 != 1) {
-                        NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
-                    }
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
                 }
-                ((void)tmp0);
-                ((void)tmp1);
             }
             break;
         }
         case 2: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
                 }
             }
             break;
@@ -1752,10 +1732,10 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 3: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
                 }
             }
             break;
@@ -1763,11 +1743,11 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 4: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
                 }
             }
             break;
@@ -1775,12 +1755,12 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 5: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
                 }
             }
             break;
@@ -1788,13 +1768,13 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 6: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
                 }
             }
             break;
@@ -1802,14 +1782,14 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 7: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
                 }
             }
             break;
@@ -1817,15 +1797,15 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 8: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
                 }
             }
             break;
@@ -1833,16 +1813,16 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 9: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
                 }
             }
             break;
@@ -1850,17 +1830,17 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 10: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
                 }
             }
             break;
@@ -1868,18 +1848,18 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 11: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
                 }
             }
             break;
@@ -1887,19 +1867,19 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 12: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
                 }
             }
             break;
@@ -1907,20 +1887,20 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 13: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
-                    field13[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
+                    field13[recordIndex] = 1;
                 }
             }
             break;
@@ -1928,21 +1908,21 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         case 14: {
             for (auto singleState : state) {
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
-                    field13[recordIndex] += 1;
-                    field14[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
+                    field13[recordIndex] = 1;
+                    field14[recordIndex] = 1;
                 }
             }
             break;
@@ -1951,22 +1931,22 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
             for (auto singleState : state) {
 
                 for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-                    field0[recordIndex] += 1;
-                    field1[recordIndex] += 1;
-                    field2[recordIndex] += 1;
-                    field3[recordIndex] += 1;
-                    field4[recordIndex] += 1;
-                    field5[recordIndex] += 1;
-                    field6[recordIndex] += 1;
-                    field7[recordIndex] += 1;
-                    field8[recordIndex] += 1;
-                    field9[recordIndex] += 1;
-                    field10[recordIndex] += 1;
-                    field11[recordIndex] += 1;
-                    field12[recordIndex] += 1;
-                    field13[recordIndex] += 1;
-                    field14[recordIndex] += 1;
-                    field15[recordIndex] += 1;
+                    field0[recordIndex] = 1;
+                    field1[recordIndex] = 1;
+                    field2[recordIndex] = 1;
+                    field3[recordIndex] = 1;
+                    field4[recordIndex] = 1;
+                    field5[recordIndex] = 1;
+                    field6[recordIndex] = 1;
+                    field7[recordIndex] = 1;
+                    field8[recordIndex] = 1;
+                    field9[recordIndex] = 1;
+                    field10[recordIndex] = 1;
+                    field11[recordIndex] = 1;
+                    field12[recordIndex] = 1;
+                    field13[recordIndex] = 1;
+                    field14[recordIndex] = 1;
+                    field15[recordIndex] = 1;
                 }
             }
             break;
