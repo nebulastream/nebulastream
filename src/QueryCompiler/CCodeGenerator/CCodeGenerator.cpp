@@ -845,7 +845,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         createTriggerCall->addParameter(constantTriggerTime);
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
-        NES_THROW_RUNTIME_ERROR("This mode is not supported anymore");
+        NES_WARNING("This mode is not supported anymore");
     } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
@@ -1396,7 +1396,7 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createTriggerCall->addParameter(constantTriggerTime);
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
-        NES_THROW_RUNTIME_ERROR("This mode is not supported anymore");
+        NES_WARNING("This mode is not supported anymore");
     } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
         auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
         auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
