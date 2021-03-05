@@ -111,7 +111,7 @@ TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     EXPECT_EQ(source->getGatheringIntervalCount(), frequency);
 }
 
-TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
+TEST_F(MillisecondIntervalTest, DISABLED_testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
 
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
