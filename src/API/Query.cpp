@@ -37,6 +37,8 @@
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <iostream>
 #include <stdarg.h>
 
@@ -139,7 +141,8 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
 
 Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");
-    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+//    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+    auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
@@ -190,7 +193,9 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+//    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+    auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
+
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
 
