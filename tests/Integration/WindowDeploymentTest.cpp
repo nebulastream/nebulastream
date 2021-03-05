@@ -1599,7 +1599,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedWithMergingTumblingWi
 
     NES_INFO("WindowDeploymentTest: Start worker 5");
     workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPo1rt(port + 60);
+    workerConfig->setRpcPort(port + 60);
     workerConfig->setDataPort(port + 61);
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
