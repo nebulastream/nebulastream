@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
 #define NES_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
 #ifdef ENABLE_MQTT_BUILD
+
 #include <Util/Logger.hpp>
 #include <mqtt/callback.h>
 #include <mqtt/client.h>
@@ -48,15 +49,20 @@ class MQTTClientWrapper {
     mqtt::client_ptr getSyncClient();
 
     /**
-     * @brief connect to a MQTT broker
+     * @brief connect to an MQTT broker
      */
     void connect(mqtt::connect_options connOpts);
 
     /**
-     * @brief disconnect from a MQTT broker
+     * @brief disconnect from an MQTT broker
      */
     void disconnect();
 
+    /**
+    * @brief send a string to an MQTT broker
+    */
+    void sendPayload(const std::string payload, const std::string topic, int qualityOfService);
+    
     /**
      * @brief get the number of elements currently residing in the buffer (messages that have not been delivered yet)
      */

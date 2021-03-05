@@ -25,6 +25,11 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 
+#include <Util/UtilityFunctions.hpp>
+
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
 namespace NES {
 /*
  the user can specify the time unit for the delay and the duration of the delay in that time unit
@@ -33,6 +38,8 @@ namespace NES {
 */
 const uint32_t NANO_TO_MILLI_SECONDS_MULTIPLIER = 1000000;
 const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
+
+enum MQTTBrokerType { ThingsBoard };
 
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
@@ -62,6 +69,44 @@ MQTTSink::~MQTTSink() {
     }
 }
 
+std::vector<std::string> getDataFromTupleBuffer(NodeEngine::TupleBuffer& inputBuffer, SchemaPtr schemaPtr) {
+    std::vector<uint32_t> offsets;
+    std::vector<std::string> str;
+    auto buf = inputBuffer.getBufferAs<char>();
+    std::vector<PhysicalTypePtr> types;
+    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+
+    // deduce the offsets for the individual fields
+    for (uint32_t i = 0; i < schemaPtr->getSize(); ++i) {
+        auto physicalType = physicalDataTypeFactory.getPhysicalType(schemaPtr->get(i)->getDataType());
+        offsets.push_back(physicalType->size());
+        types.push_back(physicalType);
+        NES_TRACE("CodeGenerator: " + std::string("Field Size ") + schemaPtr->get(i)->toString() + std::string(": ")
+                      + std::to_string(physicalType->size()));
+    }
+
+    uint32_t prefix_sum = 0;
+    for (uint32_t i = 0; i < offsets.size(); ++i) {
+        uint32_t val = offsets[i];
+        offsets[i] = prefix_sum;
+        prefix_sum += val;
+        NES_TRACE("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schemaPtr->get(i)->toString()
+                      + std::string(": ") + std::to_string(offsets[i]));
+    }
+
+    // use offset array to pinpoint borders between TupleBuffer values; create payload from TupleBuffer content
+    for (uint32_t i = 0; i < inputBuffer.getNumberOfTuples() * schemaPtr->getSchemaSizeInBytes(); i += schemaPtr->getSchemaSizeInBytes()) {
+        for (uint32_t s = 0; s < offsets.size(); ++s) {
+            void* value = &buf[i + offsets[s]];
+            std::string tmp = types[s]->convertRawToString(value);
+            str.push_back(tmp);
+        }
+    }
+
+    return str;
+}
+
+
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     try {
         std::unique_lock lock(writeMutex);
@@ -70,36 +115,26 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
                                               << " because queue is not connected");
             throw Exception("Write to zmq sink failed");
         }
+        // single buffer approach, might want to anticipate multiple buffers:
+        // auto dataBuffers = sinkFormat->getData(inputBuffer);
         if (!inputBuffer.isValid()) {
             NES_ERROR("MQTTSink::writeData input buffer invalid");
             return false;
         }
 
-        if (asynchronousClient) {
-            mqtt::topic sendTopic(*client->getAsyncClient(), topic, qualityOfService, true);
-            /* Iterate over the input TupleBuffer. In this case each Tuple of the TupleBuffer contains 64 bit (uint64).
-               32 bit are used for the key (uint32) and the remaining 32 bit for the value (also uint32).
-               For now we are only interested in the value, so we grab the value at j+1 and increase j+2 each iteration. */
-            for (uint32_t j = 0; j < inputBuffer.getNumberOfTuples() * 2; j = j + 2) {
-                std::string value = std::to_string(inputBuffer.getBuffer<uint32_t>()[j + 1]);
-                std::string payload = "{\"temperature\":" + value + "}";
-                sendTopic.publish(std::move(payload));
-                std::this_thread::sleep_for(minDelayBetweenSends);
-            }
-        } else {
-            MQTTClientWrapper::UserCallback cb;
-            client->setCallback(cb);
-            // look at the asynchronousClient case for information about the TupleBuffer usage
-            for (uint32_t j = 0; j < inputBuffer.getNumberOfTuples() * 2; j = j + 2) {
-                std::string value = std::to_string(inputBuffer.getBuffer<uint32_t>()[j + 1]);
-                std::string payload = "{\"temperature\":" + value + "}";
-                // synchronous clients do not allow for sending via mqtt::topic. Instead, each message is constructed
-                // individually. The message is given a particular quality of service and then sent synchronously.
-                auto pubmsg = mqtt::make_message(topic, payload);
-                pubmsg->set_qos(qualityOfService);
-                (*client->getSyncClient()).publish(pubmsg);
-                std::this_thread::sleep_for(minDelayBetweenSends);
-            }
+        NES_TRACE("MQTTSink::writeData" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
+        std::vector<std::string> bufferData = getDataFromTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr());
+        
+        //TODO replace with proper user input, currently only for demo purposes
+        MQTTBrokerType brokerType = MQTTBrokerType::ThingsBoard;
+        switch(brokerType) {
+            case(MQTTBrokerType::ThingsBoard):
+                for (auto value : bufferData) {
+                    std::string payload = "{\"temperature\":" + value + "}";
+                    client->sendPayload(payload, topic, qualityOfService);
+                    NES_TRACE("MQTTSink::writeData Sending Payload: " << payload);
+                    std::this_thread::sleep_for(minDelayBetweenSends);
+                }
         }
         // If the connection to the MQTT broker is lost during sending, the MQTT client might buffer all the remaining messages.
         if (asynchronousClient && client->getNumberOfUnsentMessages() > 0) {

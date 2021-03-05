@@ -18,6 +18,7 @@
 #include <Util/MQTTClientWrapper.hpp>
 #include <mqtt/client.h>
 
+
 #ifdef ENABLE_MQTT_BUILD
 namespace NES {
 const std::chrono::duration<int64_t> MAX_WAIT_FOR_BROKER_CONNECT = std::chrono::seconds(20);
@@ -48,6 +49,17 @@ void MQTTClientWrapper::disconnect() {
         asyncClient->disconnect()->wait_for(MAX_WAIT_FOR_BROKER_CONNECT);
     } else {
         syncClient->disconnect();
+    }
+}
+
+void MQTTClientWrapper::sendPayload(std::string payload, std::string topic, int qualityOfService) {
+    if (asyncClient) {
+        mqtt::topic sendTopic(*asyncClient, topic, qualityOfService, true);
+        sendTopic.publish(std::move(payload));
+    } else {
+        auto pubmsg = mqtt::make_message(topic, payload);
+        pubmsg->set_qos(qualityOfService);
+        (*syncClient).publish(pubmsg);
     }
 }
 

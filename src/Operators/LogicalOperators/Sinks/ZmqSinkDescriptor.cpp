@@ -15,6 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 
 namespace NES {
 

@@ -380,6 +380,11 @@ add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
 target_link_libraries(query-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
 
+### MQTTSinkDepleymentTest ###
+add_executable(mqtt-sink-deployment-test "Integration/MQTTSinkDeploymentTest.cpp")
+target_link_libraries(mqtt-sink-deployment-test nes ${GTEST_LIBRARIES})
+add_test(NAME mqtt-sink-deployment-test COMMAND mqtt-sink-deployment-test)
+
 ### RenameTest ###
 add_executable(rename-test "Integration/RenameTest.cpp")
 target_link_libraries(rename-test nes ${GTEST_LIBRARIES})
