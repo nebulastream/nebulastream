@@ -89,7 +89,8 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
     auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
 
     //we use a on time trigger as default that triggers every 1 second
-    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+//    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+    auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
 
     //we use a lazy NL join because this is currently the only one that is implemented
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
