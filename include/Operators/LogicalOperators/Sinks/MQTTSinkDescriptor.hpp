@@ -42,8 +42,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @return descriptor for MQTT sink
      */
     static SinkDescriptorPtr create(const std::string address, const std::string clientId, const std::string topic,
-                                    const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
-                                    uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
+                                    const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit = MQTTSink::nanoseconds,
+                                    uint64_t msgDelay = 1, MQTTSink::ServiceQualities qualityOfService = MQTTSink::atLeastOnce, bool asynchronousClient = true);
 
     /**
      * @brief get address information from a MQTT sink client
