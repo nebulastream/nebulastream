@@ -14,6 +14,8 @@
     limitations under the License.
 */
 
+#include <Network/NetworkSink.hpp>
+#include <Network/NetworkSource.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
@@ -21,7 +23,6 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
@@ -199,15 +200,32 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
-    //TODO: NEVER CHANGE THE ORDER HERE !!!
-    for (const auto& sink : qep->getSinks()) {
-        NES_DEBUG("QueryManager: start sink " << sink);
-        sink->setup();
-    }
-
     if (!qep->setup() || !qep->start()) {
         NES_FATAL_ERROR("QueryManager: query execution plan could not started");
         return false;
+    }
+
+    for (const auto& sink : qep->getSinks()) {
+        if (std::dynamic_pointer_cast<Network::NetworkSink>(sink)) {
+            NES_DEBUG("QueryManager: start network sink " << sink);
+            sink->setup();
+        }
+    }
+
+    for (const auto& source : qep->getSources()) {
+        if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
+            NES_DEBUG("QueryManager: start network source " << source << " str=" << source->toString());
+            if (!source->start()) {
+                NES_WARNING("QueryManager: network source " << source << " could not started as it is already running");
+            } else {
+                NES_DEBUG("QueryManager: network source " << source << " started successfully");
+            }
+        }
+    }
+
+    for (const auto& sink : qep->getSinks()) {
+        NES_DEBUG("QueryManager: start sink " << sink);
+        sink->setup();
     }
 
     for (const auto& source : qep->getSources()) {
