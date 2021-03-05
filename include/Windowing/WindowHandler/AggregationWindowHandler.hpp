@@ -65,6 +65,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @return boolean if the window thread is started
    */
     bool start() override {
+        std::unique_lock lock(windowMutex);
         auto expected = false;
         if (isRunning.compare_exchange_strong(expected, true)) {
             return executablePolicyTrigger->start(this->AbstractWindowHandler::shared_from_base<AggregationWindowHandler>());
@@ -77,6 +78,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     bool stop() override {
+        std::unique_lock lock(windowMutex);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop called");
         auto expected = true;
         bool result = false;
@@ -164,10 +166,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString()
                                               << " forceFlush=" << forceFlush);
 
-        if (!isRunning) {
-            NES_WARNING("Window trigger tries to trigger but is already marked for shutdown");
-            return;
-        }
+//        if (!isRunning) {
+//            NES_WARNING("Window trigger tries to trigger but is already marked for shutdown");
+//            return;
+//        }
 
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
             NES_DEBUG("AggregationWindowHandler("

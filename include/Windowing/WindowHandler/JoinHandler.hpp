@@ -63,6 +63,7 @@ class JoinHandler : public AbstractJoinHandler {
    * @return boolean if the window thread is started
    */
     bool start() override {
+        std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
         if (isRunning.compare_exchange_strong(expected, true)) {
@@ -76,6 +77,7 @@ class JoinHandler : public AbstractJoinHandler {
      * @return
      */
     bool stop() override {
+        std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler stop id=" << id << ": stop");
         auto expected = true;
         if (isRunning.compare_exchange_strong(expected, false)) {
@@ -97,10 +99,10 @@ class JoinHandler : public AbstractJoinHandler {
         std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()  << " forceFlush=" << forceFlush);
 
-        if (!isRunning) {
-            NES_WARNING("Joinhandler returns from trigger as it is not running anymore");
-            return;
-        }
+//        if (!isRunning) {
+//            NES_WARNING("Joinhandler returns from trigger as it is not running anymore");
+//            return;
+//        }
 
         if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
             NES_DEBUG("JoinHandler "
