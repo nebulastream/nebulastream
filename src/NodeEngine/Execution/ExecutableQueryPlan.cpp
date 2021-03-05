@@ -28,7 +28,8 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySu
                                          QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created), numOfProducers(this->sources.size()) {
+      qepStatus(Created), numOfProducers(this->sources.size()),
+      qepTerminationStatusPromise(), qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
     // nop
 }
 
@@ -51,7 +52,7 @@ ExecutableQueryPlan::~ExecutableQueryPlan() {
 }
 
 std::shared_future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture() {
-    return qepTerminationStatusFuture.get_future().share();
+    return qepTerminationStatusFuture.share();
 }
 
 bool ExecutableQueryPlan::fail() {
@@ -132,7 +133,7 @@ void ExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContex
 }
 
 bool ExecutableQueryPlan::stop() {
-    bool ret = true;
+    bool allStagesStopped = true;
     auto expected = Running;
     NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
     if (qepStatus.compare_exchange_strong(expected, Stopped)) {
@@ -140,16 +141,21 @@ bool ExecutableQueryPlan::stop() {
         for (auto& stage : pipelines) {
             if (!stage->stop()) {
                 NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
-                ret = false;
+                allStagesStopped = false;
             }
         }
-        if (ret) {
-            qepTerminationStatusFuture.set_value(ExecutableQueryPlanResult::Ok);
-            return true;
+        if (allStagesStopped) {
+            qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+            return true; // correct stop
         }
+        qepStatus.store(ErrorState);
+        qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
+        return false; // one stage failed to stop
     }
-    qepStatus.store(ErrorState);
-    qepTerminationStatusFuture.set_value(ExecutableQueryPlanResult::Error);
+    // if we get there it measn the CAS failed and expected is the current value
+    while (!qepStatus.compare_exchange_strong(expected, ErrorState)) {
+        // try to install ErrorState
+    }
     return false;
 }
 
@@ -177,7 +183,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 for (auto& sink : sinks) {
                     sink->postReconfigurationCallback(task);
                 }
-                qepTerminationStatusFuture.set_value(ExecutableQueryPlanResult::Ok);
+                qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
                 return;
             }
         }
