@@ -130,7 +130,7 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, buffMgr);
         server.start();
-        ASSERT_EQ(server.getIsRunning(), true);
+        ASSERT_EQ(server.isServerRunning(), true);
     } catch (...) {
         // shutdown failed
         FAIL();
