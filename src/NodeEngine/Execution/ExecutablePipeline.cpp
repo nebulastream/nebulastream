@@ -121,7 +121,7 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
     }
 }
 void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& task) {
-    NES_DEBUG("Going to execute postReconfigurationCallback on pipeline belonging to query id: " << qepId << " stage id: " << pipelineStageId);
+    NES_DEBUG("Going to execute postReconfigurationCallback on pipeline belonging to subplanId: " << qepId << " stage id: " << pipelineStageId);
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case SoftEndOfStream: {
@@ -134,23 +134,23 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 stop();
                 if (nextPipeline == nullptr) {
                     auto queryManager = pipelineContext->getQueryManager();
-                    NES_ASSERT2_FMT(!targetQep.expired(), "Invalid qep for reconfig of query id: " << qepId << " subplan id: " << pipelineStageId);
+                    NES_ASSERT2_FMT(!targetQep.expired(), "Invalid qep for reconfig of subplanId: " << qepId << " stage id: " << pipelineStageId);
                     auto newReconf = ReconfigurationMessage(qepId, SoftEndOfStream, targetQep.lock(), std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
                     queryManager->addReconfigurationMessage(qepId, newReconf, false);
-                    NES_DEBUG("Going to triggering reconfig whole plan belonging to query id: " << qepId << " subplan id: " << pipelineStageId << " got SoftEndOfStream on last pipeline");
+                    NES_DEBUG("Going to triggering reconfig whole plan belonging to subplanId: " << qepId << " stage id: " << pipelineStageId << " got SoftEndOfStream on last pipeline");
                 } else {
                     auto queryManager = pipelineContext->getQueryManager();
                     auto newReconf = ReconfigurationMessage(qepId, SoftEndOfStream, nextPipeline, std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
                     queryManager->addReconfigurationMessage(qepId, newReconf, false);
-                    NES_DEBUG("Going to reconfigure next pipeline belonging to query id: " << qepId << " subplan id: " << nextPipeline->pipelineStageId << " got SoftEndOfStream  with nextPipeline");
+                    NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: " << qepId << " stage id: " << nextPipeline->pipelineStageId << " got SoftEndOfStream  with nextPipeline");
                 }
             } else {
-                NES_DEBUG("Requested reconfiguration of pipeline belonging to query id: " << qepId << " subplan id: " << pipelineStageId << " but refCount was " << (prevProducerCounter) << " and now is " << (prevProducerCounter - 1));
+                NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: " << qepId << " stage id: " << pipelineStageId << " but refCount was " << (prevProducerCounter) << " and now is " << (prevProducerCounter - 1));
             }
             break;
         }
         case HardEndOfStream: {
-            NES_DEBUG("Going to reconfigure pipeline belonging to query id: " << qepId << " subplan id: " << pipelineStageId << " got HardEndOfStream");
+            NES_DEBUG("Going to reconfigure pipeline belonging to subplanId: " << qepId << " stage id: " << pipelineStageId << " got HardEndOfStream");
             if (nextPipeline != nullptr) {
                 nextPipeline->postReconfigurationCallback(task);
             }
