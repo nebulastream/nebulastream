@@ -50,8 +50,8 @@ ExecutableQueryPlan::~ExecutableQueryPlan() {
     pipelines.clear();
 }
 
-std::future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture() {
-    return qepTerminationStatusFuture.get_future();
+std::shared_future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture() {
+    return qepTerminationStatusFuture.get_future().share();
 }
 
 bool ExecutableQueryPlan::fail() {
