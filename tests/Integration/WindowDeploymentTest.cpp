@@ -44,12 +44,10 @@ class WindowDeploymentTest : public testing::Test {
     WorkerConfigPtr workerConfig;
     SourceConfigPtr sourceConfig;
 
-    static void SetUpTestCase() {
+    void SetUp() {
         NES::setupLogging("WindowDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowDeploymentTest test class.");
-    }
 
-    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
 
