@@ -611,7 +611,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
-TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
+TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
 
     EXPECT_THROW(
         {// created buffer per source * number of sources
@@ -649,7 +649,7 @@ TEST_F(ProjectionTest, mergeQueryWithWrongProjection) {
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
-TEST_F(ProjectionTest, mergeQuery) {
+TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     // created buffer per source * number of sources
     uint64_t expectedBuf = 20;
 

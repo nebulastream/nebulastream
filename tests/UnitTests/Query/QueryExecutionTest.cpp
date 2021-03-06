@@ -875,7 +875,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 // P2 = Source2 -> filter2
 // P3 = [P1|P2] -> merge -> SINK
 // So, merge is a blocking window_scan with two children.
-TEST_F(QueryExecutionTest, mergeQuery) {
+TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // created buffer per source * number of sources
     uint64_t expectedBuf = 20;
 

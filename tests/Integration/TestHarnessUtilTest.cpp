@@ -651,7 +651,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
 /*
  * Testing test harness pushing element push to wrong source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
     struct Car {
         uint32_t key;
         uint32_t value;
