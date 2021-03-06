@@ -1656,7 +1656,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
 
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();

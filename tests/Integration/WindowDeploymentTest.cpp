@@ -1407,7 +1407,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnDifferentNodes) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
@@ -1547,7 +1547,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 /**
  * @brief test distributed tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
+TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedWithMergingTumblingWindowQueryEventTimeWithMergeAndComputeOnSameNodes) {
     coordinatorConfig->resetCoordinatorOptions();
     workerConfig->resetWorkerOptions();
     sourceConfig->resetSourceOptions();
