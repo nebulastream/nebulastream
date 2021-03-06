@@ -74,7 +74,7 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingSingleStreamRenameOperat
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
-    ASSERT_TRUE(!renameStreamOperators.empty());
+    EXPECT_TRUE(!renameStreamOperators.empty());
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
@@ -85,10 +85,10 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingSingleStreamRenameOperat
     typeInferencePhase->execute(updatedQueryPlan);
 
     renameStreamOperators = updatedQueryPlan->getOperatorByType<RenameStreamOperatorNode>();
-    ASSERT_TRUE(renameStreamOperators.empty());
+    EXPECT_TRUE(renameStreamOperators.empty());
 
     auto projectOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(projectOperators.size() == 1);
+    EXPECT_TRUE(projectOperators.size() == 1);
 }
 
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOperator) {
@@ -102,7 +102,7 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOper
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
-    ASSERT_TRUE(!renameStreamOperators.empty());
+    EXPECT_TRUE(!renameStreamOperators.empty());
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
@@ -113,10 +113,10 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOper
     typeInferencePhase->execute(updatedQueryPlan);
 
     renameStreamOperators = updatedQueryPlan->getOperatorByType<RenameStreamOperatorNode>();
-    ASSERT_TRUE(renameStreamOperators.empty());
+    EXPECT_TRUE(renameStreamOperators.empty());
 
     auto projectOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(projectOperators.size() == 2);
+    EXPECT_TRUE(projectOperators.size() == 2);
 }
 
 TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingStreamRenameOperatorWithProject) {
@@ -133,7 +133,7 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingStreamRenameOperatorWith
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
-    ASSERT_TRUE(!renameStreamOperators.empty());
+    EXPECT_TRUE(!renameStreamOperators.empty());
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
@@ -144,8 +144,8 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingStreamRenameOperatorWith
     typeInferencePhase->execute(updatedQueryPlan);
 
     renameStreamOperators = updatedQueryPlan->getOperatorByType<RenameStreamOperatorNode>();
-    ASSERT_TRUE(renameStreamOperators.empty());
+    EXPECT_TRUE(renameStreamOperators.empty());
 
     auto projectOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(projectOperators.size() == 2);
+    EXPECT_TRUE(projectOperators.size() == 2);
 }

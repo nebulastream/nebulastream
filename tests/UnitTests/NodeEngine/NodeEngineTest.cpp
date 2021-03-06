@@ -279,7 +279,7 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
 TEST_F(EngineTest, testStartStopEngineEmpty) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
-    ASSERT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->stop());
 }
 
 TEST_F(EngineTest, teststartDeployStop) {
@@ -287,10 +287,10 @@ TEST_F(EngineTest, teststartDeployStop) {
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
-    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->stop());
 
     testOutput();
 }
@@ -300,11 +300,11 @@ TEST_F(EngineTest, testStartDeployUndeployStop) {
     auto ptr = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
-    ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
-    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(ptr->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->undeployQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop());
+    EXPECT_TRUE(ptr->undeployQuery(testQueryId));
+    EXPECT_TRUE(ptr->stop());
 
     testOutput();
 }
@@ -314,16 +314,16 @@ TEST_F(EngineTest, testStartRegisterStartStopDeregisterStop) {
     auto ptr = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(ptr, testQueryId);
-    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep));
-    ASSERT_TRUE(ptr->startQuery(testQueryId));
-    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(ptr->registerQueryInNodeEngine(qep));
+    EXPECT_TRUE(ptr->startQuery(testQueryId));
+    EXPECT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
     pipeline->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->stopQuery(testQueryId));
+    EXPECT_TRUE(ptr->stopQuery(testQueryId));
 
-    ASSERT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Stopped);
+    EXPECT_TRUE(ptr->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Stopped);
 
-    ASSERT_TRUE(ptr->unregisterQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop());
+    EXPECT_TRUE(ptr->unregisterQuery(testQueryId));
+    EXPECT_TRUE(ptr->stop());
 
     testOutput();
 }
@@ -366,28 +366,28 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source2->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    ASSERT_TRUE(engine->startQuery(1));
-    ASSERT_TRUE(engine->startQuery(2));
+    EXPECT_TRUE(engine->startQuery(1));
+    EXPECT_TRUE(engine->startQuery(2));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->stopQuery(1, true));
-    ASSERT_TRUE(engine->stopQuery(2, true));
+    EXPECT_TRUE(engine->stopQuery(1, true));
+    EXPECT_TRUE(engine->stopQuery(2, true));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Stopped);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Stopped);
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Stopped);
+    EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Stopped);
 
-    ASSERT_TRUE(!engine->stop());
+    EXPECT_TRUE(!engine->stop());
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Invalid);
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
+    EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Invalid);
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
@@ -431,21 +431,21 @@ TEST_F(EngineTest, testParallelSameSource) {
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source2->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    ASSERT_TRUE(engine->startQuery(1));
-    ASSERT_TRUE(engine->startQuery(2));
+    EXPECT_TRUE(engine->startQuery(1));
+    EXPECT_TRUE(engine->startQuery(2));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->undeployQuery(1));
-    ASSERT_TRUE(engine->undeployQuery(2));
-    ASSERT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->undeployQuery(1));
+    EXPECT_TRUE(engine->undeployQuery(2));
+    EXPECT_TRUE(engine->stop());
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
@@ -488,21 +488,21 @@ TEST_F(EngineTest, testParallelSameSink) {
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source2->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    ASSERT_TRUE(engine->startQuery(1));
-    ASSERT_TRUE(engine->startQuery(2));
+    EXPECT_TRUE(engine->startQuery(1));
+    EXPECT_TRUE(engine->startQuery(2));
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->undeployQuery(1));
-    ASSERT_TRUE(engine->undeployQuery(2));
-    ASSERT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->undeployQuery(1));
+    EXPECT_TRUE(engine->undeployQuery(2));
+    EXPECT_TRUE(engine->stop());
     testOutput("qep12.txt", joinedExpectedOutput);
 }
 //
@@ -542,21 +542,21 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     auto pipeline2 = ExecutablePipeline::create(0, 2, executable2, context2, 1, nullptr, source1->getSchema(), sch2);
     builder2.addPipeline(pipeline2);
 
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
-    ASSERT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder1.build()));
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(builder2.build()));
 
-    ASSERT_TRUE(engine->startQuery(1));
-    ASSERT_TRUE(engine->startQuery(2));
+    EXPECT_TRUE(engine->startQuery(1));
+    EXPECT_TRUE(engine->startQuery(2));
 
     executable1->completedPromise.get_future().get();
     executable2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Running);
 
-    ASSERT_TRUE(engine->undeployQuery(1));
-    ASSERT_TRUE(engine->undeployQuery(2));
-    ASSERT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->undeployQuery(1));
+    EXPECT_TRUE(engine->undeployQuery(2));
+    EXPECT_TRUE(engine->stop());
 
     testOutput("qep3.txt", joinedExpectedOutput);
 }
@@ -566,16 +566,16 @@ TEST_F(EngineTest, testStartStopStartStop) {
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto [qep, pipeline] = setupQEP(engine, testQueryId);
-    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
     pipeline->completedPromise.get_future().get();
 
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
 
-    ASSERT_TRUE(engine->undeployQuery(testQueryId));
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
+    EXPECT_TRUE(engine->undeployQuery(testQueryId));
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
 
-    ASSERT_TRUE(engine->stop());
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
+    EXPECT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Invalid);
     testOutput();
 }
 
@@ -598,7 +598,7 @@ void assertKiller() {
                          std::move(compiler), nodeEngineId) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
-            ASSERT_TRUE(strcmp(exception->what(),
+            EXPECT_TRUE(strcmp(exception->what(),
                                "Failed assertion on false error message: this will fail now with a NesRuntimeException")
                         == 0);
         }
@@ -624,7 +624,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();
             NES_ERROR(str);
-            ASSERT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
+            EXPECT_TRUE(strcmp(str, "Got fatal error on thread 0: Catch me if you can!") == 0);
             completedPromise.set_value(true);
             stop(true);
         }
@@ -657,10 +657,10 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, 1, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
     auto qep = builder.build();
-    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
-    ASSERT_TRUE(engine->completedPromise.get_future().get());
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::ErrorState);
-    ASSERT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->completedPromise.get_future().get());
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::ErrorState);
+    EXPECT_TRUE(engine->stop());
 }
 
 TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
@@ -678,7 +678,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();
             NES_ERROR(str);
-            ASSERT_TRUE(strcmp(str, "Unknown exception caught") == 0);
+            EXPECT_TRUE(strcmp(str, "Unknown exception caught") == 0);
             completedPromise.set_value(true);
         }
     };
@@ -709,10 +709,10 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     auto pipeline = ExecutablePipeline::create(0, testQueryId, executable, context, 1, nullptr, source->getSchema(), sch);
     builder.addPipeline(pipeline);
     auto qep = builder.build();
-    ASSERT_TRUE(engine->deployQueryInNodeEngine(qep));
+    EXPECT_TRUE(engine->deployQueryInNodeEngine(qep));
     engine->completedPromise.get_future().get();
-    ASSERT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
-    ASSERT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->getQueryStatus(testQueryId) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(engine->stop());
 }
 
 TEST_F(EngineTest, DISABLED_testFatalCrash) {

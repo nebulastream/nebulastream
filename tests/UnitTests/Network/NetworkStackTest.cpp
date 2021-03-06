@@ -311,7 +311,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             // register the incoming channel
             netManager->registerSubpartitionConsumer(nesPartition);
             auto startTime = std::chrono::steady_clock::now().time_since_epoch();
-            ASSERT_TRUE(completedProm.get_future().get());
+            EXPECT_TRUE(completedProm.get_future().get());
             auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
             auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
             double bytes = totalNumBuffer * bufferSize;
@@ -474,7 +474,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             }
 
             for (std::promise<bool>& p : completedPromises) {
-                ASSERT_TRUE(p.get_future().get());
+                EXPECT_TRUE(p.get_future().get());
             }
         });
 
@@ -579,7 +579,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             // register the incoming channel
             //add latency
             netManager->registerSubpartitionConsumer(nesPartition);
-            ASSERT_TRUE(completed.get_future().get());
+            EXPECT_TRUE(completed.get_future().get());
             pManager->unregisterSubpartition(nesPartition);
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
@@ -630,10 +630,10 @@ TEST_F(NetworkStackTest, testNetworkSource) {
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
     auto networkSource = std::make_unique<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                          netManager, nesPartition);
-    ASSERT_TRUE(networkSource->start());
+    EXPECT_TRUE(networkSource->start());
 
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionCounter(nesPartition), 0);
-    ASSERT_TRUE(networkSource->stop());
+    EXPECT_TRUE(networkSource->stop());
     ASSERT_FALSE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
     nodeEngine->stop();
     networkSource = nullptr;
@@ -649,12 +649,12 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
 
     auto networkSource = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                          nodeEngine->getNetworkManager(), nesPartition);
-    ASSERT_TRUE(networkSource->start());
+    EXPECT_TRUE(networkSource->start());
 
     auto networkSink = std::make_shared<NetworkSink>(schema, 0, nodeEngine->getNetworkManager(), nodeLocation, nesPartition,
                                                      nodeEngine->getBufferManager(), nullptr);
 
-    ASSERT_TRUE(networkSource->stop());
+    EXPECT_TRUE(networkSource->stop());
     nodeEngine->stop();
     networkSource.reset();
     nodeEngine.reset();
@@ -743,10 +743,10 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         std::thread receivingThread([&]() {
             // register the incoming channel
             NetworkSource source(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition);
-            ASSERT_TRUE(source.start());
-            ASSERT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
+            EXPECT_TRUE(source.start());
+            EXPECT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
             completed.get_future().get();
-            ASSERT_TRUE(source.stop());
+            EXPECT_TRUE(source.stop());
         });
 
         auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);

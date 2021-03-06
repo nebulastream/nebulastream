@@ -41,7 +41,7 @@ TEST_F(ThreadNamingTest, testThreadNaming) {
     char threadName[17];
     setThreadName("NES-%d", 0);
     pthread_getname_np(pthread_self(), threadName, sizeof(threadName));
-    ASSERT_TRUE(std::strcmp(threadName, "NES-0") == 0);
+    EXPECT_TRUE(std::strcmp(threadName, "NES-0") == 0);
 }
 
 }// namespace NES

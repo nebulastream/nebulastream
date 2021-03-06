@@ -253,34 +253,34 @@ TEST_F(QueryTest, testQueryJoin) {
 
 TEST_F(QueryTest, testQueryExpression) {
     auto andExpression = Attribute("f1") && 10;
-    ASSERT_TRUE(andExpression->instanceOf<AndExpressionNode>());
+    EXPECT_TRUE(andExpression->instanceOf<AndExpressionNode>());
 
     auto orExpression = Attribute("f1") || 45;
-    ASSERT_TRUE(orExpression->instanceOf<OrExpressionNode>());
+    EXPECT_TRUE(orExpression->instanceOf<OrExpressionNode>());
 
     auto lessExpression = Attribute("f1") < 45;
-    ASSERT_TRUE(lessExpression->instanceOf<LessExpressionNode>());
+    EXPECT_TRUE(lessExpression->instanceOf<LessExpressionNode>());
 
     auto lessThenExpression = Attribute("f1") <= 45;
-    ASSERT_TRUE(lessThenExpression->instanceOf<LessEqualsExpressionNode>());
+    EXPECT_TRUE(lessThenExpression->instanceOf<LessEqualsExpressionNode>());
 
     auto equalsExpression = Attribute("f1") == 45;
-    ASSERT_TRUE(equalsExpression->instanceOf<EqualsExpressionNode>());
+    EXPECT_TRUE(equalsExpression->instanceOf<EqualsExpressionNode>());
 
     auto greaterExpression = Attribute("f1") > 45;
-    ASSERT_TRUE(greaterExpression->instanceOf<GreaterExpressionNode>());
+    EXPECT_TRUE(greaterExpression->instanceOf<GreaterExpressionNode>());
 
     auto greaterThenExpression = Attribute("f1") >= 45;
-    ASSERT_TRUE(greaterThenExpression->instanceOf<GreaterEqualsExpressionNode>());
+    EXPECT_TRUE(greaterThenExpression->instanceOf<GreaterEqualsExpressionNode>());
 
     auto notEqualExpression = Attribute("f1") != 45;
-    ASSERT_TRUE(notEqualExpression->instanceOf<NegateExpressionNode>());
+    EXPECT_TRUE(notEqualExpression->instanceOf<NegateExpressionNode>());
     auto equals = notEqualExpression->as<NegateExpressionNode>()->child();
-    ASSERT_TRUE(equals->instanceOf<EqualsExpressionNode>());
+    EXPECT_TRUE(equals->instanceOf<EqualsExpressionNode>());
 
     auto assignmentExpression = Attribute("f1") = --Attribute("f1")++ + 10;
     ConsoleDumpHandler::create()->dump(assignmentExpression, std::cout);
-    ASSERT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
+    EXPECT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
 }
 
 }// namespace NES
