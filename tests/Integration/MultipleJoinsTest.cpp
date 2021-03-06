@@ -167,11 +167,11 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
@@ -181,11 +181,11 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -331,12 +331,12 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
@@ -347,11 +347,11 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -502,12 +502,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
@@ -519,11 +519,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
         "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -674,12 +674,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
@@ -690,11 +690,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,1000,2000,4,4,4,1001,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -830,11 +830,11 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
@@ -853,11 +853,11 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
         "1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n"
         "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
         "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1003,12 +1003,12 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
@@ -1028,11 +1028,11 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
         "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n"
         "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1183,12 +1183,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
@@ -1221,11 +1221,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
         "500,1500,12,1000,2000,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
         "500,1500,12,500,1500,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n"
         "500,1500,12,500,1500,12,500,1500,12,1,12,1001,5,12,1011,1,12,1300,1,12,1300\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1376,12 +1376,12 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3window4$start:INTEGER,window1window2window3window4$end:INTEGER,window1window2window3window4$key:"
@@ -1413,11 +1413,11 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
         "500,1500,12,1000,2000,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n"
         "500,1500,12,500,1500,12,1,12,1001,5,12,1011,1000,2000,12,1,12,1300,1,12,1300\n"
         "500,1500,12,500,1500,12,1,12,1001,5,12,1011,500,1500,12,1,12,1300,1,12,1300\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleJoinsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleJoinsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

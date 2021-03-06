@@ -92,13 +92,13 @@ TEST_F(SimplePatternTest, testPatternWithFilter) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("SimplePatternTest: stop worker 1");
     bool retStopWrk1 = wrk1->stop(false);
@@ -164,12 +164,12 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     //TODO Patternname waiting for String support in map operator
 
@@ -268,12 +268,12 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
 
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -366,13 +366,13 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 0));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 0));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("SimplePatternTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     //TODO Patternname waiting for String support in map operator
 
@@ -453,11 +453,11 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamSingleOutput) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
 
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     //TODO Patternname waiting for String support in map operator
 
@@ -557,10 +557,10 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge)
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());

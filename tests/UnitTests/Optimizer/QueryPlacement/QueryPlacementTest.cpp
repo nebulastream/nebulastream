@@ -132,19 +132,19 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
             ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
             ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
             for (auto children : actualRootOperator->getChildren()) {
-                ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
             }
         } else {
-            ASSERT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
             for (auto children : actualRootOperator->getChildren()) {
-                ASSERT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
             }
         }
     }
@@ -187,19 +187,19 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
             std::vector<SourceLogicalOperatorNodePtr> sourceOperators = querySubPlan->getSourceOperators();
             ASSERT_EQ(sourceOperators.size(), 2);
             for (auto sourceOperator : sourceOperators) {
-                ASSERT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
+                EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperatorNode>());
             }
         } else {
-            ASSERT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1);
             OperatorNodePtr actualRootOperator = actualRootOperators[0];
-            ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
             for (auto children : actualRootOperator->getChildren()) {
-                ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
             }
         }
     }
@@ -256,23 +256,23 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });
-                ASSERT_TRUE(found != expectedRootOperators.end());
+                EXPECT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
                 }
             }
         } else {
-            ASSERT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 2);
             for (auto rootOperator : actualRootOperators) {
-                ASSERT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
                 for (auto children : rootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
                 }
             }
         }
@@ -327,23 +327,23 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });
-                ASSERT_TRUE(found != expectedRootOperators.end());
+                EXPECT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
                 }
             }
         } else {
-            ASSERT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 2);
             for (auto rootOperator : actualRootOperators) {
-                ASSERT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
                 for (auto children : rootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
                 }
             }
         }
@@ -400,23 +400,23 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });
-                ASSERT_TRUE(found != expectedRootOperators.end());
+                EXPECT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
                 }
             }
         } else {
-            ASSERT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 1);
             for (auto rootOperator : actualRootOperators) {
-                ASSERT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
                 for (auto children : rootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
                 }
             }
         }
@@ -471,23 +471,23 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });
-                ASSERT_TRUE(found != expectedRootOperators.end());
+                EXPECT_TRUE(found != expectedRootOperators.end());
                 ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
                 for (auto children : actualRootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
                 }
             }
         } else {
-            ASSERT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
             std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
             ASSERT_EQ(querySubPlans.size(), 1);
             auto querySubPlan = querySubPlans[0];
             std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
             ASSERT_EQ(actualRootOperators.size(), 2);
             for (auto rootOperator : actualRootOperators) {
-                ASSERT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
+                EXPECT_TRUE(rootOperator->instanceOf<SinkLogicalOperatorNode>());
                 for (auto children : rootOperator->getChildren()) {
-                    ASSERT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+                    EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
                 }
             }
         }

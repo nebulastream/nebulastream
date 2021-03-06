@@ -86,7 +86,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
@@ -118,7 +118,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
@@ -148,7 +148,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
@@ -180,7 +180,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
@@ -212,7 +212,7 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
@@ -304,7 +304,7 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
@@ -401,7 +401,7 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     auto sig2 = logicalOperator22->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
@@ -454,7 +454,7 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
@@ -508,7 +508,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     auto sig2 = projectionOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources) {
@@ -599,7 +599,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator) {
@@ -629,7 +629,7 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
     auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
-    ASSERT_TRUE(sig1->isEqual(sig2));
+    EXPECT_TRUE(sig1->isEqual(sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator) {
@@ -765,5 +765,5 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
 //    auto equalQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
 //    bool isEqual = equalQueryMergerRule->apply();
 //
-//    ASSERT_TRUE(isEqual);
+//    EXPECT_TRUE(isEqual);
 //}

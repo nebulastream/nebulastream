@@ -78,9 +78,9 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     // get the execution plan
     std::stringstream getExecutionPlanStringStream;
@@ -119,7 +119,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 
     NES_INFO("RESTEndpointTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

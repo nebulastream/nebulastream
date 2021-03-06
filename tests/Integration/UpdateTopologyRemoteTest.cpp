@@ -92,34 +92,34 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     TopologyPtr topology = crd->getTopology();
 
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-    ASSERT_TRUE(rootNode->getGrpcPort() == port + 1);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    ASSERT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
+    EXPECT_TRUE(rootNode->getGrpcPort() == port + 1);
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
-    ASSERT_TRUE(node1->getGrpcPort() == node1RpcPort);
-    ASSERT_TRUE(node1->getAvailableResources() == workerNumberOfSlots);
+    EXPECT_TRUE(node1->getGrpcPort() == node1RpcPort);
+    EXPECT_TRUE(node1->getAvailableResources() == workerNumberOfSlots);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
-    ASSERT_TRUE(node2->getGrpcPort() == node2RpcPort);
-    ASSERT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
+    EXPECT_TRUE(node2->getGrpcPort() == node2RpcPort);
+    EXPECT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
 
     NES_INFO("ADD NEW PARENT");
     bool successAddPar = wrk->addParent(node2->getId());
     EXPECT_TRUE(successAddPar);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    ASSERT_TRUE(node2->getChildren().size() == 1);
-    ASSERT_TRUE(node2->getChildren()[0]->as<TopologyNode>()->getId() == node1->getId());
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(node2->getChildren().size() == 1);
+    EXPECT_TRUE(node2->getChildren()[0]->as<TopologyNode>()->getId() == node1->getId());
 
     NES_INFO("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node2->getId());
     EXPECT_TRUE(successRemoveParent);
     EXPECT_TRUE(successAddPar);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    ASSERT_TRUE(node2->getChildren().empty());
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(node2->getChildren().empty());
 
     NES_INFO("stopping worker");
     bool retStopWrk = wrk->stop(false);
@@ -163,17 +163,17 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     TopologyPtr topology = crd->getTopology();
 
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-    ASSERT_TRUE(rootNode->getGrpcPort() == port + 1);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(rootNode->getGrpcPort() == port + 1);
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
-    ASSERT_TRUE(node1->getGrpcPort() == node1RpcPort);
+    EXPECT_TRUE(node1->getGrpcPort() == node1RpcPort);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
-    ASSERT_TRUE(node2->getGrpcPort() == node2RpcPort);
+    EXPECT_TRUE(node2->getGrpcPort() == node2RpcPort);
 
     NES_INFO("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node1->getId());

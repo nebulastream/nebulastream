@@ -404,7 +404,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerNoblocking) {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
                 auto bufOpt = getBufferNoBlocking(*bufferManager);
-                ASSERT_TRUE(bufOpt.has_value());
+                EXPECT_TRUE(bufOpt.has_value());
                 auto buf = *bufOpt;
                 auto* data = buf.getBufferAs<uint32_t>();
                 for (size_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {

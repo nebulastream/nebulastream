@@ -113,8 +113,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputT
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -175,7 +175,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -222,8 +222,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
         "R2000073,1543624020000,102.629631,8,1\n"
         "R2000070,1543625280000,108.166664,5,1\n";
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -262,7 +262,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -306,8 +306,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -367,7 +367,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     schema << endl;
 
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -414,8 +414,8 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 3, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());

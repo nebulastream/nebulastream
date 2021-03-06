@@ -134,7 +134,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     }
 
     ASSERT_NE(initialGatheringInterval, source->getGatheringIntervalCount());
-    ASSERT_TRUE(nodeEngine->stop());
+    EXPECT_TRUE(nodeEngine->stop());
 }
 
 /**
@@ -164,10 +164,10 @@ TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
     }
 
     ASSERT_NE(source->getGatheringIntervalCount(), initialGatheringInterval);
-    ASSERT_TRUE(source->getGatheringIntervalCount() > initialGatheringInterval);
-    ASSERT_TRUE(source->getGatheringIntervalCount() < 1000);// we don't control how much the change will be
+    EXPECT_TRUE(source->getGatheringIntervalCount() > initialGatheringInterval);
+    EXPECT_TRUE(source->getGatheringIntervalCount() < 1000);// we don't control how much the change will be
     ASSERT_EQ((source->getGatheringIntervalCount() - initialGatheringInterval) % intervalIncrease, 0);
-    ASSERT_TRUE(nodeEngine->stop());
+    EXPECT_TRUE(nodeEngine->stop());
 }
 
 }// namespace NES

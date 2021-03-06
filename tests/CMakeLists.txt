@@ -410,8 +410,8 @@ target_link_libraries(complex-sequence-test nes ${GTEST_LIBRARIES})
 add_test(NAME complex-sequence-test COMMAND complex-sequence-test)
 
 ### mergeDeploymentTest ###
-add_executable(union-deployment-test "Integration/UnionDeploymentTest.cpp")
-target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
+#add_executable(union-deployment-test "Integration/UnionDeploymentTest.cpp")
+#target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
 #add_test(NAME union-deployment-test COMMAND union-deployment-test)
 
 ### ContiniousSourceTest ###

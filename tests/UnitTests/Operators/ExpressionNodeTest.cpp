@@ -53,15 +53,15 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
     auto expression = EqualsExpressionNode::create(left, right);
 
     // check if expression is a predicate
-    ASSERT_TRUE(expression->isPredicate());
+    EXPECT_TRUE(expression->isPredicate());
     auto fieldRead = FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "field_1");
     auto constant = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "10"));
     auto lessThen = LessEqualsExpressionNode::create(fieldRead, constant);
-    ASSERT_TRUE(lessThen->isPredicate());
+    EXPECT_TRUE(lessThen->isPredicate());
 
     auto andExpression = AndExpressionNode::create(expression, lessThen);
     ConsoleDumpHandler::create()->dump(andExpression, std::cout);
-    ASSERT_TRUE(andExpression->isPredicate());
+    EXPECT_TRUE(andExpression->isPredicate());
 }
 
 TEST_F(ExpressionNodeTest, attributeStampInference) {
@@ -69,16 +69,16 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
 
     auto attribute = Attribute("f1").getExpressionNode();
     // check if the attribute field is initially undefined
-    ASSERT_TRUE(attribute->getStamp()->isUndefined());
+    EXPECT_TRUE(attribute->getStamp()->isUndefined());
 
     // infer stamp using schema
     attribute->inferStamp(schema);
-    ASSERT_TRUE(attribute->getStamp()->isEquals(DataTypeFactory::createInt8()));
+    EXPECT_TRUE(attribute->getStamp()->isEquals(DataTypeFactory::createInt8()));
 
     // test inference with undefined attribute
     auto notValidAttribute = Attribute("f2").getExpressionNode();
 
-    ASSERT_TRUE(notValidAttribute->getStamp()->isUndefined());
+    EXPECT_TRUE(notValidAttribute->getStamp()->isUndefined());
     // we expect that this call throws an exception
     ASSERT_ANY_THROW(notValidAttribute->inferStamp(schema));
 }
@@ -91,23 +91,23 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
                       ->addField("test$f4", DataTypeFactory::createArray(10, DataTypeFactory::createBoolean()));
 
     auto addExpression = Attribute("f1") + 10;
-    ASSERT_TRUE(addExpression->getStamp()->isUndefined());
+    EXPECT_TRUE(addExpression->getStamp()->isUndefined());
     addExpression->inferStamp(schema);
-    ASSERT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
+    EXPECT_TRUE(addExpression->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
 
     auto mulExpression = Attribute("f2") * 10;
-    ASSERT_TRUE(mulExpression->getStamp()->isUndefined());
+    EXPECT_TRUE(mulExpression->getStamp()->isUndefined());
     mulExpression->inferStamp(schema);
-    ASSERT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(INT64)));
+    EXPECT_TRUE(mulExpression->getStamp()->isEquals(DataTypeFactory::createType(INT64)));
 
     auto increment = Attribute("f3")++;
-    ASSERT_TRUE(increment->getStamp()->isUndefined());
+    EXPECT_TRUE(increment->getStamp()->isUndefined());
     increment->inferStamp(schema);
-    ASSERT_TRUE(increment->getStamp()->isEquals(DataTypeFactory::createType(FLOAT64)));
+    EXPECT_TRUE(increment->getStamp()->isEquals(DataTypeFactory::createType(FLOAT64)));
 
     // We expect that you can't increment an array
     auto incrementArray = Attribute("f4")++;
-    ASSERT_TRUE(incrementArray->getStamp()->isUndefined());
+    EXPECT_TRUE(incrementArray->getStamp()->isUndefined());
     ASSERT_ANY_THROW(incrementArray->inferStamp(schema));
 }
 
@@ -120,15 +120,15 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
 
     auto equalsExpression = Attribute("f1") == 10;
     equalsExpression->inferStamp(schema);
-    ASSERT_TRUE(equalsExpression->isPredicate());
+    EXPECT_TRUE(equalsExpression->isPredicate());
 
     auto lessExpression = Attribute("f2") < 10;
     lessExpression->inferStamp(schema);
-    ASSERT_TRUE(lessExpression->isPredicate());
+    EXPECT_TRUE(lessExpression->isPredicate());
 
     auto negateBoolean = !Attribute("f3");
     negateBoolean->inferStamp(schema);
-    ASSERT_TRUE(negateBoolean->isPredicate());
+    EXPECT_TRUE(negateBoolean->isPredicate());
 
     // you cant negate non boolean.
     auto negateInteger = !Attribute("f1");
@@ -136,11 +136,11 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
 
     auto andExpression = Attribute("f3") && true;
     andExpression->inferStamp(schema);
-    ASSERT_TRUE(andExpression->isPredicate());
+    EXPECT_TRUE(andExpression->isPredicate());
 
     auto orExpression = Attribute("f3") || Attribute("f3");
     orExpression->inferStamp(schema);
-    ASSERT_TRUE(orExpression->isPredicate());
+    EXPECT_TRUE(orExpression->isPredicate());
     // you cant make a logical expression between non boolean.
     auto orIntegerExpression = Attribute("f1") || Attribute("f2");
     ASSERT_ANY_THROW(negateInteger->inferStamp(schema));
@@ -155,7 +155,7 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
 
     auto assertion = Attribute("f1") = 10 * (33 + Attribute("f1"));
     assertion->inferStamp(schema);
-    ASSERT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
+    EXPECT_TRUE(assertion->getField()->getStamp()->isEquals(DataTypeFactory::createType(INT32)));
 }
 
 }// namespace NES
