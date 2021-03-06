@@ -606,10 +606,17 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp2 += field2[recordIndex];
                     tmp3 += field3[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -624,10 +631,20 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp3 += field3[recordIndex];
                     tmp4 += field4[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -643,10 +660,23 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp4 += field4[recordIndex];
                     tmp5 += field5[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4 + tmp5;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 + tmp5)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -663,10 +693,26 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp5 += field5[recordIndex];
                     tmp6 += field6[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4 + tmp5 + tmp6;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 + tmp5 + tmp6)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -684,12 +730,29 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp6 += field6[recordIndex];
                     tmp7 += field7[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -708,12 +771,32 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp7 += field7[recordIndex];
                     tmp8 += field8[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -734,12 +817,35 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp8 += field8[recordIndex];
                     tmp9 += field9[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8 + tmp9;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -761,13 +867,38 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp9 += field9[recordIndex];
                     tmp10 += field10[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 + tmp10)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -790,14 +921,41 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp10 += field10[recordIndex];
                     tmp11 += field11[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 ;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp11 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp11 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -821,14 +979,41 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp11 += field11[recordIndex];
                     tmp12 += field12[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
                 }
             }
 
@@ -854,14 +1039,44 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp12 += field12[recordIndex];
                     tmp13 += field13[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12 + tmp13;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12 + tmp13)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
+                }
+                if (tmp13 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -887,15 +1102,47 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp13 += field13[recordIndex];
                     tmp14 += field14[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12;
-                tmp0 += tmp13 + tmp14;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12 + tmp13 + tmp14)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
+                }
+                if (tmp13 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * NUM_TUPLES");
+                }
+                if (tmp14 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -922,15 +1169,50 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                     tmp14 += field14[recordIndex];
                     tmp15 += field15[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12;
-                tmp0 += tmp13 + tmp14 + tmp15;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12 + tmp13 + tmp14 + tmp15 )) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
+                }
+                if (tmp13 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * NUM_TUPLES");
+                }
+                if (tmp14 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1 * NUM_TUPLES");
+                }
+                if (tmp15 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1038,10 +1320,17 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp2 += field2[recordIndex];
                     tmp3 += field3[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1056,10 +1345,20 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp3 += field3[recordIndex];
                     tmp4 += field4[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1075,10 +1374,23 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp4 += field4[recordIndex];
                     tmp5 += field5[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4 + tmp5;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 + tmp5)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1095,10 +1407,26 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp5 += field5[recordIndex];
                     tmp6 += field6[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4 + tmp5 + tmp6;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 + tmp5 + tmp6)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1116,12 +1444,29 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp6 += field6[recordIndex];
                     tmp7 += field7[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1140,12 +1485,32 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp7 += field7[recordIndex];
                     tmp8 += field8[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1166,12 +1531,35 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp8 += field8[recordIndex];
                     tmp9 += field9[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8 + tmp9;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1193,13 +1581,38 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp9 += field9[recordIndex];
                     tmp10 += field10[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 + tmp10)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1222,14 +1635,41 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp10 += field10[recordIndex];
                     tmp11 += field11[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 ;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp11 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp11 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1253,14 +1693,41 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp11 += field11[recordIndex];
                     tmp12 += field12[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
                 }
             }
 
@@ -1286,14 +1753,44 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp12 += field12[recordIndex];
                     tmp13 += field13[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12 + tmp13;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12 + tmp13)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
+                }
+                if (tmp13 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1319,15 +1816,47 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp13 += field13[recordIndex];
                     tmp14 += field14[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12;
-                tmp0 += tmp13 + tmp14;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12 + tmp13 + tmp14)) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
+                }
+                if (tmp13 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * NUM_TUPLES");
+                }
+                if (tmp14 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1 * NUM_TUPLES");
                 }
             }
             break;
@@ -1354,15 +1883,50 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                     tmp14 += field14[recordIndex];
                     tmp15 += field15[recordIndex];
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12;
-                tmp0 += tmp13 + tmp14 + tmp15;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12 + tmp13 + tmp14 + tmp15 )) {
-                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * NUM_TUPLES");
+                }
+                if (tmp1 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * NUM_TUPLES");
+                }
+                if (tmp2 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * NUM_TUPLES");
+                }
+                if (tmp3 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * NUM_TUPLES");
+                }
+                if (tmp4 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * NUM_TUPLES");
+                }
+                if (tmp5 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * NUM_TUPLES");
+                }
+                if (tmp6 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * NUM_TUPLES");
+                }
+                if (tmp7 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * NUM_TUPLES");
+                }
+                if (tmp8 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * NUM_TUPLES");
+                }
+                if (tmp9 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * NUM_TUPLES");
+                }
+                if (tmp10 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * NUM_TUPLES");
+                }
+                if (tmp12 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * NUM_TUPLES");
+                }
+                if (tmp13 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * NUM_TUPLES");
+                }
+                if (tmp14 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1 * NUM_TUPLES");
+                }
+                if (tmp15 != 1 * NUM_TUPLES) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1 * NUM_TUPLES");
                 }
             }
             break;
