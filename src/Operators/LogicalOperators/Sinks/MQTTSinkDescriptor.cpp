@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_MQTT_BUILD
-
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 
 namespace NES {
@@ -60,5 +58,3 @@ bool MQTTSinkDescriptor::equal(SinkDescriptorPtr other) {
         && asynchronousClient == otherSinkDescriptor->asynchronousClient;
 }
 }// namespace NES
-
-#endif

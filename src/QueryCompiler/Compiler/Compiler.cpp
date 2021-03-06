@@ -79,9 +79,6 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     flags->addFlag("-I" + IncludePath);
     flags->addFlag("-o" + libraryName);
 
-#ifdef ENABLE_MQTT_BUILD
-    flags->addFlag("-DENABLE_MQTT_BUILD=1");
-#endif
 #ifdef NES_LOGGING_TRACE_LEVEL
     flags->addFlag("-DNES_LOGGING_TRACE_LEVEL=1");
 #endif

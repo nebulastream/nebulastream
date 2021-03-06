@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_MQTT_BUILD
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -224,5 +223,3 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerSynchronously) {
         20, 5, MQTTSink::TimeUnits::milliseconds, 500, MQTTSink::ServiceQualities::atLeastOnce, false, false);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
-
-#endif

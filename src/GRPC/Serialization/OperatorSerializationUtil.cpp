@@ -74,15 +74,13 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/OPCSourceDescriptor.hpp>
 #endif
 #ifdef ENABLE_MQTT_BUILD
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#endif
-#ifdef ENABLE_MQTT_BUILD
-#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #endif
 
 namespace NES {
@@ -1117,7 +1115,6 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
         sinkDetails->mutable_sinkdescriptor()->PackFrom(opcSerializedSinkDescriptor);
     }
 #endif
-#ifdef ENABLE_MQTT_BUILD
     else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
         // serialize MQTT sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
@@ -1136,7 +1133,6 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
 
         sinkDetails->mutable_sinkdescriptor()->PackFrom(mqttSerializedSinkDescriptor);
     }
-#endif
     else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
         // serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
@@ -1226,7 +1222,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
                                          opcSerializedSinkDescriptor.password());
     }
 #endif
-#ifdef ENABLE_MQTT_BUILD
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor>()) {
         // de-serialize MQTT sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MQTTSinkDescriptor");
@@ -1239,7 +1234,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
             (MQTTSink::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
             serializedSinkDescriptor.asynchronousclient());
     }
-#endif
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");
