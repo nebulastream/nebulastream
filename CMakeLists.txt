@@ -31,7 +31,6 @@ include(cmake/GetSemanticVersion.cmake)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
-set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 
 # C++ Standard
 set(CMAKE_CXX_STANDARD 17)
