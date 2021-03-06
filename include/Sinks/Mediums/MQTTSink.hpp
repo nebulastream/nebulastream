@@ -16,13 +16,15 @@
 
 #ifndef MQTTSINK_HPP
 #define MQTTSINK_HPP
-#ifdef ENABLE_MQTT_BUILD
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/MQTTClientWrapper.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
+// The client relies on the Paho MQTT library and causes a crash, if the flag is set and the library is not present
+#ifdef ENABLE_MQTT_BUILD
+#include <Util/MQTTClientWrapper.hpp>
+#endif
 
 namespace NES {
 /**
@@ -145,11 +147,13 @@ class MQTTSink : public SinkMedium {
     bool connected;
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends;
 
+    // The client relies on the Paho MQTT library and causes a crash, if the flag is set and the library is not present
+#ifdef ENABLE_MQTT_BUILD
     MQTTClientWrapperPtr client;
+#endif
 };
 typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
 
 }// namespace NES
 
-#endif
 #endif//MQTTSINK

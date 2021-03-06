@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#ifdef ENABLE_MQTT_BUILD
 #include <Sinks/Mediums/MQTTSink.hpp>
 
 #include <cstdint>
@@ -38,8 +37,6 @@ namespace NES {
 */
 const uint32_t NANO_TO_MILLI_SECONDS_MULTIPLIER = 1000000;
 const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
-
-enum MQTTBrokerType { ThingsBoard };
 
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
@@ -115,26 +112,24 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
                                               << " because queue is not connected");
             throw Exception("Write to zmq sink failed");
         }
-        // single buffer approach, might want to anticipate multiple buffers:
-        // auto dataBuffers = sinkFormat->getData(inputBuffer);
+
         if (!inputBuffer.isValid()) {
             NES_ERROR("MQTTSink::writeData input buffer invalid");
             return false;
         }
 
         NES_TRACE("MQTTSink::writeData" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
-        std::vector<std::string> bufferData = getDataFromTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr());
-        
-        //TODO replace with proper user input, currently only for demo purposes
-        MQTTBrokerType brokerType = MQTTBrokerType::ThingsBoard;
-        switch(brokerType) {
-            case(MQTTBrokerType::ThingsBoard):
-                for (auto value : bufferData) {
-                    std::string payload = "{\"temperature\":" + value + "}";
-                    client->sendPayload(payload, topic, qualityOfService);
-                    NES_TRACE("MQTTSink::writeData Sending Payload: " << payload);
-                    std::this_thread::sleep_for(minDelayBetweenSends);
-                }
+        /*
+          For now, the only broker that data is sent to is ThingsBoard. Thus this implementation currently is ThingsBoard specific
+          It might make sense to introduce an Enum 'MQTTEndpointType' in the future and depending on the endpoint type,
+          send data in the correct format.
+         */
+        std::vector<std::string> dataBufferAsStringVector = getDataFromTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr());
+        for (auto value : dataBufferAsStringVector) {
+            std::string payload = "{\"temperature\":" + value + "}";
+            client->sendPayload(payload, topic, qualityOfService);
+            NES_TRACE("MQTTSink::writeData Sending Payload: " << payload);
+            std::this_thread::sleep_for(minDelayBetweenSends);
         }
         // If the connection to the MQTT broker is lost during sending, the MQTT client might buffer all the remaining messages.
         if (asynchronousClient && client->getNumberOfUnsentMessages() > 0) {
@@ -215,5 +210,3 @@ const MQTTSink::ServiceQualities MQTTSink::getQualityOfService() const { return 
 bool MQTTSink::getAsynchronousClient() { return asynchronousClient; }
 
 }// namespace NES
-
-#endif

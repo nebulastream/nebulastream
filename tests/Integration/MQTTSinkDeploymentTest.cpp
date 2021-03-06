@@ -26,7 +26,6 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 
 using namespace std;
@@ -66,9 +65,10 @@ class MQTTSinkDeploymentTest : public testing::Test {
 
 /**
  * Test deploying an MQTT sink and sending data via the deployed sink to an MQTT broker
+ * DISABLED for now, because it requires a manually set up MQTT broker -> fails otherwise
  */
 
-TEST_F(MQTTSinkDeploymentTest, testDeployOneWorker) {
+TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -94,14 +94,10 @@ TEST_F(MQTTSinkDeploymentTest, testDeployOneWorker) {
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    /*
-     *   const std::string LOCAL_ADDRESS = "127.0.0.1:1883";
-    const std::string CLIENT_ID = "nes-mqtt-test-client";
-    const std::string TOPIC = "v1/devices/me/telemetry";
-    const std::string USER = "rfRqLGZRChg8eS30PEeR";
-     */
-//    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
-    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("127.0.0.1:1883", "nes-mqtt-test-client", "v1/devices/me/telemetry", "rfRqLGZRChg8eS30PEeR", 5, MQTTSink::milliseconds, 500, MQTTSink::atLeastOnce, true));)";
+
+    // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
+    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("127.0.0.1:1883", "nes-mqtt-test-client",
+                "v1/devices/me/telemetry", "rfRqLGZRChg8eS30PEeR", 5, MQTTSink::milliseconds, 500, MQTTSink::atLeastOnce, true));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));

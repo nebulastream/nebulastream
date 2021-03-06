@@ -17,8 +17,6 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 
-#ifdef ENABLE_MQTT_BUILD
-
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 
@@ -134,6 +132,5 @@ class MQTTSinkDescriptor : public SinkDescriptor {
 typedef std::shared_ptr<MQTTSinkDescriptor> MQTTSinkDescriptorPtr;
 
 }// namespace NES
-#endif
 
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
