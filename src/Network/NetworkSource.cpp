@@ -46,9 +46,7 @@ bool NetworkSource::start() {
 }
 
 bool NetworkSource::stop() {
-    // TODO ensure proper termination: what should happen here when we call stop but refCnt has not reached zero?
     NES_DEBUG("NetworkSource: stop called on " << nesPartition);
-//    networkManager->unregisterSubpartitionConsumer(nesPartition);
     return true;
 }
 
