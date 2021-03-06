@@ -438,7 +438,7 @@ static void BM_ReadRecordsStruct(benchmark::State& state) {
             maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleCacheLine);
             auto tupleIt = buffer.getBuffer<TupleCacheLine>();
             for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
-                tupleIt[i].key = 42;
+                tupleIt[i].key = 1;
                 tupleIt[i].value1 = 1;
                 tupleIt[i].value2 = 1;
                 tupleIt[i].value3 = 1;
@@ -534,15 +534,50 @@ static void BM_ReadRecordsStruct(benchmark::State& state) {
                     tmp14 += tupleIt[i].value14;
                     tmp15 += tupleIt[i].value15;
                 }
-                int32_t tmp0_0 = tmp0;
-                tmp0 += tmp1 + tmp2 + tmp3 + tmp4;
-                tmp0 += tmp5 + tmp6 + tmp7 + tmp8;
-                tmp0 += tmp9 + tmp10 + tmp11 + tmp12;
-                tmp0 += tmp13 + tmp14 + tmp15;
-                if (tmp0 != (tmp0_0 + tmp1 + tmp2 + tmp3 + tmp4 +
-                             tmp5 + tmp6 + tmp7 + tmp8 + tmp9 +
-                             tmp10 + tmp11 + tmp12 + tmp13 + tmp14 + tmp15 )) {
-                    NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != tmp0");
+                if (tmp0 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp1 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp2 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp3 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp4 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp5 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp6 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp7 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp8 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp9 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp10 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp12 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp13 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp14 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp15 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1 * maxTuplesPerBuffer");
                 }
             }
             break;
