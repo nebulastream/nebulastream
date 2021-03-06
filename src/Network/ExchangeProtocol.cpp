@@ -70,7 +70,8 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         if (partitionManager->unregisterSubpartition(endOfStreamMessage.getChannelId().getNesPartition())) {
             protocolListener->onEndOfStream(endOfStreamMessage);
         } else {
-            NES_DEBUG("ExchangeProtocol: EndOfStream message received from " << endOfStreamMessage.getChannelId().toString() << " but there is still some active subpartition");
+            NES_DEBUG("ExchangeProtocol: EndOfStream message received from " << endOfStreamMessage.getChannelId().toString() << " but there is still some active subpartition: "
+                      << partitionManager->getSubpartitionCounter(endOfStreamMessage.getChannelId().getNesPartition()));
         }
     } else {
         NES_ERROR("ExchangeProtocol: EndOfStream message received from " << endOfStreamMessage.getChannelId().toString() << " however the partition is not registered on this worker");

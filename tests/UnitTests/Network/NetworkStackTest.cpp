@@ -561,8 +561,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                 ASSERT_EQ(id, nesPartition);
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override {
-                eosCnt++;
-                if (eosCnt == numSendingThreads) {
+                auto prev = eosCnt.fetch_add(1);
+                if (prev == 0) {
                     completed.set_value(true);
                 }
             }
@@ -580,7 +580,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             //add latency
             netManager->registerSubpartitionConsumer(nesPartition);
             EXPECT_TRUE(completed.get_future().get());
-            pManager->unregisterSubpartition(nesPartition);
+//            pManager->unregisterSubpartition(nesPartition);
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
 
@@ -604,6 +604,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                     usleep(gen(rnd));
                     networkSink->writeData(buffer, workerContext);
                 }
+                auto rtEnd = NodeEngine::ReconfigurationMessage(0, NodeEngine::HardEndOfStream, networkSink);
+                networkSink->reconfigure(rtEnd, workerContext);
             });
             sendingThreads.emplace_back(std::move(sendingThread));
         }
@@ -634,10 +636,9 @@ TEST_F(NetworkStackTest, testNetworkSource) {
 
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionCounter(nesPartition), 0);
     EXPECT_TRUE(networkSource->stop());
+    netManager->unregisterSubpartitionConsumer(nesPartition);
     ASSERT_FALSE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
     nodeEngine->stop();
-    networkSource = nullptr;
-    nodeEngine = nullptr;
 }
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
@@ -721,7 +722,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         void onEndOfStream(Network::Messages::EndOfStreamMessage) override {
             eosCnt++;
-            if (eosCnt == numSendingThreads) {
+            if (eosCnt == 1) {
                 completed.set_value(true);
             }
         }

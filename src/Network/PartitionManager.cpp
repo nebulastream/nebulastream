@@ -35,9 +35,14 @@ bool PartitionManager::registerSubpartition(NesPartition partition) {
 bool PartitionManager::unregisterSubpartition(NesPartition partition) {
     std::unique_lock lock(partitionCounterMutex);
 
-    if (partitionCounter.find(partition) == partitionCounter.end()) {
-        NES_FATAL_ERROR("PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
-        NES_THROW_RUNTIME_ERROR("PartitionManager: error while unregistering partition");
+    NES_ASSERT2_FMT(partitionCounter.find(partition) != partitionCounter.end(),
+                    "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
+
+    // safeguard
+    if (partitionCounter[partition] == 0) {
+        NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
+        partitionCounter.erase(partition);
+        return true;
     }
 
     partitionCounter[partition]--;
