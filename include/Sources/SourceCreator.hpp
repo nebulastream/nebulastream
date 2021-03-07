@@ -68,8 +68,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
-                                                                             NodeEngine::QueryManagerPtr queryManager,
-                                                                             OperatorId operatorId);
+                                                                 NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
 
 /**
  * @brief function to create a lambda source

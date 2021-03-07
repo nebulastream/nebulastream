@@ -31,11 +31,7 @@
 
 namespace NES::NodeEngine::Execution {
 
-
-enum class ExecutableQueryPlanResult : uint8_t {
-    Ok,
-    Error
-};
+enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
 
 /**
  * @brief Represents an executable plan of an particular query.
@@ -78,7 +74,6 @@ class ExecutableQueryPlan : public Reconfigurable {
     std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
 
   public:
-
     /**
      * @brief Fail the query plan and free all associated resources.
      * @return not defined yet

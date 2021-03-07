@@ -104,9 +104,7 @@ GeneratedQueryExecutionPlanBuilder& GeneratedQueryExecutionPlanBuilder::addOpera
     return *this;
 }
 
-const std::vector<DataSourcePtr> & GeneratedQueryExecutionPlanBuilder::getSources() const {
-    return sources;
-}
+const std::vector<DataSourcePtr>& GeneratedQueryExecutionPlanBuilder::getSources() const { return sources; }
 
 DataSourcePtr GeneratedQueryExecutionPlanBuilder::getSource(uint64_t index) { return sources[index]; }
 

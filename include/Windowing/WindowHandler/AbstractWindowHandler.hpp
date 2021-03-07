@@ -40,11 +40,14 @@ namespace NES::Windowing {
 /**
  * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler>, public NodeEngine::Reconfigurable {
+class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler>,
+                              public NodeEngine::Reconfigurable {
     typedef detail::virtual_enable_shared_from_this<AbstractWindowHandler> inherited0;
     typedef NodeEngine::Reconfigurable inherited1;
+
   public:
-    explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition) : windowDefinition(windowDefinition) {
+    explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
+        : windowDefinition(windowDefinition), running(false) {
         // nop
     }
 
@@ -174,7 +177,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @tparam Derived the class type that we want to cast the shared ptr
      * @return this instance casted to the desired shared_ptr<Derived> type
      */
-    template <typename Derived>
+    template<typename Derived>
     std::shared_ptr<Derived> shared_from_base() {
         return std::static_pointer_cast<Derived>(inherited0::shared_from_this());
     }
@@ -198,7 +201,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
 
   protected:
     LogicalWindowDefinitionPtr windowDefinition;
-    std::atomic_bool running{false};
+    std::atomic_bool running;
     WindowManagerPtr windowManager;
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
     uint64_t lastWatermark;

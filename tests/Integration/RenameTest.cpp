@@ -37,13 +37,14 @@ static uint64_t rpcPort = 4000;
 
 class RenameTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("RenameTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RenameTest test class.");
+    }
+
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
     }
 
     void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }

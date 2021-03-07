@@ -25,25 +25,26 @@
 
 namespace NES::Windowing {
 
-ExecutableOnWatermarkChangeTriggerPolicy::~ExecutableOnWatermarkChangeTriggerPolicy() { NES_WARNING("~ExecutableOnWatermarkChangeTriggerPolicy()"); }
+ExecutableOnWatermarkChangeTriggerPolicy::~ExecutableOnWatermarkChangeTriggerPolicy() {
+    NES_WARNING("~ExecutableOnWatermarkChangeTriggerPolicy()");
+}
 
 bool ExecutableOnWatermarkChangeTriggerPolicy::start(AbstractWindowHandlerPtr) {
-    std::unique_lock lock(runningTriggerMutex);
+    //as this policy do not have to start something we immediately return
     return true;
 }
 
 bool ExecutableOnWatermarkChangeTriggerPolicy::start(Join::AbstractJoinHandlerPtr) {
-    std::unique_lock lock(runningTriggerMutex);
+    //as this policy do not have to start something we immediately return
     return true;
 }
 
 bool ExecutableOnWatermarkChangeTriggerPolicy::stop() {
-    std::unique_lock lock(runningTriggerMutex);
+    //as this policy do not have to start something we immediately return
     return true;
 }
 
-ExecutableOnWatermarkChangeTriggerPolicy::ExecutableOnWatermarkChangeTriggerPolicy()
-    :  runningTriggerMutex() {}
+ExecutableOnWatermarkChangeTriggerPolicy::ExecutableOnWatermarkChangeTriggerPolicy() : runningTriggerMutex() {}
 
 ExecutableOnWatermarkChangeTriggerPolicyPtr ExecutableOnWatermarkChangeTriggerPolicy::create() {
     return std::make_shared<ExecutableOnWatermarkChangeTriggerPolicy>();

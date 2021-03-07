@@ -17,14 +17,14 @@
 #ifndef NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
 #define NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
 
-#include <atomic>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <Util/ThreadBarrier.hpp>
-#include <memory>
-#include <any>
 #include <Util/Logger.hpp>
+#include <Util/ThreadBarrier.hpp>
+#include <any>
+#include <atomic>
+#include <memory>
 
 namespace NES::NodeEngine {
 
@@ -46,8 +46,10 @@ class ReconfigurationMessage {
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
-    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, ReconfigurablePtr instance = nullptr, std::any userdata = nullptr)
-        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), userdata(userdata) {
+    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type,
+                                    ReconfigurablePtr instance = nullptr, std::any userdata = nullptr)
+        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr),
+          userdata(userdata) {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
@@ -60,7 +62,8 @@ class ReconfigurationMessage {
      * @param userdata extra information to use in this reconfiguration
      * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, uint64_t numThreads, ReconfigurablePtr instance, std::any userdata = nullptr, bool blocking = false)
+    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, uint64_t numThreads,
+                                    ReconfigurablePtr instance, std::any userdata = nullptr, bool blocking = false)
         : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), postSyncBarrier(nullptr), userdata(userdata) {
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
@@ -139,13 +142,13 @@ class ReconfigurationMessage {
      * @tparam T the type of the reconfiguration's userdata
      * @return the user data value or error if that is not set
      */
-    template <typename T>
+    template<typename T>
     T getUserData() const {
         NES_ASSERT2_FMT(userdata.has_value(), "invalid userdata");
         return std::any_cast<T>(userdata);
     }
 
-    private:
+  private:
     /**
      * @brief resouce cleanup method
      */

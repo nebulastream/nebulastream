@@ -36,18 +36,14 @@ NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, Excha
     }
 }
 
-NetworkManager::~NetworkManager() {
-    destroy();
-}
+NetworkManager::~NetworkManager() { destroy(); }
 
 NetworkManagerPtr NetworkManager::create(const std::string& hostname, uint16_t port, Network::ExchangeProtocol&& exchangeProtocol,
                                          NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread) {
     return std::make_shared<NetworkManager>(hostname, port, std::move(exchangeProtocol), bufferManager, numServerThread);
 }
 
-void NetworkManager::destroy() {
-    server->stop();
-}
+void NetworkManager::destroy() { server->stop(); }
 
 bool NetworkManager::isPartitionRegistered(NesPartition nesPartition) const {
     return exchangeProtocol.getPartitionManager()->isRegistered(nesPartition);

@@ -113,7 +113,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
         AbstractWindowHandler::postReconfigurationCallback(task);
         auto flushInflightWindows = [this]() {
-            return ;
+            //TODO: this will be removed if we integrate the graceful shutdown
+            return;
             // flush in-flight records
             auto windowType = windowDefinition->getWindowType();
             int64_t windowLenghtMs = 0;
@@ -123,7 +124,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
             } else if (windowType->isSlidingWindow()) {
                 auto window = dynamic_cast<SlidingWindow*>(windowType.get());
-                windowLenghtMs = window->getSlide().getTime();
+                windowLenghtMs = window->getSize().getTime();
 
             } else {
                 NES_ASSERT(false, "unknonw windownd");
@@ -140,6 +141,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             stop();
         };
 
+        //switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
             case NodeEngine::SoftEndOfStream: {
                 flushInflightWindows();
@@ -166,11 +168,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString()
                                               << " forceFlush=" << forceFlush);
 
-//        if (!isRunning) {
-//            NES_WARNING("Window trigger tries to trigger but is already marked for shutdown");
-//            return;
-//        }
-
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
             NES_DEBUG("AggregationWindowHandler("
                       << handlerType << "," << id
@@ -193,7 +190,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             if (windowDefinition->getWindowType()->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
                 windowSize = window->getSize().getTime();
-
             } else if (windowDefinition->getWindowType()->isSlidingWindow()) {
                 SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
                 windowSize = window->getSize().getTime();
@@ -201,9 +197,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                 NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
             }
 
-            NES_DEBUG("For flushing maxWatermark = " << max->second << " window size=" << windowSize
-                                                     << " trigger ts =" << max->second + windowSize);
-            watermark = max->second + windowSize;
+            auto allowedLateness = windowManager->getAllowedLateness();
+            NES_DEBUG("For flushing maxWatermark = " << max->second << " window size=" << windowSize << " trigger ts ="
+                                                     << max->second + windowSize << " allowedLateness=" << allowedLateness);
+            watermark = max->second + windowSize + allowedLateness;
         }
 
         //In the following, find out the minimal watermark among the buffers/stores to know where

@@ -55,7 +55,6 @@ class ZmqServer : public boost::noncopyable {
      */
     bool start();
 
-
     /**
     * Stop the server. It throws exceptions if the stopping fails.
     */

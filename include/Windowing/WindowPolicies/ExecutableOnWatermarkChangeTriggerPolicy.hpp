@@ -33,11 +33,15 @@ class ExecutableOnWatermarkChangeTriggerPolicy : public BaseExecutableWindowTrig
     ~ExecutableOnWatermarkChangeTriggerPolicy();
 
     /**
-     * @brief This function starts the trigger policy
+     * @brief This function starts the trigger policy for a window handler
      * @return bool indicating success
      */
     bool start(AbstractWindowHandlerPtr windowHandler) override;
-    //TODO maybe we can solve this better by having a common parent class for both handler
+
+    /**
+     * @brief This function starts the trigger policy for a join handler
+     * @return bool indicating success
+     */
     bool start(Join::AbstractJoinHandlerPtr joinHandler) override;
 
     /**

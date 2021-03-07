@@ -37,10 +37,12 @@ uint64_t restPort = 8081;
 
 class MultiWorkerTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("MultiWorkerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultiWorkerTest test class.");
+    }
+
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

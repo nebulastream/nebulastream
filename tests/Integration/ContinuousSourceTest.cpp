@@ -40,10 +40,12 @@ uint64_t restPort = 8081;
 
 class ContinuousSourceTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup ContinuousSourceTest test class.");
+    }
+
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

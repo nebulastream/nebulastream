@@ -291,10 +291,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 }
                 bufferReceived++;
             }
-            void onEndOfStream(Messages::EndOfStreamMessage) override {
-
-                completedProm.set_value(true);
-            }
+            void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
 
             void onChannelError(Messages::ErrorMessage) override {}
@@ -580,7 +577,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             //add latency
             netManager->registerSubpartitionConsumer(nesPartition);
             EXPECT_TRUE(completed.get_future().get());
-//            pManager->unregisterSubpartition(nesPartition);
+            //            pManager->unregisterSubpartition(nesPartition);
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
 
@@ -750,7 +747,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             EXPECT_TRUE(source.stop());
         });
 
-        auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);
+        auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition,
+                                                         nodeEngine->getBufferManager(), nullptr);
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel

@@ -120,9 +120,7 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     explicit EndOfStreamMessage(ChannelId channelId, bool graceful = true) : ExchangeMessage(channelId), graceful(graceful) {}
 
-    bool isGraceful() const {
-        return graceful;
-    }
+    bool isGraceful() const { return graceful; }
 
   private:
     bool graceful;

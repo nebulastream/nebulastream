@@ -40,10 +40,12 @@ static uint64_t rpcPort = 4000;
 
 class WindowDeploymentTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("WindowDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowDeploymentTest test class.");
+    }
+
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

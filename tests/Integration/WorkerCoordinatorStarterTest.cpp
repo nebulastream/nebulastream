@@ -36,12 +36,12 @@ uint64_t restPort = 8081;
 
 class WorkerCoordinatorStarterTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
-        rpcPort = rpcPort + 30;
     }
+
+    void SetUp() { rpcPort = rpcPort + 30; }
 
     void TearDown() { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
 };

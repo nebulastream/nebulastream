@@ -21,7 +21,10 @@ namespace NES::NodeEngine::Execution {
 
 /**
  * @brief The executable pipeline stage represents the executable part of a an specific pipeline.
+ * @Usage this pipeline is the empty pipeline that just retuns without doing processing, during execution, if tasks get invalid, we will switch the
+ * function pointer to this one
  * For instance, during code generation we generate an implementation of this class, which defines all virtual functions.
+ *
  */
 class DiscardingExecutablePipelineStage : public ExecutablePipelineStage {
 
@@ -29,5 +32,5 @@ class DiscardingExecutablePipelineStage : public ExecutablePipelineStage {
     uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
                      WorkerContext& workerContext) override;
 };
-}
+}// namespace NES::NodeEngine::Execution
 #endif//NES_INCLUDE_NODEENGINE_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_

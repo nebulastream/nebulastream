@@ -29,6 +29,7 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <chrono>
@@ -41,7 +42,6 @@
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
-#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES::NodeEngine {
 
@@ -58,6 +58,7 @@ namespace NES::NodeEngine {
 class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager>, public Reconfigurable {
     typedef NES::detail::virtual_enable_shared_from_this<QueryManager> inherited0;
     typedef Reconfigurable inherited1;
+
   public:
     enum ExecutionResult : uint8_t { Ok = 0, Error, Finished };
 
@@ -179,8 +180,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage reconfigurationDescriptor,
-                                bool blocking = false);
+    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage reconfigurationMessage,
+                                   bool blocking = false);
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source

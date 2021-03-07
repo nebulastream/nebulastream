@@ -40,9 +40,12 @@ static uint64_t rpcPort = 4000;
 
 class QueryDeploymentTest : public testing::Test {
   public:
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryDeploymentTest test class.");
+    }
+
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
@@ -278,8 +281,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query =
-        R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
+    string query = R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
         + "\", \"CSV_FORMAT\", \"APPEND\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -565,28 +567,27 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n";
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -655,28 +656,27 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n";
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -796,9 +796,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"default_logical\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"" + outputFilePath
-            + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"default_logical\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -943,8 +942,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     std::string outputFilePath = "test.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").project(Attribute(\"id\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"default_logical\").project(Attribute(\"id\")).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -1010,8 +1009,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").project(Attribute(\"asd\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = "Query::from(\"default_logical\").project(Attribute(\"asd\")).sink(FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
@@ -1148,28 +1147,27 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n";
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -1245,32 +1243,30 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
-
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
-    string expectedContent =
-        "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n";
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath1));
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));
@@ -1358,28 +1354,27 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
-    string expectedContent =
-        "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n"
-        "1,1\n";
+    string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n"
+                             "1,1\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath1));
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath2));

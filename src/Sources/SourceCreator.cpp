@@ -58,8 +58,8 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
 }
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
-                                                                             NodeEngine::QueryManagerPtr queryManager,
-                                                                             OperatorId operatorId) {
+                                                                 NodeEngine::QueryManagerPtr queryManager,
+                                                                 OperatorId operatorId) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager,
                                            queryManager, /**bufferCnt*/ 1, /*frequency*/ 1000, operatorId);
 }
