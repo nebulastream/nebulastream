@@ -281,7 +281,8 @@ class JoinHandler : public AbstractJoinHandler {
         switch (message.getType()) {
             case NodeEngine::SoftEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG("SoftEndOfStream received on join handler " << toString() << ": going to flush in-flight windows and cleanup");
+                    NES_DEBUG("SoftEndOfStream received on join handler " << toString()
+                                                                          << ": going to flush in-flight windows and cleanup");
                     flushInflightWindows();
                     cleanup();
                 } else {
@@ -291,7 +292,8 @@ class JoinHandler : public AbstractJoinHandler {
             }
             case NodeEngine::HardEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG("HardEndOfStream received on join handler " << toString() << ": going to flush in-flight windows and cleanup");
+                    NES_DEBUG("HardEndOfStream received on join handler " << toString()
+                                                                          << ": going to flush in-flight windows and cleanup");
                     cleanup();
                 } else {
                     NES_DEBUG("HardEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
