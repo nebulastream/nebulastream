@@ -149,7 +149,7 @@ class ExecutablePipeline : public Reconfigurable {
     /**
      * @brief atomically increment number of producers for this pipeline
      */
-    void pin();
+    void incrementProducerCount();
 
   private:
     uint32_t pipelineStageId;
