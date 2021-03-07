@@ -97,7 +97,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                       << id << ":: Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << " watermark=" << tupleBuffer.getWatermark()
-                      << "windowAction=" << toString() << std::endl);
+                      << "windowAction=" << toString());
 
             //forward buffer to next  pipeline stage
             executionContext->dispatchBuffer(tupleBuffer);
