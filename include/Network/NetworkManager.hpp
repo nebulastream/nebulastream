@@ -87,11 +87,25 @@ class NetworkManager {
     OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                   std::chrono::seconds waitTime, uint8_t retryTimes);
 
+    /**
+     * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol
+     * @param hostname
+     * @param port
+     * @param exchangeProtocol
+     * @param bufferManager
+     * @param numServerThread
+     */
     explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol,
                             NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
+    /**
+     * @brief Destroy the network manager calling destroy()
+     */
     ~NetworkManager();
 
+    /**
+     * @brief This methods destroys the network manager by stopping the underlying (ZMQ) server
+     */
     void destroy();
 
     std::shared_ptr<ZmqServer> server;
