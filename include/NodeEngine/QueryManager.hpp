@@ -183,10 +183,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
                                 bool blocking = false);
 
     /**
-     * @brief
-     * @param sourceId
-     * @param graceful
-     * @return
+     * @brief introduces end of stream to all QEPs connected to this source
+     * @param sourceId the id of the source
+     * @param graceful hard or soft termination
+     * @return true if it went through
      */
     bool addEndOfStream(OperatorId sourceId, bool graceful = true);
 

@@ -240,9 +240,19 @@ class JoinHandler : public AbstractJoinHandler {
 
     auto getRightJoinState() { return rightJoinState; }
 
+    /**
+     * @brief reconfigure machinery for the join handler: do not nothing (for now)
+     * @param message
+     * @param context
+     */
     void reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) override {
         AbstractJoinHandler::reconfigure(message, context);
     }
+
+    /**
+     * @brief Reconfiguration machinery on the last thread for the join handler: react to soft or hard termination
+     * @param message
+     */
     void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) override {
         AbstractJoinHandler::postReconfigurationCallback(message);
         auto flushInflightWindows = [this]() {
@@ -275,24 +285,20 @@ class JoinHandler : public AbstractJoinHandler {
         switch (message.getType()) {
             case NodeEngine::SoftEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG("SoftEndOfStream reduces to zero, shutting down");
+                    NES_DEBUG("SoftEndOfStream received on join handler " << toString() << ": going to flush in-flight windows and cleanup");
                     flushInflightWindows();
                     cleanup();
-                }
-                else
-                {
-                    NES_DEBUG("SoftEndOfStream decrement to " << refCnt.load());
+                } else {
+                    NES_DEBUG("SoftEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
                 }
                 break;
             }
             case NodeEngine::HardEndOfStream: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG("HardEndOfStream reduces to zero, shutting down");
+                    NES_DEBUG("HardEndOfStream received on join handler " << toString() << ": going to flush in-flight windows and cleanup");
                     cleanup();
-                }
-                else
-                {
-                    NES_DEBUG("HardEndOfStream decrement to " << refCnt.load());
+                } else {
+                    NES_DEBUG("HardEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
                 }
                 break;
             }
