@@ -49,6 +49,7 @@ enum MessageType {
     kEventBuffer,
 };
 
+/// this enum defines the errors that can occur in the network stack logic
 enum ErrorType : uint8_t { kNoError, kPartitionNotRegisteredError, kUnknownError, kUnknownPartition };
 
 class MessageHeader {

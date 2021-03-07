@@ -93,6 +93,11 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
 
     LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
 
+    /**
+     * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
+     * @tparam Derived the class type that we want to cast the shared ptr
+     * @return this instance casted to the desired shared_ptr<Derived> type
+     */
     template <typename Derived>
     std::shared_ptr<Derived> shared_from_base() {
         return std::static_pointer_cast<Derived>(inherited0::shared_from_this());

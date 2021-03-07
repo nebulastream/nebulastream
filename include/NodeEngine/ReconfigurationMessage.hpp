@@ -44,6 +44,7 @@ class ReconfigurationMessage {
      * @param parentPlanId the owning plan id
      * @param type what kind of reconfiguration we want
      * @param instance the target of the reconfiguration
+     * @param userdata extra information to use in this reconfiguration
      */
     explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, ReconfigurablePtr instance = nullptr, std::any userdata = nullptr)
         : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), userdata(userdata) {
@@ -55,6 +56,9 @@ class ReconfigurationMessage {
      * @brief create a reconfiguration task that will be passed to every running thread
      * @param other the task we want to issue (created using the other ctor)
      * @param numThreads number of running threads
+     * @param instance the target of the reconfiguration
+     * @param userdata extra information to use in this reconfiguration
+     * @param blocking whether the reconfiguration must block for completion
      */
     explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, uint64_t numThreads, ReconfigurablePtr instance, std::any userdata = nullptr, bool blocking = false)
         : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), postSyncBarrier(nullptr), userdata(userdata) {
@@ -70,6 +74,7 @@ class ReconfigurationMessage {
      * @brief create a reconfiguration task that will be passed to every running thread
      * @param other the task we want to issue (created using the other ctor)
      * @param numThreads number of running threads
+     * @param blocking whether the reconfiguration must block for completion
      */
     explicit ReconfigurationMessage(const ReconfigurationMessage& other, uint64_t numThreads, bool blocking = false)
         : ReconfigurationMessage(other) {
@@ -91,6 +96,9 @@ class ReconfigurationMessage {
         // nop
     }
 
+    /**
+     * @brief Destructor that calls destroy()
+     */
     ~ReconfigurationMessage() { destroy(); }
 
     /**
@@ -126,6 +134,11 @@ class ReconfigurationMessage {
      */
     void postWait();
 
+    /**
+     * @brief Provides the userdata installed in this reconfiguration descriptor
+     * @tparam T the type of the reconfiguration's userdata
+     * @return the user data value or error if that is not set
+     */
     template <typename T>
     T getUserData() const {
         NES_ASSERT2_FMT(userdata.has_value(), "invalid userdata");
