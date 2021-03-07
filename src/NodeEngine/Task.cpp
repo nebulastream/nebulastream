@@ -46,8 +46,7 @@ uint64_t Task::getId() { return id; }
 std::string Task::toString() {
     std::stringstream ss;
     ss << "Task: id=" << id;
-    ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId()
-       << " nextPipelineId=" << pipeline->getNextPipeline();
+    ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId() ;
     ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples()
        << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
     return ss.str();

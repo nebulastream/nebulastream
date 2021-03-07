@@ -31,12 +31,14 @@ namespace NES::NodeEngine::Execution {
  * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
-class ExecutablePipeline : public Reconfigurable {
+class ExecutablePipeline : public NES::detail::virtual_enable_shared_from_this<ExecutablePipeline>, public Reconfigurable {
+    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
+    typedef  NES::detail::virtual_enable_shared_from_this<ExecutablePipeline> executablePipelineThis;
+    typedef ErrorListener inherited1;
   public:
     explicit ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
-                                PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines,
-                                ExecutablePipelinePtr nextPipeline, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                bool reconfiguration);
+                                PipelineExecutionContextPtr pipelineContext,  uint32_t numOfProducingPipelines,
+                                SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -50,8 +52,7 @@ class ExecutablePipeline : public Reconfigurable {
      */
     static ExecutablePipelinePtr create(uint32_t pipelineId, const QuerySubPlanId querySubPlanId,
                                         ExecutablePipelineStagePtr executablePipelineStage,
-                                        PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines,
-                                        const ExecutablePipelinePtr nextPipelineStage, SchemaPtr inputSchema,
+                                        PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines, SchemaPtr inputSchema,
                                         SchemaPtr outputSchema, bool reconfiguration = false);
 
     /**
@@ -79,12 +80,6 @@ class ExecutablePipeline : public Reconfigurable {
      * @return
      */
     bool stop();
-
-    /**
-     * @brief Get next pipeline stage
-     * @return
-     */
-    ExecutablePipelinePtr getNextPipeline();
 
     /**
     * @brief Get id of pipeline stage
@@ -151,17 +146,23 @@ class ExecutablePipeline : public Reconfigurable {
      */
     void incrementProducerCount();
 
+    void addSuccessor(ExecutablePipelinePtr executablePipeline);
+    void addPredecessor(ExecutablePipelinePtr executablePipeline);
+
+    bool hasSuccessors();
+
   private:
     uint32_t pipelineStageId;
     QuerySubPlanId qepId;
     ExecutablePipelineStagePtr executablePipelineStage;
-    ExecutablePipelinePtr nextPipeline;
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
     std::atomic<bool> isRunning;
     std::atomic<uint32_t> activeProducers;
+    std::vector<ExecutablePipelinePtr> successors;
+    std::vector<ExecutablePipelinePtr> predecessors;
 };
 
 }// namespace NES::NodeEngine::Execution

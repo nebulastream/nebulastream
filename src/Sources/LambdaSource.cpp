@@ -57,9 +57,8 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
                                                                      << " outOrgID=" << buffer.getOriginId());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
-    } else {
-        return buffer;
     }
+    return buffer;
 }
 
 bool LambdaSource::stop(bool) { return this->DataSource::stop(false); }
