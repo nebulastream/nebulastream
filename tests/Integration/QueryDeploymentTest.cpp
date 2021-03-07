@@ -285,9 +285,6 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     string expectedContent =
         "+----------------------------------------------------+\n"
@@ -426,8 +423,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -496,8 +491,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -571,9 +564,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
@@ -664,9 +654,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
@@ -747,8 +734,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -818,9 +803,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
-
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -966,9 +948,6 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
-
 
     string expectedContent = "default_logical$id:INTEGER\n"
                              "1\n"
@@ -1092,8 +1071,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -1170,9 +1147,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
@@ -1274,18 +1248,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId1, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 2));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 2));
-
-//    ifstream my_file1("test1.out");
-//    EXPECT_TRUE(my_file1.good());
-//
-//    std::ifstream ifs1("test1.out");
-//    std::string actualContent1((std::istreambuf_iterator<char>(ifs1)), (std::istreambuf_iterator<char>()));
 
     string expectedContent =
         "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
@@ -1396,33 +1358,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
-    //    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId1, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId1, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId1, globalQueryPlan, 2));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 2));
-
-//
-//
-//    NES_INFO("QueryDeploymentTest: Remove query " << queryId1);
-//    queryService->validateAndQueueStopRequest(queryId1);
-//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId1, queryCatalog));
-//
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId2, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId2, globalQueryPlan, 1));
-//    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId2, globalQueryPlan, 2));
-//
-//    NES_INFO("QueryDeploymentTest: Remove query " << queryId2);
-//    queryService->validateAndQueueStopRequest(queryId2);
-//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
-//
-//    ifstream my_file1("test1.out");
-//    EXPECT_TRUE(my_file1.good());
-//
-//    std::ifstream ifs1("test1.out");
-//    std::string actualContent1((std::istreambuf_iterator<char>(ifs1)), (std::istreambuf_iterator<char>()));
-
     string expectedContent =
         "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
         "1,1\n"
@@ -1456,22 +1391,6 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     NES_INFO("QueryDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId2);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId2, queryCatalog));
-
-//
-//    NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): content=" << actualContent1);
-//    NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): expContent=" << expectedContent);
-//    EXPECT_EQ(actualContent1, expectedContent);
-//
-//    ifstream my_file2("test2.out");
-//    EXPECT_TRUE(my_file2.good());
-//
-//    std::ifstream ifs2("test2.out");
-//    std::string actualContent2((std::istreambuf_iterator<char>(ifs2)), (std::istreambuf_iterator<char>()));
-//
-//    NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): content=" << actualContent2);
-//    NES_INFO("QueryDeploymentTest (testDeployUndeployTwoWorkerFileOutput): expContent=" << expectedContent);
-//
-//    EXPECT_EQ(actualContent2, expectedContent);
 
     NES_INFO("QueryDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1582,9 +1501,6 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "windowwindow2$start:INTEGER,windowwindow2$end:INTEGER,windowwindow2$key:INTEGER,window$value:INTEGER,window$id:INTEGER,"
