@@ -45,15 +45,12 @@ bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Wo
 
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
-    //    NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Created, "Setup : parent plan not running on net sink " << nesPartition);
-    queryManager->addReconfigurationMessage(parentPlanId,
-                                         NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Initialize, shared_from_this()), false);
+    queryManager->addReconfigurationMessage(
+        parentPlanId, NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Initialize, shared_from_this()), false);
 }
 
 void NetworkSink::shutdown() {
     NES_DEBUG("NetworkSink: shutdown() called " << nesPartition.toString() << " qep " << parentPlanId);
-//    queryManager->addReconfigurationMessage(parentPlanId, NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this()),
-//                                         true);
 }
 
 const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPartition.toString(); }
@@ -63,7 +60,6 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
     Reconfigurable::reconfigure(task, workerContext);
     switch (task.getType()) {
         case NodeEngine::Initialize: {
-            //            NES_ASSERT(queryManager->getQepStatus(parentPlanId) == ExecutableQueryPlan::Running, "parent plan not running on net sink " << nesPartition);
             auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
             NES_ASSERT(channel, "Channel not valid partition " << nesPartition);
             workerContext.storeChannel(nesPartition.getOperatorId(), std::move(channel));
@@ -83,7 +79,5 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
         }
     }
 }
-
 }// namespace Network
-
 }// namespace NES

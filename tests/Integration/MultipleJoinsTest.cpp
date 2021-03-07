@@ -35,10 +35,12 @@ static uint64_t rpcPort = 4000;
 
 class MultipleJoinsTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("MultipleJoinsTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultipleJoinsTest test class.");
+    }
+
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

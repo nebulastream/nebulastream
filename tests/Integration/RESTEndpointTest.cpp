@@ -39,9 +39,6 @@ class RESTEndpointTest : public testing::Test {
     }
 
     void SetUp() {
-        NES::setupLogging("RESTEndpointTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup RESTEndpointTest test class.");
-
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

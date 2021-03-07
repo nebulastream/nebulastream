@@ -51,9 +51,7 @@ bool ZmqServer::start() {
     return startPromise.get_future().get();
 }
 
-ZmqServer::~ZmqServer() {
-    stop();
-}
+ZmqServer::~ZmqServer() { stop(); }
 
 bool ZmqServer::stop() {
     // Do not change the shutdown sequence!

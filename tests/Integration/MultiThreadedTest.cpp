@@ -34,14 +34,14 @@ static uint64_t rpcPort = 4000;
 
 class MultiThreadedTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("MultiThreadedTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultiThreadedTest test class.");
+    }
 
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
     }
 
     void TearDown() { NES_INFO("Tear down MultiThreadedTest class."); }
@@ -55,7 +55,6 @@ TEST_F(MultiThreadedTest, startStopWorkerCoordinatorSingle) {
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
-    
 }
 
 }// namespace NES

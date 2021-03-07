@@ -36,8 +36,8 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <iostream>
 #include <stdarg.h>
@@ -88,8 +88,7 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
     auto leftKeyFieldAccess = leftKeyExpression->as<FieldAccessExpressionNode>();
     auto rightKeyFieldAccess = rightKeyExpression->as<FieldAccessExpressionNode>();
 
-    //we use a on time trigger as default that triggers every 1 second
-//    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+    //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
 
     //we use a lazy NL join because this is currently the only one that is implemented
@@ -142,7 +141,7 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
 
 Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");
-//    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+    //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
     //numberOfInputEdges = 1, this will in a later rule be replaced with the number of children of the window
@@ -194,7 +193,8 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
         NES_ERROR("Query: window key has to be an FieldAccessExpression but it was a " + keyExpression->toString());
     }
     auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-//    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(defaultTriggerTimeInMs);
+
+    //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
 
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();

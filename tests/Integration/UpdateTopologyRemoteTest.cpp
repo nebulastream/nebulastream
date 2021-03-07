@@ -35,7 +35,6 @@ uint64_t restPort = 8081;
 
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
-
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();
     std::string ipAddress = "127.0.0.1";
@@ -47,9 +46,7 @@ class UpdateTopologyRemoteTest : public testing::Test {
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
 
-    void SetUp() {
-        rpcPort = rpcPort + 30;
-    }
+    void SetUp() { rpcPort = rpcPort + 30; }
 
     static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
 };

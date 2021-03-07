@@ -32,15 +32,14 @@ namespace NES {
 uint64_t rpcPort = 4000;
 uint64_t restPort = 8081;
 
-
 class StreamCatalogRemoteTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("StreamCatalogRemoteTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup StreamCatalogRemoteTest test class.");
-        rpcPort = rpcPort + 30;
     }
+
+    void SetUp() { rpcPort = rpcPort + 30; }
 
     void TearDown() { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
 };

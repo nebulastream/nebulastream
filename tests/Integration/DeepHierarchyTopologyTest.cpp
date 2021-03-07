@@ -36,10 +36,12 @@ static uint64_t rpcPort = 4000;
 
 class DeepHierarchyTopologyTest : public testing::Test {
   public:
+    static void SetUpTestCase() {
+        NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup DeepTopologyHierarchyTest test class.");
+    }
 
     void SetUp() {
-        NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup DeepTopologyHierarchyTest test class.");
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

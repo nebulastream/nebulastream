@@ -41,7 +41,7 @@ class JoinHandler : public AbstractJoinHandler {
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                          BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction, uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
-          executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2) , isRunning(false){
+          executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2), isRunning(false) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
@@ -97,12 +97,8 @@ class JoinHandler : public AbstractJoinHandler {
     */
     void trigger(bool forceFlush = false) override {
         std::unique_lock lock(mutex);
-        NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()  << " forceFlush=" << forceFlush);
-
-//        if (!isRunning) {
-//            NES_WARNING("Joinhandler returns from trigger as it is not running anymore");
-//            return;
-//        }
+        NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
+                                 << " forceFlush=" << forceFlush);
 
         if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
             NES_DEBUG("JoinHandler "
@@ -162,7 +158,6 @@ class JoinHandler : public AbstractJoinHandler {
                 executablePolicyTrigger->stop();
             }
         }
-
     }
 
     /**
@@ -256,6 +251,7 @@ class JoinHandler : public AbstractJoinHandler {
     void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) override {
         AbstractJoinHandler::postReconfigurationCallback(message);
         auto flushInflightWindows = [this]() {
+            //TODO: this will be removed if we integrate the graceful shutdown
             return;
             // flush in-flight records
             auto windowType = joinDefinition->getWindowType();
@@ -310,12 +306,9 @@ class JoinHandler : public AbstractJoinHandler {
 
   private:
     std::recursive_mutex mutex;
-
     std::atomic<bool> isRunning;
-
     StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* leftJoinState;
     StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>* rightJoinState;
-
     Join::BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction;
     uint64_t id;
     std::atomic<uint32_t> refCnt;

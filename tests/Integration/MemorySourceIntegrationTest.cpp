@@ -37,14 +37,14 @@ uint64_t restPort = 8081;
 
 class MemorySourceIntegrationTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("MemorySourceIntegrationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MemorySourceIntegrationTest test class.");
+    }
 
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
     }
 };
 

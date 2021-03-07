@@ -40,14 +40,14 @@ static uint64_t rpcPort = 4000;
 
 class AssignWatermarkTest : public testing::Test {
   public:
-
-    void SetUp() {
+    static void SetUpTestCase() {
         NES::setupLogging("AssignWatermarkTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup AssignWatermarkTest test class.");
+    }
 
+    void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
     }
 
     void TearDown() { std::cout << "Tear down AssignWatermarkTest class." << std::endl; }

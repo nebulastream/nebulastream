@@ -28,14 +28,12 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySu
                                          QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
-      qepStatus(Created), numOfProducers(this->sources.size()),
-      qepTerminationStatusPromise(), qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
+      qepStatus(Created), numOfProducers(this->sources.size()), qepTerminationStatusPromise(),
+      qepTerminationStatusFuture(qepTerminationStatusPromise.get_future()) {
     // nop
 }
 
-void ExecutableQueryPlan::pin() {
-    numOfProducers++;
-}
+void ExecutableQueryPlan::pin() { numOfProducers++; }
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
@@ -144,15 +142,18 @@ bool ExecutableQueryPlan::stop() {
                 allStagesStopped = false;
             }
         }
+
         if (allStagesStopped) {
             qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
-            return true; // correct stop
+            return true;// correct stop
         }
+
         qepStatus.store(ErrorState);
         qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
-        return false; // one stage failed to stop
+        return false;// one stage failed to stop
     }
-    // if we get there it measn the CAS failed and expected is the current value
+
+    // if we get there it mean the CAS failed and expected is the current value
     while (!qepStatus.compare_exchange_strong(expected, ErrorState)) {
         // try to install ErrorState
     }
@@ -161,6 +162,7 @@ bool ExecutableQueryPlan::stop() {
 
 void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
+    //soft eos means we drain the state and hard means we truncate it
     switch (task.getType()) {
         case HardEndOfStream: {
             NES_DEBUG("Executing HardEndOfStream on qep " << queryId << " " << querySubPlanId);
@@ -171,15 +173,17 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                     sink->postReconfigurationCallback(task);
                 }
             } else {
-                return; // we must not invoke end of stream on qep's sinks if the qep was not stopped
+                return;// we must not invoke end of stream on qep's sinks if the qep was not stopped
             }
             break;
         }
         case SoftEndOfStream: {
-            NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan " << querySubPlanId);
+            NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan "
+                                                                                       << querySubPlanId);
             auto expected = Running;
             if (qepStatus.compare_exchange_strong(expected, Stopped)) {
-                NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId << " is marked as stopped now");
+                NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
+                                                            << " is marked as stopped now");
                 for (auto& sink : sinks) {
                     sink->postReconfigurationCallback(task);
                 }

@@ -18,8 +18,8 @@
 #define NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/ReconfigurationType.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
+#include <NodeEngine/ReconfigurationType.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES {
@@ -38,16 +38,16 @@ class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Recon
     }
 
     /**
-* @brief reconfigure callback that will be called per thread
-*/
+     * @brief reconfigure callback that will be called per thread
+    */
     virtual void reconfigure(ReconfigurationMessage&, WorkerContext&) {
         // nop
     }
 
     /**
-* @brief callback that will be called on the last thread the executes
-* the reconfiguration
-*/
+     * @brief callback that will be called on the last thread the executes
+     * the reconfiguration
+   */
     virtual void postReconfigurationCallback(ReconfigurationMessage&) {
         // nop
     }

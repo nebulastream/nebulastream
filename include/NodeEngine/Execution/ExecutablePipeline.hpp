@@ -18,11 +18,11 @@
 #define INCLUDE_PIPELINESTAGE_H_
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/ReconfigurationMessage.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
 #include <vector>
-#include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/ReconfigurationMessage.hpp>
 
 namespace NES::NodeEngine::Execution {
 
@@ -34,8 +34,9 @@ namespace NES::NodeEngine::Execution {
 class ExecutablePipeline : public Reconfigurable {
   public:
     explicit ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
-                                PipelineExecutionContextPtr pipelineContext,  uint32_t numOfProducingPipelines, ExecutablePipelinePtr nextPipeline,
-                                SchemaPtr inputSchema, SchemaPtr outputSchema, bool reconfiguration);
+                                PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines,
+                                ExecutablePipelinePtr nextPipeline, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -49,8 +50,7 @@ class ExecutablePipeline : public Reconfigurable {
      */
     static ExecutablePipelinePtr create(uint32_t pipelineId, const QuerySubPlanId querySubPlanId,
                                         ExecutablePipelineStagePtr executablePipelineStage,
-                                        PipelineExecutionContextPtr pipelineContext,
-                                        uint32_t numOfProducingPipelines,
+                                        PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines,
                                         const ExecutablePipelinePtr nextPipelineStage, SchemaPtr inputSchema,
                                         SchemaPtr outputSchema, bool reconfiguration = false);
 
