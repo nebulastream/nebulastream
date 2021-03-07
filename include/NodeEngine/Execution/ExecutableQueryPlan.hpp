@@ -50,7 +50,7 @@ class ExecutableQueryPlan : public Reconfigurable {
     /**
      * @brief Increment the number of producers for this qep
      */
-    void pin();
+    void incrementProducerCount();
 
     /**
      * @brief Setup the query plan, e.g., instantiate state variables.

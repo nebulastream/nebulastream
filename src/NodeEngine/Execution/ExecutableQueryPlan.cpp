@@ -33,7 +33,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySu
     // nop
 }
 
-void ExecutableQueryPlan::pin() { numOfProducers++; }
+void ExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
 
 QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 

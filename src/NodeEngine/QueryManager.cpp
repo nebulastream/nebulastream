@@ -488,7 +488,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             buffer = optBuffer.value();
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer()) ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(),
-                                                            qep->getPipeline(targetStage), weakQep);
+                                                            qep->getPipeline(targetStage), std::move(weakQep));
             NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful
                                                                                         << " to stage " << targetStage);
         } else {

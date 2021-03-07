@@ -196,7 +196,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
     }
 }
 
-void ExecutablePipeline::pin() {
+void ExecutablePipeline::incrementProducerCount() {
     auto oldValue = activeProducers.fetch_add(1);
     NES_DEBUG("ExecutablePipeline " << this << " has refCnt increased to " << (oldValue + 1));
 }

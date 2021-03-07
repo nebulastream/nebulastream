@@ -47,9 +47,9 @@ class ReconfigurationMessage {
      * @param userdata extra information to use in this reconfiguration
      */
     explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type,
-                                    ReconfigurablePtr instance = nullptr, std::any userdata = nullptr)
+                                    ReconfigurablePtr instance = nullptr, std::any&& userdata = nullptr)
         : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr),
-          userdata(userdata) {
+          userdata(std::move(userdata)) {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
@@ -63,8 +63,8 @@ class ReconfigurationMessage {
      * @param blocking whether the reconfiguration must block for completion
      */
     explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, uint64_t numThreads,
-                                    ReconfigurablePtr instance, std::any userdata = nullptr, bool blocking = false)
-        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), postSyncBarrier(nullptr), userdata(userdata) {
+                                    ReconfigurablePtr instance, std::any&& userdata = nullptr, bool blocking = false)
+        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), postSyncBarrier(nullptr), userdata(std::move(userdata)) {
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
         refCnt.store(numThreads + (blocking ? 1 : 0));
