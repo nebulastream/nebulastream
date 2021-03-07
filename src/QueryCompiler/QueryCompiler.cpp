@@ -188,7 +188,10 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
 
         auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(
             stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext, numOfProducers,
-            pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
+            holder.inputSchema, holder.outputSchema);
+        auto nextPipeline = pipelines[*holder.consumers.begin()];
+        if(nextPipeline)
+            pipeline->addSuccessor(nextPipeline);
 
         NES_DEBUG("pipeline code=" << pipeline->getCodeAsString());
         builder.addPipeline(pipeline);
