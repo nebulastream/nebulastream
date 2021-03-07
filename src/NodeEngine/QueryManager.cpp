@@ -460,7 +460,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
 
-#if 0
+#if 1
         auto tryCnt = 0;
         while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
