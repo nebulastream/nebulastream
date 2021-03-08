@@ -48,18 +48,23 @@ namespace NES {
 
     bool KafkaSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext&)
     {
-        NES_ASSERT2(_topics.size() == 1, "Currently we support only 1 topic but provided "<< _topics.size());
+       // NES_ASSERT2(_topics.size() == 1, "Currently we support only 1 topic but provided "<< _topics.size());
         // there is space for improvement, you can specify multiple topics, each with its own specific partitions -> simple change of the logic
         std::cout << "Topics: " << _topics.size()<<std::endl;
         std::cout << "Partitions: " << _partitions[0].size()<<std::endl; // give me number of partitions specified for the only topic!!!
-        auto numberOfPArtitions = _partitions[0].size();
+        auto numberOfPArtitions = 0;
+        if(_partitions.size()!=0)
+       {
+           numberOfPArtitions = _partitions[0].size();
+       }
+        
         int round_robin = 0;
         auto numberOfTuples = inputBuffer.getNumberOfTuples();
         auto buffer = inputBuffer.getBufferAs<char>();
         auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
         // no specific partitions, use the constructor only with topic, it will automatically divide the data  between them
-        if(_partitions.empty())
+       if(_partitions.size()==0)
         {
             for(uint64_t i = 0; i < numberOfTuples; i++) {
                 std::stringstream ss;
