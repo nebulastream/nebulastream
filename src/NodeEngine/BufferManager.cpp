@@ -48,7 +48,7 @@ void BufferManager::clear() {
         }
     }
     if (!success) {
-        NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used");
+        NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers=" << allBuffers.size() << " available=" << availableBuffers.size());
     }
     // RAII takes care of deallocating memory here
     allBuffers.clear();

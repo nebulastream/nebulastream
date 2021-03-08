@@ -834,7 +834,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 }
 
 //TODO: add test when end of stream message is in place
-TEST_F(QueryDeploymentTest, DISABLED_testDeployOneWorkerFileOutputWithFilterWithInProcessTermination) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTermination) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
