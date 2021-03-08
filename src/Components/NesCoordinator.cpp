@@ -57,10 +57,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
       numberOfBuffers(coordinatorConfig->getNumberOfBuffers()->getValue()),
       bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
-      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()), inherited0(), inherited1() {
+      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()), inherited0(), inherited1(), isRunning(false) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");
-    stopped = false;
     topology = Topology::create();
     streamCatalog = std::make_shared<StreamCatalog>();
     globalExecutionPlan = GlobalExecutionPlan::create();
@@ -124,6 +123,11 @@ NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNo
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");
 
+    auto expected = false;
+    if (!isRunning.compare_exchange_strong(expected, true)) {
+        NES_ASSERT2_FMT(false, "cannot start nes coordinator");
+    }
+
     queryRequestProcessorThread = std::make_shared<std::thread>(([&]() {
         setThreadName("RqstProc");
 
@@ -178,7 +182,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     }));
     NES_DEBUG("NESWorker::startCoordinatorRESTServer: ready");
 
-    stopped = false;
     if (blocking) {//blocking is for the starter to wait here for user to send query
         NES_DEBUG("NesCoordinator started, join now and waiting for work");
         restThread->join();
@@ -192,7 +195,8 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
 bool NesCoordinator::stopCoordinator(bool force) {
     NES_DEBUG("NesCoordinator: stopCoordinator force=" << force);
-    if (!stopped) {
+    auto expected = true;
+    if (isRunning.compare_exchange_strong(expected, false)) {
         NES_DEBUG("NesCoordinator: stopping rest server");
         bool successStopRest = restServer->stop();
         if (!successStopRest) {
@@ -239,7 +243,6 @@ bool NesCoordinator::stopCoordinator(bool force) {
             NES_ERROR("NesCoordinator: rpc thread not joinable");
             throw Exception("Error while stopping thread->join");
         }
-        stopped = true;
         return true;
     } else {
         NES_DEBUG("NesCoordinator: already stopped");

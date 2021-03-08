@@ -173,8 +173,10 @@ bool QueryRequestProcessorService::isQueryProcessorRunning() {
 
 void QueryRequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
-    this->queryProcessorRunning = false;
-    queryRequestQueue->insertPoisonPill();
+    if (queryProcessorRunning) {
+        this->queryProcessorRunning = false;
+        queryRequestQueue->insertPoisonPill();
+    }
 }
 
 }// namespace NES
