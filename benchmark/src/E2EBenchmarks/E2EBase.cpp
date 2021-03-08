@@ -110,6 +110,11 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
+    }//end of for
+    if(statisticsVec.size() == 0)
+    {
+        NES_ERROR("We cannot use this run as no data was measured");
+        assert(0);
     }
 }
 
@@ -121,6 +126,7 @@ E2EBase::~E2EBase() {
     statisticsVec.clear();
     queryService.reset();
     queryCatalog.reset();
+    NES::shutdownLogging();
 }
 
 void E2EBase::setupSources() {
