@@ -384,6 +384,12 @@ static void BM_ReadWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& s
     DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
         static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
+    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+    for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+        mappedColumnLayout->pushRecord<false>(writeRecord);
+    }
+
     auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
     auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, mappedColumnLayout);
     auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, mappedColumnLayout);
@@ -484,6 +490,13 @@ static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& stat
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr mappedRowLayout =
         std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+
+
+    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+    for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+        mappedRowLayout->pushRecord<false>(writeRecord);
+    }
 
     auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
     auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
@@ -588,7 +601,6 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr mappedRowLayout =
         std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
-    state.ResumeTiming();
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
         int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
