@@ -103,7 +103,7 @@ void QueryManager::destroy() {
 
     operatorIdToQueryMap.clear();
     queryToStatisticsMap.clear();
-
+    runningQEPs.clear();
     NES_DEBUG("QueryManager::resetQueryManager finished");
 }
 
