@@ -35,6 +35,11 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
 }
 
 LocalBufferManager::~LocalBufferManager() {
+    destroy();
+}
+
+void LocalBufferManager::destroy() {
+    NES_DEBUG("Destroying LocalBufferManager");
     std::unique_lock lock(mutex);
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
@@ -43,6 +48,7 @@ LocalBufferManager::~LocalBufferManager() {
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
+    bufferManager.reset();
 }
 
 size_t LocalBufferManager::getAvailableExclusiveBuffers() const {

@@ -46,7 +46,7 @@ std::optional<NodeEngine::TupleBuffer> AdaptiveSource::receiveData() {
     return buf;
 }
 
-void AdaptiveSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
+void AdaptiveSource::runningRoutine() {
     setThreadName("AdaptSrc-%d", operatorId);
     std::string thName = "AdaptSrc-" + operatorId;
 
@@ -98,6 +98,7 @@ void AdaptiveSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, 
             continue;
         }
     }
+    queryManager->addEndOfStream(operatorId, true);
     NES_DEBUG("AdaptiveSource " << this->operatorId << ": end running");
 }
 }// namespace NES

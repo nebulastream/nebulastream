@@ -41,7 +41,7 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
       numberOfBuffers(workerConfig->getNumberOfBuffers()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
-      topologyNodeId(INVALID_TOPOLOGY_NODE_ID) {
+      topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
     connected = false;
     withRegisterStream = false;
     withParent = false;
@@ -112,6 +112,11 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                 << " localWorkerZmqPort=" << localWorkerZmqPort << " type=" << type);
 
     NES_DEBUG("NesWorker::start: start NodeEngine");
+    auto expected = false;
+    if (!isRunning.compare_exchange_strong(expected, true)) {
+       NES_ASSERT2_FMT(false, "cannot start nes worker");
+    }
+
     try {
         nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads, bufferSizeInBytes,
                                                     numberOfBuffers);
@@ -152,7 +157,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(success, "cannot addParent");
     }
 
-    stopped = false;
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work");
         signal(SIGINT, termFunc);
@@ -178,7 +182,8 @@ NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");
-    if (!stopped) {
+    auto expected = true;
+    if (isRunning.compare_exchange_strong(expected, false)) {
         bool successShutdownNodeEngine = nodeEngine->stop();
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
@@ -199,7 +204,6 @@ bool NesWorker::stop(bool) {
         rpcServer.reset();
         rpcThread.reset();
 
-        stopped = true;
         return successShutdownNodeEngine;
     } else {
         NES_WARNING("NesWorker::stop: already stopped");

@@ -68,7 +68,7 @@ bool DataSource::start() {
     NES_DEBUG("DataSource " << operatorId << ": Spawn thread");
     thread = std::make_shared<std::thread>([this, barrier]() {
         barrier->wait();
-        runningRoutine(bufferManager, queryManager);
+        runningRoutine();
     });
     barrier->wait();
     return true;
@@ -130,7 +130,7 @@ bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
-void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) {
+void DataSource::runningRoutine() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
@@ -219,6 +219,8 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
     }
     // inject reconfiguration task containing end of stream
     queryManager->addEndOfStream(operatorId, wasGracefullyStopped);
+    bufferManager.reset();
+    queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");
 }
 

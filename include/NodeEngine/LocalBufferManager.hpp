@@ -48,6 +48,11 @@ class LocalBufferManager : public BufferRecycler {
     ~LocalBufferManager();
 
     /**
+     * @brief Destroys this buffer pool and returns own buffers to global pool
+     */
+    void destroy();
+
+    /**
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
      * @return a new buffer
      */

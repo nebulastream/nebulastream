@@ -75,7 +75,8 @@ bool ExecutablePipeline::stop() {
         for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->stop(pipelineContext);
         }
-        return executablePipelineStage->stop(*pipelineContext.get()) == 0;
+        auto ret = executablePipelineStage->stop(*pipelineContext.get()) == 0;
+        return ret;
     }
     return false;
 }
@@ -175,6 +176,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                               << qepId << " stage id: " << nextPipeline->pipelineStageId
                               << " got SoftEndOfStream  with nextPipeline");
                 }
+                pipelineContext.reset();
             } else {
                 NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: "
                           << qepId << " stage id: " << pipelineStageId << " but refCount was " << (prevProducerCounter)
@@ -188,6 +190,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             if (nextPipeline != nullptr) {
                 nextPipeline->postReconfigurationCallback(task);
             }
+            pipelineContext.reset();
             break;
         }
         default: {

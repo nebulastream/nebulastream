@@ -34,6 +34,7 @@
 namespace NES::NodeEngine {
 
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
+extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
     return NodeEngine::create(hostname, port, config, 1, 4096, 1024);
@@ -110,6 +111,7 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
 NodeEngine::~NodeEngine() {
     NES_TRACE("~NodeEngine()");
     stop();
+    removeGlobalErrorListener(inherited2::shared_from_this());
 }
 
 bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
@@ -376,14 +378,29 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         }
     }
 
+    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+    NES_DEBUG("refcnt nm " << networkManager.use_count());
+    NES_DEBUG("refcnt qm " << queryManager.use_count());
+
     // release components
+    // TODO do not touch the sequence here
+    deployedQEPs.clear();
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
-    queryManager.reset();
     networkManager->destroy();
+//    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+//    NES_DEBUG("refcnt nm " << networkManager.use_count());
+//    NES_DEBUG("refcnt qm " << queryManager.use_count());
+    queryCompiler.reset();
+    queryManager.reset();
     networkManager.reset();
+//    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+//    NES_DEBUG("refcnt nm " << networkManager.use_count());
+//    NES_DEBUG("refcnt qm " << queryManager.use_count());
+
     bufferManager->clear();
     bufferManager.reset();
+
     isReleased = true;
     return !withError;
 }

@@ -32,6 +32,20 @@ namespace NES::NodeEngine {
 using std::string;
 namespace detail {
 
+class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecutionContext {
+  public:
+    explicit ReconfigurationPipelineExecutionContext(QuerySubPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
+        : Execution::PipelineExecutionContext(
+            queryExecutionPlanId, queryManager, LocalBufferManagerPtr(),
+            [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
+            },
+            [](TupleBuffer&) {
+            },
+            std::vector<Execution::OperatorHandlerPtr>()) {
+        // nop
+    }
+};
+
 class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
     typedef Execution::ExecutablePipelineStage base;
 
@@ -367,7 +381,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
                                   ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
                                   true);
     }
-    NES_DEBUG("QueryManager::stopQuery: query" << qep << " was " << (ret ? "successful" : " not successful"));
+    NES_DEBUG("QueryManager::stopQuery: query " << qep->getQuerySubPlanId() << " was " << (ret ? "successful" : " not successful"));
     return ret;
 }
 
@@ -446,13 +460,8 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     auto buffer = optBuffer.value();
     auto task = new (buffer.getBuffer())
         ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
-    auto pipelineContext = std::make_shared<Execution::PipelineExecutionContext>(
-        queryExecutionPlanId, inherited0::shared_from_this(), bufferManager,
-        [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
-        },
-        [](TupleBuffer&) {
-        },
-        std::vector<Execution::OperatorHandlerPtr>());
+    auto pipelineContext =
+        std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, 1,
                                                           nullptr, nullptr, nullptr, true);
     {
@@ -501,13 +510,8 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
         }
 
-        auto pipelineContext = std::make_shared<Execution::PipelineExecutionContext>(
-            queryExecutionPlanId, inherited0::shared_from_this(), bufferManager,
-            [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
-            },
-            [](TupleBuffer&) {
-            },
-            std::vector<Execution::OperatorHandlerPtr>());
+        auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,
+                                                                                                 inherited0::shared_from_this());
         auto pipeline = Execution::ExecutablePipeline::create(
             /** default pipeline Id*/ -1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
             /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
