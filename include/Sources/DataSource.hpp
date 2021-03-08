@@ -86,12 +86,8 @@ class DataSource : public NodeEngine::Reconfigurable {
 
     /**
      * @brief running routine while source is active
-     * 1.) check if running is still true
-     * 2.) check if max number of buffer to produced is reached (num_buffers_to_process)
-     * 3.) If not call receiveData in a blocking fashion
-     * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    virtual void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager);
+    virtual void runningRoutine();
 
     /**
      * @brief virtual function to receive a buffer

@@ -46,7 +46,7 @@ class AdaptiveSource : public DataSource {
      * @param bufferManager
      * @param queryManager
      */
-    void runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) override;
+    void runningRoutine() override;
 
     /**
      * @brief sample data and choose to update the new frequency
