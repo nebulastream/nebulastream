@@ -169,6 +169,8 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     */
     void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
+    void clear();
+
   private:
     std::vector<detail::MemorySegment> allBuffers;
     std::deque<detail::MemorySegment*> availableBuffers;

@@ -32,7 +32,7 @@ BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers) : buffe
     configure(bufferSize, numOfBuffers);
 }
 
-BufferManager::~BufferManager() {
+void BufferManager::clear() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
     auto success = true;
     if (allBuffers.size() != availableBuffers.size()) {
@@ -58,6 +58,9 @@ BufferManager::~BufferManager() {
         }
     }
     unpooledBuffers.clear();
+}
+BufferManager::~BufferManager() {
+    clear();
 }
 
 void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
