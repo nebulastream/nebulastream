@@ -382,6 +382,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryManager.reset();
     networkManager->destroy();
     networkManager.reset();
+    bufferManager->clear();
     bufferManager.reset();
     isReleased = true;
     return !withError;
