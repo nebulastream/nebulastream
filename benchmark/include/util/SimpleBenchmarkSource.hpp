@@ -60,7 +60,7 @@ class SimpleBenchmarkSource : public DataSource {
     /**
      * @brief this function is very similar to DataSource.cpp runningRoutine(). The difference is that the sleep is in ms
      */
-    void runningRoutine(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager) override {
+    void runningRoutine() override {
         if (!queryManager) {
             NES_ERROR("query Manager not set");
             throw std::logic_error("SimpleBenchmarkSource: QueryManager not set");
