@@ -35,7 +35,7 @@ BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers) : buffe
 void BufferManager::clear() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
     auto success = true;
-    NES_DEBUG("Shutting down Buffer Manager");
+    NES_DEBUG("Shutting down Buffer Manager " << this);
     if (allBuffers.size() != availableBuffers.size()) {
         NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
         success = false;
@@ -53,6 +53,7 @@ void BufferManager::clear() {
     }
     // RAII takes care of deallocating memory here
     allBuffers.clear();
+    availableBuffers.clear();
     for (auto& holder : unpooledBuffers) {
         if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0) {
             NES_THROW_RUNTIME_ERROR("Deletion of unpooled buffer invoked on used memory segment");
