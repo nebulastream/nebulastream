@@ -34,6 +34,7 @@ jobs:
         run: |
           docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
       - name: docker cleanup
+        if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_build
       - name: Notify Slack
