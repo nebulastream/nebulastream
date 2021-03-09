@@ -25,7 +25,7 @@ const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 5;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 
-const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
+//const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
@@ -223,9 +223,6 @@ void E2EBase::setupSources() {
 
 void E2EBase::setup() {
     std::cout << "setup" << std::endl;
-
-    NES::setupLogging("E2EBase.log", DEBUGL_LEVEL);
-    std::cout << "Setup E2EBase test class." << std::endl;
 
     portOffset += 13;
 
