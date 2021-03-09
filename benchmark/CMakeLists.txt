@@ -153,6 +153,7 @@ if (NES_BUILD_BENCHMARKS)
     ### Output Channel Benchmark ###
     add_executable(output-channel-benchmark "src/BenchmarkSuite/BenchmarkOutputChannel.cpp")
     target_link_libraries(output-channel-benchmark nes)
+    target_sources(output-channel-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME output-channel-benchmark COMMAND output-channel-benchmark --benchmark_out=output-channel-benchmark.log --benchmark_out_format=json)
 
 
