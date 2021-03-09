@@ -268,8 +268,8 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     coordinatorConfig->setRestPort(restPort);
     workerConfig->setCoordinatorPort(rpcPort);
 
-    coordinatorConfig->setNumWorkerThreads(3);
-    workerConfig->setNumWorkerThreads(3);
+//    coordinatorConfig->setNumWorkerThreads(3);
+//    workerConfig->setNumWorkerThreads(3);
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -308,7 +308,6 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
 
     //register physical stream R2000070
     PhysicalStreamConfigPtr conf70 = PhysicalStreamConfig::create(sourceConfig);
-
     wrk1->registerPhysicalStream(conf70);
 
     std::string outputFilePath = "testDeployOneWorkerCentralWindowQueryEventTime.out";
@@ -324,8 +323,6 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,1\n"

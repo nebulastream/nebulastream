@@ -126,7 +126,7 @@ E2EBase::~E2EBase() {
     statisticsVec.clear();
     queryService.reset();
     queryCatalog.reset();
-    NES::shutdownLogging();
+//    NES::shutdownLogging();
 }
 
 void E2EBase::setupSources() {
