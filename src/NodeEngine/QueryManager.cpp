@@ -482,7 +482,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
-    NES_ERROR("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
+    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
     NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
     auto reconfigType = graceful ? SoftEndOfStream : HardEndOfStream;
     for (const auto& qep : operatorIdToQueryMap[sourceId]) {
