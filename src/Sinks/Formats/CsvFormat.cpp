@@ -70,7 +70,7 @@ std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer&
                        "CsvFormat: Content size is not equal to buffer size and will waste space in a buffer.");
             std::copy(contentWithSingleBufferSize.begin(), contentWithSingleBufferSize.end(), buf.getBuffer());
             buf.setNumberOfTuples(contentWithSingleBufferSize.size());
-            buffers.push_back(buf);
+            buffers.emplace_back(std::move(buf));
         }
         auto buf = this->bufferManager->getBufferBlocking();
         NES_ASSERT(bufferContent.size() <= buf.getBufferSize(), "CsvFormat: Remaining is too big and wont fit.");
@@ -83,7 +83,7 @@ std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer&
         auto buf = this->bufferManager->getBufferBlocking();
         std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
         buf.setNumberOfTuples(contentSize);
-        buffers.push_back(buf);
+        buffers.emplace_back(std::move(buf));
     }
     return buffers;
 }

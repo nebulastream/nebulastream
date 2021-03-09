@@ -19,8 +19,7 @@
 
 using namespace Benchmarking;
 
-const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
-
+const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_NONE;
 
 /**
  * @brief This benchmarks runs a projection query on one worker and one coordinator
