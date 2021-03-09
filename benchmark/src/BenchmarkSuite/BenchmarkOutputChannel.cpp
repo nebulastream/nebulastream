@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
                                                                    1 * 1024 * 1024);
 
     std::string benchmarkName = "outputchannel";
-    std::string benchmarkFolderName = "MapQueries_" + NES::Benchmarking::BenchmarkUtils::getCurDateTimeStringWithNESVersion();
+    std::string benchmarkFolderName = "OutputChannel" + NES::Benchmarking::BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName))
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
