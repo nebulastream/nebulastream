@@ -30,14 +30,13 @@ int main() {
     NES::setupLogging("E2EBase.log", DEBUGL_LEVEL);
     std::cout << "Setup E2EBase test class." << std::endl;
 
-
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 4, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 3, 1);
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 4, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 3, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
