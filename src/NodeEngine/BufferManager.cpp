@@ -49,7 +49,7 @@ void BufferManager::clear() {
         }
     }
     if (!success) {
-        NES_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers=" << allBuffers.size() << " available=" << availableBuffers.size());
+        NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers=" << allBuffers.size() << " available=" << availableBuffers.size());
     }
     // RAII takes care of deallocating memory here
     allBuffers.clear();
@@ -99,7 +99,9 @@ TupleBuffer BufferManager::getBufferBlocking() {
     }
     auto memSegment = availableBuffers.front();
     availableBuffers.pop_front();
+
     if (memSegment->controlBlock->prepare()) {
+        NES_ERROR("getBufferBlocking buffer=" << memSegment->ptr);
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");

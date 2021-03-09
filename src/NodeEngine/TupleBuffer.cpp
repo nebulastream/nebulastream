@@ -70,7 +70,8 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) {
     return *this;
 }
 
-TupleBuffer::~TupleBuffer() { release(); }
+TupleBuffer::~TupleBuffer() {
+    release(); }
 
 bool TupleBuffer::isValid() const { return ptr != nullptr; }
 
@@ -80,7 +81,9 @@ TupleBuffer& TupleBuffer::retain() {
 }
 
 void TupleBuffer::release() {
+    NES_ERROR("release buffer=" << this);
     if (controlBlock && controlBlock->release()) {
+        NES_ERROR("freed buffer=" << this);
         controlBlock = nullptr;
         ptr = nullptr;
         size = 0;
