@@ -138,6 +138,9 @@ class BufferControlBlock {
     std::atomic<BufferRecycler*> owningBufferRecycler;
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
+  public:
+    uint64_t magic;
+
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
   private:
     class ThreadOwnershipInfo {
