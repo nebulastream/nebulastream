@@ -195,8 +195,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
         case SoftEndOfStream: {
             NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan "
                                                                                        << querySubPlanId);
-           stop();
-
+            stop();
             for (auto& sink : sinks) {
                 sink->postReconfigurationCallback(task);
             }
