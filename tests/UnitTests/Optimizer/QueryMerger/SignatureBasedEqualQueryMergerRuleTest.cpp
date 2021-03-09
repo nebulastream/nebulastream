@@ -1783,8 +1783,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
     Query subQuery1 = Query::from("truck");
-    Query query1 =
-        Query::from("car").joinWith(subQuery1).where(Attribute("value")).equalsTo(Attribute("value")).window(windowType1).sink(printSinkDescriptor);
+    Query query1 = Query::from("car")
+                       .joinWith(subQuery1)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType1)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -1794,8 +1798,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto aggregation2 = Sum(Attribute("value"));
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").joinWith(subQuery2).where(Attribute("value")).equalsTo(Attribute("value")).window(windowType2).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .joinWith(subQuery2)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType2)
+                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1860,8 +1868,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
     Query subQuery1 = Query::from("truck");
-    Query query1 =
-        Query::from("car").joinWith(subQuery1).where(Attribute("value")).equalsTo(Attribute("value")).window(windowType1).sink(printSinkDescriptor);
+    Query query1 = Query::from("car")
+                       .joinWith(subQuery1)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType1)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -1871,8 +1883,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto aggregation2 = Sum(Attribute("value"));
 
     Query subQuery2 = Query::from("car");
-    Query query2 =
-        Query::from("truck").joinWith(subQuery2).where( Attribute("value")).equalsTo(Attribute("value")).window(windowType2).sink(printSinkDescriptor);
+    Query query2 = Query::from("truck")
+                       .joinWith(subQuery2)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType2)
+                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1937,8 +1953,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
     Query subQuery1 = Query::from("truck");
-    Query query1 =
-        Query::from("car").joinWith(subQuery1).where( Attribute("value")).equalsTo( Attribute("value")).window(windowType1).sink(printSinkDescriptor);
+    Query query1 = Query::from("car")
+                       .joinWith(subQuery1)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType1)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -1948,8 +1968,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto aggregation2 = Sum(Attribute("value"));
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").joinWith(subQuery2).where(Attribute("value")).equalsTo( Attribute("value")).window(windowType2).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .joinWith(subQuery2)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType2)
+                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -2014,8 +2038,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
 
     Query subQuery1 = Query::from("truck");
-    Query query1 =
-        Query::from("car").joinWith(subQuery1).where(Attribute("value")).equalsTo( Attribute("value")).window(windowType1).sink(printSinkDescriptor);
+    Query query1 = Query::from("car")
+                       .joinWith(subQuery1)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType1)
+                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
@@ -2025,8 +2053,12 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     auto aggregation2 = Sum(Attribute("value"));
 
     Query subQuery2 = Query::from("truck");
-    Query query2 =
-        Query::from("car").joinWith(subQuery2).where(Attribute("value")).equalsTo(Attribute("value")).window(windowType2).sink(printSinkDescriptor);
+    Query query2 = Query::from("car")
+                       .joinWith(subQuery2)
+                       .where(Attribute("value"))
+                       .equalsTo(Attribute("value"))
+                       .window(windowType2)
+                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
