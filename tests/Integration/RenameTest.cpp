@@ -451,15 +451,9 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     string query =
         R"(Query::from("window1")
             .project(Attribute("id1").rename("id1New"), Attribute("timestamp"))
-            .joinWith(
-                        Query::from("window2")
-                        .project(
-                            Attribute("id2").rename("id2New"),
-                            Attribute("timestamp")
-                        ),
-                   Attribute("id1New"), Attribute("id2New"),
-                    TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
+            .joinWith(Query::from("window2").project(Attribute("id2").rename("id2New"), Attribute("timestamp")))
+            .where(Attribute("id1New")).equalsTo(Attribute("id2New")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+            Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
