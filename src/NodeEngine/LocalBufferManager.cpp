@@ -40,7 +40,7 @@ void LocalBufferManager::destroy() {
     NES_DEBUG("Destroying LocalBufferManager");
     std::unique_lock lock(mutex);
     auto ownedBufferManager = bufferManager.lock();
-    NES_ERROR("buffers before=" << ownedBufferManager->getAvailableBuffers()
+    NES_DEBUG("buffers before=" << ownedBufferManager->getAvailableBuffers()
                                 << " size of local buffers=" << exclusiveBuffers.size());
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
@@ -49,7 +49,7 @@ void LocalBufferManager::destroy() {
         memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
         ownedBufferManager->recyclePooledBuffer(memSegment);
     }
-    NES_ERROR("buffers after=" << ownedBufferManager->getAvailableBuffers()
+    NES_DEBUG("buffers after=" << ownedBufferManager->getAvailableBuffers()
                                << " size of local buffers=" << exclusiveBuffers.size());
 }
 

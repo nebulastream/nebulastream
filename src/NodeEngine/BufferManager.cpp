@@ -36,6 +36,7 @@ void BufferManager::clear() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
     auto success = true;
     NES_DEBUG("Shutting down Buffer Manager " << this);
+    localBufferPools.clear();
     if (allBuffers.size() != availableBuffers.size()) {
         NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
         success = false;
@@ -67,7 +68,7 @@ BufferManager::~BufferManager() {
 }
 
 void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
-    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    std::unique_lock lock(availableBuffersMutex);
     if (isConfigured) {
         NES_THROW_RUNTIME_ERROR("[BufferManager] Already configured - we cannot change the buffer manager at runtime for now!");
     }
@@ -91,7 +92,7 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {
-    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    std::unique_lock lock(availableBuffersMutex);
     //TODO: remove this
 
     while (availableBuffers.empty()) {
@@ -108,7 +109,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
-    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    std::unique_lock lock(availableBuffersMutex);
     if (availableBuffers.empty()) {
         return std::nullopt;
     }
@@ -122,7 +123,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::milliseconds timeout_ms) {
-    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    std::unique_lock lock(availableBuffersMutex);
     auto pred = [=]() {
         return !availableBuffers.empty();
     };
@@ -139,7 +140,7 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
 }
 
 std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
-    std::unique_lock<std::mutex> lock(unpooledBuffersMutex);
+    std::unique_lock lock(unpooledBuffersMutex);
     UnpooledBufferHolder probe(bufferSize);
     auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
     if (candidate != unpooledBuffers.end()) {
@@ -179,7 +180,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
 }
 
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment) {
-    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    std::unique_lock lock(availableBuffersMutex);
     if (!segment->isAvailable()) {
         NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
     }
@@ -188,7 +189,7 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment) {
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment) {
-    std::unique_lock<std::mutex> lock(unpooledBuffersMutex);
+    std::unique_lock lock(unpooledBuffersMutex);
     if (!segment->isAvailable()) {
         NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment");
     }
@@ -217,13 +218,13 @@ size_t BufferManager::getBufferSize() const { return bufferSize; }
 
 size_t BufferManager::getNumOfPooledBuffers() const { return numOfBuffers; }
 
-size_t BufferManager::getNumOfUnpooledBuffers() {
-    std::unique_lock<std::mutex> lock(unpooledBuffersMutex);
+size_t BufferManager::getNumOfUnpooledBuffers() const {
+    std::unique_lock lock(unpooledBuffersMutex);
     return unpooledBuffers.size();
 }
 
-size_t BufferManager::getAvailableBuffers() {
-    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+size_t BufferManager::getAvailableBuffers() const {
+    std::unique_lock lock(availableBuffersMutex);
     return availableBuffers.size();
 }
 
@@ -243,7 +244,7 @@ BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail
 void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 
 LocalBufferManagerPtr BufferManager::createLocalBufferManager(size_t numberOfReservedBuffers) {
-    std::unique_lock<std::mutex> lock(availableBuffersMutex);
+    std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
     NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (auto i = 0; i < numberOfReservedBuffers; ++i) {
