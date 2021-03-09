@@ -378,11 +378,21 @@ bool Topology::increaseResources(uint64_t nodeId, uint16_t amountToIncrease) {
 
 TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topologyNodes) {
 
-    NES_INFO("Topology: find common node for a set of topology nodes.");
+    NES_DEBUG("Topology: find common node for a set of topology nodes.");
 
     if (topologyNodes.empty()) {
-        NES_WARNING("Topology: Input topology node list was empty.");
+        NES_ERROR("Topology: Input topology node list was empty.");
         return nullptr;
+    }
+
+    //Check if one of the input node is a root node of the topology
+    auto found = std::find_if(topologyNodes.begin(), topologyNodes.end(), [&](TopologyNodePtr topologyNode) {
+        return rootNode->getId() == topologyNode->getId();
+    });
+
+    // If a root node found in the input nodes then return the root topology node
+    if (found != topologyNodes.end()) {
+        return *found;
     }
 
     NES_DEBUG("Topology: Selecting a start node to identify the common ancestor.");
@@ -421,7 +431,7 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
         }
     }
 
-    NES_WARNING("Topology: Unable to find a common ancestor topology node for the input topology nodes.");
+    NES_ERROR("Topology: Unable to find a common ancestor topology node for the input topology nodes.");
     return nullptr;
 }
 

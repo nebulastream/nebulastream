@@ -349,7 +349,7 @@ TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
 /*
  * @brief Test a query with a single window operator and a single join operator running multiple nodes
  */
-TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoins) {
+TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoinsWithTopDown) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -457,12 +457,131 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     };
 
     std::vector<Output> expectedOutput = {{1090, 1100, 4, 48}, {1000, 1010, 12, 96}, {1010, 1020, 12, 192}};
-
-    // FIXME: This test should use the `BottomUp` placement to demonstrate the orchestration of multiple window and join \
-    //  operators between the topology nodes. However, currently the BottomUp throws error when executed using this query and \
-    //  topology. (Issue #1631)
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "TopDown");
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
 
+//* Topology:
+//PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
+//|--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+/*
+ * @brief Test a query with a single window operator and a single join operator running multiple nodes
+ */
+TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoinsWithBottomUp) {
+    struct Window1 {
+        uint64_t id1;
+        uint64_t timestamp;
+    };
+
+    struct Window2 {
+        uint64_t id2;
+        uint64_t timestamp;
+    };
+
+    struct Window3 {
+        uint64_t id3;
+        uint64_t timestamp;
+    };
+
+    auto window1Schema = Schema::create()
+        ->addField("id1", DataTypeFactory::createUInt64())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window2Schema = Schema::create()
+        ->addField("id2", DataTypeFactory::createUInt64())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    auto window3Schema = Schema::create()
+        ->addField("id3", DataTypeFactory::createUInt64())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
+    ASSERT_EQ(sizeof(Window3), window2Schema->getSchemaSizeInBytes());
+
+    std::string queryWithJoinAndWindowOperator =
+        R"(Query::from("window1")
+            .project(Attribute("window1$id1"), Attribute("window1$timestamp"))
+            .filter(Attribute("window1$id1")<16)
+            .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
+            .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)))
+            .windowByKey(Attribute("window1window2window3$key"), SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5)), Sum(Attribute("window1window2$key")))
+            .windowByKey(Attribute("window1window2window3$key"), TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10)), Sum(Attribute("window1window2$key")))
+            .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
+        )";
+    TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
+    testHarness.addNonSourceWorker();
+    testHarness.addNonSourceWorker();
+    testHarness.addNonSourceWorker();
+    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(0));
+    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));
+    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(2));
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 6);
+
+    testHarness.getTopology()->print();
+
+    // Check if the topology matches the expected hierarchy
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 3);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 1);
+
+    testHarness.pushElement<Window1>({1, 1000}, 3);
+    testHarness.pushElement<Window2>({12, 1001}, 3);
+    testHarness.pushElement<Window2>({4, 1002}, 3);
+    testHarness.pushElement<Window2>({4, 1005}, 3);
+    testHarness.pushElement<Window2>({4, 1006}, 3);
+    testHarness.pushElement<Window2>({1, 2000}, 3);
+    testHarness.pushElement<Window2>({11, 2001}, 3);
+    testHarness.pushElement<Window2>({16, 2002}, 3);
+    testHarness.pushElement<Window2>({4, 2802}, 3);
+    testHarness.pushElement<Window2>({4, 3642}, 3);
+    testHarness.pushElement<Window2>({1, 3000}, 3);
+
+    testHarness.pushElement<Window2>({21, 1003}, 4);
+    testHarness.pushElement<Window2>({12, 1011}, 4);
+    testHarness.pushElement<Window2>({12, 1013}, 4);
+    testHarness.pushElement<Window2>({12, 1015}, 4);
+    testHarness.pushElement<Window2>({4, 1102}, 4);
+    testHarness.pushElement<Window2>({4, 1112}, 4);
+    testHarness.pushElement<Window2>({1, 2010}, 4);
+    testHarness.pushElement<Window2>({11, 2301}, 4);
+    testHarness.pushElement<Window2>({4, 2022}, 4);
+    testHarness.pushElement<Window2>({4, 3012}, 4);
+    testHarness.pushElement<Window2>({33, 3100}, 4);
+
+    testHarness.pushElement<Window3>({4, 1013}, 5);
+    testHarness.pushElement<Window3>({12, 1010}, 5);
+    testHarness.pushElement<Window3>({8, 1105}, 5);
+    testHarness.pushElement<Window3>({76, 1132}, 5);
+    testHarness.pushElement<Window3>({19, 2210}, 5);
+    testHarness.pushElement<Window3>({1, 2501}, 5);
+    testHarness.pushElement<Window2>({4, 2432}, 5);
+    testHarness.pushElement<Window2>({4, 3712}, 5);
+    testHarness.pushElement<Window3>({45, 3120}, 5);
+
+    struct Output {
+        uint64_t window1window2$start;
+        uint64_t window1window2$end;
+        uint64_t window1window2$key;
+        uint64_t window1$id1;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (window1window2$start == rhs.window1window2$start && window1window2$end == rhs.window1window2$end
+                    && window1window2$key == rhs.window1window2$key && window1$id1 == rhs.window1$id1);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1090, 1100, 4, 48}, {1000, 1010, 12, 96}, {1010, 1020, 12, 192}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
