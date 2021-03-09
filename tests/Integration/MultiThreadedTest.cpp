@@ -268,8 +268,8 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     coordinatorConfig->setRestPort(restPort);
     workerConfig->setCoordinatorPort(rpcPort);
 
-//    coordinatorConfig->setNumWorkerThreads(3);
-//    workerConfig->setNumWorkerThreads(3);
+    coordinatorConfig->setNumWorkerThreads(3);
+    workerConfig->setNumWorkerThreads(3);
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);

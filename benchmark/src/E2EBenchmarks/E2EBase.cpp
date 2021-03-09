@@ -58,7 +58,6 @@ std::string E2EBase::runExperiment(std::string query) {
     std::cout << "setup experiment with parameter threadCntWorker=" << numberOfWorkerThreads
               << " threadCntCoordinator=" << numberOfCoordinatorThreads << " sourceCnt=" << sourceCnt
               << " mode=" << getInputOutputModeAsString(mode) << " query=" << query << std::endl;
-    //    E2EBasePtr test = std::make_shared<E2EBase>(threadCntWorker, threadCntCoordinator, sourceCnt, mode);
 
     std::cout << "run query" << std::endl;
     runQuery(query);
@@ -304,7 +303,7 @@ std::string E2EBase::getResult() {
 
     out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
         << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed
-        << tuplesProcessed * 1'000'000'000.0 / runtime.count() << "," << std::fixed
+        << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << "," << std::fixed
         << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024 << std::endl;
 
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
