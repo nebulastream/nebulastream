@@ -156,7 +156,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
-//                stop();
+                stop();
                 //it the current pipeline is the last pipeline in the qep and thus we reconfigure the qep
                 if (nextPipeline == nullptr) {
                     auto queryManager = pipelineContext->getQueryManager();
