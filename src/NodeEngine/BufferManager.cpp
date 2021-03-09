@@ -101,7 +101,6 @@ TupleBuffer BufferManager::getBufferBlocking() {
     availableBuffers.pop_front();
 
     if (memSegment->controlBlock->prepare()) {
-        NES_ERROR("getBufferBlocking buffer=" << memSegment->ptr);
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");

@@ -133,13 +133,11 @@ class BufferControlBlock {
     std::atomic<int64_t> watermark;
     std::atomic<uint64_t> originId;
 
-  private:
+  public:
     MemorySegment* owner;
+    uint64_t magic;
     std::atomic<BufferRecycler*> owningBufferRecycler;
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
-
-  public:
-    uint64_t magic;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
   private:
