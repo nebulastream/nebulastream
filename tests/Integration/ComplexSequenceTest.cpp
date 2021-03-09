@@ -525,16 +525,16 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     };
 
     auto window1Schema = Schema::create()
-        ->addField("id1", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id1", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window2Schema = Schema::create()
-        ->addField("id2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id2", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     auto window3Schema = Schema::create()
-        ->addField("id3", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                             ->addField("id3", DataTypeFactory::createUInt64())
+                             ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Window1), window1Schema->getSchemaSizeInBytes());
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
@@ -551,11 +551,11 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
-    testHarness.addNonSourceWorker(); //wrk0
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0)); //wrk1
-    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(0)); //wrk2
-    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(1)); //wrk3
-    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1)); //wrk4
+    testHarness.addNonSourceWorker();                                                            //wrk0
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                                  //wrk1
+    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(0));//wrk2
+    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(1));//wrk3
+    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));//wrk4
 
     ASSERT_EQ(testHarness.getWorkerCount(), 5);
 
