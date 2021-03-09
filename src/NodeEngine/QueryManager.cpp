@@ -600,6 +600,8 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
         NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline "
                                                                  << nextPipeline << " inputBuffer " << buffer);
         cv.notify_all();
+    } else {
+        NES_ERROR("Pushed task for non running pipeline " << it->second->getQuerySubPlanId());
     }
 }
 

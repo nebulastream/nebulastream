@@ -153,6 +153,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
              * TODO: this requires underflow/overflow checks
              * TODO: our types need their own sto/strto methods
              */
+                NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(), "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "  << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
                 if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
                     uint64_t val = std::stoull(tokens[j].c_str());
                     memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);

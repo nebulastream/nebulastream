@@ -81,6 +81,7 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
         }
         allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+            NES_ASSERT2_FMT(segment->controlBlock->magic == 0x30011991, "wrong magic");
             recycler->recyclePooledBuffer(segment);
         });
         availableBuffers.emplace_back(&allBuffers.back());
