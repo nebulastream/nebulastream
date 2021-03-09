@@ -22,7 +22,7 @@
 namespace NES::NodeEngine {
 LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
                                        size_t numberOfReservedBuffers)
-    : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers) {
+    : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers), isDestroyed(false) {
 
     while (!buffers.empty()) {
         auto memSegment = buffers.front();
@@ -34,21 +34,26 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
     }
 }
 
-LocalBufferManager::~LocalBufferManager() {
-    destroy();
-}
+LocalBufferManager::~LocalBufferManager() { destroy(); }
 
 void LocalBufferManager::destroy() {
-    NES_DEBUG("Destroying LocalBufferManager");
-    std::unique_lock lock(mutex);
-    while (!exclusiveBuffers.empty()) {
-        // return exclusive buffers to the global pool
-        auto memSegment = exclusiveBuffers.front();
-        exclusiveBuffers.pop_front();
-        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
-        bufferManager->recyclePooledBuffer(memSegment);
+    if (!isDestroyed) {
+        NES_DEBUG("Destroying LocalBufferManager");
+        std::unique_lock lock(mutex);
+        NES_ERROR("buffers before=" << bufferManager->getAvailableBuffers()
+                                    << " size of local buffers=" << exclusiveBuffers.size());
+        while (!exclusiveBuffers.empty()) {
+            // return exclusive buffers to the global pool
+            auto memSegment = exclusiveBuffers.front();
+            exclusiveBuffers.pop_front();
+            memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
+            bufferManager->recyclePooledBuffer(memSegment);
+        }
+        NES_ERROR("buffers after=" << bufferManager->getAvailableBuffers()
+                                   << " size of local buffers=" << exclusiveBuffers.size());
+        bufferManager.reset();
+        isDestroyed = true;
     }
-    bufferManager.reset();
 }
 
 size_t LocalBufferManager::getAvailableExclusiveBuffers() const {

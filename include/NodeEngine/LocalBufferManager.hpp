@@ -81,6 +81,7 @@ class LocalBufferManager : public BufferRecycler {
     std::deque<detail::MemorySegment*> exclusiveBuffers;
     size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
+    bool isDestroyed;
 };
 
 }// namespace NodeEngine
