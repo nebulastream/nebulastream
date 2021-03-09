@@ -44,27 +44,27 @@
 
 namespace NES {
 
-JoinQueryBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinQueryBuilder::Join(subQueryRhs, this); }
+JoinQueryBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinQueryBuilder::Join(subQueryRhs, *this); }
 
 namespace JoinQueryBuilder {
 
-constexpr JoinWhere Join::where(ExpressionItem onLeftKey) { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
+JoinWhere Join::where(ExpressionItem onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
 
-constexpr Join::Join(const Query& subQueryRhs, const Query& originalQuery)
+Join::Join(const Query& subQueryRhs, Query& originalQuery)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
 
-constexpr JoinCondition JoinWhere::equalsTo(ExpressionItem onRightKey) {
+JoinCondition JoinWhere::equalsTo(ExpressionItem onRightKey) const {
     return JoinCondition(subQueryRhs, originalQuery, onLeftKey, onRightKey);
 }
 
-constexpr JoinWhere::JoinWhere(const Query& subQueryRhs, const Query& originalQuery, ExpressionItem onLeftKey)
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey) {}
 
-JoinCondition JoinCondition::window(const Windowing::WindowTypePtr windowType) {
+Query& JoinCondition::window(const Windowing::WindowTypePtr windowType) const {
     return originalQuery.joinWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original joinWith() function
 }
 
-constexpr JoinCondition::JoinCondition(const Query& subQueryRhs, const Query& originalQuery, ExpressionItem onLeftKey,
+JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey,
                                        ExpressionItem onRightKey)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
 
