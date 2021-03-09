@@ -320,6 +320,7 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
         }
         return true;
     }
+
     NES_ERROR("NodeEngine: qep does not exists. stop failed " << queryId);
     return false;
 }

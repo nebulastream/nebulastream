@@ -354,7 +354,7 @@ bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
 }
 
 bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful) {
-    NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId());
+    NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
     std::unique_lock lock(queryMutex);
     // here im using COW to avoid keeping the lock for long
@@ -366,7 +366,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
     lock.unlock();
     for (const auto& source : copiedSources) {
         if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
-            source->stop(graceful);
+            source->stop(true);
         }
     }
     // TODO evaluate if we need to have this a wait instead of a get
@@ -375,13 +375,14 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
     if (qep->getTerminationFuture().get() != Execution::ExecutableQueryPlanResult::Ok) {
         NES_FATAL_ERROR("QueryManager: QEP " << qep->getQuerySubPlanId() << " could not be stopped");
         ret = false;
-    };
+    }
     if (ret) {
         addReconfigurationMessage(qep->getQuerySubPlanId(),
                                   ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
                                   true);
     }
     NES_DEBUG("QueryManager::stopQuery: query " << qep->getQuerySubPlanId() << " was " << (ret ? "successful" : " not successful"));
+
     return ret;
 }
 

@@ -38,7 +38,8 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   git \
   wget \
   z3 \
-  tar
+  tar \
+  cmake
 
 sudo add-apt-repository ppa:open62541-team/ppa -qq && \
   sudo apt-get update && \
