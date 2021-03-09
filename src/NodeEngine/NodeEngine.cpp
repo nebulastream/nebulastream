@@ -389,15 +389,15 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     networkManager->destroy();
-//    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-//    NES_DEBUG("refcnt nm " << networkManager.use_count());
-//    NES_DEBUG("refcnt qm " << queryManager.use_count());
+    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+    NES_DEBUG("refcnt nm " << networkManager.use_count());
+    NES_DEBUG("refcnt qm " << queryManager.use_count());
     queryCompiler.reset();
     queryManager.reset();
     networkManager.reset();
-//    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-//    NES_DEBUG("refcnt nm " << networkManager.use_count());
-//    NES_DEBUG("refcnt qm " << queryManager.use_count());
+    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+    NES_DEBUG("refcnt nm " << networkManager.use_count());
+    NES_DEBUG("refcnt qm " << queryManager.use_count());
 
     bufferManager->clear();
     bufferManager.reset();
