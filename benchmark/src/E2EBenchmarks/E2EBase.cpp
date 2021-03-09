@@ -211,7 +211,7 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream", "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+                "LambdaSource", "test_stream" + std::to_string(i), "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
 
             wrk1->registerPhysicalStream(conf);
         }
@@ -279,11 +279,6 @@ void E2EBase::runQuery(std::string query) {
     runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(stop.time_since_epoch() - start.time_since_epoch());
 }
 
-struct dotted : std::numpunct<char> {
-    char do_thousands_sep() const { return '.'; }   // separate with dots
-    std::string do_grouping() const { return "\3"; }// groups of 3 digits
-    static void imbue(std::ostream& os) { os.imbue(std::locale(os.getloc(), new dotted)); }
-};
 
 std::string E2EBase::getResult() {
     std::stringstream out;
