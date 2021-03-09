@@ -50,8 +50,7 @@ namespace JoinQueryBuilder {
 
 JoinWhere Join::where(ExpressionItem onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
 
-Join::Join(const Query& subQueryRhs, Query& originalQuery)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
+Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
 
 JoinCondition JoinWhere::equalsTo(ExpressionItem onRightKey) const {
     return JoinCondition(subQueryRhs, originalQuery, onLeftKey, onRightKey);
@@ -64,8 +63,7 @@ Query& JoinCondition::window(const Windowing::WindowTypePtr windowType) const {
     return originalQuery.joinWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original joinWith() function
 }
 
-JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey,
-                                       ExpressionItem onRightKey)
+JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
 
 }// namespace JoinQueryBuilder

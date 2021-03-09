@@ -121,15 +121,14 @@ class JoinCondition {
     * @param onLeftKey
     * @param onRightKey
     */
-    JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey,
-                            ExpressionItem onRightKey);
+    JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey);
 
     /**
      * @brief: calls internal the original joinWith function with all the gathered parameters.
      * @param windowType
      * @return the query with the result of the original joinWith function is returned.
      */
-     Query& window(const Windowing::WindowTypePtr windowType) const;
+    Query& window(const Windowing::WindowTypePtr windowType) const;
 
   private:
     const Query& subQueryRhs;
