@@ -77,11 +77,11 @@ class LocalBufferManager : public BufferRecycler {
     void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
   private:
-    BufferManagerPtr bufferManager;
+    std::weak_ptr<BufferManager> bufferManager;
     std::deque<detail::MemorySegment*> exclusiveBuffers;
     size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
-    bool isDestroyed;
+//    bool isDestroyed;
 };
 
 }// namespace NodeEngine

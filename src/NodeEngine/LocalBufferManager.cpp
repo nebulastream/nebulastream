@@ -22,7 +22,7 @@
 namespace NES::NodeEngine {
 LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
                                        size_t numberOfReservedBuffers)
-    : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers), isDestroyed(false) {
+    : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers) {
 
     while (!buffers.empty()) {
         auto memSegment = buffers.front();
@@ -37,23 +37,20 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
 LocalBufferManager::~LocalBufferManager() { destroy(); }
 
 void LocalBufferManager::destroy() {
-    if (!isDestroyed) {
-        NES_DEBUG("Destroying LocalBufferManager");
-        std::unique_lock lock(mutex);
-        NES_ERROR("buffers before=" << bufferManager->getAvailableBuffers()
-                                    << " size of local buffers=" << exclusiveBuffers.size());
-        while (!exclusiveBuffers.empty()) {
-            // return exclusive buffers to the global pool
-            auto memSegment = exclusiveBuffers.front();
-            exclusiveBuffers.pop_front();
-            memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
-            bufferManager->recyclePooledBuffer(memSegment);
-        }
-        NES_ERROR("buffers after=" << bufferManager->getAvailableBuffers()
-                                   << " size of local buffers=" << exclusiveBuffers.size());
-        bufferManager.reset();
-        isDestroyed = true;
+    NES_DEBUG("Destroying LocalBufferManager");
+    std::unique_lock lock(mutex);
+    auto ownedBufferManager = bufferManager.lock();
+    NES_ERROR("buffers before=" << ownedBufferManager->getAvailableBuffers()
+                                << " size of local buffers=" << exclusiveBuffers.size());
+    while (!exclusiveBuffers.empty()) {
+        // return exclusive buffers to the global pool
+        auto memSegment = exclusiveBuffers.front();
+        exclusiveBuffers.pop_front();
+        memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
+        ownedBufferManager->recyclePooledBuffer(memSegment);
     }
+    NES_ERROR("buffers after=" << ownedBufferManager->getAvailableBuffers()
+                               << " size of local buffers=" << exclusiveBuffers.size());
 }
 
 size_t LocalBufferManager::getAvailableExclusiveBuffers() const {
@@ -78,7 +75,7 @@ TupleBuffer LocalBufferManager::getBuffer() {
         }
     }
     // fallback to global pool
-    return bufferManager->getBufferBlocking();
+    return bufferManager.lock()->getBufferBlocking();
 }
 
 void LocalBufferManager::recyclePooledBuffer(detail::MemorySegment* memSegment) {

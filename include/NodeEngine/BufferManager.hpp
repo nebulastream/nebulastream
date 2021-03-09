@@ -185,6 +185,8 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     uint32_t numOfBuffers;
 
     std::atomic<bool> isConfigured;
+
+    std::vector<LocalBufferManagerPtr> localBufferPools;
 };
 }// namespace NodeEngine
 
