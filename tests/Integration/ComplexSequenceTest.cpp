@@ -410,16 +410,16 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 1);
 
     testHarness.pushElement<Window1>({1, 1000}, 3);
-    testHarness.pushElement<Window2>({12, 1001}, 3);
-    testHarness.pushElement<Window2>({4, 1002}, 3);
-    testHarness.pushElement<Window2>({4, 1005}, 3);
-    testHarness.pushElement<Window2>({4, 1006}, 3);
-    testHarness.pushElement<Window2>({1, 2000}, 3);
-    testHarness.pushElement<Window2>({11, 2001}, 3);
-    testHarness.pushElement<Window2>({16, 2002}, 3);
-    testHarness.pushElement<Window2>({4, 2802}, 3);
-    testHarness.pushElement<Window2>({4, 3642}, 3);
-    testHarness.pushElement<Window2>({1, 3000}, 3);
+    testHarness.pushElement<Window1>({12, 1001}, 3);
+    testHarness.pushElement<Window1>({4, 1002}, 3);
+    testHarness.pushElement<Window1>({4, 1005}, 3);
+    testHarness.pushElement<Window1>({4, 1006}, 3);
+    testHarness.pushElement<Window1>({1, 2000}, 3);
+    testHarness.pushElement<Window1>({11, 2001}, 3);
+    testHarness.pushElement<Window1>({16, 2002}, 3);
+    testHarness.pushElement<Window1>({4, 2802}, 3);
+    testHarness.pushElement<Window1>({4, 3642}, 3);
+    testHarness.pushElement<Window1>({1, 3000}, 3);
 
     testHarness.pushElement<Window2>({21, 1003}, 4);
     testHarness.pushElement<Window2>({12, 1011}, 4);
@@ -439,8 +439,8 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     testHarness.pushElement<Window3>({76, 1132}, 5);
     testHarness.pushElement<Window3>({19, 2210}, 5);
     testHarness.pushElement<Window3>({1, 2501}, 5);
-    testHarness.pushElement<Window2>({4, 2432}, 5);
-    testHarness.pushElement<Window2>({4, 3712}, 5);
+    testHarness.pushElement<Window3>({4, 2432}, 5);
+    testHarness.pushElement<Window3>({4, 3712}, 5);
     testHarness.pushElement<Window3>({45, 3120}, 5);
 
     struct Output {
@@ -464,12 +464,47 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
 
 //* Topology:
 //PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
-//|--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-//|  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-//|--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-//|  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
 //|--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-//|  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|  |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+//|  |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+
+// Placement:
+//ExecutionNode(id:1, ip:127.0.0.1, topologyNodeId:1)
+//| QuerySubPlan(queryId:1, querySubPlanId:5)
+//|  SINK(16)
+//|    MAP(15)
+//|      CENTRALWINDOW(17)
+//|        WATERMARKASSIGNER(13)
+//|          CENTRALWINDOW(18)
+//|            WATERMARKASSIGNER(11)
+//|              Join(10)
+//|                SOURCE(19,)
+//|                SOURCE(25,)
+//|--ExecutionNode(id:2, ip:127.0.0.1, topologyNodeId:2)
+//|  | QuerySubPlan(queryId:1, querySubPlanId:1)
+//|  |  SINK(20)
+//|  |    WATERMARKASSIGNER(9)
+//|  |      SOURCE(8,window3)
+//|  | QuerySubPlan(queryId:1, querySubPlanId:4)
+//|  |  SINK(26)
+//|  |    Join(7)
+//|  |      SOURCE(21,)
+//|  |      SOURCE(23,)
+//|  |--ExecutionNode(id:4, ip:127.0.0.1, topologyNodeId:4)
+//|  |  | QuerySubPlan(queryId:1, querySubPlanId:2)
+//|  |  |  SINK(22)
+//|  |  |    WATERMARKASSIGNER(6)
+//|  |  |      SOURCE(4,window2)
+//|  |--ExecutionNode(id:3, ip:127.0.0.1, topologyNodeId:3)
+//|  |  | QuerySubPlan(queryId:1, querySubPlanId:3)
+//|  |  |  SINK(24)
+//|  |  |    WATERMARKASSIGNER(5)
+//|  |  |      FILTER(3)
+//|  |  |        PROJECTION(2, schema=window1$id1:INTEGER window1$timestamp:INTEGER )
+//|  |  |          SOURCE(1,window1)
+
 /*
  * @brief Test a query with a single window operator and a single join operator running multiple nodes
  */
@@ -516,34 +551,33 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
-    testHarness.addNonSourceWorker();
-    testHarness.addNonSourceWorker();
-    testHarness.addNonSourceWorker();
-    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(0));
-    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1));
-    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(2));
+    testHarness.addNonSourceWorker(); //wrk0
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0)); //wrk1
+    testHarness.addMemorySource("window3", window3Schema, "window3", testHarness.getWorkerId(0)); //wrk2
+    testHarness.addMemorySource("window1", window1Schema, "window1", testHarness.getWorkerId(1)); //wrk3
+    testHarness.addMemorySource("window2", window2Schema, "window2", testHarness.getWorkerId(1)); //wrk4
 
-    ASSERT_EQ(testHarness.getWorkerCount(), 6);
+    ASSERT_EQ(testHarness.getWorkerCount(), 5);
 
     testHarness.getTopology()->print();
 
     // Check if the topology matches the expected hierarchy
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 3);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 1);
-    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren().size(), 1);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(testHarness.getTopology()->getRoot()->getChildren()[0]->getChildren()[1]->getChildren().size(), 0);
 
     testHarness.pushElement<Window1>({1, 1000}, 3);
-    testHarness.pushElement<Window2>({12, 1001}, 3);
-    testHarness.pushElement<Window2>({4, 1002}, 3);
-    testHarness.pushElement<Window2>({4, 1005}, 3);
-    testHarness.pushElement<Window2>({4, 1006}, 3);
-    testHarness.pushElement<Window2>({1, 2000}, 3);
-    testHarness.pushElement<Window2>({11, 2001}, 3);
-    testHarness.pushElement<Window2>({16, 2002}, 3);
-    testHarness.pushElement<Window2>({4, 2802}, 3);
-    testHarness.pushElement<Window2>({4, 3642}, 3);
-    testHarness.pushElement<Window2>({1, 3000}, 3);
+    testHarness.pushElement<Window1>({12, 1001}, 3);
+    testHarness.pushElement<Window1>({4, 1002}, 3);
+    testHarness.pushElement<Window1>({4, 1005}, 3);
+    testHarness.pushElement<Window1>({4, 1006}, 3);
+    testHarness.pushElement<Window1>({1, 2000}, 3);
+    testHarness.pushElement<Window1>({11, 2001}, 3);
+    testHarness.pushElement<Window1>({16, 2002}, 3);
+    testHarness.pushElement<Window1>({4, 2802}, 3);
+    testHarness.pushElement<Window1>({4, 3642}, 3);
+    testHarness.pushElement<Window1>({1, 3000}, 3);
 
     testHarness.pushElement<Window2>({21, 1003}, 4);
     testHarness.pushElement<Window2>({12, 1011}, 4);
@@ -557,15 +591,15 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
     testHarness.pushElement<Window2>({4, 3012}, 4);
     testHarness.pushElement<Window2>({33, 3100}, 4);
 
-    testHarness.pushElement<Window3>({4, 1013}, 5);
-    testHarness.pushElement<Window3>({12, 1010}, 5);
-    testHarness.pushElement<Window3>({8, 1105}, 5);
-    testHarness.pushElement<Window3>({76, 1132}, 5);
-    testHarness.pushElement<Window3>({19, 2210}, 5);
-    testHarness.pushElement<Window3>({1, 2501}, 5);
-    testHarness.pushElement<Window2>({4, 2432}, 5);
-    testHarness.pushElement<Window2>({4, 3712}, 5);
-    testHarness.pushElement<Window3>({45, 3120}, 5);
+    testHarness.pushElement<Window3>({4, 1013}, 2);
+    testHarness.pushElement<Window3>({12, 1010}, 2);
+    testHarness.pushElement<Window3>({8, 1105}, 2);
+    testHarness.pushElement<Window3>({76, 1132}, 2);
+    testHarness.pushElement<Window3>({19, 2210}, 2);
+    testHarness.pushElement<Window3>({1, 2501}, 2);
+    testHarness.pushElement<Window3>({4, 2432}, 2);
+    testHarness.pushElement<Window3>({4, 3712}, 2);
+    testHarness.pushElement<Window3>({45, 3120}, 2);
 
     struct Output {
         uint64_t window1window2$start;
