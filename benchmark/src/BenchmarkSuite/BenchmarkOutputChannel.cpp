@@ -28,7 +28,7 @@
 namespace NES::Benchmarking {
 
 static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged, uint64_t numSenderThreads,
-                                    uint64_t numServerThreads, uint64_t dataSize, uint32_t port) {
+                                    uint64_t numServerThreads, uint64_t dataSize, uint32_t port, uint32_t rep) {
     std::promise<bool> completedProm;
     std::promise<uint64_t> bytesSent;
     std::promise<double> elapsedSeconds;
@@ -36,7 +36,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
 
     uint64_t totalNumBuffer = dataSize / bufferSize;
     std::atomic<std::uint64_t> bufferReceived = 0;
-    auto nesPartition = Network::NesPartition(1, 22, 333, 444);
+    auto nesPartition = Network::NesPartition(1 + rep, 22 + rep, 333 + rep, 444 + rep);
     try {
         class ExchangeListener : public Network::ExchangeProtocolListener {
 
@@ -67,10 +67,12 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
              buffMgr, numServerThreads);
 
 
+        auto firstBarrier = std::make_shared<NES::ThreadBarrier>(2);
         std::vector<std::thread> allThreads;
-        allThreads.emplace_back([&netManager, &nesPartition, totalNumBuffer, bufferSize, &bytesSent, &elapsedSeconds, &completedProm] {
+        allThreads.emplace_back([&netManager, &nesPartition, totalNumBuffer, bufferSize, &bytesSent, &elapsedSeconds, &completedProm, firstBarrier] {
             // register the incoming channel
             netManager->registerSubpartitionConsumer(nesPartition);
+          firstBarrier->wait();
             auto startTime = std::chrono::steady_clock::now().time_since_epoch();
             completedProm.get_future().get();
             auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
@@ -82,13 +84,14 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
             elapsedSeconds.set_value(elapsed.count()/1e9);
         });
 
+        firstBarrier->wait();
 
-
+        auto secondBarrier = std::make_shared<NES::ThreadBarrier>(numSenderThreads);
         for (uint64_t thread = 0; thread < numSenderThreads; ++thread) {
-            allThreads.emplace_back([totalNumBuffer, &completedProm, nesPartition, bufferSize, &buffMgr, &netManager, port] {
+            allThreads.emplace_back([totalNumBuffer, &completedProm, nesPartition, bufferSize, &buffMgr, &netManager, port, secondBarrier] {
                 Network::NodeLocation nodeLocation(0, "127.0.0.1", port);
                 auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
-
+                secondBarrier->wait();
                 if (senderChannel == nullptr) {
                     NES_DEBUG("NetworkStackTest: Error in registering OutputChannel!");
                     completedProm.set_value(false);
@@ -112,11 +115,9 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
         }
 
         throughputRet = bytesSent.get_future().get() / elapsedSeconds.get_future().get();
-
     } catch (...) {
         NES_THROW_RUNTIME_ERROR("BenchmarkOutputChannel: Error occured!");
     }
-
     return throughputRet;
 }
 }
@@ -165,7 +166,7 @@ int main(int argc, char** argv){
                     throughputVec.clear();
                     for (uint64_t i = 0; i < NUM_REPS; ++i) {
                         double throughput = NES::Benchmarking::BM_TestMassiveSending(bufferSize, buffersManaged, numSenderThreads,
-                                                                                     numServerThreads, dataSize, startPort + curComb);
+                                                                                     numServerThreads, dataSize, startPort + curComb, curComb);
                         throughputVec.emplace_back(throughput);
                     }
 
