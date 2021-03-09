@@ -83,7 +83,7 @@ std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer&
         auto buf = this->bufferManager->getBufferBlocking();
         std::memcpy(buf.getBufferAs<char>(), bufferContent.c_str(), contentSize);
         buf.setNumberOfTuples(contentSize);
-        buffers.push_back(buf);
+        buffers.emplace_back(buf);
     }
     return buffers;
 }
