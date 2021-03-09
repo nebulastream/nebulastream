@@ -75,18 +75,18 @@ class Join {
      * @param subQueryRhs
      * @param originalQuery
      */
-    constexpr Join(const Query& subQueryRhs, const Query& originalQuery);
+    Join(const Query& subQueryRhs, Query& originalQuery);
 
     /**
      * @brief sets the left key item, after that it can be compared with the function implemented in Condition
      * @param onLeftKey
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    constexpr JoinWhere where(ExpressionItem onLeftKey);
+    JoinWhere where(ExpressionItem onLeftKey) const;
 
   private:
     const Query& subQueryRhs;
-    const Query& originalQuery;
+    Query& originalQuery;
 };
 
 class JoinWhere {
@@ -97,18 +97,18 @@ class JoinWhere {
      * @param originalQuery
      * @param onLeftKey
      */
-    constexpr JoinWhere(const Query& subQueryRhs, const Query& originalQuery, ExpressionItem onLeftKey);
+    JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey);
 
     /**
      * @brief sets the rightKey item
      * @param onRightKey
      * @return object of type JoinCondition on which windowing & the original joinWith function can be called.
      */
-    constexpr JoinCondition equalsTo(ExpressionItem onRightKey);
+    JoinCondition equalsTo(ExpressionItem onRightKey) const;
 
   private:
     const Query& subQueryRhs;
-    const Query& originalQuery;
+    Query& originalQuery;
     ExpressionItem onLeftKey;
 };
 
@@ -121,7 +121,7 @@ class JoinCondition {
     * @param onLeftKey
     * @param onRightKey
     */
-    constexpr JoinCondition(const Query& subQueryRhs, const Query& originalQuery, ExpressionItem onLeftKey,
+    JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey,
                             ExpressionItem onRightKey);
 
     /**
@@ -129,11 +129,11 @@ class JoinCondition {
      * @param windowType
      * @return the query with the result of the original joinWith function is returned.
      */
-    JoinCondition window(const Windowing::WindowTypePtr windowType);
+     Query& window(const Windowing::WindowTypePtr windowType) const;
 
   private:
     const Query& subQueryRhs;
-    const Query& originalQuery;
+    Query& originalQuery;
     ExpressionItem onLeftKey;
     ExpressionItem onRightKey;
 };
