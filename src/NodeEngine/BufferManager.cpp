@@ -251,7 +251,9 @@ LocalBufferManagerPtr BufferManager::createLocalBufferManager(size_t numberOfRes
         availableBuffers.pop_front();
         buffers.emplace_back(memSegment);
     }
-    return std::make_shared<LocalBufferManager>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+    auto ret = std::make_shared<LocalBufferManager>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+    localBufferPools.push_back(ret);
+    return ret;
 }
 
 }// namespace NES::NodeEngine
