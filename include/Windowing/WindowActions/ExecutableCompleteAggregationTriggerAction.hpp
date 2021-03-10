@@ -163,15 +163,13 @@ class ExecutableCompleteAggregationTriggerAction
         auto recordsPerWindow = std::vector<uint64_t>(windows.size(), 0);
 
         // if the aggregation function is Min, we should not initialize partialFinalAggregates with 0
-        int64_t initialValue;
+        int64_t initialValue = 0;
         if (windowDefinition->getWindowAggregation()->getType()==WindowAggregationDescriptor::Min) {
             if (auto type = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())){
                 initialValue = type->getUpperBound();
             } else if (auto type = DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
                 initialValue = type->getUpperBound();
             }
-        } else {
-            initialValue = 0;
         }
 
         // allocate partial final aggregates for each window
