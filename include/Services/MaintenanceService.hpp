@@ -22,12 +22,15 @@
 #define NES_MAINTENANCESERVICE_HPP
 #include <memory>
 #include <vector>
+
 namespace NES {
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
-class QueryService;
-typedef std::shared_ptr<QueryService> QueryServicePtr;
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+class QueryRequestQueue;
+typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
@@ -36,7 +39,7 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
  */
 class MaintenanceService {
   public:
-    explicit MaintenanceService(TopologyPtr topology, QueryServicePtr queryService, GlobalExecutionPlanPtr globalExecutionPlan);
+    explicit MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, GlobalExecutionPlanPtr globalExecutionPlan);
 
     ~MaintenanceService();
     /**
@@ -76,7 +79,8 @@ class MaintenanceService {
     bool markNodeForMaintenance(uint64_t nodeId);
 
     TopologyPtr topology;
-    QueryServicePtr queryService;
+    QueryCatalogPtr queryCatalog;
+    QueryRequestQueuePtr queryRequestQueue;
     GlobalExecutionPlanPtr globalExecutionPlan;
 
 };

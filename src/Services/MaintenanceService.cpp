@@ -18,16 +18,20 @@
 //
 
 #include "Services/MaintenanceService.hpp"
-#include <Util/Logger.hpp>
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
+
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
+#include <Util/Logger.hpp>
+#include <WorkQueues/QueryRequestQueue.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+
 
 namespace NES {
-MaintenanceService::MaintenanceService(TopologyPtr topology, QueryServicePtr queryService,
-                                       GlobalExecutionPlanPtr globalExecutionPlan): topology{topology}, queryService{queryService}, globalExecutionPlan{globalExecutionPlan}{
+MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue,
+                                       GlobalExecutionPlanPtr globalExecutionPlan): topology{topology}, queryCatalog{queryCatalog},queryRequestQueue{queryRequestQueue}, globalExecutionPlan{globalExecutionPlan}{
     NES_DEBUG("MaintenanceService: Initializing");
 };
 MaintenanceService::~MaintenanceService() {
