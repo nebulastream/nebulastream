@@ -64,6 +64,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             NES_FATAL_ERROR("ExecutableNestedLoopJoinTriggerAction " << id << ":: the weakExecutionContext was already expired!");
             return false;
         }
+
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = executionContext->allocateTupleBuffer();
         // iterate over all keys in both window states and perform the join

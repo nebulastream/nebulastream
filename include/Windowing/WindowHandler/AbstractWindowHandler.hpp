@@ -165,6 +165,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
             originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
             auto afterMin = getMinWatermark();
             if (beforeMin < afterMin) {
+                NES_DEBUG("AbstractWindowHandler trigger for before=" << beforeMin << " afterMin=" << afterMin);
                 trigger();
             }
         } else {

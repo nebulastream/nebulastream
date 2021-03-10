@@ -54,14 +54,14 @@ class ExecutableCompleteAggregationTriggerAction
         SchemaPtr outputSchema, uint64_t id)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id) {
 
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString());
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString() << " id=" << id);
         this->windowSchema = outputSchema;
         windowTupleLayout = NodeEngine::createRowLayout(this->windowSchema);
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
                   uint64_t lastWatermark) {
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id=" << id << " " << this->windowDefinition->getDistributionType()->toString()
                                                                  << "): doAction for currentWatermark=" << currentWatermark
                                                                  << " lastWatermark=" << lastWatermark);
 
@@ -81,7 +81,7 @@ class ExecutableCompleteAggregationTriggerAction
                              lastWatermark);//put key into this
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
-                                                                     << "nextEdge=" << it.second->nextEdge);
+                                                                     << "nextEdge=" << it.second->nextEdge << " id=" << id);
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
@@ -110,13 +110,14 @@ class ExecutableCompleteAggregationTriggerAction
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
                           NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark) {
 
+        NES_DEBUG("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
         // create result vector of windows
         auto windows = std::vector<WindowState>();
 
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction " << id
+            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction id=" << id
                                                                           << ": the weakExecutionContext was already expired!");
         }
         auto executionContext = this->weakExecutionContext.lock();
