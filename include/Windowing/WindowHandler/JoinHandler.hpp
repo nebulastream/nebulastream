@@ -81,6 +81,7 @@ class JoinHandler : public AbstractJoinHandler {
         NES_DEBUG("JoinHandler stop id=" << id << ": stop");
         auto expected = true;
         if (isRunning.compare_exchange_strong(expected, false)) {
+            executableJoinAction->destroy();
             return executablePolicyTrigger->stop();
         }
         return false;
