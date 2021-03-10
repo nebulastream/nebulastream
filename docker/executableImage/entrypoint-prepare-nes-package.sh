@@ -29,10 +29,7 @@ then
     if test -f docker/executableImage/resources/*.deb; then
         rm docker/executableImage/resources/*.deb
     fi
-    for i in build/*.deb;
-    do
-      [ -f "$i" ] && cp "$i" docker/executableImage/resources/;
-    done
+    cp build/*.deb docker/executableImage/resources
     result=$?
     rm -rf /nebulastream/build
     exit $result
