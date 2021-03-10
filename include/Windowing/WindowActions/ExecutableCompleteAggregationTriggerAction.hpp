@@ -162,7 +162,15 @@ class ExecutableCompleteAggregationTriggerAction
 
         // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
-        auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
+
+        //FIXME: bad workaround because we don't consider the type of PartialAggregateType
+        int initialValue;
+        if (windowDefinition->getWindowAggregation()->getType()==WindowAggregationDescriptor::Min) {
+            initialValue = INT32_MAX;
+        } else {
+            initialValue = 0;
+        }
+        auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(),initialValue);
 
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
