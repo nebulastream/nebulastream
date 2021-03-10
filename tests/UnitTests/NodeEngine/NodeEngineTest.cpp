@@ -387,7 +387,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Stopped);
     EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Stopped);
 
-    EXPECT_TRUE(!engine->stop());
+    EXPECT_TRUE(engine->stop());
 
     EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
     EXPECT_TRUE(engine->getQueryStatus(2) == ExecutableQueryPlanStatus::Invalid);
