@@ -73,7 +73,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
         auto firstBarrier = std::make_shared<NES::ThreadBarrier>(2);
         std::vector<std::thread> allThreads;
         allThreads.emplace_back(
-            [&netManager, &nesPartition, totalNumBuffer, bufferSize, &bytesSent, &elapsedSeconds, &completedProm, firstBarrier] {
+            [&netManager, &nesPartition, totalNumBuffer, bufferSize, &bytesSent, &elapsedSeconds, &completedProm, firstBarrier, numSenderThreads] {
                 // register the incoming channel
                 netManager->registerSubpartitionConsumer(nesPartition);
                 firstBarrier->wait();
@@ -81,7 +81,7 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
                 completedProm.get_future().get();
                 auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
                 auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
-                double bytes = totalNumBuffer * bufferSize;
+                double bytes = numSenderThreads * totalNumBuffer * bufferSize;
                 double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
                 NES_INFO("Sent " << bytes << " bytes / " << (elapsed.count() / 1e9) << " seconds = throughput " << throughput
                                  << " MiB/s");
