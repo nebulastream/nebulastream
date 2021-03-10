@@ -94,7 +94,9 @@ class TestUtils {
         NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
             web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
-            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
+            web::uri_builder builder(("/"));
+            builder.append_query(("queryId"), queryId);
+            clientProc.request(web::http::methods::GET, builder.to_string())
                 .then([](const web::http::http_response& response) {
                     cout << "Get query status" << endl;
                     return response.extract_json();
@@ -119,7 +121,9 @@ class TestUtils {
 
             web::http::client::http_client clientProc("http://localhost:" + restPort
                                                       + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
-            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
+            web::uri_builder builder(("/"));
+            builder.append_query(("queryId"), queryId);
+            clientProc.request(web::http::methods::GET, builder.to_string())
                 .then([](const web::http::http_response& response) {
                     cout << "read number of buffers" << endl;
                     return response.extract_json();
@@ -156,7 +160,9 @@ class TestUtils {
         web::json::value json_return;
 
         web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/stop-query");
-        client.request(web::http::methods::DEL, _XPLATSTR("/"), queryId)
+        web::uri_builder builder(("/"));
+        builder.append_query(("queryId"), queryId);
+        client.request(web::http::methods::DEL, builder.to_string())
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
                 return response.extract_json();
