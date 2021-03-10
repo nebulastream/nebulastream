@@ -704,7 +704,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceManyBuffers) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("key") > 15))";
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("timestamp") >= 100000))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     //register physical stream
@@ -713,10 +713,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceManyBuffers) {
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setSourceConfig("../tests/test_data/benchmark.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(170);
+    sourceConfig->setNumberOfBuffersToProduce(1000);
     sourceConfig->setSkipHeader(false);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
@@ -731,13 +731,8 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceManyBuffers) {
 
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
-    std::vector<Output> expectedOutput = {{21, 9, 1011},
-                                          {17, 15, 1017},
-                                          {21, 1, 2011},
-                                          {17, 1, 2017},
-                                          {21, 9, 3011},
-                                          {17, 15, 3017}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> expectedOutput = {{1, 1, 100000}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
