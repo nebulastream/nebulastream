@@ -83,6 +83,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         auto expected = true;
         bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
+            StateManager::instance().unRegisterState("window");
             result = executablePolicyTrigger->stop();
         }
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop result =" << result);

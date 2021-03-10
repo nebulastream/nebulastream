@@ -1199,6 +1199,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
             }
         }
     }
-    EXPECT_EQ(results.size(), 40);
+    EXPECT_EQ(results.size(), 20);
 }
 }// namespace NES

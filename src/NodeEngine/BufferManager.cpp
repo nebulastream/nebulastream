@@ -64,10 +64,11 @@ void BufferManager::clear() {
         }
     }
     unpooledBuffers.clear();
+    NES_DEBUG("Shutting down Buffer Manager completed " << this);
 }
 
 BufferManager::~BufferManager() {
-    clear();
+    // nop
 }
 
 void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {

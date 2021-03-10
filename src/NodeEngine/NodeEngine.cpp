@@ -111,7 +111,7 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
 NodeEngine::~NodeEngine() {
     NES_DEBUG("Destroying NodeEngine()");
     stop();
-    removeGlobalErrorListener(inherited2::shared_from_this());
+//    removeGlobalErrorListener(inherited2::shared_from_this());
 }
 
 bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
@@ -337,7 +337,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     bool expected = true;
     if (!isRunning.compare_exchange_strong(expected, false)) {
         NES_WARNING("NodeEngine::stop: engine already stopped");
-        return true;
+        return false;
     }
     NES_WARNING("NodeEngine::stop: going to stop the node engine");
     std::unique_lock lock(engineMutex);
@@ -404,7 +404,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
 
     bufferManager->clear();
     bufferManager.reset();
-
+//    removeGlobalErrorListener(inherited2::shared_from_this());
     return !withError;
 }
 

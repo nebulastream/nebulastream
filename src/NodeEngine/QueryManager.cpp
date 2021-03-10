@@ -364,6 +364,11 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
     auto sources = qep->getSources();
     auto copiedSources = std::vector(sources.begin(), sources.end());
     lock.unlock();
+
+    if (qep->getStatus() != Execution::Running) {
+        return true;
+    }
+
     for (const auto& source : copiedSources) {
         if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
             source->stop(true);

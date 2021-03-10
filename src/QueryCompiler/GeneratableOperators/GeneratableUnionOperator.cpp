@@ -22,8 +22,12 @@ namespace NES {
 
 void GeneratableUnionOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto newPipelineContext1 = PipelineContext::create();
-    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
     auto newPipelineContext2 = PipelineContext::create();
+
+    newPipelineContext1->arity = PipelineContext::BinaryLeft;
+    getChildren()[0]->as<GeneratableOperator>()->produce(codegen, newPipelineContext1);
+
+    newPipelineContext2->arity = PipelineContext::BinaryRight;
     getChildren()[1]->as<GeneratableOperator>()->produce(codegen, newPipelineContext2);
 
     context->addNextPipeline(newPipelineContext1);
