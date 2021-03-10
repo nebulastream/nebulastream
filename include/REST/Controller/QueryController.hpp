@@ -54,9 +54,9 @@ class QueryController : public BaseController {
     /**
      * Handling the Get requests for the query
      * @param path : the url of the rest request
-     * @param message : the user message
+     * @param request : the user message
      */
-    void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
+    void handleGet(std::vector<utility::string_t> path, web::http::http_request request);
 
     /**
      * Handling the POST requests for the query
@@ -68,9 +68,9 @@ class QueryController : public BaseController {
     /**
      * @brief Handle the stop request for the query
      * @param path : the resource path the user wanted to get
-     * @param message : the user message
+     * @param request : the user message
      */
-    void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
+    void handleDelete(std::vector<utility::string_t> path, web::http::http_request request);
 
   private:
     TopologyPtr topology;
