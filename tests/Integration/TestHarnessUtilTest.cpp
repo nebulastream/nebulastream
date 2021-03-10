@@ -307,7 +307,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
     ASSERT_EQ(sizeof(Window2), window2Schema->getSchemaSizeInBytes());
 
     std::string queryWithJoinOperator =
-        R"(Query::from("window1").joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
+        R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))))";
     TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("window1", window1Schema, "window1");
