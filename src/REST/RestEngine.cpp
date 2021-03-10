@@ -18,12 +18,12 @@
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
-#include "REST/Controller/BaseController.hpp"
-#include "REST/Controller/QueryController.hpp"
-#include "REST/Controller/StreamCatalogController.hpp"
+#include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
+#include <REST/Controller/QueryController.hpp>
+#include <REST/Controller/StreamCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
 
 namespace NES {
