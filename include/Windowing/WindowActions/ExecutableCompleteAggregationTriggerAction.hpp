@@ -18,7 +18,6 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/Numeric.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
