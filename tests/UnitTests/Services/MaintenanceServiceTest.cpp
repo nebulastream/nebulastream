@@ -153,4 +153,18 @@ TEST_F(MaintenanceServiceTest, findPathBetweenIgnoresNodesMakredForMaintenanceTe
     TopologyNodePtr mThirdStartNodeParent4 = mThirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(mThirdStartNodeParent4->getId() == topologyNodes[0]->getId());
 }
+TEST_F(MaintenanceServiceTest, sampleTest){
+
 }
+
+//TEST_F(MaintenanceServiceTest, PassingInvalidNodeIdTest){
+//    auto topology = Topology::create();
+//    auto globalExecutionPlan = GlobalExecutionPlan::create();
+//    auto queryCatalog = std::make_shared<QueryCatalog>();
+//    auto queryRequestQueue = std::make_shared<QueryRequestQueue>(1);
+//    auto maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
+//
+//    EXPECT_THROW(maintenanceService->submitMaintenanceRequest(1,1), std::runtime_error);
+//}
+
+}//namespace NES
