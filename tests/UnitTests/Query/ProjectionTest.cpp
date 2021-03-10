@@ -330,9 +330,9 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
         // id
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), recordIndex);
     }
+    buffer.release();
     testSink->shutdown();
     plan->stop();
-    nodeEngine->stop();
 }
 
 TEST_F(ProjectionTest, projectionQueryWrongField) {
@@ -391,7 +391,6 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     }
     testSink->shutdown();
     plan->stop();
-    nodeEngine->stop();
 }
 
 TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
@@ -451,7 +450,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     }
     testSink->shutdown();
     plan->stop();
-    nodeEngine->stop();
+
 }
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
@@ -567,7 +566,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
     }
     // nodeEngine->stopQuery(1);
-    nodeEngine->stop();
+
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
@@ -738,5 +737,5 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     testSink->shutdown();
     testSource1->stop(false);
     testSource2->stop(false);
-    nodeEngine->stop();
+
 }
