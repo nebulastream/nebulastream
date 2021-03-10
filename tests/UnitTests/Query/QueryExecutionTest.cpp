@@ -319,6 +319,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     }
     testSink->shutdown();
     plan->stop();
+    buffer.release();
     nodeEngine->stop();
 }
 
@@ -378,6 +379,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     }
     testSink->shutdown();
     plan->stop();
+    buffer.release();
     nodeEngine->stop();
 }
 
@@ -538,6 +540,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
     }
     // nodeEngine->stopQuery(1);
+    testSink->shutdown();
     nodeEngine->stop();
 }
 
