@@ -24,6 +24,10 @@
 #include <future>
 #include <stdint.h>
 #include <util/BenchmarkUtils.hpp>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 namespace NES::Benchmarking {
 
@@ -122,6 +126,9 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
     }
     return throughputRet;
 }
+
+
+
 }// namespace NES::Benchmarking
 
 int main(int argc, char** argv) {
@@ -137,30 +144,31 @@ int main(int argc, char** argv) {
     std::vector<uint64_t> allServerThreads;
     std::vector<uint64_t> allDataSizesToBeSent;
 
-    NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 4 * 1024, 32 * 1024);
-    //    NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 4 * 1024, 8 * 1024 * 1024);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allSenderThreads, 1, 3, 1);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allServerThreads, 3, 5, 1);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, 1 * 1024 * 1024, 3 * 1024 * 1024,
-                                                                   1 * 1024 * 1024);
+    NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 4 * 1024, 2 * 1024 * 1024);
+    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allSenderThreads, 1, 6, 1);
+    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allServerThreads, 3, 6, 1);
+    NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allDataSizesToBeSent, 1 * 1024 * 1024 * 1024, (uint64_t)130 * 1024 * 1024 * 1024);
 
     std::string benchmarkName = "outputchannel";
     std::string benchmarkFolderName = "OutputChannel" + NES::Benchmarking::BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName))
         throw RuntimeException("Could not create folder " + benchmarkFolderName);
 
-    NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_DEBUG);
+    NES::setupLogging(benchmarkFolderName + "/" + (benchmarkName) + ".log", NES::LOG_WARNING);
 
     // Writing header to csv file
     std::ofstream benchmarkFile;
     benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
-    benchmarkFile << "DATASIZE,NUM_SERVER_THREADS,NUM_SENDER_THREADS,BUFFERSIZE,BUFFERSMANAGED,NUM_REPS,MEAN,STDDEV\n";
+    benchmarkFile << "DATASIZE,NUM_SERVER_THREADS,NUM_SENDER_THREADS,BUFFERSIZE,BUFFERSMANAGED,NUM_REPS,THROUGHPUT\n";
     benchmarkFile.close();
 
     uint64_t totalParamCombinations =
         allDataSizesToBeSent.size() * allServerThreads.size() * allSenderThreads.size() * allBufferSizes.size();
     uint64_t curComb = 0;
-    uint32_t startPort = 33333;
+
+    srand(time(NULL));
+    int32_t min = 60000, max = 60500;
+    int32_t startPort = rand() % (max - min) + min;
     std::vector<double> throughputVec;
 
     for (auto dataSize : allDataSizesToBeSent) {
@@ -168,11 +176,21 @@ int main(int argc, char** argv) {
             for (auto numSenderThreads : allSenderThreads) {
                 for (auto bufferSize : allBufferSizes) {
                     throughputVec.clear();
+                    int32_t port = startPort;// + curComb;
                     for (uint64_t i = 0; i < NUM_REPS; ++i) {
                         double throughput =
                             NES::Benchmarking::BM_TestMassiveSending(bufferSize, buffersManaged, numSenderThreads,
-                                                                     numServerThreads, dataSize, startPort + curComb, curComb);
+                                                                     numServerThreads, dataSize, port, curComb);
                         throughputVec.emplace_back(throughput);
+                    }
+                    // Writing whole throughput vector to csv to csv file
+                    for (auto throughput : throughputVec) {
+                        benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
+                        benchmarkFile << std::to_string(dataSize) << "," << std::to_string(numServerThreads) << ","
+                                  << std::to_string(numSenderThreads) << "," << std::to_string(bufferSize) << ","
+                                  << std::to_string(buffersManaged) << "," << std::to_string(NUM_REPS) << ","
+                                  << std::to_string(throughput) << "\n";
+                        benchmarkFile.close();
                     }
 
                     // After a single experiment was done NUM_REPS, it is now time to calculate mean, stddev
@@ -190,17 +208,10 @@ int main(int argc, char** argv) {
                     }
                     stddev = sqrt(sum / throughputVec.size());
 
-                    // Writing results to csv file
-                    benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
-                    benchmarkFile << std::to_string(dataSize) << "," << std::to_string(numServerThreads) << ","
-                                  << std::to_string(numSenderThreads) << "," << std::to_string(bufferSize) << ","
-                                  << std::to_string(buffersManaged) << "," << std::to_string(NUM_REPS) << ","
-                                  << std::to_string(mean) << "," << std::to_string(stddev) << "\n";
-                    benchmarkFile.close();
-
                     // Outputting current combination count and incrementing
                     std::cout << "Performed experiment [" << (++curComb) << "/" << totalParamCombinations
-                              << "] with [mean,stddev] of [" << mean << "," << stddev << "]\n";
+                              << "] with [size,serverThreads,senderThreads,buffSize,port] [" << dataSize << "," << numServerThreads << "," << numSenderThreads
+                              << "," << bufferSize << "," << port << "] and got [mean,stddev] of [" << mean << "," << stddev << "]\n";
                 }
             }
         }
