@@ -66,30 +66,30 @@ void RestEngine::setEndpoint(const std::string& value) {
     _listener = web::http::experimental::listener::http_listener(endpointBuilder.to_uri());
 }
 
-void RestEngine::handleGet(http_request message) {
-    auto path = getPath(message);
-    auto paths = splitPath(path);
+void RestEngine::handleGet(http_request request) {
+    auto path = getPath(request);
+    auto splittedPath = splitPath(path);
 
-    if (!paths.empty()) {
-        if (paths[0] == "query") {
-            queryController->handleGet(paths, message);
+    if (!splittedPath.empty()) {
+        if (splittedPath[0] == "query") {
+            queryController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "streamCatalog") {
-            streamCatalogController->handleGet(paths, message);
+        } else if (splittedPath[0] == "streamCatalog") {
+            streamCatalogController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "queryCatalog") {
-            queryCatalogController->handleGet(paths, message);
+        } else if (splittedPath[0] == "queryCatalog") {
+            queryCatalogController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "monitoring") {
-            monitoringController->handleGet(paths, message);
+        } else if (splittedPath[0] == "monitoring") {
+            monitoringController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "connectivity" && paths.size() == 1) {
-            connectivityController->handleGet(paths, message);
-        } else if (paths[0] == "topology") {
-            topologyController->handleGet(paths, message);
+        } else if (splittedPath[0] == "connectivity" && splittedPath.size() == 1) {
+            connectivityController->handleGet(splittedPath, request);
+        } else if (splittedPath[0] == "topology") {
+            topologyController->handleGet(splittedPath, request);
         }
     }
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
 }
 
 void RestEngine::handlePost(http_request message) {

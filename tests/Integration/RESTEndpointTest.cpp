@@ -22,6 +22,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <cpprest/http_client.h>
 #include <iostream>
 
 namespace NES {
@@ -93,7 +94,9 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     web::json::value getExecutionPlanJsonReturn;
 
     web::http::client::http_client getExecutionPlanClient("http://127.0.0.1:8083/v1/nes/query/execution-plan");
-    getExecutionPlanClient.request(web::http::methods::GET, _XPLATSTR("/"), getExecutionPlanRequestBody)
+    web::uri_builder builder(("/"));
+    builder.append_query(("queryId"), queryId);
+    getExecutionPlanClient.request(web::http::methods::GET, builder.to_string())
         .then([](const web::http::http_response& response) {
             NES_INFO("get first then");
             return response.extract_json();

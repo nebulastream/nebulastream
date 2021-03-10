@@ -78,7 +78,7 @@ class RestEngine : public BaseController {
 
     ~RestEngine();
 
-    void handleGet(http_request message);
+    void handleGet(http_request request);
     void handlePost(http_request message);
     void handleDelete(http_request message);
     void handlePut(http_request message);

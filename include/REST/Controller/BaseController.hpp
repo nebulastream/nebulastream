@@ -32,64 +32,64 @@ class BaseController {
     /**
      * @brief Handle the get request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handleGet(std::vector<utility::string_t> path, http_request message);
+    void handleGet(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief Handle the put request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handlePut(std::vector<utility::string_t> path, http_request message);
+    void handlePut(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief Handle the post request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handlePost(std::vector<utility::string_t> path, http_request message);
+    void handlePost(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief Handle the delete request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handleDelete(std::vector<utility::string_t> path, http_request message);
+    void handleDelete(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief Handle the patch request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handlePatch(std::vector<utility::string_t> path, http_request message);
+    void handlePatch(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief Handle the head request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handleHead(std::vector<utility::string_t> path, http_request message);
+    void handleHead(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief Handle trace request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handleTrace(std::vector<utility::string_t> path, http_request message);
+    void handleTrace(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief Handle unionWith request from the user
      * @param path : the resource path the user wanted to get
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handleMerge(std::vector<utility::string_t> path, http_request message);
+    void handleMerge(std::vector<utility::string_t> path, http_request request);
 
     /**
      * @brief set http response options
-     * @param message : the message from the user
+     * @param request : the message from the user
      */
-    void handleOptions(http_request message);
+    void handleOptions(http_request request);
 
     json::value responseNotImpl(const http::method& method, utility::string_t path);
     void internalServerErrorImpl(web::http::http_request message) const;
@@ -101,6 +101,19 @@ class BaseController {
     void badRequestImpl(const web::http::http_request& message, const web::json::value& detail) const;
 
     void handleException(const web::http::http_request& message, const std::exception& exc);
-    utility::string_t getPath(http_request& message);
+
+    /**
+     * @brief Get the URI path from the request
+     * @param request : the user request
+     * @return the path from the request
+     */
+    utility::string_t getPath(http_request& request);
+
+    /**
+     * @brief Get the parameters from the request if any
+     * @param request : the user request
+     * @return a map containing parameter keys and values
+     */
+    std::map<utility::string_t, utility::string_t> getParameters(http_request& request);
 };
 }// namespace NES

@@ -48,7 +48,7 @@ class ReconfigurationMessage {
      */
     explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type,
                                     ReconfigurablePtr instance = nullptr, std::any&& userdata = nullptr)
-        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr),
+        : type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr), parentPlanId(parentPlanId),
           userdata(std::move(userdata)) {
         refCnt.store(0);
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
@@ -64,7 +64,7 @@ class ReconfigurationMessage {
      */
     explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, uint64_t numThreads,
                                     ReconfigurablePtr instance, std::any&& userdata = nullptr, bool blocking = false)
-        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), postSyncBarrier(nullptr),
+        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), parentPlanId(parentPlanId),
           userdata(std::move(userdata)) {
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
@@ -95,8 +95,8 @@ class ReconfigurationMessage {
      * @param that
      */
     ReconfigurationMessage(const ReconfigurationMessage& that)
-        : parentPlanId(that.parentPlanId), type(that.type), instance(that.instance), syncBarrier(nullptr),
-          postSyncBarrier(nullptr), userdata(that.userdata) {
+        : type(that.type), instance(that.instance), syncBarrier(nullptr), postSyncBarrier(nullptr),
+          parentPlanId(that.parentPlanId), userdata(that.userdata) {
         // nop
     }
 
