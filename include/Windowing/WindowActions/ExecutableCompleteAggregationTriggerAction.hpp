@@ -16,6 +16,9 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableCompleteAggregationTriggerAction_HPP_
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -160,16 +163,20 @@ class ExecutableCompleteAggregationTriggerAction
 
         auto recordsPerWindow = std::vector<uint64_t>(windows.size(), 0);
 
-        // allocate partial final aggregates for each window
-        //because we trigger each second, there could be multiple windows ready
-
-        //FIXME: bad workaround because we don't consider the type of PartialAggregateType
-        int initialValue;
+        // if the aggregation function is Min, we should not initialize partialFinalAggregates with 0
+        int64_t initialValue;
         if (windowDefinition->getWindowAggregation()->getType()==WindowAggregationDescriptor::Min) {
-            initialValue = INT32_MAX;
+            if (auto type = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())){
+                initialValue = type->getUpperBound();
+            } else if (auto type = DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
+                initialValue = type->getUpperBound();
+            }
         } else {
             initialValue = 0;
         }
+
+        // allocate partial final aggregates for each window
+        //because we trigger each second, there could be multiple windows ready
         auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(),initialValue);
 
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
