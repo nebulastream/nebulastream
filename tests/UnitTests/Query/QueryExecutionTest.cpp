@@ -226,9 +226,7 @@ class TestSink : public SinkMedium {
     std::string toString() { return "Test_Sink"; }
 
     void shutdown() override {
-        std::unique_lock lock(m);
-        cleanupBuffers();
-    };
+    }
 
     ~TestSink() override {
         std::unique_lock lock(m);
@@ -242,7 +240,6 @@ class TestSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
-  private:
     void cleanupBuffers() {
         for (auto& buffer : resultBuffers) {
             buffer.release();
@@ -317,9 +314,9 @@ TEST_F(QueryExecutionTest, filterQuery) {
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         EXPECT_EQ(memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(buffer), recordIndex);
     }
+    buffer.release();
     testSink->shutdown();
     plan->stop();
-    buffer.release();
     nodeEngine->stop();
 }
 
@@ -625,6 +622,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 9);
     }
     nodeEngine->stopQuery(1);
+    testSink->cleanupBuffers();
     nodeEngine->stop();
 }
 
