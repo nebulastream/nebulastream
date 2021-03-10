@@ -72,15 +72,21 @@ class QueryExecutionTest : public testing::Test {
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case."); }
+    void TearDown() {
+        NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
+        nodeEngine->stop();
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test class."); }
 
     SchemaPtr testSchema;
+    NodeEngine::NodeEnginePtr nodeEngine;
 };
 
 /**
@@ -241,13 +247,14 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
     void cleanupBuffers() {
+        std::unique_lock lock(m);
         for (auto& buffer : resultBuffers) {
             buffer.release();
         }
         resultBuffers.clear();
     }
 
-    std::mutex m;
+    mutable std::recursive_mutex m;
     uint64_t expectedBuffer;
 
   public:
@@ -265,8 +272,6 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -317,12 +322,10 @@ TEST_F(QueryExecutionTest, filterQuery) {
     buffer.release();
     testSink->shutdown();
     plan->stop();
-    nodeEngine->stop();
 }
 
 TEST_F(QueryExecutionTest, projectionQuery) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
@@ -377,7 +380,6 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     testSink->shutdown();
     plan->stop();
     buffer.release();
-    nodeEngine->stop();
 }
 
 /**
@@ -387,8 +389,6 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     uint64_t millisecondOfallowedLateness = 8; /*second of allowedLateness*/
 
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -451,7 +451,7 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     auto& resultBuffer = testSink->get(0);
 
     EXPECT_EQ(resultBuffer.getWatermark(), 15);
-    nodeEngine->stop();
+
 }
 
 /**
@@ -460,8 +460,7 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
  * The source generates 2. buffers.
  */
 TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -536,8 +535,8 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         // value
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
     }
-    // nodeEngine->stopQuery(1);
-    nodeEngine->stop();
+    nodeEngine->stopQuery(1);
+    testSink->cleanupBuffers();
 }
 
 /**
@@ -546,8 +545,6 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
  * The source generates 2. buffers.
  */
 TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -623,12 +620,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     }
     nodeEngine->stopQuery(1);
     testSink->cleanupBuffers();
-    nodeEngine->stop();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
@@ -701,12 +695,10 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
-    nodeEngine->stop();
+    testSink->cleanupBuffers();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
@@ -787,15 +779,13 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     EXPECT_EQ(expectedContent2, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
 
     nodeEngine->stopQuery(1);
-    nodeEngine->stop();
+    testSink->cleanupBuffers();
 }
 
 /*
  * In this test we use a slide size that is equivalent to the slice size, to test if slicing works proper for small slides as well
  */
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
@@ -868,7 +858,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(1);
-    nodeEngine->stop();
+    testSink->cleanupBuffers();
 }
 
 // P1 = Source1 -> filter1
@@ -878,9 +868,6 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // created buffer per source * number of sources
     uint64_t expectedBuf = 20;
-
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                      nodeEngine->getQueryManager(), 1);
@@ -962,5 +949,6 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     testSink->shutdown();
     testSource1->stop(false);
     testSource2->stop(false);
-    nodeEngine->stop();
+    testSink->cleanupBuffers();
+
 }
