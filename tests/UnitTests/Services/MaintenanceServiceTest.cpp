@@ -16,13 +16,10 @@
 //
 // Created by balint on 10.03.21.
 //
-
-#include <Catalogs/QueryCatalog.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <WorkQueues/QueryRequestQueue.hpp>
+
 #include <gtest/gtest.h>
 namespace NES{
 class MaintenanceServiceTest : public ::testing::Test {

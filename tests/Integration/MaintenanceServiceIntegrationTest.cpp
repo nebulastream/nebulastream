@@ -318,9 +318,5 @@ TEST_F(MaintenanceServiceIntegrationTest, DISABLED_defTest) {
     ASSERT_EQ(parentQueryIds.front(), queryId);
 
     }
-TEST_F(MaintenanceServiceTest, testForDefaultLogicalStream) {
-    auto allLogicalStreams = crd->getStreamCatalog()->getAllLogicalStream();
-    ASSERT_EQ(allLogicalStreams.size(),0);
-}
 
 }//namespace NES
