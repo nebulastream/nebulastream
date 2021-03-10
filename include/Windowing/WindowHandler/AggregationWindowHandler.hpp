@@ -38,7 +38,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         uint64_t id)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
-          id(id), isRunning(false) {
+          id(id), isRunning(false), windowStateVariable(nullptr) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
@@ -253,8 +253,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         this->windowManager =
             std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness(), id);
         // Initialize StateVariable
+        auto defaultCallback = [](const KeyType&) {
+          return new Windowing::WindowSliceStore<PartialAggregateType>(0);
+        };
         this->windowStateVariable =
-            StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+            StateManager::instance().registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>("window", defaultCallback);
         executableWindowAction->setup(pipelineExecutionContext);
         return true;
     }
