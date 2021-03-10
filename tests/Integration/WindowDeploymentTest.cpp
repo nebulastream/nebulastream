@@ -1846,7 +1846,6 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
         }
     };
 
-    // FIXME: the result is {1000, 2000, 1, 0}
     std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
