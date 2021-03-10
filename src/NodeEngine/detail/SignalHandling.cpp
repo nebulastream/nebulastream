@@ -62,7 +62,7 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
  * @param listener the error listener to remove system-wide
  */
 void removeGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
-    NES_DEBUG("installGlobalErrorListener");
+    NES_DEBUG("removeGlobalErrorListener");
     std::unique_lock lock(globalErrorListenerMutex);
     for (auto it = globalErrorListeners.begin(); it != globalErrorListeners.end(); ++it) {
         if (it->get() == listener.get()) {

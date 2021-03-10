@@ -53,9 +53,9 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, Query
 
 PipelineExecutionContext::~PipelineExecutionContext() {
     NES_DEBUG("~PipelineExecutionContext() " << toString());
-    if (localBufferPool) {
-        localBufferPool->destroy();
-    }
+//    if (localBufferPool) {
+//        localBufferPool->destroy();
+//    }
 }
 
 TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return localBufferPool->getBuffer(); }

@@ -606,10 +606,12 @@ void assertKiller() {
             : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager),
                          std::move(compiler), nodeEngineId) {}
 
-        void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
+        void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
+            stop(false);
             EXPECT_TRUE(strcmp(exception->what(),
                                "Failed assertion on false error message: this will fail now with a NesRuntimeException")
                         == 0);
+            NodeEngine::onFatalException(std::move(exception), std::move(callstack));
         }
     };
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31340);
@@ -617,7 +619,7 @@ void assertKiller() {
 }
 }// namespace detail
 
-TEST_F(EngineTest, testExceptionCrash) { EXPECT_EXIT(detail::assertKiller(), testing::ExitedWithCode(1), ""); }
+TEST_F(EngineTest, DISABLED_testExceptionCrash) { EXPECT_EXIT(detail::assertKiller(), testing::ExitedWithCode(1), ""); }
 
 TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {

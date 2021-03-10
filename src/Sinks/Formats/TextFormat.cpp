@@ -39,7 +39,6 @@ std::vector<NodeEngine::TupleBuffer> TextFormat::getData(NodeEngine::TupleBuffer
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("TextFormat::getData: write watermark-only buffer");
-        buffers.push_back(inputBuffer);
         return buffers;
     }
 

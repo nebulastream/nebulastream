@@ -55,6 +55,10 @@ ZmqServer::~ZmqServer() { stop(); }
 
 bool ZmqServer::stop() {
     // Do not change the shutdown sequence!
+    auto expected = true;
+    if (!isRunning.compare_exchange_strong(expected, false)) {
+        return false;
+    }
     NES_INFO("ZmqServer: Initiating shutdown");
     if (!zmqContext) {
         return false;// start() not called
