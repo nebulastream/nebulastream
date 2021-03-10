@@ -30,13 +30,13 @@ jobs:
         uses: styfle/cancel-workflow-action@0.7.0
         with:
           access_token: ${{ github.token }}
-      - name: Run tests
-        run: |
-          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
-      - name: docker cleanup
-        if: ${{ always() }}
-        run: |
-          docker rm -f ${{ github.run_id }}_build
+#      - name: Run tests
+#        run: |
+#          docker run --name ${{ github.run_id }}_build -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nebulastream/nes-build-image:latest
+#      - name: docker cleanup
+#        if: ${{ always() }}
+#        run: |
+#          docker rm -f ${{ github.run_id }}_build
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
@@ -49,7 +49,7 @@ jobs:
 
   release:
     runs-on: [self-hosted, linux, X64, Build]
-    if: github.ref == 'refs/heads/master'
+#    if: github.ref == 'refs/heads/master'
     needs: build-job
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
@@ -77,7 +77,7 @@ jobs:
               #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
               #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
               echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
+              docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:multi-arch --platform=linux/amd64,linux/arm64 --push
               echo "Pushed the build image"
               docker logout
           else
@@ -90,7 +90,7 @@ jobs:
               echo "Found changes done to devImage"
               cd docker/devImage/
               echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-              docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
+              docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:multi-arch --platform=linux/amd64,linux/arm64 --push
               echo "Pushed the dev image"
               docker logout
           else
@@ -103,7 +103,7 @@ jobs:
           cd $GITHUB_WORKSPACE
           echo "Releasing new executable image with version $nes_version and latest"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --platform=linux/amd64,linux/arm64 --push
+          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable -t nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:multi-arch --platform=linux/amd64,linux/arm64 --push
           echo "Pushed the execution image"
           docker logout
       - name: Release new version
@@ -111,7 +111,7 @@ jobs:
           CI_SECRET: ${{ secrets.CI_SECRET }}
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt
-          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+          docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:multi-arch
       # Find the PR associated with this push, if there is one.
       - uses: jwalton/gh-find-current-pr@v1
         id: findPr
