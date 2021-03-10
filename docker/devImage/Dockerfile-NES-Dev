@@ -1,4 +1,4 @@
-FROM nebulastream/nes-build-image:latest
+FROM nebulastream/nes-build-image:multi-arch
 
 RUN DEBIAN_FRONTEND="noninteractive" apt-get update -qq && apt-get install -qq \
   rsync \
