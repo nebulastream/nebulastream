@@ -93,7 +93,6 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
     this->queryManager = std::move(queryManager);
     this->bufferManager = std::move(bufferManager);
     this->partitionManager = std::move(partitionManager);
-    isReleased = false;
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
@@ -106,10 +105,11 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
     } else {
         NES_DEBUG("NodeEngine(): thread pool successfully started");
     }
+    isRunning.store(true);
 }
 
 NodeEngine::~NodeEngine() {
-    NES_TRACE("~NodeEngine()");
+    NES_DEBUG("Destroying NodeEngine()");
     stop();
     removeGlobalErrorListener(inherited2::shared_from_this());
 }
@@ -332,12 +332,15 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO @Steffen: does it make sense to have force stop still?
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
     //TODO @all: error handling, e.g., is it an error if the query is stopped but not undeployed? @Steffen?
-    std::unique_lock lock(engineMutex);
 
-    if (isReleased) {
+
+    bool expected = true;
+    if (!isRunning.compare_exchange_strong(expected, false)) {
         NES_WARNING("NodeEngine::stop: engine already stopped");
         return true;
     }
+    NES_WARNING("NodeEngine::stop: going to stop the node engine");
+    std::unique_lock lock(engineMutex);
     bool withError = false;
 
     // release all deployed queries
@@ -402,7 +405,6 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     bufferManager->clear();
     bufferManager.reset();
 
-    isReleased = true;
     return !withError;
 }
 
@@ -513,7 +515,7 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onFatalException: exception=" << exception->what() << " callstack=\n" << callstack);
+    NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
     std::cerr << "NodeEngine failed fatally" << std::endl;
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Exception: " << exception->what() << std::endl;

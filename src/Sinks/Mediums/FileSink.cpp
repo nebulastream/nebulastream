@@ -102,7 +102,7 @@ bool FileSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     NES_DEBUG("FileSink::getData: write data to file=" << filePath);
     auto dataBuffers = sinkFormat->getData(inputBuffer);
 
-    for (auto buffer : dataBuffers) {
+    for (auto& buffer : dataBuffers) {
         NES_DEBUG("FileSink::getData: write buffer of size " << buffer.getNumberOfTuples());
         if (sinkFormat->getSinkFormat() == NES_FORMAT) {
             outputFile.write((char*) buffer.getBuffer(),

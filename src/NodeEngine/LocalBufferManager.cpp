@@ -34,12 +34,17 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
     }
 }
 
-LocalBufferManager::~LocalBufferManager() { destroy(); }
+LocalBufferManager::~LocalBufferManager() {
+    // nop
+}
 
 void LocalBufferManager::destroy() {
     NES_DEBUG("Destroying LocalBufferManager");
     std::unique_lock lock(mutex);
     auto ownedBufferManager = bufferManager.lock();
+    NES_ASSERT2_FMT(numberOfReservedBuffers == exclusiveBuffers.size(),
+                    "one or more buffers were not returned to the pool " << exclusiveBuffers.size() << " but expected "
+                                                                         << numberOfReservedBuffers);
     NES_DEBUG("buffers before=" << ownedBufferManager->getAvailableBuffers()
                                 << " size of local buffers=" << exclusiveBuffers.size());
     while (!exclusiveBuffers.empty()) {

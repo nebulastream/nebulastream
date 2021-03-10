@@ -36,6 +36,9 @@ void BufferManager::clear() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
     auto success = true;
     NES_DEBUG("Shutting down Buffer Manager " << this);
+    for (auto& localPool : localBufferPools) {
+        localPool->destroy();
+    }
     localBufferPools.clear();
     if (allBuffers.size() != availableBuffers.size()) {
         NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers " << availableBuffers.size());
