@@ -27,7 +27,7 @@ StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog)
     NES_DEBUG("StreamCatalogController()");
 }
 
-void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
+void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);
@@ -38,13 +38,13 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         json::value result{};
         if (allLogicalStreamAsString.empty()) {
             NES_DEBUG("No Logical Stream Found");
-            resourceNotFoundImpl(message);
+            resourceNotFoundImpl(request);
             return;
         } else {
             for (auto const& [key, val] : allLogicalStreamAsString) {
                 result[key] = json::value::string(val);
             }
-            successMessageImpl(message, result);
+            successMessageImpl(request, result);
             return;
         }
     } else if (path[1] == "allPhysicalStream") {
@@ -67,7 +67,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             json::value result{};
             if (allPhysicalStream.empty()) {
                 NES_DEBUG("No Physical Stream Found");
-                resourceNotFoundImpl(message);
+                resourceNotFoundImpl(request);
                 return;
             } else {
                 std::vector<json::value> allStream = {};
@@ -75,22 +75,22 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                     allStream.push_back(json::value::string(physicalStream->toString()));
                 }
                 result["Physical Streams"] = json::value::array(allStream);
-                successMessageImpl(message, result);
+                successMessageImpl(request, result);
                 return;
             }
         } catch (const std::exception& exc) {
             NES_ERROR("StreamCatalogController: handleGet -allPhysicalStream: Exception occurred while building the "
                       "query plan for user request:"
                       << exc.what());
-            handleException(message, exc);
+            handleException(request, exc);
             return;
         } catch (...) {
             RuntimeUtils::printStackTrace();
-            internalServerErrorImpl(message);
+            internalServerErrorImpl(request);
             return;
         }
     } else {
-        resourceNotFoundImpl(message);
+        resourceNotFoundImpl(request);
     }
 }
 
@@ -180,7 +180,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
     }
 }
 
-void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request message) {
+void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request request) {
 
     //Extract parameters if any
     auto parameters = getParameters(request);
@@ -205,7 +205,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
             json::value result{};
             if (added) {
                 result["Success"] = json::value::boolean(added);
-                successMessageImpl(message, result);
+                successMessageImpl(request, result);
             } else {
                 throw std::invalid_argument("Could not remove logical stream " + streamName);
             }
@@ -215,15 +215,15 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
             NES_ERROR("StreamCatalogController: handleDelete -deleteLogicalStream: Exception occurred while building the "
                       "query plan for user request."
                       << exc.what());
-            handleException(message, exc);
+            handleException(request, exc);
             return;
         } catch (...) {
             RuntimeUtils::printStackTrace();
-            internalServerErrorImpl(message);
+            internalServerErrorImpl(request);
             return;
         }
     } else {
-        resourceNotFoundImpl(message);
+        resourceNotFoundImpl(request);
     }
 }
 
