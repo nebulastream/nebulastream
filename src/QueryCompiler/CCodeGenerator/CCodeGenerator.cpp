@@ -1375,10 +1375,9 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         createAggregateCall =
             call("Windowing::ExecutableCountAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
     } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Min) {
-
         createAggregateCall = call("Windowing::ExecutableMinAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
     } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Max) {
-        createAggregateCall = call("Windowing::ExecutableManAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
+        createAggregateCall = call("Windowing::ExecutableMaxAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
     } else {
         NES_FATAL_ERROR("Aggregation Handler: aggregation=" << aggregation->getType() << " not implemented");
     }
