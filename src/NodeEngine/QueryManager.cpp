@@ -601,9 +601,9 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
     // dispatch buffer as task
     auto it = runningQEPs.find(nextPipeline->getQepParentId());
     if (it != runningQEPs.end() && it->second->getStatus() == Execution::Running) {
-        taskQueue.emplace_back(std::move(nextPipeline), buffer);
         NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline "
-                                                                 << nextPipeline << " inputBuffer " << buffer);
+                                                                 << nextPipeline->getPipeStageId() << " inputBuffer " << buffer);
+        taskQueue.emplace_back(std::move(nextPipeline), buffer);
         cv.notify_all();
     } else {
         NES_ERROR("Pushed task for non running pipeline " << it->second->getQuerySubPlanId());

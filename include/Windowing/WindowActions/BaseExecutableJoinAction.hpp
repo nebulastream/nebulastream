@@ -46,7 +46,8 @@ class BaseExecutableJoinAction {
     }
 
     virtual void destroy() {
-        phantom.reset();
+        NES_DEBUG("Destroy phantom for cnt = " << phantom.use_count() << " weak ptr=" << weakExecutionContext.use_count());
+//        phantom.reset();
     }
 
   protected:
