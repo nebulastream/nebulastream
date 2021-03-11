@@ -22,10 +22,13 @@
 namespace NES {
 const std::chrono::duration<int64_t> MAX_WAIT_FOR_BROKER_CONNECT = std::chrono::seconds(20);
 MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId,
-                                     uint64_t maxBufferedMSGs) {
+                                     uint64_t maxBufferedMSGs, std::string topic, int qualityOfService) {
     this->useAsyncClient = useAsyncClient;
+    this->topic = topic;
+    this->qualityOfService = qualityOfService;
     if (useAsyncClient) {
         asyncClient = std::make_shared<mqtt::async_client>(address, clientId, maxBufferedMSGs);
+        sendTopic = std::make_shared<mqtt::topic>(*asyncClient, topic, qualityOfService, true);
     } else {
         syncClient = std::make_shared<mqtt::client>(address, clientId, maxBufferedMSGs);
     }
@@ -51,10 +54,9 @@ void MQTTClientWrapper::disconnect() {
     }
 }
 
-void MQTTClientWrapper::sendPayload(std::string payload, std::string topic, int qualityOfService) {
+void MQTTClientWrapper::sendPayload(std::string payload) {
     if (asyncClient) {
-        mqtt::topic sendTopic(*asyncClient, topic, qualityOfService, true);
-        sendTopic.publish(std::move(payload));
+        sendTopic->publish(std::move(payload));
     } else {
         auto pubmsg = mqtt::make_message(topic, payload);
         pubmsg->set_qos(qualityOfService);

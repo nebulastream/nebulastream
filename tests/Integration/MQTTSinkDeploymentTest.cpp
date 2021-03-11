@@ -73,6 +73,9 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
     NES_INFO("QueryDeploymentTest: Start coordinator");
+    // Here the default schema (default_logical) is already initialized (NesCoordinator calls 'StreamCatalog'
+    // it is later used in TypeInferencePhase.cpp via 'streamCatalog->getSchemaForLogicalStream(streamName);' to set
+    // the new sources schema to the default_logical schema
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
@@ -99,6 +102,9 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("127.0.0.1:1883", "nes-mqtt-test-client",
                 "v1/devices/me/telemetry", "rfRqLGZRChg8eS30PEeR", 5, MQTTSink::milliseconds, 500, MQTTSink::atLeastOnce, true));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    // From here on at some point the DataSource.cpp 'runningRoutine()' function is called
+    // this function, because "default_logical" is used, uses 'DefaultSource.cpp', which create a TupleBuffer with 10 id:value
+    // pairs, each being 1,1
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
