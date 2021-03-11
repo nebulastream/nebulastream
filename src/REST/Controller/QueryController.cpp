@@ -184,7 +184,7 @@ void QueryController::handleDelete(std::vector<utility::string_t> path, http_req
 
         try {
             //Prepare Input query from user string
-            QueryId queryId = std::stoi(path[2]);
+            QueryId queryId = std::stoi(param->second);
 
             bool success = queryService->validateAndQueueStopRequest(queryId);
             //Prepare the response
