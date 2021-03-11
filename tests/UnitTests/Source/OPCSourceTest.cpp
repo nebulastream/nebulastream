@@ -194,6 +194,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     NES_DEBUG("OPCSOURCETEST::TEST_F(OPCSourceTest, OPCSourceValue) expected value is: " << expected
                                                                                          << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
+    tuple_buffer->release();
     stopServer();
 }
 }// namespace NES
