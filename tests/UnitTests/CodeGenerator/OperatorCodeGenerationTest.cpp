@@ -540,19 +540,18 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
                                                                               input_schema, windowOutputSchema, false);
 
         auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage1, executionContext, 1, nextPipeline,
-                                                                              input_schema, windowOutputSchema, false);
-
+                                                                               input_schema, windowOutputSchema, false);
 
         ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
         ASSERT_TRUE(firstPipeline->start());
-//        ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-//        ASSERT_TRUE(nextPipeline->start());
-//        stage1->setup(*executionContext.get());
-//        stage1->start(*executionContext.get());
-//        stage2->setup(*executionContext.get());
-//        stage2->start(*executionContext.get());
-        windowHandler->start();
-        windowHandler->setup(executionContext);
+        ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
+        ASSERT_TRUE(nextPipeline->start());
+        //        stage1->setup(*executionContext.get());
+        //        stage1->start(*executionContext.get());
+        //        stage2->setup(*executionContext.get());
+        //        stage2->start(*executionContext.get());
+        //        windowHandler->start();
+        //        windowHandler->setup(executionContext);
 
         /* prepare input tuple buffer */
         auto inputBuffer = source->receiveData().value();
@@ -628,15 +627,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
 
     ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
     ASSERT_TRUE(firstPipeline->start());
-    //        ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-    //        ASSERT_TRUE(nextPipeline->start());
-    stage1->setup(*executionContext.get());
-    stage1->start(*executionContext.get());
-    //        stage2->setup(*executionContext.get());
-    //        stage2->start(*executionContext.get());
-    windowHandler->start();
-    windowHandler->setup(executionContext);
-    windowHandler->setup(executionContext);
+    ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
+    ASSERT_TRUE(nextPipeline->start());
+    //    stage1->setup(*executionContext.get());
+    //    stage1->start(*executionContext.get());
+    //    //        stage2->setup(*executionContext.get());
+    //    //        stage2->start(*executionContext.get());
+    //    windowHandler->start();
+    //    windowHandler->setup(executionContext);
+    //    windowHandler->setup(executionContext);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
