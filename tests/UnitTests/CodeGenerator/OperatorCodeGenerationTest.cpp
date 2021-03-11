@@ -87,20 +87,15 @@ class OperatorCodeGenerationTest : public testing::Test {
     void SetUp() {
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
         auto streamConf = PhysicalStreamConfig::createEmpty();
-        this->nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() {
-        nodeEngine->stop();
-        nodeEngine = nullptr;
         NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
-
-    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
 };
 
 class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
@@ -345,7 +340,7 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
 TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
@@ -384,7 +379,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -433,7 +428,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -453,7 +448,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationScanOperator) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -487,244 +482,12 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
 }
 
 /**
- * @brief This test generates a window assigner
- */
-TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowIngestionTime) {
-
-    try {
-        /* prepare objects for test */
-        auto streamConf = PhysicalStreamConfig::createEmpty();
-        auto nodeEngine = this->nodeEngine;
-        NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-        auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-        auto codeGenerator = CCodeGenerator::create();
-        auto context1 = PipelineContext::create();
-        context1->pipelineName = "1";
-        auto input_schema = source->getSchema();
-
-        codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
-        WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
-
-        auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
-        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-        auto windowDefinition =
-            LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64), sum,
-                                            TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
-                                            DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
-        auto aggregate =
-            TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-        codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
-
-        /* compile code to pipeline stage */
-        auto stage1 = codeGenerator->compile(context1);
-
-        auto context2 = PipelineContext::create();
-        context2->pipelineName = "1";
-        codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-        auto stage2 = codeGenerator->compile(context2);
-
-        auto windowOutputSchema = Schema::create()
-                                      ->addField(createField("_$start", UINT64))
-                                      ->addField(createField("_$end", UINT64))
-                                      ->addField("window$key", UINT64)
-                                      ->addField("window$value", UINT64);
-        auto windowHandler =
-            createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
-                windowDefinition, windowOutputSchema);
-        auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
-
-        auto executionContext = std::make_shared<TestPipelineExecutionContext>(
-            nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowOperatorHandler);
-
-        auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(2, 0, stage2, executionContext, 1, nullptr,
-                                                                              input_schema, windowOutputSchema, false);
-
-        auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage1, executionContext, 1, nextPipeline,
-                                                                               input_schema, windowOutputSchema, false);
-
-        ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-        ASSERT_TRUE(firstPipeline->start());
-        ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-        ASSERT_TRUE(nextPipeline->start());
-        //        stage1->setup(*executionContext.get());
-        //        stage1->start(*executionContext.get());
-        //        stage2->setup(*executionContext.get());
-        //        stage2->start(*executionContext.get());
-        //        windowHandler->start();
-        //        windowHandler->setup(executionContext);
-
-        /* prepare input tuple buffer */
-        auto inputBuffer = source->receiveData().value();
-
-        /* execute Stage */
-        // auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowHandler, nullptr);
-        stage1->execute(inputBuffer, *executionContext.get(), wctx);
-
-        //check partial aggregates in window state
-        auto stateVar = windowHandler->getTypedWindowState();
-        auto keyZero = stateVar->get(0);
-        EXPECT_EQ(keyZero.value()->getPartialAggregates()[0], 5);
-        EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
-
-        nextPipeline->stop();
-    } catch (std::exception& e) {
-        NES_ERROR(e.what());
-        ASSERT_TRUE(false);
-    }
-}
-
-/**
- * @brief This test generates a window assigner
- */
-TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTime) {
-    /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-    auto codeGenerator = CCodeGenerator::create();
-    auto context1 = PipelineContext::create();
-
-    auto input_schema = source->getSchema();
-
-    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
-
-    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
-    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("window$key", BasicType::UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value")), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
-
-    /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1);
-
-    auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(context2);
-
-    auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("_$start", UINT64))
-                                  ->addField(createField("_$end", UINT64))
-                                  ->addField("window$key", UINT64)
-                                  ->addField("window$value", UINT64);
-    auto windowHandler =
-        createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
-            windowDefinition, windowOutputSchema);
-    auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
-
-    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                           nodeEngine->getBufferManager(), windowOperatorHandler);
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, 1, nullptr,
-                                                                          input_schema, windowOutputSchema);
-
-    auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage1, executionContext, 1, nextPipeline,
-                                                                           input_schema, windowOutputSchema, false);
-
-    ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-    ASSERT_TRUE(firstPipeline->start());
-    ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-    ASSERT_TRUE(nextPipeline->start());
-    //    stage1->setup(*executionContext.get());
-    //    stage1->start(*executionContext.get());
-    //    //        stage2->setup(*executionContext.get());
-    //    //        stage2->start(*executionContext.get());
-    //    windowHandler->start();
-    //    windowHandler->setup(executionContext);
-    //    windowHandler->setup(executionContext);
-
-    /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData().value();
-
-    /* execute Stage */
-    stage1->execute(inputBuffer, *executionContext.get(), wctx);
-
-    //check partial aggregates in window state
-    auto stateVar = windowHandler->getTypedWindowState();
-    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
-    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
-}
-
-/**
- * @brief This test generates a window assigner
- */
-TEST_F(OperatorCodeGenerationTest, codeGenerationCompleteWindowEventTimeWithTimeUnit) {
-    /* prepare objects for test */
-    auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
-    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
-    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
-    auto codeGenerator = CCodeGenerator::create();
-    auto context1 = PipelineContext::create();
-
-    auto input_schema = source->getSchema();
-
-    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
-    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
-
-    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
-    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-    auto windowDefinition = LogicalWindowDefinition::create(
-        Attribute("window$key", BasicType::UINT64), sum,
-        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value"), Seconds()), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
-    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
-
-    /* compile code to pipeline stage */
-    auto stage1 = codeGenerator->compile(context1);
-
-    auto context2 = PipelineContext::create();
-    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
-    auto stage2 = codeGenerator->compile(context2);
-
-    auto windowOutputSchema = Schema::create()
-                                  ->addField(createField("_$start", UINT64))
-                                  ->addField(createField("_$end", UINT64))
-                                  ->addField("window$key", UINT64)
-                                  ->addField("window$value", UINT64);
-
-    // init window handler
-
-    auto windowHandler =
-        createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
-            windowDefinition, windowOutputSchema);
-    auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
-    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                           nodeEngine->getBufferManager(), windowOperatorHandler);
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, 1, nullptr,
-                                                                          input_schema, windowOutputSchema);
-    windowHandler->setup(executionContext);
-
-    /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData().value();
-
-    /* execute Stage */
-    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
-                                                                       nodeEngine->getBufferManager(), windowOperatorHandler);
-    stage1->setup(*queryContext.get());
-    stage1->start(*queryContext.get());
-    stage1->execute(inputBuffer, *queryContext.get(), wctx);
-
-    //check partial aggregates in window state
-    auto stateVar =
-        windowHandler->as<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>()->getTypedWindowState();
-    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
-    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
-}
-
-/**
  * @brief This test generates a window slicer
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -794,7 +557,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -927,7 +690,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
     /* prepare objects for test */
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
     auto schema = Schema::create()
                       ->addField(createField("window$start", UINT64))
                       ->addField(createField("window$end", UINT64))
@@ -964,7 +727,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1013,7 +776,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1075,7 +838,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     /* prepare objects for test */
     auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
@@ -1139,7 +902,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     /* prepare objects for test */
     auto streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = this->nodeEngine;
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
     auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = CCodeGenerator::create();
@@ -1241,5 +1004,238 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
         }
     }
     EXPECT_EQ(results.size(), 20);
+}
+
+
+
+/**
+ * @brief This test generates a window assigner
+ */
+TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestionTime) {
+
+    try {
+        /* prepare objects for test */
+        auto streamConf = PhysicalStreamConfig::createEmpty();
+        auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+        NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+        auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+        auto codeGenerator = CCodeGenerator::create();
+        auto context1 = PipelineContext::create();
+        context1->pipelineName = "1";
+        auto input_schema = source->getSchema();
+
+        codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
+        WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+
+        auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+        auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+        auto windowDefinition =
+            LogicalWindowDefinition::create(Attribute("window$key", BasicType::UINT64), sum,
+                                            TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                                            DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+        auto aggregate =
+            TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+        codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
+
+        /* compile code to pipeline stage */
+        auto stage1 = codeGenerator->compile(context1);
+
+        auto context2 = PipelineContext::create();
+        context2->pipelineName = "1";
+        codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
+        auto stage2 = codeGenerator->compile(context2);
+
+        auto windowOutputSchema = Schema::create()
+            ->addField(createField("_$start", UINT64))
+            ->addField(createField("_$end", UINT64))
+            ->addField("window$key", UINT64)
+            ->addField("window$value", UINT64);
+        auto windowHandler =
+            createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
+                windowDefinition, windowOutputSchema);
+        auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
+
+        auto executionContext = std::make_shared<TestPipelineExecutionContext>(
+            nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowOperatorHandler);
+
+        auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(2, 0, stage2, executionContext, 1, nullptr,
+                                                                              input_schema, windowOutputSchema, false);
+
+        auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage1, executionContext, 1, nextPipeline,
+                                                                               input_schema, windowOutputSchema, false);
+
+        ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
+        ASSERT_TRUE(firstPipeline->start());
+        ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
+        ASSERT_TRUE(nextPipeline->start());
+        stage1->setup(*executionContext.get());
+        stage1->start(*executionContext.get());
+        stage2->setup(*executionContext.get());
+        stage2->start(*executionContext.get());
+        windowHandler->start();
+        windowHandler->setup(executionContext);
+
+        /* prepare input tuple buffer */
+        auto inputBuffer = source->receiveData().value();
+
+        /* execute Stage */
+        // auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowHandler, nullptr);
+        stage1->execute(inputBuffer, *executionContext.get(), wctx);
+
+        //check partial aggregates in window state
+        auto stateVar = windowHandler->getTypedWindowState();
+        auto keyZero = stateVar->get(0);
+        EXPECT_EQ(keyZero.value()->getPartialAggregates()[0], 5);
+        EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+
+    } catch (std::exception& e) {
+        NES_ERROR(e.what());
+        ASSERT_TRUE(false);
+    }
+}
+
+/**
+ * @brief This test generates a window assigner
+ */
+TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTime) {
+    /* prepare objects for test */
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+
+    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("window$key", BasicType::UINT64), sum,
+        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value")), Seconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+    auto aggregate =
+        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1);
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2);
+
+    auto windowOutputSchema = Schema::create()
+        ->addField(createField("_$start", UINT64))
+        ->addField(createField("_$end", UINT64))
+        ->addField("window$key", UINT64)
+        ->addField("window$value", UINT64);
+    auto windowHandler =
+        createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
+            windowDefinition, windowOutputSchema);
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
+
+    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                           nodeEngine->getBufferManager(), windowOperatorHandler);
+
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(2, 0, stage2, executionContext, 1, nullptr,
+                                                                          input_schema, windowOutputSchema, false);
+
+    auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage1, executionContext, 1, nextPipeline,
+                                                                           input_schema, windowOutputSchema, false);
+
+    ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
+    ASSERT_TRUE(firstPipeline->start());
+    ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
+    ASSERT_TRUE(nextPipeline->start());
+    stage1->setup(*executionContext.get());
+    stage1->start(*executionContext.get());
+    stage2->setup(*executionContext.get());
+    stage2->start(*executionContext.get());
+    windowHandler->start();
+    windowHandler->setup(executionContext);
+
+    /* prepare input tuple buffer */
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    stage1->execute(inputBuffer, *executionContext.get(), wctx);
+
+    //check partial aggregates in window state
+    auto stateVar = windowHandler->getTypedWindowState();
+    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
+    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+}
+
+/**
+ * @brief This test generates a window assigner
+ */
+TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTimeWithTimeUnit) {
+    /* prepare objects for test */
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+    NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = CCodeGenerator::create();
+    auto context1 = PipelineContext::create();
+
+    auto input_schema = source->getSchema();
+
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context1);
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+
+    auto sum = SumAggregationDescriptor::on(Attribute("window$value", BasicType::UINT64));
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+    auto windowDefinition = LogicalWindowDefinition::create(
+        Attribute("window$key", BasicType::UINT64), sum,
+        TumblingWindow::of(TimeCharacteristic::createEventTime(Attribute("window$value"), Seconds()), Seconds(10)),
+        DistributionCharacteristic::createCompleteWindowType(), 1, trigger, triggerAction, 0);
+    auto aggregate =
+        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
+
+    /* compile code to pipeline stage */
+    auto stage1 = codeGenerator->compile(context1);
+
+    auto context2 = PipelineContext::create();
+    codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), context2);
+    auto stage2 = codeGenerator->compile(context2);
+
+    auto windowOutputSchema = Schema::create()
+        ->addField(createField("_$start", UINT64))
+        ->addField(createField("_$end", UINT64))
+        ->addField("window$key", UINT64)
+        ->addField("window$value", UINT64);
+
+    // init window handler
+
+    auto windowHandler =
+        createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
+            windowDefinition, windowOutputSchema);
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDefinition, windowOutputSchema, windowHandler);
+    auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                           nodeEngine->getBufferManager(), windowOperatorHandler);
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, 1, nullptr,
+                                                                          input_schema, windowOutputSchema);
+    windowHandler->setup(executionContext);
+
+    /* prepare input tuple buffer */
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                       nodeEngine->getBufferManager(), windowOperatorHandler);
+    stage1->setup(*queryContext.get());
+    stage1->start(*queryContext.get());
+    stage1->execute(inputBuffer, *queryContext.get(), wctx);
+
+    //check partial aggregates in window state
+    auto stateVar =
+        windowHandler->as<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>()->getTypedWindowState();
+    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
+    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
 }// namespace NES
