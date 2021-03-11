@@ -17,14 +17,14 @@
 #ifndef SPLIT_LOGICAL_OPERATOR_NODE_HPP
 #define SPLIT_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/ExchangeOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
 
 namespace NES {
 
 /**
  * @brief broadcast operator is used for efficiently broadcasting the tuples form its upstream operator to all its downstream operators.
  */
-class BroadcastLogicalOperatorNode : public ExchangeOperatorNode {
+class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public LogicalOperatorNode {
   public:
     explicit BroadcastLogicalOperatorNode(OperatorId id);
     ~BroadcastLogicalOperatorNode() = default;

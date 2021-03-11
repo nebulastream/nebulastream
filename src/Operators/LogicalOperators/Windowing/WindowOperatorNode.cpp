@@ -19,8 +19,6 @@
 namespace NES {
 
 WindowOperatorNode::WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : windowDefinition(windowDefinition), UnaryOperatorNode(id) {}
-
-Windowing::LogicalWindowDefinitionPtr WindowOperatorNode::getWindowDefinition() const { return windowDefinition; }
+    : OperatorNode(id), AbstractWindowOperator(windowDefinition), LogicalUnaryOperatorNode(id) {}
 
 }// namespace NES

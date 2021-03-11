@@ -15,12 +15,12 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 
 namespace NES {
 
 UnaryOperatorNode::UnaryOperatorNode(OperatorId id)
-    : LogicalOperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
+    : OperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 
 bool UnaryOperatorNode::isBinaryOperator() const { return false; }
 
@@ -44,33 +44,4 @@ SchemaPtr UnaryOperatorNode::getInputSchema() const { return inputSchema; }
 
 SchemaPtr UnaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
-bool UnaryOperatorNode::inferSchema() {
-    // We assume that all children operators have the same output schema otherwise this plan is not valid
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->inferSchema()) {
-            return false;
-        }
-    }
-
-    if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("UnaryOperatorNode: this node should have at least one child operator");
-    }
-
-    auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("UnaryOperatorNode: infer schema failed. The schema has to be the same across all child operators."
-                      " this op schema="
-                      << child->as<OperatorNode>()->getOutputSchema()->toString() << " child schema=" << childSchema->toString());
-            return false;
-        }
-    }
-
-    //Reset and reinitialize the input and output schemas
-    inputSchema->clear();
-    inputSchema = inputSchema->copyFields(childSchema);
-    outputSchema->clear();
-    outputSchema = outputSchema->copyFields(childSchema);
-    return true;
-}
 }// namespace NES

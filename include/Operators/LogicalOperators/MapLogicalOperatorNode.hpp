@@ -17,7 +17,8 @@
 #ifndef MAP_LOGICAL_OPERATOR_NODE_HPP
 #define MAP_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/AbstractMapOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,15 +26,9 @@ namespace NES {
 /**
  * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
  */
-class MapLogicalOperatorNode : public UnaryOperatorNode {
+class MapLogicalOperatorNode : public AbstractMapOperator, public LogicalUnaryOperatorNode {
   public:
     MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
-
-    /**
-     * @brief Returns the expression of this map operator
-     * @return FieldAssignmentExpressionNodePtr
-     */
-    FieldAssignmentExpressionNodePtr getMapExpression();
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:

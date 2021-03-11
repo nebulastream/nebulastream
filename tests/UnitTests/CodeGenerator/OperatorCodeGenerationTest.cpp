@@ -533,7 +533,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                            nodeEngine->getBufferManager(), windowOperatorHandler);
 
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, 1, nullptr,
+    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, 1,
                                                                           input_schema, windowOutputSchema);
     windowHandler->setup(executionContext);
 

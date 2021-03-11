@@ -23,7 +23,7 @@
 namespace NES {
 
 MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id)
-    : mapExpression(mapExpression), UnaryOperatorNode(id) {}
+    : OperatorNode(id), AbstractMapOperator(mapExpression), LogicalUnaryOperatorNode(id) {}
 
 bool MapLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;
@@ -39,7 +39,7 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 bool MapLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
 
@@ -72,8 +72,6 @@ const std::string MapLogicalOperatorNode::toString() const {
 std::string MapLogicalOperatorNode::getStringBasedSignature() {
     return "MAP(" + mapExpression->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
 }
-
-FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
 
 OperatorNodePtr MapLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);

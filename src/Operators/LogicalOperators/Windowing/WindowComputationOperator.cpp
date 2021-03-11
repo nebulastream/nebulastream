@@ -24,7 +24,7 @@
 namespace NES {
 
 WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : WindowOperatorNode(windowDefinition, id) {
+    : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());

@@ -44,8 +44,15 @@ typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 class UnaryOperatorNode;
 typedef std::shared_ptr<UnaryOperatorNode> UnaryOperatorNodePtr;
 
+class LogicalUnaryOperatorNode;
+typedef std::shared_ptr<LogicalUnaryOperatorNode> LogicalUnaryOperatorNodePtr;
+
 class BinaryOperatorNode;
 typedef std::shared_ptr<BinaryOperatorNode> BinaryOperatorNodePtr;
+
+class LogicalBinaryOperatorNode;
+typedef std::shared_ptr<LogicalBinaryOperatorNode> LogicalBinaryOperatorNodePtr;
+
 
 class ExchangeOperatorNode;
 typedef std::shared_ptr<ExchangeOperatorNode> ExchangeOperatorNodePtr;

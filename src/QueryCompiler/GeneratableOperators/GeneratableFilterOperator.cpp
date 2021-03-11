@@ -27,7 +27,7 @@ GeneratableFilterOperatorPtr GeneratableFilterOperator::create(FilterLogicalOper
 }
 
 GeneratableFilterOperator::GeneratableFilterOperator(const ExpressionNodePtr filterExpression, OperatorId id)
-    : FilterLogicalOperatorNode(filterExpression, id) {}
+    :  OperatorNode(id), FilterLogicalOperatorNode(filterExpression, id) {}
 
 void GeneratableFilterOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);

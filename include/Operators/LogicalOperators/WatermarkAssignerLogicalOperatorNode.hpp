@@ -17,19 +17,18 @@
 #ifndef NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
 #define NES_WATERMARKASSIGNERLOGICALOPERATORNODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/AbstractWatermarkAssignerOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Windowing/WindowingForwardRefs.hpp>
+
 
 namespace NES {
 
-class WatermarkAssignerLogicalOperatorNode : public UnaryOperatorNode {
+class WatermarkAssignerLogicalOperatorNode : public AbstractWatermarkAssignerOperator, public LogicalUnaryOperatorNode {
   public:
     WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
                                          OperatorId id);
-
-    Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
-
     bool equal(const NodePtr rhs) const override;
 
     bool isIdentical(NodePtr rhs) const override;
@@ -39,9 +38,6 @@ class WatermarkAssignerLogicalOperatorNode : public UnaryOperatorNode {
     OperatorNodePtr copy() override;
     std::string getStringBasedSignature() override;
     bool inferSchema() override;
-
-  private:
-    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 
 typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;

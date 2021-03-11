@@ -17,7 +17,7 @@
 #ifndef RENAMESTREAM_LOGICAL_OPERATOR_NODE_HPP
 #define RENAMESTREAM_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,7 +25,7 @@ namespace NES {
 /**
  * @brief this operator renames the stream
  */
-class RenameStreamOperatorNode : public UnaryOperatorNode {
+class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit RenameStreamOperatorNode(const std::string newStreamName, OperatorId id);
     ~RenameStreamOperatorNode() = default;

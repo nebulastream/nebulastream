@@ -15,13 +15,14 @@
 */
 
 #include <Exceptions/TypeInferenceException.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-UnionLogicalOperatorNode::UnionLogicalOperatorNode(OperatorId id) : BinaryOperatorNode(id) {}
+UnionLogicalOperatorNode::UnionLogicalOperatorNode(OperatorId id) : OperatorNode(id), AbstractUnionOperator(), LogicalBinaryOperatorNode(id){}
 
 bool UnionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<UnionLogicalOperatorNode>()->getId() == id;
@@ -42,7 +43,7 @@ std::string UnionLogicalOperatorNode::getStringBasedSignature() {
 }
 
 bool UnionLogicalOperatorNode::inferSchema() {
-    if (!BinaryOperatorNode::inferSchema()) {
+    if (!LogicalBinaryOperatorNode::inferSchema()) {
         return false;
     }
 

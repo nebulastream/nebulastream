@@ -16,12 +16,12 @@
 
 #include <API/Schema.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 
 namespace NES {
 
 BinaryOperatorNode::BinaryOperatorNode(OperatorId id)
-    : LogicalOperatorNode(id), leftInputSchema(Schema::create()), rightInputSchema(Schema::create()),
+    : OperatorNode(id), leftInputSchema(Schema::create()), rightInputSchema(Schema::create()),
       outputSchema(Schema::create()) {
     //nop
 }
@@ -54,41 +54,5 @@ SchemaPtr BinaryOperatorNode::getRightInputSchema() const { return rightInputSch
 
 SchemaPtr BinaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
-bool BinaryOperatorNode::inferSchema() {
-
-    distinctSchemas.clear();
-    //Check the number of child operators
-    if (children.size() < 2) {
-        NES_ERROR("BinaryOperatorNode: this operator should have at least two child operators");
-        throw TypeInferenceException("BinaryOperatorNode: this node should have at least two child operators");
-    }
-
-    // Infer schema of all child operators
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->inferSchema()) {
-            NES_ERROR("BinaryOperatorNode: failed inferring the schema of the child operator");
-            throw TypeInferenceException("BinaryOperatorNode: failed inferring the schema of the child operator");
-        }
-    }
-
-    //Identify different type of schemas from children operators
-    for (auto& child : children) {
-        auto childOutputSchema = child->as<OperatorNode>()->getOutputSchema();
-        auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](SchemaPtr distinctSchema) {
-            return childOutputSchema->equals(distinctSchema, false);
-        });
-        if (found == distinctSchemas.end()) {
-            distinctSchemas.push_back(childOutputSchema);
-        }
-    }
-
-    //validate that only two different type of schema were present
-    if (distinctSchemas.size() > 2) {
-        throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(distinctSchemas.size())
-                                     + " distinct schemas but expected 2 or less distinct schemas.");
-    }
-
-    return true;
-}
 
 }// namespace NES
