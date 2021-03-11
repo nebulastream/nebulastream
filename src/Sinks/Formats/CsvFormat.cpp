@@ -52,7 +52,6 @@ std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer&
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("CsvFormat::getData: write watermark-only buffer");
-//        buffers.push_back(inputBuffer);
         return buffers;
     }
     std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(inputBuffer, schema);

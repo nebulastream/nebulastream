@@ -109,7 +109,6 @@ class ZmqServer : public boost::noncopyable {
      *   exception: error
      */
     std::promise<bool> errorPromise;
-
 };
 
 }// namespace Network

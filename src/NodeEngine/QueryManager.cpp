@@ -387,7 +387,6 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
                                   true);
     }
     NES_DEBUG("QueryManager::stopQuery: query " << qep->getQuerySubPlanId() << " was " << (ret ? "successful" : " not successful"));
-
     return ret;
 }
 

@@ -111,7 +111,6 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
 NodeEngine::~NodeEngine() {
     NES_DEBUG("Destroying NodeEngine()");
     stop();
-//    removeGlobalErrorListener(inherited2::shared_from_this());
 }
 
 bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
@@ -387,7 +386,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     NES_DEBUG("refcnt qm " << queryManager.use_count());
 
     // release components
-    // TODO do not touch the sequence here
+    // TODO do not touch the sequence here as it will lead to errors in the shutdown sequence
     deployedQEPs.clear();
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
@@ -404,7 +403,6 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
 
     bufferManager->clear();
     bufferManager.reset();
-//    removeGlobalErrorListener(inherited2::shared_from_this());
     return !withError;
 }
 

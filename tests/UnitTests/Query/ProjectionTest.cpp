@@ -450,8 +450,8 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     }
     testSink->shutdown();
     plan->stop();
-
 }
+
 TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
@@ -565,8 +565,6 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
         // value
         EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
     }
-    // nodeEngine->stopQuery(1);
-
 }
 
 TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
@@ -737,5 +735,4 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     testSink->shutdown();
     testSource1->stop(false);
     testSource2->stop(false);
-
 }

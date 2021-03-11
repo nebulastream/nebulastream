@@ -24,8 +24,8 @@ using namespace std;
 const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
 const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 5;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
+const uint64_t STARTUP_SLEEP_INTERVAL_IN_SECONDS = 3;
 
-//const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_WARNING;
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
 
@@ -109,7 +109,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
-    }//end of for
+    }
     if(statisticsVec.size() == 0)
     {
         NES_ERROR("We cannot use this run as no data was measured");
@@ -125,7 +125,6 @@ E2EBase::~E2EBase() {
     statisticsVec.clear();
     queryService.reset();
     queryCatalog.reset();
-//    NES::shutdownLogging();
 }
 
 void E2EBase::setupSources() {
@@ -262,7 +261,7 @@ void E2EBase::runQuery(std::string query) {
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     //give the system some seconds to come to steady mode
-    sleep(3);
+    sleep(STARTUP_SLEEP_INTERVAL_IN_SECONDS);
 
     auto start = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(start);

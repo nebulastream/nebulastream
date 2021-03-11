@@ -121,9 +121,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     queryService->validateAndQueueStopRequest(queryId);
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-
-
-
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -524,7 +521,6 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
                              "1500,2500,1,11\n"
                              "0,1000,1,1\n"
                              "0,1000,4,1\n";
-
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 

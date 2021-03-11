@@ -30,8 +30,6 @@
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Util/Logger.hpp>
 #include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <utility>
 
@@ -227,9 +225,7 @@ void NodeStatsProvider::readDiskStats() {
     auto diskStates = nodeStats.mutable_diskstats();
     diskStates->Clear();
 
-
     struct statvfs svfs;
-
     int ret = statvfs("/", &svfs);
     if (ret == EFAULT) {
         NES_ERROR("NodeProperties: could not read Disk statistics");

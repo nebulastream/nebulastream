@@ -19,14 +19,14 @@
 
 using namespace Benchmarking;
 
-const NES::DebugLevel DEBUGL_LEVEL = NES::LOG_NONE;
+const NES::DebugLevel DEBUG_LEVEL = NES::LOG_NONE;
 
 /**
  * @brief This benchmarks runs a projection query on one worker and one coordinator
  * @return
  */
 int main() {
-    NES::setupLogging("E2EBase.log", DEBUGL_LEVEL);
+    NES::setupLogging("E2EBase.log", DEBUG_LEVEL);
     std::cout << "Setup E2EBase test class." << std::endl;
 
     // Number of workerThreads in nodeEngine
@@ -41,14 +41,10 @@ int main() {
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
-    // source mode
+    // source modes are: E2EBase::InputOutputMode::CacheMode, E2EBase::InputOutputMode::MemMode, E2EBase::InputOutputMode::FileMode
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
-//    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::CacheMode, E2EBase::InputOutputMode::MemMode};
-    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemMode};
-    //            std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
-    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
 
-    //roughly 2 out of 3 filds were removed
+    // 2 out of 3 filds were removed
     string query = "Query::from(\"input\").project(Attribute(\"id\")).sink(NullOutputSinkDescriptor::create());";
 
     std::string benchmarkName = "E2EProjectBenchmark";

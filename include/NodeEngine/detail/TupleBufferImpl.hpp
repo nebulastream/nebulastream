@@ -135,7 +135,6 @@ class BufferControlBlock {
 
   public:
     MemorySegment* owner;
-    uint64_t magic;
     std::atomic<BufferRecycler*> owningBufferRecycler;
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 

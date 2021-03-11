@@ -446,7 +446,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingSimplePattern) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingSimplePattern.out";
     remove(outputFilePath.c_str());

@@ -460,8 +460,6 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
  * The source generates 2. buffers.
  */
 TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
-
-
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource =
@@ -679,9 +677,8 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // wait till all buffers have been produced
     testSink->completed.get_future().get();
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
-    // get result buffer
-//    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
+    // get result buffer
     auto& resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
