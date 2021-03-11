@@ -80,11 +80,15 @@ class JoinHandler : public AbstractJoinHandler {
         std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler stop id=" << id << ": stop");
         auto expected = true;
+        bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
             executableJoinAction->destroy();
-            return executablePolicyTrigger->stop();
+            result = executablePolicyTrigger->stop();
+            // TODO add concept for lifecycle management of state variable
+//            StateManager::instance().unRegisterState(leftJoinState);
+//            StateManager::instance().unRegisterState(rightJoinState);
         }
-        return false;
+        return result;
     }
 
     std::string toString() override {
@@ -217,10 +221,10 @@ class JoinHandler : public AbstractJoinHandler {
         };
         this->leftJoinState =
             StateManager::instance().registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
-                "leftSide", leftDefaultCallback);
+                "leftSide" + toString(), leftDefaultCallback);
         this->rightJoinState =
             StateManager::instance().registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
-                "rightSide", rightDefaultCallback);
+                "rightSide" + toString(), rightDefaultCallback);
 
         executableJoinAction->setup(pipelineExecutionContext, originId);
         return true;

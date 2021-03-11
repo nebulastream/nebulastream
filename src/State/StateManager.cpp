@@ -17,7 +17,7 @@
 #include "State/StateManager.hpp"
 
 namespace NES {
-
+// TODO remove singleton at some point
 StateManager& StateManager::instance() {
     static StateManager singleton;
     return singleton;
