@@ -385,7 +385,8 @@ static void BM_ReadWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& s
         static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
 
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+               int32_t, int32_t, int32_t, int32_t>
+        writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
@@ -491,9 +492,9 @@ static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& stat
     DynamicRowLayoutBufferPtr mappedRowLayout =
         std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
 
-
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+               int32_t, int32_t, int32_t, int32_t>
+        writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedRowLayout->pushRecord<false>(writeRecord);
     }
@@ -602,10 +603,11 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     DynamicRowLayoutBufferPtr mappedRowLayout =
         std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
-        for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            mappedRowLayout->pushRecord<false>(writeRecord);
-        }
+               int32_t, int32_t, int32_t, int32_t>
+        writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+    for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
+        mappedRowLayout->pushRecord<false>(writeRecord);
+    }
 
     auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
     auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
@@ -654,8 +656,8 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
                         NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
                     }
                 }
-                ((void)tmp0);
-                ((void)tmp1);
+                ((void) tmp0);
+                ((void) tmp1);
             }
             break;
         }
@@ -1301,7 +1303,6 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         }
     }
 
-
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
@@ -1312,11 +1313,12 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout =
-        std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(colLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+        static_cast<DynamicColumnLayoutBuffer*>(colLayout->map(tupleBuffer).release()));
     state.ResumeTiming();
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+               int32_t, int32_t, int32_t, int32_t>
+        writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
@@ -1368,8 +1370,8 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
                         NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
                     }
                 }
-                ((void)tmp0);
-                ((void)tmp1);
+                ((void) tmp0);
+                ((void) tmp1);
             }
             break;
         }
@@ -2015,7 +2017,6 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         }
     }
 
-
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
@@ -2030,7 +2031,8 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
     state.ResumeTiming();
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+               int32_t, int32_t, int32_t, int32_t>
+        writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedRowLayout->pushRecord<false>(writeRecord);
     }
@@ -2307,7 +2309,6 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
         }
     }
 
-
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
@@ -2318,11 +2319,12 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout =
-        std::unique_ptr<DynamicColumnLayoutBuffer>(static_cast<DynamicColumnLayoutBuffer*>(colLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+        static_cast<DynamicColumnLayoutBuffer*>(colLayout->map(tupleBuffer).release()));
     state.ResumeTiming();
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-        int32_t, int32_t, int32_t, int32_t> writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
+               int32_t, int32_t, int32_t, int32_t>
+        writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedColumnLayout->pushRecord<false>(writeRecord);
     }
@@ -2599,7 +2601,6 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
         }
     }
 
-
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
 }
 
@@ -2619,10 +2620,10 @@ BENCHMARK(BM_ReadWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITION
 BENCHMARK(BM_WriteWholeRecordWithFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_WriteWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
-BENCHMARK(BM_ReadingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0,15,1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WritingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0,15,1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadingNumberOfFieldsColLayoutNewLayout)->DenseRange(0,15,1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WritingNumberOfFieldsColLayoutNewLayout)->DenseRange(0,15,1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WritingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_ReadingNumberOfFieldsColLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+BENCHMARK(BM_WritingNumberOfFieldsColLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 // A benchmark main is needed
 int main(int argc, char** argv) {
