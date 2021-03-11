@@ -80,6 +80,10 @@ TupleBuffer LocalBufferManager::getBuffer() {
         }
     }
     // fallback to global pool
+    if(bufferManager.expired())
+    {
+        NES_FATAL_ERROR("Buffer manager weak ptr is expired");
+    }
     return bufferManager.lock()->getBufferBlocking();
 }
 

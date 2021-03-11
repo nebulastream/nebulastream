@@ -99,6 +99,7 @@ class StateManager {
     template<typename Key, typename Value>
     void unRegisterState(const StateVariable<Key, Value>* variable) {
         std::unique_lock<std::mutex> lock(mutex);
+        //we iterate over all state_variables and remove the variable if existent
         for (auto& [name, stateVar] : state_variables) {
             if (variable == stateVar) {
                 delete stateVar;

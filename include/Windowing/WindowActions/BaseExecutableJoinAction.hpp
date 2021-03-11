@@ -45,11 +45,6 @@ class BaseExecutableJoinAction {
         this->phantom = pipelineExecutionContext;
     }
 
-    virtual void destroy() {
-        NES_DEBUG("Destroy phantom for cnt = " << phantom.use_count() << " weak ptr=" << weakExecutionContext.use_count());
-//        phantom.reset();
-    }
-
   protected:
     std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
     // sorry i need to do this to remind us of this hack

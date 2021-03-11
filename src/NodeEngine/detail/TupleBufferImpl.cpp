@@ -77,7 +77,7 @@ MemorySegment::~MemorySegment() {
 BufferControlBlock::BufferControlBlock(MemorySegment* owner, BufferRecycler* recycler,
                                        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
     : referenceCounter(0), numberOfTuples(0), owner(owner), owningBufferRecycler(recycler), recycleCallback(recycleCallback),
-      watermark(0), originId(0), magic(0x30011991) {}
+      watermark(0), originId(0){}
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
@@ -86,7 +86,6 @@ BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     owner = that.owner;
     watermark.store(that.watermark.load());
     originId.store(that.originId.load());
-    magic = that.magic;
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
@@ -96,7 +95,6 @@ BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that
     owner = that.owner;
     watermark.store(that.watermark.load());
     originId.store(that.originId.load());
-    magic = that.magic;
     return *this;
 }
 

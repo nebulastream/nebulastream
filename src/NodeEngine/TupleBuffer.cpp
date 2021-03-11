@@ -70,8 +70,7 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) {
     return *this;
 }
 
-TupleBuffer::~TupleBuffer() {
-    release(); }
+TupleBuffer::~TupleBuffer() { release(); }
 
 bool TupleBuffer::isValid() const { return ptr != nullptr; }
 

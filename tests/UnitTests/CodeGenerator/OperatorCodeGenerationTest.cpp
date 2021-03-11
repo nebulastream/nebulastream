@@ -1079,7 +1079,6 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         auto inputBuffer = source->receiveData().value();
 
         /* execute Stage */
-        // auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(), windowHandler, nullptr);
         stage1->execute(inputBuffer, *executionContext.get(), wctx);
 
         //check partial aggregates in window state
@@ -1211,7 +1210,6 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
         ->addField("window$value", UINT64);
 
     // init window handler
-
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition, windowOutputSchema);

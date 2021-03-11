@@ -113,9 +113,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
         AbstractWindowHandler::postReconfigurationCallback(task);
-//        auto flushInflightWindows = [this]() {
+        auto flushInflightWindows = [this]() {
 //            return;
 //            //TODO: this will be removed if we integrate the graceful shutdown
+//            TODO: we keep this code to integrate the other shutdown method
 //            return;
 //            // flush in-flight records
 //            auto windowType = windowDefinition->getWindowType();
@@ -135,23 +136,16 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 //            trigger(true);
 //            //            executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
 //            NES_DEBUG("Flushed window content after end of stream message " << toString());
-//        };
-//
-//        auto cleanup = [this]() {
-//            // drop window content and cleanup resources
-//            // wait for trigger thread to stop
-//            stop();
-//        };
+        };
+
 
         //switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
             case NodeEngine::SoftEndOfStream: {
-//                flushInflightWindows();
-//                cleanup();
+                flushInflightWindows();
                 break;
             }
             case NodeEngine::HardEndOfStream: {
-//                cleanup();
                 break;
             }
             default: {
