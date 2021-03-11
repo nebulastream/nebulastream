@@ -99,12 +99,6 @@ class OperatorNode : public Node {
     NodePtr getChildWithOperatorId(uint64_t operatorId);
 
     /**
-     * @brief Method to infer the schema for this operator
-     * @return bool indicating success
-     */
-    virtual bool inferSchema() = 0;
-
-    /**
      * @brief Method to get the output schema of the operator
      * @return output schema
      */

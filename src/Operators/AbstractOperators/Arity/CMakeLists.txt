@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        ExchangeOperatorNode.cpp
         BinaryOperatorNode.cpp
         UnaryOperatorNode.cpp
+        ExchangeOperatorNode.cpp
 )

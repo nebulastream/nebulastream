@@ -36,7 +36,7 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
 namespace NES {
 
-class LogicalOperatorNode : public OperatorNode {
+class LogicalOperatorNode : public virtual OperatorNode {
 
   public:
     LogicalOperatorNode(OperatorId id);
@@ -67,11 +67,6 @@ class LogicalOperatorNode : public OperatorNode {
     virtual std::string getStringBasedSignature();
 
     virtual bool inferSchema() = 0;
-    virtual void setOutputSchema(SchemaPtr outputSchema) = 0;
-    virtual SchemaPtr getOutputSchema() const = 0;
-    virtual bool isBinaryOperator() const = 0;
-    virtual bool isExchangeOperator() const = 0;
-    virtual bool isUnaryOperator() const = 0;
 
   protected:
     Optimizer::QuerySignaturePtr signature;

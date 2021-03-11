@@ -27,7 +27,7 @@
 namespace NES {
 
 JoinLogicalOperatorNode::JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
-    : joinDefinition(joinDefinition), BinaryOperatorNode(id) {}
+    : OperatorNode(id), AbstractJoinOperator(joinDefinition), LogicalBinaryOperatorNode(id) {}
 
 bool JoinLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<JoinLogicalOperatorNode>()->getId() == id;
@@ -53,7 +53,7 @@ Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { re
 
 bool JoinLogicalOperatorNode::inferSchema() {
 
-    if (!BinaryOperatorNode::inferSchema()) {
+    if (!LogicalBinaryOperatorNode::inferSchema()) {
         return false;
     }
 

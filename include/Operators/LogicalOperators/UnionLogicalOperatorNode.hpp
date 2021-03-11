@@ -17,7 +17,8 @@
 #ifndef UNION_LOGICAL_OPERATOR_NODE_HPP
 #define UNION_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/AbstractUnionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,7 +26,7 @@ namespace NES {
 /**
  * @brief Union operator that Union two streams together. This operator behaves similar to the unionWith operator in RDBMS.
  */
-class UnionLogicalOperatorNode : public BinaryOperatorNode {
+class UnionLogicalOperatorNode : public AbstractUnionOperator, public LogicalBinaryOperatorNode{
   public:
     explicit UnionLogicalOperatorNode(OperatorId id);
     ~UnionLogicalOperatorNode() = default;

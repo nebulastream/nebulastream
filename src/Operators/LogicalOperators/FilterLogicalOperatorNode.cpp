@@ -22,9 +22,9 @@
 namespace NES {
 
 FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr predicate, uint64_t id)
-    : predicate(predicate), UnaryOperatorNode(id) {}
+    :  OperatorNode(id), AbstractFilterOperator(predicate), LogicalUnaryOperatorNode(id) {}
 
-ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
+
 
 bool FilterLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<FilterLogicalOperatorNode>()->getId() == id;
@@ -50,7 +50,7 @@ std::string FilterLogicalOperatorNode::getStringBasedSignature() {
 }
 
 bool FilterLogicalOperatorNode::inferSchema() {
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     predicate->inferStamp(inputSchema);

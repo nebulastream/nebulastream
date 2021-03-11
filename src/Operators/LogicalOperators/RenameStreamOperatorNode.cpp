@@ -23,7 +23,7 @@
 namespace NES {
 
 RenameStreamOperatorNode::RenameStreamOperatorNode(const std::string newStreamName, uint64_t id)
-    : newStreamName(newStreamName), UnaryOperatorNode(id) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), newStreamName(newStreamName) {}
 
 bool RenameStreamOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<RenameStreamOperatorNode>()->getId() == id;
@@ -48,7 +48,7 @@ std::string RenameStreamOperatorNode::getStringBasedSignature() {
 }
 
 bool RenameStreamOperatorNode::inferSchema() {
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     //Update output schema by changing the qualifier and corresponding attribute names

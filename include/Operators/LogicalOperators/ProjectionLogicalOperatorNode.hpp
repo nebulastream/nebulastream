@@ -17,7 +17,8 @@
 #ifndef PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 #define PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/AbstractOperators/AbstractProjectionOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,7 +26,7 @@ namespace NES {
 /**
  * @brief projection operator, which contains an resets the output schema
  */
-class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
+class ProjectionLogicalOperatorNode : public AbstractProjectionOperator, public LogicalUnaryOperatorNode{
   public:
     explicit ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, OperatorId id);
     ~ProjectionLogicalOperatorNode() = default;
@@ -46,11 +47,8 @@ class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
 
-    std::vector<ExpressionNodePtr> getExpressions();
     std::string getStringBasedSignature() override;
 
-  private:
-    std::vector<ExpressionNodePtr> expressions;
 };
 
 }// namespace NES

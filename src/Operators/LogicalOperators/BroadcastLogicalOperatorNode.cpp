@@ -22,7 +22,7 @@
 
 namespace NES {
 
-BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id) : ExchangeOperatorNode(id) {}
+BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id) : OperatorNode(id), ExchangeOperatorNode(id), LogicalOperatorNode(id) {}
 
 bool BroadcastLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return rhs->as<BroadcastLogicalOperatorNode>()->getId() == id;
@@ -34,12 +34,6 @@ bool BroadcastLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     return false;
 };
-
-bool BroadcastLogicalOperatorNode::inferSchema() {
-    // infer the default input and output schema
-    ExchangeOperatorNode::inferSchema();
-    return true;
-}
 
 const std::string BroadcastLogicalOperatorNode::toString() const {
     std::stringstream ss;
@@ -53,4 +47,30 @@ OperatorNodePtr BroadcastLogicalOperatorNode::copy() {
     copy->setOutputSchema(outputSchema);
     return copy;
 }
+
+bool BroadcastLogicalOperatorNode::inferSchema() {
+    // We assume that all children operators have the same output schema otherwise this plan is not valid
+    if (children.empty()) {
+        NES_THROW_RUNTIME_ERROR("ExchangeOperatorNode: this node should have at least one child operator");
+    }
+
+    for (const auto& child : children) {
+        if (!child->as<LogicalOperatorNode>()->inferSchema()) {
+            return false;
+        }
+    }
+
+    auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
+    for (const auto& child : children) {
+        if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
+            NES_ERROR("ExchangeOperatorNode: infer schema failed. The schema has to be the same across all child operators.");
+            return false;
+        }
+    }
+
+    inputSchema = childSchema->copy();
+    outputSchema = childSchema->copy();
+    return true;
+}
+
 }// namespace NES

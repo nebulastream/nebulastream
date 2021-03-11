@@ -42,7 +42,7 @@ GeneratableSlicingWindowOperator::create(Windowing::LogicalWindowDefinitionPtr w
 GeneratableSlicingWindowOperator::GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
                                                                    GeneratableWindowAggregationPtr generatableWindowAggregation,
                                                                    OperatorId id)
-    : GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {}
+    :  OperatorNode(id), GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {}
 
 const std::string GeneratableSlicingWindowOperator::toString() const {
     std::stringstream ss;

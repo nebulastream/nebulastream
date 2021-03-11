@@ -15,12 +15,12 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Arity/ExchangeOperatorNode.hpp>
+#include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
 
 namespace NES {
 
 ExchangeOperatorNode::ExchangeOperatorNode(OperatorId id)
-    : LogicalOperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
+    : OperatorNode(id), inputSchema(Schema::create()), outputSchema(Schema::create()) {}
 
 bool ExchangeOperatorNode::isBinaryOperator() const { return false; }
 
@@ -46,30 +46,5 @@ void ExchangeOperatorNode::setOutputSchema(SchemaPtr outputSchema) {
 SchemaPtr ExchangeOperatorNode::getInputSchema() const { return inputSchema; }
 
 SchemaPtr ExchangeOperatorNode::getOutputSchema() const { return outputSchema; }
-
-bool ExchangeOperatorNode::inferSchema() {
-    // We assume that all children operators have the same output schema otherwise this plan is not valid
-    if (children.empty()) {
-        NES_THROW_RUNTIME_ERROR("ExchangeOperatorNode: this node should have at least one child operator");
-    }
-
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->inferSchema()) {
-            return false;
-        }
-    }
-
-    auto childSchema = children[0]->as<OperatorNode>()->getOutputSchema();
-    for (const auto& child : children) {
-        if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("ExchangeOperatorNode: infer schema failed. The schema has to be the same across all child operators.");
-            return false;
-        }
-    }
-
-    inputSchema = childSchema->copy();
-    outputSchema = childSchema->copy();
-    return true;
-}
 
 }// namespace NES

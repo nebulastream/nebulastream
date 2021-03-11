@@ -23,7 +23,7 @@
 
 namespace NES {
 
-class UnaryOperatorNode : public LogicalOperatorNode {
+class UnaryOperatorNode : public virtual OperatorNode {
   public:
     explicit UnaryOperatorNode(OperatorId id);
 
@@ -70,12 +70,6 @@ class UnaryOperatorNode : public LogicalOperatorNode {
 
     void setOutputSchema(SchemaPtr outputSchema) override;
 
-    /**
-    * @brief infers the input and out schema of this operator depending on its child.
-    * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
-    * @return true if schema was correctly inferred
-    */
-    virtual bool inferSchema() override;
 
   protected:
     SchemaPtr inputSchema;

@@ -25,7 +25,7 @@
 namespace NES {
 
 ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, uint64_t id)
-    : expressions(expressions), UnaryOperatorNode(id) {}
+    : OperatorNode(id), AbstractProjectionOperator(expressions), LogicalUnaryOperatorNode(id) {}
 
 bool ProjectionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<ProjectionLogicalOperatorNode>()->getId() == id;
@@ -61,7 +61,7 @@ std::string ProjectionLogicalOperatorNode::getStringBasedSignature() {
 }
 
 bool ProjectionLogicalOperatorNode::inferSchema() {
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
@@ -90,8 +90,6 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     }
     return true;
 }
-
-std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
 
 OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createProjectionOperator(expressions, id);

@@ -36,7 +36,7 @@ GeneratableSinkOperatorPtr GeneratableSinkOperator::create(SinkLogicalOperatorNo
 }
 
 GeneratableSinkOperator::GeneratableSinkOperator(SinkDescriptorPtr sinkDescriptor, SchemaPtr outputSchema, OperatorId id)
-    : SinkLogicalOperatorNode(std::move(sinkDescriptor), id) {
+    :  OperatorNode(id), SinkLogicalOperatorNode(std::move(sinkDescriptor), id) {
     this->outputSchema = outputSchema;
 }
 
