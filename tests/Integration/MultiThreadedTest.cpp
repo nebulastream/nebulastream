@@ -351,8 +351,6 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-
-
 TEST_F(MultiThreadedTest, testMultipleWindows) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
@@ -364,8 +362,8 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 
     coordinatorConfig->setNumberOfSlots(12);
 
-    coordinatorConfig->setNumWorkerThreads(3);
-    workerConfig->setNumWorkerThreads(3);
+    coordinatorConfig->setNumWorkerThreads(2);
+    workerConfig->setNumWorkerThreads(2);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -410,6 +408,7 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     srcConf->setSourceConfig("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(3);
+    srcConf->setSourceFrequency(0);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
