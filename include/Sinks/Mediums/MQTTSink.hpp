@@ -42,14 +42,14 @@ class MQTTSink : public SinkMedium {
      * @param user: user identification for client
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @param timeUnit: time unit chosen by client user for message delay
-     * @param msgDelay: time before next message is sent by client to broker
+     * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
     MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
              const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
-             uint64_t msgDelay, const ServiceQualities qualityOfService, bool asynchronousClient);
+             uint64_t messageDelay, const ServiceQualities qualityOfService, bool asynchronousClient);
     ~MQTTSink();
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
@@ -134,6 +134,13 @@ class MQTTSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
+
+    /**
+    * @brief converts field names of SchemaPtr and values of TupleBuffer to json payloads and sends via an MQTT client
+    * @return true if successful, false otherwise
+    */
+    bool sendDataFromTupleBuffer(NodeEngine::TupleBuffer& inputBuffer, SchemaPtr schemaPtr);
+
     QuerySubPlanId parentPlanId;
     std::string address;
     std::string clientId;
@@ -141,7 +148,7 @@ class MQTTSink : public SinkMedium {
     std::string user;
     uint64_t maxBufferedMSGs;
     TimeUnits timeUnit;
-    uint64_t msgDelay;
+    uint64_t messageDelay;
     ServiceQualities qualityOfService;
     bool asynchronousClient;
     bool connected;

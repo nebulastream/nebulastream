@@ -36,7 +36,8 @@ class MQTTClientWrapper {
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @return MQTTClientWrapper
      */
-    MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId, uint64_t maxBufferedMSGs);
+    MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId,
+                      uint64_t maxBufferedMSGs, const std::string topic, int qualityOfService);
 
     /**
      * @brief get a pointer to the MQTT asynchronous client ONLY IF 'useAsyncClient' = true
@@ -61,7 +62,7 @@ class MQTTClientWrapper {
     /**
     * @brief send a string to an MQTT broker
     */
-    void sendPayload(const std::string payload, const std::string topic, int qualityOfService);
+    void sendPayload(const std::string payload);
     
     /**
      * @brief get the number of elements currently residing in the buffer (messages that have not been delivered yet)
@@ -86,6 +87,10 @@ class MQTTClientWrapper {
     mqtt::async_client_ptr asyncClient;
     mqtt::client_ptr syncClient;
     bool useAsyncClient;
+    std::string topic;
+    int qualityOfService;
+    std::shared_ptr<mqtt::topic> sendTopic;
+
 };
 typedef std::shared_ptr<MQTTClientWrapper> MQTTClientWrapperPtr;
 

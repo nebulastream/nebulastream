@@ -34,14 +34,14 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param user: user identification for client
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @param timeUnit: time unit chosen by client user for message delay
-     * @param msgDelay: time before next message is sent by client to broker
+     * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return descriptor for MQTT sink
      */
     static SinkDescriptorPtr create(const std::string address, const std::string clientId, const std::string topic,
-                                    const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit = MQTTSink::nanoseconds,
-                                    uint64_t msgDelay = 1, MQTTSink::ServiceQualities qualityOfService = MQTTSink::atLeastOnce, bool asynchronousClient = true);
+                                    const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
+                                    uint64_t messageDelay, MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
 
     /**
      * @brief get address information from a MQTT sink client
@@ -109,14 +109,14 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param user: user identification for client
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @param timeUnit: time unit chosen by client user for message delay
-     * @param msgDelay: time before next message is sent by client to broker
+     * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
     explicit MQTTSinkDescriptor(const std::string address, const std::string clientId, const std::string topic,
                                 const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
-                                uint64_t msgDelay, const MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
+                                uint64_t messageDelay, const MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
 
     std::string address;
     std::string clientId;
@@ -124,7 +124,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     std::string user;
     uint64_t maxBufferedMSGs;
     MQTTSink::TimeUnits timeUnit;
-    uint64_t msgDelay;
+    uint64_t messageDelay;
     MQTTSink::ServiceQualities qualityOfService;
     bool asynchronousClient;
 };

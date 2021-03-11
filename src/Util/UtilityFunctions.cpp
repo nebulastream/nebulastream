@@ -80,7 +80,6 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "#include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>" << std::endl;
-//        code << "#include <Operators/LogicalOperators/Sinks/MQTTSink.hpp>" << std::endl;
         code << "#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>" << std::endl;
         code << "#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>" << std::endl;
         code << "#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>" << std::endl;

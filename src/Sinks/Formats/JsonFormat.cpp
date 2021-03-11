@@ -24,7 +24,12 @@ namespace NES {
 
 JsonFormat::JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
 
-std::vector<NodeEngine::TupleBuffer> JsonFormat::getData(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+std::vector<NodeEngine::TupleBuffer> JsonFormat::getData(NodeEngine::TupleBuffer& inputBuffer) {
+    // changed this, because the MQTT Sink requires the JsonFormat
+    NES_TRACE("JsonFormat::getData : function is not properly implemented yet, but simply returns buffer in vector wrapper");
+    return std::vector<NodeEngine::TupleBuffer>{inputBuffer};
+//    NES_NOT_IMPLEMENTED();
+}
 
 std::optional<NodeEngine::TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
 

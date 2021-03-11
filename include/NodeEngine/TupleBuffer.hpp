@@ -104,6 +104,12 @@ class TupleBuffer {
     }
 
     /**
+    * @param schema : schema that holds information on how tuples for this TupleBuffer are constructed
+    * @return a vector containing pointers to the beginning of each of the TupleBuffer's tuples
+    */
+    std::vector<char*> getTuplesWithSchema(SchemaPtr schema);
+
+    /**
     * @brief Increases the internal reference counter by one
     * @return the same TupleBuffer object
     */
