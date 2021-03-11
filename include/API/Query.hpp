@@ -63,7 +63,7 @@ using namespace NES::Windowing;
 
 static const uint64_t defaultTriggerTimeInMs = 1000;
 
-namespace JoinQueryBuilder {
+namespace JoinOperatorBuilder{
 
 class JoinWhere;
 class JoinCondition;
@@ -137,7 +137,7 @@ class JoinCondition {
     ExpressionItem onRightKey;
 };
 
-}//namespace JoinQueryBuilder
+}//namespace JoinOperatorBuilder
 
 /**
  * User interface to create stream processing queries.
@@ -149,14 +149,14 @@ class Query {
 
     ~Query() = default;
 
-    friend class JoinQueryBuilder::JoinCondition;// we need that because we make the original joinWith() private
+    friend class JoinOperatorBuilder::JoinCondition;// we need that because we make the original joinWith() private
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
      * @param subQueryRhs
      * @return object where where() function is defined and can be called by user
      */
-    JoinQueryBuilder::Join joinWith(const Query& subQueryRhs);
+    JoinOperatorBuilder::Join joinWith(const Query& subQueryRhs);
 
     /**
      * @brief: Creates a query from a particular source stream. The source stream is identified by its name.

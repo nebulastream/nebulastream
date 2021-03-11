@@ -44,9 +44,9 @@
 
 namespace NES {
 
-JoinQueryBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinQueryBuilder::Join(subQueryRhs, *this); }
+JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
-namespace JoinQueryBuilder {
+namespace JoinOperatorBuilder{
 
 JoinWhere Join::where(ExpressionItem onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
 
@@ -66,7 +66,7 @@ Query& JoinCondition::window(const Windowing::WindowTypePtr windowType) const {
 JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey)
     : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
 
-}// namespace JoinQueryBuilder
+}// namespace JoinOperatorBuilder
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
