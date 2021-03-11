@@ -751,7 +751,6 @@ static void BM_ReadFieldStruct(benchmark::State& state) {
                 int32_t tmp0 = 0;
                 for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
                     tmp0 += tupleIt[i].key;
-
                 }
                 if (tmp0 != maxTuplesPerBuffer * 1)
                     NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != maxTuplesPerBuffer * 1");
