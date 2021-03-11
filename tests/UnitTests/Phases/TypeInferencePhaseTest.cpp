@@ -757,13 +757,19 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
     auto subQuery = Query::from("default_logical2");
     auto subQuery2 = Query::from("default_logical3");
     auto query = Query::from("default_logical")
-                     .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
-                     .joinWith(subQuery2, Attribute("f5"), Attribute("f3"), windowType2)
-                     .filter(Attribute("default_logical$f1") < 42)
-                     .project(Attribute("default_logical$f1").rename("f23"), Attribute("default_logical2$f3").rename("f44"))
-                     .map(Attribute("f23") = Attribute("f44") + 2)
-                     .as("x")
-                     .sink(FileSinkDescriptor::create(""));
+        .joinWith(subQuery)
+        .where(Attribute("f1"))
+        .equalsTo(Attribute("f3"))
+        .window(windowType1)
+        .joinWith(subQuery2)
+        .where(Attribute("f5"))
+        .equalsTo(Attribute("f3"))
+        .window(windowType2)
+        .filter(Attribute("default_logical$f1") < 42)
+        .project(Attribute("default_logical$f1").rename("f23"), Attribute("default_logical2$f3").rename("f44"))
+        .map(Attribute("f23") = Attribute("f44") + 2)
+        .as("x")
+        .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
     auto phase = TypeInferencePhase::create(streamCatalog);
@@ -894,11 +900,14 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
     auto subQuery = Query::from("default_logical2");
 
     auto query = Query::from("default_logical")
-                     .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
-                     .windowByKey(Attribute("default_logical$f1"),
-                                  TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
-                                  Sum(Attribute("default_logical2$f3")))
-                     .sink(FileSinkDescriptor::create(""));
+        .joinWith(subQuery)
+        .where(Attribute("f1"))
+        .equalsTo(Attribute("f3"))
+        .window(windowType1)
+        .windowByKey(Attribute("default_logical$f1"),
+                     TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)),
+                     Sum(Attribute("default_logical2$f3")))
+        .sink(FileSinkDescriptor::create(""));
 
     auto phase = TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
@@ -946,11 +955,19 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
     auto subQuery = Query::from("default_logical2");
     auto subQuery3 = Query::from("default_logical4");
 
-    auto subQuery2 = Query::from("default_logical3").joinWith(subQuery3, Attribute("f5"), Attribute("f7"), windowType3);
+    auto subQuery2 =
+        Query::from("default_logical3").joinWith(subQuery3).where(Attribute("f5")).equalsTo(Attribute("f7")).window(windowType3);
     auto query = Query::from("default_logical")
-                     .joinWith(subQuery, Attribute("f1"), Attribute("f3"), windowType1)
-                     .joinWith(subQuery2, Attribute("f1"), Attribute("f5"), windowType2)
-                     .sink(FileSinkDescriptor::create(""));
+        .joinWith(subQuery)
+        .where(Attribute("f1"))
+        .equalsTo(Attribute("f3"))
+        .window(windowType1)
+        .joinWith(subQuery2)
+        .where(Attribute("f1"))
+        .equalsTo(Attribute("f5"))
+        .window(windowType2)
+        .sink(FileSinkDescriptor::create(""));
+
     auto plan = query.getQueryPlan();
 
     auto phase = TypeInferencePhase::create(streamCatalog);
