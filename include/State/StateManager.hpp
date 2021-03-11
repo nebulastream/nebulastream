@@ -77,7 +77,7 @@ class StateManager {
     }
 
     /**
-     * Register a new StateVariable object
+     * Remove a StateVariable object
      * @tparam Key
      * @tparam Value
      * @param variable_name an unique identifier for the state variable
@@ -87,6 +87,25 @@ class StateManager {
         std::unique_lock<std::mutex> lock(mutex);
         delete state_variables[variableName];
         state_variables.erase(variableName);
+    }
+
+    /**
+     * Remove a new StateVariable object
+     * @tparam Key
+     * @tparam Value
+     * @param variable_name an unique identifier for the state variable
+     * @return the state variable as a reference
+     */
+    template<typename Key, typename Value>
+    void unRegisterState(const StateVariable<Key, Value>* variable) {
+        std::unique_lock<std::mutex> lock(mutex);
+        for (auto& [name, stateVar] : state_variables) {
+            if (variable == stateVar) {
+                delete stateVar;
+                state_variables.erase(name);
+                return;
+            }
+        }
     }
 
     /**
