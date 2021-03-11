@@ -92,60 +92,60 @@ void RestEngine::handleGet(http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
 }
 
-void RestEngine::handlePost(http_request message) {
-    auto path = getPath(message);
+void RestEngine::handlePost(http_request request) {
+    auto path = getPath(request);
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
         if (paths[0] == "query" || paths[0] == "pattern") {
-            queryController->handlePost(paths, message);
+            queryController->handlePost(paths, request);
             return;
         } else if (paths[0] == "streamCatalog") {
-            streamCatalogController->handlePost(paths, message);
+            streamCatalogController->handlePost(paths, request);
             return;
         } else if (paths[0] == "monitoring") {
-            monitoringController->handlePost(paths, message);
+            monitoringController->handlePost(paths, request);
             return;
         }
     }
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
 }
 
-void RestEngine::handleDelete(http_request message) {
+void RestEngine::handleDelete(http_request request) {
     NES_DEBUG("RestEngine::handleDelete");
-    auto path = getPath(message);
+    auto path = getPath(request);
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
         if (paths[0] == "streamCatalog") {
-            streamCatalogController->handleDelete(paths, message);
+            streamCatalogController->handleDelete(paths, request);
             return;
         } else if (paths[0] == "query") {
-            queryController->handleDelete(paths, message);
+            queryController->handleDelete(paths, request);
             return;
         }
     }
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, path));
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, path));
 }
 
-void RestEngine::handleHead(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(message)));
+void RestEngine::handleHead(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(request)));
 }
 
-void RestEngine::handleMerge(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(message)));
+void RestEngine::handleMerge(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(request)));
 }
 
-void RestEngine::handleTrace(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(message)));
+void RestEngine::handleTrace(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
 }
 
-void RestEngine::handlePut(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT, getPath(message)));
+void RestEngine::handlePut(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT, getPath(request)));
 }
 
-void RestEngine::handlePatch(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH, getPath(message)));
+void RestEngine::handlePatch(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH, getPath(request)));
 }
 
 std::string RestEngine::endpoint() const { return _listener.uri().to_string(); }
