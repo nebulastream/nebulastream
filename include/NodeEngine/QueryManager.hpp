@@ -22,13 +22,14 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <NodeEngine/ReconfigurationTask.hpp>
+#include <NodeEngine/ReconfigurationMessage.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <chrono>
@@ -54,7 +55,10 @@ namespace NES::NodeEngine {
  * @Limitations:
  *    - statistics do not cover intermediate buffers
  */
-class QueryManager : public std::enable_shared_from_this<QueryManager>, public Reconfigurable {
+class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager>, public Reconfigurable {
+    typedef NES::detail::virtual_enable_shared_from_this<QueryManager> inherited0;
+    typedef Reconfigurable inherited1;
+
   public:
     enum ExecutionResult : uint8_t { Ok = 0, Error, Finished };
 
@@ -110,9 +114,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      */
     void addWorkForNextPipeline(TupleBuffer& buffer, Execution::ExecutablePipelinePtr nextPipeline);
 
-    void destroyCallback(ReconfigurationTask& task) override;
+    void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    void reconfigure(ReconfigurationTask&, WorkerContext& context) override;
+    void reconfigure(ReconfigurationMessage&, WorkerContext& context) override;
 
     /**
      * @brief retrieve the execution status of a given local query sub plan id.
@@ -136,9 +140,10 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
     /**
      * @brief method to start a query
      * @param qep of the query to start
+     * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    bool stopQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful = false);
 
     /**
     * @brief method to fail a query
@@ -175,8 +180,16 @@ class QueryManager : public std::enable_shared_from_this<QueryManager>, public R
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationTask(QuerySubPlanId queryExecutionPlanId, ReconfigurationTask reconfigurationDescriptor,
-                                bool blocking = false);
+    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage reconfigurationMessage,
+                                   bool blocking = false);
+
+    /**
+     * @brief introduces end of stream to all QEPs connected to this source
+     * @param sourceId the id of the source
+     * @param graceful hard or soft termination
+     * @return true if it went through
+     */
+    bool addEndOfStream(OperatorId sourceId, bool graceful = true);
 
     /**
      * @return true if thread pool is running

@@ -37,9 +37,6 @@ static uint64_t rpcPort = 4000;
 
 class RenameTest : public testing::Test {
   public:
-    CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
     static void SetUpTestCase() {
         NES::setupLogging("RenameTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RenameTest test class.");
@@ -48,23 +45,20 @@ class RenameTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
-        crdConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-        crdConf->setRpcPort(rpcPort);
-        crdConf->setRestPort(restPort);
-
-        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }
 };
 
 TEST_F(RenameTest, testAttributeRenameAndProjection) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -90,13 +84,13 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
                    "create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
@@ -135,9 +129,14 @@ TEST_F(RenameTest, testAttributeRenameAndProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -166,13 +165,13 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
                    ".sink(FileSinkDescriptor::create(\"test.out\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
@@ -211,9 +210,14 @@ TEST_F(RenameTest, testAttributeRenameAndProjectionMapTestProjection) {
 }
 
 TEST_F(RenameTest, testAttributeRenameAndFilter) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     remove("test.out");
 
     NES_INFO("RenameTest: Start coordinator");
@@ -239,13 +243,13 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
         R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").rename("NewName"), Attribute("value")).sink(FileSinkDescriptor::create("test.out", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     string expectedContent = "default_logical$NewName:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -259,7 +263,7 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, "test.out"));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, "test.out"));
 
     NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -274,9 +278,14 @@ TEST_F(RenameTest, testAttributeRenameAndFilter) {
 }
 
 TEST_F(RenameTest, testCentralWindowEventTime) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -331,9 +340,9 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$newId:INTEGER,window$newValue:INTEGER\n"
                              "1000,2000,1,1\n"
@@ -343,11 +352,11 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
                              "1000,2000,12,1\n"
                              "2000,3000,16,2\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -363,9 +372,14 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
  * Test deploying join with different streams
  */
 TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     NES_INFO("RenameTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -451,10 +465,10 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "_$start:INTEGER,_$end:INTEGER,_$key:INTEGER,window1$win1:INTEGER,window1$id1New:INTEGER,window1$timestamp:INTEGER,"
@@ -464,11 +478,11 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
         "1000,2000,12,1,12,1001,5,12,1011\n"
         "2000,3000,1,2,1,2000,2,1,2010\n"
         "2000,3000,11,2,11,2001,2,11,2301\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("RenameTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("RenameTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

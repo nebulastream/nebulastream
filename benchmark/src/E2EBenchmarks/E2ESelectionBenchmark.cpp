@@ -26,19 +26,22 @@ using namespace Benchmarking;
 int main() {
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 4, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 2, 3, 1);
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 4, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 2, 3, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
-    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     // source mode
-    //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::MemoryMode};
-    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemoryMode};
+    //    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::CacheMode,
+    //                                                         E2EBase::InputOutputMode::MemMode};
+    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::CacheMode, E2EBase::InputOutputMode::MemMode};
+    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemMode};
+    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
     //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
 
     //roughly 50% selectivity
@@ -48,8 +51,8 @@ int main() {
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
-    ss << "BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffers,ProcessedTasks,ProcessedTuples,"
-          "ProcessedBytes"
+    ss << "Time,BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffersTotal,ProcessedTasksTotal,"
+          "ProcessedTuplesTotal,ProcessedBytesTotal,ThroughputInTupsPerSec,ThroughputInMBPerSec"
        << std::endl;
 
     for (auto workerThreadCnt : allWorkerThreads) {
@@ -57,11 +60,13 @@ int main() {
         for (auto coordinatorThreadCnt : allCoordinatorThreads) {
             std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
             for (auto dataSourceCnt : allDataSources) {
+                std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
                 for (auto sourceMode : allSourceModes) {
-                    std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
-                    ss << benchmarkName << "," << nesVersion << "," << workerThreadCnt << "," << coordinatorThreadCnt << ","
-                       << dataSourceCnt << "," << E2EBase::getInputOutputModeAsString(sourceMode);
-                    ss << E2EBase::runExperiment(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode, query);
+                    std::cout << "sourceMode=" << E2EBase::getInputOutputModeAsString(sourceMode) << std::endl;
+                    auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode);
+                    ss << test->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion << "," << workerThreadCnt << ","
+                       << coordinatorThreadCnt << "," << dataSourceCnt << "," << E2EBase::getInputOutputModeAsString(sourceMode);
+                    ss << test->runExperiment(query);
                 }
             }
         }

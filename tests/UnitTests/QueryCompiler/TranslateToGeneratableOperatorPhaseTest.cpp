@@ -146,13 +146,13 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableSinkOperator = translatePhase->transform(sinkOperator->as<OperatorNode>());
 
-    ASSERT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
+    EXPECT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
 
     auto generatableFilterOperator = generatableSinkOperator->getChildren()[0];
-    ASSERT_TRUE(generatableFilterOperator->instanceOf<GeneratableFilterOperator>());
+    EXPECT_TRUE(generatableFilterOperator->instanceOf<GeneratableFilterOperator>());
 
     auto generatableSourceOperator = generatableFilterOperator->getChildren()[0];
-    ASSERT_TRUE(generatableSourceOperator->instanceOf<GeneratableScanOperator>());
+    EXPECT_TRUE(generatableSourceOperator->instanceOf<GeneratableScanOperator>());
 }
 
 TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
@@ -182,16 +182,16 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
 
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableSinkOperator = translatePhase->transform(queryPlan->getRootOperators()[0]);
-    ASSERT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
+    EXPECT_TRUE(generatableSinkOperator->instanceOf<GeneratableSinkOperator>());
 
     auto generatableWindowScanOperator = generatableSinkOperator->getChildren()[0];
-    ASSERT_TRUE(generatableWindowScanOperator->instanceOf<GeneratableScanOperator>());
+    EXPECT_TRUE(generatableWindowScanOperator->instanceOf<GeneratableScanOperator>());
 
     auto generatableWindowOperator = generatableWindowScanOperator->getChildren()[0];
-    ASSERT_TRUE(generatableWindowOperator->instanceOf<GeneratableCompleteWindowOperator>());
+    EXPECT_TRUE(generatableWindowOperator->instanceOf<GeneratableCompleteWindowOperator>());
 
     auto generatableSourceOperator = generatableWindowOperator->getChildren()[0];
-    ASSERT_TRUE(generatableSourceOperator->instanceOf<GeneratableScanOperator>());
+    EXPECT_TRUE(generatableSourceOperator->instanceOf<GeneratableScanOperator>());
 }
 
 }// namespace NES

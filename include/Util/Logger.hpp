@@ -217,7 +217,6 @@ struct LoggingBlackHole {
     do {                                                                                                                         \
         NES::detail::LoggingBlackHole bh;                                                                                        \
         ((void) (bh << __VA_ARGS__));                                                                                            \
-        ;                                                                                                                        \
     } while (0)
 #define NES_INFO(...)                                                                                                            \
     do {                                                                                                                         \
@@ -278,7 +277,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
-                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
@@ -296,7 +295,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
-                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
@@ -311,7 +310,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
         if (!(CONDITION)) {                                                                                                      \
             LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << __VA_ARGS__);                      \
             {                                                                                                                    \
-                auto __stacktrace = collectAndPrintStacktrace();                                                                 \
+                auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
@@ -323,7 +322,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 
 #define NES_THROW_RUNTIME_ERROR(...)                                                                                             \
     do {                                                                                                                         \
-        auto __stacktrace = collectAndPrintStacktrace();                                                                         \
+        auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                        \
         std::stringbuf __buffer;                                                                                                 \
         std::ostream __os(&__buffer);                                                                                            \
         __os << __VA_ARGS__;                                                                                                     \
@@ -337,52 +336,6 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
     } while (0)
 
 namespace NES {
-static void setupLogging(std::string logFileName, DebugLevel level) {
-    std::cout << "Logger: SETUP_LOGGING" << std::endl;
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, logFileName);
-    log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-#ifdef NES_LOGGING_NO_LEVEL
-    NESLogger->setLevel(log4cxx::Level::getOff());
-#else
-    // set log level
-    switch (level) {
-        case LOG_NONE: {
-            NESLogger->setLevel(log4cxx::Level::getOff());
-            break;
-        }
-        case LOG_WARNING: {
-            NESLogger->setLevel(log4cxx::Level::getWarn());
-            break;
-        }
-        case LOG_DEBUG: {
-            NESLogger->setLevel(log4cxx::Level::getDebug());
-            break;
-        }
-        case LOG_INFO: {
-            NESLogger->setLevel(log4cxx::Level::getInfo());
-            break;
-        }
-        case LOG_TRACE: {
-            NESLogger->setLevel(log4cxx::Level::getTrace());
-            break;
-        }
-        default: {
-            NES_FATAL_ERROR("setupLogging: log level not supported " << getDebugLevelAsString(level));
-        }
-    }
-#endif
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
-}
-
 static void setLogLevel(DebugLevel level) {
     // set log level
 #ifdef NES_LOGGING_NO_LEVEL
@@ -415,6 +368,23 @@ static void setLogLevel(DebugLevel level) {
         }
     }
 #endif
+}
+
+static void setupLogging(std::string logFileName, DebugLevel level) {
+    std::cout << "Logger: SETUP_LOGGING" << std::endl;
+    // create PatternLayout
+    log4cxx::LayoutPtr layoutPtr(
+        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c: %l [%M] %X{threadName} [%-5t] [%p] : %m%n"));
+
+    // create FileAppender
+    LOG4CXX_DECODE_CHAR(fileName, logFileName);
+    log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+
+    // create ConsoleAppender
+    log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+    setLogLevel(level);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
 }
 
 #define NES_NOT_IMPLEMENTED()                                                                                                    \

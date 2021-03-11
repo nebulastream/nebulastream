@@ -421,25 +421,25 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     try {
         DynamicRowLayoutField<uint32_t, false>::create(3, mappedRowLayout);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         DynamicRowLayoutField<uint32_t, false>::create(4, mappedRowLayout);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         DynamicRowLayoutField<uint32_t, false>::create(5, mappedRowLayout);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     size_t i = 0;
@@ -452,49 +452,49 @@ TEST_F(DynamicMemoryLayoutTest, rowLayoutLayoutFieldBoundaryNoCheck) {
     try {
         ((void) field0[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field2[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field2[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field0[++i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field1[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field2[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 }
 
@@ -529,25 +529,25 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
     try {
         DynamicColumnLayoutField<uint32_t, false>::create(3, mappedColumnLayout);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         DynamicColumnLayoutField<uint32_t, false>::create(4, mappedColumnLayout);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         DynamicColumnLayoutField<uint32_t, false>::create(5, mappedColumnLayout);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     size_t i = 0;
@@ -560,49 +560,49 @@ TEST_F(DynamicMemoryLayoutTest, columnLayoutLayoutFieldBoundaryNoCheck) {
     try {
         ((void) field0[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field2[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field2[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field0[++i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field1[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 
     try {
         ((void) field2[i]);
     } catch (NES::NesRuntimeException& e) {
-        ASSERT_TRUE(false);
+        EXPECT_TRUE(false);
     } catch (Exception& e) {
-        ASSERT_TRUE(true);
+        EXPECT_TRUE(true);
     }
 }
 

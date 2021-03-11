@@ -85,11 +85,11 @@ class MonitoringStackTest : public testing::Test {
 TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
     CpuMetrics cpuMetrics = cpuStats.measure();
-    ASSERT_TRUE(cpuMetrics.getNumCores() > 0);
+    EXPECT_TRUE(cpuMetrics.getNumCores() > 0);
     for (int i = 0; i < cpuMetrics.getNumCores(); i++) {
-        ASSERT_TRUE(cpuMetrics.getValues(i).user > 0);
+        EXPECT_TRUE(cpuMetrics.getValues(i).user > 0);
     }
-    ASSERT_TRUE(cpuMetrics.getTotal().user > 0);
+    EXPECT_TRUE(cpuMetrics.getTotal().user > 0);
 
     auto cpuIdle = MetricUtils::CPUIdle(0);
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
@@ -98,7 +98,7 @@ TEST_F(MonitoringStackTest, testCPUStats) {
 TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
     auto memMetrics = memStats.measure();
-    ASSERT_TRUE(memMetrics.FREE_RAM > 0);
+    EXPECT_TRUE(memMetrics.FREE_RAM > 0);
 
     NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM / (1024 * 1024) << "gb");
 }
@@ -106,13 +106,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
 TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
     auto diskMetrics = diskStats.measure();
-    ASSERT_TRUE(diskMetrics.fBavail > 0);
+    EXPECT_TRUE(diskMetrics.fBavail > 0);
 }
 
 TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
     auto networkMetrics = networkStats.measure();
-    ASSERT_TRUE(!networkMetrics.getInterfaceNames().empty());
+    EXPECT_TRUE(!networkMetrics.getInterfaceNames().empty());
 
     for (std::string intfs : networkMetrics.getInterfaceNames()) {
         NES_INFO("MonitoringStackTest: Received metrics for interface " << intfs);
@@ -131,37 +131,37 @@ TEST_F(MonitoringStackTest, testMetric) {
     // test with simple data types
     metrics.emplace_back(1);
     Metric m0 = metrics[0];
-    ASSERT_TRUE(getMetricType(m0) == MetricType::UnknownType);
+    EXPECT_TRUE(getMetricType(m0) == MetricType::UnknownType);
     int valueInt = m0.getValue<int>();
-    ASSERT_TRUE(valueInt == 1);
+    EXPECT_TRUE(valueInt == 1);
     metricsMap.insert({"sdf", 1});
 
     metrics.emplace_back(std::string("test"));
     Metric m1 = metrics[1];
     std::string valueString = m1.getValue<std::string>();
-    ASSERT_TRUE(valueString == "test");
+    EXPECT_TRUE(valueString == "test");
 
     // test cpu stats
     metrics.emplace_back(cpuStats);
     Metric m2 = metrics[2];
-    ASSERT_TRUE(getMetricType(m2) == MetricType::GaugeType);
+    EXPECT_TRUE(getMetricType(m2) == MetricType::GaugeType);
     Gauge<CpuMetrics> cpuMetrics = m2.getValue<Gauge<CpuMetrics>>();
-    ASSERT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
+    EXPECT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
     metrics.emplace_back(networkStats);
     auto networkMetrics = metrics[3].getValue<Gauge<NetworkMetrics>>();
-    ASSERT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
+    EXPECT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
 
     // test disk stats
     metrics.emplace_back(diskStats);
     auto diskMetrics = metrics[4].getValue<Gauge<DiskMetrics>>();
-    ASSERT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
+    EXPECT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
 
     // test mem stats
     metrics.emplace_back(memStats);
     auto memMetrics = metrics[5].getValue<Gauge<MemoryMetrics>>();
-    ASSERT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
+    EXPECT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
 TEST_F(MonitoringStackTest, testMetricGroup) {
@@ -176,36 +176,36 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
     auto intS = "simpleInt";
     metricGroup->add(intS, 1);
     int valueInt = metricGroup->getAs<int>(intS);
-    ASSERT_TRUE(valueInt == 1);
+    EXPECT_TRUE(valueInt == 1);
 
     auto stringS = "simpleString";
     metricGroup->add(stringS, std::string("test"));
     std::string valueString = metricGroup->getAs<std::string>(stringS);
-    ASSERT_TRUE(valueString == "test");
+    EXPECT_TRUE(valueString == "test");
 
     // test cpu stats
     auto cpuS = "cpuStats";
     metricGroup->add(cpuS, cpuStats);
     Gauge<CpuMetrics> cpuMetrics = metricGroup->getAs<Gauge<CpuMetrics>>(cpuS);
-    ASSERT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
+    EXPECT_TRUE(cpuStats.measure().getNumCores() == cpuMetrics.measure().getNumCores());
 
     // test network stats
     auto networkS = "networkStats";
     metricGroup->add(networkS, networkStats);
     auto networkMetrics = metricGroup->getAs<Gauge<NetworkMetrics>>(networkS);
-    ASSERT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
+    EXPECT_TRUE(networkStats.measure().getInterfaceNum() == networkMetrics.measure().getInterfaceNum());
 
     // test disk stats
     auto diskS = "diskStats";
     metricGroup->add(diskS, diskStats);
     auto diskMetrics = metricGroup->getAs<Gauge<DiskMetrics>>(diskS);
-    ASSERT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
+    EXPECT_TRUE(diskStats.measure().fBavail == diskMetrics.measure().fBavail);
 
     // test mem stats
     auto memS = "memStats";
     metricGroup->add(memS, memStats);
     auto memMetrics = metricGroup->getAs<Gauge<MemoryMetrics>>(memS);
-    ASSERT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
+    EXPECT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
 /**
@@ -325,18 +325,18 @@ TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
 
     auto schema = metricGroup->createSchema();
     auto deserMem = MemoryMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::MEMORY_METRICS_DESC);
-    ASSERT_TRUE(deserMem != MemoryMetrics{});
-    ASSERT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
+    EXPECT_TRUE(deserMem != MemoryMetrics{});
+    EXPECT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
 
     auto deserCpu = CpuMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::CPU_METRICS_DESC);
-    ASSERT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
-    ASSERT_TRUE(deserCpu.getValues(1).user > 0);
+    EXPECT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
+    EXPECT_TRUE(deserCpu.getValues(1).user > 0);
 
     auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::NETWORK_METRICS_DESC);
-    ASSERT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
+    EXPECT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
 
     auto deserDisk = DiskMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::DISK_METRICS_DESC);
-    ASSERT_TRUE(deserDisk.fBlocks == diskStats.measure().fBlocks);
+    EXPECT_TRUE(deserDisk.fBlocks == diskStats.measure().fBlocks);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
@@ -353,9 +353,9 @@ TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
     auto schema = metricGroup->createSchema();
     GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
 
-    ASSERT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
-    ASSERT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
-    ASSERT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
+    EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
+    EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
+    EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
 }
 
 TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
@@ -390,8 +390,8 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     auto schema = crd->workerRpcClient->requestMonitoringData(destAddress, plan, tupleBuffer);
 
     NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
-    ASSERT_TRUE(schema->getSize() > 1);
-    ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+    EXPECT_TRUE(schema->getSize() > 1);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
     NES_INFO("MonitoringStackTest: Stopping worker");
@@ -437,8 +437,8 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
         auto [schema, tupleBuffer] = crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan);
 
         NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
-        ASSERT_TRUE(schema->getSize() > 1);
-        ASSERT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
+        EXPECT_TRUE(schema->getSize() > 1);
+        EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
         tupleBuffer.release();
         schema.reset();
     }

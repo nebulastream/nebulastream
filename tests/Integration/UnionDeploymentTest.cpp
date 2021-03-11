@@ -39,9 +39,6 @@ static uint64_t rpcPort = 4000;
 
 class UnionDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
-    SourceConfigPtr sourceConfig;
     static void SetUpTestCase() {
         NES::setupLogging("UnionDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup UnionDeploymentTest test class.");
@@ -50,15 +47,6 @@ class UnionDeploymentTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
-        coordinatorConfig = CoordinatorConfig::create();
-        coordinatorConfig->setRpcPort(rpcPort);
-        coordinatorConfig->setRestPort(restPort);
-
-        workerConfig = WorkerConfig::create();
-        workerConfig->setCoordinatorPort(rpcPort);
-
-        sourceConfig = SourceConfig::create();
     }
 
     void TearDown() { NES_INFO("Tear down UnionDeploymentTest class."); }
@@ -67,10 +55,15 @@ class UnionDeploymentTest : public testing::Test {
 /**
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
-TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -135,10 +128,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -230,7 +223,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     NES_INFO("UnionDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -249,10 +242,15 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -317,10 +315,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -412,7 +410,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     NES_INFO("UnionDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -431,10 +429,15 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDifferentSpeed) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -500,10 +503,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 6));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -595,7 +598,7 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 
     NES_INFO("UnionDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -614,10 +617,15 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDownWithDifferentSpe
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -688,7 +696,7 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     cout << "queryid=" << queryId << endl;
-    ASSERT_TRUE(!TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(!TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     NES_INFO("UnionDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -709,10 +717,15 @@ TEST_F(UnionDeploymentTest, testMergeTwoDifferentStreams) {
  * Case: 2 filter operators are above a unionWith operator and will be pushed down towards both of the available sources.
  *       2 filter operators are already below unionWith operator and need to be pushed down normally towards its respective source.
  */
-TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentStreams) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -785,10 +798,10 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -851,7 +864,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -872,10 +885,15 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
  * Case: 1 filter operator is above a unionWith operator and will be pushed down towards both of the available sources.
  *       1 filter operator is already below unionWith operator and needs to be pushed down normally towards its own source.
  */
-TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+TEST_F(UnionDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferentStreams) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -946,10 +964,10 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -983,7 +1001,7 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1004,10 +1022,15 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentStreams)
  * Case: 2 filter operators are already below unionWith operator and needs to be pushed down normally towards their respective source.
  *       Here the filters don't need to be pushed down over an existing unionWith operator.
  */
-TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentStreams) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1079,10 +1102,10 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     std::ifstream ifs(outputFilePath);
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
@@ -1133,7 +1156,7 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("UnionDeploymentTest For Filter-Push-Down: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

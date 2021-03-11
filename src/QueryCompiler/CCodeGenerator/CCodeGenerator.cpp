@@ -845,6 +845,12 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
         createTriggerCall->addParameter(constantTriggerTime);
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
+        NES_WARNING("This mode is not supported anymore");
+    } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+        auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
+        auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
+        auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
+        setupScope->addStatement(triggerStatement.copy());
     } else {
         NES_FATAL_ERROR("Aggregation Handler: mode=" << policy->getPolicyType() << " not implemented");
     }
@@ -1388,6 +1394,12 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto constantTriggerTime =
             Constant(tf->createValueType(DataTypeFactory::createBasicValue(triggerDesc->getTriggerTimeInMs())));
         createTriggerCall->addParameter(constantTriggerTime);
+        auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
+        setupScope->addStatement(triggerStatement.copy());
+        NES_WARNING("This mode is not supported anymore");
+    } else if (policy->getPolicyType() == Windowing::triggerOnWatermarkChange) {
+        auto triggerDesc = std::dynamic_pointer_cast<Windowing::OnTimeTriggerPolicyDescription>(policy);
+        auto createTriggerCall = call("Windowing::ExecutableOnWatermarkChangeTriggerPolicy::create");
         auto triggerStatement = VarDeclStatement(executableTrigger).assign(createTriggerCall);
         setupScope->addStatement(triggerStatement.copy());
     } else {

@@ -18,6 +18,7 @@
 #define INCLUDE_JOIN_WINDOW_HPP_
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -42,7 +43,11 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
 /**
  * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHandler> {
+class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<AbstractJoinHandler>,
+                            public NodeEngine::Reconfigurable {
+    typedef detail::virtual_enable_shared_from_this<AbstractJoinHandler> inherited0;
+    typedef NodeEngine::Reconfigurable inherited1;
+
   public:
     explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                                  Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger)
@@ -54,7 +59,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
 
     template<class Type>
     auto as() {
-        return std::dynamic_pointer_cast<Type>(shared_from_this());
+        return std::dynamic_pointer_cast<Type>(inherited0::shared_from_this());
     }
 
     /**
@@ -73,7 +78,7 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
      * @brief triggers all ready windows.
      * @return
      */
-    virtual void trigger() = 0;
+    virtual void trigger(bool forceFlush = false) = 0;
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
@@ -89,6 +94,16 @@ class AbstractJoinHandler : public std::enable_shared_from_this<AbstractJoinHand
     virtual std::string toString() = 0;
 
     LogicalJoinDefinitionPtr getJoinDefinition() { return joinDefinition; }
+
+    /**
+     * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
+     * @tparam Derived the class type that we want to cast the shared ptr
+     * @return this instance casted to the desired shared_ptr<Derived> type
+     */
+    template<typename Derived>
+    std::shared_ptr<Derived> shared_from_base() {
+        return std::static_pointer_cast<Derived>(inherited0::shared_from_this());
+    }
 
     /**
      * @brief Gets the maximal processed ts per origin id.

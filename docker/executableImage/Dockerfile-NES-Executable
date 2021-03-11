@@ -1,13 +1,23 @@
-FROM nebulastream/nes-build-image:latest
+FROM nebulastream/nes-build-image:latest AS buildimg
 
-ADD ./resources/*.deb nes.deb
-RUN dpkg -i nes.deb && \
-    apt install iproute2 ifupdown net-tools -y -qq && \
-    apt autoclean -y -qq
-RUN rm nes.deb
-ADD ./resources/exdra.csv /opt/local/nebula-stream/exdra.csv
-ADD ./entrypoint-containernet.sh /entrypoint-containernet.sh
-ADD ./entrypoint-nes-executable.sh /entrypoint.sh
+COPY ./ /nebulastream
+
+RUN mkdir -p /nebulastream/build && \
+    cd /nebulastream/build && export CC=/usr/bin/clang && export CXX=/usr/bin/clang++ && \
+    cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/$($ACTUAL_TRIPLE)" -DCPPRESTSDK_DIR="/usr/lib/$($ACTUAL_TRIPLE)/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
+    make version && make -j4 && cpack && cp *.deb /nes.deb && cd && rm -rf /nebulastream/build
+
+FROM nebulastream/nes-build-image:latest AS execimg
+
+COPY --from=buildimg /nes.deb .
+
+RUN dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools -y -qq && \
+    apt autoclean -y -qq && rm -rf /*.deb && cd
+
+COPY ./docker/executableImage/resources/exdra.csv /opt/local/nebula-stream/exdra.csv
+COPY ./docker/executableImage/entrypoint-prepare-nes-package.sh /entrypoint-prepare-nes-package.sh
+COPY ./docker/executableImage/entrypoint-containernet.sh /entrypoint-containernet.sh
+COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
 
 ENV restIp="0.0.0.0"
 ENV restPort=8081

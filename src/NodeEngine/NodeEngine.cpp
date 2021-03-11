@@ -21,15 +21,10 @@
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Util/Logger.hpp>
@@ -303,7 +298,7 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
     return false;
 }
 
-bool NodeEngine::stopQuery(QueryId queryId) {
+bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
     if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
@@ -314,7 +309,7 @@ bool NodeEngine::stopQuery(QueryId queryId) {
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->stopQuery(deployedQEPs[querySubPlanId])) {
+            if (queryManager->stopQuery(deployedQEPs[querySubPlanId], graceful)) {
                 NES_DEBUG("NodeEngine: stop of QEP " << querySubPlanId << " succeeded");
             } else {
                 NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed");
@@ -385,9 +380,9 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     queryManager.reset();
+    networkManager->destroy();
     networkManager.reset();
     bufferManager.reset();
-    networkManager.reset();
     isReleased = true;
     return !withError;
 }
@@ -433,8 +428,10 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
     }
 }
 
-void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage) {
-    // nop
+void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
+    // propagate EOS to the locally running QEPs that use the network source
+    NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
+    queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
@@ -447,7 +444,7 @@ void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
 
 void NodeEngine::onChannelError(Network::Messages::ErrorMessage err) {
     if (err.getErrorType() == Network::Messages::ErrorType::kPartitionNotRegisteredError) {
-        NES_WARNING("NodeEngine: Unable to find the NES Partition " << err.getChannelId());
+        NES_WARNING("NodeEngine: Unable to find the NES Partition " << err.getChannelId() << ": please, retry later or abort.");
         return;
     }
     NES_THROW_RUNTIME_ERROR(err.getErrorTypeAsString());

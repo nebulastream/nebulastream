@@ -20,24 +20,28 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
-                                         std::map<std::string, z3::ExprPtr> windowsExpressions,
-                                         std::map<std::string, std::vector<std::string>> attributeMap,
-                                         std::vector<std::string> sources) {
-    return std::make_shared<QuerySignature>(QuerySignature(conditions, columns, windowsExpressions, attributeMap, sources));
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                                         std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions) {
+    return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions), std::move(columns),
+                                                           std::move(schemaFieldToExprMaps), std::move(windowsExpressions)));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
-                               std::map<std::string, z3::ExprPtr> windowsExpressions,
-                               std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources)
-    : conditions(conditions), columns(columns), windowsExpressions(windowsExpressions), attributeMap(attributeMap),
-      sources(sources) {}
+QuerySignature::QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                               std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                               std::map<std::string, z3::ExprPtr>&& windowsExpressions)
+    : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
+      windowsExpressions(std::move(windowsExpressions)) {}
 
 z3::ExprPtr QuerySignature::getConditions() { return conditions; }
 
-std::map<std::string, z3::ExprPtr> QuerySignature::getColumns() { return columns; }
+const std::vector<std::string>& QuerySignature::getColumns() { return columns; }
 
-std::map<std::string, z3::ExprPtr> QuerySignature::getWindowsExpressions() { return windowsExpressions; }
+const std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions() { return windowsExpressions; }
+
+const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchemaFieldToExprMaps() {
+    return schemaFieldToExprMaps;
+}
 
 bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
@@ -59,22 +63,52 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
         return false;
     }
 
-    //Convert columns from both the signatures into equality conditions.
+    //Check if two columns are identical
     //If column from one signature doesn't exists in other signature then they are not equal.
-    z3::expr_vector allConditions(context);
-    for (auto columnEntry : columns) {
-        if (otherColumns.find(columnEntry.first) == otherColumns.end()) {
-            NES_WARNING("Column " << columnEntry.first << " doesn't exists in column list of other signature");
+    auto otherSchemaFieldToExprMaps = other->getSchemaFieldToExprMaps();
+
+    //Iterate over all distinct schema maps
+    // and identify if there is an equivalent schema map in the other signature
+    for (auto schemaMap : schemaFieldToExprMaps) {
+        bool schemaExists = false;
+        for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
+             otherSchemaMapItr++) {
+            bool schemaMatched = false;
+            //Iterate over all the field expressions from one schema and other
+            // and check if they are matching
+            for (auto [fieldName, fieldExpr] : schemaMap) {
+                bool fieldMatch = false;
+                for (auto [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
+                    if (z3::eq(*fieldExpr, *otherFieldExpr)) {
+                        fieldMatch = true;
+                        break;
+                    }
+                }
+                //If field is not matched with any of the other's field then schema is mis-matched
+                if (!fieldMatch) {
+                    schemaMatched = false;
+                    break;
+                }
+                schemaMatched = true;
+            }
+
+            //If schema is matched then remove the other schema from the list to avoid duplicate matching
+            if (schemaMatched) {
+                otherSchemaFieldToExprMaps.erase(otherSchemaMapItr);
+                schemaExists = true;
+                break;
+            }
+        }
+
+        //If a matching schema doesn't exists in other signature then two signatures are different
+        if (!schemaExists) {
+            NES_WARNING("QuerySignature: Both signatures have different column entries");
             return false;
         }
-        //For each column expression of the column in other signature we try to create a DNF using
-        // each column expression of the same column in this signature.
-        auto otherColumnExpression = otherColumns[columnEntry.first];
-        auto columnExpression = columnEntry.second;
-
-        allConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherColumnExpression, *columnExpression)));
     }
 
+    //Compute all CNF conditions for check
+    z3::expr_vector allConditions(context);
     //Check the number of window expressions extracted from both queries
     auto otherWindowExpressions = other->windowsExpressions;
     if (windowsExpressions.size() != otherWindowExpressions.size()) {
@@ -104,9 +138,4 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     NES_DEBUG("Solving: " << solver);
     return solver.check() == z3::unsat;
 }
-
-std::vector<std::string> QuerySignature::getSources() { return sources; }
-
-std::map<std::string, std::vector<std::string>> QuerySignature::getAttributeMap() { return attributeMap; }
-
 }// namespace NES::Optimizer

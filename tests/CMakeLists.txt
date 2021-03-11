@@ -395,6 +395,11 @@ add_executable(multi-join-test "Integration/MultipleJoinsTest.cpp")
 target_link_libraries(multi-join-test nes ${GTEST_LIBRARIES})
 add_test(NAME multi-join-test COMMAND multi-join-test)
 
+### MultiThreadedTest ###
+add_executable(multi-thread-test "Integration/MultiThreadedTest.cpp")
+target_link_libraries(multi-thread-test nes ${GTEST_LIBRARIES})
+add_test(NAME multi-thread-test COMMAND multi-thread-test)
+
 ### AssignWatermarkTest ###
 #TODO: activate for testing
 add_executable(assignment-watermark-test "Integration/AssignWatermarkTest.cpp")
@@ -405,7 +410,11 @@ add_executable(allowed-lateness-test "Integration/AllowedLatenessTest.cpp")
 target_link_libraries(allowed-lateness-test nes ${GTEST_LIBRARIES})
 add_test(NAME allowed-lateness-test COMMAND allowed-lateness-test)
 
-### mergeDeploymentTest ###
+add_executable(complex-sequence-test "Integration/ComplexSequenceTest.cpp")
+target_link_libraries(complex-sequence-test nes ${GTEST_LIBRARIES})
+add_test(NAME complex-sequence-test COMMAND complex-sequence-test)
+
+### unionDeploymentTest ###
 add_executable(union-deployment-test "Integration/UnionDeploymentTest.cpp")
 target_link_libraries(union-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME union-deployment-test COMMAND union-deployment-test)

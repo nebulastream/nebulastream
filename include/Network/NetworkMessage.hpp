@@ -44,10 +44,13 @@ enum MessageType {
     /// type of a message that contains an error
     kErrorMessage,
     /// type of a message that marks a stream subpartition as finished, i.e., no more records are expected
-    kEndOfStream
+    kEndOfStream,
+    /// message type of an event buffer
+    kEventBuffer,
 };
 
-enum ErrorType { kNoError, kPartitionNotRegisteredError, kUnknownError };
+/// this enum defines the errors that can occur in the network stack logic
+enum ErrorType : uint8_t { kNoError, kPartitionNotRegisteredError, kUnknownError, kUnknownPartition };
 
 class MessageHeader {
   public:
@@ -115,7 +118,12 @@ class EndOfStreamMessage : public ExchangeMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kEndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
+    explicit EndOfStreamMessage(ChannelId channelId, bool graceful = true) : ExchangeMessage(channelId), graceful(graceful) {}
+
+    bool isGraceful() const { return graceful; }
+
+  private:
+    bool graceful;
 };
 
 class ErrorMessage : public ExchangeMessage {

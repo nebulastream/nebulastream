@@ -57,16 +57,16 @@ class NetworkManager {
      * @brief This method is called on the receiver side to register a SubpartitionConsumer, i.e. indicate that the
      * server is ready to receive particular subpartitions.
      * @param the nesPartition
-     * @return the current counter of the subpartition
+     * @return true if the partition was registered for the first time, false otherwise
      */
-    uint64_t registerSubpartitionConsumer(NesPartition nesPartition);
+    bool registerSubpartitionConsumer(NesPartition nesPartition);
 
     /**
      * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
      * @param the nesPartition
-     * @return the new counter of the subpartition
+     * @return true if the partition was registered fully, false otherwise
      */
-    uint64_t unregisterSubpartitionConsumer(NesPartition nesPartition);
+    bool unregisterSubpartitionConsumer(NesPartition nesPartition);
 
     /**
      * @param nesPartition to check
@@ -87,8 +87,26 @@ class NetworkManager {
     OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
                                                   std::chrono::seconds waitTime, uint8_t retryTimes);
 
+    /**
+     * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol
+     * @param hostname
+     * @param port
+     * @param exchangeProtocol
+     * @param bufferManager
+     * @param numServerThread
+     */
     explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol,
                             NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+
+    /**
+     * @brief Destroy the network manager calling destroy()
+     */
+    ~NetworkManager();
+
+    /**
+     * @brief This methods destroys the network manager by stopping the underlying (ZMQ) server
+     */
+    void destroy();
 
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;

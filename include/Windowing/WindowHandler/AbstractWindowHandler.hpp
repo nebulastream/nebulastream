@@ -18,6 +18,7 @@
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
@@ -39,15 +40,20 @@ namespace NES::Windowing {
 /**
  * @brief The abstract window handler is the base class for all window handlers
  */
-class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindowHandler> {
+class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler>,
+                              public NodeEngine::Reconfigurable {
+    typedef detail::virtual_enable_shared_from_this<AbstractWindowHandler> inherited0;
+    typedef NodeEngine::Reconfigurable inherited1;
+
   public:
-    explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition) : windowDefinition(windowDefinition) {
+    explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
+        : windowDefinition(windowDefinition), running(false) {
         // nop
     }
 
     template<class Type>
     auto as() {
-        return std::dynamic_pointer_cast<Type>(shared_from_this());
+        return std::dynamic_pointer_cast<Type>(inherited0::shared_from_this());
     }
 
     /**
@@ -66,7 +72,7 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
      * @brief triggers all ready windows.
      * @return
      */
-    virtual void trigger() = 0;
+    virtual void trigger(bool forceFlush = false) = 0;
 
     /**
     * @brief Initialises the state of this window depending on the window definition.
@@ -166,9 +172,36 @@ class AbstractWindowHandler : public std::enable_shared_from_this<AbstractWindow
         }
     }
 
+    /**
+     * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
+     * @tparam Derived the class type that we want to cast the shared ptr
+     * @return this instance casted to the desired shared_ptr<Derived> type
+     */
+    template<typename Derived>
+    std::shared_ptr<Derived> shared_from_base() {
+        return std::static_pointer_cast<Derived>(inherited0::shared_from_this());
+    }
+
+    /**
+     * @brief Reconfigure machinery for the window hander: does nothing in this class but can be overidden in its children
+     * @param task
+     * @param context
+     */
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override {
+        Reconfigurable::reconfigure(task, context);
+    }
+
+    /**
+     * @brief Reconfigure machinery for the window hander: does nothing in this class but can be overidden in its children
+     * @param task
+     */
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
+        Reconfigurable::postReconfigurationCallback(task);
+    }
+
   protected:
     LogicalWindowDefinitionPtr windowDefinition;
-    std::atomic_bool running{false};
+    std::atomic_bool running;
     WindowManagerPtr windowManager;
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;
     uint64_t lastWatermark;

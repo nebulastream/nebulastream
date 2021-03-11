@@ -387,6 +387,7 @@ class TestUtils {
             sleep(1);
         }
         NES_DEBUG("checkStoppedOrTimeout: expected status not reached within set timeout");
+        NES_ASSERT(false, "checkStoppedOrTimeout: expected status not reached within set timeout");
         return false;
     }
 
@@ -472,6 +473,11 @@ class TestUtils {
                 free(buff);
 
                 if (expectedNumberOfContent != currentContentSize) {
+                    if (currentContentSize > expectedNumberOfContent) {
+                        NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: content is larger than expected result");
+                        return false;
+                    }
+
                     NES_DEBUG("TestUtil:checkBinaryOutputContentLengthOrTimeout:: number of expected lines "
                               << expectedNumberOfContent << " not reached yet with " << currentContent.size()
                               << " lines content=" << content);

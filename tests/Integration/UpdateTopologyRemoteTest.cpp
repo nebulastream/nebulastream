@@ -31,16 +31,13 @@ namespace NES {
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
 uint64_t rpcPort = 4000;
+uint64_t restPort = 8081;
 
 class UpdateTopologyRemoteTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
-    std::string ipAddress = "127.0.0.1";
-
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();
-
+    std::string ipAddress = "127.0.0.1";
     uint16_t coordinatorNumberOfSlots = processorCount * 2;
     uint16_t workerNumberOfSlots = processorCount;
 
@@ -49,20 +46,19 @@ class UpdateTopologyRemoteTest : public testing::Test {
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
 
-    void SetUp() {
-        rpcPort = rpcPort + 30;
-        coordinatorConfig = CoordinatorConfig::create();
-        workerConfig = WorkerConfig::create();
-        coordinatorConfig->setRpcPort(rpcPort);
-        workerConfig->setCoordinatorPort(rpcPort);
-    }
+    void SetUp() { rpcPort = rpcPort + 30; }
 
     static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
 };
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
 
@@ -92,34 +88,34 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     TopologyPtr topology = crd->getTopology();
 
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-    ASSERT_TRUE(rootNode->getGrpcPort() == port + 1);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    ASSERT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
+    EXPECT_TRUE(rootNode->getGrpcPort() == port + 1);
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(rootNode->getAvailableResources() == coordinatorNumberOfSlots);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
-    ASSERT_TRUE(node1->getGrpcPort() == node1RpcPort);
-    ASSERT_TRUE(node1->getAvailableResources() == workerNumberOfSlots);
+    EXPECT_TRUE(node1->getGrpcPort() == node1RpcPort);
+    EXPECT_TRUE(node1->getAvailableResources() == workerNumberOfSlots);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
-    ASSERT_TRUE(node2->getGrpcPort() == node2RpcPort);
-    ASSERT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
+    EXPECT_TRUE(node2->getGrpcPort() == node2RpcPort);
+    EXPECT_TRUE(node2->getAvailableResources() == workerNumberOfSlots);
 
     NES_INFO("ADD NEW PARENT");
     bool successAddPar = wrk->addParent(node2->getId());
     EXPECT_TRUE(successAddPar);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    ASSERT_TRUE(node2->getChildren().size() == 1);
-    ASSERT_TRUE(node2->getChildren()[0]->as<TopologyNode>()->getId() == node1->getId());
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(node2->getChildren().size() == 1);
+    EXPECT_TRUE(node2->getChildren()[0]->as<TopologyNode>()->getId() == node1->getId());
 
     NES_INFO("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node2->getId());
     EXPECT_TRUE(successRemoveParent);
     EXPECT_TRUE(successAddPar);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
-    ASSERT_TRUE(node2->getChildren().empty());
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(node2->getChildren().empty());
 
     NES_INFO("stopping worker");
     bool retStopWrk = wrk->stop(false);
@@ -135,8 +131,14 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 }
 
 TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
@@ -163,17 +165,17 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     TopologyPtr topology = crd->getTopology();
 
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
-    ASSERT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, port + 1));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node1RpcPort));
+    EXPECT_TRUE(topology->nodeExistsWithIpAndPort(ipAddress, node2RpcPort));
 
     TopologyNodePtr rootNode = topology->getRoot();
-    ASSERT_TRUE(rootNode->getGrpcPort() == port + 1);
-    ASSERT_TRUE(rootNode->getChildren().size() == 2);
+    EXPECT_TRUE(rootNode->getGrpcPort() == port + 1);
+    EXPECT_TRUE(rootNode->getChildren().size() == 2);
     TopologyNodePtr node1 = rootNode->getChildren()[0]->as<TopologyNode>();
-    ASSERT_TRUE(node1->getGrpcPort() == node1RpcPort);
+    EXPECT_TRUE(node1->getGrpcPort() == node1RpcPort);
     TopologyNodePtr node2 = rootNode->getChildren()[1]->as<TopologyNode>();
-    ASSERT_TRUE(node2->getGrpcPort() == node2RpcPort);
+    EXPECT_TRUE(node2->getGrpcPort() == node2RpcPort);
 
     NES_INFO("REMOVE NEW PARENT");
     bool successRemoveParent = wrk->removeParent(node1->getId());

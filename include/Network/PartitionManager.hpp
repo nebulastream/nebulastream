@@ -32,18 +32,17 @@ class PartitionManager {
      * @brief Registers a subpartition in the PartitionManager. If the subpartition does not exist a new entry is
      * added in the partition table, otherwise the counter is incremented.
      * @param the partition
-     * @return the new counter
+     * @return true if this is  the first time the partition was registered, false otherwise
      */
-    uint64_t registerSubpartition(NesPartition partition);
+    bool registerSubpartition(NesPartition partition);
 
     /**
      * @brief Unregisters a subpartition in the PartitionManager. If the subpartition does not exist or the current
      * counter is 0 an error is thrown.
      * @param the partition
-     * @return the new counter
-     * @throw  std::out_of_range  If no such data is present.
+     * @return true if the partition counter got to zero, false otherwise
      */
-    uint64_t unregisterSubpartition(NesPartition partition);
+    bool unregisterSubpartition(NesPartition partition);
 
     /**
      * @brief Returns the current counter of a given partition. Throws error if not existing.
@@ -59,13 +58,6 @@ class PartitionManager {
      * @return true if registered, else false
      */
     bool isRegistered(NesPartition partition) const;
-
-    /**
-     * @brief removes a subpartition completely from the entry list
-     * @param the partition
-     * @return  The number of elements erased.
-     */
-    uint64_t deletePartition(NesPartition partition);
 
     /**
      * @brief clears all registered partitions

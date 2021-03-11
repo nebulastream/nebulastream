@@ -51,11 +51,13 @@ bool ZmqServer::start() {
     return startPromise.get_future().get();
 }
 
-ZmqServer::~ZmqServer() {
+ZmqServer::~ZmqServer() { stop(); }
+
+bool ZmqServer::stop() {
     // Do not change the shutdown sequence!
     NES_INFO("ZmqServer: Initiating shutdown");
     if (!zmqContext) {
-        return;// start() not called
+        return false;// start() not called
     }
     keepRunning = false;
     /// plz do not change the above shutdown sequence
@@ -78,11 +80,14 @@ ZmqServer::~ZmqServer() {
             }
         } catch (std::exception& e) {
             NES_ERROR("ZmqServer: Server failed to start due to " << e.what());
-            throw;
+            zmqContext->close();
+            zmqContext.reset();
+            throw e;
         }
     }
     zmqContext->close();
     zmqContext.reset();
+    return true;
 }
 
 void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {

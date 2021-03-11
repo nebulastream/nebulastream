@@ -98,8 +98,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();
@@ -144,8 +144,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -215,8 +215,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
     NES_INFO("read file=" << outputFilePath);
@@ -284,8 +284,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     ifstream my_file(outputFilePath);
     EXPECT_TRUE(my_file.good());
@@ -360,8 +360,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     string expectedContent =
         "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:Char,exdra$metadata_id:Char,exdra$features_type:"
@@ -464,7 +464,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -494,8 +494,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     string expectedContent =
         "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
@@ -527,7 +527,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -561,8 +561,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     // if filter is applied correctly, no output is generated
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
@@ -597,7 +597,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -628,8 +628,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,10000,1,51\n"
@@ -640,7 +640,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
                              "5000,15000,1,95\n"
                              "10000,20000,1,145\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();

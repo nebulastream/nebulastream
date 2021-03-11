@@ -14,22 +14,28 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
-#define NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
+#ifndef NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
+#define NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_
 
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <Util/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <any>
+#include <atomic>
 #include <memory>
 
 namespace NES::NodeEngine {
+
+class Reconfigurable;
+typedef std::shared_ptr<Reconfigurable> ReconfigurablePtr;
 
 /**
  * @brief this class contains the description of the reconfiguration that
  * must be carried out
  */
-class ReconfigurationTask {
+class ReconfigurationMessage {
     using ThreadBarrierPtr = std::unique_ptr<ThreadBarrier>;
 
   public:
@@ -38,19 +44,45 @@ class ReconfigurationTask {
      * @param parentPlanId the owning plan id
      * @param type what kind of reconfiguration we want
      * @param instance the target of the reconfiguration
+     * @param userdata extra information to use in this reconfiguration
      */
-    explicit ReconfigurationTask(const QuerySubPlanId parentPlanId, ReconfigurationType type, Reconfigurable* instance = nullptr)
-        : parentPlanId(parentPlanId), type(type), instance(instance), syncBarrier(nullptr), postSyncBarrier(nullptr) {
+    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type,
+                                    ReconfigurablePtr instance = nullptr, std::any&& userdata = nullptr)
+        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), syncBarrier(nullptr), postSyncBarrier(nullptr),
+          userdata(std::move(userdata)) {
         refCnt.store(0);
+        NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
 
     /**
      * @brief create a reconfiguration task that will be passed to every running thread
      * @param other the task we want to issue (created using the other ctor)
      * @param numThreads number of running threads
+     * @param instance the target of the reconfiguration
+     * @param userdata extra information to use in this reconfiguration
+     * @param blocking whether the reconfiguration must block for completion
      */
-    explicit ReconfigurationTask(const ReconfigurationTask& other, uint64_t numThreads, bool blocking = false)
-        : ReconfigurationTask(other) {
+    explicit ReconfigurationMessage(const QuerySubPlanId parentPlanId, ReconfigurationType type, uint64_t numThreads,
+                                    ReconfigurablePtr instance, std::any&& userdata = nullptr, bool blocking = false)
+        : parentPlanId(parentPlanId), type(type), instance(std::move(instance)), postSyncBarrier(nullptr),
+          userdata(std::move(userdata)) {
+        NES_ASSERT(this->userdata.has_value(), "invalid userdata");
+        syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
+        refCnt.store(numThreads + (blocking ? 1 : 0));
+        if (blocking) {
+            postSyncBarrier = std::make_unique<ThreadBarrier>(numThreads + 1);
+        }
+    }
+
+    /**
+     * @brief create a reconfiguration task that will be passed to every running thread
+     * @param other the task we want to issue (created using the other ctor)
+     * @param numThreads number of running threads
+     * @param blocking whether the reconfiguration must block for completion
+     */
+    explicit ReconfigurationMessage(const ReconfigurationMessage& other, uint64_t numThreads, bool blocking = false)
+        : ReconfigurationMessage(other) {
+        NES_ASSERT(this->userdata.has_value(), "invalid userdata");
         syncBarrier = std::make_unique<ThreadBarrier>(numThreads);
         refCnt.store(numThreads + (blocking ? 1 : 0));
         if (blocking) {
@@ -62,13 +94,16 @@ class ReconfigurationTask {
      * @brief copy constructor
      * @param that
      */
-    ReconfigurationTask(const ReconfigurationTask& that)
+    ReconfigurationMessage(const ReconfigurationMessage& that)
         : parentPlanId(that.parentPlanId), type(that.type), instance(that.instance), syncBarrier(nullptr),
-          postSyncBarrier(nullptr) {
+          postSyncBarrier(nullptr), userdata(that.userdata) {
         // nop
     }
 
-    ~ReconfigurationTask() { destroy(); }
+    /**
+     * @brief Destructor that calls destroy()
+     */
+    ~ReconfigurationMessage() { destroy(); }
 
     /**
      * @brief get the reconfiguration type
@@ -86,47 +121,46 @@ class ReconfigurationTask {
      * @brief get the target instance to reconfigura
      * @return the target instance
      */
-    Reconfigurable* getInstance() const { return instance; };
+    ReconfigurablePtr getInstance() const { return instance; };
 
     /**
      * @brief issue a synchronization barrier for all threads
      */
-    void wait() { syncBarrier->wait(); }
+    void wait();
 
     /**
      * @brief callback executed after the reconfiguration is carried out
      */
-    void postReconfiguration() {
-        if (refCnt.fetch_sub(1) == 1) {
-            instance->destroyCallback(*this);
-            destroy();
-        }
-    }
+    void postReconfiguration();
 
     /**
      * @brief issue a synchronization barrier for all threads
      */
-    void postWait() {
-        if (postSyncBarrier != nullptr) {
-            postSyncBarrier->wait();
-        }
+    void postWait();
+
+    /**
+     * @brief Provides the userdata installed in this reconfiguration descriptor
+     * @tparam T the type of the reconfiguration's userdata
+     * @return the user data value or error if that is not set
+     */
+    template<typename T>
+    T getUserData() const {
+        NES_ASSERT2_FMT(userdata.has_value(), "invalid userdata");
+        return std::any_cast<T>(userdata);
     }
 
   private:
     /**
      * @brief resouce cleanup method
      */
-    void destroy() {
-        syncBarrier.reset();
-        postSyncBarrier.reset();
-    }
+    void destroy();
 
   private:
     /// type of the reconfiguration
     ReconfigurationType type;
 
     /// pointer to reconfigurable instance
-    Reconfigurable* instance;
+    ReconfigurablePtr instance;
 
     /// pointer to initial thread barrier
     ThreadBarrierPtr syncBarrier;
@@ -139,6 +173,9 @@ class ReconfigurationTask {
 
     /// owning plan id
     const QuerySubPlanId parentPlanId;
+
+    /// custom data
+    std::any userdata;
 };
 }// namespace NES::NodeEngine
-#endif//NES_INCLUDE_NODEENGINE_RECONFIGURATIONTASK_HPP_
+#endif//NES_INCLUDE_NODEENGINE_ReconfigurationMessage_HPP_

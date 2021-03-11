@@ -38,26 +38,14 @@ static uint64_t rpcPort = 4000;
 
 class JoinDeploymentTest : public testing::Test {
   public:
-    CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
     static void SetUpTestCase() {
         NES::setupLogging("JoinDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup JoinDeploymentTest test class.");
     }
 
     void SetUp() {
-
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
-        crdConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-        crdConf->setRpcPort(rpcPort);
-        crdConf->setRestPort(restPort);
-
-        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
@@ -69,10 +57,13 @@ class JoinDeploymentTest : public testing::Test {
 //TODO: this test will be enabled once we have the renaming function using as
 //TODO: prevent self join
 TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -131,17 +122,17 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -161,10 +152,13 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 * Test deploying join with same data and same schema
  * */
 TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -240,10 +234,10 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$value:"
                              "INTEGER,window1$id:INTEGER,window1$timestamp:INTEGER,"
@@ -253,11 +247,11 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
                              "2000,3000,1,2,1,2000,2,1,2000\n"
                              "2000,3000,11,2,11,2001,2,11,2001\n"
                              "2000,3000,16,2,16,2002,2,16,2002\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -277,10 +271,13 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
  * Test deploying join with same data but different names in the schema
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -357,10 +354,10 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -370,11 +367,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
                              "2000,3000,1,2,1,2000,2,1,2000\n"
                              "2000,3000,11,2,11,2001,2,11,2001\n"
                              "2000,3000,16,2,16,2002,2,16,2002\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -394,10 +391,13 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -475,10 +475,10 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -488,11 +488,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
                              "1000,2000,12,1,12,1001,5,12,1011\n"
                              "2000,3000,1,2,1,2000,2,1,2010\n"
                              "2000,3000,11,2,11,2001,2,11,2301\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -512,10 +512,13 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -593,10 +596,10 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -606,11 +609,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
                              "2000,3000,1,2,1,2000,1,2000\n"
                              "2000,3000,11,2,11,2001,11,2001\n"
                              "2000,3000,16,2,16,2002,16,2002\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -630,10 +633,13 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
  * Test deploying join with different streams and different Speed
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -715,10 +721,10 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -729,11 +735,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
                              "2000,3000,11,2,11,2001,2,11,2301\n"
                              "1000,2000,12,1,12,1001,5,12,1011\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -753,10 +759,13 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
  * Test deploying join with different three sources
  */
 TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     crdConf->setNumberOfSlots(16);
@@ -848,11 +857,11 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -868,11 +877,11 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
                              "2000,3000,11,2,11,2001,2,11,2301\n"
                              "2000,3000,11,2,11,2001,2,11,2301\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -896,10 +905,13 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
  * Test deploying join with different three sources
  */
 TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     crdConf->setNumberOfSlots(8);
@@ -1002,12 +1014,12 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk4, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -1033,11 +1045,11 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
                              "2000,3000,11,2,11,2001,2,11,2301\n"
                              "2000,3000,11,2,11,2001,2,11,2301\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1065,9 +1077,14 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1144,10 +1161,10 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -1162,11 +1179,11 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
                              "1500,2500,11,2,11,2001,2,11,2301\n"
                              "1000,2000,12,1,12,1001,5,12,1011\n"
                              "500,1500,12,1,12,1001,5,12,1011\n";
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1186,9 +1203,14 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
  * Test deploying join with different streams
  */
 TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -1265,10 +1287,10 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent = "window1window2$start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win:"
                              "INTEGER,window1$id1:INTEGER,window1$timestamp:INTEGER,"
@@ -1284,11 +1306,11 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
                              "2000,3000,16,2,16,2002,16,2002\n"
                              "1500,2500,16,2,16,2002,16,2002\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("JoinDeploymentTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("JoinDeploymentTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

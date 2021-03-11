@@ -97,6 +97,9 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
 #ifdef NES_LOGGING_NO_LEVEL
     flags->addFlag("-DNES_LOGGING_NO_LEVEL=1");
 #endif
+#ifdef NES_LOGGING_FATAL_ERROR_LEVEL
+    flags->addFlag("-DNES_LOGGING_FATAL_ERROR_LEVEL=1");
+#endif
 
     flags->addFlag(filename);
 

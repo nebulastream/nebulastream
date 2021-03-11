@@ -33,7 +33,7 @@
 
 class E2EBase {
   public:
-    enum class InputOutputMode { FileMode, MemoryMode };
+    enum class InputOutputMode { FileMode, CacheMode, MemMode };
 
     /**
      * @brief Method to perform the benchmark
@@ -44,12 +44,12 @@ class E2EBase {
      * @param query the query to be run
      * @return csv list of the results
      */
-    static std::string runExperiment(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt,
-                                     InputOutputMode mode, std::string query);
+    std::string runExperiment(std::string query);
 
     E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode);
     ~E2EBase();
     static std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode);
+    string getTsInRfc3339();
 
   private:
     /**

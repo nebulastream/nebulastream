@@ -33,8 +33,6 @@ static uint64_t rpcPort = 4000;
 
 class RESTEndpointTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
     static void SetUpTestCase() {
         NES::setupLogging("RESTEndpointTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup RESTEndpointTest test class.");
@@ -43,19 +41,20 @@ class RESTEndpointTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coordinatorConfig = CoordinatorConfig::create();
-        workerConfig = WorkerConfig::create();
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 };
 
 TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     NES_INFO("RESTEndpointTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -78,9 +77,9 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     string query = "Query::from(\"default_logical\").sink(PrintSinkDescriptor::create());";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     // get the execution plan
     std::stringstream getExecutionPlanStringStream;
@@ -119,7 +118,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 
     NES_INFO("RESTEndpointTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

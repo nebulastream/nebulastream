@@ -20,7 +20,7 @@
 
 #define CALLSTACK_MAX_SIZE 32
 
-namespace NES {
+namespace NES::NodeEngine {
 /**
  * @brief This methods collects the call stacks and prints is
  */
@@ -37,4 +37,4 @@ std::string collectAndPrintStacktrace() {
 
 void nesErrorHandler() { collectAndPrintStacktrace(); }
 
-}// namespace NES
+}// namespace NES::NodeEngine

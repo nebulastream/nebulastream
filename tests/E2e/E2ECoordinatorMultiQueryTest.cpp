@@ -120,11 +120,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     NES_INFO("Query ID2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
 
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -221,9 +221,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
     EXPECT_NE(queryId3, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId3, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId3, 1, std::to_string(restPort)));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -237,9 +237,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId3, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId3, std::to_string(restPort)));
 
     std::ifstream ifsQ1(pathQuery1.c_str());
     EXPECT_TRUE(ifsQ1.good());
@@ -291,7 +291,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
               "UINT64))->addField(createField(\\\"velocity\\\", FLOAT32))->addField(createField(\\\"quantity\\\", UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -340,11 +340,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
     EXPECT_NE(queryId1, INVALID_QUERY_ID);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
 
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 =
         "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,_$PatternId:INTEGER\n"
@@ -401,7 +401,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -453,11 +453,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("Query ID 2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
 
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,51\n"
@@ -513,7 +513,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
-    ASSERT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
@@ -566,11 +566,11 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     NES_INFO("Query ID 2: " << queryId2);
     EXPECT_NE(queryId2, INVALID_QUERY_ID);
 
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(restPort)));
 
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
-    ASSERT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId2, std::to_string(restPort)));
 
     string expectedContent1 = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                               "0,10000,1,51\n"
@@ -588,8 +588,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
                               "0,20000,12,1\n"
                               "0,20000,16,2\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath));
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent1, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent2, outputFilePath2));
 
     NES_INFO("Killing worker process->PID: " << workerPid);
     workerProc.terminate();

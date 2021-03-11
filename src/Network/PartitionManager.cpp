@@ -19,7 +19,7 @@
 
 namespace NES::Network {
 
-uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
+bool PartitionManager::registerSubpartition(NesPartition partition) {
     std::unique_lock lock(partitionCounterMutex);
     //check if partition is present
     if (partitionCounter.find(partition) != partitionCounter.end()) {
@@ -29,43 +29,36 @@ uint64_t PartitionManager::registerSubpartition(NesPartition partition) {
         partitionCounter[partition] = 0;
     }
     NES_DEBUG("PartitionManager: Registering " << partition.toString() << "=" << partitionCounter[partition]);
-    return partitionCounter[partition];
+    return partitionCounter[partition] == 0;
 }
 
-uint64_t PartitionManager::unregisterSubpartition(NesPartition partition) {
+bool PartitionManager::unregisterSubpartition(NesPartition partition) {
     std::unique_lock lock(partitionCounterMutex);
 
-    if (partitionCounter.find(partition) == partitionCounter.end()) {
-        NES_FATAL_ERROR("PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
-        NES_THROW_RUNTIME_ERROR("PartitionManager: error while unregistering partition");
+    NES_ASSERT2_FMT(partitionCounter.find(partition) != partitionCounter.end(),
+                    "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
+
+    // safeguard
+    if (partitionCounter[partition] == 0) {
+        NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
+        partitionCounter.erase(partition);
+        return true;
     }
 
-    // if partition is contained, decrement counter
-    auto counter = partitionCounter[partition];
-
-    if (counter == 0) {
+    partitionCounter[partition]--;
+    NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << partitionCounter[partition] << ")");
+    if (partitionCounter[partition] == 0) {
         //if counter reaches 0, log error
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
         partitionCounter.erase(partition);
-    } else {
-        //else decrement counter
-        partitionCounter[partition]--;
-        NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << counter << ")");
+        return true;
     }
-
-    // return new counter
-    return counter;
+    return false;
 }
 
 uint64_t PartitionManager::getSubpartitionCounter(NesPartition partition) {
     std::shared_lock lock(partitionCounterMutex);
     return partitionCounter.at(partition);
-}
-
-uint64_t PartitionManager::deletePartition(NesPartition partition) {
-    std::unique_lock lock(partitionCounterMutex);
-    NES_INFO("PartitionManager: Deleting " << partition.toString());
-    return partitionCounter.erase(partition);
 }
 
 void PartitionManager::clear() {

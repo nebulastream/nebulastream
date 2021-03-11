@@ -38,7 +38,8 @@ namespace NES {
 DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId)
     : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
-      generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId) {
+      generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId),
+      wasGracefullyStopped(true) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->bufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -50,7 +51,7 @@ void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = opera
 SchemaPtr DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
-    stop();
+    stop(false);
     NES_DEBUG("DataSource " << operatorId << ": Destroy Data Source.");
 }
 
@@ -73,18 +74,22 @@ bool DataSource::start() {
     return true;
 }
 
-bool DataSource::stop() {
+bool DataSource::stop(bool graceful) {
     std::unique_lock lock(startStopMutex);
     NES_DEBUG("DataSource " << operatorId << ": Stop called and source is " << (running ? "running" : "not running"));
     if (!running) {
         NES_DEBUG("DataSource " << operatorId << " is not running");
         return false;
     }
+    wasGracefullyStopped = graceful;
+    // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
+    // TODO in general this highlights how our source model has some issues
     running = false;
     bool ret = false;
 
     try {
-        if (thread) {
+        NES_ASSERT2_FMT(!!thread, "Thread for source " << operatorId << " is not existing");
+        {
             NES_DEBUG("DataSource::stop try to join threads=" << thread->get_id());
             if (thread->joinable()) {
                 NES_DEBUG("DataSource::stop thread is joinable=" << thread->get_id());
@@ -100,18 +105,20 @@ bool DataSource::stop() {
                 ret = true;
                 thread.reset();
             } else {
-                NES_DEBUG("DataSource " << operatorId << ": Thread is not joinable");
+                NES_ERROR("DataSource " << operatorId << ": Thread is not joinable");
+                wasGracefullyStopped = false;
                 return false;
             }
         }
     } catch (...) {
         NES_ERROR("DataSource::stop error IN CATCH");
         auto expPtr = std::current_exception();
+        wasGracefullyStopped = false;
         try {
-            if (expPtr)
+            if (expPtr) {
                 std::rethrow_exception(expPtr);
-        } catch (const std::exception& e)// it would not work if you pass by value
-        {
+            }
+        } catch (const std::exception& e) {// it would not work if you pass by value
             NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
         }
     }
@@ -206,12 +213,13 @@ void DataSource::runningRoutine(NodeEngine::BufferManagerPtr bufferManager, Node
         } else {
             NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
                                     << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
-            return;
+            running = false;
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
-        NES_DEBUG("DataSource::runningRoutine: exist routine " << this);
     }
-    NES_WARNING("DataSource end running");
+    // inject reconfiguration task containing end of stream
+    queryManager->addEndOfStream(operatorId, wasGracefullyStopped);
+    NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
 // debugging

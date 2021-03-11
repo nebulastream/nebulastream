@@ -21,7 +21,6 @@
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/YSBSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
 namespace NES {
@@ -98,9 +97,6 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
         NES_DEBUG("PhysicalStreamConfig: create Netty source for " << conf << " buffers");
         return NettySourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
                                            numBuffers, frequency, skipHeader);
-    } else if (type == "YSBSource") {
-        NES_DEBUG("PhysicalStreamConfig: create YSB source for " << conf);
-        return YSBSourceDescriptor::create(numberOfTuplesToProducePerBuffer, numBuffers, frequency.count());
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
     }

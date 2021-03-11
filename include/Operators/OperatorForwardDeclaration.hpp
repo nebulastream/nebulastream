@@ -45,5 +45,14 @@ typedef std::shared_ptr<ProjectionLogicalOperatorNode> ProjectionLogicalOperator
 class MapLogicalOperatorNode;
 typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
 
+class WindowLogicalOperatorNode;
+typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+
+class WatermarkAssignerLogicalOperatorNode;
+typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
+
+class SourceLogicalOperatorNode;
+typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+
 }// namespace NES
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_OPERATORFORWARDDECLARATION_HPP_

@@ -24,8 +24,8 @@ add_source_nes(
         LogicalStreamSourceDescriptor.cpp
         NetworkSourceDescriptor.cpp
         OPCSourceDescriptor.cpp
-        YSBSourceDescriptor.cpp
         MemorySourceDescriptor.cpp
         MQTTSourceDescriptor.cpp
+        LambdaSourceDescriptor.cpp
         NettySourceDescriptor.cpp
 )

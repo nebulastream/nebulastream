@@ -24,7 +24,7 @@ class TestHarnessUtilTest : public testing::Test {
   public:
     static void SetUpTestCase() {
         NES::setupLogging("TestHarnessUtilTest.log", NES::LOG_DEBUG);
-        NES_INFO("TestHarnessUtilTest test class SetUpTestCase.");
+        NES_INFO("Setup TestHarnessUtilTest test class.");
     }
 
     void SetUp() {
@@ -82,7 +82,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
                                               30,
                                           },
                                           {71, 71, 71}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -135,7 +135,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
                                               30,
                                           },
                                           {71, 71, 71}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -201,7 +201,7 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilWithTwoPhysicalSourceOfDiffe
                                               30,
                                           },
                                           {71, 71, 71}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -275,7 +275,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
         {1000, 2000, 1, 2},  {2000, 3000, 1, 0},  {3000, 4000, 1, 4},  {4000, 5000, 1, 0},  {1000, 2000, 4, 2},
         {2000, 3000, 11, 4}, {3000, 4000, 11, 0}, {1000, 2000, 12, 2}, {2000, 3000, 16, 4},
     };
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -351,7 +351,7 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
                                           {1000, 2000, 4, 4, 1002, 4, 1112},
                                           {1000, 2000, 12, 12, 1001, 12, 1011},
                                           {2000, 3000, 11, 11, 2001, 11, 2301}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -401,7 +401,7 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
                                               30,
                                           },
                                           {71, 5041, 71}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -427,31 +427,35 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
     std::string queryWithFilterOperator = R"(Query::from("car").map(Attribute("value") = Attribute("value") * Attribute("key")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator);
 
-    /*
- * Expected topology:
- * PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
- *  |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
- *  |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
- *  |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
- */
+    /**
+    * Expected topology:
+        PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
+        |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+        |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+        |  |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+        |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+    */
 
-    testHarness.addNonSourceWorker();
-    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 0: " << testHarness.getWorkerId(0));
-    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));
-    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 1: " << testHarness.getWorkerId(1));
-    testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));
-    NES_DEBUG("TestHarness:testHarnesWithHiearchyInTopology id of worker at idx 2: " << testHarness.getWorkerId(2));
+    testHarness.addNonSourceWorker();                                                 //idx=0
+    testHarness.addNonSourceWorker(testHarness.getWorkerId(0));                       //idx=1
+    testHarness.addMemorySource("car", carSchema, "car1", testHarness.getWorkerId(1));//idx=2
+    testHarness.addMemorySource("car", carSchema, "car2", testHarness.getWorkerId(1));//idx=3
 
     TopologyPtr topology = testHarness.getTopology();
     NES_DEBUG("TestHarness: topology:\n" << topology->toString());
     EXPECT_EQ(topology->getRoot()->getChildren().size(), 1);
     EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren().size(), 1);
-    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+    EXPECT_EQ(topology->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 2);
 
-    testHarness.pushElement<Car>({40, 40, 40}, 0);
-    testHarness.pushElement<Car>({30, 30, 30}, 0);
-    testHarness.pushElement<Car>({71, 71, 71}, 0);
-    testHarness.pushElement<Car>({21, 21, 21}, 0);
+    testHarness.pushElement<Car>({40, 40, 40}, 2);
+    testHarness.pushElement<Car>({30, 30, 30}, 2);
+    testHarness.pushElement<Car>({71, 71, 71}, 2);
+    testHarness.pushElement<Car>({21, 21, 21}, 2);
+
+    testHarness.pushElement<Car>({40, 40, 40}, 3);
+    testHarness.pushElement<Car>({30, 30, 30}, 3);
+    testHarness.pushElement<Car>({71, 71, 71}, 3);
+    testHarness.pushElement<Car>({21, 21, 21}, 3);
 
     struct Output {
         uint32_t key;
@@ -469,8 +473,16 @@ TEST_F(TestHarnessUtilTest, testHarnesWithHiearchyInTopology) {
                                               900,
                                               30,
                                           },
+                                          {71, 5041, 71},
+                                          {40, 1600, 40},
+                                          {21, 441, 21},
+                                          {
+                                              30,
+                                              900,
+                                              30,
+                                          },
                                           {71, 5041, 71}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -525,7 +537,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
     std::vector<Output> expectedOutput = {{1, 2, 3}, {1, 2, 4}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -587,7 +599,7 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
     std::vector<Output> expectedOutput = {{1, 2, 3}, {1, 2, 4}, {1, 9, 9}, {1, 8, 8}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size());
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
@@ -616,7 +628,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
-    EXPECT_THROW(testHarness.getOutput<Output>(1), NesRuntimeException);
+    EXPECT_THROW(testHarness.getOutput<Output>(1, "BottomUp"), NesRuntimeException);
 }
 
 /*
@@ -639,7 +651,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
 /*
  * Testing test harness pushing element push to wrong source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
+TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
     struct Car {
         uint32_t key;
         uint32_t value;

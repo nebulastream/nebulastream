@@ -45,12 +45,34 @@ class NetworkSink : public SinkMedium {
 
     ~NetworkSink();
 
+    /**
+     * @brief Writes data to the underlying output channel
+     * @param inputBuffer
+     * @param workerContext
+     * @return true if no error occurred
+     */
     bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) override;
 
+    /**
+     * @return the string representation of the network sink
+     */
     const std::string toString() const override;
 
-    void reconfigure(NodeEngine::ReconfigurationTask& task, NodeEngine::WorkerContext& workerContext) override;
+    /**
+     * @brief reconfiguration machinery for the network sink
+     * @param task descriptor of the reconfiguration
+     * @param workerContext the thread on which this is called
+     */
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) override;
+
+    /**
+     * @brief setup method to configure the network sink via a reconfiguration
+     */
     void setup() override;
+
+    /**
+     * @brief Destroys the network sink
+     */
     void shutdown() override;
 
     /**

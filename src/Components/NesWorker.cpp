@@ -293,7 +293,11 @@ bool NesWorker::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
     NES_DEBUG("connected= " << con);
     NES_ASSERT(con, "Connection failed");
     bool success = coordinatorRpcClient->replaceParent(oldParentId, newParentId);
-    NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success);
+    if (!success) {
+        NES_WARNING("NesWorker::replaceParent() failed to replace oldParent=" << oldParentId
+                                                                              << " with newParentId=" << newParentId);
+    }
+    NES_DEBUG("NesWorker::replaceParent() success=" << success);
     return success;
 }
 

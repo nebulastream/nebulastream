@@ -86,9 +86,9 @@ bool ExecutableOnTimeTriggerPolicy::stop() {
 
     if (thread && thread->joinable()) {
         thread->join();
+        NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Thread joinded");
     }
     thread.reset();
-    NES_DEBUG("ExecutableOnTimeTriggerPolicy " << this << ": Thread joinded");
     // TODO what happens to the content of the window that it is still in the state?
     return true;
 }

@@ -86,7 +86,7 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     ASSERT_EQ(mapOperators1.size(), 1);
     ASSERT_EQ(mapOperators2.size(), 1);
 
-    ASSERT_TRUE(mapOperators1[0]->getSignature()->isEqual(mapOperators2[0]->getSignature()));
+    EXPECT_TRUE(mapOperators1[0]->getSignature()->isEqual(mapOperators2[0]->getSignature()));
 
     auto srcOperators1 = plan1->getOperatorByType<SourceLogicalOperatorNode>();
     auto srcOperators2 = plan2->getOperatorByType<SourceLogicalOperatorNode>();
@@ -94,6 +94,6 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     ASSERT_EQ(srcOperators1.size(), 1);
     ASSERT_EQ(srcOperators2.size(), 1);
 
-    ASSERT_TRUE(srcOperators1[0]->getSignature()->isEqual(srcOperators2[0]->getSignature()));
+    EXPECT_TRUE(srcOperators1[0]->getSignature()->isEqual(srcOperators2[0]->getSignature()));
 }
 }// namespace NES::Optimizer

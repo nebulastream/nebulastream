@@ -18,17 +18,20 @@
 #define NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/ReconfigurationMessage.hpp>
 #include <NodeEngine/ReconfigurationType.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::NodeEngine {
+namespace NES {
+namespace NodeEngine {
 
 /**
- * @brief Nes components that require to be reconfigured at runtime need to
- * inherit from this class. It provides a reconfigure callback that will be called
- * per thread and a destroyCallback that will be called on the last thread the executes
- * the reconfiguration.
- */
-class Reconfigurable {
+* @brief Nes components that require to be reconfigured at runtime need to
+* inherit from this class. It provides a reconfigure callback that will be called
+* per thread and a postReconfigurationCallback that will be called on the last thread the executes
+* the reconfiguration.
+*/
+class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Reconfigurable> {
   public:
     virtual ~Reconfigurable() {
         // nop
@@ -36,20 +39,21 @@ class Reconfigurable {
 
     /**
      * @brief reconfigure callback that will be called per thread
-     */
-    virtual void reconfigure(ReconfigurationTask&, WorkerContextRef) {
+    */
+    virtual void reconfigure(ReconfigurationMessage&, WorkerContext&) {
         // nop
     }
 
     /**
      * @brief callback that will be called on the last thread the executes
      * the reconfiguration
-     */
-    virtual void destroyCallback(ReconfigurationTask&) {
+   */
+    virtual void postReconfigurationCallback(ReconfigurationMessage&) {
         // nop
     }
 };
 
-}// namespace NES::NodeEngine
+}// namespace NodeEngine
+}// namespace NES
 
 #endif//NES_INCLUDE_NODEENGINE_RECONFIGURABLE_HPP_

@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
+#include <NodeEngine/Reconfigurable.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -37,7 +38,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         uint64_t id)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
-          id(id) {
+          id(id), isRunning(false) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
@@ -63,16 +64,29 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start() override { return executablePolicyTrigger->start(this->shared_from_this()); }
+    bool start() override {
+        std::unique_lock lock(windowMutex);
+        auto expected = false;
+        if (isRunning.compare_exchange_strong(expected, true)) {
+            return executablePolicyTrigger->start(this->AbstractWindowHandler::shared_from_base<AggregationWindowHandler>());
+        }
+        return false;
+    }
 
     /**
      * @brief Stops the window thread.
      * @return
      */
     bool stop() override {
-        executablePolicyTrigger->stop();
-        //StateManager::instance().unRegisterState("window");
-        return true;
+        std::unique_lock lock(windowMutex);
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop called");
+        auto expected = true;
+        bool result = false;
+        if (isRunning.compare_exchange_strong(expected, false)) {
+            result = executablePolicyTrigger->stop();
+        }
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop result =" << result);
+        return result;
     }
 
     std::string toString() override {
@@ -92,14 +106,67 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         return ss.str();
     }
 
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override {
+        AbstractWindowHandler::reconfigure(task, context);
+    }
+
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
+        AbstractWindowHandler::postReconfigurationCallback(task);
+        auto flushInflightWindows = [this]() {
+            //TODO: this will be removed if we integrate the graceful shutdown
+            return;
+            // flush in-flight records
+            auto windowType = windowDefinition->getWindowType();
+            int64_t windowLenghtMs = 0;
+            if (windowType->isTumblingWindow()) {
+                auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
+                windowLenghtMs = window->getSize().getTime();
+
+            } else if (windowType->isSlidingWindow()) {
+                auto window = dynamic_cast<SlidingWindow*>(windowType.get());
+                windowLenghtMs = window->getSize().getTime();
+
+            } else {
+                NES_ASSERT(false, "unknonw windownd");
+            }
+            NES_DEBUG("Going to flush window " << toString());
+            trigger(true);
+            //            executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
+            NES_DEBUG("Flushed window content after end of stream message " << toString());
+        };
+
+        auto cleanup = [this]() {
+            // drop window content and cleanup resources
+            // wait for trigger thread to stop
+            stop();
+        };
+
+        //switch between soft eos (state is drained) and hard eos (state is truncated)
+        switch (task.getType()) {
+            case NodeEngine::SoftEndOfStream: {
+                flushInflightWindows();
+                cleanup();
+                break;
+            }
+            case NodeEngine::HardEndOfStream: {
+                cleanup();
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    }
+
     /**
      * @brief triggers all ready windows.
      */
-    void trigger() override {
+    void trigger(bool forceFlush = false) override {
         std::unique_lock lock(windowMutex);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window action "
                                               << executableWindowAction->toString()
-                                              << " distribution type=" << windowDefinition->getDistributionType()->toString());
+                                              << " distribution type=" << windowDefinition->getDistributionType()->toString()
+                                              << " forceFlush=" << forceFlush);
 
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
             NES_DEBUG("AggregationWindowHandler("
@@ -108,7 +175,33 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                       << originIdToMaxTsMap.size() << " numberOfInputEdges=" << numberOfInputEdges);
             return;
         }
-        auto watermark = getMinWatermark();
+
+        uint64_t watermark = 0;
+        if (!forceFlush) {
+            watermark = getMinWatermark();
+        } else {
+            std::map<uint64_t, uint64_t>::iterator max =
+                std::max_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(),
+                                 [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
+                                     return a.second < b.second;
+                                 });
+
+            uint64_t windowSize = 0;
+            if (windowDefinition->getWindowType()->isTumblingWindow()) {
+                TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
+                windowSize = window->getSize().getTime();
+            } else if (windowDefinition->getWindowType()->isSlidingWindow()) {
+                SlidingWindow* window = dynamic_cast<SlidingWindow*>(windowDefinition->getWindowType().get());
+                windowSize = window->getSize().getTime();
+            } else {
+                NES_THROW_RUNTIME_ERROR("AggregationWindowHandler: Undefined Window Type");
+            }
+
+            auto allowedLateness = windowManager->getAllowedLateness();
+            NES_DEBUG("For flushing maxWatermark = " << max->second << " window size=" << windowSize << " trigger ts ="
+                                                     << max->second + windowSize << " allowedLateness=" << allowedLateness);
+            watermark = max->second + windowSize + allowedLateness;
+        }
 
         //In the following, find out the minimal watermark among the buffers/stores to know where
         // we have to start the processing from so-called lastWatermark
@@ -136,10 +229,18 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run doing with watermark=" << watermark
                                               << " lastWatermark=" << lastWatermark);
+
         executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id
                                               << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
         lastWatermark = std::max(watermark, lastWatermark);
+
+        if (forceFlush) {
+            bool expected = true;
+            if (isRunning.compare_exchange_strong(expected, false)) {
+                executablePolicyTrigger->stop();
+            }
+        }
     }
 
     /**
@@ -179,7 +280,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
     std::string handlerType;
     uint64_t id;
-    mutable std::mutex windowMutex;
+    mutable std::recursive_mutex windowMutex;
+    std::atomic<bool> isRunning;
 };
 
 }// namespace NES::Windowing

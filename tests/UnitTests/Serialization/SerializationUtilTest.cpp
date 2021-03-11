@@ -98,67 +98,67 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     // serialize and deserialize int8
     auto serializedInt8 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt8(), new SerializableDataType());
     auto deserializedInt8 = DataTypeSerializationUtil::deserializeDataType(serializedInt8);
-    ASSERT_TRUE(DataTypeFactory::createInt8()->isEquals(deserializedInt8));
+    EXPECT_TRUE(DataTypeFactory::createInt8()->isEquals(deserializedInt8));
 
     // serialize and deserialize int16
     auto serializedInt16 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt16(), new SerializableDataType());
     auto deserializedInt16 = DataTypeSerializationUtil::deserializeDataType(serializedInt16);
-    ASSERT_TRUE(DataTypeFactory::createInt16()->isEquals(deserializedInt16));
+    EXPECT_TRUE(DataTypeFactory::createInt16()->isEquals(deserializedInt16));
 
     // serialize and deserialize int32
     auto serializedInt32 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt32(), new SerializableDataType());
     auto deserializedInt32 = DataTypeSerializationUtil::deserializeDataType(serializedInt32);
-    ASSERT_TRUE(DataTypeFactory::createInt32()->isEquals(deserializedInt32));
+    EXPECT_TRUE(DataTypeFactory::createInt32()->isEquals(deserializedInt32));
 
     // serialize and deserialize int64
     auto serializedInt64 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt64(), new SerializableDataType());
     auto deserializedInt64 = DataTypeSerializationUtil::deserializeDataType(serializedInt64);
-    ASSERT_TRUE(DataTypeFactory::createInt64()->isEquals(deserializedInt64));
+    EXPECT_TRUE(DataTypeFactory::createInt64()->isEquals(deserializedInt64));
 
     // serialize and deserialize uint8
     auto serializedUInt8 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt8(), new SerializableDataType());
     auto deserializedUInt8 = DataTypeSerializationUtil::deserializeDataType(serializedUInt8);
-    ASSERT_TRUE(DataTypeFactory::createUInt8()->isEquals(deserializedUInt8));
+    EXPECT_TRUE(DataTypeFactory::createUInt8()->isEquals(deserializedUInt8));
 
     // serialize and deserialize uint16
     auto serializedUInt16 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt16(), new SerializableDataType());
     auto deserializedUInt16 = DataTypeSerializationUtil::deserializeDataType(serializedUInt16);
-    ASSERT_TRUE(DataTypeFactory::createUInt16()->isEquals(deserializedUInt16));
+    EXPECT_TRUE(DataTypeFactory::createUInt16()->isEquals(deserializedUInt16));
 
     // serialize and deserialize uint32
     auto serializedUInt32 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt32(), new SerializableDataType());
     auto deserializedUInt32 = DataTypeSerializationUtil::deserializeDataType(serializedUInt32);
-    ASSERT_TRUE(DataTypeFactory::createUInt32()->isEquals(deserializedUInt32));
+    EXPECT_TRUE(DataTypeFactory::createUInt32()->isEquals(deserializedUInt32));
 
     // serialize and deserialize uint64
     auto serializedUInt64 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt64(), new SerializableDataType());
     auto deserializedUInt64 = DataTypeSerializationUtil::deserializeDataType(serializedUInt64);
-    ASSERT_TRUE(DataTypeFactory::createUInt64()->isEquals(deserializedUInt64));
+    EXPECT_TRUE(DataTypeFactory::createUInt64()->isEquals(deserializedUInt64));
 
     // serialize and deserialize float32
     auto serializedFloat32 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createFloat(), new SerializableDataType());
     auto deserializedFloat32 = DataTypeSerializationUtil::deserializeDataType(serializedFloat32);
-    ASSERT_TRUE(DataTypeFactory::createFloat()->isEquals(deserializedFloat32));
+    EXPECT_TRUE(DataTypeFactory::createFloat()->isEquals(deserializedFloat32));
 
     // serialize and deserialize float64
     auto serializedFloat64 =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createDouble(), new SerializableDataType());
     auto deserializedFloat64 = DataTypeSerializationUtil::deserializeDataType(serializedFloat64);
-    ASSERT_TRUE(DataTypeFactory::createDouble()->isEquals(deserializedFloat64));
+    EXPECT_TRUE(DataTypeFactory::createDouble()->isEquals(deserializedFloat64));
 
     // serialize and deserialize float64
     auto serializedArray = DataTypeSerializationUtil::serializeDataType(
         DataTypeFactory::createArray(42, DataTypeFactory::createInt8()), new SerializableDataType());
     auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(serializedArray);
-    ASSERT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->isEquals(deserializedArray));
+    EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->isEquals(deserializedArray));
 
     /*
    std::string json_string;
@@ -176,7 +176,7 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema);
-    ASSERT_TRUE(deserializedSchema->equals(schema));
+    EXPECT_TRUE(deserializedSchema->equals(schema));
 
     std::string json_string;
     auto options = google::protobuf::util::JsonOptions();
@@ -194,7 +194,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
 #if ENABLE_OPC_BUILD
@@ -204,7 +204,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 #endif
 
@@ -213,7 +213,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -221,7 +221,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
         std::string json_string;
         auto options = google::protobuf::util::JsonOptions();
         options.add_whitespace = true;
@@ -234,7 +234,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -242,7 +242,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -250,7 +250,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -259,7 +259,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         auto serializedSourceDescriptor =
             OperatorSerializationUtil::serializeSourceSourceDescriptor(source, new SerializableOperator_SourceDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(serializedSourceDescriptor);
-        ASSERT_TRUE(source->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(source->equal(deserializedSourceDescriptor));
     }
 }
 
@@ -270,7 +270,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
 #if ENABLE_OPC_BUILD
@@ -280,7 +280,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 #endif
 
@@ -289,7 +289,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -297,7 +297,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -305,7 +305,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -313,7 +313,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -321,7 +321,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -329,7 +329,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 
     {
@@ -339,7 +339,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         auto serializedSinkDescriptor =
             OperatorSerializationUtil::serializeSinkDescriptor(sink, new SerializableOperator_SinkDetails());
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(serializedSinkDescriptor);
-        ASSERT_TRUE(sink->equal(deserializedSourceDescriptor));
+        EXPECT_TRUE(sink->equal(deserializedSourceDescriptor));
     }
 }
 
@@ -349,7 +349,7 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
         auto fieldAccess = FieldAccessExpressionNode::create(DataTypeFactory::createInt32(), "f1");
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(fieldAccess, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(fieldAccess->equal(deserializedExpression));
+        EXPECT_TRUE(fieldAccess->equal(deserializedExpression));
     }
     auto f1 = FieldAccessExpressionNode::create(DataTypeFactory::createInt32(), "f1");
     auto f2 = FieldAccessExpressionNode::create(DataTypeFactory::createInt32(), "f2");
@@ -358,74 +358,74 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
         auto expression = AndExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 
     {
         auto expression = OrExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 
     {
         auto expression = EqualsExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 
     {
         auto expression = LessExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 
     {
         auto expression = LessEqualsExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 
     {
         auto expression = GreaterExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 
     {
         auto expression = GreaterExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 
     {
         auto expression = AddExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
     {
         auto expression = MulExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
     {
         auto expression = DivExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
     {
         auto expression = SubExpressionNode::create(f1, f2);
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
         auto deserializedExpression = ExpressionSerializationUtil::deserializeExpression(serializedExpression);
-        ASSERT_TRUE(expression->equal(deserializedExpression));
+        EXPECT_TRUE(expression->equal(deserializedExpression));
     }
 }
 
@@ -435,42 +435,42 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto source = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("testStream"));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(source, new SerializableOperator());
         auto sourceOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(source->equal(sourceOperator));
+        EXPECT_TRUE(source->equal(sourceOperator));
     }
 
     {
         auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(filter, new SerializableOperator());
         auto filterOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(filter->equal(filterOperator));
+        EXPECT_TRUE(filter->equal(filterOperator));
     }
 
     {
         auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
         auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(map->equal(mapOperator));
+        EXPECT_TRUE(map->equal(mapOperator));
     }
 
     {
         auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());
         auto sinkOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(sink->equal(sinkOperator));
+        EXPECT_TRUE(sink->equal(sinkOperator));
     }
 
     {
         auto unionOp = LogicalOperatorFactory::createUnionOperator();
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(unionOp, new SerializableOperator());
         auto unionOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(unionOp->equal(unionOperator));
+        EXPECT_TRUE(unionOp->equal(unionOperator));
     }
 
     {
         auto broadcast = LogicalOperatorFactory::createBroadcastOperator();
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(broadcast, new SerializableOperator());
         auto broadcastOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(broadcast->equal(broadcastOperator));
+        EXPECT_TRUE(broadcast->equal(broadcastOperator));
     }
 
     {
@@ -486,7 +486,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join, new SerializableOperator());
         auto joinOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
-        ASSERT_TRUE(join->equal(joinOperator));
+        EXPECT_TRUE(join->equal(joinOperator));
     }
 }
 
@@ -505,9 +505,9 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
-    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
-    ASSERT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+    EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
 #if ENABLE_OPC_BUILD
@@ -529,9 +529,9 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
     auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
-    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
-    ASSERT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
+    EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 #endif
 
@@ -552,19 +552,19 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
     auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
-    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
 
     std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
     for (auto actualRootOperator : actualRootOperators) {
         bool found = false;
         for (auto queryRoot : queryPlan->getRootOperators()) {
             if (actualRootOperator->equal(queryRoot)) {
-                ASSERT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
+                EXPECT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
                 found = true;
             }
         }
-        ASSERT_TRUE(found);
+        EXPECT_TRUE(found);
     }
 }
 
@@ -586,27 +586,27 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     auto serializedQueryPlan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     auto deserializedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(serializedQueryPlan);
 
-    ASSERT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
-    ASSERT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
+    EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
+    EXPECT_TRUE(deserializedQueryPlan->getQuerySubPlanId() == queryPlan->getQuerySubPlanId());
 
     std::vector<OperatorNodePtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
     for (auto actualRootOperator : actualRootOperators) {
         bool found = false;
         for (auto queryRoot : queryPlan->getRootOperators()) {
             if (actualRootOperator->equal(queryRoot)) {
-                ASSERT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
+                EXPECT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
                 found = true;
             }
         }
-        ASSERT_TRUE(found);
+        EXPECT_TRUE(found);
     }
-    ASSERT_TRUE(actualRootOperators[0]->getChildren()[0]->as<OperatorNode>()->getId()
+    EXPECT_TRUE(actualRootOperators[0]->getChildren()[0]->as<OperatorNode>()->getId()
                 == actualRootOperators[1]->getChildren()[0]->as<OperatorNode>()->getId());
-    ASSERT_TRUE(actualRootOperators[0]->getChildren()[0].get() == actualRootOperators[1]->getChildren()[0].get());
+    EXPECT_TRUE(actualRootOperators[0]->getChildren()[0].get() == actualRootOperators[1]->getChildren()[0].get());
     std::vector<NodePtr> sourceOperatorsForRoot1 = actualRootOperators[0]->getAllLeafNodes();
     std::vector<NodePtr> sourceOperatorsForRoot2 = actualRootOperators[1]->getAllLeafNodes();
-    ASSERT_TRUE(sourceOperatorsForRoot1.size() == 2);
-    ASSERT_TRUE(sourceOperatorsForRoot2.size() == 2);
+    EXPECT_TRUE(sourceOperatorsForRoot1.size() == 2);
+    EXPECT_TRUE(sourceOperatorsForRoot2.size() == 2);
     for (auto sourceOperatorForRoot1 : sourceOperatorsForRoot1) {
         bool found = false;
         for (auto sourceOperatorForRoot2 : sourceOperatorsForRoot2) {
@@ -614,6 +614,6 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
                 found = true;
             }
         }
-        ASSERT_TRUE(found);
+        EXPECT_TRUE(found);
     }
 }

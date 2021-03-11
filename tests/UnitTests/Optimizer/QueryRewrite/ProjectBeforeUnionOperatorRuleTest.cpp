@@ -77,7 +77,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(projectionOperators.empty());
+    EXPECT_TRUE(projectionOperators.empty());
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
@@ -88,11 +88,11 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     typeInferencePhase->execute(updatedQueryPlan);
 
     projectionOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(projectionOperators.size() == 1);
+    EXPECT_TRUE(projectionOperators.size() == 1);
     auto projectOperator = projectionOperators[0];
     SchemaPtr projectOutputSchema = projectOperator->getOutputSchema();
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("y$a"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("y$b"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("y$a"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("y$b"));
 }
 
 TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas) {
@@ -106,7 +106,7 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(projectionOperators.empty());
+    EXPECT_TRUE(projectionOperators.empty());
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
@@ -117,5 +117,5 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     typeInferencePhase->execute(updatedQueryPlan);
 
     projectionOperators = updatedQueryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
-    ASSERT_TRUE(projectionOperators.empty());
+    EXPECT_TRUE(projectionOperators.empty());
 }

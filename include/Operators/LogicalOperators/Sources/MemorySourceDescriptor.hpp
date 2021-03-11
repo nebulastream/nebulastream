@@ -27,7 +27,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
   public:
     /**
      * @brief Ctor of a MemorySourceDescriptor
-     * @param schema the schame of the source
+     * @param schema the schema of the source
      * @param memoryArea a non-null pointer to the area of memory to use in the source
      * @param memoryAreaSize the size of the area of memory
      */

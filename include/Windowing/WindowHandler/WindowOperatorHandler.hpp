@@ -27,6 +27,7 @@ namespace NES::Windowing {
 class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
   public:
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
+
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
                           AbstractWindowHandlerPtr windowHandler);
 
@@ -71,10 +72,16 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     }
 
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     ~WindowOperatorHandler() override { NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count())); }
+
     LogicalWindowDefinitionPtr getWindowDefinition();
+
+    void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) override;
+
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override;
 
     SchemaPtr getResultSchema();
 

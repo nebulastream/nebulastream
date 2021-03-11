@@ -58,72 +58,79 @@ if (NES_BUILD_BENCHMARKS)
     #-------------------------------# Benchmark Suite#-----------------------------
 
     ### Statemanager Benchmark ###
-    add_executable(statemanager-benchmark "BenchmarkSuite/StatemanagerBenchmark.cpp")
+    add_executable(statemanager-benchmark "src/BenchmarkSuite/StatemanagerBenchmark.cpp")
     target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
 
     ### Benchmark Uniform Data Benchmark ###
-    add_executable(uniformdata-benchmark "BenchmarkSuite/BenchmarkCreateUniformData.cpp")
+    add_executable(uniformdata-benchmark "src/BenchmarkSuite/BenchmarkCreateUniformData.cpp")
     target_link_libraries(uniformdata-benchmark nes ${GBENCHMARK_LIBRARIES})
     target_sources(uniformdata-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME uniformdata-benchmark COMMAND uniformdata-benchmark --benchmark_out=uniformdata-benchmark.log --benchmark_out_format=json)
 
     ### Tuple Buffer Benchmark ###
-    add_executable(tuplebuffer-benchmark "BenchmarkSuite/TupleBufferBenchmark.cpp")
+    add_executable(tuplebuffer-benchmark "src/BenchmarkSuite/TupleBufferBenchmark.cpp")
     target_link_libraries(tuplebuffer-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME tuplebuffer-benchmark COMMAND tuplebuffer-benchmark --benchmark_out=tuplebuffer-benchmark.log --benchmark_out_format=json)
 
     ### Filter Queries Benchmark ###
-    add_executable(filter-query-benchmark "BenchmarkSuite/FilterQueryBenchmarks.cpp")
+    add_executable(filter-query-benchmark "src/BenchmarkSuite/FilterQueryBenchmarks.cpp")
     target_link_libraries(filter-query-benchmark nes)
     target_sources(filter-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME filter-query-benchmark COMMAND filter-query-benchmark --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
 
     ### Filter Queries Benchmark ###
-    add_executable(ysb-query "BenchmarkSuite/YSBSelect.cpp")
+    add_executable(ysb-query "src/BenchmarkSuite/YSBSelect.cpp")
     target_link_libraries(ysb-query nes)
     target_sources(ysb-query PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME ysb-query COMMAND ysb-query --benchmark_out=filter-query-benchmark.log --benchmark_out_format=json)
 
     ### Map Queries Benchmark ###
-    add_executable(map-query-benchmark "BenchmarkSuite/MapQueryBenchmarks.cpp")
+    add_executable(map-query-benchmark "src/BenchmarkSuite/MapQueryBenchmarks.cpp")
     target_link_libraries(map-query-benchmark nes)
     target_sources(map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME map-query-benchmark COMMAND map-query-benchmark --benchmark_out=map-query-benchmark.log --benchmark_out_format=json)
 
     ### BufferSize Query Benchmark ###
-    add_executable(buffer-size-query-benchmark "BenchmarkSuite/QueryBufferSizesBenchmark.cpp")
+    add_executable(buffer-size-query-benchmark "src/BenchmarkSuite/QueryBufferSizesBenchmark.cpp")
     target_link_libraries(buffer-size-query-benchmark nes)
     target_sources(buffer-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME buffer-size-query-benchmark COMMAND buffer-size-query-benchmark --benchmark_out=buffer-size-query-benchmark.log --benchmark_out_format=json)
 
     ### TupleSize Query Benchmark ###
-    add_executable(tuple-size-query-benchmark "BenchmarkSuite/QueryTupleSizesBenchmark.cpp")
+    add_executable(tuple-size-query-benchmark "src/BenchmarkSuite/QueryTupleSizesBenchmark.cpp")
     target_link_libraries(tuple-size-query-benchmark nes)
     target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
 
     ### E2e Benchmark Project ###
-    add_executable(e2e-project-benchmark "E2ETests/E2EProjectBenchmark.cpp")
-    target_link_libraries(e2e-project-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-project-benchmark PUBLIC "E2ETests/E2EBase.cpp")
-    target_sources(e2e-project-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-project-benchmark COMMAND e2e-project-benchmark)
+    add_executable(e2e-project-query-benchmark "src/E2EBenchmarks/E2EProjectBenchmark.cpp")
+    target_link_libraries(e2e-project-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-project-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
+    target_sources(e2e-project-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME e2e-project-query-benchmark COMMAND e2e-project-query-benchmark)
 
     ### E2e Benchmark Select ###
-    add_executable(e2e-select-benchmark "E2ETests/E2ESelectionBenchmark.cpp")
-    target_link_libraries(e2e-select-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-select-benchmark PUBLIC "E2ETests/E2EBase.cpp")
-    target_sources(e2e-select-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-select-benchmark COMMAND e2e-select-benchmark)
+    add_executable(e2e-select-query-benchmark "src/E2EBenchmarks/E2ESelectionBenchmark.cpp")
+    target_link_libraries(e2e-select-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-select-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
+    target_sources(e2e-select-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME e2e-select-query-benchmark COMMAND e2e-select-query-benchmark)
+
+    ### E2e Benchmark window ###
+    add_executable(e2e-window-query-benchmark "src/E2EBenchmarks/E2EWindowBenchmark.cpp")
+    target_link_libraries(e2e-window-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-window-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
+    target_sources(e2e-window-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    #add_test(NAME e2e-window-query-benchmark COMMAND e2e-window-query-benchmark)
 
     ### Memory Layout Benchmark ###
-    add_executable(memory-layout-benchmark "BenchmarkSuite/BenchmarkMemoryLayout.cpp")
+    add_executable(memory-layout-benchmark "src/BenchmarkSuite/BenchmarkMemoryLayout.cpp")
     target_link_libraries(memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME memory-layout-benchmark COMMAND memory-layout-benchmark --benchmark_out=memory-layout-benchmark.log --benchmark_out_format=json)
 
     ### Dynamic Memory Layout Benchmark ###
-    add_executable(dynamic-memory-layout-benchmark "BenchmarkSuite/BenchmarkDynamicMemoryLayout.cpp")
+    add_executable(dynamic-memory-layout-benchmark "src/BenchmarkSuite/BenchmarkDynamicMemoryLayout.cpp")
     target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
 

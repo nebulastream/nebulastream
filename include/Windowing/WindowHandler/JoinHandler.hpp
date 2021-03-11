@@ -17,6 +17,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
@@ -28,6 +30,7 @@
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 
 namespace NES::Join {
@@ -38,7 +41,7 @@ class JoinHandler : public AbstractJoinHandler {
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                          BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction, uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
-          executableJoinAction(std::move(executableJoinAction)), id(id) {
+          executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2), isRunning(false) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
@@ -60,8 +63,13 @@ class JoinHandler : public AbstractJoinHandler {
    * @return boolean if the window thread is started
    */
     bool start() override {
-        NES_DEBUG("JoinHandler " << id << ": start " << this);
-        return executablePolicyTrigger->start(this->shared_from_this());
+        std::unique_lock lock(mutex);
+        NES_DEBUG("JoinHandler start id=" << id << " " << this);
+        auto expected = false;
+        if (isRunning.compare_exchange_strong(expected, true)) {
+            return executablePolicyTrigger->start(this->shared_from_base<AbstractJoinHandler>());
+        }
+        return false;
     }
 
     /**
@@ -69,8 +77,13 @@ class JoinHandler : public AbstractJoinHandler {
      * @return
      */
     bool stop() override {
-        NES_DEBUG("JoinHandler " << id << ": stop");
-        return executablePolicyTrigger->stop();
+        std::unique_lock lock(mutex);
+        NES_DEBUG("JoinHandler stop id=" << id << ": stop");
+        auto expected = true;
+        if (isRunning.compare_exchange_strong(expected, false)) {
+            return executablePolicyTrigger->stop();
+        }
+        return false;
     }
 
     std::string toString() override {
@@ -82,9 +95,10 @@ class JoinHandler : public AbstractJoinHandler {
     /**
     * @brief triggers all ready windows.
     */
-    void trigger() override {
+    void trigger(bool forceFlush = false) override {
         std::unique_lock lock(mutex);
-        NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString());
+        NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
+                                 << " forceFlush=" << forceFlush);
 
         if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
             NES_DEBUG("JoinHandler "
@@ -137,6 +151,13 @@ class JoinHandler : public AbstractJoinHandler {
         lock.lock();
         NES_DEBUG("JoinHandler " << id << ": set lastWatermarkLeft to=" << minMinWatermark);
         lastWatermark = minMinWatermark;
+
+        if (forceFlush) {
+            bool expected = true;
+            if (isRunning.compare_exchange_strong(expected, false)) {
+                executablePolicyTrigger->stop();
+            }
+        }
     }
 
     /**
@@ -214,14 +235,85 @@ class JoinHandler : public AbstractJoinHandler {
 
     auto getRightJoinState() { return rightJoinState; }
 
+    /**
+     * @brief reconfigure machinery for the join handler: do not nothing (for now)
+     * @param message
+     * @param context
+     */
+    void reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) override {
+        AbstractJoinHandler::reconfigure(message, context);
+    }
+
+    /**
+     * @brief Reconfiguration machinery on the last thread for the join handler: react to soft or hard termination
+     * @param message
+     */
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) override {
+        AbstractJoinHandler::postReconfigurationCallback(message);
+        auto flushInflightWindows = [this]() {
+            //TODO: this will be removed if we integrate the graceful shutdown
+            return;
+            // flush in-flight records
+            auto windowType = joinDefinition->getWindowType();
+            int64_t windowLenghtMs = 0;
+            if (windowType->isTumblingWindow()) {
+                auto* window = dynamic_cast<Windowing::TumblingWindow*>(windowType.get());
+                windowLenghtMs = window->getSize().getTime();
+
+            } else if (windowType->isSlidingWindow()) {
+                auto window = dynamic_cast<Windowing::SlidingWindow*>(windowType.get());
+                windowLenghtMs = window->getSlide().getTime();
+            } else {
+                NES_ASSERT(false, "Invalid window");
+            }
+            NES_DEBUG("Going to flush window " << toString());
+            trigger(true);
+            executableJoinAction->doAction(leftJoinState, rightJoinState, lastWatermark + windowLenghtMs + 1, lastWatermark);
+            NES_DEBUG("Flushed window content after end of stream message " << toString());
+        };
+
+        auto cleanup = [this]() {
+            // drop window content and cleanup resources
+            // wait for trigger thread to stop
+            stop();
+        };
+
+        switch (message.getType()) {
+            case NodeEngine::SoftEndOfStream: {
+                if (refCnt.fetch_sub(1) == 1) {
+                    NES_DEBUG("SoftEndOfStream received on join handler " << toString()
+                                                                          << ": going to flush in-flight windows and cleanup");
+                    flushInflightWindows();
+                    cleanup();
+                } else {
+                    NES_DEBUG("SoftEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
+                }
+                break;
+            }
+            case NodeEngine::HardEndOfStream: {
+                if (refCnt.fetch_sub(1) == 1) {
+                    NES_DEBUG("HardEndOfStream received on join handler " << toString()
+                                                                          << ": going to flush in-flight windows and cleanup");
+                    cleanup();
+                } else {
+                    NES_DEBUG("HardEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
+                }
+                break;
+            }
+            default: {
+                break;
+            }
+        }
+    }
+
   private:
     std::recursive_mutex mutex;
-
+    std::atomic<bool> isRunning;
     StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* leftJoinState;
     StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>* rightJoinState;
-
     Join::BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction;
     uint64_t id;
+    std::atomic<uint32_t> refCnt;
 };
 }// namespace NES::Join
 #endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_

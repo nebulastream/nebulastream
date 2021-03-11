@@ -26,12 +26,12 @@
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/KafkaSource.hpp>
+#include <Sources/LambdaSource.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Sources/NettySource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Sources/YSBSource.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <chrono>
 
@@ -58,11 +58,20 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
     return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId);
 }
 
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
-                                                                             NodeEngine::QueryManagerPtr queryManager,
-                                                                             OperatorId operatorId) {
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
+                                                                 NodeEngine::QueryManagerPtr queryManager,
+                                                                 OperatorId operatorId) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager,
                                            queryManager, /**bufferCnt*/ 1, /*frequency*/ 1000, operatorId);
+}
+
+const DataSourcePtr createLambdaSource(
+    SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    OperatorId operatorId) {
+    return std::make_shared<LambdaSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
+                                          std::move(generationFunction), operatorId);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -104,19 +113,11 @@ const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferMa
 
 
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
-                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                       std::chrono::milliseconds frequency) {
+                                       NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
+                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
+                                       OperatorId operatorId) {
     return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess,
                                           frequency, operatorId);
-}
-
-
-const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                    uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                    OperatorId operatorId) {
-    return std::make_shared<YSBSource>(bufferManager, queryManager, numBuffersToProcess, numberOfTuplesToProducePerBuffer,
-                                       frequency, operatorId);
 }
 
 const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,

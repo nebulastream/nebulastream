@@ -25,11 +25,13 @@ namespace NES::NodeEngine::Execution {
 
 static constexpr auto NUM_BUFFERS_PER_PIPELINE = 64;
 
-PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, BufferManagerPtr bufferManager,
+PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, QueryManagerPtr queryManager,
+                                                   BufferManagerPtr bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                                    std::vector<OperatorHandlerPtr> operatorHandlers)
-    : queryId(queryId), localBufferPool(bufferManager->createLocalBufferManager(NUM_BUFFERS_PER_PIPELINE)),
+    : queryId(queryId), queryManager(queryManager),
+      localBufferPool(bufferManager->createLocalBufferManager(NUM_BUFFERS_PER_PIPELINE)),
       emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
       operatorHandlers(std::move(operatorHandlers)) {

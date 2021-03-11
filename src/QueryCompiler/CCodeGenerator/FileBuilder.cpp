@@ -37,6 +37,9 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <NodeEngine/Execution/PipelineExecutionContext.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>" << std::endl;
+    builder.declations << "#include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowHandler/JoinHandler.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>" << std::endl;

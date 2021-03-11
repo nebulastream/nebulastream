@@ -47,7 +47,7 @@ using NodeEngine::MemoryLayoutPtr;
 using NodeEngine::TupleBuffer;
 
 const uint64_t buffersManaged = 8 * 1024;
-const uint64_t bufferSize = 4 * 1024;
+const uint64_t bufferSize = 32 * 1024;
 
 struct TestStruct {
     int64_t id;
@@ -130,7 +130,7 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
         auto exchangeProtocol = ExchangeProtocol(partMgr, std::make_shared<DummyExchangeProtocolListener>());
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, buffMgr);
         server.start();
-        ASSERT_EQ(server.getIsRunning(), true);
+        ASSERT_EQ(server.isServerRunning(), true);
     } catch (...) {
         // shutdown failed
         FAIL();
@@ -271,7 +271,6 @@ TEST_F(NetworkStackTest, testMassiveSending) {
     uint64_t totalNumBuffer = 1'000'000;
     std::atomic<std::uint64_t> bufferReceived = 0;
     auto nesPartition = NesPartition(1, 22, 333, 444);
-
     try {
         class ExchangeListener : public ExchangeProtocolListener {
 
@@ -286,8 +285,9 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 ASSERT_EQ((buffer.getBufferSize() == bufferSize) && (id.getQueryId(), 1) && (id.getOperatorId(), 22)
                               && (id.getPartitionId(), 333) && (id.getSubpartitionId(), 444),
                           true);
+                auto bufferContent = buffer.getBuffer<uint64_t>();
                 for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
-                    ASSERT_EQ(buffer.getBuffer<uint64_t>()[j], j);
+                    ASSERT_EQ(bufferContent[j], j);
                 }
                 bufferReceived++;
             }
@@ -304,17 +304,23 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             "127.0.0.1", 31337, ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
             buffMgr);
 
-        std::thread t([&netManager, &nesPartition, &completedProm] {
+        std::thread t([&netManager, &nesPartition, &completedProm, totalNumBuffer] {
             // register the incoming channel
             netManager->registerSubpartitionConsumer(nesPartition);
-            ASSERT_TRUE(completedProm.get_future().get());
+            auto startTime = std::chrono::steady_clock::now().time_since_epoch();
+            EXPECT_TRUE(completedProm.get_future().get());
+            auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
+            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
+            double bytes = totalNumBuffer * bufferSize;
+            double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
+            std::cout << "Sent " << bytes << " bytes :: throughput " << throughput << std::endl;
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
         auto senderChannel = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, std::chrono::seconds(1), 5);
 
         if (senderChannel == nullptr) {
-            NES_INFO("NetworkStackTest: Error in registering OutputChannel!");
+            NES_DEBUG("NetworkStackTest: Error in registering OutputChannel!");
             completedProm.set_value(false);
         } else {
             for (uint64_t i = 0; i < totalNumBuffer; ++i) {
@@ -327,7 +333,6 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             }
             senderChannel.reset();
         }
-
         t.join();
     } catch (...) {
         ASSERT_EQ(true, false);
@@ -343,10 +348,6 @@ TEST_F(NetworkStackTest, testPartitionManager) {
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
     partitionManager->registerSubpartition(partition1);
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 1);
-
-    partitionManager->unregisterSubpartition(partition1Copy);
-    ASSERT_EQ(partitionManager->isRegistered(partition1), true);
-    ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
 
     partitionManager->unregisterSubpartition(partition1Copy);
     ASSERT_EQ(partitionManager->isRegistered(partition1), false);
@@ -470,7 +471,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             }
 
             for (std::promise<bool>& p : completedPromises) {
-                ASSERT_TRUE(p.get_future().get());
+                EXPECT_TRUE(p.get_future().get());
             }
         });
 
@@ -557,8 +558,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                 ASSERT_EQ(id, nesPartition);
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override {
-                eosCnt++;
-                if (eosCnt == numSendingThreads) {
+                auto prev = eosCnt.fetch_add(1);
+                if (prev == 0) {
                     completed.set_value(true);
                 }
             }
@@ -575,19 +576,19 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             // register the incoming channel
             //add latency
             netManager->registerSubpartitionConsumer(nesPartition);
-            ASSERT_TRUE(completed.get_future().get());
-            pManager->unregisterSubpartition(nesPartition);
+            EXPECT_TRUE(completed.get_future().get());
+            //            pManager->unregisterSubpartition(nesPartition);
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
 
-        NetworkSink networkSink(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr);
+        auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr);
 
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
-                auto rt = NodeEngine::ReconfigurationTask(0, NodeEngine::Initialize, &networkSink);
-                networkSink.reconfigure(rt, workerContext);
+                auto rt = NodeEngine::ReconfigurationMessage(0, NodeEngine::Initialize, networkSink);
+                networkSink->reconfigure(rt, workerContext);
                 std::mt19937 rnd;
                 std::uniform_int_distribution gen(50'000, 100'000);
                 auto buffMgr = bMgr;
@@ -598,8 +599,10 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                     }
                     buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
                     usleep(gen(rnd));
-                    networkSink.writeData(buffer, workerContext);
+                    networkSink->writeData(buffer, workerContext);
                 }
+                auto rtEnd = NodeEngine::ReconfigurationMessage(0, NodeEngine::HardEndOfStream, networkSink);
+                networkSink->reconfigure(rtEnd, workerContext);
             });
             sendingThreads.emplace_back(std::move(sendingThread));
         }
@@ -626,14 +629,13 @@ TEST_F(NetworkStackTest, testNetworkSource) {
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
     auto networkSource = std::make_unique<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                          netManager, nesPartition);
-    ASSERT_TRUE(networkSource->start());
+    EXPECT_TRUE(networkSource->start());
 
     ASSERT_EQ(nodeEngine->getPartitionManager()->getSubpartitionCounter(nesPartition), 0);
-    ASSERT_TRUE(networkSource->stop());
+    EXPECT_TRUE(networkSource->stop());
+    netManager->unregisterSubpartitionConsumer(nesPartition);
     ASSERT_FALSE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
     nodeEngine->stop();
-    networkSource = nullptr;
-    nodeEngine = nullptr;
 }
 
 TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
@@ -645,12 +647,12 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
 
     auto networkSource = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                          nodeEngine->getNetworkManager(), nesPartition);
-    ASSERT_TRUE(networkSource->start());
+    EXPECT_TRUE(networkSource->start());
 
     auto networkSink = std::make_shared<NetworkSink>(schema, 0, nodeEngine->getNetworkManager(), nodeLocation, nesPartition,
                                                      nodeEngine->getBufferManager(), nullptr);
 
-    ASSERT_TRUE(networkSource->stop());
+    EXPECT_TRUE(networkSource->stop());
     nodeEngine->stop();
     networkSource.reset();
     nodeEngine.reset();
@@ -717,7 +719,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         void onEndOfStream(Network::Messages::EndOfStreamMessage) override {
             eosCnt++;
-            if (eosCnt == numSendingThreads) {
+            if (eosCnt == 1) {
                 completed.set_value(true);
             }
         }
@@ -739,26 +741,27 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
         std::thread receivingThread([&]() {
             // register the incoming channel
             NetworkSource source(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition);
-            ASSERT_TRUE(source.start());
-            ASSERT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
+            EXPECT_TRUE(source.start());
+            EXPECT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
             completed.get_future().get();
-            ASSERT_TRUE(source.stop());
+            EXPECT_TRUE(source.stop());
         });
 
-        NetworkSink networkSink(schema, 0, netManager, nodeLocation, nesPartition, nodeEngine->getBufferManager(), nullptr);
+        auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition,
+                                                         nodeEngine->getBufferManager(), nullptr);
         for (int threadNr = 0; threadNr < numSendingThreads; threadNr++) {
             std::thread sendingThread([&] {
                 // register the incoming channel
                 NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
-                auto rt = NodeEngine::ReconfigurationTask(0, NodeEngine::Initialize, &networkSink);
-                networkSink.reconfigure(rt, workerContext);
+                auto rt = NodeEngine::ReconfigurationMessage(0, NodeEngine::Initialize, networkSink);
+                networkSink->reconfigure(rt, workerContext);
                 for (uint64_t i = 0; i < totalNumBuffer; ++i) {
                     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
                     for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
                         buffer.getBuffer<uint64_t>()[j] = j;
                     }
                     buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
-                    networkSink.writeData(buffer, workerContext);
+                    networkSink->writeData(buffer, workerContext);
                     usleep(rand() % 10000 + 1000);
                 }
             });

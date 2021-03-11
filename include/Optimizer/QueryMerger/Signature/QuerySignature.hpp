@@ -27,6 +27,7 @@ typedef std::shared_ptr<expr> ExprPtr;
 }// namespace z3
 
 namespace NES::Optimizer {
+
 class QuerySignature;
 typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
@@ -63,15 +64,13 @@ class QuerySignature {
      * @brief Create instance of Query plan signature
      * @param conditions: the predicates involved in the query
      * @param columns: the predicates involving columns to be extracted
+     * @param schemaFieldToExprMaps: map of tuple schemas expected at the operator
      * @param windowsExpressions: the map containing window expressions
-     * @param attributeMap : the mapping between original to resolved attribute names
-     * @param sources: the set of sources used for building the query
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
-                                    std::map<std::string, z3::ExprPtr> windowsExpressions,
-                                    std::map<std::string, std::vector<std::string>> attributeMap,
-                                    std::vector<std::string> sources);
+    static QuerySignaturePtr create(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                                    std::map<std::string, z3::ExprPtr>&& windowsExpressions);
 
     /**
      * @brief Get the conditions
@@ -83,25 +82,19 @@ class QuerySignature {
      * @brief Get the column predicates
      * @return map of column name to list of predicates
      */
-    std::map<std::string, z3::ExprPtr> getColumns();
+    const std::vector<std::string>& getColumns();
+
+    /**
+     * @brief Get vector of schemas for the operator
+     * @return pointer to Operator schemas
+     */
+    const std::vector<std::map<std::string, z3::ExprPtr>>& getSchemaFieldToExprMaps();
 
     /**
      * @brief Get the window definitions
      * @return map of window definitions
      */
-    std::map<std::string, z3::ExprPtr> getWindowsExpressions();
-
-    /**
-     * @brief Get the sources that are used for computing the signature
-     * @return vector of sources
-     */
-    std::vector<std::string> getSources();
-
-    /**
-     * @brief get the map containing key as original attribute and value as a vector of resolved attributes
-     * @return original attribute to resolved attributes map
-     */
-    std::map<std::string, std::vector<std::string>> getAttributeMap();
+    const std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
 
     /**
      * @brief Validate if this signature is equal to input signature
@@ -111,15 +104,22 @@ class QuerySignature {
     bool isEqual(QuerySignaturePtr other);
 
   private:
-    QuerySignature(z3::ExprPtr conditions, std::map<std::string, z3::ExprPtr> columns,
-                   std::map<std::string, z3::ExprPtr> windowsExpressions,
-                   std::map<std::string, std::vector<std::string>> attributeMap, std::vector<std::string> sources);
+    QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+                   std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
+                   std::map<std::string, z3::ExprPtr>&& windowsExpressions);
 
     z3::ExprPtr conditions;
-    std::map<std::string, z3::ExprPtr> columns;
+    std::vector<std::string> columns;
+    /**
+     * This vector contains a collection of unique tuple schemas this operator can expect
+     * For Example:
+     * - A Union operator will experience tuples with 2 distinct schemas.
+     * - A downstream Map operator to a union will also experience tuples with 2 distinct schemas.
+     * - A down stream Union operator to two distinct Union operators will experience 4 distinct schemas (2 from left and 2 from right child).
+     * - A down stream Join operator to two distinct Union operator can experience maximum 2 X 2 distinct schemas.
+     */
+    std::vector<std::map<std::string, z3::ExprPtr>> schemaFieldToExprMaps;
     std::map<std::string, z3::ExprPtr> windowsExpressions;
-    std::map<std::string, std::vector<std::string>> attributeMap;
-    std::vector<std::string> sources;
 };
 }// namespace NES::Optimizer
 

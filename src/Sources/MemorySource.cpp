@@ -77,6 +77,8 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
 
     buffer.setNumberOfTuples(numberOfTuples);
 
+    generatedTuples += buffer.getNumberOfTuples();
+    generatedBuffers++;
     NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;

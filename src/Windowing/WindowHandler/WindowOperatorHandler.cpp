@@ -40,5 +40,13 @@ void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHand
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
 void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->start(); }
 void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
+void WindowOperatorHandler::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) {
+    Reconfigurable::reconfigure(task, context);
+    windowHandler->reconfigure(task, context);
+}
+void WindowOperatorHandler::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
+    Reconfigurable::postReconfigurationCallback(task);
+    windowHandler->postReconfigurationCallback(task);
+}
 
 }// namespace NES::Windowing

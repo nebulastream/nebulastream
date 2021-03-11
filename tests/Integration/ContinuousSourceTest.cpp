@@ -24,7 +24,6 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
-#include <Sources/YSBSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
@@ -37,36 +36,31 @@ namespace NES {
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
 uint64_t rpcPort = 4000;
+uint64_t restPort = 8081;
 
 class ContinuousSourceTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
-    SourceConfigPtr sourceConfig;
-
     static void SetUpTestCase() {
         NES::setupLogging("ContinuousSourceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
 
     void SetUp() {
-
         rpcPort = rpcPort + 30;
-        coordinatorConfig = CoordinatorConfig::create();
-        workerConfig = WorkerConfig::create();
-        sourceConfig = SourceConfig::create();
-        coordinatorConfig->setRpcPort(rpcPort);
-        workerConfig->setCoordinatorPort(rpcPort);
+        restPort = restPort + 2;
     }
 
     void TearDown() { std::cout << "Tear down ContinuousSourceTest class." << std::endl; }
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -104,13 +98,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     string expectedContent =
         "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:Char,exdra$metadata_id:Char,exdra$features_type:"
@@ -170,10 +164,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -219,13 +216,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -235,10 +232,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithLargerFrequency) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -284,13 +284,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -300,10 +300,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -352,13 +355,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -424,10 +427,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileWithLargerFrequency) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -476,13 +482,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -548,10 +554,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -605,13 +614,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
@@ -621,10 +630,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
 }
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -682,13 +694,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1235,10 +1247,13 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
  * */
 
 TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -1279,13 +1294,13 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     NES_INFO("ContinuousSourceTest: Wait on result");
     auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 5));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 5));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 5));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 5));
 
     NES_INFO("ContinuousSourceTest: Undeploy query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     std::ifstream ifs(outputFilePath.c_str());
     EXPECT_TRUE(ifs.good());
@@ -1468,90 +1483,6 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     NES_INFO("ExpContent=" << expectedContent);
 
     EXPECT_EQ(content, expectedContent);
-
-    bool retStopWrk = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk);
-
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(ContinuousSourceTest, testYSB) {
-
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    sourceConfig->resetSourceOptions();
-
-    //TODO: writing of csv file works, now make test green
-    NES_INFO("ContinuousSourceTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);
-    EXPECT_NE(port, 0);
-    NES_INFO("ContinuousSourceTest: Coordinator started successfully");
-
-    NES_INFO("ContinuousSourceTest: Start worker 1");
-    workerConfig->setCoordinatorPort(port);
-    workerConfig->setRpcPort(port + 10);
-    workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("ContinuousSourceTest: Worker1 started successfully");
-
-    sourceConfig->setSourceType("YSBSource");
-    sourceConfig->setSourceConfig("");
-    sourceConfig->setSourceFrequency(1);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(5);
-    sourceConfig->setNumberOfBuffersToProduce(2);
-    sourceConfig->setPhysicalStreamName("test_stream");
-    sourceConfig->setLogicalStreamName("ysb");
-    //register physical stream
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    wrk1->registerPhysicalStream(conf);
-
-    std::string filePath = "contTestOut.csv";
-    remove(filePath.c_str());
-
-    QueryServicePtr queryService = crd->getQueryService();
-    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
-    //register query
-    std::string queryString =
-        R"(Query::from("ysb").windowByKey(Attribute("campaign_id"), TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(1)), Sum(Attribute("user_id"))).sink(FileSinkDescriptor::create(")"
-        + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-    auto globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 3));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
-
-    NES_INFO("QueryDeploymentTest: Remove query");
-    ASSERT_TRUE(queryService->validateAndQueueStopRequest(queryId));
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-    std::ifstream ifs(filePath.c_str());
-    EXPECT_TRUE(ifs.good());
-
-    std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
-
-    NES_INFO("ContinuousSourceTest: content=" << content);
-    EXPECT_TRUE(!content.empty());
-
-    std::ifstream infile(filePath.c_str());
-    std::string line;
-    int lineCnt = 0;
-    while (std::getline(infile, line)) {
-        if (lineCnt > 0) {
-            auto token = UtilityFunctions::split(line, ',');
-            YSBSource::YsbRecord rec{};
-            rec.campaignId = stoi(token[2]);
-            EXPECT_TRUE(rec.campaignId >= 0 && rec.campaignId < 10000);
-        }
-        lineCnt++;
-    }
-
-    EXPECT_EQ(sizeof(YSBSource::YsbRecord), 78);
 
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);

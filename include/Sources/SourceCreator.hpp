@@ -36,6 +36,9 @@ namespace NES {
 /**
  * @brief function to create a test source which produces 10 tuples within one buffer with value one based on a schema
  * @param schema of the data source
+ * @param bufferManager
+ * @param queryManager
+ * @param operatorId
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -45,6 +48,9 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
 /**
  * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
  * @param schema of the data source
+ * @param bufferManager
+ * @param queryManager
+ * @param operatorId
  * @param number of buffers that should be produced
  * @param frequency when to gather the next buffer
  * @return a const data source pointer
@@ -56,15 +62,38 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
+ * @param bufferManager
+ * @param queryManager
+ * @param operatorId
  * @return a const data source pointer
  */
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
-                                                                             NodeEngine::QueryManagerPtr queryManager,
-                                                                             OperatorId operatorId);
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
+                                                                 NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
+
+/**
+ * @brief function to create a lambda source
+ * @param schema of the data source
+ * @param bufferManager
+ * @param queryManager
+ * @param number of buffers that should be produced
+ * @param frequency when to gather the next buffer
+ * @param generationFunction
+ * @param operatorId
+ * @return a const data source pointer */
+const DataSourcePtr createLambdaSource(
+    SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+    uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+    std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+    OperatorId operatorId);
 
 /**
  * @brief function to create an empty zmq source
  * @param schema of data source
+ * @param bufferManager
+ * @param queryManager
+ * @param host
+ * @param port
+ * @param operatorId
  * @return a const data source pointer
  */
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -74,7 +103,10 @@ const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerP
 /**
  * @brief function to create a binary file source
  * @param schema of data source
+ * @param bufferManager
+ * @param queryManager
  * @param path to the file to reading
+ * @param operatorId
  * @return a const data source pointer
  */
 const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -84,7 +116,10 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferM
 /**
  * @brief function to create a sense source
  * @param schema of data source
+ * @param bufferManager
+ * @param queryManager
  * @param udfs of the file
+ * @param operatorId
  * @return a const data source pointer
  */
 const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -93,10 +128,19 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManage
 /**
  * @brief function to create a csvfile source
  * @param schema of data source
+ * @param bufferManager
+ * @param queryManager
+ * @param pathToFile
+ * @param delimiter
+ * @param numberOfTuplesToProducePerBuffer
+ * @param numBuffersToProcess
+ * @param frequency
+ * @param skipHeader
+ * @param operatorId
  * @return a const data source pointer
  */
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                        NodeEngine::QueryManagerPtr queryManager, const std::string& path_to_file,
+                                        NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
                                         const std::string& delimiter, uint64_t numberOfTuplesToProducePerBuffer,
                                         uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
@@ -105,29 +149,28 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
  * @param schema of the source
  * @param bufferManager
  * @param queryManager
- * @param operatorId
  * @param memoryArea the memory buffer to scan and create buffers out of
  * @param memoryAreaSize the size of the memory buffer
+ * @param numBuffersToProcess
+ * @param frequency
+ * @param operatorId
  * @return
  */
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
-                                       std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                       std::chrono::milliseconds frequency);
+                                       NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
+                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
+                                       OperatorId operatorId);
 
-const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                        const std::string& path_to_file, const std::string& delimiter,
-                                        uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                        uint64_t frequency, bool skipHeader, OperatorId operatorId);
+const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                          NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
+                                          const std::string& delimiter,uint64_t numberOfTuplesToProducePerBuffer,
+                                          uint64_t numBuffersToProcess,uint64_t frequency, bool skipHeader, OperatorId operatorId);
 
 /**
  * @brief function to create a ysb source
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createYSBSource(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                    uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                    OperatorId operatorId);
 
 /**
  * @brief function to create a network source

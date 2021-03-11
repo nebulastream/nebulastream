@@ -17,6 +17,9 @@
 #ifndef NES_THREADBARRIER_HPP
 #define NES_THREADBARRIER_HPP
 
+#include <condition_variable>
+#include <mutex>
+
 namespace NES {
 
 /**

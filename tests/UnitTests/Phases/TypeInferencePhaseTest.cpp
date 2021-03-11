@@ -91,7 +91,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     expectedInputSchema->addField("default_logical$f1", BasicType::INT32);
     expectedInputSchema->addField("default_logical$f2", BasicType::INT8);
 
-    ASSERT_TRUE(source->getOutputSchema()->equals(expectedInputSchema));
+    EXPECT_TRUE(source->getOutputSchema()->equals(expectedInputSchema));
 
     auto mappedSchema = Schema::create();
     mappedSchema->addField("default_logical$f1", BasicType::INT32);
@@ -99,8 +99,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     mappedSchema->addField("default_logical$f3", BasicType::INT8);
 
     NES_DEBUG("first=" << map->getOutputSchema()->toString() << " second=" << mappedSchema->toString());
-    ASSERT_TRUE(map->getOutputSchema()->equals(mappedSchema));
-    ASSERT_TRUE(sink->getOutputSchema()->equals(mappedSchema));
+    EXPECT_TRUE(map->getOutputSchema()->equals(mappedSchema));
+    EXPECT_TRUE(sink->getOutputSchema()->equals(mappedSchema));
 }
 
 /**
@@ -164,7 +164,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 
     NES_INFO(sink->getOutputSchema()->toString());
 
-    ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
+    EXPECT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
 
 /**
@@ -190,7 +190,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
                             ->addField("default_logical$f3", BasicType::UINT32);
 
     NES_INFO(sink->getOutputSchema()->toString());
-    ASSERT_TRUE(sink->getOutputSchema()->equals(resultSchema));
+    EXPECT_TRUE(sink->getOutputSchema()->equals(resultSchema));
 }
 
 /**
@@ -299,24 +299,24 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f2"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f1"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f2"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f1"));
 }
 
 /**
@@ -347,29 +347,29 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
-    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f4"));
 }
 
 /**
@@ -400,29 +400,29 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f1"));
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f2"));
+    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f1"));
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f2"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f1"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f2"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f1"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f2"));
 }
 
 /**
@@ -455,34 +455,34 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
-    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
 
     SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
+    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f3"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f4"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f3"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f4"));
 }
 
 /**
@@ -511,24 +511,24 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f1"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f2"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f1"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f2"));
 }
 
 /**
@@ -561,34 +561,34 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
-    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
 
     SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
+    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f3"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("f4"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f3"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f4"));
 }
 
 /**
@@ -625,39 +625,39 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr mergeOutputSchema = mergeOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mergeOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mergeOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(mergeOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(mergeOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mergeOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(mergeOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
-    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f4"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f4"));
 
     SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
+    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f3"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f4"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f4"));
 }
 
 /**
@@ -692,43 +692,43 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 3);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$ts"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 3);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$ts"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << filterOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 9);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$f1"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$ts"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$f1"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$ts"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("yx$start"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("yx$end"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("yx$key"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 9);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("x$default_logical$ts"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("y$default_logical$ts"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("yx$start"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("yx$end"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("yx$key"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
-    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("x$default_logical$f3"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("y$default_logical$f4"));
+    EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("y$default_logical$f4"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("y$default_logical$f4"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f3"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("y$default_logical$f4"));
 
     SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
-    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$x$default_logical$f3"));
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$y$default_logical$f4"));
+    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$x$default_logical$f3"));
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$y$default_logical$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f3"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("y$default_logical$f4"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f3"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("y$default_logical$f4"));
 }
 
 /**
@@ -774,59 +774,59 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     NES_DEBUG("expected src0= " << sourceOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 3);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$f5"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$f6"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$ts"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 3);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$f5"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$f6"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical3$ts"));
 
     SchemaPtr sourceOutputSchema2 = sourceOperator[1]->getOutputSchema();
     NES_DEBUG("expected src2= " << sourceOperator[1]->getOutputSchema()->toString());
-    ASSERT_TRUE(sourceOutputSchema2->fields.size() == 3);
-    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$ts"));
+    EXPECT_TRUE(sourceOutputSchema2->fields.size() == 3);
+    EXPECT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema2->hasFieldName("default_logical$ts"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << filterOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(filterOutputSchema->fields.size() == 15);
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$start"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$end"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$key"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3$f5"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3$f6"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical3$ts"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$key"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical$ts"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical2$f3"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical2$f4"));
-    ASSERT_TRUE(filterOutputSchema->hasFieldName("default_logical2$ts"));
+    EXPECT_TRUE(filterOutputSchema->fields.size() == 15);
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$start"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$end"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical3default_logicaldefault_logical2$key"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical3$f5"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical3$f6"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical3$ts"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logicaldefault_logical2$key"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical$ts"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical2$f3"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical2$f4"));
+    EXPECT_TRUE(filterOutputSchema->hasFieldName("default_logical2$ts"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << projectOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(projectOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical$f23"));
-    ASSERT_TRUE(projectOutputSchema->hasFieldName("default_logical2$f44"));
+    EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical$f23"));
+    EXPECT_TRUE(projectOutputSchema->hasFieldName("default_logical2$f44"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << mapOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(mapOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("f23"));
-    ASSERT_TRUE(mapOutputSchema->hasFieldName("f44"));
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("f23"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("f44"));
 
     SchemaPtr renameStreamOutputSchema = renameStreamOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << renameStreamOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(renameStreamOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical2$f44"));
-    ASSERT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f23"));
+    EXPECT_TRUE(renameStreamOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical2$f44"));
+    EXPECT_TRUE(renameStreamOutputSchema->hasFieldName("x$default_logical$f23"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 2);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f23"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical2$f44"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical$f23"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("x$default_logical2$f44"));
 }
 
 /**
@@ -847,30 +847,30 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
     auto windows = resultPlan->getOperatorByType<WindowOperatorNode>();
 
     NES_DEBUG("win1=" << windows[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(windows[0]->getOutputSchema()->fields.size() == 5);
-    ASSERT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$start"));
-    ASSERT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$end"));
-    ASSERT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$cnt"));
-    ASSERT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$value"));
-    ASSERT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$id"));
+    EXPECT_TRUE(windows[0]->getOutputSchema()->fields.size() == 5);
+    EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$start"));
+    EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$end"));
+    EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$cnt"));
+    EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$value"));
+    EXPECT_TRUE(windows[0]->getOutputSchema()->hasFieldName("default_logical$id"));
 
     NES_DEBUG("win2=" << windows[1]->getOutputSchema()->toString());
-    ASSERT_TRUE(windows[1]->getOutputSchema()->fields.size() == 5);
-    ASSERT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$start"));
-    ASSERT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$end"));
-    ASSERT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$cnt"));
-    ASSERT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$value"));
-    ASSERT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$id"));
+    EXPECT_TRUE(windows[1]->getOutputSchema()->fields.size() == 5);
+    EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$start"));
+    EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$end"));
+    EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$cnt"));
+    EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$value"));
+    EXPECT_TRUE(windows[1]->getOutputSchema()->hasFieldName("default_logical$id"));
 
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 5);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$start"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$end"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$cnt"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$value"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$id"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$cnt"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$value"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$id"));
 }
 
 /**
@@ -907,12 +907,12 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
     auto sinkOperator = resultPlan->getOperatorByType<SinkLogicalOperatorNode>();
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected = " << sinkOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 5);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$cnt"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f3"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 5);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$cnt"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f3"));
 }
 
 /**
@@ -958,100 +958,100 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
     NES_DEBUG("expected src0= " << sourceOperator[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(sourceOutputSchema->fields.size() == 3);
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sourceOutputSchema->hasFieldName("default_logical$ts"));
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 3);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$ts"));
 
     SchemaPtr sourceOutputSchema2 = sourceOperator[1]->getOutputSchema();
     NES_DEBUG("expected src2= " << sourceOperator[1]->getOutputSchema()->toString());
-    ASSERT_TRUE(sourceOutputSchema2->fields.size() == 3);
-    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical2$f3"));
-    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical2$f4"));
-    ASSERT_TRUE(sourceOutputSchema2->hasFieldName("default_logical2$ts"));
+    EXPECT_TRUE(sourceOutputSchema2->fields.size() == 3);
+    EXPECT_TRUE(sourceOutputSchema2->hasFieldName("default_logical2$f3"));
+    EXPECT_TRUE(sourceOutputSchema2->hasFieldName("default_logical2$f4"));
+    EXPECT_TRUE(sourceOutputSchema2->hasFieldName("default_logical2$ts"));
 
     SchemaPtr sourceOutputSchema3 = sourceOperator[2]->getOutputSchema();
     NES_DEBUG("expected src3= " << sourceOperator[2]->getOutputSchema()->toString());
-    ASSERT_TRUE(sourceOutputSchema3->fields.size() == 3);
-    ASSERT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$f5"));
-    ASSERT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$f6"));
-    ASSERT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$ts"));
+    EXPECT_TRUE(sourceOutputSchema3->fields.size() == 3);
+    EXPECT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$f5"));
+    EXPECT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$f6"));
+    EXPECT_TRUE(sourceOutputSchema3->hasFieldName("default_logical3$ts"));
 
     SchemaPtr joinOutSchema1 = joinOperators[0]->getOutputSchema();
     NES_DEBUG("expected join1= " << joinOperators[0]->getOutputSchema()->toString());
-    ASSERT_TRUE(joinOutSchema1->fields.size() == 21);
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$start"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$end"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$key"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2$start"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2$end"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2$key"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical$ts"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical2$f3"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical2$f4"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical2$ts"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical3default_logical4$start"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical3default_logical4$end"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical3default_logical4$key"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical3$f5"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical3$f6"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical3$ts"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical4$f7"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical4$f8"));
-    ASSERT_TRUE(joinOutSchema1->hasFieldName("default_logical4$ts"));
+    EXPECT_TRUE(joinOutSchema1->fields.size() == 21);
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$start"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$end"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$key"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2$start"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2$end"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logicaldefault_logical2$key"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical$ts"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical2$f3"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical2$f4"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical2$ts"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical3default_logical4$start"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical3default_logical4$end"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical3default_logical4$key"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical3$f5"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical3$f6"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical3$ts"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical4$f7"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical4$f8"));
+    EXPECT_TRUE(joinOutSchema1->hasFieldName("default_logical4$ts"));
 
     SchemaPtr joinOutSchema2 = joinOperators[1]->getOutputSchema();
     NES_DEBUG("expected join2= " << joinOperators[1]->getOutputSchema()->toString());
-    ASSERT_TRUE(joinOutSchema2->fields.size() == 9);
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logicaldefault_logical2$start"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logicaldefault_logical2$end"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logicaldefault_logical2$key"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logical$ts"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logical2$f3"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logical2$f4"));
-    ASSERT_TRUE(joinOutSchema2->hasFieldName("default_logical2$ts"));
+    EXPECT_TRUE(joinOutSchema2->fields.size() == 9);
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logicaldefault_logical2$start"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logicaldefault_logical2$end"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logicaldefault_logical2$key"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logical$ts"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logical2$f3"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logical2$f4"));
+    EXPECT_TRUE(joinOutSchema2->hasFieldName("default_logical2$ts"));
 
     SchemaPtr joinOutSchema3 = joinOperators[2]->getOutputSchema();
     NES_DEBUG("expected join3= " << joinOperators[2]->getOutputSchema()->toString());
-    ASSERT_TRUE(joinOutSchema3->fields.size() == 9);
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical3default_logical4$start"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical3default_logical4$end"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical3default_logical4$key"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical3$f5"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical3$f6"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical3$ts"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical4$f7"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical4$f8"));
-    ASSERT_TRUE(joinOutSchema3->hasFieldName("default_logical4$ts"));
+    EXPECT_TRUE(joinOutSchema3->fields.size() == 9);
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical3default_logical4$start"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical3default_logical4$end"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical3default_logical4$key"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical3$f5"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical3$f6"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical3$ts"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical4$f7"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical4$f8"));
+    EXPECT_TRUE(joinOutSchema3->hasFieldName("default_logical4$ts"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     NES_DEBUG("expected sinkOutputSchema= " << sinkOutputSchema->toString());
-    ASSERT_TRUE(sinkOutputSchema->fields.size() == 21);
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$start"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$end"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$key"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$key"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f1"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f2"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical$ts"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f3"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f4"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$ts"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical3default_logical4$start"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical3default_logical4$end"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical3default_logical4$key"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical3$f5"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical3$f6"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical3$ts"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$f7"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$f8"));
-    ASSERT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$ts"));
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 21);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2default_logical3default_logical4$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logicaldefault_logical2$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical$ts"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f3"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$f4"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical2$ts"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical3default_logical4$start"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical3default_logical4$end"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical3default_logical4$key"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical3$f5"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical3$f6"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical3$ts"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$f7"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$f8"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("default_logical4$ts"));
 }
 
 }// namespace NES

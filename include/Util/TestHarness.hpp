@@ -51,6 +51,7 @@ class TestHarness {
         wrkConf = WorkerConfig::create();
         crd = std::make_shared<NesCoordinator>(crdConf);
         crdPort = crd->startCoordinator(/**blocking**/ false);
+        nonSourceWorkerCount = 0;
     };
 
     ~TestHarness() { NES_DEBUG("TestHarness: ~TestHarness()"); };
@@ -62,6 +63,8 @@ class TestHarness {
          */
     template<typename T>
     void pushElement(T element, uint64_t sourceIdx) {
+        // compute the index of the csv/memory source relative to all workers, including nonSource workers
+        sourceIdx = sourceIdx - nonSourceWorkerCount;
         if (sourceIdx >= sourceSchemas.size()) {
             NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
         }
@@ -179,6 +182,7 @@ class TestHarness {
      * @param parentId id of the parent to connect
      */
     void addNonSourceWorker(uint64_t parentId) {
+        nonSourceWorkerCount++;
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
         wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
@@ -202,10 +206,12 @@ class TestHarness {
     /**
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
          * then return the result of the query execution
+         * @param placementStrategyName: total number of tuple expected in the query result
+         * @param numberOfContentToExpect: placement strategy name
          * @return output string
          */
     template<typename T>
-    std::vector<T> getOutput(uint64_t numberOfContentToExpect) {
+    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
                                     << std::to_string(physicalStreamNames.size())
@@ -251,7 +257,7 @@ class TestHarness {
         //register query
         std::string queryString =
             queryWithoutSink + R"(.sink(FileSinkDescriptor::create(")" + filePath + R"(" , "NES_FORMAT", "APPEND"));)";
-        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+        QueryId queryId = queryService->validateAndQueueAddRequest(queryString, placementStrategyName);
 
         if (!TestUtils::waitForQueryToStart(queryId, queryCatalog)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: waitForQueryToStart returns false");
@@ -266,6 +272,9 @@ class TestHarness {
                                                ->getSinkOperators()[0]
                                                ->getOutputSchema()
                                                ->getSchemaSizeInBytes();
+        NES_DEBUG(
+            "TestHarness: outputSchema: "
+            << queryCatalog->getQueryCatalogEntry(queryId)->getQueryPlan()->getSinkOperators()[0]->getOutputSchema()->toString());
         NES_ASSERT(outputSchemaSizeInBytes == sizeof(T),
                    "The size of output struct does not match output schema."
                    " Output struct:"
@@ -335,6 +344,7 @@ class TestHarness {
     std::vector<PhysicalStreamConfigPtr> csvSourceConfs;
     std::vector<TestHarnessSourceType> sourceTypes;
     uint64_t bufferSize;
+    uint64_t nonSourceWorkerCount;
 };
 }// namespace NES
 

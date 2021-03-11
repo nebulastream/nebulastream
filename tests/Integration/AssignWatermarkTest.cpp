@@ -40,34 +40,14 @@ static uint64_t rpcPort = 4000;
 
 class AssignWatermarkTest : public testing::Test {
   public:
-    CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
-
     static void SetUpTestCase() {
         NES::setupLogging("AssignWatermarkTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup AssignWatermarkTest test class.");
     }
 
     void SetUp() {
-
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
-        crdConf = CoordinatorConfig::create();
-        crdConf->setRpcPort(rpcPort);
-        crdConf->setRestPort(restPort);
-
-        wrkConf = WorkerConfig::create();
-        wrkConf->setCoordinatorPort(rpcPort);
-
-        srcConf = SourceConfig::create();
-        srcConf->setSourceType("CSVSource");
-        srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
-        srcConf->setNumberOfTuplesToProducePerBuffer(3);
-        srcConf->setNumberOfBuffersToProduce(4);
-        srcConf->setPhysicalStreamName("test_stream");
-        srcConf->setLogicalStreamName("window");
     }
 
     void TearDown() { std::cout << "Tear down AssignWatermarkTest class." << std::endl; }
@@ -79,9 +59,24 @@ class AssignWatermarkTest : public testing::Test {
  * @brief test event time watermark for central tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
 
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -132,19 +127,19 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,12\n"
                              "2000,3000,1,24\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("AssignWatermarkTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -160,9 +155,24 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
  * @brief test event time watermark for distributed tumbling window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
 
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -233,21 +243,21 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,36\n"
                              "2000,3000,1,72\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("AssignWatermarkTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -267,9 +277,24 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
  * @brief test event time watermark for central sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
 
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -321,9 +346,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "2500,3500,1,10\n"
@@ -332,11 +357,11 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
                              "1000,2000,1,12\n"
                              "500,1500,1,6\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("AssignWatermarkTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -352,10 +377,24 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
  * @brief test event time watermark for distributed sliding window with 50 ms allowed lateness
  */
 TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf = CoordinatorConfig::create();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
 
+    wrkConf = WorkerConfig::create();
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    srcConf = SourceConfig::create();
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/window-out-of-order.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(3);
+    srcConf->setNumberOfBuffersToProduce(4);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("window");
     NES_INFO("AssignWatermarkTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -424,11 +463,11 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 3));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "500,1500,1,18\n"
@@ -437,11 +476,11 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
                              "2000,3000,1,72\n"
                              "2500,3500,1,30\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("AssignWatermarkTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("AssignWatermarkTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

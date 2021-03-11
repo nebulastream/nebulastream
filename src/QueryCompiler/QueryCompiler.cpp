@@ -141,7 +141,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 childPipelines.emplace_back(pipelines[childStageId]);
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
-                builder.getQuerySubPlanId(), builder.getBufferManager(),
+                builder.getQuerySubPlanId(), builder.getQueryManager(), builder.getBufferManager(),
                 [childPipelines](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& childPipeline : childPipelines) {
                         childPipeline->execute(buffer, workerContext);
@@ -161,7 +161,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 NES_THROW_RUNTIME_ERROR("No sinks available in query plan");
             }
             executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
-                builder.getQuerySubPlanId(), builder.getBufferManager(),
+                builder.getQuerySubPlanId(), builder.getQueryManager(), builder.getBufferManager(),
                 [sinks](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef workerContext) {
                     for (auto& sink : sinks) {
                         sink->writeData(buffer, workerContext);
@@ -172,8 +172,19 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 },
                 holder.operatorHandlers);
         }
+        uint32_t numOfProducers = holder.producers.size();
+        //This is not something to look at, please pass by
+        if (numOfProducers == 0) {
+            for (const auto& source : builder.getSources()) {
+                SchemaPtr sourceSchema = source->getSchema();
+                if (holder.inputSchema && holder.inputSchema->equals(sourceSchema)) {
+                    ++numOfProducers;
+                }
+            }
+        }
+
         auto pipeline = NodeEngine::Execution::ExecutablePipeline::create(
-            stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext,
+            stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext, numOfProducers,
             pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
 
         NES_TRACE("pipeline code=" << pipeline->getCodeAsString());

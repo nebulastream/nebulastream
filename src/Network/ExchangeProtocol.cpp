@@ -67,9 +67,18 @@ void ExchangeProtocol::onChannelError(const Messages::ErrorMessage error) { prot
 void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage) {
     NES_DEBUG("ExchangeProtocol: EndOfStream message received from " << endOfStreamMessage.getChannelId().toString());
     if (partitionManager->isRegistered(endOfStreamMessage.getChannelId().getNesPartition())) {
-        partitionManager->unregisterSubpartition(endOfStreamMessage.getChannelId().getNesPartition());
+        if (partitionManager->unregisterSubpartition(endOfStreamMessage.getChannelId().getNesPartition())) {
+            protocolListener->onEndOfStream(endOfStreamMessage);
+        } else {
+            NES_DEBUG("ExchangeProtocol: EndOfStream message received from "
+                      << endOfStreamMessage.getChannelId().toString() << " but there is still some active subpartition: "
+                      << partitionManager->getSubpartitionCounter(endOfStreamMessage.getChannelId().getNesPartition()));
+        }
+    } else {
+        NES_ERROR("ExchangeProtocol: EndOfStream message received from "
+                  << endOfStreamMessage.getChannelId().toString() << " however the partition is not registered on this worker");
+        protocolListener->onServerError(Messages::ErrorMessage(endOfStreamMessage.getChannelId(), Messages::kUnknownPartition));
     }
-    protocolListener->onEndOfStream(endOfStreamMessage);
 }
 
 std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }

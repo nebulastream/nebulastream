@@ -34,10 +34,6 @@ static uint64_t rpcPort = 4000;
 
 class MultipleWindowsTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coordinatorConfig;
-    WorkerConfigPtr workerConfig;
-    SourceConfigPtr srcConf;
-
     static void SetUpTestCase() {
         NES::setupLogging("MultipleWindowsTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MultipleWindowsTest test class.");
@@ -46,24 +42,19 @@ class MultipleWindowsTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-
-        coordinatorConfig = CoordinatorConfig::create();
-        workerConfig = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-
-        coordinatorConfig->setRpcPort(rpcPort);
-        coordinatorConfig->setRestPort(restPort);
-        workerConfig->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { NES_INFO("Tear down MultipleWindowsTest class."); }
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -119,19 +110,19 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,2000,1,1\n"
                              "0,2000,4,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -144,10 +135,15 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
-    coordinatorConfig->resetCoordinatorOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
     coordinatorConfig->setNumberOfSlots(12);
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -166,7 +162,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -215,20 +211,20 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,2000,1,2\n"
                              "0,2000,4,2\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -248,10 +244,13 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -307,9 +306,9 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_DEBUG("wakeup");
 
@@ -327,11 +326,11 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
                              "0,10000,16,12\n"
                              "5000,15000,1,570\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -347,10 +346,13 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
  * @brief test central sliding window and event time
  */
 TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -369,7 +371,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -416,9 +418,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     NES_DEBUG("wakeup");
 
@@ -441,11 +443,11 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
                              "0,10000,16,24\n"
                              "5000,15000,16,24\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -462,10 +464,13 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -521,9 +526,9 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "16000,17000,1,33\n"
@@ -545,11 +550,11 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
                              "0,1000,1,1\n"
                              "0,1000,4,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -562,10 +567,13 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
 }
 
 TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -584,7 +592,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -631,9 +639,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,2000,1,8\n"
@@ -646,11 +654,11 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
                              "2000,4000,11,16\n"
                              "2000,4000,16,4\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -670,10 +678,13 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
  * @brief Test all three windows in a row
  */
 TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -692,7 +703,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -741,7 +752,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
                              "0,2000,6\n"
@@ -754,11 +765,11 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
                              "14000,16000,60\n"
                              "16000,18000,68\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -811,9 +822,13 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
 |  |  |      WATERMARKASSIGNER(7)
 |  |  |        SOURCE(8,window)
      */
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -832,7 +847,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -844,7 +859,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NES_INFO("MultipleWindowsTest: Worker2 started SUCCESSFULLY");
 
     NES_INFO("MultipleWindowsTest: Start worker 3");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
@@ -895,11 +910,11 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
@@ -910,11 +925,11 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -977,9 +992,13 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 |  |  |      FILTER(11)
 |  |  |        SOURCE(10,window)
      */
-    coordinatorConfig->resetCoordinatorOptions();
-    workerConfig->resetWorkerOptions();
-    srcConf->resetSourceOptions();
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -998,7 +1017,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
 
     NES_INFO("MultipleWindowsTest: Start worker 2");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
@@ -1010,7 +1029,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NES_INFO("MultipleWindowsTest: Worker2 started SUCCESSFULLY");
 
     NES_INFO("MultipleWindowsTest: Start worker 3");
-    workerConfig->resetWorkerOptions();
+
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
@@ -1063,11 +1082,11 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
-    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk3, queryId, globalQueryPlan, 2));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
     string expectedContent =
         "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
@@ -1078,11 +1097,11 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
         "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
         "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("MultipleWindowsTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("MultipleWindowsTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

@@ -36,24 +36,14 @@ static uint64_t rpcPort = 4000;
 
 class DeepHierarchyTopologyTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
-
     static void SetUpTestCase() {
         NES::setupLogging("DeepTopologyHierarchyTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup DeepTopologyHierarchyTest test class.");
+        NES_INFO("Setup DeepTopologyHierarchyTest test class.");
     }
 
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-        coConf->setRpcPort(rpcPort);
-        coConf->setRestPort(restPort);
-        wrkConf->setCoordinatorPort(rpcPort);
     }
 
     void TearDown() { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
@@ -70,12 +60,16 @@ class DeepHierarchyTopologyTest : public testing::Test {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -137,7 +131,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
 
     std::string outputFilePath = "testOutputAndAllSensors.out";
@@ -154,7 +148,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -208,11 +202,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -252,13 +246,17 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndAllSensors) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    coConf->setNumberOfSlots(12);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    crdConf->setNumberOfSlots(12);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -337,7 +335,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
@@ -356,7 +354,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -420,11 +418,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -467,12 +465,16 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -534,7 +536,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 1);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 4);
 
@@ -552,7 +554,7 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -596,11 +598,11 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -640,12 +642,16 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSourceAndWorker) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -719,7 +725,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
@@ -738,7 +744,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -792,11 +798,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -844,13 +850,17 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSourceAndWorker) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    coConf->setNumberOfSlots(12);
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    crdConf->setNumberOfSlots(12);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -992,7 +1002,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
@@ -1015,7 +1025,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "default_logical$id:INTEGER,default_logical$value:INTEGER\n"
                              "1,1\n"
@@ -1069,11 +1079,11 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1137,12 +1147,16 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithDefaultSo
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -1296,7 +1310,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
@@ -1320,7 +1334,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "testStream$val3:INTEGER\n"
                              "3\n"
@@ -1332,11 +1346,11 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
                              "3\n"
                              "4\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1400,12 +1414,16 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -1559,7 +1577,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
@@ -1583,17 +1601,17 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "1000,2000,1,68\n"
                              "2000,3000,2,112\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1656,13 +1674,17 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
+TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -1818,7 +1840,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
 
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
@@ -1841,7 +1863,7 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "car$id:INTEGER,car$value:INTEGER\n"
                              "1,1\n"
@@ -1885,11 +1907,11 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
                              "1,1\n"
                              "1,1\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
@@ -1949,12 +1971,16 @@ TEST_F(DeepHierarchyTopologyTest, testUnionThreeLevel) {
     |  |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
 TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDataAndWorkerFinal) {
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    coConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
     EXPECT_NE(port, 0);
     NES_DEBUG("DeepTopologyHierarchyTest: Coordinator started successfully");
@@ -2053,7 +2079,7 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
     NES_DEBUG("DeepTopologyHierarchyTest: topology: \n" << crd->getTopology()->toString());
 
-    // Check if the topology the expected hierarchy
+    // Check if the topology matches the expected hierarchy
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 2);
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
@@ -2078,18 +2104,18 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
                              "0,2000,96\n"
                              "2000,4000,256\n"
                              "4000,6000,168\n";
 
-    ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Remove query");
     queryService->validateAndQueueStopRequest(queryId);
-    ASSERT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_DEBUG("DeepTopologyHierarchyTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);

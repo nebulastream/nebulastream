@@ -84,14 +84,14 @@ class Query {
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
     * @param subQuery is the query to be unioned
-    * @return
+    * @return the query
     */
     Query& unionWith(Query* subQuery);
 
     /**
      * @brief this call projects out the attributes in the parameter list
      * @param attribute list
-     * @return
+     * @return the query
      */
     template<typename... Args>
     Query& project(Args&&... args) {
@@ -107,14 +107,17 @@ class Query {
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
      * @param new stream name
-     * @return
+     * @return the query
      */
     Query& as(const std::string newStreamName);
 
     /**
      * @brief This methods add the join operator to a query
-     * @param subQueryRhs is the query to be merged
-     * @return
+     * @param subQueryRhs subQuery to be joined
+     * @param onLeftKey key attribute of the left stream
+     * @param onLeftKey key attribute of the right stream
+     * @param windowType Window definition.
+     * @return the query
      */
     Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                     const Windowing::WindowTypePtr windowType);

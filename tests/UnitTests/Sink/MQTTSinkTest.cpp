@@ -157,7 +157,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
                                                       msgDelay, qualityOfService, asynchronousClient);
 
     bool connectedToBroker = mqttSink->connect();
-    ASSERT_TRUE(connectedToBroker);
+    EXPECT_TRUE(connectedToBroker);
 }
 
 /* - MQTT Client send a finite amount of Data to Broker ---------------------------------------------------- */
