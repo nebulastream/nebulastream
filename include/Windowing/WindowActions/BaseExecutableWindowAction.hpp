@@ -41,10 +41,12 @@ class BaseExecutableWindowAction {
 
     void setup(NodeEngine::Execution::PipelineExecutionContextPtr executionContext) {
         this->weakExecutionContext = executionContext;
+        this->phantom = executionContext;
     }
 
   protected:
     std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
+    std::shared_ptr<NodeEngine::Execution::PipelineExecutionContext> phantom;
     SchemaPtr windowSchema;
 };
 }// namespace NES::Windowing
