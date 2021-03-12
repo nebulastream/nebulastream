@@ -410,28 +410,30 @@ class TestUtils {
         uint64_t count = 0;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             sleep(1);
+            found = 0;
+            count = 0;
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
-                NES_DEBUG("checkOutputOrTimeout: file " << outputFilePath << " open and good");
-                std::vector<std::string> expectedLines = UtilityFunctions::split(expectedContent, '\n');
+                NES_DEBUG("checkoutputortimeout: file " << outputFilePath << " open and good");
+                std::vector<std::string> expectedlines = UtilityFunctions::split(expectedContent, '\n');
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 count = std::count(content.begin(), content.end(), '\n');
-                if (expectedLines.size() != count) {
-                    NES_DEBUG("checkOutputOrTimeout: number of expected lines "
-                              << expectedLines.size() << " not reached yet with " << count << " lines content=" << content);
+                if (expectedlines.size() != count) {
+                    NES_DEBUG("checkoutputortimeout: number of expected lines "
+                              << expectedlines.size() << " not reached yet with " << count << " lines content=" << content);
                     continue;
                 }
 
                 if (content.size() != expectedContent.size()) {
-                    NES_DEBUG("checkOutputOrTimeout: number of chars "
+                    NES_DEBUG("checkoutputortimeout: number of chars "
                               << expectedContent.size() << " not reached yet with chars content=" << content.size()
                               << " lines content=" << content);
                     continue;
                 }
 
-                for (uint64_t i = 0; i < expectedLines.size(); i++) {
-                    if (content.find(expectedLines[i]) != std::string::npos) {
+                for (uint64_t i = 0; i < expectedlines.size(); i++) {
+                    if (content.find(expectedlines[i]) != std::string::npos) {
                         found++;
                     }
                 }
