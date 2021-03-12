@@ -26,7 +26,7 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
-#include <Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 
@@ -111,7 +111,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -191,7 +191,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleS
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -252,7 +252,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSourc
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -319,7 +319,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -386,7 +386,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorC
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -453,7 +453,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -511,7 +511,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilte
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -568,7 +568,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilte
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -626,7 +626,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAt
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -684,7 +684,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapVa
     sinkOperator2GQN->getChildren();
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert

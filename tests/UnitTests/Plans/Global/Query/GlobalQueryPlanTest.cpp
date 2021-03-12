@@ -19,7 +19,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -237,7 +237,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 2);
 
     //Apply L0 query merger rule
-    SyntaxBasedEqualQueryMergerRulePtr l0MergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    SyntaxBasedEqualQueryMergerRulePtr l0MergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     l0MergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
@@ -286,7 +286,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 3);
 
     //Apply Syntax Based Equal Query Merger rule
-    SyntaxBasedEqualQueryMergerRulePtr syntaxBasedEqualQueryMergerRule = SyntaxBasedEqualQueryMergerRule::create();
+    SyntaxBasedEqualQueryMergerRulePtr syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //Get MetaData information

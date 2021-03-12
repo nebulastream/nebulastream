@@ -18,7 +18,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/QueryMerger/SignatureBasedEqualQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -27,25 +27,25 @@
 
 namespace NES::Optimizer {
 
-SignatureBasedEqualQueryMergerRule::SignatureBasedEqualQueryMergerRule() {}
+SignatureBasedCompleteQueryMergerRule::SignatureBasedCompleteQueryMergerRule() {}
 
-SignatureBasedEqualQueryMergerRule::~SignatureBasedEqualQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
+SignatureBasedCompleteQueryMergerRule::~SignatureBasedCompleteQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
 
-SignatureBasedEqualQueryMergerRulePtr SignatureBasedEqualQueryMergerRule::create() {
-    return std::make_shared<SignatureBasedEqualQueryMergerRule>(SignatureBasedEqualQueryMergerRule());
+SignatureBasedEqualQueryMergerRulePtr SignatureBasedCompleteQueryMergerRule::create() {
+    return std::make_shared<SignatureBasedCompleteQueryMergerRule>(SignatureBasedCompleteQueryMergerRule());
 }
 
-bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO("SignatureBasedEqualQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
     if (allSharedQueryMetaData.size() == 1) {
-        NES_WARNING("SignatureBasedEqualQueryMergerRule: Found only a single query metadata in the global query plan."
+        NES_WARNING("SignatureBasedCompleteQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("SignatureBasedEqualQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
         for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
@@ -75,7 +75,7 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                     }
                 }
                 if (!areEqual) {
-                    NES_WARNING("SignatureBasedEqualQueryMergerRule: There are not equal Target sink for Host sink "
+                    NES_WARNING("SignatureBasedCompleteQueryMergerRule: There are not equal Target sink for Host sink "
                                 << hostSink->toString());
                     break;
                 }
@@ -83,7 +83,7 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (!areEqual) {
-                NES_WARNING("SignatureBasedEqualQueryMergerRule: Target and Host Shared Query MetaData are not equal");
+                NES_WARNING("SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
                 continue;
             }
 
@@ -100,7 +100,7 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                     });
 
                 if (found == hostSinkGQNs.end()) {
-                    NES_THROW_RUNTIME_ERROR("SignatureBasedEqualQueryMergerRule: Unexpected behaviour");
+                    NES_THROW_RUNTIME_ERROR("SignatureBasedCompleteQueryMergerRule: Unexpected behaviour");
                 }
 
                 //Remove all children of target sink global query node
@@ -112,7 +112,7 @@ bool SignatureBasedEqualQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                 }
             }
 
-            NES_TRACE("SignatureBasedEqualQueryMergerRule: Merge target Shared metadata into address metadata");
+            NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
             hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
             //Clear the target shared query metadata
             targetSharedQueryMetaData->clear();
