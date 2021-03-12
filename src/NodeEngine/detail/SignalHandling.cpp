@@ -26,7 +26,7 @@
 namespace NES::NodeEngine {
 
 /// this mutex protected the globalErrorListeners vector
-static std::mutex globalErrorListenerMutex;
+static std::recursive_mutex globalErrorListenerMutex;
 /// this vector contains system-wide error listeners, e.g., NodeEngine and CoordinatorEngine
 static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 
