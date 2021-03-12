@@ -45,7 +45,7 @@ bool ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef work
                                                 << " stage=" << pipelineStageId);
     if (!isRunning) {
         NES_DEBUG("Cannot execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage="
-                                                             << pipelineStageId << " as pipeline is not running anymore");
+                                                           << pipelineStageId << " as pipeline is not running anymore");
         return true;
     }
 

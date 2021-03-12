@@ -93,7 +93,6 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down CodeGenerationTest test class." << std::endl; }
 
-
     NodeEngine::NodeEnginePtr nodeEngine;
 };
 

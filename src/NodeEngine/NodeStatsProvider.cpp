@@ -214,7 +214,6 @@ void NodeStatsProvider::readMemStats() {
         memoryStats->set_loads_5min(sinfo.loads[1]);
         memoryStats->set_loads_15min(sinfo.loads[2]);
     }
-
 }
 #else
 void NodeStatsProvider::readMemStats() {}

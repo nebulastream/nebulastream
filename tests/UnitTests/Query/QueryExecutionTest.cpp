@@ -231,8 +231,7 @@ class TestSink : public SinkMedium {
 
     std::string toString() { return "Test_Sink"; }
 
-    void shutdown() override {
-    }
+    void shutdown() override {}
 
     ~TestSink() override {
         std::unique_lock lock(m);
@@ -389,7 +388,6 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     uint64_t millisecondOfallowedLateness = 8; /*second of allowedLateness*/
 
-
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
     auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 1,
@@ -451,7 +449,6 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
     auto& resultBuffer = testSink->get(0);
 
     EXPECT_EQ(resultBuffer.getWatermark(), 15);
-
 }
 
 /**
@@ -947,5 +944,4 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     testSource1->stop(false);
     testSource2->stop(false);
     testSink->cleanupBuffers();
-
 }

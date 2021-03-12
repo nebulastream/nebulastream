@@ -110,8 +110,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
                           .count();
         }
     }
-    if(statisticsVec.size() == 0)
-    {
+    if (statisticsVec.size() == 0) {
         NES_ERROR("We cannot use this run as no data was measured");
         assert(0);
     }
@@ -277,7 +276,6 @@ void E2EBase::runQuery(std::string query) {
 
     runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(stop.time_since_epoch() - start.time_since_epoch());
 }
-
 
 std::string E2EBase::getResult() {
     std::stringstream out;

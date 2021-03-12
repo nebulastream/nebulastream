@@ -104,7 +104,8 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
     }
     NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generated_tuples_this_pass << " of size=" << tupleSize);
-    NES_ASSERT(generated_tuples_this_pass* tupleSize < buf.getBufferSize(), "Error in CSV reading, the required amount of tuples do not fit into one buffer");
+    NES_ASSERT(generated_tuples_this_pass * tupleSize < buf.getBufferSize(),
+               "Error in CSV reading, the required amount of tuples do not fit into one buffer");
 
     std::string line;
     uint64_t tupCnt = 0;
@@ -154,7 +155,10 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
              * TODO: this requires underflow/overflow checks
              * TODO: our types need their own sto/strto methods
              */
-                NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(), "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "  << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
+                NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
+                                "Overflow detected: buffer size = " << buf.getBufferSize()
+                                                                    << " position = " << (offset + tupCnt * tupleSize)
+                                                                    << " field size " << fieldSize);
                 if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
                     uint64_t val = std::stoull(tokens[j].c_str());
                     memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);

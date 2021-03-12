@@ -43,17 +43,13 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, Query
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
                                                    std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                                    std::vector<OperatorHandlerPtr> operatorHandlers)
-    : queryId(queryId), queryManager(queryManager),
-      localBufferPool(bufferManager),
-      emitFunctionHandler(std::move(emitFunction)),
+    : queryId(queryId), queryManager(queryManager), localBufferPool(bufferManager), emitFunctionHandler(std::move(emitFunction)),
       emitToQueryManagerFunctionHandler(std::move(emitToQueryManagerFunctionHandler)),
       operatorHandlers(std::move(operatorHandlers)) {
     NES_DEBUG("Created PipelineExecutionContext() " << toString());
 }
 
-PipelineExecutionContext::~PipelineExecutionContext() {
-    NES_DEBUG("~PipelineExecutionContext() " << toString());
-}
+PipelineExecutionContext::~PipelineExecutionContext() { NES_DEBUG("~PipelineExecutionContext() " << toString()); }
 
 TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return localBufferPool->getBuffer(); }
 

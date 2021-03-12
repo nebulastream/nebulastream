@@ -114,7 +114,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker::start: start NodeEngine");
     auto expected = false;
     if (!isRunning.compare_exchange_strong(expected, true)) {
-       NES_ASSERT2_FMT(false, "cannot start nes worker");
+        NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
 
     try {

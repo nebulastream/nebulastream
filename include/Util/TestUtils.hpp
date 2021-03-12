@@ -426,9 +426,9 @@ class TestUtils {
                 }
 
                 if (content.size() != expectedContent.size()) {
-                    NES_DEBUG("checkoutputortimeout: number of chars "
-                              << expectedContent.size() << " not reached yet with chars content=" << content.size()
-                              << " lines content=" << content);
+                    NES_DEBUG("checkoutputortimeout: number of chars " << expectedContent.size()
+                                                                       << " not reached yet with chars content=" << content.size()
+                                                                       << " lines content=" << content);
                     continue;
                 }
 

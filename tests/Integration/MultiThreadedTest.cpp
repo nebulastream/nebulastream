@@ -110,33 +110,31 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-
-    string expectedContent =
-        "stream$value:INTEGER,stream$id:INTEGER,stream$timestamp:INTEGER\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n"
-        "1,1,1000\n"
-        "1,12,1001\n"
-        "1,4,1002\n";
+    string expectedContent = "stream$value:INTEGER,stream$id:INTEGER,stream$timestamp:INTEGER\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n"
+                             "1,1,1000\n"
+                             "1,12,1001\n"
+                             "1,4,1002\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -219,32 +217,31 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 2));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 2));
 
-    string expectedContent =
-        "stream$id:INTEGER\n"
-        "1\n"
-        "12\n"
-        "4\n"
-        "1\n"
-        "12\n"
-        "4\n"
-        "1\n"
-        "12\n"
-        "4\n"
-        "1\n"
-        "12\n"
-        "4\n"
-        "1\n"
-        "12\n"
-        "4\n"
-        "1\n"
-        "12\n"
-        "4\n"
-        "1\n"
-        "12\n"
-        "4\n"
-        "1\n"
-        "12\n"
-        "4\n";
+    string expectedContent = "stream$id:INTEGER\n"
+                             "1\n"
+                             "12\n"
+                             "4\n"
+                             "1\n"
+                             "12\n"
+                             "4\n"
+                             "1\n"
+                             "12\n"
+                             "4\n"
+                             "1\n"
+                             "12\n"
+                             "4\n"
+                             "1\n"
+                             "12\n"
+                             "4\n"
+                             "1\n"
+                             "12\n"
+                             "4\n"
+                             "1\n"
+                             "12\n"
+                             "4\n"
+                             "1\n"
+                             "12\n"
+                             "4\n";
 
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -322,7 +319,7 @@ TEST_F(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
     string query =
         "Query::from(\"window\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
         "Seconds(1)), Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -490,7 +487,7 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindowsCrashTest) {
 
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/window.csv");
-//    srcConf->setNumberOfBuffersToProduce(1000);
+    //    srcConf->setNumberOfBuffersToProduce(1000);
     srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setSourceFrequency(0);
     srcConf->setPhysicalStreamName("test_stream");
@@ -612,7 +609,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -735,7 +732,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
         .joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -794,7 +791,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
 
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-    
+
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
@@ -885,7 +882,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
         .joinWith(Query::from("window3"), Attribute("id1"), Attribute("id3"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .joinWith(Query::from("window4"), Attribute("id1"), Attribute("id4"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1009,7 +1006,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
 
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/window.csv");
-//    srcConf->setNumberOfBuffersToProduce(1000);
+    //    srcConf->setNumberOfBuffersToProduce(1000);
     srcConf->setNumberOfTuplesToProducePerBuffer(1);
     srcConf->setSourceFrequency(0);
     srcConf->setPhysicalStreamName("test_stream");
@@ -1034,7 +1031,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2"), Attribute("id1"), Attribute("id2"), TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-            + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1055,6 +1052,5 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("JoinDeploymentTest: Test finished");
 }
-
 
 }// namespace NES

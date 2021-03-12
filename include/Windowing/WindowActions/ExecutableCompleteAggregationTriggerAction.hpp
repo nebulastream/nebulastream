@@ -54,16 +54,17 @@ class ExecutableCompleteAggregationTriggerAction
         SchemaPtr outputSchema, uint64_t id)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id) {
 
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString() << " id=" << id);
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
+                                                                                       << " id=" << id);
         this->windowSchema = outputSchema;
         windowTupleLayout = NodeEngine::createRowLayout(this->windowSchema);
     }
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
                   uint64_t lastWatermark) {
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id=" << id << " " << this->windowDefinition->getDistributionType()->toString()
-                                                                 << "): doAction for currentWatermark=" << currentWatermark
-                                                                 << " lastWatermark=" << lastWatermark);
+        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
+                  << id << " " << this->windowDefinition->getDistributionType()->toString()
+                  << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -117,8 +118,8 @@ class ExecutableCompleteAggregationTriggerAction
         auto windows = std::vector<WindowState>();
 
         if (this->weakExecutionContext.expired()) {
-            NES_FATAL_ERROR("ExecutableCompleteAggregationTriggerAction id=" << id
-                                                                          << ": the weakExecutionContext was already expired!");
+            NES_FATAL_ERROR(
+                "ExecutableCompleteAggregationTriggerAction id=" << id << ": the weakExecutionContext was already expired!");
         }
         auto executionContext = this->weakExecutionContext.lock();
 

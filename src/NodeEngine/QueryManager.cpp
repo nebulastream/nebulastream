@@ -386,7 +386,8 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
                                   ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
                                   true);
     }
-    NES_DEBUG("QueryManager::stopQuery: query " << qep->getQuerySubPlanId() << " was " << (ret ? "successful" : " not successful"));
+    NES_DEBUG("QueryManager::stopQuery: query " << qep->getQuerySubPlanId() << " was "
+                                                << (ret ? "successful" : " not successful"));
     return ret;
 }
 

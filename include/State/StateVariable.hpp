@@ -100,8 +100,7 @@ class StateVariable : public detail::Destroyable {
 
       private:
         explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback)
-            : backend(backend), key(key), defaultCallback(defaultCallback) {
-        }
+            : backend(backend), key(key), defaultCallback(defaultCallback) {}
 
       public:
         /**
