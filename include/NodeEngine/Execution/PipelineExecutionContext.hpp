@@ -57,7 +57,6 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                       std::vector<OperatorHandlerPtr> operatorHandlers);
 
-
     ~PipelineExecutionContext();
 
     /**

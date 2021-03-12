@@ -84,8 +84,8 @@ class JoinHandler : public AbstractJoinHandler {
         if (isRunning.compare_exchange_strong(expected, false)) {
             result = executablePolicyTrigger->stop();
             // TODO add concept for lifecycle management of state variable
-//            StateManager::instance().unRegisterState(leftJoinState);
-//            StateManager::instance().unRegisterState(rightJoinState);
+            //            StateManager::instance().unRegisterState(leftJoinState);
+            //            StateManager::instance().unRegisterState(rightJoinState);
         }
         return result;
     }

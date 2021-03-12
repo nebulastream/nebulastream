@@ -86,8 +86,8 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
         auto [currentPipelineStateId, consumerPipelineStateId, currContext, layer] = queue.front();
         queue.pop_front();
         try {
-            NES_DEBUG("QueryCompiler: Layer: " <<  layer << " Compile query:" << queryId << " querySubPlan:" << querySubPlanId
-                                                      << " pipeline:" << currentPipelineStateId);
+            NES_DEBUG("QueryCompiler: Layer: " << layer << " Compile query:" << queryId << " querySubPlan:" << querySubPlanId
+                                               << " pipeline:" << currentPipelineStateId);
             // TODO we should set the proper pipeline name and ID during pipeline creation
             currContext->pipelineName = std::to_string(currentPipelineStateId);
             auto executablePipelineStage = codeGenerator->compile(currContext);

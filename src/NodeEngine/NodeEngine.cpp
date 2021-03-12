@@ -332,7 +332,6 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
     //TODO @all: error handling, e.g., is it an error if the query is stopped but not undeployed? @Steffen?
 
-
     bool expected = true;
     if (!isRunning.compare_exchange_strong(expected, false)) {
         NES_WARNING("NodeEngine::stop: engine already stopped");

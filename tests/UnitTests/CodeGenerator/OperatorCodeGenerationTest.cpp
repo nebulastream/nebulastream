@@ -90,9 +90,7 @@ class OperatorCodeGenerationTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
-        NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case.");
-    }
+    void TearDown() { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
@@ -1006,8 +1004,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     EXPECT_EQ(results.size(), 20);
 }
 
-
-
 /**
  * @brief This test generates a window assigner
  */
@@ -1046,10 +1042,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         auto stage2 = codeGenerator->compile(context2);
 
         auto windowOutputSchema = Schema::create()
-            ->addField(createField("_$start", UINT64))
-            ->addField(createField("_$end", UINT64))
-            ->addField("window$key", UINT64)
-            ->addField("window$value", UINT64);
+                                      ->addField(createField("_$start", UINT64))
+                                      ->addField(createField("_$end", UINT64))
+                                      ->addField("window$key", UINT64)
+                                      ->addField("window$value", UINT64);
         auto windowHandler =
             createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
                 windowDefinition, windowOutputSchema);
@@ -1128,10 +1124,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("_$start", UINT64))
-        ->addField(createField("_$end", UINT64))
-        ->addField("window$key", UINT64)
-        ->addField("window$value", UINT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField("window$key", UINT64)
+                                  ->addField("window$value", UINT64);
     auto windowHandler =
         createWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
             windowDefinition, windowOutputSchema);
@@ -1204,10 +1200,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto stage2 = codeGenerator->compile(context2);
 
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("_$start", UINT64))
-        ->addField(createField("_$end", UINT64))
-        ->addField("window$key", UINT64)
-        ->addField("window$value", UINT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField("window$key", UINT64)
+                                  ->addField("window$value", UINT64);
 
     // init window handler
     auto windowHandler =
