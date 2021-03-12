@@ -30,8 +30,8 @@ using namespace std;
 namespace NES {
 uint64_t rpcPort = 4000;
 uint64_t restPort = 8081;
-uint64_t numberOfWorkerThreads = 2;
-uint64_t numberOfCoordinatorThreads = 2;
+uint64_t numberOfWorkerThreads = 3;
+uint64_t numberOfCoordinatorThreads = 3;
 
 class MultiThreadedTest : public testing::Test {
   public:
@@ -410,7 +410,6 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     srcConf->setSourceConfig("../tests/test_data/window.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(3);
     srcConf->setNumberOfBuffersToProduce(3);
-    srcConf->setSourceFrequency(0);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("window");
     //register physical stream R2000070
@@ -435,9 +434,6 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, globalQueryPlan, 4));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, globalQueryPlan, 4));
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, globalQueryPlan, 1));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
                              "0,2000,1,2\n"
