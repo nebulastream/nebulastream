@@ -30,6 +30,8 @@ using namespace std;
 namespace NES {
 uint64_t rpcPort = 4000;
 uint64_t restPort = 8081;
+uint64_t numberOfWorkerThreads = 2;
+uint64_t numberOfCoordinatorThreads = 2;
 
 class MultiThreadedTest : public testing::Test {
   public:
@@ -53,9 +55,9 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-    crdConf->setNumWorkerThreads(3);
+    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
     wrkConf->setCoordinatorPort(rpcPort);
-    wrkConf->setNumWorkerThreads(3);
+    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -161,8 +163,8 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
 
     crdConf->setRpcPort(rpcPort);
     crdConf->setRestPort(restPort);
-    crdConf->setNumWorkerThreads(3);
-    wrkConf->setNumWorkerThreads(3);
+    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
+    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
     wrkConf->setCoordinatorPort(rpcPort);
 
     NES_INFO("QueryDeploymentTest: Start coordinator");
@@ -271,8 +273,8 @@ TEST_F(MultiThreadedTest, testCentralWindowEventTime) {
     coordinatorConfig->setRestPort(restPort);
     workerConfig->setCoordinatorPort(rpcPort);
 
-    coordinatorConfig->setNumWorkerThreads(3);
-    workerConfig->setNumWorkerThreads(3);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
 
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -362,8 +364,8 @@ TEST_F(MultiThreadedTest, testMultipleWindows) {
 
     coordinatorConfig->setNumberOfSlots(12);
 
-    coordinatorConfig->setNumWorkerThreads(2);
-    workerConfig->setNumWorkerThreads(2);
+    coordinatorConfig->setNumWorkerThreads(numberOfCoordinatorThreads);
+    workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
@@ -474,8 +476,8 @@ TEST_F(MultiThreadedTest, testOneJoin) {
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
 
-    crdConf->setNumWorkerThreads(3);
-    wrkConf->setNumWorkerThreads(3);
+    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
+    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     crdConf->setNumberOfSlots(16);
@@ -620,8 +622,8 @@ TEST_F(MultiThreadedTest, test2Joins) {
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
 
-    crdConf->setNumWorkerThreads(3);
-    wrkConf->setNumWorkerThreads(3);
+    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
+    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
 
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
@@ -779,8 +781,8 @@ TEST_F(MultiThreadedTest, threeJoins) {
     crdConf->setRestPort(restPort);
     wrkConf->setCoordinatorPort(rpcPort);
 
-    crdConf->setNumWorkerThreads(3);
-    wrkConf->setNumWorkerThreads(3);
+    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
+    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
     
     NES_INFO("JoinDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
