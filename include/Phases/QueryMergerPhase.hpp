@@ -27,8 +27,8 @@ typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
-class SyntaxBasedEqualQueryMergerRule;
-typedef std::shared_ptr<SyntaxBasedEqualQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
+class SyntaxBasedCompleteQueryMergerRule;
+typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
 
 class QueryMergerPhase {
 
