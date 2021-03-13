@@ -26,8 +26,6 @@
 
 #include <Util/UtilityFunctions.hpp>
 
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 
 namespace NES {
@@ -53,7 +51,9 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const 
         * ((timeUnit == milliseconds) ? NANO_TO_MILLI_SECONDS_MULTIPLIER
                                       : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != nanoseconds) | (timeUnit == nanoseconds))));
     std::cout << "DELAY: " << minDelayBetweenSends.count();
+#ifdef ENABLE_MQTT_BUILD
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
+#endif
     NES_DEBUG("MQTTSink::~MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
 }
 
@@ -69,21 +69,22 @@ MQTTSink::~MQTTSink() {
 }
 
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
+    std::unique_lock lock(writeMutex);
+    if (!connected) {
+        NES_DEBUG("MQTTSink::writeData  " << this << ": cannot write buffer " << inputBuffer
+                                          << " because queue is not connected");
+        throw Exception("Write to zmq sink failed");
+    }
+
+    if (!inputBuffer.isValid()) {
+        NES_ERROR("MQTTSink::writeData input buffer invalid");
+        return false;
+    }
+    // Print received Tuple Buffer for debugging purposes.
+    NES_TRACE("MQTTSink::writeData" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
+
+#ifdef ENABLE_MQTT_BUILD
     try {
-        std::unique_lock lock(writeMutex);
-        if (!connected) {
-            NES_DEBUG("MQTTSink::writeData  " << this << ": cannot write buffer " << inputBuffer
-                                              << " because queue is not connected");
-            throw Exception("Write to zmq sink failed");
-        }
-
-        if (!inputBuffer.isValid()) {
-            NES_ERROR("MQTTSink::writeData input buffer invalid");
-            return false;
-        }
-        // Print received Tuple Buffer for debugging purposes.
-        NES_TRACE("MQTTSink::writeData" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
-
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
         auto formatIterator = sinkFormat->getTupleIterator(inputBuffer);
@@ -106,6 +107,7 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: " << ex.what());
         return false;
     }
+#endif
     return true;
 }
 
@@ -128,6 +130,7 @@ const std::string MQTTSink::toString() const {
 }
 
 bool MQTTSink::connect() {
+#ifdef ENABLE_MQTT_BUILD
     if (!connected) {
         try {
             auto connOpts = mqtt::connect_options_builder()
@@ -149,10 +152,12 @@ bool MQTTSink::connect() {
     } else {
         NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected=" << address);
     }
+#endif
     return connected;
 }
 
 bool MQTTSink::disconnect() {
+#ifdef ENABLE_MQTT_BUILD
     if (connected) {
         client->disconnect();
         connected = false;
@@ -163,6 +168,7 @@ bool MQTTSink::disconnect() {
         NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT disconnected");
     }
     NES_TRACE("MQTTSink::disconnect: connected value is" << connected);
+#endif
     return !connected;
 }
 
