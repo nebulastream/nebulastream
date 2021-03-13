@@ -85,7 +85,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
         for (auto it : queryStatisticsPtrs) {
-            NES::NodeEngine::QueryStatisticsPtr currentStat = std::make_shared<NES::NodeEngine::QueryStatistics>();
+            NES::NodeEngine::QueryStatisticsPtr currentStat = std::make_shared<NES::NodeEngine::QueryStatistics>(0,0);
             currentStat->setProcessedBuffers(it->getProcessedBuffers());
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
