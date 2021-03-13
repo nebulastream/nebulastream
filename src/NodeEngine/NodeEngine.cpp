@@ -85,8 +85,9 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
-    : inherited0(), inherited1(), inherited2(), config(config), nodeEngineId(nodeEngineId) {
+    : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId) {
 
+    configs.push_back(config);
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);
@@ -337,7 +338,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         NES_WARNING("NodeEngine::stop: engine already stopped");
         return false;
     }
-    NES_WARNING("NodeEngine::stop: going to stop the node engine");
+    NES_DEBUG("NodeEngine::stop: going to stop the node engine");
     std::unique_lock lock(engineMutex);
     bool withError = false;
 
@@ -483,7 +484,8 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << queryId);
     std::vector<QuerySubPlanId> querySubPlanIds = (*foundQuerySubPlanIds).second;
     for (auto querySubPlanId : querySubPlanIds) {
-        queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId));
+//        NES_WARNING("push back for " << querySubPlanId << " strg=" << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
+        queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
     }
     return queryStatistics;
 }
@@ -494,13 +496,15 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     auto schema = sourceDescriptor->getSchema();
-    NES_ASSERT(config, "physical source config is not specified");
-    return config->build(sourceDescriptor->getSchema());
+    NES_ASSERT(!configs.empty(), "no config for source");
+    auto conf = configs.back();
+    configs.pop_back();
+    return conf->build(sourceDescriptor->getSchema());
 }
 
 void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
     NES_ASSERT(config, "physical source config is not specified");
-    this->config = config;
+    this->configs.emplace_back(config);
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {

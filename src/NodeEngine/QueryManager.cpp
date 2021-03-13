@@ -89,11 +89,6 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()");
-    if (waitCounter != 0) {
-        NES_ERROR("QueryManager waitCounter="
-                  << waitCounter
-                  << " which means the source was blocked and could produce in full-speed this is maybe a problem");
-    }
     destroy();
 }
 
@@ -106,6 +101,12 @@ bool QueryManager::startThreadPool() {
 }
 
 void QueryManager::destroy() {
+    if (waitCounter != 0) {
+        NES_ERROR("QueryManager waitCounter="
+                      << waitCounter
+                      << " which means the source was blocked and could produce in full-speed this is maybe a problem");
+    }
+
     if (threadPool) {
         threadPool->stop();
         threadPool.reset();
@@ -155,7 +156,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
                 // qep not found in list, add it
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << sourceOperatorId);
                 operatorIdToQueryMap[sourceOperatorId].insert(qep);
-                queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
+                queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
             } else {
                 NES_DEBUG("QueryManager: Source " << sourceOperatorId << " and QEP already exist.");
                 return false;
@@ -165,7 +166,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
             NES_DEBUG("QueryManager: Source " << sourceOperatorId << " not found. Creating new element with with qep " << qep);
             std::unordered_set<Execution::ExecutableQueryPlanPtr> qepSet = {qep};
             operatorIdToQueryMap[sourceOperatorId] = qepSet;
-            queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>());
+            queryToStatisticsMap.insert(qep->getQuerySubPlanId(), std::make_shared<QueryStatistics>(qep->getQueryId(), qep->getQuerySubPlanId()));
             queryMapToOperatorId[qep->getQueryId()].push_back(sourceOperatorId);
             // by far the most obscure piece of code that we have so far :D
             // TODO refactor this using the pipeline concept 2.0
@@ -374,6 +375,8 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
             source->stop(true);
         }
     }
+
+    NES_WARNING("Number of tasks in queue when stopped=" << taskQueue.size());
     // TODO evaluate if we need to have this a wait instead of a get
     // TODO for instance we could wait N seconds and if the stopped is not succesful by then
     // TODO we need to trigger a hard local kill of a QEP
@@ -437,7 +440,8 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 
         auto tryCnt = 0;
         //TODO: this very simple rule ensures that sources can only get buffer if more than 10% of the overall buffer exists
-        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1) {
+        uint64_t upperBound = threadPool->getNumberOfThreads() * 10000;
+        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1 || taskQueue.size() > upperBound) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             waitCounter++;
             //TODO: we have to do this because it could be that a source is stuck here and then the shutdown crashes, so basically we test 100x for 100ms
@@ -446,6 +450,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
                 break;
             }
         }
+
 
         //TODO: this is a problem now as it can become the bottleneck
         std::unique_lock workQueueLock(workMutex);

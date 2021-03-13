@@ -35,8 +35,9 @@ LambdaSource::LambdaSource(
     OperatorId operatorId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId),
       generationFunction(std::move(generationFunction)) {
-    NES_DEBUG("LambdaSource:" << this << " creating");
+    NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));
     this->gatheringInterval = std::chrono::milliseconds(frequency);
+    wasGracefullyStopped = false;
 }
 
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
@@ -57,9 +58,9 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     } else {
         return buffer;
     }
-
-    NES_ASSERT(false, "this must not be invoked");
 }
+
+bool LambdaSource::stop(bool) { return this->DataSource::stop(false); }
 
 SourceType LambdaSource::getType() const { return LAMBDA_SOURCE; }
 

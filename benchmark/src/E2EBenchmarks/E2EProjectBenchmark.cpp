@@ -26,25 +26,25 @@ const NES::DebugLevel DEBUG_LEVEL = NES::LOG_NONE;
  * @return
  */
 int main() {
-    NES::setupLogging("E2EBase.log", DEBUG_LEVEL);
-    std::cout << "Setup E2EBase test class." << std::endl;
+    NES::setupLogging("E2EProjectBenchmark.log", DEBUG_LEVEL);
+    std::cout << "Setup E2EProjectBenchmark test class." << std::endl;
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 4, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 3, 1);
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 4, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 3, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
-    // source modes are: E2EBase::InputOutputMode::CacheMode, E2EBase::InputOutputMode::MemMode, E2EBase::InputOutputMode::FileMode
+    // source modes are
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
 
-    // 2 out of 3 filds were removed
+    // 2 out of 3 fields were removed
     string query = "Query::from(\"input\").project(Attribute(\"id\")).sink(NullOutputSinkDescriptor::create());";
 
     std::string benchmarkName = "E2EProjectBenchmark";

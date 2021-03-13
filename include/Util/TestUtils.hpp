@@ -393,7 +393,7 @@ class TestUtils {
             sleep(1);
         }
         NES_DEBUG("checkStoppedOrTimeout: expected status not reached within set timeout");
-        NES_ASSERT(false, "checkStoppedOrTimeout: expected status not reached within set timeout");
+//        NES_ASSERT(false, "checkStoppedOrTimeout: expected status not reached within set timeout");
         return false;
     }
 
