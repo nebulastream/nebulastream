@@ -17,14 +17,14 @@
 #ifndef MQTTSINK_HPP
 #define MQTTSINK_HPP
 
+#ifdef ENABLE_MQTT_BUILD
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-// The client relies on the Paho MQTT library and causes a crash, if the flag is set and the library is not present
-#ifdef ENABLE_MQTT_BUILD
 #include <Util/MQTTClientWrapper.hpp>
-#endif
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+
 
 namespace NES {
 /**
@@ -32,8 +32,6 @@ namespace NES {
  */
 class MQTTSink : public SinkMedium {
   public:
-    enum TimeUnits { nanoseconds, milliseconds, seconds };
-    enum ServiceQualities { atMostOnce, atLeastOnce };// MQTT also offers exactly once, add if needed
     /**
      * @brief Creates the MQTT sink
      * @param address: address name of MQTT broker
@@ -47,9 +45,10 @@ class MQTTSink : public SinkMedium {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
+     // TODO change MSGS to Messages
     MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
-             const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
-             uint64_t messageDelay, const ServiceQualities qualityOfService, bool asynchronousClient);
+             const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const MQTTSinkDescriptor::TimeUnits timeUnit,
+             uint64_t messageDelay, const MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient);
     ~MQTTSink();
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
@@ -102,7 +101,7 @@ class MQTTSink : public SinkMedium {
      * @brief get the user chosen time unit (default is milliseconds)
      * @return time unit chosen for the message delay
      */
-    const TimeUnits getTimeUnit() const;
+    const MQTTSinkDescriptor::TimeUnits getTimeUnit() const;
 
     /**
      * @brief get the user chosen delay between two sent messages (default is 500)
@@ -114,7 +113,7 @@ class MQTTSink : public SinkMedium {
      * @brief get the value for the current quality of service
      * @return quality of service value
      */
-    const ServiceQualities getQualityOfService() const;
+    const MQTTSinkDescriptor::ServiceQualities getQualityOfService() const;
 
     /**
      * @brief get bool that indicates whether the client is asynchronous or synchronous (default is true)
@@ -140,20 +139,17 @@ class MQTTSink : public SinkMedium {
     std::string topic;
     std::string user;
     uint64_t maxBufferedMSGs;
-    TimeUnits timeUnit;
+    MQTTSinkDescriptor::TimeUnits timeUnit;
     uint64_t messageDelay;
-    ServiceQualities qualityOfService;
+    MQTTSinkDescriptor::ServiceQualities qualityOfService;
     bool asynchronousClient;
     bool connected;
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends;
 
-    // The client relies on the Paho MQTT library and causes a crash, if the flag is set and the library is not present
-#ifdef ENABLE_MQTT_BUILD
     MQTTClientWrapperPtr client;
-#endif
 };
 typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
 
 }// namespace NES
-
+#endif
 #endif//MQTTSINK

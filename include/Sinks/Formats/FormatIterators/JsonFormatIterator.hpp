@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_NODEENGINE_FORMATITERATORS_JSONFORMATITERATOR_HPP_
 #define NES_INCLUDE_NODEENGINE_FORMATITERATORS_JSONFORMATITERATOR_HPP_
 
-#include "SinkFormatIterator.hpp"
+#include <Sinks/Formats/FormatIterators/SinkFormatIterator.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 namespace NES {

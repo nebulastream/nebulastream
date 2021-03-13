@@ -19,7 +19,7 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Sinks/Mediums/MQTTSink.hpp>
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 
 #include <Sinks/Mediums/SinkMedium.hpp>
 #ifdef ENABLE_KAFKA_BUILD
@@ -29,6 +29,9 @@
 #include <open62541/client_config_default.h>
 #include <open62541/client_highlevel.h>
 #include <open62541/plugin/log_stdout.h>
+#endif
+#ifdef ENABLE_MQTT_BUILD
+#include <Sinks/Mediums/MQTTSink.hpp>
 #endif
 
 namespace NES {
@@ -201,8 +204,8 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
  */
 const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                  const std::string address, const std::string clientID, const std::string topic,
-                                 const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
-                                 uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
+                                 const std::string user, uint64_t maxBufferedMSGs, const MQTTSinkDescriptor::TimeUnits timeUnit,
+                                 uint64_t msgDelay, MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient);
 
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */

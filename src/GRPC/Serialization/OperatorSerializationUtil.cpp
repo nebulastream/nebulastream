@@ -1230,8 +1230,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         return MQTTSinkDescriptor::create(
             serializedSinkDescriptor.address(), serializedSinkDescriptor.clientid(), serializedSinkDescriptor.topic(),
             serializedSinkDescriptor.user(), serializedSinkDescriptor.maxbufferedmsgs(),
-            (MQTTSink::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
-            (MQTTSink::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
+            (MQTTSinkDescriptor::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
+            (MQTTSinkDescriptor::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
             serializedSinkDescriptor.asynchronousclient());
     }
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {

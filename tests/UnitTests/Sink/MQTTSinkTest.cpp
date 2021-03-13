@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef ENABLE_MQTT_BUILD
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -92,8 +92,8 @@ class MQTTTSinkTest : public testing::Test {
         return buffer;
     }
 
-    bool createMQTTSinkConnectToBrokerWriteData(uint64_t numTuples, uint64_t maxBufferedMSGs, MQTTSink::TimeUnits timeUnit,
-                                                uint64_t msgDelay, MQTTSink::ServiceQualities qualityOfService,
+    bool createMQTTSinkConnectToBrokerWriteData(uint64_t numTuples, uint64_t maxBufferedMSGs, MQTTSinkDescriptor::TimeUnits timeUnit,
+                                                uint64_t msgDelay, MQTTSinkDescriptor::ServiceQualities qualityOfService,
                                                 bool asynchronousClient, bool printBuffer) {
         // Create MQTT Sink
         NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
@@ -134,9 +134,9 @@ class MQTTTSinkTest : public testing::Test {
 /* ------------------------------------------------------------------------------ */
 TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
     uint64_t maxBufferedMSGs = 120;
-    const MQTTSink::TimeUnits timeUnit = MQTTSink::milliseconds;
+    const MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
     uint64_t msgDelay = 500;
-    MQTTSink::ServiceQualities qualityOfService = MQTTSink::ServiceQualities::atLeastOnce;
+    MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = true;
     auto mqttSink = createMQTTSink(testSchema, 0, nodeEngine, LOCAL_ADDRESS, CLIENT_ID, TOPIC, USER, maxBufferedMSGs, timeUnit,
                                    msgDelay, qualityOfService, asynchronousClient);
@@ -147,9 +147,9 @@ TEST_F(MQTTTSinkTest, testMQTTClientCreation) {
 /* - MQTT Client SetUp / Connect to Broker ---------------------------------------------------- */
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     uint64_t maxBufferedMSGs = 120;
-    const MQTTSink::TimeUnits timeUnit = MQTTSink::milliseconds;
+    const MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
     uint64_t msgDelay = 500;
-    MQTTSink::ServiceQualities qualityOfService = MQTTSink::ServiceQualities::atLeastOnce;
+    MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = true;
     SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
     MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format, 0, LOCAL_ADDRESS, CLIENT_ID, TOPIC, USER, maxBufferedMSGs, timeUnit,
@@ -162,7 +162,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
 /* - MQTT Client send a finite amount of Data to Broker ---------------------------------------------------- */
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(
-        5, 5, MQTTSink::TimeUnits::milliseconds, 500, MQTTSink::ServiceQualities::atLeastOnce, true, false);
+        5, 5, MQTTSinkDescriptor::TimeUnits::milliseconds, 500, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, true, false);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
@@ -171,14 +171,14 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerAsynchronous) {
    call should fail and log: 'No more messages can be buffered' If the test is not stopped, it RUNS FOR AN HOUR" */
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTbrokerDeathToClientStopAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(
-        3600, 5, MQTTSink::TimeUnits::milliseconds, 1, MQTTSink::ServiceQualities::atLeastOnce, true, false);
+        3600, 5, MQTTSinkDescriptor::TimeUnits::milliseconds, 1, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, true, false);
     NES_INFO("testMQTTbrokerDeathToClientStopAsynchronous result: " << bufferDataSuccessfullyWrittenToBroker);
 }
 
 /* - MQTT Client kill disconnect and reconnect to broker, payloads lost? --------------------------- */
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendMassiveDataQuicklyAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(
-        50000, 1000, MQTTSink::TimeUnits::nanoseconds, 100000, MQTTSink::ServiceQualities::atLeastOnce, true, false);
+        50000, 1000, MQTTSinkDescriptor::TimeUnits::nanoseconds, 100000, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, true, false);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
@@ -189,7 +189,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendMassiveDataQuicklyAsynchronous) {
    the client is finished sending messages. The test should succeed. */
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTUnsentMessagesAsynchronous) {
     bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(
-        20, 20, MQTTSink::TimeUnits::milliseconds, 500, MQTTSink::ServiceQualities::atLeastOnce, true, false);
+        20, 20, MQTTSinkDescriptor::TimeUnits::milliseconds, 500, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, true, false);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
@@ -199,9 +199,9 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTUnsentMessagesAsynchronous) {
 /* - MQTT Client SetUp / Connect to Broker ---------------------------------------------------- */
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
     uint64_t maxBufferedMSGs = 120;
-    const MQTTSink::TimeUnits timeUnit = MQTTSink::TimeUnits::milliseconds;
+    const MQTTSinkDescriptor::TimeUnits timeUnit = MQTTSinkDescriptor::TimeUnits::milliseconds;
     uint64_t msgDelay = 500;
-    MQTTSink::ServiceQualities qualityOfService = MQTTSink::ServiceQualities::atLeastOnce;
+    MQTTSinkDescriptor::ServiceQualities qualityOfService = MQTTSinkDescriptor::ServiceQualities::atLeastOnce;
     bool asynchronousClient = false;
     auto testSchema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto mqttSink = createMQTTSink(testSchema, 0, nodeEngine, LOCAL_ADDRESS, CLIENT_ID, TOPIC, USER, maxBufferedMSGs, timeUnit,
@@ -220,6 +220,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendFiniteDataToBrokerSynchronously) {
 
     bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(
-        20, 5, MQTTSink::TimeUnits::milliseconds, 500, MQTTSink::ServiceQualities::atLeastOnce, false, false);
+        20, 5, MQTTSinkDescriptor::TimeUnits::milliseconds, 500, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, false, false);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
+#endif

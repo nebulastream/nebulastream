@@ -18,8 +18,8 @@
 
 namespace NES {
 MQTTSinkDescriptor::MQTTSinkDescriptor(const std::string address, const std::string clientId, const std::string topic,
-                                       const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
-                                       uint64_t messageDelay, const MQTTSink::ServiceQualities qualityOfService,
+                                       const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
+                                       uint64_t messageDelay, const ServiceQualities qualityOfService,
                                        bool asynchronousClient)
     : address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient) {}
@@ -29,14 +29,14 @@ const std::string MQTTSinkDescriptor::getClientId() const { return clientId; }
 const std::string MQTTSinkDescriptor::getTopic() const { return topic; }
 const std::string MQTTSinkDescriptor::getUser() const { return user; }
 uint64_t MQTTSinkDescriptor::getMaxBufferedMSGs() { return maxBufferedMSGs; }
-const MQTTSink::TimeUnits MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
+const MQTTSinkDescriptor::TimeUnits MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
 uint64_t MQTTSinkDescriptor::getMsgDelay() { return messageDelay; }
-const MQTTSink::ServiceQualities MQTTSinkDescriptor::getQualityOfService() const { return qualityOfService; }
+const MQTTSinkDescriptor::ServiceQualities MQTTSinkDescriptor::getQualityOfService() const { return qualityOfService; }
 bool MQTTSinkDescriptor::getAsynchronousClient() { return asynchronousClient; }
 
 SinkDescriptorPtr MQTTSinkDescriptor::create(const std::string address, const std::string clientId, const std::string topic,
-                                             const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
-                                             uint64_t messageDelay, const MQTTSink::ServiceQualities qualityOfService,
+                                             const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
+                                             uint64_t messageDelay, const ServiceQualities qualityOfService,
                                              bool asynchronousClient) {
     return std::make_shared<MQTTSinkDescriptor>(MQTTSinkDescriptor(address, clientId, topic, user, maxBufferedMSGs, timeUnit,
                                                                    messageDelay, qualityOfService, asynchronousClient));
