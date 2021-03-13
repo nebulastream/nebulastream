@@ -18,6 +18,7 @@
 #define NES_INCLUDE_SINKS_SINKFORMAT_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <Sinks/Formats/FormatIterators/SinkFormatIterator.hpp>
 
 #include <fstream>
 /**
@@ -42,6 +43,13 @@ class SinkFormat {
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
     virtual std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer) = 0;
+
+    /**
+    * @brief depending on the SinkFormat type, returns an iterator that can be used to retrieve tuples from the TupleBuffer
+    * @param a tuple buffer pointer
+    * @return TupleBuffer iterator
+     */
+    virtual SinkFormatIteratorPtr getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief method to write the schema of the data

@@ -13,11 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        CsvFormat.cpp
-        JsonFormat.cpp
-        NesFormat.cpp
-        SinkFormat.cpp
-        TextFormat.cpp
+        SinkFormatIterator.cpp
+        JsonFormatIterator.cpp
 )
-
-add_subdirectory(FormatIterators)

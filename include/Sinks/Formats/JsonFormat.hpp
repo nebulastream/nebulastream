@@ -18,6 +18,7 @@
 #define NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
+#include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 namespace NES {
 
 class JsonFormat : public SinkFormat {
@@ -30,6 +31,14 @@ class JsonFormat : public SinkFormat {
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
     std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer);
+
+    //TODO implement this function with an SinkFormatIterator
+    /**
+    * @brief method to write a TupleBuffer
+    * @param a tuple buffers pointer
+    * @return vector of Tuple buffer containing the content of the tuplebuffer
+     */
+    SinkFormatIteratorPtr getTupleIterator(NodeEngine::TupleBuffer& inputBuffer);
 
     /**
     * @brief method to write the schema of the data
@@ -48,6 +57,7 @@ class JsonFormat : public SinkFormat {
      * @return sink format
      */
     SinkFormatTypes getSinkFormat();
+
 };
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

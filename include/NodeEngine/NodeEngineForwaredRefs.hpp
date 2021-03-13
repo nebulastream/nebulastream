@@ -31,6 +31,8 @@ typedef std::shared_ptr<Schema> SchemaPtr;
 namespace NodeEngine {
 
 class TupleBuffer;
+typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
+
 class PhysicalField;
 typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
 template<class ValueType>

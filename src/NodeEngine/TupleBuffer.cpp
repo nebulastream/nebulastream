@@ -42,6 +42,12 @@ TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other
     }
 }
 
+TupleBuffer::TupleBuffer(const TupleBufferPtr other) noexcept : controlBlock(other->controlBlock), ptr(other->ptr), size(other->size) {
+    if (controlBlock) {
+        controlBlock->retain();
+    }
+}
+
 TupleBuffer::TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
     other.controlBlock = nullptr;
     other.ptr = nullptr;

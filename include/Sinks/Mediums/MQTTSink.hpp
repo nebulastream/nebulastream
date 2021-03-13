@@ -134,13 +134,6 @@ class MQTTSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() override;
 
   private:
-
-    /**
-    * @brief converts field names of SchemaPtr and values of TupleBuffer to json payloads and sends via an MQTT client
-    * @return true if successful, false otherwise
-    */
-    bool sendDataFromTupleBuffer(NodeEngine::TupleBuffer& inputBuffer, SchemaPtr schemaPtr);
-
     QuerySubPlanId parentPlanId;
     std::string address;
     std::string clientId;

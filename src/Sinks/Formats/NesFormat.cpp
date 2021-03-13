@@ -56,4 +56,8 @@ std::vector<NodeEngine::TupleBuffer> NesFormat::getData(NodeEngine::TupleBuffer&
 std::string NesFormat::toString() { return "NES_FORMAT"; }
 
 SinkFormatTypes NesFormat::getSinkFormat() { return NES_FORMAT; }
+
+SinkFormatIteratorPtr NesFormat::getTupleIterator(NodeEngine::TupleBuffer&) {
+    NES_NOT_IMPLEMENTED();
+}
 }// namespace NES
