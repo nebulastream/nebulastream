@@ -214,6 +214,11 @@ add_executable(translate-to-generatable-operator-phase-tests "UnitTests/QueryCom
 target_link_libraries(translate-to-generatable-operator-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME translate-to-generatable-operator-phase-tests COMMAND translate-to-generatable-operator-phase-tests)
 
+# QueryPlanIteratorTest
+add_executable(queryplan-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
+target_link_libraries(queryplan-iterator-test nes ${GTEST_LIBRARIES})
+add_test(NAME queryplan-iterator-test COMMAND queryplan-iterator-test)
+
 # ConvertLogicalToPhysicalSinkTest
 add_executable(convert-logical-to-physical-sink-tests "UnitTests/Phases/ConvertLogicalToPhysicalSinkTest.cpp")
 target_link_libraries(convert-logical-to-physical-sink-tests nes ${GTEST_LIBRARIES})
