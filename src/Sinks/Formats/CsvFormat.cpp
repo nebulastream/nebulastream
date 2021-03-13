@@ -91,4 +91,8 @@ std::string CsvFormat::toString() { return "CSV_FORMAT"; }
 
 SinkFormatTypes CsvFormat::getSinkFormat() { return CSV_FORMAT; }
 
+SinkFormatIteratorPtr CsvFormat::getTupleIterator(NodeEngine::TupleBuffer&) {
+    NES_NOT_IMPLEMENTED();
+}
+
 }// namespace NES

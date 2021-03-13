@@ -22,7 +22,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Sinks/Formats/TextFormat.hpp>
+#include <Sinks/Formats/JsonFormat.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -97,7 +97,7 @@ class MQTTTSinkTest : public testing::Test {
                                                 bool asynchronousClient, bool printBuffer) {
         // Create MQTT Sink
         NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
-        SinkFormatPtr format = std::make_shared<TextFormat>(testSchema, nodeEngine->getBufferManager());
+        SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
 
         /* This was originally done like the other sink tests, using the createMQTTSink() function, which returns a DataSinkPtr.
            However, this caused a problem, because the DataSinkPtr is defined as 'std::shared_ptr<SinkMedium>' and thus only gives
@@ -151,7 +151,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerAsynchronous) {
     uint64_t msgDelay = 500;
     MQTTSink::ServiceQualities qualityOfService = MQTTSink::ServiceQualities::atLeastOnce;
     bool asynchronousClient = true;
-    SinkFormatPtr format = std::make_shared<TextFormat>(testSchema, nodeEngine->getBufferManager());
+    SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
     MQTTSinkPtr mqttSink = std::make_shared<MQTTSink>(format, 0, LOCAL_ADDRESS, CLIENT_ID, TOPIC, USER, maxBufferedMSGs, timeUnit,
                                                       msgDelay, qualityOfService, asynchronousClient);
 

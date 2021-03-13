@@ -45,6 +45,10 @@ namespace NES::NodeEngine {
  *
  * Reminder: this class should be header-only to help inlining
  */
+
+class Schema;
+typedef std::shared_ptr<TupleBuffer> TupleBufferPtr ;
+
 class TupleBuffer {
     friend class BufferManager;
     friend class detail::MemorySegment;
@@ -62,6 +66,8 @@ class TupleBuffer {
     static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
 
     TupleBuffer(const TupleBuffer& other) noexcept;
+
+    TupleBuffer(const TupleBufferPtr other) noexcept;
 
     TupleBuffer(TupleBuffer&& other) noexcept;
 
@@ -103,6 +109,7 @@ class TupleBuffer {
         return reinterpret_cast<T*>(ptr);
     }
 
+    //TODO remove this function
     /**
     * @param schema : schema that holds information on how tuples for this TupleBuffer are constructed
     * @return a vector containing pointers to the beginning of each of the TupleBuffer's tuples

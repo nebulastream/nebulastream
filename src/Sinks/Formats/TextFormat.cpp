@@ -73,4 +73,8 @@ std::string TextFormat::toString() { return "TEXT_FORMAT"; }
 
 SinkFormatTypes TextFormat::getSinkFormat() { return TEXT_FORMAT; }
 
+SinkFormatIteratorPtr TextFormat::getTupleIterator(NodeEngine::TupleBuffer&) {
+    NES_NOT_IMPLEMENTED();
+}
+
 }// namespace NES

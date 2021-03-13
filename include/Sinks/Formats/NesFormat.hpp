@@ -35,6 +35,13 @@ class NesFormat : public SinkFormat {
     std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer);
 
     /**
+    * @brief method to write a TupleBuffer
+    * @param a tuple buffers pointer
+    * @return vector of Tuple buffer containing the content of the tuplebuffer
+     */
+    SinkFormatIteratorPtr getTupleIterator(NodeEngine::TupleBuffer& inputBuffer);
+
+    /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
     */

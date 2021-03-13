@@ -28,6 +28,7 @@
 
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 
 namespace NES {
 /*
@@ -67,70 +68,6 @@ MQTTSink::~MQTTSink() {
     }
 }
 
-bool MQTTSink::sendDataFromTupleBuffer(NodeEngine::TupleBuffer& inputBuffer, SchemaPtr schemaPtr) {
-    std::vector<uint32_t> fieldOffsets;
-    std::vector<PhysicalTypePtr> types;
-    auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-
-    // Iterate over all fields of a tuple. Store sizes in fieldOffsets, to calculate correct offsets in the step below.
-    // Also, store types of fields in a separate array. Is later used to convert values to strings correctly.
-    for (uint32_t i = 0; i < schemaPtr->getSize(); ++i) {
-        auto physicalType = physicalDataTypeFactory.getPhysicalType(schemaPtr->get(i)->getDataType());
-        fieldOffsets.push_back(physicalType->size());
-        types.push_back(physicalType);
-        NES_TRACE("CodeGenerator: " + std::string("Field Size ") + schemaPtr->get(i)->toString() + std::string(": ")
-                      + std::to_string(physicalType->size()));
-    }
-
-    // Iteratively add up all the sizes in the offset array, to correctly determine where each field starts in the TupleBuffer
-    // From fieldOffsets = {64, 32, 32, 128} (field sizes) to fieldOffsets = {64, 96, 128, 256} (actual field offsets)
-    uint32_t prefix_sum = 0;
-    for (uint32_t i = 0; i < fieldOffsets.size(); ++i) {
-        uint32_t val = fieldOffsets[i];
-        fieldOffsets[i] = prefix_sum;
-        prefix_sum += val;
-        NES_TRACE("CodeGenerator: " + std::string("Prefix SumAggregationDescriptor: ") + schemaPtr->get(i)->toString()
-                      + std::string(": ") + std::to_string(fieldOffsets[i]));
-    }
-
-    /*
-        Get pointers to all tuples in TupleBuffer.
-        Iterate over tuples and by using the field offset array, access each field of a tuple in an iteration and
-        convert the fields content to a string, that is added to the JSON message. The field name will be used as key.
-     */
-    std::string jsonMessage;
-    std::vector<char*> tuplePointers = inputBuffer.getTuplesWithSchema(schemaPtr);
-    if(tuplePointers.empty()) {
-        NES_ERROR("MQTTSink::sendDataFromTupleBuffer: Tuple Buffer is empty. Can not extract any data");
-        return false;
-    }
-    //iterate over all tuples in the TupleBuffer, convert each tuple to a JSON string
-    for(auto tuplePointer : tuplePointers) {
-        jsonMessage = "{";
-        // Add first tuple to json object and if there is more, add rest.
-        // Adding the first tuple before the loop avoids checking if last tuple is processed in order to omit "," after json value
-        uint32_t currentField = 0;
-        std::string fieldValue = types[currentField]->convertRawToString(&tuplePointer[fieldOffsets[currentField]]);
-        jsonMessage += schemaPtr->fields[currentField]->getName() + ":" + fieldValue;
-        // Iterate over all fields in a tuple. Get field offsets from fieldOffsets array. Use fieldNames as keys and TupleBuffer
-        // values as the corresponding values
-        for (++currentField; currentField < schemaPtr->fields.size(); ++currentField) {
-            jsonMessage += ",";
-            void* fieldPointer = &tuplePointer[fieldOffsets[currentField]];
-            fieldValue = types[currentField]->convertRawToString(fieldPointer);
-            jsonMessage += schemaPtr->fields[currentField]->getName() + ":" + fieldValue;
-        }
-        jsonMessage += "}";
-
-        NES_TRACE("MQTTSink::writeData Sending Payload: " << jsonMessage);
-        client->sendPayload(jsonMessage);
-        std::this_thread::sleep_for(minDelayBetweenSends);
-    }
-
-    return true;
-}
-
-
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     try {
         std::unique_lock lock(writeMutex);
@@ -144,19 +81,26 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
             NES_ERROR("MQTTSink::writeData input buffer invalid");
             return false;
         }
-
         // Print received Tuple Buffer for debugging purposes.
         NES_TRACE("MQTTSink::writeData" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
 
-        // Right now the only supported sink format is the JSON_FORMAT. Also, the getData function right now is a stub.
-        auto dataBuffers = sinkFormat->getData(inputBuffer);
-        bool successfullySentData = false;
-        for(auto dataBuffer : dataBuffers) {
-            successfullySentData = sendDataFromTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr());
+        // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
+        // and afterwards sent to an MQTT broker, via the MQTT client
+        auto formatIterator = sinkFormat->getTupleIterator(inputBuffer);
+        auto begin = formatIterator->begin()->as<JsonFormatIterator::jsonIterator>();
+        auto end   =   formatIterator->end()->as<JsonFormatIterator::jsonIterator>();
+        while (begin->operator!=(end)) {
+            NES_TRACE("MQTTSink::writeData Sending Payload: " << begin->getCurrentTupleAsJson());
+            client->sendPayload(begin->getCurrentTupleAsJson());
+            std::this_thread::sleep_for(minDelayBetweenSends);
+            begin->operator++();
         }
-        // If the connection to the MQTT broker is lost during sending, the MQTT client might buffer all the remaining messages.
-        if (!successfullySentData || (asynchronousClient && client->getNumberOfUnsentMessages() > 0)) {
+
+        // When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
+        // that were not successfully sent to an MQTT broker.
+        if ((asynchronousClient && client->getNumberOfUnsentMessages() > 0)) {
             NES_ERROR("MQTTSink::writeData: " << client->getNumberOfUnsentMessages() << " messages could not be sent");
+            return false;
         }
     } catch (const mqtt::exception& ex) {
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: " << ex.what());
