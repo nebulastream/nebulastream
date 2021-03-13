@@ -187,6 +187,7 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
                                             const uint64_t kafkaProducerTimeout);
 #endif
 
+#ifdef ENABLE_MQTT_BUILD
 /**
  * @brief create MQTT sink
  * @param schema: schema of the data
@@ -206,6 +207,7 @@ const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, 
                                  const std::string address, const std::string clientID, const std::string topic,
                                  const std::string user, uint64_t maxBufferedMSGs, const MQTTSinkDescriptor::TimeUnits timeUnit,
                                  uint64_t msgDelay, MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient);
+#endif
 
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */

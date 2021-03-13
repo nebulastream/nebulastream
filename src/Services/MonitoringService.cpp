@@ -16,6 +16,7 @@
 
 #include <Services/MonitoringService.hpp>
 
+#include <API/Schema.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
