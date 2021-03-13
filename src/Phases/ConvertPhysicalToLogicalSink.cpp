@@ -59,6 +59,7 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
         return OPCSinkDescriptor::create(opcSink->getUrl(), opcSink->getNodeId(), opcSink->getUser(), opcSink->getPassword());
     }
 #endif
+#ifdef ENABLE_MQTT_BUILD
     else if (sinkType == "MQTT_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating MQTT sink");
         MQTTSinkPtr mqttSink = std::dynamic_pointer_cast<MQTTSink>(dataSink);
@@ -67,6 +68,7 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
                                           mqttSink->getMsgDelay(), mqttSink->getQualityOfService(),
                                           mqttSink->getAsynchronousClient());
     }
+#endif
     else if (sinkType == "FILE_SINK") {
         FileSinkPtr fileSink = std::dynamic_pointer_cast<FileSink>(dataSink);
         NES_INFO("ConvertPhysicalToLogicalSink: Creating File sink with outputMode " << fileSink->getAppendAsBool() << " format "
@@ -76,5 +78,5 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
         NES_ERROR("ConvertPhysicalToLogicalSink: Unknown Data Sink Type");
         throw std::invalid_argument("Unknown SinkMedium Type");
     }
-}// namespace NES
+}
 }// namespace NES

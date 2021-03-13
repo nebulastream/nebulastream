@@ -13,19 +13,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#ifdef ENABLE_MQTT_BUILD
 #include <Sinks/Mediums/MQTTSink.hpp>
-
 #include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>
-
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
-
 #include <Util/UtilityFunctions.hpp>
-
 #include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 
 namespace NES {
@@ -40,20 +36,19 @@ const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
-                   const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
-                   uint64_t messageDelay, const ServiceQualities qualityOfService, bool asynchronousClient)
+                   const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const MQTTSinkDescriptor::TimeUnits timeUnit,
+                   uint64_t messageDelay, const MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient)
     : SinkMedium(sinkFormat, parentPlanId), address(address), clientId(clientId), topic(topic), user(user),
       maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
       asynchronousClient(asynchronousClient), connected(false) {
 
-    minDelayBetweenSends = std::chrono::nanoseconds(
-        messageDelay
-        * ((timeUnit == milliseconds) ? NANO_TO_MILLI_SECONDS_MULTIPLIER
-                                      : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != nanoseconds) | (timeUnit == nanoseconds))));
+    minDelayBetweenSends = std::chrono::nanoseconds(messageDelay * ((timeUnit == MQTTSinkDescriptor::TimeUnits::milliseconds)
+                                    ? NANO_TO_MILLI_SECONDS_MULTIPLIER
+                                    : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSinkDescriptor::TimeUnits::nanoseconds) |
+                                                                    (timeUnit == MQTTSinkDescriptor::TimeUnits::nanoseconds))));
     std::cout << "DELAY: " << minDelayBetweenSends.count();
-#ifdef ENABLE_MQTT_BUILD
+
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
-#endif
     NES_DEBUG("MQTTSink::~MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
 }
 
@@ -83,7 +78,6 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     // Print received Tuple Buffer for debugging purposes.
     NES_TRACE("MQTTSink::writeData" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, sinkFormat->getSchemaPtr()));
 
-#ifdef ENABLE_MQTT_BUILD
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
@@ -107,7 +101,6 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
         NES_ERROR("MQTTSink::writeData: Error during writeData in MQTT sink: " << ex.what());
         return false;
     }
-#endif
     return true;
 }
 
@@ -130,7 +123,6 @@ const std::string MQTTSink::toString() const {
 }
 
 bool MQTTSink::connect() {
-#ifdef ENABLE_MQTT_BUILD
     if (!connected) {
         try {
             auto connOpts = mqtt::connect_options_builder()
@@ -152,12 +144,10 @@ bool MQTTSink::connect() {
     } else {
         NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected=" << address);
     }
-#endif
     return connected;
 }
 
 bool MQTTSink::disconnect() {
-#ifdef ENABLE_MQTT_BUILD
     if (connected) {
         client->disconnect();
         connected = false;
@@ -168,7 +158,6 @@ bool MQTTSink::disconnect() {
         NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT disconnected");
     }
     NES_TRACE("MQTTSink::disconnect: connected value is" << connected);
-#endif
     return !connected;
 }
 
@@ -177,9 +166,9 @@ const std::string MQTTSink::getClientId() const { return clientId; }
 const std::string MQTTSink::getTopic() const { return topic; }
 const std::string MQTTSink::getUser() const { return user; }
 uint64_t MQTTSink::getMaxBufferedMSGs() { return maxBufferedMSGs; }
-const MQTTSink::TimeUnits MQTTSink::getTimeUnit() const { return timeUnit; }
+const MQTTSinkDescriptor::TimeUnits MQTTSink::getTimeUnit() const { return timeUnit; }
 uint64_t MQTTSink::getMsgDelay() { return messageDelay; }
-const MQTTSink::ServiceQualities MQTTSink::getQualityOfService() const { return qualityOfService; }
+const MQTTSinkDescriptor::ServiceQualities MQTTSink::getQualityOfService() const { return qualityOfService; }
 bool MQTTSink::getAsynchronousClient() { return asynchronousClient; }
-
+#endif
 }// namespace NES

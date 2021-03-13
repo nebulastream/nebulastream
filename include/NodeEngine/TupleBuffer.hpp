@@ -17,7 +17,6 @@
 #ifndef INCLUDE_TUPLEBUFFER_H_
 #define INCLUDE_TUPLEBUFFER_H_
 
-#include <API/Schema.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <atomic>
 #include <cstdint>
@@ -108,13 +107,6 @@ class TupleBuffer {
     T* getBufferAs() {
         return reinterpret_cast<T*>(ptr);
     }
-
-    //TODO remove this function
-    /**
-    * @param schema : schema that holds information on how tuples for this TupleBuffer are constructed
-    * @return a vector containing pointers to the beginning of each of the TupleBuffer's tuples
-    */
-    std::vector<char*> getTuplesWithSchema(SchemaPtr schema);
 
     /**
     * @brief Increases the internal reference counter by one

@@ -122,14 +122,4 @@ void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
     std::swap(lhs.controlBlock, rhs.controlBlock);
 }
 
-std::vector<char*> TupleBuffer::getTuplesWithSchema(SchemaPtr schema) {
-    auto buffer = this->getBufferAs<char>();
-    std::vector<char*> tuplePointers;
-    uint64_t rowSize = schema->getSchemaSizeInBytes();
-    for (uint32_t i = 0; i < this->getNumberOfTuples(); ++i) {
-        tuplePointers.push_back(&buffer[i * rowSize]);
-    }
-    return tuplePointers;
-}
-
 }// namespace NES::NodeEngine

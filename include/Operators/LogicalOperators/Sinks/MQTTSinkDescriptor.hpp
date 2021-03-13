@@ -18,7 +18,6 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Sinks/Mediums/MQTTSink.hpp>
 
 namespace NES {
 /**
@@ -26,6 +25,8 @@ namespace NES {
  */
 class MQTTSinkDescriptor : public SinkDescriptor {
   public:
+    enum TimeUnits { nanoseconds, milliseconds, seconds };
+    enum ServiceQualities { atMostOnce, atLeastOnce };// MQTT also offers exactly once, add if needed
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker
@@ -40,8 +41,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @return descriptor for MQTT sink
      */
     static SinkDescriptorPtr create(const std::string address, const std::string clientId, const std::string topic,
-                                    const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
-                                    uint64_t messageDelay, MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
+                                    const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
+                                    uint64_t messageDelay, ServiceQualities qualityOfService, bool asynchronousClient);
 
     /**
      * @brief get address information from a MQTT sink client
@@ -77,7 +78,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief get the user chosen time unit (default is milliseconds)
      * @return time unit chosen for the message delay
      */
-    const MQTTSink::TimeUnits getTimeUnit() const;
+    const TimeUnits getTimeUnit() const;
 
     /**
      * @brief get the user chosen delay between two sent messages (default is 500)
@@ -89,7 +90,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief get the value for the current quality of service
      * @return quality of service value
      */
-    const MQTTSink::ServiceQualities getQualityOfService() const;
+    const ServiceQualities getQualityOfService() const;
 
     /**
      * @brief get bool that indicates whether the client is asynchronous or synchronous (default is true)
@@ -115,17 +116,17 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @return MQTT sink
      */
     explicit MQTTSinkDescriptor(const std::string address, const std::string clientId, const std::string topic,
-                                const std::string user, uint64_t maxBufferedMSGs, const MQTTSink::TimeUnits timeUnit,
-                                uint64_t messageDelay, const MQTTSink::ServiceQualities qualityOfService, bool asynchronousClient);
+                                const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
+                                uint64_t messageDelay, const ServiceQualities qualityOfService, bool asynchronousClient);
 
     std::string address;
     std::string clientId;
     std::string topic;
     std::string user;
     uint64_t maxBufferedMSGs;
-    MQTTSink::TimeUnits timeUnit;
+    TimeUnits timeUnit;
     uint64_t messageDelay;
-    MQTTSink::ServiceQualities qualityOfService;
+    ServiceQualities qualityOfService;
     bool asynchronousClient;
 };
 

@@ -16,7 +16,6 @@
 
 #ifndef NES_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
 #define NES_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
-//#ifdef ENABLE_MQTT_BUILD
 
 #include <Util/Logger.hpp>
 #include <mqtt/callback.h>
@@ -95,5 +94,4 @@ class MQTTClientWrapper {
 typedef std::shared_ptr<MQTTClientWrapper> MQTTClientWrapperPtr;
 
 }// namespace NES
-//#endif
 #endif//NES_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_
