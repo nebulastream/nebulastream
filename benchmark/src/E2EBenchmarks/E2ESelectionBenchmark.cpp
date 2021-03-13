@@ -55,12 +55,12 @@ int main() {
           "ProcessedTuplesTotal,ProcessedBytesTotal,ThroughputInTupsPerSec,ThroughputInMBPerSec"
        << std::endl;
 
-    for (auto dataSourceCnt : allDataSources) {
-        std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
-        for (auto workerThreadCnt : allWorkerThreads) {
-            std::cout << "workerThreadCnt=" << workerThreadCnt << std::endl;
-            for (auto coordinatorThreadCnt : allCoordinatorThreads) {
-                std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
+    for (auto workerThreadCnt : allWorkerThreads) {
+        std::cout << "workerThreadCnt=" << workerThreadCnt << std::endl;
+        for (auto coordinatorThreadCnt : allCoordinatorThreads) {
+            std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
+            for (auto dataSourceCnt : allDataSources) {
+                std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
                 for (auto sourceMode : allSourceModes) {
                     std::cout << "sourceMode=" << E2EBase::getInputOutputModeAsString(sourceMode) << std::endl;
                     auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode);
