@@ -15,7 +15,6 @@
 */
 
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <string>
 namespace NES::NodeEngine::Execution {
 
 uint32_t ExecutablePipelineStage::setup(PipelineExecutionContext&) { return 0; }
