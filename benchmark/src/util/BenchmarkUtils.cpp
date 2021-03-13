@@ -71,7 +71,7 @@ void BenchmarkUtils::recordStatistics(std::vector<NodeEngine::QueryStatistics*>&
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(1);
         for (auto it : queryStatisticsPtrs) {
 
-            auto* statistics = new NodeEngine::QueryStatistics();
+            auto* statistics = new NodeEngine::QueryStatistics(0,0);
             statistics->setProcessedBuffers(it->getProcessedBuffers());
             statistics->setProcessedTasks(it->getProcessedTasks());
             statistics->setProcessedTuple(it->getProcessedTuple());

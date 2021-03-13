@@ -79,8 +79,13 @@ bool DataSource::stop(bool graceful) {
     NES_DEBUG("DataSource " << operatorId << ": Stop called and source is " << (running ? "running" : "not running"));
     if (!running) {
         NES_DEBUG("DataSource " << operatorId << " is not running");
+        if (thread && thread->joinable()) {
+            thread->join();
+            thread.reset();
+        }
         return false;
     }
+
     wasGracefullyStopped = graceful;
     // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
     // TODO in general this highlights how our source model has some issues
@@ -122,7 +127,7 @@ bool DataSource::stop(bool graceful) {
             NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
         }
     }
-
+    NES_WARNING("Stopped Source = " << wasGracefullyStopped);
     return ret;
 }
 
@@ -218,7 +223,7 @@ void DataSource::runningRoutine() {
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
     // inject reconfiguration task containing end of stream
-    queryManager->addEndOfStream(operatorId, wasGracefullyStopped);
+    queryManager->addEndOfStream(operatorId, wasGracefullyStopped);//
     bufferManager.reset();
     queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");

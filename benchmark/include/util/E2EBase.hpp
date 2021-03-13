@@ -33,7 +33,15 @@
 
 class E2EBase {
   public:
-    enum class InputOutputMode { FileMode, CacheMode, MemMode };
+    /**
+     * @brief Enums for modes
+     * FileMode = read from file
+     * CacheMode = read always the same buffer
+     * MemMode = generate always the same data but in different buffers
+     * WindowMode = generate increasing time stamps in different buffers (each buffer will have time(0) time stamps
+     * JoinMode = generate two sources with increasing timestamp
+     */
+    enum class InputOutputMode { FileMode, CacheMode, MemMode, WindowMode, JoinMode };
 
     /**
      * @brief Method to perform the benchmark

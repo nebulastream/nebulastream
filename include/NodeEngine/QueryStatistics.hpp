@@ -23,7 +23,9 @@ namespace NES::NodeEngine {
 
 class QueryStatistics {
   public:
-    QueryStatistics() : processedTasks(0), processedTuple(0), processedBuffers(0), processedWatermarks(0){};
+    QueryStatistics(uint64_t queryId, uint64_t subQueryId)
+        : processedTasks(0), processedTuple(0), processedBuffers(0), processedWatermarks(0), queryId(queryId),
+          subQueryId(subQueryId){};
 
     /**
      * @brief getter for processedTasks
@@ -94,6 +96,17 @@ class QueryStatistics {
     std::atomic<uint64_t> processedTuple;
     std::atomic<uint64_t> processedBuffers;
     std::atomic<uint64_t> processedWatermarks;
+    uint64_t queryId;
+    uint64_t subQueryId;
+
+  public:
+    void setQueryId(uint64_t queryId);
+    void setSubQueryId(uint64_t subQueryId);
+
+  public:
+    uint64_t getQueryId() const;
+    uint64_t getSubQueryId() const;
+  private:
 };
 
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;

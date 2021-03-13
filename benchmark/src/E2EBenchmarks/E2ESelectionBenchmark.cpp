@@ -19,30 +19,30 @@
 
 using namespace Benchmarking;
 
+const NES::DebugLevel DEBUG_LEVEL = NES::LOG_NONE;
+
 /**
- * @brief This benchmarks runs a selection query on one worker and one coordinator
+ * @brief This benchmarks runs a map query on one worker and one coordinator
  * @return
  */
 int main() {
+    NES::setupLogging("E2ESelectionBenchmark.log", DEBUG_LEVEL);
+    std::cout << "Setup E2ESelectionBenchmark test class." << std::endl;
+
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 2, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 3, 1);
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 2, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 3, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
-    // source mode
-    //    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::FileMode, E2EBase::InputOutputMode::CacheMode,
-    //                                                         E2EBase::InputOutputMode::MemMode};
-    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::CacheMode, E2EBase::InputOutputMode::MemMode};
-    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemMode};
-    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
-    //    std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
+    // source modes are
+    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
 
     //roughly 50% selectivity
     string query = "Query::from(\"input\").filter(Attribute(\"value\") > 5).sink(NullOutputSinkDescriptor::create());";
@@ -55,12 +55,12 @@ int main() {
           "ProcessedTuplesTotal,ProcessedBytesTotal,ThroughputInTupsPerSec,ThroughputInMBPerSec"
        << std::endl;
 
-    for (auto workerThreadCnt : allWorkerThreads) {
-        std::cout << "workerThreadCnt=" << workerThreadCnt << std::endl;
-        for (auto coordinatorThreadCnt : allCoordinatorThreads) {
-            std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
-            for (auto dataSourceCnt : allDataSources) {
-                std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
+    for (auto dataSourceCnt : allDataSources) {
+        std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
+        for (auto workerThreadCnt : allWorkerThreads) {
+            std::cout << "workerThreadCnt=" << workerThreadCnt << std::endl;
+            for (auto coordinatorThreadCnt : allCoordinatorThreads) {
+                std::cout << "coordinatorThreadCnt=" << coordinatorThreadCnt << std::endl;
                 for (auto sourceMode : allSourceModes) {
                     std::cout << "sourceMode=" << E2EBase::getInputOutputModeAsString(sourceMode) << std::endl;
                     auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode);

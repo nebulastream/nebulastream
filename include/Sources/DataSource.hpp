@@ -186,6 +186,8 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::mutex startStopMutex;
     std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
+
+  protected:
     std::atomic<bool> wasGracefullyStopped;
 };
 

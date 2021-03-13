@@ -242,7 +242,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
-    AbstractPhysicalStreamConfigPtr config;
+    std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;

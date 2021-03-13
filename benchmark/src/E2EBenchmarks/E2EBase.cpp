@@ -49,8 +49,12 @@ std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
         return "CacheMode";
     } else if (mode == E2EBase::InputOutputMode::MemMode) {
         return "MemoryMode";
+    } else if (mode == E2EBase::InputOutputMode::WindowMode) {
+        return "WindowMode";
+    } else if (mode == E2EBase::InputOutputMode::JoinMode) {
+        return "JoinMode";
     } else {
-        return "Unkown mode";
+        return "Unknown mode";
     }
 }
 
@@ -85,19 +89,22 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             currentStat->setProcessedBuffers(it->getProcessedBuffers());
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
+            currentStat->setQueryId(it->getQueryId());
+            currentStat->setSubQueryId(it->getSubQueryId());
             auto start = std::chrono::system_clock::now();
             auto in_time_t = std::chrono::system_clock::to_time_t(start);
 
             if (currentStat->getProcessedTuple() == 0) {
                 NES_ERROR("No Output produced, all data size=" << statisticsVec.size());
             } else {
-                if (statisticsVec.size() > 1) {
-                    auto prev = statisticsVec.back();
-                    std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
-                              << " processedBuffers=" << currentStat->getProcessedBuffers() - prev->getProcessedBuffers()
-                              << " processedTasks=" << currentStat->getProcessedTasks() - prev->getProcessedTasks()
-                              << " processedTuples=" << currentStat->getProcessedTuple() - prev->getProcessedTuple() << std::endl;
-                }
+//                if (statisticsVec.size() > 1) {
+//                    auto prev = statisticsVec.back();
+//                    std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
+//                              << " processedBuffers=" << currentStat->getProcessedBuffers() - prev->getProcessedBuffers()
+//                              << " processedTasks=" << currentStat->getProcessedTasks() - prev->getProcessedTasks()
+//                              << " processedTuples=" << currentStat->getProcessedTuple() - prev->getProcessedTuple() << std::endl;
+//                }
+                std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>" << currentStat->getQueryStatisticsAsString() << std::endl;
                 statisticsVec.push_back(currentStat);
             }
         }
@@ -213,6 +220,85 @@ void E2EBase::setupSources() {
 
             wrk1->registerPhysicalStream(conf);
         }
+    } else if (mode == InputOutputMode::WindowMode) {
+        std::cout << "windowmode source mode" << std::endl;
+
+        for (uint64_t i = 0; i < sourceCnt; i++) {
+            auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+                struct Record {
+                    uint64_t id;
+                    uint64_t value;
+                    uint64_t timestamp;
+                };
+
+                auto records = buffer.getBufferAs<Record>();
+                auto ts = time(0);
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                    records[u].id = u;
+                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                    records[u].value = u % 10;
+                    records[u].timestamp = ts;
+                }
+                return;
+            };
+
+            NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
+                "LambdaSource", "test_stream" + std::to_string(i), "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+
+            wrk1->registerPhysicalStream(conf);
+        }
+    } else if (mode == InputOutputMode::JoinMode) {
+        std::cout << "joinmode source mode" << std::endl;
+
+        for (uint64_t i = 0; i < sourceCnt; i++) {
+            auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+                struct Record {
+                    uint64_t id;
+                    uint64_t value;
+                    uint64_t timestamp;
+                };
+
+                auto records = buffer.getBufferAs<Record>();
+                auto ts = time(0);
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                    records[u].id = u;
+                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                    records[u].value = u % 10;
+                    records[u].timestamp = ts;
+                }
+                return;
+            };
+
+            auto func2 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+              struct Record {
+                  uint64_t id;
+                  uint64_t value;
+                  uint64_t timestamp;
+              };
+
+              auto records = buffer.getBufferAs<Record>();
+              auto ts = time(0);
+              for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                  records[u].id = u;
+                  //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                  records[u].value = u % 10;
+                  records[u].timestamp = ts;
+              }
+              return;
+            };
+
+            wrk1->registerLogicalStream("input1", testSchemaFileName);
+            wrk1->registerLogicalStream("input2", testSchemaFileName);
+
+            NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
+                "LambdaSource", "test_stream1", "input1", func1, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+            wrk1->registerPhysicalStream(conf1);
+
+            NES::AbstractPhysicalStreamConfigPtr conf2 = NES::LambdaSourceStreamConfig::create(
+                "LambdaSource", "test_stream2", "input2", func2, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+            wrk1->registerPhysicalStream(conf2);
+
+        }
     } else {
         NES_ASSERT(false, "input output mode not supported");
     }
@@ -303,17 +389,24 @@ std::string E2EBase::getResult() {
 }
 
 void E2EBase::tearDown() {
-    std::cout << "E2EBase: Remove query" << std::endl;
-    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
-    std::cout << "E2EBase: wait for stop" << std::endl;
-    NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
+    try {
+        std::cout << "E2EBase: Remove query" << std::endl;
+        NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
+        std::cout << "E2EBase: wait for stop" << std::endl;
+        bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
+        if (!ret) {
+            NES_ERROR("query was not stopped within 30 sec");
+        }
 
-    std::cout << "E2EBase: Stop worker 1" << std::endl;
-    bool retStopWrk1 = wrk1->stop(true);
-    NES_ASSERT(retStopWrk1, "retStopWrk1");
+        std::cout << "E2EBase: Stop worker 1" << std::endl;
+        bool retStopWrk1 = wrk1->stop(true);
+        NES_ASSERT(retStopWrk1, "retStopWrk1");
 
-    std::cout << "E2EBase: Stop Coordinator" << std::endl;
-    bool retStopCord = crd->stopCoordinator(true);
-    NES_ASSERT(retStopCord, "retStopCord");
-    std::cout << "E2EBase: Test finished" << std::endl;
+        std::cout << "E2EBase: Stop Coordinator" << std::endl;
+        bool retStopCord = crd->stopCoordinator(true);
+        NES_ASSERT(retStopCord, "retStopCord");
+        std::cout << "E2EBase: Test finished" << std::endl;
+    } catch (...) {
+        NES_ERROR("Error was thrown while query shutdown");
+    }
 }
