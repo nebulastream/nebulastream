@@ -20,6 +20,7 @@
 #include <Util/Logger.hpp>
 #include <atomic>
 #include <functional>
+#include <API/Schema.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>

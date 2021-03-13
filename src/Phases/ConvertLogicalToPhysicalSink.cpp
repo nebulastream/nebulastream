@@ -63,6 +63,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
                              opcSinkDescriptor->getUser(), opcSinkDescriptor->getPassword());
     }
 #endif
+#ifdef ENABLE_MQTT_BUILD
     else if (sinkDescriptor->instanceOf<MQTTSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating MQTT sink");
         const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
@@ -72,6 +73,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SchemaPtr schema, SinkD
                               mqttSinkDescriptor->getMsgDelay(), mqttSinkDescriptor->getQualityOfService(),
                               mqttSinkDescriptor->getAsynchronousClient());
     }
+#endif
     else if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
         auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
         NES_INFO(

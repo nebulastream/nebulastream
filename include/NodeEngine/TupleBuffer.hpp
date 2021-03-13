@@ -45,7 +45,6 @@ namespace NES::NodeEngine {
  * Reminder: this class should be header-only to help inlining
  */
 
-class Schema;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr ;
 
 class TupleBuffer {
