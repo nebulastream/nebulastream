@@ -85,7 +85,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
         for (auto it : queryStatisticsPtrs) {
-            NES::NodeEngine::QueryStatisticsPtr currentStat = std::make_shared<NES::NodeEngine::QueryStatistics>(0,0);
+            NES::NodeEngine::QueryStatisticsPtr currentStat = std::make_shared<NES::NodeEngine::QueryStatistics>(0, 0);
             currentStat->setProcessedBuffers(it->getProcessedBuffers());
             currentStat->setProcessedTasks(it->getProcessedTasks());
             currentStat->setProcessedTuple(it->getProcessedTuple());
@@ -97,14 +97,15 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             if (currentStat->getProcessedTuple() == 0) {
                 NES_ERROR("No Output produced, all data size=" << statisticsVec.size());
             } else {
-//                if (statisticsVec.size() > 1) {
-//                    auto prev = statisticsVec.back();
-//                    std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
-//                              << " processedBuffers=" << currentStat->getProcessedBuffers() - prev->getProcessedBuffers()
-//                              << " processedTasks=" << currentStat->getProcessedTasks() - prev->getProcessedTasks()
-//                              << " processedTuples=" << currentStat->getProcessedTuple() - prev->getProcessedTuple() << std::endl;
-//                }
-                std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>" << currentStat->getQueryStatisticsAsString() << std::endl;
+                //                if (statisticsVec.size() > 1) {
+                //                    auto prev = statisticsVec.back();
+                //                    std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
+                //                              << " processedBuffers=" << currentStat->getProcessedBuffers() - prev->getProcessedBuffers()
+                //                              << " processedTasks=" << currentStat->getProcessedTasks() - prev->getProcessedTasks()
+                //                              << " processedTuples=" << currentStat->getProcessedTuple() - prev->getProcessedTuple() << std::endl;
+                //                }
+                std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>"
+                          << currentStat->getQueryStatisticsAsString() << std::endl;
                 statisticsVec.push_back(currentStat);
             }
         }
@@ -270,21 +271,21 @@ void E2EBase::setupSources() {
             };
 
             auto func2 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-              struct Record {
-                  uint64_t id;
-                  uint64_t value;
-                  uint64_t timestamp;
-              };
+                struct Record {
+                    uint64_t id;
+                    uint64_t value;
+                    uint64_t timestamp;
+                };
 
-              auto records = buffer.getBufferAs<Record>();
-              auto ts = time(0);
-              for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                  records[u].id = u;
-                  //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-                  records[u].value = u % 10;
-                  records[u].timestamp = ts;
-              }
-              return;
+                auto records = buffer.getBufferAs<Record>();
+                auto ts = time(0);
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                    records[u].id = u;
+                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                    records[u].value = u % 10;
+                    records[u].timestamp = ts;
+                }
+                return;
             };
 
             wrk1->registerLogicalStream("input1", testSchemaFileName);
@@ -297,7 +298,6 @@ void E2EBase::setupSources() {
             NES::AbstractPhysicalStreamConfigPtr conf2 = NES::LambdaSourceStreamConfig::create(
                 "LambdaSource", "test_stream2", "input2", func2, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
             wrk1->registerPhysicalStream(conf2);
-
         }
     } else {
         NES_ASSERT(false, "input output mode not supported");
@@ -374,10 +374,54 @@ std::string E2EBase::getResult() {
 
     NES_ASSERT(statisticsVec.size() != 0, "stats too small");
 
-    auto tuplesProcessed = statisticsVec[statisticsVec.size() - 1]->getProcessedTuple() - statisticsVec[0]->getProcessedTuple();
-    auto bufferProcessed =
-        statisticsVec[statisticsVec.size() - 1]->getProcessedBuffers() - statisticsVec[0]->getProcessedBuffers();
-    auto tasksProcessed = statisticsVec[statisticsVec.size() - 1]->getProcessedTasks() - statisticsVec[0]->getProcessedTasks();
+    //sum up per individual pipeline
+    std::map<uint64_t, uint64_t> subPlanIdToTaskCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToBufferCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToTuplelCnt;
+    for (auto& stat : statisticsVec) {
+        subPlanIdToTaskCnt[stat->getSubQueryId()] += stat->getProcessedTasks();
+        subPlanIdToBufferCnt[stat->getSubQueryId()] += stat->getProcessedBuffers();
+        subPlanIdToTuplelCnt[stat->getSubQueryId()] += stat->getProcessedTuple();
+    }
+
+    map<uint64_t, uint64_t>::iterator it;
+    for (it = subPlanIdToTaskCnt.begin(); it != subPlanIdToTaskCnt.end(); it++)
+    {
+        //get subplan id
+        auto subPlanId = it->second;
+
+        //get smallest value for this subqueryplan ID from the vector
+        for(auto& val : statisticsVec)
+        {
+            if(val->getSubQueryId() == subPlanId)
+            {
+                //substract first value
+                subPlanIdToTaskCnt[subPlanId] -= val->getProcessedTasks();
+                subPlanIdToBufferCnt[subPlanId] -= val->getProcessedBuffers();
+                subPlanIdToTuplelCnt[subPlanId] -= val->getProcessedTuple();
+            }
+        }
+    }
+
+    auto tuplesProcessed = 0;
+    auto bufferProcessed = 0;
+    auto tasksProcessed = 0;
+
+    //sum up the values
+    for(auto& val : subPlanIdToTaskCnt)
+    {
+        tasksProcessed += val.second;
+    }
+
+    for(auto& val : subPlanIdToBufferCnt)
+    {
+        bufferProcessed += val.second;
+    }
+
+    for(auto& val : subPlanIdToTuplelCnt)
+    {
+        tuplesProcessed += val.second;
+    }
 
     out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
         << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed

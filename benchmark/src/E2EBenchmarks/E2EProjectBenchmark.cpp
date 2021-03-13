@@ -44,7 +44,7 @@ int main() {
     // source modes are
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
 
-    // 2 out of 3 fields were removed
+    // 2 out of 3 fields were removeds
     string query = "Query::from(\"input\").project(Attribute(\"id\")).sink(NullOutputSinkDescriptor::create());";
 
     std::string benchmarkName = "E2EProjectBenchmark";
