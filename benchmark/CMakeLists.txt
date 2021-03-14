@@ -151,8 +151,8 @@ if (NES_BUILD_BENCHMARKS)
     add_test(NAME e2e-join-query-benchmark COMMAND e2e-join-query-benchmark)
 
     add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
+    add_custom_target(run_e2e_benchmark COMMAND ctest -R ^e2e --output-on-failure)
     message("---Done building benchmarks")
-
 
 else(NES_BUILD_BENCHMARKS)
     message("---Not building benchmarks!")
