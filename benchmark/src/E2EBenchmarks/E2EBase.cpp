@@ -85,40 +85,41 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
         for (auto it : queryStatisticsPtrs) {
-            NES::NodeEngine::QueryStatisticsPtr currentStat = std::make_shared<NES::NodeEngine::QueryStatistics>(0, 0);
-            currentStat->setProcessedBuffers(it->getProcessedBuffers());
-            currentStat->setProcessedTasks(it->getProcessedTasks());
-            currentStat->setProcessedTuple(it->getProcessedTuple());
-            currentStat->setQueryId(it->getQueryId());
-            currentStat->setSubQueryId(it->getSubQueryId());
             auto start = std::chrono::system_clock::now();
             auto in_time_t = std::chrono::system_clock::to_time_t(start);
+            std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>"
+                      << it->getQueryStatisticsAsString() << std::endl;
 
-            if (currentStat->getProcessedTuple() == 0) {
-                NES_ERROR("No Output produced, all data size=" << statisticsVec.size());
+            if (it->getProcessedTuple() == 0) {
+                NES_ERROR("No Output produced on time " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X"));
             } else {
-                //                if (statisticsVec.size() > 1) {
-                //                    auto prev = statisticsVec.back();
-                //                    std::cout << "Statistics at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
-                //                              << " processedBuffers=" << currentStat->getProcessedBuffers() - prev->getProcessedBuffers()
-                //                              << " processedTasks=" << currentStat->getProcessedTasks() - prev->getProcessedTasks()
-                //                              << " processedTuples=" << currentStat->getProcessedTuple() - prev->getProcessedTuple() << std::endl;
-                //                }
-                std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>"
-                          << currentStat->getQueryStatisticsAsString() << std::endl;
-                statisticsVec.push_back(currentStat);
+                //if first iteration just push the first value
+                if (subPlanIdToTaskCnt.count(it->getSubQueryId() ) == 0) {
+                    subPlanIdToTaskCnt[it->getSubQueryId()] = it->getProcessedTasks();
+                    subPlanIdToBufferCnt[it->getSubQueryId()] = it->getProcessedBuffers();
+                    subPlanIdToTuplelCnt[it->getSubQueryId()] = it->getProcessedTuple();
+                }
+
+                //if last iteration do last - first
+                if (i + 1 == EXPERIMENT_RUNTIME_IN_SECONDS + 1) {
+                    subPlanIdToTaskCnt[it->getSubQueryId()] = it->getProcessedTasks() - subPlanIdToTaskCnt[it->getSubQueryId()];
+                    subPlanIdToBufferCnt[it->getSubQueryId()] =
+                        it->getProcessedBuffers() - subPlanIdToBufferCnt[it->getSubQueryId()];
+                    subPlanIdToTuplelCnt[it->getSubQueryId()] =
+                        it->getProcessedTuple() - subPlanIdToTuplelCnt[it->getSubQueryId()];
+                }
             }
         }
 
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        while (curTime < nextPeriodStartTime) {
+        while (curTime < nextPeriodStartTime && i + 1 < EXPERIMENT_RUNTIME_IN_SECONDS +1) {
             std::this_thread::sleep_for(std::chrono::seconds(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS));
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
     }
-    if (statisticsVec.size() == 0) {
+    if (subPlanIdToTuplelCnt.size() == 0) {
         NES_ERROR("We cannot use this run as no data was measured");
         assert(0);
     }
@@ -129,7 +130,9 @@ E2EBase::~E2EBase() {
     tearDown();
     crd.reset();
     wrk1.reset();
-    statisticsVec.clear();
+    subPlanIdToTaskCnt.clear();
+    subPlanIdToBufferCnt.clear();
+    subPlanIdToTuplelCnt.clear();
     queryService.reset();
     queryCatalog.reset();
 }
@@ -366,60 +369,21 @@ void E2EBase::runQuery(std::string query) {
 std::string E2EBase::getResult() {
     std::stringstream out;
     out.precision(1);
-    std::cout << "aggregate " << statisticsVec.size() << " measurements" << std::endl;
-    if (statisticsVec.size() == 0) {
-        NES_ERROR("result is empty");
-        return "X,X,X,X \n";
-    }
-
-    NES_ASSERT(statisticsVec.size() != 0, "stats too small");
-
-    //sum up per individual pipeline
-    std::map<uint64_t, uint64_t> subPlanIdToTaskCnt;
-    std::map<uint64_t, uint64_t> subPlanIdToBufferCnt;
-    std::map<uint64_t, uint64_t> subPlanIdToTuplelCnt;
-    for (auto& stat : statisticsVec) {
-        subPlanIdToTaskCnt[stat->getSubQueryId()] += stat->getProcessedTasks();
-        subPlanIdToBufferCnt[stat->getSubQueryId()] += stat->getProcessedBuffers();
-        subPlanIdToTuplelCnt[stat->getSubQueryId()] += stat->getProcessedTuple();
-    }
-
-    map<uint64_t, uint64_t>::iterator it;
-    for (it = subPlanIdToTaskCnt.begin(); it != subPlanIdToTaskCnt.end(); it++)
-    {
-        //get subplan id
-        auto subPlanId = it->second;
-
-        //get smallest value for this subqueryplan ID from the vector
-        for(auto& val : statisticsVec)
-        {
-            if(val->getSubQueryId() == subPlanId)
-            {
-                //substract first value
-                subPlanIdToTaskCnt[subPlanId] -= val->getProcessedTasks();
-                subPlanIdToBufferCnt[subPlanId] -= val->getProcessedBuffers();
-                subPlanIdToTuplelCnt[subPlanId] -= val->getProcessedTuple();
-            }
-        }
-    }
 
     auto tuplesProcessed = 0;
     auto bufferProcessed = 0;
     auto tasksProcessed = 0;
 
     //sum up the values
-    for(auto& val : subPlanIdToTaskCnt)
-    {
+    for (auto& val : subPlanIdToTaskCnt) {
         tasksProcessed += val.second;
     }
 
-    for(auto& val : subPlanIdToBufferCnt)
-    {
+    for (auto& val : subPlanIdToBufferCnt) {
         bufferProcessed += val.second;
     }
 
-    for(auto& val : subPlanIdToTuplelCnt)
-    {
+    for (auto& val : subPlanIdToTuplelCnt) {
         tuplesProcessed += val.second;
     }
 

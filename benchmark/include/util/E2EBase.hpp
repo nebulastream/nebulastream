@@ -103,7 +103,9 @@ class E2EBase {
     NES::NesCoordinatorPtr crd;
     NES::NesWorkerPtr wrk1;
 
-    std::vector<NES::NodeEngine::QueryStatisticsPtr> statisticsVec;
+    std::map<uint64_t, uint64_t> subPlanIdToTaskCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToBufferCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToTuplelCnt;
     NES::QueryServicePtr queryService;
     QueryId queryId;
     NES::QueryCatalogPtr queryCatalog;
