@@ -17,7 +17,18 @@
 #ifndef NES_SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
 #define NES_SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
 
+#include <memory>
+
+namespace NES {
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+}// namespace NES
+
 namespace NES::Optimizer {
+
+class SignatureBasedPartialQueryMergerRule;
+typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPartialQueryMergerRulePtr;
+
 /**
  * @brief SignatureBasedPartialQueryMergerRule is responsible for merging together all Queries sharing a common upstream operator
  * chain. After running this rule only a single representative operator chain should exists in the Global Query Plan for the common
@@ -57,7 +68,17 @@ namespace NES::Optimizer {
  *
  */
 class SignatureBasedPartialQueryMergerRule {
+    static SignatureBasedPartialQueryMergerRulePtr create();
+    ~SignatureBasedPartialQueryMergerRule();
 
+    /**
+     * @brief apply the rule on Global Query Plan
+     * @param globalQueryPlan : the global query plan
+     */
+    bool apply(GlobalQueryPlanPtr globalQueryPlan);
+
+  private:
+    explicit SignatureBasedPartialQueryMergerRule();
 };
 }// namespace NES::Optimizer
 

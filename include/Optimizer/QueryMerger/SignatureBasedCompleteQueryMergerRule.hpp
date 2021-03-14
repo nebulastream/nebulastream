@@ -27,7 +27,7 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 namespace NES::Optimizer {
 
 class SignatureBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedEqualQueryMergerRulePtr;
+typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
 
 /**
  * @brief SignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
@@ -71,12 +71,12 @@ typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedEqu
 class SignatureBasedCompleteQueryMergerRule {
 
   public:
-    static SignatureBasedEqualQueryMergerRulePtr create();
+    static SignatureBasedCompleteQueryMergerRulePtr create();
     ~SignatureBasedCompleteQueryMergerRule();
 
     /**
      * @brief apply the rule on Global Query Plan
-     * @param globalQueryPlan : the global query plan
+     * @param globalQueryPlan: the global query plan
      */
     bool apply(GlobalQueryPlanPtr globalQueryPlan);
 

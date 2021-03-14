@@ -31,7 +31,7 @@ SignatureBasedCompleteQueryMergerRule::SignatureBasedCompleteQueryMergerRule() {
 
 SignatureBasedCompleteQueryMergerRule::~SignatureBasedCompleteQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
 
-SignatureBasedEqualQueryMergerRulePtr SignatureBasedCompleteQueryMergerRule::create() {
+SignatureBasedCompleteQueryMergerRulePtr SignatureBasedCompleteQueryMergerRule::create() {
     return std::make_shared<SignatureBasedCompleteQueryMergerRule>(SignatureBasedCompleteQueryMergerRule());
 }
 
