@@ -140,7 +140,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         }
 
         std::getline(input, line);
-        NES_DEBUG("CSVSource line=" << tupCnt << " val=" << line);
+        NES_TRACE("CSVSource line=" << tupCnt << " val=" << line);
         std::vector<std::string> tokens;
         boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
         uint64_t offset = 0;
@@ -207,8 +207,8 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
 
     currentPosInFile = input.tellg();
     buf.setNumberOfTuples(tupCnt);
-    NES_DEBUG("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
-    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+    NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
+    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
     //update statistics
 }

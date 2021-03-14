@@ -30,6 +30,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
+#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 
 namespace NES::NodeEngine {
 
@@ -496,10 +497,19 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
     auto schema = sourceDescriptor->getSchema();
-    NES_ASSERT(!configs.empty(), "no config for source");
-    auto conf = configs.back();
-    configs.pop_back();
-    return conf->build(sourceDescriptor->getSchema());
+
+    if(sourceDescriptor->instanceOf<LambdaSourceDescriptor>())
+    {
+        NES_ASSERT(!configs.empty(), "no config for Lambda source");
+        auto conf = configs.back();
+        configs.pop_back();
+        return conf->build(sourceDescriptor->getSchema());
+    }
+    else
+    {
+        NES_ASSERT(configs[0], "physical source config is not specified");
+        return configs[0]->build(sourceDescriptor->getSchema());
+    }
 }
 
 void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
