@@ -498,7 +498,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
 
     auto schema = sourceDescriptor->getSchema();
 
-    if(sourceDescriptor->instanceOf<LambdaSourceDescriptor>())
+    if(configs.size() > 1)
     {
         NES_ASSERT(!configs.empty(), "no config for Lambda source");
         auto conf = configs.back();
@@ -507,6 +507,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     }
     else
     {
+        assert(configs.size() == 1);
         NES_ASSERT(configs[0], "physical source config is not specified");
         return configs[0]->build(sourceDescriptor->getSchema());
     }
