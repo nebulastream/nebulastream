@@ -28,7 +28,6 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <iostream>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -38,6 +37,7 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <iostream>
 
 using namespace std;
 
@@ -80,9 +80,7 @@ class QueryPlanIteratorTest : public testing::Test {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     }
 
-    void TearDown() {
-        NES_DEBUG("Tear down QueryPlanIteratorTest Test.");
-    }
+    void TearDown() { NES_DEBUG("Tear down QueryPlanIteratorTest Test."); }
 
   protected:
     DumpContextPtr dumpContext;
@@ -229,7 +227,6 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
     ++queryPlanIter;
     ASSERT_EQ(sourceOp2, *queryPlanIter);
 }
-
 
 /**
  * @brief Query:

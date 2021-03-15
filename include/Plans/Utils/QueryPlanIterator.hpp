@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
 #define NES_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
 #include <Plans/Query/QueryPlan.hpp>
-#include <stack>
 #include <iterator>
-namespace NES{
+#include <stack>
+namespace NES {
 
 /**
  * @brief Iterator for query plans, which correctly handles multiple sources and sinks.
@@ -42,7 +42,7 @@ namespace NES{
  * #5 - Source 1
  * #6 - Source 2
  */
-class QueryPlanIterator{
+class QueryPlanIterator {
   public:
     explicit QueryPlanIterator(QueryPlanPtr queryPlan);
 
@@ -90,6 +90,6 @@ class QueryPlanIterator{
     QueryPlanPtr queryPlan;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_PLANS_UTILS_QUERYPLANITERATOR_HPP_
