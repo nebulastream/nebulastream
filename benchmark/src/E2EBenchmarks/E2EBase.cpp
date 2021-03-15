@@ -408,6 +408,7 @@ std::string E2EBase::getResult() {
         << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << "," << std::fixed
         << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024 << std::endl;
 
+    std::cout << "tuples per sec=" << << std::fixed << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << std::endl;
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
     return out.str();
 }
