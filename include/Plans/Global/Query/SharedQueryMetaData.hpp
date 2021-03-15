@@ -75,7 +75,7 @@ typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
 class SharedQueryMetaData {
 
   public:
-    static SharedQueryMetaDataPtr create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    static SharedQueryMetaDataPtr create(QueryId queryId, QueryPlanPtr queryPlan);
 
     /**
      * @brief Add a global query metadata into this
@@ -144,16 +144,16 @@ class SharedQueryMetaData {
     bool isNew() const;
 
     /**
-     * @brief Get the set of Global Query Nodes with sink operators grouped together
-     * @return the set of Global Query Nodes with Sink Operators
+     * @brief Get the vector of sink operators sharing common upstream operators
+     * @return the vector of Sink Operators
      */
-    std::set<GlobalQueryNodePtr> getSinkGlobalQueryNodes();
+    std::vector<OperatorNodePtr> getSinkOperators();
 
     /**
-     * @brief Get the collection of registered query ids
-     * @return map of registered query ids and their sink global query nodes
+     * @brief Get the collection of registered query ids and their sink operators
+     * @return map of registered query ids and their sink operators
      */
-    std::map<QueryId, std::set<GlobalQueryNodePtr>> getQueryIdToSinkGQNMap();
+    std::map<QueryId, std::vector<OperatorNodePtr>> getQueryIdToSinkOperatorMap();
 
     /**
      * @brief Get the shared query id
@@ -173,12 +173,22 @@ class SharedQueryMetaData {
      */
     void setAsOld();
 
+    /**
+     * @brief Assign all parent operators of the operatorToMerge to the target operator
+     * @param operatorToMerge: operator whose parent operators need to be assigned to target operator
+     * @param targetOperator: operator to which the parent operators of the target operator need to be assigned to
+     * @return true if successful else false
+     */
+    bool mergeOperatorInto(OperatorNodePtr operatorToMerge, OperatorNodePtr targetOperator);
+
   private:
-    explicit SharedQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    explicit SharedQueryMetaData(QueryId queryId, QueryPlanPtr queryPlan);
 
     SharedQueryId sharedQueryId;
-    std::map<QueryId, std::set<GlobalQueryNodePtr>> queryIdToSinkGQNMap;
-    std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;
+    QueryPlanPtr queryPlan;
+    std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;
+    std::vector<QueryId> queryIds;
+    std::vector<OperatorNodePtr> sinkOperators;
     bool deployed;
     bool newMetaData;
 };

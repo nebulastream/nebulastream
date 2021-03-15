@@ -87,9 +87,9 @@ bool SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQuery
                 continue;
             }
 
-            std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkGlobalQueryNodes();
+            std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkOperators();
             //Iterate over all target sink global query node
-            for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkGlobalQueryNodes()) {
+            for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkOperators()) {
                 //Check for the target sink global query node the corresponding address sink global query node id in the map
                 uint64_t hostSinkOperatorId = targetHostSinkNodeMap[targetSinkGQN->getOperator()->getId()];
 

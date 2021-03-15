@@ -62,10 +62,10 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQ
             //Check if the target and address query plan are equal and return the target and address operator mappings
             if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetHostOperatorMap)) {
 
-                std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkGlobalQueryNodes();
+                std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkOperators();
                 //Iterate over all target sink global query nodes and try to identify a matching address global query node
                 // using the target address operator map
-                for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkGlobalQueryNodes()) {
+                for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkOperators()) {
                     uint64_t hostSinkOperatorId = targetHostOperatorMap[targetSinkGQN->getOperator()->getId()];
 
                     auto found = std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(),

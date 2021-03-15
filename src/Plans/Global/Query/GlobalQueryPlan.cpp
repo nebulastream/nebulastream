@@ -132,7 +132,7 @@ bool GlobalQueryPlan::updateSharedQueryMetadata(SharedQueryMetaDataPtr sharedQue
     sharedQueryIdToMetaDataMap[sharedQueryId] = sharedQueryMetaData;
 
     NES_TRACE("GlobalQueryPlan: Updating the Query Id to Shared Query Id map");
-    for (auto [queryId, sinkGQNs] : sharedQueryMetaData->getQueryIdToSinkGQNMap()) {
+    for (auto [queryId, sinkGQNs] : sharedQueryMetaData->getQueryIdToSinkOperatorMap()) {
         queryIdToSharedQueryIdMap[queryId] = sharedQueryId;
     }
     return true;
