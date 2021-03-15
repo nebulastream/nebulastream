@@ -68,6 +68,8 @@ typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPart
  *
  */
 class SignatureBasedPartialQueryMergerRule {
+
+  public:
     static SignatureBasedPartialQueryMergerRulePtr create();
     ~SignatureBasedPartialQueryMergerRule();
 
