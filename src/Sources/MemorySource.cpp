@@ -85,8 +85,6 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     } else {
         return buffer;
     }
-
-    NES_ASSERT(false, "this must not be invoked");
 }
 
 const std::string MemorySource::toString() const { return "MemorySource"; }

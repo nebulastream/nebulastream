@@ -106,7 +106,6 @@ class QueryPlanIteratorTest : public testing::Test {
  *
  */
 TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
-
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -132,7 +131,6 @@ TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
  *
  */
 TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
-
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -165,7 +163,6 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
  *
  */
 TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
-
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -199,7 +196,6 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
  *
  */
 TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
-
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp3);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -247,8 +243,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
  *
  *
  */
-TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
-
+TEST_F(QueryPlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp3);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -272,13 +267,9 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
     ++queryPlanIter;
     ASSERT_EQ(filterOp3, *queryPlanIter);
     ++queryPlanIter;
-    ASSERT_EQ(sourceOp1, *queryPlanIter);
-    ++queryPlanIter;
     ASSERT_EQ(filterOp4, *queryPlanIter);
     ++queryPlanIter;
-    ASSERT_EQ(sinkOp3, *queryPlanIter);
-    ++queryPlanIter;
-    ASSERT_EQ(sourceOp2, *queryPlanIter);
+    ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
 }// namespace NES
