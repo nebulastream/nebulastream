@@ -152,18 +152,19 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     nodeEngine->startQuery(1);
     recordStatistics(statisticsVec, nodeEngine);
 
-    while (!benchmarkSink->completed.get_future().get())
-        ;
+    while (!benchmarkSink->completed.get_future().get()) ;
     NES_WARNING("BenchmarkUtils: completed is true!!");
 
     NES_WARNING("BenchmarkUtils: Stopping query...");
-    nodeEngine->stopQuery(1, true);
+//    nodeEngine->stopQuery(1, true);
+    nodeEngine->stop(false);
     NES_WARNING("Query was stopped!");
 
     /* This is not necessary anymore as we do not want to have the differences anymore. We are only interested in the total
-     * number of tuples, buffers, tasks. Via the total number and runSingleExperimentSeconds we can calculate throughput
-     * */
-    //computeDifferenceOfStatistics(statisticsVec);
+     * number of tuples, buffers, tasks. Via the total number and runSingleExperimentSeconds we can calculate the throughput
+     *
+     * computeDifferenceOfStatistics(statisticsVec);
+     */
 }
 
 std::string BenchmarkUtils::getTsInRfc3339(){
