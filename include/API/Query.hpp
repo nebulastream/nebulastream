@@ -63,7 +63,7 @@ using namespace NES::Windowing;
 
 static const uint64_t defaultTriggerTimeInMs = 1000;
 
-namespace JoinOperatorBuilder{
+namespace JoinOperatorBuilder {
 
 class JoinWhere;
 class JoinCondition;
