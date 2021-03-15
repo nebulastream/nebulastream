@@ -120,11 +120,11 @@ class SimpleBenchmarkSink : public SinkMedium {
             NES_DEBUG("This data sink only accepts data for numeric fields");
         }
 
-        if (currentTuples % (100 * 1000 * 1000) == 0) {
-            NES_WARNING("SimpleBenchmarkSink: endOfBenchmark = " << endOfBenchmark << " with " << input_buffer.getNumberOfTuples()
-                                                                 << " number of tuples!");
-            NES_DEBUG("SimpleBenchmarkSink: currentTuples=" << currentTuples);
-        }
+//        if (currentTuples % (100 * 1000 * 1000) == 0) {
+//            NES_WARNING("SimpleBenchmarkSink: endOfBenchmark = " << endOfBenchmark << " with " << input_buffer.getNumberOfTuples()
+//                                                                 << " number of tuples!");
+//            NES_DEBUG("SimpleBenchmarkSink: currentTuples=" << currentTuples);
+//        }
         if (endOfBenchmark && input_buffer.getNumberOfTuples() > 0 && !promiseSet) {
             NES_WARNING("SimpleBenchmarkSink: setting promise to true!");
             completed.set_value(endOfBenchmark);

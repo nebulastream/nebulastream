@@ -98,6 +98,12 @@ class BenchmarkUtils {
      */
     static std::string getStatisticsAsCSV(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
 
+    /**
+     *
+     * @return current time as a timestamp according to RFC3339
+     */
+    static std::string getTsInRfc3339();
+
     static void printOutConsole(NodeEngine::QueryStatistics* statistic, SchemaPtr schema);
 
     /**
@@ -126,8 +132,9 @@ class BenchmarkUtils {
         try {                                                                                                                    \
             std::ofstream benchmarkFile;                                                                                         \
             benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);                \
-            benchmarkFile << "BM_Name,NES_Version,Ingestionrate,WorkerThreads,SourceCnt,RunSingleExperiment,PeriodLength,"       \
-                             "ProcessedBuffers,ProcessedTasks,ProcessedTuples,ProcessedBytes"                                    \
+            benchmarkFile << "Time,BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffersTotal," \
+                          << "ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,ThroughputInTupsPerSec,"              \
+                          << "ThroughputInMBPerSec,Ingestionrate,RunSingleExperiment,PeriodLength"                               \
                           << (csvHeaderString) << "\n";                                                                          \
             benchmarkFile.close();                                                                                               \
                                                                                                                                  \
@@ -168,18 +175,19 @@ class BenchmarkUtils {
                                 benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv",                 \
                                                    std::ios_base::app);                                                          \
                                                                                                                                  \
-                                for (auto statistic : statisticsVec) {                                                           \
-                                    benchmarkFile << (benchmarkName) << ",\"" << NES_VERSION << "\""                             \
-                                                  << "," << std::to_string(ingestionRate) << ","                                 \
-                                                  << std::to_string(workerThreads) << "," << std::to_string(sourceCnt) << ","    \
-                                                  << std::to_string(BenchmarkUtils::runSingleExperimentSeconds) << ","           \
-                                                  << std::to_string(BenchmarkUtils::periodLengthInSeconds)                       \
-                                                  << BenchmarkUtils::getStatisticsAsCSV(statistic, thisSchema)                   \
-                                                  << (customCSVOutputs) << "\n";                                                 \
+                                benchmarkFile << BenchmarkUtils::getTsInRfc3339() << "," <<(benchmarkName) << ",\""                          \
+                                              << NES_VERSION << "\"" << std::to_string(workerThreads) << ","                 \
+                                              << "CoordinatorThreadCnt," << std::to_string(sourceCnt)                        \
+                                              << "MemoryMode," << BenchmarkUtils::getStatisticsAsCSV(statisticsVec[statisticsVec.size() - 1], thisSchema)  \
+                                              << std::to_string(ingestionRate) << ","                                        \
+                                              << std::to_string(BenchmarkUtils::runSingleExperimentSeconds) << ","           \
+                                              << std::to_string(BenchmarkUtils::periodLengthInSeconds)                       \
+                                              << (customCSVOutputs) << "\n";                                                 \
+                                benchmarkFile.close();                                                                           \
                                                                                                                                  \
+                                for (auto statistic : statisticsVec) {                                                            \
                                     delete statistic;                                                                            \
                                 }                                                                                                \
-                                benchmarkFile.close();                                                                           \
                                 std::ifstream t(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv");                   \
                                 std::string content((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());      \
                                 std::cout << "benchmark content" << content << std::endl;                                        \

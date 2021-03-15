@@ -110,9 +110,12 @@ std::string BenchmarkUtils::getCurDateTimeStringWithNESVersion() {
 }
 
 std::string BenchmarkUtils::getStatisticsAsCSV(NodeEngine::QueryStatistics* statistic, SchemaPtr schema) {
-    return "," + std::to_string(statistic->getProcessedBuffers()) + "," + std::to_string(statistic->getProcessedTasks()) + ","
+    return "," + std::to_string(statistic->getProcessedBuffers()) +
+        "," + std::to_string(statistic->getProcessedTasks()) + ","
         + std::to_string(statistic->getProcessedTuple()) + ","
-        + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes());
+        + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes())
+        + "," + std::to_string(statistic->getProcessedTuple() / BenchmarkUtils::runSingleExperimentSeconds)
+        + "," + std::to_string((statistic->getProcessedTuple() * schema->getSchemaSizeInBytes()) / (1024 * 1024 * BenchmarkUtils::runSingleExperimentSeconds));
 }
 
 void BenchmarkUtils::printOutConsole(NodeEngine::QueryStatistics* statistic, SchemaPtr schema) {
@@ -154,10 +157,24 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     NES_WARNING("BenchmarkUtils: completed is true!!");
 
     NES_WARNING("BenchmarkUtils: Stopping query...");
-    nodeEngine->stopQuery(1);
+    nodeEngine->stopQuery(1, false);
     NES_WARNING("Query was stopped!");
 
-    computeDifferenceOfStatistics(statisticsVec);
+    /* This is not necessary anymore as we do not want to have the differences anymore. We are only interested in the total
+     * number of tuples, buffers, tasks. Via the total number and runSingleExperimentSeconds we can calculate throughput
+     * */
+    //computeDifferenceOfStatistics(statisticsVec);
+}
+
+std::string BenchmarkUtils::getTsInRfc3339(){
+    const auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+    const auto now_s = std::chrono::time_point_cast<std::chrono::seconds>(now_ms);
+    const auto millis = now_ms - now_s;
+    const auto c_now = std::chrono::system_clock::to_time_t(now_s);
+
+    std::stringstream ss;
+    ss << std::put_time(gmtime(&c_now), "%FT%T") << '.' << std::setfill('0') << std::setw(3) << millis.count() << 'Z';
+    return ss.str();
 }
 
 }// namespace NES::Benchmarking
