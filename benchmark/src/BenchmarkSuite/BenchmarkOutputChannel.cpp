@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
 
     NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 4 * 1024, 1 * 1024 * 1024);
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allSenderThreads, 1, 6, 1);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allServerThreads, 4, 6, 1);
+    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allServerThreads, 3, 6, 1);
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t)1 * 1024 * 1024 * 1024,
                                                                    (uint64_t)2 * 1024 * 1024 * 1024, (uint64_t)1 * 1024 * 1024 * 1024);
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t)10 * 1024 * 1024 * 1024,
