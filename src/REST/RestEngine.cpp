@@ -151,7 +151,7 @@ void RestEngine::handlePost(http_request request) {
             return;
         }
         else if(paths[0] == "maintenance") {
-            maintenanceController->handlePost(paths, message);
+            maintenanceController->handlePost(paths, request);
             return;
         }
     }
