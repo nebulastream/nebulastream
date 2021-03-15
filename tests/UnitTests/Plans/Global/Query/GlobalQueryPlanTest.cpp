@@ -200,10 +200,10 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert
     EXPECT_TRUE(sharedQueryMetaData.size() == 2);
-    auto queryIdToSinkGQNs1 = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    auto queryIdToSinkGQNs1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkGQNs1.size(), 1);
     EXPECT_TRUE(queryIdToSinkGQNs1.find(queryId1) != queryIdToSinkGQNs1.end());
-    auto queryIdToSinkGQNs2 = sharedQueryMetaData[1]->getQueryIdToSinkGQNMap();
+    auto queryIdToSinkGQNs2 = sharedQueryMetaData[1]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkGQNs2.size(), 1);
     EXPECT_TRUE(queryIdToSinkGQNs2.find(queryId2) != queryIdToSinkGQNs1.end());
 }
@@ -245,7 +245,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert
     EXPECT_TRUE(sharedQueryMetaData.size() == 1);
-    auto queryIdToSinkGQNsMap = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    auto queryIdToSinkGQNsMap = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
     EXPECT_TRUE(queryIdToSinkGQNsMap.find(queryId1) != queryIdToSinkGQNsMap.end());
     EXPECT_TRUE(queryIdToSinkGQNsMap.find(queryId2) != queryIdToSinkGQNsMap.end());
 }
@@ -294,18 +294,18 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
 
     //Assert
     EXPECT_TRUE(sharedQueryMetaData.size() == 2);
-    auto queryIdToSinkGQNMap1 = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    auto queryIdToSinkGQNMap1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId1) != queryIdToSinkGQNMap1.end());
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId2) != queryIdToSinkGQNMap1.end());
 
     globalQueryPlan->removeQuery(queryId1);
     //Get MetaData information
     sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    queryIdToSinkGQNMap1 = sharedQueryMetaData[0]->getQueryIdToSinkGQNMap();
+    queryIdToSinkGQNMap1 = sharedQueryMetaData[0]->getQueryIdToSinkOperatorMap();
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId1) == queryIdToSinkGQNMap1.end());
     EXPECT_TRUE(queryIdToSinkGQNMap1.find(queryId2) != queryIdToSinkGQNMap1.end());
 
-    auto queryIdToSinkGQNMap2 = sharedQueryMetaData[1]->getQueryIdToSinkGQNMap();
+    auto queryIdToSinkGQNMap2 = sharedQueryMetaData[1]->getQueryIdToSinkOperatorMap();
     EXPECT_EQ(queryIdToSinkGQNMap2.size(), 1);
     EXPECT_TRUE(queryIdToSinkGQNMap2.find(queryId3) != queryIdToSinkGQNMap1.end());
 }
