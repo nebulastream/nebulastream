@@ -74,22 +74,18 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("unsupported");
+            NES_ERROR("unsupported type " << (int)task.getType());
         }
     }
 }
 
 void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId);
-    Reconfigurable::postReconfiguration(task);
+    Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case NodeEngine::HardEndOfStream:
         case NodeEngine::SoftEndOfStream: {
-            auto queryManager = pipelineContext->getQueryManager();
-            NES_ASSERT2_FMT(!targetQep.expired(),
-                            "Invalid qep for reconfig of subplanId: " << qepId << " stage id: " << pipelineStageId);
-            auto newReconf = ReconfigurationMessage(qepId, Destroy, this);
-            queryManager->addReconfigurationMessage(queryPlanId, newReconf, false);
+            queryManager->addReconfigurationMessage(parentPlanId, NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this()), false);
             break;
         }
     }
