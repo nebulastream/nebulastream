@@ -23,7 +23,9 @@ namespace NES{
 
 /**
  * @brief Iterator for query plans, which correctly handles multiple sources and sinks.
- * The iterator visits each operator exactly one time.
+ * The iterator visits each operator exactly one time in the following order:
+ * top-to-bottom and left-to-right
+ *
  * Example Query Plan:
  *
  * -- Sink 1 ---                            --- Source 1 ---
@@ -73,7 +75,7 @@ class QueryPlanIterator{
     };
 
     /**
-     * @brief Starts a new iterator at the start node.
+     * @brief Starts a new iterator at the start node, which is always a sink.
      * @return iterator
      */
     iterator begin();
