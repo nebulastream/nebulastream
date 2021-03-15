@@ -79,5 +79,13 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
         }
     }
 }
+
+void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
+    NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId);
+    Reconfigurable::postReconfiguration(task);
+    switch (task.getType()) {
+
+    }
+}
 }// namespace Network
 }// namespace NES

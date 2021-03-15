@@ -91,7 +91,7 @@ class E2EBase {
      * @brief start the measurement of the throughput, will read the stats of the worker ever n second
      * @param nodeEngine
      */
-    void recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine);
+    std::chrono::nanoseconds recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
     uint64_t numberOfWorkerThreads;
