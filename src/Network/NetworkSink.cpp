@@ -57,7 +57,7 @@ const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPa
 
 void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);
-    Reconfigurable::reconfigure(task, workerContext);
+    NES::SinkMedium::reconfigure(task, workerContext);
     switch (task.getType()) {
         case NodeEngine::Initialize: {
             auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
@@ -74,7 +74,7 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         default: {
-            NES_ERROR("unsupported");
+            break;
         }
     }
 }
