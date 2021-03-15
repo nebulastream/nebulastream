@@ -87,19 +87,8 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto gqmToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(gqmToDeploy.size() == 2);
-
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
+    auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQueryMetaDataToDeploy.size() == 2);
 
     //assert
     for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
