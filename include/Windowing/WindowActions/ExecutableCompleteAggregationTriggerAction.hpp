@@ -163,19 +163,16 @@ class ExecutableCompleteAggregationTriggerAction
         auto recordsPerWindow = std::vector<uint64_t>(windows.size(), 0);
 
         // if the aggregation function is Min, we should not initialize partialFinalAggregates with 0
-        int64_t initialValue = 0;
+        auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
         if (windowDefinition->getWindowAggregation()->getType()==WindowAggregationDescriptor::Min) {
-            if (auto type = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())){
-                initialValue = type->getUpperBound();
-            } else if (auto type = DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                initialValue = type->getUpperBound();
+            if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())){
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->getUpperBound());
+            } else if (auto floatType = DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->getUpperBound());
             }
         }
 
-        // allocate partial final aggregates for each window
         //because we trigger each second, there could be multiple windows ready
-        auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), initialValue);
-
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
@@ -216,10 +213,10 @@ class ExecutableCompleteAggregationTriggerAction
                           << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
                 if (recordsPerWindow[i] != 0) {
                     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
-                        writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
+                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
                                                    key, value, recordsPerWindow[i]);
                     } else {
-                        writeResultRecord<KeyType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
+                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
                                                    key, value);
                     }
 
