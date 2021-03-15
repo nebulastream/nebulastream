@@ -31,16 +31,16 @@ int main() {
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 14, 4);//1 5 9 13
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 8, 2);//1 5 9 13
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads,4, 5, 4);//1 5 9 13
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads,1, 8, 2);//1 5 9 13
 
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
-    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 4, 1);
 
     // source modes are
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
