@@ -64,7 +64,7 @@ class QueryPlanIteratorTest : public testing::Test {
         pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
         pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
 
-        sourceOp = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+        sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
         sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical2"));
         filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
         filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
@@ -88,7 +88,7 @@ class QueryPlanIteratorTest : public testing::Test {
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    LogicalOperatorNodePtr sourceOp, sourceOp2;
+    LogicalOperatorNodePtr sourceOp1, sourceOp2;
 
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4;
     LogicalOperatorNodePtr sinkOp1, sinkOp2, sinkOp3;
@@ -98,6 +98,7 @@ class QueryPlanIteratorTest : public testing::Test {
 
     NodeEngine::NodeEnginePtr nodeEngine;
 };
+
 /**
  * @brief Query:
  *
@@ -106,19 +107,18 @@ class QueryPlanIteratorTest : public testing::Test {
  */
 TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
 
-    auto queryPlan = QueryPlan::create(sourceOp);
+    auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
-
-    std::cout << queryPlan->toString() << std::endl;
+    NES_DEBUG(queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
     ++queryPlanIter;
-    ASSERT_EQ(sourceOp, *queryPlanIter);
+    ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
 /**
@@ -133,15 +133,14 @@ TEST_F(QueryPlanIteratorTest, iterateFilterQueryPlan) {
  */
 TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
 
-    auto queryPlan = QueryPlan::create(sourceOp);
+    auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
     queryPlan->addRootOperator(sinkOp2);
     filterOp1->addParent(sinkOp2);
 
-    std::cout << queryPlan->toString() << std::endl;
-
+    NES_DEBUG(queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
@@ -152,8 +151,9 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
     ++queryPlanIter;
-    ASSERT_EQ(sourceOp, *queryPlanIter);
+    ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
+
 /**
  * @brief Query:
  *
@@ -166,27 +166,25 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkQueryPlan) {
  */
 TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
 
-    auto queryPlan = QueryPlan::create(sourceOp);
+    auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
     filterOp1->addChild(filterOp2);
     filterOp2->addChild(sourceOp2);
 
-    std::cout << queryPlan->toString() << std::endl;
-
+    NES_DEBUG(queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp1, *queryPlanIter);
     ++queryPlanIter;
-    ASSERT_EQ(sourceOp, *queryPlanIter);
+    ASSERT_EQ(sourceOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp2, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(sourceOp2, *queryPlanIter);
 }
-
 
 /**
  * @brief Query:
@@ -202,7 +200,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSourceQueryPlan) {
  */
 TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
 
-    auto queryPlan = QueryPlan::create(sourceOp);
+    auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp3);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -213,8 +211,8 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
     filterOp4->addChild(sourceOp2);
     sourceOp2->addParent(sinkOp3);
     queryPlan->addRootOperator(sinkOp3);
-    std::cout << queryPlan->toString() << std::endl;
 
+    NES_DEBUG(queryPlan->toString());
 
     auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
     ASSERT_EQ(sinkOp1, *queryPlanIter);
@@ -227,7 +225,7 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
     ++queryPlanIter;
     ASSERT_EQ(filterOp3, *queryPlanIter);
     ++queryPlanIter;
-    ASSERT_EQ(sourceOp, *queryPlanIter);
+    ASSERT_EQ(sourceOp1, *queryPlanIter);
     ++queryPlanIter;
     ASSERT_EQ(filterOp4, *queryPlanIter);
     ++queryPlanIter;
@@ -237,5 +235,50 @@ TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
 }
 
 
+/**
+ * @brief Query:
+ *
+ *                                        --- Filter3 ---
+ *                                      /                 \
+ * --- Sink 1 --- Filter1 --- Filter2 ---                  --- Source
+ *                         /            \                 /
+ *                        /               --- Filter4 ---
+ *            --- Sink 2
+ *
+ *
+ */
+TEST_F(QueryPlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
+
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp3);
+    queryPlan->appendOperatorAsNewRoot(filterOp2);
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    filterOp2->addParent(sinkOp2);
+    queryPlan->addRootOperator(sinkOp2);
+    filterOp2->addChild(filterOp4);
+    filterOp4->addChild(sourceOp1);
+
+    NES_DEBUG(queryPlan->toString());
+
+    auto queryPlanIter = QueryPlanIterator(queryPlan).begin();
+    ASSERT_EQ(sinkOp1, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(filterOp1, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(sinkOp2, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(filterOp2, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(filterOp3, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(sourceOp1, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(filterOp4, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(sinkOp3, *queryPlanIter);
+    ++queryPlanIter;
+    ASSERT_EQ(sourceOp2, *queryPlanIter);
+}
 
 }// namespace NES

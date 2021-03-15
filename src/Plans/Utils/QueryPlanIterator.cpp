@@ -26,7 +26,7 @@ QueryPlanIterator::iterator QueryPlanIterator::end() { return iterator(); }
 
 QueryPlanIterator::iterator::iterator(QueryPlanPtr current) {
     auto rootOperators = current->getRootOperators();
-    for (long i = rootOperators.size() - 1; i >= 0; i--) {
+    for (int64_t i = rootOperators.size() - 1; i >= 0; i--) {
         workStack.push(rootOperators[i]);
     }
 }
@@ -49,11 +49,11 @@ QueryPlanIterator::iterator& QueryPlanIterator::iterator::operator++() {
         auto current = workStack.top();
         workStack.pop();
         auto children = current->getChildren();
-        for (long i = children.size() - 1; i >= 0; i--) {
+        for (int64_t i = children.size() - 1; i >= 0; i--) {
 
             auto child = children[i];
             NES_ASSERT(child->getParents().size() != 0,
-                       "A child node should have a parend!");
+                       "A child node should have a parent");
 
             // check if current node is last parent of child.
             if(child->getParents().back() == current){
