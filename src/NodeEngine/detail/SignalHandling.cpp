@@ -40,7 +40,9 @@ void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     auto exception = std::make_shared<NesRuntimeException>(buffer, stacktrace);
     for (auto& listener : globalErrorListeners) {
-        listener.lock()->onFatalException(exception, stacktrace);
+        if (!listener.expired()) {
+            listener.lock()->onFatalException(exception, stacktrace);
+        }
     }
     std::exit(1);
 }
