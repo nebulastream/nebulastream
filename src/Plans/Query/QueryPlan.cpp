@@ -247,4 +247,29 @@ QueryPlanPtr QueryPlan::copy() {
     return QueryPlan::create(queryId, INVALID_QUERY_ID, duplicateRootOperators);
 }
 
+bool QueryPlan::removeRootOperatorFromPlan(OperatorNodePtr rootOperatorToRemove) {
+
+    auto found = std::find_if(rootOperators.begin(), rootOperators.end(), [&](OperatorNodePtr rootOperator) {
+        return rootOperator->getId() == rootOperatorToRemove->getId();
+    });
+
+    if (found == rootOperators.end()) {
+        NES_ERROR("");
+        return false;
+    }
+    removeOperatorFromPlan(rootOperatorToRemove);
+    rootOperators.erase(found);
+    return true;
+}
+
+bool QueryPlan::removeOperatorFromPlan(OperatorNodePtr operatorToRemove) {
+    for (auto& child : operatorToRemove->getChildren()) {
+        if (child->getParents().size() == 1) {
+            removeOperatorFromPlan(child->as<OperatorNode>());
+        }
+        operatorToRemove->removeChild(child);
+    }
+    return true;
+}
+
 }// namespace NES

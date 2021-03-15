@@ -58,8 +58,11 @@ bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
     // Iterate over all sink global query nodes for the input query and remove the corresponding exclusive upstream operator chains
     for (auto sinkOperator : sinkOperatorsToRemove) {
 
-        removeExclusiveChildren(*found);
-        /*sinkOperators.erase();*/
+        //Remove sink operator and associated operators from query plan
+        if (!queryPlan->removeRootOperatorFromPlan(sinkOperator)) {
+            NES_ERROR("");
+            return false;
+        }
         //Remove the sink operator from the collection of sink operators in the global query metadata
         sinkOperators.erase(std::remove(sinkOperators.begin(), sinkOperators.end(), sinkOperator), sinkOperators.end());
         NES_ERROR("Unable to find query's sink global query node in the set of Sink global query nodes in the metadata");
