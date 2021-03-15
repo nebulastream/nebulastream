@@ -46,7 +46,7 @@ namespace NES {
 
 JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
 
-namespace JoinOperatorBuilder{
+namespace JoinOperatorBuilder {
 
 JoinWhere Join::where(ExpressionItem onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
 

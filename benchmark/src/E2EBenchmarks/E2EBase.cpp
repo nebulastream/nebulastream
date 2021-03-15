@@ -94,7 +94,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
                 NES_ERROR("No Output produced on time " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X"));
             } else {
                 //if first iteration just push the first value
-                if (subPlanIdToTaskCnt.count(iter->getSubQueryId() ) == 0) {
+                if (subPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
                     subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
                     subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
                     subPlanIdToTuplelCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
@@ -114,7 +114,7 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
 
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        while (curTime < nextPeriodStartTime && i + 1 < EXPERIMENT_RUNTIME_IN_SECONDS +1) {
+        while (curTime < nextPeriodStartTime && i + 1 < EXPERIMENT_RUNTIME_IN_SECONDS + 1) {
             std::this_thread::sleep_for(std::chrono::seconds(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS));
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();

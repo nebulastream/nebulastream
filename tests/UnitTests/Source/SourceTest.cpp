@@ -749,6 +749,5 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     bool retStopCord = crd->stopCoordinator(true);
     NES_ASSERT(retStopCord, "retStopCord");
     std::cout << "E2EBase: Test finished" << std::endl;
-
 }
 }// namespace NES

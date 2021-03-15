@@ -56,6 +56,7 @@ class GeneratorSource : public DataSource {
     SourceType getType() const override;
 
     virtual ~GeneratorSource();
+
   protected:
     GeneratorSource() = default;
 };

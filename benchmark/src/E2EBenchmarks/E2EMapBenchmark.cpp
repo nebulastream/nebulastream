@@ -45,7 +45,8 @@ int main() {
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
 
     //add one field
-    string query = "Query::from(\"input\").map(Attribute(\"value2\") = Attribute(\"value\") + 5).sink(NullOutputSinkDescriptor::create());";
+    string query =
+        "Query::from(\"input\").map(Attribute(\"value2\") = Attribute(\"value\") + 5).sink(NullOutputSinkDescriptor::create());";
 
     std::string benchmarkName = "E2EMapBenchmark";
     std::string nesVersion = NES_VERSION;
