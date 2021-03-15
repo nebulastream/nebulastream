@@ -88,7 +88,7 @@ bool GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
         }
     }
 
-    auto sharedQueryMetadata = SharedQueryMetaData::create({queryId}, queryRootGQNs);
+    auto sharedQueryMetadata = SharedQueryMetaData::create(queryPlan);
     return updateSharedQueryMetadata(sharedQueryMetadata);
 }
 

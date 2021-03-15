@@ -25,9 +25,10 @@
 
 namespace NES {
 
-SharedQueryMetaData::SharedQueryMetaData(QueryId queryId, QueryPlanPtr queryPlan)
+SharedQueryMetaData::SharedQueryMetaData(QueryPlanPtr queryPlan)
     : sharedQueryId(PlanIdGenerator::getNextSharedQueryId()), deployed(false), newMetaData(true) {
     NES_DEBUG("SharedQueryMetaData()");
+    auto queryId = queryPlan->getQueryId();
     //Create a new query plan
     this->queryPlan = QueryPlan::create();
     auto rootOperators = queryPlan->getRootOperators();
@@ -40,8 +41,8 @@ SharedQueryMetaData::SharedQueryMetaData(QueryId queryId, QueryPlanPtr queryPlan
     queryIds.push_back(queryId);
 }
 
-SharedQueryMetaDataPtr SharedQueryMetaData::create(QueryId queryId, QueryPlanPtr queryPlan) {
-    return std::make_shared<SharedQueryMetaData>(SharedQueryMetaData(queryId, queryPlan));
+SharedQueryMetaDataPtr SharedQueryMetaData::create(QueryPlanPtr queryPlan) {
+    return std::make_shared<SharedQueryMetaData>(SharedQueryMetaData(queryPlan));
 }
 
 bool SharedQueryMetaData::removeQueryId(QueryId queryId) {

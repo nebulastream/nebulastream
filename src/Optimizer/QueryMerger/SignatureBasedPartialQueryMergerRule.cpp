@@ -14,14 +14,24 @@
     limitations under the License.
 */
 
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/QueryMerger/SignatureBasedPartialQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
+#include <z3++.h>
 
 namespace NES::Optimizer {
 
 SignatureBasedPartialQueryMergerRule::SignatureBasedPartialQueryMergerRule() {}
+
+SignatureBasedPartialQueryMergerRule::~SignatureBasedPartialQueryMergerRule() {
+    NES_DEBUG("~SignatureBasedPartialQueryMergerRule()");
+}
 
 SignatureBasedPartialQueryMergerRulePtr SignatureBasedPartialQueryMergerRule::create() {
     return std::make_shared<SignatureBasedPartialQueryMergerRule>(SignatureBasedPartialQueryMergerRule());
@@ -79,16 +89,16 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
                 continue;
             }
 
-            std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkOperators();
+            std::vector<OperatorNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkOperators();
             //Iterate over all target sink global query node
-            for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkOperators()) {
+            for (auto targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
                 //Check for the target sink global query node the corresponding address sink global query node id in the map
-                uint64_t hostSinkOperatorId = targetHostSinkNodeMap[targetSinkGQN->getOperator()->getId()];
+                uint64_t hostSinkOperatorId = targetHostSinkNodeMap[targetSinkOperator->getId()];
 
                 // Find the address sink global query node with the matching id
                 auto found =
-                    std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(), [hostSinkOperatorId](GlobalQueryNodePtr hostSinkGQN) {
-                        return hostSinkGQN->getOperator()->getId() == hostSinkOperatorId;
+                    std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(), [hostSinkOperatorId](OperatorNodePtr hostSinkGQN) {
+                        return hostSinkGQN->getId() == hostSinkOperatorId;
                     });
 
                 if (found == hostSinkGQNs.end()) {
@@ -96,11 +106,11 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
                 }
 
                 //Remove all children of target sink global query node
-                targetSinkGQN->removeChildren();
+                targetSinkOperator->removeChildren();
 
                 //Add children of matched address sink global query node to the target sink global query node
                 for (auto hostChild : (*found)->getChildren()) {
-                    hostChild->addParent(targetSinkGQN);
+                    hostChild->addParent(targetSinkOperator);
                 }
             }
 
@@ -118,5 +128,4 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
     globalQueryPlan->removeEmptySharedQueryMetaData();
     return true;
 }
-
 }// namespace NES::Optimizer

@@ -75,7 +75,7 @@ typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
 class SharedQueryMetaData {
 
   public:
-    static SharedQueryMetaDataPtr create(QueryId queryId, QueryPlanPtr queryPlan);
+    static SharedQueryMetaDataPtr create(QueryPlanPtr queryPlan);
 
     /**
      * @brief Add a global query metadata into this
@@ -83,13 +83,6 @@ class SharedQueryMetaData {
      * @return true if successful else false
      */
     bool addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData);
-
-    /**
-     * @brief Add a new Set of Global Query Node with sink operators
-     * @param globalQueryNodes :  the Global Query Node with sink operators
-     * @return true if successful else false
-     */
-    bool addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes);
 
     /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators and clear the sink global query node lists
@@ -177,7 +170,7 @@ class SharedQueryMetaData {
     bool mergeOperatorInto(OperatorNodePtr operatorToMerge, OperatorNodePtr targetOperator);
 
   private:
-    explicit SharedQueryMetaData(QueryId queryId, QueryPlanPtr queryPlan);
+    explicit SharedQueryMetaData(QueryPlanPtr queryPlan);
 
     SharedQueryId sharedQueryId;
     QueryPlanPtr queryPlan;
