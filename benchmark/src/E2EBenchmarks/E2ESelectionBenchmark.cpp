@@ -35,7 +35,8 @@ int main() {
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 2, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads,1, 14, 4);//1 5 9 13
+
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
