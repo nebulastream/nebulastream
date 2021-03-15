@@ -73,10 +73,10 @@ std::vector<uint64_t> MaintenanceService::firstStrat(uint64_t nodeId) {
     if(!topologyNode){
         throw std::runtime_error("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");
     }
+    markNodeForMaintenance(nodeId);
     ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
     if(!executionNode){
         NES_DEBUG("No queries deployed on node with id " << std::to_string(nodeId));
-        markNodeForMaintenance(nodeId);
         return parentQueryIds;
     }
     auto map = executionNode->getAllQuerySubPlans();
@@ -85,12 +85,15 @@ std::vector<uint64_t> MaintenanceService::firstStrat(uint64_t nodeId) {
         for(auto it2: it.second){
           uint64_t id = it2->getQueryId();
            if(std::find(parentQueryIds.begin(), parentQueryIds.end(),id) == parentQueryIds.end()){
+               queryCatalog->markQueryAs(id,QueryStatus::Restart);
+               queryRequestQueue->add(queryCatalog->getQueryCatalogEntry(id));
                parentQueryIds.push_back(id);
            }
         }
     }
     auto  ID = parentQueryIds.front();
     NES_DEBUG("ID of first query :" << std::to_string(ID));
+
 
     return parentQueryIds;
 }
