@@ -99,11 +99,6 @@ class SharedQueryMetaData {
     bool removeQueryId(QueryId queryId);
 
     /**
-     * @brief This method will recursively remove the child and its children GQN that have no or only 1 parent
-     */
-    void removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode);
-
-    /**
      * @brief Clear all MetaData information
      */
     void clear();
