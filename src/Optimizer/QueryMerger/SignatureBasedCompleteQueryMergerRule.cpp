@@ -62,57 +62,44 @@ bool SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQuery
 
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
-            std::map<uint64_t, uint64_t> targetHostSinkNodeMap;
-            bool areEqual;
+            std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
             for (auto hostSink : hostQueryPlan->getSinkOperators()) {
-                areEqual = false;
+                bool foundMatch = false;
                 for (auto targetSink : targetQueryPlan->getSinkOperators()) {
-                    //Check if the address and target sink signatures match each other
+                    //Check if the address and target sink operator signatures match each other
                     if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
-                        targetHostSinkNodeMap[targetSink->getId()] = hostSink->getId();
-                        areEqual = true;
+                        targetToHostSinkOperatorMap[targetSink] = hostSink;
+                        foundMatch = true;
                         break;
                     }
                 }
-                if (!areEqual) {
+                if (!foundMatch) {
                     NES_WARNING("SignatureBasedCompleteQueryMergerRule: There are not equal Target sink for Host sink "
                                 << hostSink->toString());
+                    targetToHostSinkOperatorMap.clear();
                     break;
                 }
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata
-            if (!areEqual) {
+            if (targetToHostSinkOperatorMap.empty()) {
                 NES_WARNING("SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
                 continue;
             }
 
-            std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkOperators();
-            //Iterate over all target sink global query node
-            for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkOperators()) {
-                //Check for the target sink global query node the corresponding address sink global query node id in the map
-                uint64_t hostSinkOperatorId = targetHostSinkNodeMap[targetSinkGQN->getOperator()->getId()];
+            NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
-                // Find the address sink global query node with the matching id
-                auto found =
-                    std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(), [hostSinkOperatorId](GlobalQueryNodePtr hostSinkGQN) {
-                        return hostSinkGQN->getOperator()->getId() == hostSinkOperatorId;
-                    });
-
-                if (found == hostSinkGQNs.end()) {
-                    NES_THROW_RUNTIME_ERROR("SignatureBasedCompleteQueryMergerRule: Unexpected behaviour");
+            //Iterate over all matched pairs of sink operators and merge the query plan
+            for (auto [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
+                for (auto childToMerge : targetSinkOperator->getChildren()) {
+                    for (auto hostChild : hostSinkOperator->getChildren()) {
+                        hostSharedQueryMetaData->mergeOperatorInto(childToMerge->as<OperatorNode>(),
+                                                                   hostChild->as<OperatorNode>());
+                    }
                 }
-
-                //Remove all children of target sink global query node
-                targetSinkGQN->removeChildren();
-
-                //Add children of matched address sink global query node to the target sink global query node
-                for (auto hostChild : (*found)->getChildren()) {
-                    hostChild->addParent(targetSinkGQN);
-                }
+                hostQueryPlan->addRootOperator(targetSinkOperator);
             }
 
-            NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
             hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
             //Clear the target shared query metadata
             targetSharedQueryMetaData->clear();

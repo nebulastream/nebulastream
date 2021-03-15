@@ -60,15 +60,15 @@ bool SharedQueryMetaData::removeQueryId(QueryId queryId) {
 
         //Remove sink operator and associated operators from query plan
         if (!queryPlan->removeRootOperatorFromPlan(sinkOperator)) {
-            NES_ERROR("");
+            NES_ERROR("SharedQueryMetaData: ");
             return false;
         }
         //Remove the sink operator from the collection of sink operators in the global query metadata
         sinkOperators.erase(std::remove(sinkOperators.begin(), sinkOperators.end(), sinkOperator), sinkOperators.end());
-        NES_ERROR("Unable to find query's sink global query node in the set of Sink global query nodes in the metadata");
-        return false;
     }
     queryIdToSinkOperatorMap.erase(queryId);
+    //Mark the meta data as updated but not deployed
+    markAsNotDeployed();
     return true;
 }
 
@@ -121,16 +121,6 @@ void SharedQueryMetaData::clear() {
     markAsNotDeployed();
 }
 
-void SharedQueryMetaData::removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode) {
-
-    for (auto& child : globalQueryNode->getChildren()) {
-        if (!child->getParents().empty() && child->getParents().size() == 1) {
-            removeExclusiveChildren(child->as<GlobalQueryNode>());
-        }
-    }
-    globalQueryNode->removeChildren();
-}
-
 bool SharedQueryMetaData::addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData) {
 
     NES_DEBUG("SharedQueryMetaData: Adding query metadata to this");
@@ -169,67 +159,5 @@ bool SharedQueryMetaData::mergeOperatorInto(OperatorNodePtr operatorToMerge, Ope
     return true;
 }
 
-QueryPlanPtr SharedQueryMetaData::getQueryPlan() {
-
-    return queryPlan;
-    /*NES_DEBUG("SharedQueryMetaData: Prepare the Query Plan based on the Global Query Metadata information");
-    std::vector<OperatorNodePtr> rootOperators;
-    std::map<uint64_t, OperatorNodePtr> operatorIdToOperatorMap;
-
-    // We process a Global Query node by extracting its operator and preparing a map of operator id to operator.
-    // We push the children operators to the queue of operators to be processed.
-    // Every time we encounter an operator, we check in the map if the operator with same id already exists.
-    // We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
-    // We then check the parent operators of the current operator by looking into the parent Global Query Nodes of the current
-    // Global Query Node and add them as the parent of the current operator.
-
-    std::deque<NodePtr> globalQueryNodesToProcess{sinkGlobalQueryNodes.begin(), sinkGlobalQueryNodes.end()};
-    while (!globalQueryNodesToProcess.empty()) {
-        auto gqnToProcess = globalQueryNodesToProcess.front()->as<GlobalQueryNode>();
-        globalQueryNodesToProcess.pop_front();
-        NES_TRACE("SharedQueryMetaData: Deserialize operator " << gqnToProcess->toString());
-        OperatorNodePtr operatorNode = gqnToProcess->getOperator()->copy();
-        uint64_t operatorId = operatorNode->getId();
-        if (operatorIdToOperatorMap[operatorId]) {
-            NES_TRACE("SharedQueryMetaData: Operator was already deserialized previously");
-            operatorNode = operatorIdToOperatorMap[operatorId];
-        } else {
-            NES_TRACE("SharedQueryMetaData: Deserializing the operator and inserting into map");
-            operatorIdToOperatorMap[operatorId] = operatorNode;
-        }
-
-        for (const auto& parentNode : gqnToProcess->getParents()) {
-            auto parentGQN = parentNode->as<GlobalQueryNode>();
-            if (parentGQN->getId() == 0) {
-                continue;
-            }
-            OperatorNodePtr parentOperator = parentGQN->getOperator();
-            uint64_t parentOperatorId = parentOperator->getId();
-            if (operatorIdToOperatorMap[parentOperatorId]) {
-                NES_TRACE("SharedQueryMetaData: Found the parent operator. Adding as parent to the current operator.");
-                parentOperator = operatorIdToOperatorMap[parentOperatorId];
-                operatorNode->addParent(parentOperator);
-            } else {
-                NES_ERROR("SharedQueryMetaData: unable to find the parent operator. This should not have occurred!");
-                return nullptr;
-            }
-        }
-
-        NES_TRACE("SharedQueryMetaData: add the child global query nodes for further processing.");
-        for (const auto& childGQN : gqnToProcess->getChildren()) {
-            globalQueryNodesToProcess.push_back(childGQN);
-        }
-    }
-
-    for (const auto& sinkGlobalQueryNode : sinkGlobalQueryNodes) {
-        NES_TRACE("SharedQueryMetaData: Finding the operator with same id in the map.");
-        auto rootOperator = sinkGlobalQueryNode->getOperator()->copy();
-        rootOperator = operatorIdToOperatorMap[rootOperator->getId()];
-        NES_TRACE("SharedQueryMetaData: Adding the root operator to the vector of roots for the query plan");
-        rootOperators.push_back(rootOperator);
-    }
-    operatorIdToOperatorMap.clear();
-    return QueryPlan::create(sharedQueryId, INVALID_QUERY_ID, rootOperators);*/
-}
-
+QueryPlanPtr SharedQueryMetaData::getQueryPlan() { return queryPlan; }
 }// namespace NES
