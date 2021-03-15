@@ -74,23 +74,24 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         default: {
-//            NES_ERROR("unsupported type " << (int)task.getType());
-            break;
+            NES_THROW_RUNTIME_ERROR("unsupported");
         }
     }
 }
 
 void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId);
-    Reconfigurable::postReconfigurationCallback(task);
+    NES::SinkMedium::postReconfigurationCallback(task);
     switch (task.getType()) {
         case NodeEngine::HardEndOfStream:
         case NodeEngine::SoftEndOfStream: {
-            queryManager->addReconfigurationMessage(parentPlanId, NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this()), false);
+            auto newReconf = NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this());
+            queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
             break;
         }
-        default:
+        default: {
             break;
+        }
     }
 }
 }// namespace Network
