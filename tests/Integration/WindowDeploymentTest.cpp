@@ -1854,6 +1854,54 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
 }
 
 /*
+ * @brief Test if the min aggregation can be deployed
+ */
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
+    struct Car {
+        uint32_t key;
+        float value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createFloat())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Min(Attribute("value"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    testHarness.pushElement<Car>({1, 15.0, 1000}, 0);
+    testHarness.pushElement<Car>({1, 99.0, 1500}, 0);
+    testHarness.pushElement<Car>({1, 20.0, 2000}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        uint32_t key;
+        float value;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value == rhs.value && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, 15}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
  * @brief Test if the Count aggregation can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
