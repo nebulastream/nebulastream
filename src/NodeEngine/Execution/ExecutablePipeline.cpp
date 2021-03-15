@@ -167,7 +167,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                     queryManager->addReconfigurationMessage(qepId, newReconf, false);
                     NES_DEBUG("Going to triggering reconfig whole plan belonging to subplanId: "
                               << qepId << " stage id: " << pipelineStageId << " got SoftEndOfStream on last pipeline");
-                } else {//in this branch, we reoncfigure the pipeline itself
+                } else {//in this branch, we reoncfigure the next pipeline itself
                     auto queryManager = pipelineContext->getQueryManager();
                     auto newReconf = ReconfigurationMessage(qepId, SoftEndOfStream, nextPipeline,
                                                             std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
