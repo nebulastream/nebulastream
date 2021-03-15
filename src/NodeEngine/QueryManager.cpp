@@ -448,6 +448,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1 || taskQueue.size() > upperBound) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             waitCounter++;
+            NES_DEBUG("Waiting");
             //TODO: we have to do this because it could be that a source is stuck here and then the shutdown crashes, so basically we test 100x for 100ms
             // and then release the break
             if (tryCnt++ == 100) {
