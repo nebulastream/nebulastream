@@ -74,7 +74,7 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("unsupported");
+            NES_ERROR("unsupported");
         }
     }
 }
