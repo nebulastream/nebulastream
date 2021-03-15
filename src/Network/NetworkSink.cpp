@@ -74,7 +74,8 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         default: {
-            NES_ERROR("unsupported type " << (int)task.getType());
+//            NES_ERROR("unsupported type " << (int)task.getType());
+            break;
         }
     }
 }
@@ -88,6 +89,8 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
             queryManager->addReconfigurationMessage(parentPlanId, NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this()), false);
             break;
         }
+        default:
+            break;
     }
 }
 }// namespace Network
