@@ -67,8 +67,7 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
                                                                       << NodeEngine::NesThread::getId());
             break;
         }
-        case NodeEngine::HardEndOfStream:
-        case NodeEngine::SoftEndOfStream: {
+        case NodeEngine::Destroy: {
             workerContext.releaseChannel(nesPartition.getOperatorId());
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
                                                                         << NodeEngine::NesThread::getId());
@@ -84,7 +83,15 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
     NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId);
     Reconfigurable::postReconfiguration(task);
     switch (task.getType()) {
-
+        case NodeEngine::HardEndOfStream:
+        case NodeEngine::SoftEndOfStream: {
+            auto queryManager = pipelineContext->getQueryManager();
+            NES_ASSERT2_FMT(!targetQep.expired(),
+                            "Invalid qep for reconfig of subplanId: " << qepId << " stage id: " << pipelineStageId);
+            auto newReconf = ReconfigurationMessage(qepId, Destroy, this);
+            queryManager->addReconfigurationMessage(queryPlanId, newReconf, false);
+            break;
+        }
     }
 }
 }// namespace Network
