@@ -718,7 +718,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     NES::AbstractPhysicalStreamConfigPtr conf1 =
         NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 3, 0);
     wrk1->registerPhysicalStream(conf1);
-//
+
     NES::AbstractPhysicalStreamConfigPtr conf2 =
         NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", std::move(func2), 3, 0);
     wrk1->registerPhysicalStream(conf2);

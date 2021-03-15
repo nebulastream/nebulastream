@@ -19,14 +19,14 @@
 
 using namespace Benchmarking;
 
-const NES::DebugLevel DEBUG_LEVEL = NES::LOG_WARNING;//NES::LOG_NONE
+const NES::DebugLevel LOG_LEVEL = NES::LOG_NONE;
 
 /**
  * @brief This benchmarks runs a projection query on one worker and one coordinator
  * @return
  */
 int main() {
-    NES::setupLogging("E2EJoinBenchmark.log", DEBUG_LEVEL);
+    NES::setupLogging("E2EJoinBenchmark.log", LOG_LEVEL);
     std::cout << "Setup E2EJoinBenchmark test class." << std::endl;
 
     // Number of workerThreads in nodeEngine
