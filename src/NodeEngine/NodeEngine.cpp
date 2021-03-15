@@ -21,6 +21,7 @@
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -30,7 +31,6 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
-#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 
 namespace NES::NodeEngine {
 
@@ -485,7 +485,6 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << queryId);
     std::vector<QuerySubPlanId> querySubPlanIds = (*foundQuerySubPlanIds).second;
     for (auto querySubPlanId : querySubPlanIds) {
-//        NES_WARNING("push back for " << querySubPlanId << " strg=" << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
         queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
     }
     return queryStatistics;
@@ -496,18 +495,15 @@ Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitio
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
-    auto schema = sourceDescriptor->getSchema();
-
-    if(configs.size() > 1)
-    {
+    //we have to decide where many cases
+    // 1.) if we specify a build-in source like default source, then we have only one config but call this for each source
+    // 2.) if we have really two sources, then we would have two real configurations here
+    if (configs.size() > 1) {
         NES_ASSERT(!configs.empty(), "no config for Lambda source");
         auto conf = configs.back();
         configs.pop_back();
         return conf->build(sourceDescriptor->getSchema());
-    }
-    else
-    {
-        assert(configs.size() == 1);
+    } else {
         NES_ASSERT(configs[0], "physical source config is not specified");
         return configs[0]->build(sourceDescriptor->getSchema());
     }

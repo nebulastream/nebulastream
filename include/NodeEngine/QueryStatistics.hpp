@@ -89,24 +89,31 @@ class QueryStatistics {
   */
     void setProcessedBuffers(const std::atomic<uint64_t>& processedBuffers);
 
+    /**
+     * @brief return the current statistics as a string
+     * @return statistics as a string
+     */
     std::string getQueryStatisticsAsString();
+
+    /**
+    * @brief get the query id of this queriy
+    * @return queryId
+    */
+    uint64_t getQueryId() const;
+
+    /**
+     * @brief get the sub id of this qep (the pipeline stage)
+     * @return subqueryID
+     */
+    uint64_t getSubQueryId() const;
 
   private:
     std::atomic<uint64_t> processedTasks;
     std::atomic<uint64_t> processedTuple;
     std::atomic<uint64_t> processedBuffers;
     std::atomic<uint64_t> processedWatermarks;
-    uint64_t queryId;
-    uint64_t subQueryId;
-
-  public:
-    void setQueryId(uint64_t queryId);
-    void setSubQueryId(uint64_t subQueryId);
-
-  public:
-    uint64_t getQueryId() const;
-    uint64_t getSubQueryId() const;
-  private:
+    std::atomic<uint64_t> queryId;
+    std::atomic<uint64_t> subQueryId;
 };
 
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;

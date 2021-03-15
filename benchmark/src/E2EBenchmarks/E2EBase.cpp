@@ -84,29 +84,30 @@ void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
-        for (auto it : queryStatisticsPtrs) {
+        for (auto iter : queryStatisticsPtrs) {
             auto start = std::chrono::system_clock::now();
             auto in_time_t = std::chrono::system_clock::to_time_t(start);
             std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>"
-                      << it->getQueryStatisticsAsString() << std::endl;
+                      << iter->getQueryStatisticsAsString() << std::endl;
 
-            if (it->getProcessedTuple() == 0) {
+            if (iter->getProcessedTuple() == 0) {
                 NES_ERROR("No Output produced on time " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X"));
             } else {
                 //if first iteration just push the first value
-                if (subPlanIdToTaskCnt.count(it->getSubQueryId() ) == 0) {
-                    subPlanIdToTaskCnt[it->getSubQueryId()] = it->getProcessedTasks();
-                    subPlanIdToBufferCnt[it->getSubQueryId()] = it->getProcessedBuffers();
-                    subPlanIdToTuplelCnt[it->getSubQueryId()] = it->getProcessedTuple();
+                if (subPlanIdToTaskCnt.count(iter->getSubQueryId() ) == 0) {
+                    subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
+                    subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
+                    subPlanIdToTuplelCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
                 }
 
                 //if last iteration do last - first
                 if (i + 1 == EXPERIMENT_RUNTIME_IN_SECONDS + 1) {
-                    subPlanIdToTaskCnt[it->getSubQueryId()] = it->getProcessedTasks() - subPlanIdToTaskCnt[it->getSubQueryId()];
-                    subPlanIdToBufferCnt[it->getSubQueryId()] =
-                        it->getProcessedBuffers() - subPlanIdToBufferCnt[it->getSubQueryId()];
-                    subPlanIdToTuplelCnt[it->getSubQueryId()] =
-                        it->getProcessedTuple() - subPlanIdToTuplelCnt[it->getSubQueryId()];
+                    subPlanIdToTaskCnt[iter->getSubQueryId()] =
+                        iter->getProcessedTasks() - subPlanIdToTaskCnt[iter->getSubQueryId()];
+                    subPlanIdToBufferCnt[iter->getSubQueryId()] =
+                        iter->getProcessedBuffers() - subPlanIdToBufferCnt[iter->getSubQueryId()];
+                    subPlanIdToTuplelCnt[iter->getSubQueryId()] =
+                        iter->getProcessedTuple() - subPlanIdToTuplelCnt[iter->getSubQueryId()];
                 }
             }
         }
@@ -303,7 +304,7 @@ void E2EBase::setupSources() {
             wrk1->registerPhysicalStream(conf2);
         }
     } else {
-        NES_ASSERT(false, "input output mode not supported");
+        NES_ASSERT2_FMT(false, "input output mode not supported " << getInputOutputModeAsString(mode));
     }
 }
 

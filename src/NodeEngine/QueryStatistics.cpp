@@ -55,8 +55,6 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedWatermarks=" << processedWatermarks;
     return ss.str();
 }
-uint64_t QueryStatistics::getQueryId() const { return queryId; }
-uint64_t QueryStatistics::getSubQueryId() const { return subQueryId; }
-void QueryStatistics::setQueryId(uint64_t queryId) { QueryStatistics::queryId = queryId; }
-void QueryStatistics::setSubQueryId(uint64_t subQueryId) { QueryStatistics::subQueryId = subQueryId; }
+uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
+uint64_t QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
 }// namespace NES::NodeEngine

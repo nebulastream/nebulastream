@@ -58,8 +58,6 @@ class GeneratorSource : public DataSource {
     virtual ~GeneratorSource();
   protected:
     GeneratorSource() = default;
-
-
 };
 
 }// namespace NES
