@@ -15,6 +15,7 @@
 */
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
@@ -26,6 +27,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/TestHarness.hpp>
 #include <iostream>
 
 using namespace std;
@@ -1489,6 +1491,57 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
 
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
+}
+
+/*
+ * Testing test harness CSV source
+ */
+TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("timestamp") >= 100000))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
+
+    //register physical stream
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->setPhysicalStreamName("car");
+    sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
+    sourceConfig->setSourceFrequency(0);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfig->setNumberOfBuffersToProduce(1000);
+    sourceConfig->setSkipHeader(false);
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    testHarness.addCSVSource(conf, carSchema);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
+    };
+    std::vector<Output> expectedOutput = {{1, 1, 100000}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
 }// namespace NES
