@@ -648,7 +648,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     string path2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
                    + " --dataPort=" + worker1DataPort
                    + " --logicalStreamName=Rating --physicalStreamName=test_stream --sourceType=NettySource "
-                     "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=100 --sourceFrequency=1";
+                     "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --address=127.0.0.1";
 
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());

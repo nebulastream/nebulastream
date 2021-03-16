@@ -55,6 +55,7 @@ struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @return string representing source config
      */
     const std::string getSourceConfig() const;
+    const std::string getAddress() const;
 
     /**
      * @brief get source frequency
@@ -104,6 +105,7 @@ struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     std::chrono::milliseconds sourceFrequency;
     uint32_t numberOfTuplesToProducePerBuffer;
     uint32_t numberOfBuffersToProduce;
+    std::string address;
 
     std::string physicalStreamName;
     std::string logicalStreamName;

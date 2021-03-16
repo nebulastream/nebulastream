@@ -21,38 +21,40 @@ namespace NES {
 
 NettySourceDescriptor::NettySourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
                                          uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, bool skipHeader)
+                                         uint64_t frequency, bool skipHeader, std::string address)
     : SourceDescriptor(std::move(schema)), filePath(std::move(filePath)), delimiter(std::move(delimiter)),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), numBuffersToProcess(numBuffersToProcess),
-      frequency(frequency), skipHeader(skipHeader) {}
+      frequency(frequency), skipHeader(skipHeader),address(std::move(address)) {}
 
 NettySourceDescriptor::NettySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                          uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                         uint64_t frequency, bool skipHeader)
+                                         uint64_t frequency, bool skipHeader, std::string address)
     : SourceDescriptor(std::move(schema), std::move(streamName)), filePath(std::move(filePath)),
       delimiter(std::move(delimiter)), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer),
-      numBuffersToProcess(numBuffersToProcess), frequency(frequency), skipHeader(skipHeader) {}
+      numBuffersToProcess(numBuffersToProcess), frequency(frequency), skipHeader(skipHeader),address(std::move(address)) {}
 
 SourceDescriptorPtr NettySourceDescriptor::create(SchemaPtr schema, std::string filePath, std::string delimiter,
                                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                                                uint64_t frequency, bool skipHeader) {
+                                                uint64_t frequency, bool skipHeader, std::string address) {
     return std::make_shared<NettySourceDescriptor>(NettySourceDescriptor(std::move(schema), std::move(filePath), std::move(delimiter),
                                                                      numberOfTuplesToProducePerBuffer, numBuffersToProcess,
-                                                                     frequency, skipHeader));
+                                                                     frequency, skipHeader,std::move(address)));
 }
 
 SourceDescriptorPtr NettySourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string filePath,
                                                 std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
                                                 uint64_t numBuffersToProcess, uint64_t frequency,
-                                                bool skipHeader) {
+                                                bool skipHeader, std::string address) {
     return std::make_shared<NettySourceDescriptor>(NettySourceDescriptor(
         std::move(schema), std::move(streamName), std::move(filePath), std::move(delimiter), numberOfTuplesToProducePerBuffer,
-        numBuffersToProcess, frequency, skipHeader));
+        numBuffersToProcess, frequency, skipHeader,std::move(address)));
 }
 
 const std::string& NettySourceDescriptor::getFilePath() const { return filePath; }
 
 const std::string& NettySourceDescriptor::getDelimiter() const { return delimiter; }
+
+const std::string& NettySourceDescriptor::getAddress()  const { return address; }
 
 bool NettySourceDescriptor::getSkipHeader() const { return skipHeader; }
 
@@ -68,7 +70,7 @@ bool NettySourceDescriptor::equal(SourceDescriptorPtr other) {
     auto otherSource = other->as<NettySourceDescriptor>();
     return filePath == otherSource->getFilePath() && delimiter == otherSource->getDelimiter()
         && numBuffersToProcess == otherSource->getNumBuffersToProcess() && frequency == otherSource->getFrequency()
-        && getSchema()->equals(otherSource->getSchema());
+        && getSchema()->equals(otherSource->getSchema()) && address == otherSource->getAddress();
 }
 
 std::string NettySourceDescriptor::toString() {

@@ -47,13 +47,14 @@ namespace NES {
 
 NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                          const std::string filePath, const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
-                         uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId)
+                         uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId,  std::string address)
     : DataSource(schema, bufferManager, queryManager, operatorId), filePath(filePath), delimiter(delimiter),
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0),
-      skipHeader(skipHeader) {
+      skipHeader(skipHeader),address(address) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();
+    this->address = address;
   /*  NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
                                       << numberOfTuplesToProducePerBuffer << "endlessRepeat=" << endlessRepeat);
@@ -121,8 +122,9 @@ void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
     serv_addr.sin_port = htons(PORT);
     //172.16.0.254
     // Convert IPv4 and IPv6 addresses from text to binary form
-    if (inet_pton(AF_INET, "172.16.0.254", &serv_addr.sin_addr) <= 0) {
-        NES_ERROR("Invalid address/ Address not supported ");
+    if (inet_pton(AF_INET,address.c_str(), &serv_addr.sin_addr) <= 0) {
+        NES_ERROR(" Invalid address/ Address not supported ");
+        NES_ERROR(address.c_str());
         return;
     }
 
@@ -255,6 +257,7 @@ SourceType NettySource::getType() const { return CSV_SOURCE; }
 const std::string NettySource::getFilePath() const { return filePath; }
 
 const std::string NettySource::getDelimiter() const { return delimiter; }
+const std::string NettySource::getAddress()  const { return address; }
 
 const uint64_t NettySource::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
 /*

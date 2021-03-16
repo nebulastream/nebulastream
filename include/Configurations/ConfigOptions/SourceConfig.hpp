@@ -60,6 +60,7 @@ class SourceConfig {
      * @brief gets a ConfigOption object with sourceType
      */
     const std::shared_ptr<ConfigOption<std::string>> getSourceType() const;
+    const std::shared_ptr<ConfigOption<std::string>> getAddress() const;
 
     /**
      * @brief set the value for sourceType with the appropriate data format
@@ -75,6 +76,7 @@ class SourceConfig {
      * @brief set the value for sourceConfig with the appropriate data format
      */
     void setSourceConfig(std::string sourceConfigValue);
+    void setAddress(std::string address);
 
     /**
      * @brief gets a ConfigOption object with sourceFrequency
@@ -143,6 +145,7 @@ class SourceConfig {
     SourceConfig();
     StringConfigOption sourceType;
     StringConfigOption sourceConfig;
+    StringConfigOption address;
     IntConfigOption sourceFrequency;
     IntConfigOption numberOfBuffersToProduce;
     IntConfigOption numberOfTuplesToProducePerBuffer;

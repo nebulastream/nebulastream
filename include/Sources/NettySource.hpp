@@ -43,7 +43,7 @@ class NettySource : public DataSource {
 
     explicit NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager, const std::string filePath,
                        const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess,
-                       uint64_t frequency, bool skipHeader, OperatorId operatorId);
+                       uint64_t frequency, bool skipHeader, OperatorId operatorId, const std::string address);
 
 /**
      * @brief override the receiveData method for the csv source
@@ -90,6 +90,7 @@ class NettySource : public DataSource {
 
 
     const std::string getDelimiter() const;
+    const std::string getAddress() const;
 
     const uint64_t getNumberOfTuplesToProducePerBuffer() const;
 
@@ -110,6 +111,7 @@ class NettySource : public DataSource {
     bool endlessRepeat;
     std::ifstream input;
     bool loopOnFile;
+    std::string address;
 
     uint64_t fileSize;
     bool fileEnded;

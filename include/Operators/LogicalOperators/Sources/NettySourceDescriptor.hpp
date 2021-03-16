@@ -29,11 +29,11 @@ class NettySourceDescriptor : public SourceDescriptor {
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, std::string delimiter, uint64_t numBuffersToProcess,
                                       uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency,
-                                      bool skipHeader);
+                                      bool skipHeader, std::string address);
 
     static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                       uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                      bool skipHeader);
+                                      bool skipHeader, std::string address);
 
     /**
      * @brief get file path for reading the csv file
@@ -44,6 +44,7 @@ class NettySourceDescriptor : public SourceDescriptor {
      * @brief get delimiter for the csv file
      */
     const std::string& getDelimiter() const;
+    const std::string& getAddress() const;
 
     /**
      * @brief Get number of buffers to process
@@ -77,17 +78,18 @@ class NettySourceDescriptor : public SourceDescriptor {
   private:
     explicit NettySourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                  bool skipHeader);
+                                  bool skipHeader, std::string address);
 
     explicit NettySourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
                                  uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
-                                  bool skipHeader);
+                                  bool skipHeader, std::string address);
 
     std::string filePath;
     std::string delimiter;
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
     uint64_t frequency;
+    std::string address;
     bool skipHeader;
 };
 

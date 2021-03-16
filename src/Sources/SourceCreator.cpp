@@ -105,10 +105,10 @@ const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferMa
                                           NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
                                           const std::string& delimiter, uint64_t numberOfTuplesToProducePerBuffer,
                                           uint64_t numbersOfBufferToProduce, uint64_t frequency, bool skipHeader,
-                                          OperatorId operatorId) {
+                                          OperatorId operatorId, const std::string& address) {
     return std::make_shared<NettySource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                          numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency,
-                                         skipHeader, operatorId);
+                                         skipHeader, operatorId,address);
 }
 
 
