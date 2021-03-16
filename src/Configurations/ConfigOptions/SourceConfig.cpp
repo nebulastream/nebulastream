@@ -39,6 +39,7 @@ SourceConfig::SourceConfig() {
     physicalStreamName =
         ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.");
     logicalStreamName = ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.");
+    address = ConfigOption<std::string>::create("address", "localhost", "IP of the input generator.");
     skipHeader = ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.");
 }
 
@@ -56,6 +57,7 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
             setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
             setLogicalStreamName(config["logicalStreamName"].As<std::string>());
+            setAddress(config["address"].As<std::string>());
             setSkipHeader(config["skipHeader"].As<bool>());
         } catch (std::exception& e) {
             NES_ERROR("NesWorkerConfig: Error while initializing configuration parameters from XAML file.");
@@ -87,6 +89,8 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
                 setLogicalStreamName(it->second);
             } else if (it->first == "--skipHeader") {
                 setSkipHeader((it->second == "true"));
+            } else if (it->first == "--address") {
+                setAddress((it->second));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -107,9 +111,11 @@ void SourceConfig::resetSourceOptions() {
     setPhysicalStreamName(physicalStreamName->getDefaultValue());
     setLogicalStreamName(logicalStreamName->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
+    setAddress(address->getDefaultValue());
 }
 
 const StringConfigOption SourceConfig::getSourceType() const { return sourceType; }
+const StringConfigOption SourceConfig::getAddress() const { return address; }
 
 const StringConfigOption SourceConfig::getSourceConfig() const { return sourceConfig; }
 
@@ -146,6 +152,12 @@ void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
 void SourceConfig::setLogicalStreamName(std::string logicalStreamNameValue) {
     logicalStreamName->setValue(logicalStreamNameValue);
 }
+
+void SourceConfig::setAddress(std::string addressValue) {
+
+    address->setValue(addressValue);
+}
+
 
 void SourceConfig::setSkipHeader(bool skipHeaderValue) { skipHeader->setValue(skipHeaderValue); }
 
