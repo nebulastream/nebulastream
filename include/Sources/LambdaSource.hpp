@@ -42,6 +42,13 @@ class LambdaSource : public GeneratorSource {
 
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
+    /**
+     * @brief method to stop the source.
+     * 1.) check if bool running is false, if false return, if not stop source
+     * 2.) stop thread by join
+     */
+    bool stop(bool graceful) override;
+
   private:
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };

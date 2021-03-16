@@ -93,7 +93,7 @@ uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                   "call setup and start.");
         // TODO we have to assure that execute is never called after stop.
         // This is somehow not working currently.
-        // return -1;
+        return -1;
     }
     return executablePipelineStage->execute(inputTupleBuffer, pipelineExecutionContext, workerContext);
 }

@@ -78,14 +78,14 @@ class RestEngine : public BaseController {
 
     ~RestEngine();
 
-    void handleGet(http_request message);
-    void handlePost(http_request message);
-    void handleDelete(http_request message);
-    void handlePut(http_request message);
-    void handlePatch(http_request message);
-    void handleHead(http_request message);
-    void handleTrace(http_request message);
-    void handleMerge(http_request message);
+    void handleGet(http_request request);
+    void handlePost(http_request request);
+    void handleDelete(http_request request);
+    void handlePut(http_request request);
+    void handlePatch(http_request request);
+    void handleHead(http_request request);
+    void handleTrace(http_request request);
+    void handleMerge(http_request request);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
     std::string endpoint() const;

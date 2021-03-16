@@ -47,6 +47,8 @@ ExecutableQueryPlan::~ExecutableQueryPlan() {
                "QueryPlan is created but not executing " << queryId);
     sources.clear();
     pipelines.clear();
+    sinks.clear();
+    bufferManager.reset();
 }
 
 std::shared_future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture() {
@@ -145,11 +147,19 @@ bool ExecutableQueryPlan::stop() {
 
         if (allStagesStopped) {
             qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+            sources.clear();
+            pipelines.clear();
+            sinks.clear();
+            bufferManager.reset();
             return true;// correct stop
         }
 
         qepStatus.store(ErrorState);
         qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
+        sources.clear();
+        pipelines.clear();
+        sinks.clear();
+        bufferManager.reset();
         return false;// one stage failed to stop
     }
 
@@ -157,6 +167,11 @@ bool ExecutableQueryPlan::stop() {
     while (!qepStatus.compare_exchange_strong(expected, ErrorState)) {
         // try to install ErrorState
     }
+
+    sources.clear();
+    pipelines.clear();
+    sinks.clear();
+    bufferManager.reset();
     return false;
 }
 
@@ -190,6 +205,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
                 return;
             }
+            break;
         }
         default: {
             break;

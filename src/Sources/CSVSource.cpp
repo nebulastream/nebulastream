@@ -103,7 +103,9 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     } else {
         generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
     }
-    NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generated_tuples_this_pass);
+    NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generated_tuples_this_pass << " of size=" << tupleSize);
+    NES_ASSERT(generated_tuples_this_pass * tupleSize < buf.getBufferSize(),
+               "Error in CSV reading, the required amount of tuples do not fit into one buffer");
 
     std::string line;
     uint64_t tupCnt = 0;
@@ -138,7 +140,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
         }
 
         std::getline(input, line);
-        NES_DEBUG("CSVSource line=" << tupCnt << " val=" << line);
+        NES_TRACE("CSVSource line=" << tupCnt << " val=" << line);
         std::vector<std::string> tokens;
         boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
         uint64_t offset = 0;
@@ -153,6 +155,10 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
              * TODO: this requires underflow/overflow checks
              * TODO: our types need their own sto/strto methods
              */
+                NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
+                                "Overflow detected: buffer size = " << buf.getBufferSize()
+                                                                    << " position = " << (offset + tupCnt * tupleSize)
+                                                                    << " field size " << fieldSize);
                 if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
                     uint64_t val = std::stoull(tokens[j].c_str());
                     memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
@@ -201,8 +207,8 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
 
     currentPosInFile = input.tellg();
     buf.setNumberOfTuples(tupCnt);
-    NES_DEBUG("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
-    NES_DEBUG("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+    NES_TRACE("CSVSource::fillBuffer: reading finished read " << tupCnt << " tuples at posInFile=" << currentPosInFile);
+    NES_TRACE("CSVSource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
     //update statistics
 }

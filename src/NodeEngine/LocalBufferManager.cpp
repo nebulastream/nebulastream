@@ -35,14 +35,27 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
 }
 
 LocalBufferManager::~LocalBufferManager() {
+    // nop
+}
+
+void LocalBufferManager::destroy() {
+    NES_DEBUG("Destroying LocalBufferManager");
     std::unique_lock lock(mutex);
+    auto ownedBufferManager = bufferManager.lock();
+    NES_ASSERT2_FMT(numberOfReservedBuffers == exclusiveBuffers.size(),
+                    "one or more buffers were not returned to the pool " << exclusiveBuffers.size() << " but expected "
+                                                                         << numberOfReservedBuffers);
+    NES_DEBUG("buffers before=" << ownedBufferManager->getAvailableBuffers()
+                                << " size of local buffers=" << exclusiveBuffers.size());
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
         auto memSegment = exclusiveBuffers.front();
         exclusiveBuffers.pop_front();
-        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
-        bufferManager->recyclePooledBuffer(memSegment);
+        memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
+        ownedBufferManager->recyclePooledBuffer(memSegment);
     }
+    NES_DEBUG("buffers after=" << ownedBufferManager->getAvailableBuffers()
+                               << " size of local buffers=" << exclusiveBuffers.size());
 }
 
 size_t LocalBufferManager::getAvailableExclusiveBuffers() const {
@@ -67,7 +80,10 @@ TupleBuffer LocalBufferManager::getBuffer() {
         }
     }
     // fallback to global pool
-    return bufferManager->getBufferBlocking();
+    if (bufferManager.expired()) {
+        NES_FATAL_ERROR("Buffer manager weak ptr is expired");
+    }
+    return bufferManager.lock()->getBufferBlocking();
 }
 
 void LocalBufferManager::recyclePooledBuffer(detail::MemorySegment* memSegment) {

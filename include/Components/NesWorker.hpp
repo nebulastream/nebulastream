@@ -184,7 +184,7 @@ class NesWorker {
     uint64_t numberOfBuffers;
     uint64_t bufferSizeInBytes;
     NodeType type;
-    std::atomic<bool> stopped;
+    std::atomic<bool> isRunning;
     TopologyNodeId topologyNodeId;
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions

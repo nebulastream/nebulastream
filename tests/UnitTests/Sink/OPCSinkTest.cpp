@@ -192,6 +192,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) expected value is: " << expected
                                                                                    << ". Received value is: " << value);
     EXPECT_EQ(value, expected);
+    tuple_buffer->release();
     nodeEngine1->stop();
     stopServer();
 }

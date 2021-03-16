@@ -22,7 +22,7 @@ using namespace Benchmarking;
 const NES::DebugLevel LOG_LEVEL = NES::LOG_NONE;
 
 /**
- * @brief This benchmarks runs a projection query on one worker and one coordinator
+ * @brief This benchmarks runs a selection query on one worker and one coordinator
  * @return
  */
 int main() {
@@ -41,14 +41,14 @@ int main() {
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
-    // source modes are
-    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::WindowMode};
+    // source modes
+    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
 
+    //add one field
     string query =
-        "Query::from(\"input\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-        "Seconds(1)), Sum(Attribute(\"value\"))).sink(NullOutputSinkDescriptor::create());";
+        "Query::from(\"input\").map(Attribute(\"value2\") = Attribute(\"value\") + 5).sink(NullOutputSinkDescriptor::create());";
 
-    std::string benchmarkName = "E2EWindowBenchmark";
+    std::string benchmarkName = "E2EMapBenchmark";
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
@@ -76,7 +76,7 @@ int main() {
     std::cout << "result=" << std::endl;
     std::cout << ss.str() << std::endl;
 
-    std::ofstream out("E2EWindowBenchmark.csv");
+    std::ofstream out("E2EMapBenchmark.csv");
     out << ss.str();
     out.close();
     std::cout << "benchmark finish" << std::endl;

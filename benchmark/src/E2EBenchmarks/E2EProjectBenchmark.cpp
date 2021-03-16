@@ -19,30 +19,32 @@
 
 using namespace Benchmarking;
 
+const NES::DebugLevel LOG_LEVEL = NES::LOG_NONE;
+
 /**
  * @brief This benchmarks runs a projection query on one worker and one coordinator
  * @return
  */
 int main() {
+    NES::setupLogging("E2EProjectBenchmark.log", LOG_LEVEL);
+    std::cout << "Setup E2EProjectBenchmark test class." << std::endl;
+
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 2, 1);
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 1, 2, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
-    // source mode
-    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::CacheMode, E2EBase::InputOutputMode::MemMode};
-    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::MemMode};
-    //            std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::CacheMode};
-    //        std::vector<E2EBase::InputOutputMode> allSourceModes {E2EBase::InputOutputMode::FileMode};
+    // source modes are
+    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
 
-    //roughly 2 out of 3 filds were removed
+    // 2 out of 3 fields were removeds
     string query = "Query::from(\"input\").project(Attribute(\"id\")).sink(NullOutputSinkDescriptor::create());";
 
     std::string benchmarkName = "E2EProjectBenchmark";
@@ -60,7 +62,7 @@ int main() {
             for (auto dataSourceCnt : allDataSources) {
                 std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
                 for (auto sourceMode : allSourceModes) {
-                    std::cout << "sourceMode=" << E2EBase::getInputOutputModeAsString(sourceMode) << std::endl;
+                    std::cout << "sourceMode=" << E2EBase::getInputOutputModeAsString(sourceMode) << " " << std::endl;
                     auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode);
                     ss << test->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion << "," << workerThreadCnt << ","
                        << coordinatorThreadCnt << "," << dataSourceCnt << "," << E2EBase::getInputOutputModeAsString(sourceMode);

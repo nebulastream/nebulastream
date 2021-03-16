@@ -86,7 +86,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&,
                         QueryCompilerPtr&&, uint64_t nodeEngineId);
 
-    ~NodeEngine();
+    virtual ~NodeEngine();
 
     NodeEngine() = delete;
     NodeEngine(const NodeEngine&) = delete;
@@ -242,7 +242,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
 
-    AbstractPhysicalStreamConfigPtr config;
+    std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
@@ -251,8 +251,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
     QueryCompilerPtr queryCompiler;
-    bool isReleased;
-    std::recursive_mutex engineMutex;
+    std::atomic<bool> isRunning;
+    mutable std::recursive_mutex engineMutex;
     uint64_t nodeEngineId;
 };
 

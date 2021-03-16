@@ -1991,8 +1991,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
      */
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 1");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
+    wrkConf->setRpcPort(port + 101);
+    wrkConf->setDataPort(port + 111);
     wrkConf->setNumberOfSlots(1);
     NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
@@ -2005,8 +2005,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 2");
     wrkConf->resetWorkerOptions();
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
+    wrkConf->setRpcPort(port + 200);
+    wrkConf->setDataPort(port + 210);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
@@ -2015,8 +2015,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 3");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 30);
-    wrkConf->setDataPort(port + 31);
+    wrkConf->setRpcPort(port + 300);
+    wrkConf->setDataPort(port + 310);
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
@@ -2025,8 +2025,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 4");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 40);
-    wrkConf->setDataPort(port + 41);
+    wrkConf->setRpcPort(port + 400);
+    wrkConf->setDataPort(port + 410);
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
@@ -2037,8 +2037,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 5");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 60);
-    wrkConf->setDataPort(port + 61);
+    wrkConf->setRpcPort(port + 600);
+    wrkConf->setDataPort(port + 601);
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
@@ -2047,8 +2047,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
 
     NES_DEBUG("DeepTopologyHierarchyTest: Start worker 6");
     wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 70);
-    wrkConf->setDataPort(port + 71);
+    wrkConf->setRpcPort(port + 700);
+    wrkConf->setDataPort(port + 710);
     NesWorkerPtr wrk6 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart6 = wrk6->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart6);
@@ -2107,8 +2107,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithThreeLevelTreeWithWindowDat
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$value:INTEGER\n"
-                             "0,2000,96\n"
-                             "2000,4000,256\n"
+                             "0,2000,40\n"
+                             "2000,4000,128\n"
                              "4000,6000,168\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));

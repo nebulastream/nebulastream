@@ -26,8 +26,8 @@ const NES::DebugLevel LOG_LEVEL = NES::LOG_NONE;
  * @return
  */
 int main() {
-    NES::setupLogging("E2EMapBenchmark.log", LOG_LEVEL);
-    std::cout << "Setup E2EMapBenchmark test class." << std::endl;
+    NES::setupLogging("E2EJoinBenchmark.log", LOG_LEVEL);
+    std::cout << "Setup E2EJoinBenchmark test class." << std::endl;
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
@@ -41,14 +41,14 @@ int main() {
     std::vector<uint16_t> allDataSources;
     BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
-    // source modes are
-    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::WindowMode};
+    // source modes
+    std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::JoinMode};
 
     string query =
-        "Query::from(\"input\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-        "Seconds(1)), Sum(Attribute(\"value\"))).sink(NullOutputSinkDescriptor::create());";
+        "Query::from(\"input1\").joinWith(Query::from(\"input2\"), Attribute(\"id\"), Attribute(\"id\"), "
+        "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Milliseconds(1000))).sink(NullOutputSinkDescriptor::create());";
 
-    std::string benchmarkName = "E2EWindowBenchmark";
+    std::string benchmarkName = "E2EJoinBenchmark";
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
@@ -76,7 +76,7 @@ int main() {
     std::cout << "result=" << std::endl;
     std::cout << ss.str() << std::endl;
 
-    std::ofstream out("E2EWindowBenchmark.csv");
+    std::ofstream out("E2EJoinBenchmark.csv");
     out << ss.str();
     out.close();
     std::cout << "benchmark finish" << std::endl;

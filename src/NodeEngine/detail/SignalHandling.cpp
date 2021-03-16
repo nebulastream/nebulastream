@@ -26,9 +26,9 @@
 namespace NES::NodeEngine {
 
 /// this mutex protected the globalErrorListeners vector
-static std::mutex globalErrorListenerMutex;
+static std::recursive_mutex globalErrorListenerMutex;
 /// this vector contains system-wide error listeners, e.g., NodeEngine and CoordinatorEngine
-static std::vector<std::shared_ptr<ErrorListener>> globalErrorListeners;
+static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
 
 /**
  * @brief calls to this function will create a NesRuntimeException that is passed to all system-wide error listeners
@@ -40,7 +40,7 @@ void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
     std::unique_lock lock(globalErrorListenerMutex);
     auto exception = std::make_shared<NesRuntimeException>(buffer, stacktrace);
     for (auto& listener : globalErrorListeners) {
-        listener->onFatalException(exception, stacktrace);
+        listener.lock()->onFatalException(exception, stacktrace);
     }
     std::exit(1);
 }
@@ -57,6 +57,21 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
     }
 }
 
+/**
+ * @brief remove an error listener system-wide
+ * @param listener the error listener to remove system-wide
+ */
+void removeGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
+    NES_DEBUG("removeGlobalErrorListener");
+    std::unique_lock lock(globalErrorListenerMutex);
+    for (auto it = globalErrorListeners.begin(); it != globalErrorListeners.end(); ++it) {
+        if (it->lock().get() == listener.get()) {
+            globalErrorListeners.erase(it);
+            return;
+        }
+    }
+}
+
 namespace detail {
 static backward::SignalHandling sh;
 
@@ -66,7 +81,7 @@ void nesErrorHandler(int signal) {
     {
         std::unique_lock lock(globalErrorListenerMutex);
         for (auto& listener : globalErrorListeners) {
-            listener->onFatalError(signal, stacktrace);
+            listener.lock()->onFatalError(signal, stacktrace);
         }
     }
     std::exit(1);
@@ -92,7 +107,7 @@ void nesTerminateHandler() {
     {
         std::unique_lock lock(globalErrorListenerMutex);
         for (auto& listener : globalErrorListeners) {
-            listener->onFatalException(currentException, stacktrace);
+            listener.lock()->onFatalException(currentException, stacktrace);
         }
     }
     std::exit(1);
@@ -117,7 +132,7 @@ void nesUnexpectedException() {
     {
         std::unique_lock lock(globalErrorListenerMutex);
         for (auto& listener : globalErrorListeners) {
-            listener->onFatalException(currentException, stacktrace);
+            listener.lock()->onFatalException(currentException, stacktrace);
         }
     }
     std::exit(1);

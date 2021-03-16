@@ -44,8 +44,8 @@ namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
-uint64_t rpcPort = 1200;
-uint64_t dataPort = 1400;
+uint64_t rpcPort = 4200;
+uint64_t dataPort = 4400;
 uint64_t restPort = 8000;
 uint16_t timeout = 5;
 
@@ -335,7 +335,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
         + " --dataPort=" + worker1DataPort
         + " --sourceType=CSVSource --sourceConfig=../tests/test_data/exdra.csv "
           "--numberOfBuffersToProduce=1 --sourceFrequency=1 --physicalStreamName=test_stream --logicalStreamName=exdra "
-          "--numberOfTuplesToProducePerBuffer=21";
+          "--numberOfTuplesToProducePerBuffer=11";
 
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
@@ -401,37 +401,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
         "Point,10.573558,52.531281,419bcfb4-b89b-4094-8990-e46a5ee533ff\n"
         "11,1262343710100,Wind Turbine Data Generated for Nebula "
         "Stream,6eaafae1-475c-48b7-854d-4434a2146eef,Features,4653,0.733402,758787.000000,1262300400000,0,electricityGeneration,"
-        "Point,6.627055,48.164005,d8fe578e-1e92-40d2-83bf-6a72e024d55a\n"
-        "12,1262343720110,Wind Turbine Data Generated for Nebula "
-        "Stream,f3c1611f-db1c-49bf-9376-3ccae7248644,Features,3593,0.586449,597841.062500,1411456,282737285664290,,Point,13."
-        "546017,47.870770,2ab9f413-848c-4ab4-a386-8615426e5c47\n"
-        "13,1262343730120,Wind Turbine Data Generated for Nebula "
-        "Stream,a72db07d-5c8c-4924-aeb3-e28c0bff1b2f,Features,3889,0.166697,56208.464844,1262300400000,1262308957774,"
-        "electricityGeneration,Point,11.567608,48.489555,467c65ac-7679-4727-a05b-256571b91a46\n"
-        "14,1262343740130,Wind Turbine Data Generated for Nebula "
-        "Stream,84f00be9-c353-442d-9356-ff0fb1caa2fb,Features,2235,0.166961,299295.375000,1262300400000,0,electricityGeneration,"
-        "Point,12.368753,52.965977,9792b6cf-63cf-4baa-ab28-5bd6ff04189f\n"
-        "15,1262343750140,Wind Turbine Data Generated for Nebula "
-        "Stream,e43f634d-9869-4d96-89db-0dc66a2b5134,Features,2764,0.444815,724771.125000,1262300400000,0,electricityGeneration,"
-        "Point,11.567235,50.497688,a2db5a94-3bde-48f8-b730-ed74c7308db3\n"
-        "16,1262343760150,Wind Turbine Data Generated for Nebula "
-        "Stream,4efb382a-03d6-42a0-b55c-a033cc7209e2,Features,4140,0.369035,1123561.250000,1262300400000,0,electricityGeneration,"
-        "Point,9.361658,51.083794,3c3cd5d7-4f19-4f89-bc14-f9328fce6b5e\n"
-        "17,1262343770160,Wind Turbine Data Generated for Nebula "
-        "Stream,33f13223-a0db-4246-9abb-2bf48ca78d94,Features,2338,0.610958,84045.023438,1262300400000,1262309011585,"
-        "electricityGeneration,Point,7.109556,49.864002,d10f3a8e-8acd-453a-9961-b135104d4998\n"
-        "18,1262343780170,Wind Turbine Data Generated for Nebula "
-        "Stream,524d29d6-4d8f-4f8b-b3b4-9c55dd2cdcb4,Features,611,0.709108,46676.929688,1262300400000,1262308305059,"
-        "electricityGeneration,Point,9.864325,48.852226,9d6d6d98-da5c-4d54-94ee-6686cabc7b74\n"
-        "19,1262343790180,Wind Turbine Data Generated for Nebula "
-        "Stream,68430660-21bf-42c5-affa-5827530fb389,Features,4526,0.463146,1461850.875000,1262300400000,1262310834053,"
-        "electricityGeneration,Point,8.018541,47.056126,05a44117-f261-4fed-90c9-3211c4324b14\n"
-        "20,1262343800190,Wind Turbine Data Generated for Nebula "
-        "Stream,1bfe930f-8aeb-449f-88b4-ec668aaadfbe,Features,555,0.726571,24144.589844,1262300400000,0,electricityGeneration,"
-        "Point,10.453132,47.310814,ff331964-4c3f-465e-8bba-f6f399d51fd1\n"
-        "21,1262343810200,Wind Turbine Data Generated for Nebula "
-        "Stream,0100f145-af35-4c8e-bde7-7e044460cc95,Features,4102,0.707496,2553631.000000,1262300400000,0,electricityGeneration,"
-        "Point,11.338407,50.952404,a56a07d4-fc60-48ba-9566-3378abec4254\n";
+        "Point,6.627055,48.164005,d8fe578e-1e92-40d2-83bf-6a72e024d55a\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
@@ -446,7 +416,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingSimplePattern) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingSimplePattern) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "testExecutingSimplePattern.out";
     remove(outputFilePath.c_str());

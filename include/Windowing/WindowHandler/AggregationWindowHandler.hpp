@@ -38,7 +38,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         uint64_t id)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
-          id(id), isRunning(false) {
+          id(id), isRunning(false), windowStateVariable(nullptr) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
@@ -84,6 +84,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
             result = executablePolicyTrigger->stop();
+            StateManager::instance().unRegisterState(toString());
         }
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop result =" << result);
         return result;
@@ -91,7 +92,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     std::string toString() override {
         std::stringstream ss;
-        ss << "AG:";
+        ss << "AggregationWindowHandler(" << handlerType << "," << id << "): ";
         std::string triggerType;
         if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Combining) {
             triggerType = "Combining";
@@ -113,43 +114,37 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
         AbstractWindowHandler::postReconfigurationCallback(task);
         auto flushInflightWindows = [this]() {
-            //TODO: this will be removed if we integrate the graceful shutdown
-            return;
-            // flush in-flight records
-            auto windowType = windowDefinition->getWindowType();
-            int64_t windowLenghtMs = 0;
-            if (windowType->isTumblingWindow()) {
-                auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
-                windowLenghtMs = window->getSize().getTime();
-
-            } else if (windowType->isSlidingWindow()) {
-                auto window = dynamic_cast<SlidingWindow*>(windowType.get());
-                windowLenghtMs = window->getSize().getTime();
-
-            } else {
-                NES_ASSERT(false, "unknonw windownd");
-            }
-            NES_DEBUG("Going to flush window " << toString());
-            trigger(true);
-            //            executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
-            NES_DEBUG("Flushed window content after end of stream message " << toString());
-        };
-
-        auto cleanup = [this]() {
-            // drop window content and cleanup resources
-            // wait for trigger thread to stop
-            stop();
+            //            return;
+            //            //TODO: this will be removed if we integrate the graceful shutdown
+            //            TODO: we keep this code to integrate the other shutdown method
+            //            return;
+            //            // flush in-flight records
+            //            auto windowType = windowDefinition->getWindowType();
+            //            int64_t windowLenghtMs = 0;
+            //            if (windowType->isTumblingWindow()) {
+            //                auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
+            //                windowLenghtMs = window->getSize().getTime();
+            //
+            //            } else if (windowType->isSlidingWindow()) {
+            //                auto window = dynamic_cast<SlidingWindow*>(windowType.get());
+            //                windowLenghtMs = window->getSize().getTime();
+            //
+            //            } else {
+            //                NES_ASSERT(false, "unknonw windownd");
+            //            }
+            //            NES_DEBUG("Going to flush window " << toString());
+            //            trigger(true);
+            //            //            executableWindowAction->doAction(getTypedWindowState(), lastWatermark + windowLenghtMs + 1, lastWatermark);
+            //            NES_DEBUG("Flushed window content after end of stream message " << toString());
         };
 
         //switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
             case NodeEngine::SoftEndOfStream: {
                 flushInflightWindows();
-                cleanup();
                 break;
             }
             case NodeEngine::HardEndOfStream: {
-                cleanup();
                 break;
             }
             default: {
@@ -252,8 +247,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         this->windowManager =
             std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness(), id);
         // Initialize StateVariable
+        auto defaultCallback = [](const KeyType&) {
+            return new Windowing::WindowSliceStore<PartialAggregateType>(0);
+        };
         this->windowStateVariable =
-            StateManager::instance().registerState<KeyType, WindowSliceStore<PartialAggregateType>*>("window");
+            StateManager::instance().registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(toString(),
+                                                                                                                defaultCallback);
         executableWindowAction->setup(pipelineExecutionContext);
         return true;
     }

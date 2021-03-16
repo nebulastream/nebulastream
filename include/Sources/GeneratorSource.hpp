@@ -55,6 +55,8 @@ class GeneratorSource : public DataSource {
     const std::string toString() const override;
     SourceType getType() const override;
 
+    virtual ~GeneratorSource();
+
   protected:
     GeneratorSource() = default;
 };

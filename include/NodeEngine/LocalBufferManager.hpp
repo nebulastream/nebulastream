@@ -48,6 +48,11 @@ class LocalBufferManager : public BufferRecycler {
     ~LocalBufferManager();
 
     /**
+     * @brief Destroys this buffer pool and returns own buffers to global pool
+     */
+    void destroy();
+
+    /**
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
      * @return a new buffer
      */
@@ -72,7 +77,7 @@ class LocalBufferManager : public BufferRecycler {
     void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
   private:
-    BufferManagerPtr bufferManager;
+    std::weak_ptr<BufferManager> bufferManager;
     std::deque<detail::MemorySegment*> exclusiveBuffers;
     size_t numberOfReservedBuffers;
     mutable std::mutex mutex;

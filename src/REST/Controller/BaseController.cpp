@@ -18,33 +18,33 @@
 
 namespace NES {
 
-void BaseController::handleDelete(std::vector<utility::string_t>, http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(message)));
+void BaseController::handleDelete(std::vector<utility::string_t>, http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(request)));
 }
 
-void BaseController::handleGet(std::vector<utility::string_t>, http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, getPath(message)));
+void BaseController::handleGet(std::vector<utility::string_t>, http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, getPath(request)));
 }
 
-void BaseController::handleHead(std::vector<utility::string_t>, http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(message)));
+void BaseController::handleHead(std::vector<utility::string_t>, http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(request)));
 }
 
-void BaseController::handleMerge(std::vector<utility::string_t>, http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(message)));
+void BaseController::handleMerge(std::vector<utility::string_t>, http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(request)));
 }
 
-void BaseController::handleTrace(std::vector<utility::string_t>, http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(message)));
+void BaseController::handleTrace(std::vector<utility::string_t>, http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
 }
 
-void BaseController::handleOptions(http_request message) {
+void BaseController::handleOptions(http_request request) {
     http_response response(status_codes::OK);
     response.headers().add(U("Allow"), U("GET, POST, OPTIONS"));
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Methods"), U("GET, POST, OPTIONS"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    message.reply(response);
+    request.reply(response);
 }
 
 json::value BaseController::responseNotImpl(const http::method& method, utility::string_t path) {
@@ -101,7 +101,11 @@ void BaseController::badRequestImpl(const web::http::http_request& message, cons
     message.reply(response);
 }
 
-utility::string_t BaseController::getPath(http_request& message) { return web::uri::decode(message.relative_uri().path()); }
+utility::string_t BaseController::getPath(http_request& request) { return web::uri::decode(request.relative_uri().path()); }
+
+std::map<utility::string_t, utility::string_t> BaseController::getParameters(http_request& request) {
+    return uri::split_query(request.request_uri().query());
+}
 
 void BaseController::handleException(const web::http::http_request& message, const std::exception& exc) {
     json::value errorResponse{};
@@ -190,5 +194,4 @@ void BaseController::handleException(const web::http::http_request& message, con
         this->internalServerErrorImpl(message);
     }
 }
-
 }// namespace NES

@@ -133,7 +133,7 @@ class BufferControlBlock {
     std::atomic<int64_t> watermark;
     std::atomic<uint64_t> originId;
 
-  private:
+  public:
     MemorySegment* owner;
     std::atomic<BufferRecycler*> owningBufferRecycler;
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;

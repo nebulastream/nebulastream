@@ -21,6 +21,7 @@
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
@@ -34,6 +35,7 @@
 namespace NES::NodeEngine {
 
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
+extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
     return NodeEngine::create(hostname, port, config, 1, 4096, 1024);
@@ -84,15 +86,15 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
-    : inherited0(), inherited1(), inherited2(), config(config), nodeEngineId(nodeEngineId) {
+    : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId) {
 
+    configs.push_back(config);
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
     nodeStatsProvider = std::make_shared<NodeStatsProvider>();
     this->queryCompiler = std::move(queryCompiler);
     this->queryManager = std::move(queryManager);
     this->bufferManager = std::move(bufferManager);
     this->partitionManager = std::move(partitionManager);
-    isReleased = false;
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
@@ -105,10 +107,11 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
     } else {
         NES_DEBUG("NodeEngine(): thread pool successfully started");
     }
+    isRunning.store(true);
 }
 
 NodeEngine::~NodeEngine() {
-    NES_TRACE("~NodeEngine()");
+    NES_DEBUG("Destroying NodeEngine()");
     stop();
 }
 
@@ -318,6 +321,7 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
         }
         return true;
     }
+
     NES_ERROR("NodeEngine: qep does not exists. stop failed " << queryId);
     return false;
 }
@@ -329,12 +333,14 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO @Steffen: does it make sense to have force stop still?
     //TODO @all: imho, when this method terminates, nothing must be running still and all resources must be returned to the engine
     //TODO @all: error handling, e.g., is it an error if the query is stopped but not undeployed? @Steffen?
-    std::unique_lock lock(engineMutex);
 
-    if (isReleased) {
+    bool expected = true;
+    if (!isRunning.compare_exchange_strong(expected, false)) {
         NES_WARNING("NodeEngine::stop: engine already stopped");
-        return true;
+        return false;
     }
+    NES_DEBUG("NodeEngine::stop: going to stop the node engine");
+    std::unique_lock lock(engineMutex);
     bool withError = false;
 
     // release all deployed queries
@@ -376,14 +382,28 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         }
     }
 
+    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+    NES_DEBUG("refcnt nm " << networkManager.use_count());
+    NES_DEBUG("refcnt qm " << queryManager.use_count());
+
     // release components
+    // TODO do not touch the sequence here as it will lead to errors in the shutdown sequence
+    deployedQEPs.clear();
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
-    queryManager.reset();
     networkManager->destroy();
+    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+    NES_DEBUG("refcnt nm " << networkManager.use_count());
+    NES_DEBUG("refcnt qm " << queryManager.use_count());
+    queryCompiler.reset();
+    queryManager.reset();
     networkManager.reset();
+    NES_DEBUG("refcnt bm " << bufferManager.use_count());
+    NES_DEBUG("refcnt nm " << networkManager.use_count());
+    NES_DEBUG("refcnt qm " << queryManager.use_count());
+
+    bufferManager->clear();
     bufferManager.reset();
-    isReleased = true;
     return !withError;
 }
 
@@ -465,7 +485,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << queryId);
     std::vector<QuerySubPlanId> querySubPlanIds = (*foundQuerySubPlanIds).second;
     for (auto querySubPlanId : querySubPlanIds) {
-        queryStatistics.push_back(queryManager->getQueryStatistics(querySubPlanId));
+        queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
     }
     return queryStatistics;
 }
@@ -475,14 +495,23 @@ Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitio
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
-    auto schema = sourceDescriptor->getSchema();
-    NES_ASSERT(config, "physical source config is not specified");
-    return config->build(sourceDescriptor->getSchema());
+    //we have to decide where many cases
+    // 1.) if we specify a build-in source like default source, then we have only one config but call this for each source
+    // 2.) if we have really two sources, then we would have two real configurations here
+    if (configs.size() > 1) {
+        NES_ASSERT(!configs.empty(), "no config for Lambda source");
+        auto conf = configs.back();
+        configs.pop_back();
+        return conf->build(sourceDescriptor->getSchema());
+    } else {
+        NES_ASSERT(configs[0], "physical source config is not specified");
+        return configs[0]->build(sourceDescriptor->getSchema());
+    }
 }
 
 void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
     NES_ASSERT(config, "physical source config is not specified");
-    this->config = config;
+    this->configs.emplace_back(config);
 }
 
 void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
@@ -494,7 +523,7 @@ void NodeEngine::onFatalError(int signalNumber, std::string callstack) {
 }
 
 void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) {
-    NES_ERROR("onFatalException: exception=" << exception->what() << " callstack=\n" << callstack);
+    NES_ERROR("onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack);
     std::cerr << "NodeEngine failed fatally" << std::endl;
     std::cerr << "Error: " << strerror(errno) << std::endl;
     std::cerr << "Exception: " << exception->what() << std::endl;

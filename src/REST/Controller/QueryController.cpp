@@ -35,70 +35,78 @@ namespace NES {
 
 QueryController::QueryController(QueryServicePtr queryService, QueryCatalogPtr queryCatalog, TopologyPtr topology,
                                  GlobalExecutionPlanPtr globalExecutionPlan)
-    : queryService(queryService), queryCatalog(queryCatalog), topology(topology), globalExecutionPlan(globalExecutionPlan) {}
+    : topology(topology), queryService(queryService), queryCatalog(queryCatalog), globalExecutionPlan(globalExecutionPlan) {}
 
-void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
+void QueryController::handleGet(vector<utility::string_t> path, http_request request) {
+
+    auto parameters = getParameters(request);
 
     if (path[1] == "execution-plan") {
-        NES_INFO("QueryController:: execution-plan");
-        message.extract_string(true).then([this, message](utility::string_t body) {
-            try {
-                // get the queryId from user input
-                string userRequest(body.begin(), body.end());
-                json::value req = json::value::parse(userRequest);
-                QueryId queryId = req.at("queryId").as_integer();
+        NES_INFO("QueryController:: GET execution-plan");
+        //Check if the path contains the query id
+        auto param = parameters.find("queryId");
+        if (param == parameters.end()) {
+            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            badRequestImpl(request, errorResponse);
+        }
 
-                NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
-                // get the execution-plan for given query id
-                auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
-                NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
-                //Prepare the response
-                successMessageImpl(message, executionPlanJson);
-                return;
-            } catch (...) {
-                RuntimeUtils::printStackTrace();
-                internalServerErrorImpl(message);
-            }
-        });
+        try {
+            // get the queryId from user input
+            QueryId queryId = std::stoi(param->second);
+            NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
+            // get the execution-plan for given query id
+            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
+            NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
+            //Prepare the response
+            successMessageImpl(request, executionPlanJson);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+        }
+
     } else if (path[1] == "query-plan") {
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
-                try {
-                    //Prepare Input query from user string
-                    string userRequest(body.begin(), body.end());
+        //Check if the path contains the query id
+        auto param = parameters.find("queryId");
+        if (param == parameters.end()) {
+            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            badRequestImpl(request, errorResponse);
+        }
 
-                    json::value req = json::value::parse(userRequest);
+        try {
+            // get the queryId from user input
+            QueryId queryId = std::stoi(param->second);
 
-                    QueryId queryId = req.at("userQuery").as_integer();
+            //Call the service
+            NES_DEBUG("UtilityFunctions: Get the registered query");
+            if (!queryCatalog->queryExists(queryId)) {
+                throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
+                                             + " in query catalog.");
+            }
+            QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
 
-                    //Call the service
-                    NES_DEBUG("UtilityFunctions: Get the registered query");
-                    if (!queryCatalog->queryExists(queryId)) {
-                        throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
-                                                     + " in query catalog.");
-                    }
-                    QueryCatalogEntryPtr queryCatalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+            NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
+            auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getQueryPlan());
 
-                    NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
-                    auto basePlan = PlanJsonGenerator::getQueryPlanAsJson(queryCatalogEntry->getQueryPlan());
-
-                    //Prepare the response
-                    successMessageImpl(message, basePlan);
-                    return;
-                } catch (const std::exception& exc) {
-                    NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user "
-                              "request:"
-                              << exc.what());
-                    handleException(message, exc);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                }
-            })
-            .wait();
+            //Prepare the response
+            successMessageImpl(request, basePlan);
+            return;
+        } catch (const std::exception& exc) {
+            NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user "
+                      "request:"
+                      << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+        }
     } else {
-        resourceNotFoundImpl(message);
+        resourceNotFoundImpl(request);
     }
 }
 
@@ -158,43 +166,50 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
     }
 }
 
-void QueryController::handleDelete(std::vector<utility::string_t> path, http_request message) {
-    if (path[1] == "stop-query") {
-        NES_DEBUG("stop-query msg=" << message.to_string());
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
-                try {
-                    //Prepare Input query from user string
-                    std::string payload(body.begin(), body.end());
-                    json::value req = json::value::parse(payload);
-                    QueryId queryId = req.as_integer();
+void QueryController::handleDelete(std::vector<utility::string_t> path, http_request request) {
 
-                    bool success = queryService->validateAndQueueStopRequest(queryId);
-                    //Prepare the response
-                    json::value result{};
-                    result["success"] = json::value::boolean(success);
-                    successMessageImpl(message, result);
-                    return;
-                } catch (QueryNotFoundException& exc) {
-                    NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
-                              "user request:"
-                              << exc.what());
-                    handleException(message, exc);
-                    return;
-                } catch (InvalidQueryStatusException& exc) {
-                    NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
-                              "user request:"
-                              << exc.what());
-                    handleException(message, exc);
-                    return;
-                } catch (...) {
-                    RuntimeUtils::printStackTrace();
-                    internalServerErrorImpl(message);
-                }
-            })
-            .wait();
+    //Extract parameters if any
+    auto parameters = getParameters(request);
+
+    if (path[1] == "stop-query") {
+        NES_DEBUG("QueryController: Request received for stoping a query");
+        //Check if the path contains the query id
+        auto param = parameters.find("queryId");
+        if (param == parameters.end()) {
+            NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
+            json::value errorResponse{};
+            errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
+            badRequestImpl(request, errorResponse);
+        }
+
+        try {
+            //Prepare Input query from user string
+            QueryId queryId = std::stoi(param->second);
+
+            bool success = queryService->validateAndQueueStopRequest(queryId);
+            //Prepare the response
+            json::value result{};
+            result["success"] = json::value::boolean(success);
+            successMessageImpl(request, result);
+            return;
+        } catch (QueryNotFoundException& exc) {
+            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
+                      "user request:"
+                      << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (InvalidQueryStatusException& exc) {
+            NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for "
+                      "user request:"
+                      << exc.what());
+            handleException(request, exc);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+        }
     } else {
-        resourceNotFoundImpl(message);
+        resourceNotFoundImpl(request);
     }
 }
 

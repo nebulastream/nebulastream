@@ -30,8 +30,6 @@
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Util/Logger.hpp>
 #include <fstream>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <utility>
 
@@ -196,27 +194,26 @@ void NodeStatsProvider::readMemStats() {
     auto memoryStats = nodeStats.mutable_memorystats();
     memoryStats->Clear();
 
-    auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
+    struct sysinfo sinfo;
 
-    auto result = sysinfo(sinfo);
+    auto result = sysinfo(&sinfo);
     if (result == EFAULT) {
         NES_ERROR("NodeProperties: could not read Disk statistics");
     } else {
-        memoryStats->set_totalram(sinfo->totalram);
-        memoryStats->set_totalswap(sinfo->totalswap);
-        memoryStats->set_freeram(sinfo->freeram);
-        memoryStats->set_sharedram(sinfo->sharedram);
-        memoryStats->set_bufferram(sinfo->bufferram);
-        memoryStats->set_freeswap(sinfo->freeswap);
-        memoryStats->set_totalhigh(sinfo->totalhigh);
-        memoryStats->set_freehigh(sinfo->freehigh);
-        memoryStats->set_procs(sinfo->procs);
-        memoryStats->set_mem_unit(sinfo->mem_unit);
-        memoryStats->set_loads_1min(sinfo->loads[0]);
-        memoryStats->set_loads_5min(sinfo->loads[1]);
-        memoryStats->set_loads_15min(sinfo->loads[2]);
+        memoryStats->set_totalram(sinfo.totalram);
+        memoryStats->set_totalswap(sinfo.totalswap);
+        memoryStats->set_freeram(sinfo.freeram);
+        memoryStats->set_sharedram(sinfo.sharedram);
+        memoryStats->set_bufferram(sinfo.bufferram);
+        memoryStats->set_freeswap(sinfo.freeswap);
+        memoryStats->set_totalhigh(sinfo.totalhigh);
+        memoryStats->set_freehigh(sinfo.freehigh);
+        memoryStats->set_procs(sinfo.procs);
+        memoryStats->set_mem_unit(sinfo.mem_unit);
+        memoryStats->set_loads_1min(sinfo.loads[0]);
+        memoryStats->set_loads_5min(sinfo.loads[1]);
+        memoryStats->set_loads_15min(sinfo.loads[2]);
     }
-    delete[] sinfo;
 }
 #else
 void NodeStatsProvider::readMemStats() {}
@@ -227,19 +224,17 @@ void NodeStatsProvider::readDiskStats() {
     auto diskStates = nodeStats.mutable_diskstats();
     diskStates->Clear();
 
-    struct statvfs* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
-
-    int ret = statvfs("/", svfs);
+    struct statvfs svfs;
+    int ret = statvfs("/", &svfs);
     if (ret == EFAULT) {
         NES_ERROR("NodeProperties: could not read Disk statistics");
     } else {
-        diskStates->set_f_bsize(svfs->f_bsize);
-        diskStates->set_f_frsize(svfs->f_frsize);
-        diskStates->set_f_blocks(svfs->f_blocks);
-        diskStates->set_f_bfree(svfs->f_bfree);
-        diskStates->set_f_bavail(svfs->f_bavail);
+        diskStates->set_f_bsize(svfs.f_bsize);
+        diskStates->set_f_frsize(svfs.f_frsize);
+        diskStates->set_f_blocks(svfs.f_blocks);
+        diskStates->set_f_bfree(svfs.f_bfree);
+        diskStates->set_f_bavail(svfs.f_bavail);
     }
-    delete[] svfs;
 }
 #else
 void NodeStatsProvider::readDiskStats() {}

@@ -38,14 +38,19 @@ class BaseExecutableJoinAction {
 
     virtual SchemaPtr getJoinSchema() = 0;
 
-    void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
+    virtual void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
         NES_ASSERT(pipelineExecutionContext, "invalid pipelineExecutionContext");
         this->originId = originId;
         this->weakExecutionContext = pipelineExecutionContext;
+        this->phantom = pipelineExecutionContext;
     }
 
   protected:
     std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
+    // sorry i need to do this to remind us of this hack
+    // otherwise we ll file an issue and forget about it
+    std::shared_ptr<NodeEngine::Execution::PipelineExecutionContext> phantom;
+
     uint64_t originId;
 };
 }// namespace NES::Join

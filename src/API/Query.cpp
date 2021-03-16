@@ -44,6 +44,30 @@
 
 namespace NES {
 
+JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
+
+namespace JoinOperatorBuilder {
+
+JoinWhere Join::where(ExpressionItem onLeftKey) const { return JoinWhere(subQueryRhs, originalQuery, onLeftKey); }
+
+Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
+
+JoinCondition JoinWhere::equalsTo(ExpressionItem onRightKey) const {
+    return JoinCondition(subQueryRhs, originalQuery, onLeftKey, onRightKey);
+}
+
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey) {}
+
+Query& JoinCondition::window(const Windowing::WindowTypePtr windowType) const {
+    return originalQuery.joinWith(subQueryRhs, onLeftKey, onRightKey, windowType);//call original joinWith() function
+}
+
+JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, ExpressionItem onLeftKey, ExpressionItem onRightKey)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), onLeftKey(onLeftKey), onRightKey(onRightKey) {}
+
+}// namespace JoinOperatorBuilder
+
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
 Query::Query(const Query& query) : queryPlan(query.queryPlan) {}

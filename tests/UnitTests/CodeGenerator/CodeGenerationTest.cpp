@@ -78,13 +78,22 @@ class CodeGenerationTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() { std::cout << "Setup CodeGenerationTest test case." << std::endl; }
+    void SetUp() {
+        std::cout << "Setup CodeGenerationTest test case." << std::endl;
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024);
+    }
 
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down CodeGenerationTest test case." << std::endl; }
+    void TearDown() {
+        std::cout << "Tear down CodeGenerationTest test case." << std::endl;
+        nodeEngine->stop();
+    }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down CodeGenerationTest test class." << std::endl; }
+
+    NodeEngine::NodeEnginePtr nodeEngine;
 };
 
 class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
@@ -334,8 +343,6 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
-    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024);
     auto tf = CompilerTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");

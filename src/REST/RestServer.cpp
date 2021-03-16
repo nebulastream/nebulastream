@@ -47,7 +47,8 @@ bool RestServer::start() {
         NES_DEBUG("RestServer: Server started");
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << restEngine->endpoint());
         InterruptHandler::waitForUserInterrupt();
-        restEngine->shutdown().wait();
+        restEngine->shutdown();
+        restEngine.reset();
         NES_DEBUG("RestServer: after waitForUserInterrupt");
     } catch (const std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server << " << e.what());

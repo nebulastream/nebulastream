@@ -103,6 +103,18 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(tuple-size-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME tuple-size-query-benchmark COMMAND tuple-size-query-benchmark --benchmark_out=tuple-size-query-benchmark.log --benchmark_out_format=json)
 
+    ### Memory Layout Benchmark ###
+    add_executable(memory-layout-benchmark "src/BenchmarkSuite/BenchmarkMemoryLayout.cpp")
+    target_link_libraries(memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME memory-layout-benchmark COMMAND memory-layout-benchmark --benchmark_out=memory-layout-benchmark.log --benchmark_out_format=json)
+
+    ### Dynamic Memory Layout Benchmark ###
+    add_executable(dynamic-memory-layout-benchmark "src/BenchmarkSuite/BenchmarkDynamicMemoryLayout.cpp")
+    target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
+
+    ###########################  E2E Benchmarmks ######################
+
     ### E2e Benchmark Project ###
     add_executable(e2e-project-query-benchmark "src/E2EBenchmarks/E2EProjectBenchmark.cpp")
     target_link_libraries(e2e-project-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
@@ -117,26 +129,30 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(e2e-select-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME e2e-select-query-benchmark COMMAND e2e-select-query-benchmark)
 
+    ### E2e Benchmark Select ###
+    add_executable(e2e-map-query-benchmark "src/E2EBenchmarks/E2EMapBenchmark.cpp")
+    target_link_libraries(e2e-map-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-map-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
+    target_sources(e2e-map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME e2e-map-query-benchmark COMMAND e2e-map-query-benchmark)
+
     ### E2e Benchmark window ###
     add_executable(e2e-window-query-benchmark "src/E2EBenchmarks/E2EWindowBenchmark.cpp")
     target_link_libraries(e2e-window-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
     target_sources(e2e-window-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
     target_sources(e2e-window-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    #add_test(NAME e2e-window-query-benchmark COMMAND e2e-window-query-benchmark)
+    add_test(NAME e2e-window-query-benchmark COMMAND e2e-window-query-benchmark)
 
-    ### Memory Layout Benchmark ###
-    add_executable(memory-layout-benchmark "src/BenchmarkSuite/BenchmarkMemoryLayout.cpp")
-    target_link_libraries(memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME memory-layout-benchmark COMMAND memory-layout-benchmark --benchmark_out=memory-layout-benchmark.log --benchmark_out_format=json)
-
-    ### Dynamic Memory Layout Benchmark ###
-    add_executable(dynamic-memory-layout-benchmark "src/BenchmarkSuite/BenchmarkDynamicMemoryLayout.cpp")
-    target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
+    ### E2e Benchmark join ###
+    add_executable(e2e-join-query-benchmark "src/E2EBenchmarks/E2EJoinBenchmark.cpp")
+    target_link_libraries(e2e-join-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-join-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
+    target_sources(e2e-join-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME e2e-join-query-benchmark COMMAND e2e-join-query-benchmark)
 
     add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
+    add_custom_target(run_e2e_benchmark COMMAND ctest -R ^e2e --output-on-failure)
     message("---Done building benchmarks")
-
 
 else(NES_BUILD_BENCHMARKS)
     message("---Not building benchmarks!")

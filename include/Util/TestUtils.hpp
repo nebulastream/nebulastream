@@ -94,7 +94,9 @@ class TestUtils {
         NES_DEBUG("checkCompleteOrTimeout: Check if the query goes into the Running status within the timeout");
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec && currentStatus != "RUNNING") {
             web::http::client::http_client clientProc("http://localhost:" + restPort + "/v1/nes/queryCatalog/status");
-            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
+            web::uri_builder builder(("/"));
+            builder.append_query(("queryId"), queryId);
+            clientProc.request(web::http::methods::GET, builder.to_string())
                 .then([](const web::http::http_response& response) {
                     cout << "Get query status" << endl;
                     return response.extract_json();
@@ -119,7 +121,9 @@ class TestUtils {
 
             web::http::client::http_client clientProc("http://localhost:" + restPort
                                                       + "/v1/nes/queryCatalog/getNumberOfProducedBuffers");
-            clientProc.request(web::http::methods::GET, _XPLATSTR("/"), queryId)
+            web::uri_builder builder(("/"));
+            builder.append_query(("queryId"), queryId);
+            clientProc.request(web::http::methods::GET, builder.to_string())
                 .then([](const web::http::http_response& response) {
                     cout << "read number of buffers" << endl;
                     return response.extract_json();
@@ -156,7 +160,9 @@ class TestUtils {
         web::json::value json_return;
 
         web::http::client::http_client client("http://127.0.0.1:" + restPort + "/v1/nes/query/stop-query");
-        client.request(web::http::methods::DEL, _XPLATSTR("/"), queryId)
+        web::uri_builder builder(("/"));
+        builder.append_query(("queryId"), queryId);
+        client.request(web::http::methods::DEL, builder.to_string())
             .then([](const web::http::http_response& response) {
                 NES_INFO("get first then");
                 return response.extract_json();
@@ -387,7 +393,6 @@ class TestUtils {
             sleep(1);
         }
         NES_DEBUG("checkStoppedOrTimeout: expected status not reached within set timeout");
-        NES_ASSERT(false, "checkStoppedOrTimeout: expected status not reached within set timeout");
         return false;
     }
 
@@ -404,27 +409,30 @@ class TestUtils {
         uint64_t count = 0;
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             sleep(1);
+            found = 0;
+            count = 0;
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
-                NES_DEBUG("checkOutputOrTimeout: file " << outputFilePath << " open and good");
-                std::vector<std::string> expectedLines = UtilityFunctions::split(expectedContent, '\n');
+                NES_DEBUG("checkoutputortimeout: file " << outputFilePath << " open and good");
+                std::vector<std::string> expectedlines = UtilityFunctions::split(expectedContent, '\n');
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 count = std::count(content.begin(), content.end(), '\n');
-                if (expectedLines.size() != count) {
-                    NES_DEBUG("checkOutputOrTimeout: number of expected lines "
-                              << expectedLines.size() << " not reached yet with " << count << " lines content=" << content);
+                if (expectedlines.size() != count) {
+                    NES_DEBUG("checkoutputortimeout: number of expected lines "
+                              << expectedlines.size() << " not reached yet with " << count << " lines content=" << content);
                     continue;
                 }
 
                 if (content.size() != expectedContent.size()) {
-                    NES_DEBUG("checkOutputOrTimeout: number of chars "
-                              << expectedContent.size() << " not reached yet with chars content=" << content.size());
+                    NES_DEBUG("checkoutputortimeout: number of chars " << expectedContent.size()
+                                                                       << " not reached yet with chars content=" << content.size()
+                                                                       << " lines content=" << content);
                     continue;
                 }
 
-                for (uint64_t i = 0; i < expectedLines.size(); i++) {
-                    if (content.find(expectedLines[i]) != std::string::npos) {
+                for (uint64_t i = 0; i < expectedlines.size(); i++) {
+                    if (content.find(expectedlines[i]) != std::string::npos) {
                         found++;
                     }
                 }

@@ -52,4 +52,20 @@ std::string SinkMedium::getAppendAsString() {
         return "OVERWRITE";
     }
 }
+void SinkMedium::reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) {
+    Reconfigurable::reconfigure(message, context);
+}
+void SinkMedium::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) {
+    Reconfigurable::postReconfigurationCallback(message);
+    switch (message.getType()) {
+        case NodeEngine::SoftEndOfStream:
+        case NodeEngine::HardEndOfStream: {
+            shutdown();
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
 }// namespace NES

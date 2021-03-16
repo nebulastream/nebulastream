@@ -18,12 +18,12 @@
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
-#include "REST/Controller/BaseController.hpp"
-#include "REST/Controller/QueryController.hpp"
-#include "REST/Controller/StreamCatalogController.hpp"
+#include <REST/Controller/BaseController.hpp>
 #include <REST/Controller/ConnectivityController.hpp>
 #include <REST/Controller/MonitoringController.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
+#include <REST/Controller/QueryController.hpp>
+#include <REST/Controller/StreamCatalogController.hpp>
 #include <REST/Controller/TopologyController.hpp>
 
 namespace NES {
@@ -66,86 +66,86 @@ void RestEngine::setEndpoint(const std::string& value) {
     _listener = web::http::experimental::listener::http_listener(endpointBuilder.to_uri());
 }
 
-void RestEngine::handleGet(http_request message) {
-    auto path = getPath(message);
-    auto paths = splitPath(path);
+void RestEngine::handleGet(http_request request) {
+    auto path = getPath(request);
+    auto splittedPath = splitPath(path);
 
-    if (!paths.empty()) {
-        if (paths[0] == "query") {
-            queryController->handleGet(paths, message);
+    if (!splittedPath.empty()) {
+        if (splittedPath[0] == "query") {
+            queryController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "streamCatalog") {
-            streamCatalogController->handleGet(paths, message);
+        } else if (splittedPath[0] == "streamCatalog") {
+            streamCatalogController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "queryCatalog") {
-            queryCatalogController->handleGet(paths, message);
+        } else if (splittedPath[0] == "queryCatalog") {
+            queryCatalogController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "monitoring") {
-            monitoringController->handleGet(paths, message);
+        } else if (splittedPath[0] == "monitoring") {
+            monitoringController->handleGet(splittedPath, request);
             return;
-        } else if (paths[0] == "connectivity" && paths.size() == 1) {
-            connectivityController->handleGet(paths, message);
-        } else if (paths[0] == "topology") {
-            topologyController->handleGet(paths, message);
+        } else if (splittedPath[0] == "connectivity" && splittedPath.size() == 1) {
+            connectivityController->handleGet(splittedPath, request);
+        } else if (splittedPath[0] == "topology") {
+            topologyController->handleGet(splittedPath, request);
         }
     }
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
 }
 
-void RestEngine::handlePost(http_request message) {
-    auto path = getPath(message);
+void RestEngine::handlePost(http_request request) {
+    auto path = getPath(request);
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
         if (paths[0] == "query" || paths[0] == "pattern") {
-            queryController->handlePost(paths, message);
+            queryController->handlePost(paths, request);
             return;
         } else if (paths[0] == "streamCatalog") {
-            streamCatalogController->handlePost(paths, message);
+            streamCatalogController->handlePost(paths, request);
             return;
         } else if (paths[0] == "monitoring") {
-            monitoringController->handlePost(paths, message);
+            monitoringController->handlePost(paths, request);
             return;
         }
     }
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
 }
 
-void RestEngine::handleDelete(http_request message) {
+void RestEngine::handleDelete(http_request request) {
     NES_DEBUG("RestEngine::handleDelete");
-    auto path = getPath(message);
+    auto path = getPath(request);
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
         if (paths[0] == "streamCatalog") {
-            streamCatalogController->handleDelete(paths, message);
+            streamCatalogController->handleDelete(paths, request);
             return;
         } else if (paths[0] == "query") {
-            queryController->handleDelete(paths, message);
+            queryController->handleDelete(paths, request);
             return;
         }
     }
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, path));
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, path));
 }
 
-void RestEngine::handleHead(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(message)));
+void RestEngine::handleHead(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(request)));
 }
 
-void RestEngine::handleMerge(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(message)));
+void RestEngine::handleMerge(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(request)));
 }
 
-void RestEngine::handleTrace(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(message)));
+void RestEngine::handleTrace(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
 }
 
-void RestEngine::handlePut(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT, getPath(message)));
+void RestEngine::handlePut(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT, getPath(request)));
 }
 
-void RestEngine::handlePatch(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH, getPath(message)));
+void RestEngine::handlePatch(http_request request) {
+    request.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH, getPath(request)));
 }
 
 std::string RestEngine::endpoint() const { return _listener.uri().to_string(); }

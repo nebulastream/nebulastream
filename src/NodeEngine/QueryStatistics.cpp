@@ -47,10 +47,14 @@ void QueryStatistics::setProcessedBuffers(const std::atomic<uint64_t>& processed
 
 std::string QueryStatistics::getQueryStatisticsAsString() {
     std::stringstream ss;
-    ss << "processedTasks=" << processedTasks;
+    ss << "queryId=" << queryId;
+    ss << " subPlanId=" << subQueryId;
+    ss << " processedTasks=" << processedTasks;
     ss << " processedTuple=" << processedTuple;
     ss << " processedBuffers=" << processedBuffers;
     ss << " processedWatermarks=" << processedWatermarks;
     return ss.str();
 }
+uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
+uint64_t QueryStatistics::getSubQueryId() const { return subQueryId.load(); }
 }// namespace NES::NodeEngine

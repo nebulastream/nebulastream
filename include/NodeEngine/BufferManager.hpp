@@ -134,12 +134,12 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     /**
      * @return number of unpooled buffers
      */
-    size_t getNumOfUnpooledBuffers();
+    size_t getNumOfUnpooledBuffers() const;
 
     /**
      * @return Number of available buffers in the pool
      */
-    size_t getAvailableBuffers();
+    size_t getAvailableBuffers() const;
 
     void printStatistics();
 
@@ -169,20 +169,26 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     */
     void recycleUnpooledBuffer(detail::MemorySegment* buffer) override;
 
+    /**
+     * @brief this method clears all local buffers pools and remove all buffers from the global buffer manager
+     */
+    void clear();
+
   private:
     std::vector<detail::MemorySegment> allBuffers;
     std::deque<detail::MemorySegment*> availableBuffers;
     std::vector<UnpooledBufferHolder> unpooledBuffers;
 
-    std::mutex availableBuffersMutex;
-    std::condition_variable availableBuffersCvar;
+    mutable std::recursive_mutex availableBuffersMutex;
+    std::condition_variable_any availableBuffersCvar;
 
-    std::mutex unpooledBuffersMutex;
+    mutable std::recursive_mutex unpooledBuffersMutex;
 
     uint32_t bufferSize;
     uint32_t numOfBuffers;
 
     std::atomic<bool> isConfigured;
+    std::vector<LocalBufferManagerPtr> localBufferPools;
 };
 }// namespace NodeEngine
 

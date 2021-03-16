@@ -435,62 +435,149 @@ static void BM_ReadRecordsStruct(benchmark::State& state) {
             break;
         }
         case 4: {
+            maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleCacheLine);
+            auto tupleIt = buffer.getBuffer<TupleCacheLine>();
+            for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                tupleIt[i].key = 1;
+                tupleIt[i].value1 = 1;
+                tupleIt[i].value2 = 1;
+                tupleIt[i].value3 = 1;
+                tupleIt[i].value4 = 1;
+                tupleIt[i].value5 = 1;
+                tupleIt[i].value6 = 1;
+                tupleIt[i].value7 = 1;
+                tupleIt[i].value8 = 1;
+                tupleIt[i].value9 = 1;
+                tupleIt[i].value10 = 1;
+                tupleIt[i].value11 = 1;
+                tupleIt[i].value12 = 1;
+                tupleIt[i].value13 = 1;
+                tupleIt[i].value14 = 1;
+                tupleIt[i].value15 = 1;
+            }
+
+            break;
+        }
+        default: break;
+    }
+
+    switch (state.range(0)) {
+        case 0: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI8);
+                auto tupleIt = buffer.getBufferAs<TupleI8>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 1: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI16);
+                auto tupleIt = buffer.getBufferAs<TupleI16>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 2: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI32);
+                auto tupleIt = buffer.getBufferAs<TupleI32>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 3: {
+            for (auto singleState : state) {
+                maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleI64);
+                auto tupleIt = buffer.getBuffer<TupleI64>();
+                for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
+                    tupleIt[i].key = 42;
+                    tupleIt[i].value = 1;
+                }
+            }
+            break;
+        }
+
+        case 4: {
             for (auto singleState : state) {
                 maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleCacheLine);
                 auto tupleIt = buffer.getBuffer<TupleCacheLine>();
+                int32_t tmp0 = 0, tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0, tmp5 = 0, tmp6 = 0, tmp7 = 0;
+                int32_t tmp8 = 0, tmp9 = 0, tmp10 = 0, tmp11 = 0, tmp12 = 0, tmp13 = 0, tmp14 = 0, tmp15 = 0;
                 for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
-                    int32_t tmp0 = tupleIt[i].key;
-                    int32_t tmp1 = tupleIt[i].value1;
-                    int32_t tmp2 = tupleIt[i].value2;
-                    int32_t tmp3 = tupleIt[i].value3;
-                    int32_t tmp4 = tupleIt[i].value4;
-                    int32_t tmp5 = tupleIt[i].value5;
-                    int32_t tmp6 = tupleIt[i].value6;
-                    int32_t tmp7 = tupleIt[i].value7;
-                    int32_t tmp8 = tupleIt[i].value8;
-                    int32_t tmp9 = tupleIt[i].value9;
-                    int32_t tmp10 = tupleIt[i].value10;
-                    int32_t tmp11 = tupleIt[i].value11;
-                    int32_t tmp12 = tupleIt[i].value12;
-                    int32_t tmp13 = tupleIt[i].value13;
-                    int32_t tmp14 = tupleIt[i].value14;
-                    int32_t tmp15 = tupleIt[i].value15;
-
-                    if (tmp0 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
-                    if (tmp1 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1");
-                    if (tmp2 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1");
-                    if (tmp3 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1");
-
-                    if (tmp4 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1");
-                    if (tmp5 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1");
-                    if (tmp6 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1");
-                    if (tmp7 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1");
-
-                    if (tmp8 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1");
-                    if (tmp9 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1");
-                    if (tmp10 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1");
-                    if (tmp11 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp11 != 1");
-
-                    if (tmp12 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1");
-                    if (tmp13 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1");
-                    if (tmp14 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1");
-                    if (tmp15 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1");
+                    tmp0 += tupleIt[i].key;
+                    tmp1 += tupleIt[i].value1;
+                    tmp2 += tupleIt[i].value2;
+                    tmp3 += tupleIt[i].value3;
+                    tmp4 += tupleIt[i].value4;
+                    tmp5 += tupleIt[i].value5;
+                    tmp6 += tupleIt[i].value6;
+                    tmp7 += tupleIt[i].value7;
+                    tmp8 += tupleIt[i].value8;
+                    tmp9 += tupleIt[i].value9;
+                    tmp10 += tupleIt[i].value10;
+                    tmp11 += tupleIt[i].value11;
+                    tmp12 += tupleIt[i].value12;
+                    tmp13 += tupleIt[i].value13;
+                    tmp14 += tupleIt[i].value14;
+                    tmp15 += tupleIt[i].value15;
+                }
+                if (tmp0 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp1 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp1 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp2 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp2 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp3 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp3 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp4 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp4 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp5 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp5 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp6 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp6 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp7 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp7 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp8 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp8 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp9 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp9 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp10 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp10 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp12 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp12 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp13 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp13 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp14 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp14 != 1 * maxTuplesPerBuffer");
+                }
+                if (tmp15 != 1 * maxTuplesPerBuffer) {
+                    NES_THROW_RUNTIME_ERROR("BenchmarkDynamicMemoryLayout: tmp15 != 1 * maxTuplesPerBuffer");
                 }
             }
             break;
@@ -661,12 +748,12 @@ static void BM_ReadFieldStruct(benchmark::State& state) {
             for (auto singleState : state) {
                 maxTuplesPerBuffer = bufferManager->getBufferSize() / sizeof(TupleCacheLine);
                 auto tupleIt = buffer.getBuffer<TupleCacheLine>();
+                int32_t tmp0 = 0;
                 for (uint64_t i = 0; i < maxTuplesPerBuffer; i++) {
-                    int32_t tmp0 = tupleIt[i].key;
-
-                    if (tmp0 != 1)
-                        NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != 1");
+                    tmp0 += tupleIt[i].key;
                 }
+                if (tmp0 != maxTuplesPerBuffer * 1)
+                    NES_ERROR("BenchmarkDynamicMemoryLayout: tmp0 != maxTuplesPerBuffer * 1");
             }
             break;
         }
@@ -678,11 +765,8 @@ static void BM_ReadFieldStruct(benchmark::State& state) {
 
 #define REPETITIONS 20
 /* Just for using it with schema benchmarkCacheLine */
-BENCHMARK(BM_DefaultFilling_V1)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_DefaultFilling_V2)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_WriteRecordsStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_ReadRecordsStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-
 BENCHMARK(BM_WriteFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_ReadFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
@@ -692,7 +776,7 @@ BENCHMARK(BM_ReadFieldStruct)->DenseRange(4, 4, 1)->Repetitions(REPETITIONS)->Re
 
 int main(int argc, char** argv) {
     NESLogger->removeAllAppenders();
-    NES::setupLogging("TupleBufferBenchmark.log", LOG_DEBUG);
+    NES::setupLogging("TupleBufferBenchmark.log", LOG_WARNING);
 
     benchmark::Initialize(&argc, argv);
     benchmark::RunSpecifiedBenchmarks();

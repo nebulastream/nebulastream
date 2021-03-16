@@ -33,7 +33,15 @@
 
 class E2EBase {
   public:
-    enum class InputOutputMode { FileMode, CacheMode, MemMode };
+    /**
+     * @brief Enums for modes
+     * FileMode = read from file
+     * CacheMode = read always the same buffer
+     * MemMode = generate always the same data but in different buffers
+     * WindowMode = generate increasing time stamps in different buffers (each buffer will have time(0) time stamps
+     * JoinMode = generate two sources with increasing timestamp
+     */
+    enum class InputOutputMode { FileMode, CacheMode, MemMode, WindowMode, JoinMode };
 
     /**
      * @brief Method to perform the benchmark
@@ -95,7 +103,9 @@ class E2EBase {
     NES::NesCoordinatorPtr crd;
     NES::NesWorkerPtr wrk1;
 
-    std::vector<NES::NodeEngine::QueryStatisticsPtr> statisticsVec;
+    std::map<uint64_t, uint64_t> subPlanIdToTaskCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToBufferCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToTuplelCnt;
     NES::QueryServicePtr queryService;
     QueryId queryId;
     NES::QueryCatalogPtr queryCatalog;

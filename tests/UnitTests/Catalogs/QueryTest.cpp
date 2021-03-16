@@ -237,8 +237,10 @@ TEST_F(QueryTest, testQueryJoin) {
     auto subQuery = Query::from("default_logical").filter(lessExpression);
 
     auto query = Query::from("default_logical")
-                     .joinWith(subQuery, Attribute("id"), Attribute("id"),
-                               TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                     .joinWith(subQuery)
+                     .where(Attribute("id"))
+                     .equalsTo(Attribute("id"))
+                     .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                      .sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr> sourceOperators = plan->getSourceOperators();

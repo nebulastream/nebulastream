@@ -24,10 +24,7 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
-// TODO use NES_* instead of std::cout
-using std::cout;
-using std::endl;
-
+using namespace std;
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession

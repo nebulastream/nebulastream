@@ -31,9 +31,9 @@ class StreamCatalogController : public BaseController {
   public:
     StreamCatalogController(StreamCatalogPtr streamCatalog);
 
-    void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
+    void handleGet(std::vector<utility::string_t> path, web::http::http_request request);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
-    void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
+    void handleDelete(std::vector<utility::string_t> path, web::http::http_request request);
 
   private:
     StreamCatalogPtr streamCatalog;

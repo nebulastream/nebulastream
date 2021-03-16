@@ -118,6 +118,9 @@ class SinkMedium : public NodeEngine::Reconfigurable {
       */
     virtual SinkMediumTypes getSinkMediumType() = 0;
 
+    void reconfigure(NodeEngine::ReconfigurationMessage& message, NodeEngine::WorkerContext& context) override;
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& message) override;
+
   protected:
     SinkFormatPtr sinkFormat;
     bool append;

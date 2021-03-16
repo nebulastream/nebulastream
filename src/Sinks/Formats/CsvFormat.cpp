@@ -52,7 +52,6 @@ std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer&
 
     if (inputBuffer.getNumberOfTuples() == 0) {
         NES_WARNING("CsvFormat::getData: write watermark-only buffer");
-        buffers.push_back(inputBuffer);
         return buffers;
     }
     std::string bufferContent = UtilityFunctions::printTupleBufferAsCSV(inputBuffer, schema);
@@ -70,20 +69,20 @@ std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer&
                        "CsvFormat: Content size is not equal to buffer size and will waste space in a buffer.");
             std::copy(contentWithSingleBufferSize.begin(), contentWithSingleBufferSize.end(), buf.getBuffer());
             buf.setNumberOfTuples(contentWithSingleBufferSize.size());
-            buffers.emplace_back(buf);
+            buffers.emplace_back(std::move(buf));
         }
         auto buf = this->bufferManager->getBufferBlocking();
         NES_ASSERT(bufferContent.size() <= buf.getBufferSize(), "CsvFormat: Remaining is too big and wont fit.");
         std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
         buf.setNumberOfTuples(bufferContent.size());
-        buffers.emplace_back(buf);
+        buffers.push_back(buf);
         NES_DEBUG("CsvFormat::getData: successfully copied buffer=" << numberOfBuffers);
     } else {
-        NES_DEBUG("CsvFormat::getData: content fits in one buffer schema=" << schema->toString());
+        NES_DEBUG("CsvFormat::getData: content fits in one buffer =" << bufferContent);
         auto buf = this->bufferManager->getBufferBlocking();
-        std::memcpy(buf.getBufferAs<char>(), bufferContent.c_str(), contentSize);
+        std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
         buf.setNumberOfTuples(contentSize);
-        buffers.push_back(buf);
+        buffers.emplace_back(std::move(buf));
     }
     return buffers;
 }

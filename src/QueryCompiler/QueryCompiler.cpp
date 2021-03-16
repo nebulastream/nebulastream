@@ -77,16 +77,17 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
                                  NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, PipelineContextPtr context,
                                  std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
-    std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr>> queue;
-    queue.emplace_back(0, -1, std::move(context));
+    std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr, int32_t>> queue;
+    // we put the last pipeline here
+    queue.emplace_back(0, -1, std::move(context), 0);
     uint32_t id = 1;
 
     while (!queue.empty()) {
-        auto [currentPipelineStateId, consumerPipelineStateId, currContext] = queue.front();
+        auto [currentPipelineStateId, consumerPipelineStateId, currContext, layer] = queue.front();
         queue.pop_front();
         try {
-            NES_DEBUG("QueryCompiler: Compile query:" << queryId << " querySubPlan:" << querySubPlanId
-                                                      << " pipeline:" << currentPipelineStateId);
+            NES_DEBUG("QueryCompiler: Layer: " << layer << " Compile query:" << queryId << " querySubPlan:" << querySubPlanId
+                                               << " pipeline:" << currentPipelineStateId);
             // TODO we should set the proper pipeline name and ID during pipeline creation
             currContext->pipelineName = std::to_string(currentPipelineStateId);
             auto executablePipelineStage = codeGenerator->compile(currContext);
@@ -110,7 +111,7 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
         }
 
         for (const auto& nextPipelineContext : currContext->getNextPipelineContexts()) {
-            queue.emplace_back(currentPipelineStateId + id, currentPipelineStateId, nextPipelineContext);
+            queue.emplace_back(currentPipelineStateId + id, currentPipelineStateId, nextPipelineContext, layer + 1);
             accumulator[currentPipelineStateId].producers.emplace(currentPipelineStateId + id);
             id++;
         }
@@ -187,7 +188,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext, numOfProducers,
             pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
 
-        NES_TRACE("pipeline code=" << pipeline->getCodeAsString());
+        NES_DEBUG("pipeline code=" << pipeline->getCodeAsString());
         builder.addPipeline(pipeline);
         pipelines[stageId] = pipeline;
     }
