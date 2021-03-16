@@ -29,8 +29,8 @@ using namespace std;
 static uint64_t portOffset = 13;
 
 string E2EBase::getTsInRfc3339() {
-    const auto now_ms = time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
-    const auto now_s = time_point_cast<std::chrono::seconds>(now_ms);
+    const auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
+    const auto now_s = std::chrono::time_point_cast<std::chrono::seconds>(now_ms);
     const auto millis = now_ms - now_s;
     const auto c_now = std::chrono::system_clock::to_time_t(now_s);
 

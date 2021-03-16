@@ -23,7 +23,7 @@
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
- * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function
+ * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function
  */
 class DynamicColumnLayout;
 typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
@@ -34,7 +34,7 @@ class DynamicColumnLayout : public DynamicMemoryLayout {
     DynamicMemoryLayoutPtr copy() const override;
     DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
     static DynamicColumnLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
-    std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
+    std::unique_ptr<DynamicLayoutBuffer> bind(TupleBuffer& tupleBuffer) override;
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

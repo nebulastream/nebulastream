@@ -34,7 +34,7 @@ class DynamicRowLayout : public DynamicMemoryLayout {
     DynamicMemoryLayoutPtr copy() const override;
     DynamicRowLayout(bool checkBoundaries, SchemaPtr schema);
     static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
-    std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
+    std::unique_ptr<DynamicLayoutBuffer> bind(TupleBuffer& tupleBuffer) override;
     const std::vector<FIELD_SIZE>& getFieldOffSets() const;
 
   private:

@@ -49,7 +49,7 @@ DynamicRowLayoutPtr DynamicRowLayout::create(SchemaPtr schema, bool checkBoundar
     return std::make_shared<DynamicRowLayout>(checkBoundaries, schema);
 }
 
-std::unique_ptr<DynamicLayoutBuffer> DynamicRowLayout::map(TupleBuffer& tupleBuffer) {
+std::unique_ptr<DynamicLayoutBuffer> DynamicRowLayout::bind(TupleBuffer& tupleBuffer) {
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
     return std::make_unique<DynamicRowLayoutBuffer>(tupleBuffer, capacity, *this);

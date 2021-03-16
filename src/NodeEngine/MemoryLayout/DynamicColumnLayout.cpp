@@ -46,7 +46,7 @@ DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, bool checkB
 
 DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
 
-std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::map(TupleBuffer& tupleBuffer) {
+std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::bind(TupleBuffer& tupleBuffer) {
     std::vector<COL_OFFSET_SIZE> columnOffsets;
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
