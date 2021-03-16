@@ -18,6 +18,7 @@
 #define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 
 #include <Sources/DataSource.hpp>
+#include <NodeEngine/BufferRecycler.hpp>
 
 namespace NES {
 
@@ -27,7 +28,7 @@ namespace NES {
  * that must have ownership of the area, i.e., it must control when to free it.
  * Do not use in distributed settings but only for single node dev and testing.
  */
-class MemorySource : public DataSource {
+class MemorySource : public DataSource, public NodeEngine::BufferRecycler {
   public:
     /**
      * @brief The constructor of a MemorySource
@@ -59,11 +60,15 @@ class MemorySource : public DataSource {
      * @return the type of the source
      */
     SourceType getType() const override;
+    void recyclePooledBuffer(NodeEngine::detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(NodeEngine::detail::MemorySegment* buffer) override;
 
   private:
+    NodeEngine::BufferManagerPtr globalBufferManager;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
+    std::atomic<uint64_t> refCnt;
 };
 
 typedef std::shared_ptr<MemorySource> MemorySourcePtr;

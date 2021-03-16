@@ -198,6 +198,11 @@ class MemorySegment {
     ~MemorySegment();
 
   private:
+
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
+                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool);
+
+  private:
     /**
      * @return true if the segment has a reference counter equals to zero
      */

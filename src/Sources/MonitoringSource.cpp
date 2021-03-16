@@ -15,7 +15,7 @@
 */
 
 #include <Sources/MonitoringSource.hpp>
-
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>

@@ -51,6 +51,9 @@ class TupleBuffer {
     friend class LocalBufferManager;
 
   public:
+
+    static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
+
     TupleBuffer(const TupleBuffer& other) noexcept;
 
     TupleBuffer(TupleBuffer&& other) noexcept;

@@ -18,12 +18,12 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>
-#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
 #include <string>
 #include <zmq.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 
 namespace NES {
 
@@ -59,7 +59,7 @@ std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
             zmq::message_t new_data2;
             socket.recv(&new_data2);// actual data
 
-            auto buffer = bufferManager->getBufferBlocking();
+            auto buffer = bufferManager->getBuffer();
             buffer.setWatermark(currentTs);
             NES_DEBUG("ZMQSource  " << this << ": got buffer ");
 

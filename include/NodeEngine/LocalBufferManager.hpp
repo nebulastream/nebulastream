@@ -57,6 +57,7 @@ class LocalBufferManager : public BufferRecycler {
      * @return a new buffer
      */
     TupleBuffer getBuffer();
+    TupleBuffer getBufferBlocking();
 
     /**
      * @brief provide number of available exclusive buffers

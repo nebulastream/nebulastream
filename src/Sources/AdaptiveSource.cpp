@@ -18,7 +18,7 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/UtilityFunctions.hpp>
-
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <cassert>
 #include <chrono>
@@ -48,7 +48,6 @@ std::optional<NodeEngine::TupleBuffer> AdaptiveSource::receiveData() {
 
 void AdaptiveSource::runningRoutine() {
     setThreadName("AdaptSrc-%d", operatorId);
-    std::string thName = "AdaptSrc-" + operatorId;
 
     if (!bufferManager) {
         NES_ERROR("AdaptiveSource:" << this << ", BufferManager not set");

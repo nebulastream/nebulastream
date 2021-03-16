@@ -62,6 +62,9 @@ size_t LocalBufferManager::getAvailableExclusiveBuffers() const {
     std::unique_lock lock(mutex);
     return exclusiveBuffers.size();
 }
+TupleBuffer LocalBufferManager::getBufferBlocking() {
+    return getBuffer();
+}
 
 TupleBuffer LocalBufferManager::getBuffer() {
     {
