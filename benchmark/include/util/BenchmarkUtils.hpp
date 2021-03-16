@@ -176,10 +176,10 @@ class BenchmarkUtils {
                                                    std::ios_base::app);                                                          \
                                                                                                                                  \
                                 benchmarkFile << BenchmarkUtils::getTsInRfc3339() << "," <<(benchmarkName) << ",\""                          \
-                                              << NES_VERSION << "\"" << std::to_string(workerThreads) << ","                 \
+                                              << NES_VERSION << "\"," << std::to_string(workerThreads) << ","                 \
                                               << "CoordinatorThreadCnt," << std::to_string(sourceCnt)                        \
-                                              << "MemoryMode," << BenchmarkUtils::getStatisticsAsCSV(statisticsVec[statisticsVec.size() - 1], thisSchema)  \
-                                              << std::to_string(ingestionRate) << ","                                        \
+                                              << ",MemoryMode" << BenchmarkUtils::getStatisticsAsCSV(statisticsVec[statisticsVec.size() - 1], thisSchema)  \
+                                              << "," << std::to_string(ingestionRate) << ","                                        \
                                               << std::to_string(BenchmarkUtils::runSingleExperimentSeconds) << ","           \
                                               << std::to_string(BenchmarkUtils::periodLengthInSeconds)                       \
                                               << (customCSVOutputs) << "\n";                                                 \
