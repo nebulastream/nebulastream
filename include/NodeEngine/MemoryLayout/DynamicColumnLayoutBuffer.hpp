@@ -62,7 +62,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      * @param record
      */
     template<bool boundaryChecks, typename... Types>
-    void pushRecord(std::tuple<Types...> record);
+    bool pushRecord(std::tuple<Types...> record);
 
   private:
     std::vector<COL_OFFSET_SIZE> columnOffsets;
@@ -70,7 +70,11 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 };
 
 template<bool boundaryChecks, typename... Types>
-void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
+bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
+    if (numberOfRecords >= capacity) {
+        NES_WARNING("TupleBuffer is full and thus no tuple can be added!");
+        return false;
+    }
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
     auto fieldSizes = dynamicColLayout.getFieldSizes();
 
@@ -88,6 +92,7 @@ void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
         record);
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
+    return true;
 }
 
 template<bool boundaryChecks, typename... Types>

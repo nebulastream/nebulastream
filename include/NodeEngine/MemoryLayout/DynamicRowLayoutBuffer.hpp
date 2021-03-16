@@ -58,14 +58,19 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @param record
      */
     template<bool boundaryChecks, typename... Types>
-    void pushRecord(std::tuple<Types...> record);
+    bool pushRecord(std::tuple<Types...> record);
 
   private:
     const DynamicRowLayout& dynamicRowLayout;
 };
 
 template<bool boundaryChecks, typename... Types>
-void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
+bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
+    if (numberOfRecords >= capacity) {
+        NES_WARNING("TupleBuffer is full and thus no tuple can be added!");
+        return false;
+    }
+
     uint64_t offSet = calcOffset(numberOfRecords, 0, boundaryChecks);
     auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
     auto fieldSizes = dynamicRowLayout.getFieldSizes();
@@ -81,6 +86,8 @@ void DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
 
     tupleBuffer.setNumberOfTuples(++numberOfRecords);
     NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
+
+    return true;
 }
 
 template<bool boundaryChecks, typename... Types>

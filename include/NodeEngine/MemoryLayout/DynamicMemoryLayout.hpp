@@ -39,7 +39,7 @@ class DynamicMemoryLayout {
      * @param tupleBuffer
      * @return
      */
-    virtual std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) = 0;
+    virtual std::unique_ptr<DynamicLayoutBuffer> bind(TupleBuffer& tupleBuffer) = 0;
 
     bool isCheckBoundaryFieldChecks() const;
     uint64_t getRecordSize() const;
