@@ -503,8 +503,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     string worker1DataPort = std::to_string(dataPort);
     string path2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
         + " --dataPort=" + worker1DataPort
-        + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=NettySource "
-          "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1";
         + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
           "--sourceConfig=../tests/test_data/window.csv --numberOfBuffersToProduce=1 --sourceFrequency=1 "
           "--numberOfTuplesToProducePerBuffer=28";

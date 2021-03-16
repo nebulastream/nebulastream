@@ -52,7 +52,7 @@ NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMa
       numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0),
       skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;
-    this->gatheringInterval = frequency;
+    this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();
   /*  NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
@@ -73,7 +73,7 @@ NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMa
     } else {
         loopOnFile = false;
     }
-    NES_DEBUG("NettySource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+    NES_DEBUG("NettySource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval.count() << "ms"
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
                                       << numberOfTuplesToProducePerBuffer << "loopOnFile=" << loopOnFile);
 
@@ -91,7 +91,7 @@ std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
 
 const std::string NettySource::toString() const {
     std::stringstream ss;
-    ss << "Netty_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval
+    ss << "Netty_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count() << "ms"
        << " numBuff=" << this->numBuffersToProcess << ")";
     return ss.str();
 }

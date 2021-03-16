@@ -96,7 +96,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     }else if (type == "NettySource") {
         NES_DEBUG("PhysicalStreamConfig: create Netty source for " << conf << " buffers");
         return NettySourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
-                                           numBuffers, frequency, skipHeader);
+                                           numBuffers, frequency.count(), skipHeader);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
     }
