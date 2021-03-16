@@ -124,9 +124,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
+            ASSERT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -279,9 +279,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSourc
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1GQNChild, sink2GQNChild);
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -355,10 +355,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperators
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
+            ASSERT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -432,10 +431,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorC
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
 
-    //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
+            ASSERT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -512,9 +510,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1GQNChild, sink2GQNChild);
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -582,9 +580,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilte
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1GQNChild, sink2GQNChild);
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -651,9 +649,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilte
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1GQNChild, sink2GQNChild);
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -721,9 +719,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAt
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1GQNChild, sink2GQNChild);
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -791,9 +789,9 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapVa
     EXPECT_TRUE(updatedRootOperators2.size() == 1);
 
     //assert
-    for (NodePtr sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
-        for (auto sink2GQNChild : updatedRootOperators2[0]->getChildren()) {
-            EXPECT_NE(sink1GQNChild, sink2GQNChild);
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
