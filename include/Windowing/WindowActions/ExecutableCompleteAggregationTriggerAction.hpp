@@ -164,10 +164,11 @@ class ExecutableCompleteAggregationTriggerAction
 
         // if the aggregation function is Min, we should not initialize partialFinalAggregates with 0
         auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
-        if (windowDefinition->getWindowAggregation()->getType()==WindowAggregationDescriptor::Min) {
-            if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())){
+        if (windowDefinition->getWindowAggregation()->getType() == WindowAggregationDescriptor::Min) {
+            if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
                 partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->getUpperBound());
-            } else if (auto floatType = DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
+            } else if (auto floatType =
+                           DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
                 partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->getUpperBound());
             }
         }
@@ -213,11 +214,11 @@ class ExecutableCompleteAggregationTriggerAction
                           << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
                 if (recordsPerWindow[i] != 0) {
                     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
-                                                   key, value, recordsPerWindow[i]);
+                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
+                                                                window.getEndTs(), key, value, recordsPerWindow[i]);
                     } else {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(),
-                                                   key, value);
+                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
+                                                                window.getEndTs(), key, value);
                     }
 
                     currentNumberOfTuples++;

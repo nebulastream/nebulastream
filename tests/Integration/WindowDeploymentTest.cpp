@@ -1768,9 +1768,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1816,9 +1816,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1864,9 +1864,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createFloat())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createFloat())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1913,10 +1913,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt64())
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("value2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt64())
+                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("value2", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1929,8 +1929,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1);
 
     testHarness.pushElement<Car>({1, 15, 15, 1000}, 0);
-    testHarness.pushElement<Car>({1, 99, 88,1500}, 0);
-    testHarness.pushElement<Car>({1, 20, 20,2000}, 0);
+    testHarness.pushElement<Car>({1, 99, 88, 1500}, 0);
+    testHarness.pushElement<Car>({1, 20, 20, 2000}, 0);
 
     struct Output {
         uint64_t start;
