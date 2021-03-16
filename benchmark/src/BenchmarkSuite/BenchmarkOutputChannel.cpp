@@ -148,14 +148,14 @@ int main(int argc, char** argv) {
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allSenderThreads, 1, 6, 1);
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allServerThreads, 3, 6, 1);
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t)1 * 1024 * 1024 * 1024,
-                                                                   (uint64_t)2 * 1024 * 1024 * 1024, (uint64_t)1 * 1024 * 1024 * 1024);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t)10 * 1024 * 1024 * 1024,
-                                                                   (uint64_t)12 * 1024 * 1024 * 1024, (uint64_t)10 * 1024 * 1024 * 1024);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t)20 * 1024 * 1024 * 1024,
-                                                                   (uint64_t)110 * 1024 * 1024 * 1024,
+                                                                   (uint64_t)11 * 1024 * 1024 * 1024, (uint64_t)1 * 1024 * 1024 * 1024);
+    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t)15 * 1024 * 1024 * 1024,
+                                                                   (uint64_t)20 * 1024 * 1024 * 1024,
                                                                    (uint64_t)20 * 1024 * 1024 * 1024);
-//    NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allDataSizesToBeSent, 1 * 1024 * 1024 * 1024, (uint64_t)130 * 1024 * 1024 * 1024);
-
+    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t)20 * 1024 * 1024 * 1024,
+                                                                   (uint64_t)30 * 1024 * 1024 * 1024,
+                                                                   (uint64_t)20 * 1024 * 1024 * 1024);
+    
     std::string benchmarkName = "outputchannel";
     std::string benchmarkFolderName = "OutputChannel" + NES::Benchmarking::BenchmarkUtils::getCurDateTimeStringWithNESVersion();
     if (!std::filesystem::create_directory(benchmarkFolderName))
