@@ -21,7 +21,7 @@
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 
-namespace NES {
+/*namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
@@ -91,4 +91,4 @@ const std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
 
-}// namespace NES
+}*/// namespace NES
