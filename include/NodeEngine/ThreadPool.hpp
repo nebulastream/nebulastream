@@ -65,6 +65,10 @@ class ThreadPool {
        */
     bool stop();
 
+    bool isRunning() const {
+        return running;
+    }
+
   private:
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
