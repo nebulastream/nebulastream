@@ -33,7 +33,7 @@ int main() {
 
     // All ingestion rates that the nodeEngine is exposed
     std::vector<uint64_t> allIngestionRates;
-    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 200 * 1000 * 1000, 210 * 1000 * 1000, 10 * 1000 * 1000);
+    BenchmarkUtils::createRangeVector<uint64_t>(allIngestionRates, 600 * 1000 * 1000, 610 * 1000 * 1000, 10 * 1000 * 1000);
 
     // Duration of one experiment
     std::vector<uint64_t> allExperimentsDuration;
@@ -45,7 +45,7 @@ int main() {
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 4, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 1, 5, 1);
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
