@@ -96,23 +96,24 @@ bool QueryManager::startThreadPool() {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     NES_ASSERT(threadPool == nullptr, "thread pool already running");
+//    threadBarrier = std::make_shared<ThreadBarrier>(numThreads);
     threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads);
     return threadPool->start();
 }
 
 void QueryManager::destroy() {
-    if (waitCounter != 0) {
-        NES_ERROR("QueryManager waitCounter="
-                      << waitCounter
-                      << " which means the source was blocked and could produce in full-speed this is maybe a problem");
-    }
+//    if (waitCounter != 0) {
+//        NES_ERROR("QueryManager waitCounter="
+//                      << waitCounter
+//                      << " which means the source was blocked and could produce in full-speed this is maybe a problem");
+//    }
 
     if (threadPool) {
         threadPool->stop();
         threadPool.reset();
     }
     std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-    NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
+    NES_ERROR("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
     NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << operatorIdToQueryMap.size());
 
@@ -376,7 +377,10 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
         }
     }
 
-    NES_WARNING("Number of tasks in queue when stopped=" << taskQueue.size());
+    {
+        std::unique_lock taskLock(workMutex);
+        NES_WARNING("Number of tasks in queue when stopped=" << taskQueue.size());
+    }
     // TODO evaluate if we need to have this a wait instead of a get
     // TODO for instance we could wait N seconds and if the stopped is not succesful by then
     // TODO we need to trigger a hard local kill of a QEP
@@ -481,9 +485,8 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
             taskQueue.emplace_back(pipeline, buffer);
         }
-        cv.notify_all();
-        workMutex.unlock();
     }
+    cv.notify_all();
     if (blocking) {
         task->postWait();
         task->postReconfiguration();
@@ -558,7 +561,7 @@ QueryManager::ExecutionResult QueryManager::processNextTask(std::atomic<bool>& r
     }
     NES_DEBUG("QueryManager::getWork queue is not empty");
     // there is a potential task in the queue and the thread pool is running
-    if (running) {
+    if (running && !taskQueue.empty()) {
         auto task = taskQueue.front();
         NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         taskQueue.pop_front();
@@ -578,6 +581,7 @@ QueryManager::ExecutionResult QueryManager::processNextTask(std::atomic<bool>& r
 
 QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     std::unique_lock lock(workMutex);
+//    this->threadBarrier->wait();
     // must run this to execute all pending reconfiguration task (Destroy)
     bool hitReconfiguration = false;
     while (!taskQueue.empty()) {

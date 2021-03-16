@@ -108,7 +108,7 @@ class ThreadPool {
     std::atomic<uint16_t> numThreads;
     std::vector<std::thread> threads;
     std::mutex reconfigLock;
-    std::weak_ptr<QueryManager> queryManager;
+    std::shared_ptr<QueryManager> queryManager;
 };
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;
