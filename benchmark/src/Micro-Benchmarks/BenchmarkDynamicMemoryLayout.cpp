@@ -2045,17 +2045,17 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, bindedRowLayout);
     auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, bindedRowLayout);
     auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, bindedRowLayout);
-    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, mappedRowLayout);
+    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, bindedRowLayout);
 
-    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, mappedRowLayout);
-    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, mappedRowLayout);
-    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, mappedRowLayout);
-    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, mappedRowLayout);
+    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, bindedRowLayout);
+    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, bindedRowLayout);
+    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, bindedRowLayout);
+    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, bindedRowLayout);
 
-    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, mappedRowLayout);
-    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, mappedRowLayout);
-    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, mappedRowLayout);
-    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, mappedRowLayout);
+    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, bindedRowLayout);
+    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, bindedRowLayout);
+    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, bindedRowLayout);
+    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, bindedRowLayout);
 
     switch (state.range(0)) {
         case 0: {
