@@ -486,8 +486,9 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
             taskQueue.emplace_back(pipeline, buffer);
         }
+        cv.notify_all();
     }
-    cv.notify_all();
+
     if (blocking) {
         task->postWait();
         task->postReconfiguration();
