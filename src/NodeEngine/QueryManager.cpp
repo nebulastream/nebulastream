@@ -471,6 +471,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
+    NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
