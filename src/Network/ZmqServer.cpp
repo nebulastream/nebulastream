@@ -30,12 +30,11 @@ namespace Network {
 
 ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol,
                      NodeEngine::BufferManagerPtr bufferManager)
-    : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
+    : hostname(hostname), port(port), numNetworkThreads(std::max(DEFAULT_NUM_SERVER_THREADS, numNetworkThreads)), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
     NES_DEBUG("ZmqServer: Creating ZmqServer()");
     if (numNetworkThreads < DEFAULT_NUM_SERVER_THREADS) {
         NES_WARNING("ZmqServer: numNetworkThreads is smaller than DEFAULT_NUM_SERVER_THREADS");
-        this->numNetworkThreads = DEFAULT_NUM_SERVER_THREADS;
     }
 }
 
