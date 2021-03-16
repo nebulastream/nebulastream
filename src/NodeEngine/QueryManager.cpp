@@ -102,18 +102,18 @@ bool QueryManager::startThreadPool() {
 }
 
 void QueryManager::destroy() {
-//    if (waitCounter != 0) {
-//        NES_ERROR("QueryManager waitCounter="
-//                      << waitCounter
-//                      << " which means the source was blocked and could produce in full-speed this is maybe a problem");
-//    }
+    if (waitCounter != 0) {
+        NES_ERROR("QueryManager waitCounter="
+                      << waitCounter
+                      << " which means the source was blocked and could produce in full-speed this is maybe a problem");
+    }
 
     if (threadPool) {
         threadPool->stop();
         threadPool.reset();
     }
     std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-    NES_ERROR("QueryManager: Destroy Task Queue " << taskQueue.size());
+    NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
     NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << operatorIdToQueryMap.size());
 
