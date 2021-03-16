@@ -26,6 +26,7 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <NodeEngine/LocalBufferManager.hpp>
 
 #if __linux
 #include <sys/syscall.h>
@@ -246,7 +247,7 @@ class SimpleBenchmarkSource : public DataSource {
         buf.setNumberOfTuples(curNumberOfTuplesPerBuffer);
 
         NES_DEBUG("SimpleBenchmarkSource: available buffer after creating one buffer are "
-                  << bufferManager->getAvailableBuffers());
+                  << bufferManager->getAvailableExclusiveBuffers());
         return buf;
     }
 
