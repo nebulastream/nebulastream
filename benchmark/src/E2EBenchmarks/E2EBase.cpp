@@ -424,12 +424,47 @@ void E2EBase::tearDown() {
         }
 
         std::cout << "E2EBase: Stop worker 1" << std::endl;
-        bool retStopWrk1 = wrk1->stop(true);
-        NES_ASSERT(retStopWrk1, "retStopWrk1");
 
+        std::shared_ptr<std::promise<bool>> stopPromiseWrk1 = std::make_shared<std::promise<bool>>();
+        std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
+        std::thread t1([stopPromiseWrk1, stopPromiseCord]() {
+          std::future<bool> stopFutureWrk1 = stopPromiseWrk1->get_future();
+          bool satisfied = false;
+          while (!satisfied) {
+              switch (stopFutureWrk1.wait_for(std::chrono::seconds(1))) {
+                  case future_status::ready:  {
+                      satisfied = true;
+                  }
+                  case future_status::timeout:
+                  case future_status::deferred: {
+                      NES_WARNING("Waiting for stop");
+                      break;
+                  }
+              }
+          }
+          std::future<bool> stopFutureCord = stopPromiseCord->get_future();
+          satisfied = false;
+          while (!satisfied) {
+              switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
+                  case future_status::ready:  {
+                      satisfied = true;
+                  }
+                  case future_status::timeout:
+                  case future_status::deferred: {
+                      NES_WARNING("Waiting for stop");
+                      break;
+                  }
+              }
+          }
+        });
+        bool retStopWrk1 = wrk1->stop(true);
+        stopPromiseWrk1->set_value(retStopWrk1);
+        NES_ASSERT(retStopWrk1, "retStopWrk1");
         std::cout << "E2EBase: Stop Coordinator" << std::endl;
         bool retStopCord = crd->stopCoordinator(true);
+        stopPromiseCord->set_value(retStopCord);
         NES_ASSERT(retStopCord, "retStopCord");
+        t1.join();
         std::cout << "E2EBase: Test finished" << std::endl;
     } catch (...) {
         NES_ERROR("Error was thrown while query shutdown");

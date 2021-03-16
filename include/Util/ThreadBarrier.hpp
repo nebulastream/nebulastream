@@ -19,7 +19,7 @@
 
 #include <condition_variable>
 #include <mutex>
-
+#include <NodeEngine/NesThread.hpp>
 namespace NES {
 
 /**
@@ -32,7 +32,11 @@ class ThreadBarrier {
      * @brief Create a Barrier for size threads
      * @param size
      */
-    explicit ThreadBarrier(uint32_t size) : size(size), count(0), mutex(), cvar() {}
+    explicit ThreadBarrier(uint32_t size) : size(size), count(0), mutex(), cvar() {
+        NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
+    }
+
+    ThreadBarrier() = delete;
 
     ThreadBarrier(const ThreadBarrier&) = delete;
 
@@ -44,9 +48,11 @@ class ThreadBarrier {
     void wait() {
         std::unique_lock<std::mutex> lock(mutex);
         if (++count >= size) {
+            NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
             cvar.notify_all();
         } else {
             while (count < size) {
+                NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
                 cvar.wait(lock);
             }
         }
