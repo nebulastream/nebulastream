@@ -28,6 +28,8 @@
 #include <mqtt/async_client.h>
 #include <sstream>
 #include <string>
+#include <NodeEngine/LocalBufferManager.hpp>
+
 
 using namespace std;
 using namespace std::chrono;
