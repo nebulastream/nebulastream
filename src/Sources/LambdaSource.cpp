@@ -25,7 +25,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <utility>
-
+#include <NodeEngine/LocalBufferManager.hpp>
 namespace NES {
 
 LambdaSource::LambdaSource(

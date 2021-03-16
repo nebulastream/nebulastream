@@ -178,7 +178,7 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::chrono::milliseconds gatheringInterval;
     OperatorId operatorId;
     SourceType type;
-    NodeEngine::BufferManagerPtr bufferManager;
+    NodeEngine::LocalBufferManagerPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
 
   private:

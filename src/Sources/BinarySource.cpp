@@ -15,9 +15,8 @@
 */
 
 #include <NodeEngine/QueryManager.hpp>
-#include <assert.h>
 #include <sstream>
-
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
@@ -38,7 +37,7 @@ BinarySource::BinarySource(SchemaPtr schema, NodeEngine::BufferManagerPtr buffer
 }
 
 std::optional<NodeEngine::TupleBuffer> BinarySource::receiveData() {
-    auto buf = this->bufferManager->getBufferBlocking();
+    auto buf = this->bufferManager->getBuffer();
     fillBuffer(buf);
     return buf;
 }

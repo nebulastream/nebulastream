@@ -24,6 +24,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <NodeEngine/LocalBufferManager.hpp>
 using namespace std;
 
 namespace NES {

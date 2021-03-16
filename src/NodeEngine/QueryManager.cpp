@@ -437,20 +437,21 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         }
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
-
-//        auto tryCnt = 0;
-//        //TODO: this very simple rule ensures that sources can only get buffer if more than 10% of the overall buffer exists
-//        uint64_t upperBound = threadPool->getNumberOfThreads() * 10000;
-//        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1 || taskQueue.size() > upperBound) {
-//            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-//            waitCounter++;
-//            NES_WARNING("Waiting");
-//            //TODO: we have to do this because it could be that a source is stuck here and then the shutdown crashes, so basically we test 100x for 100ms
-//            // and then release the break
-//            if (tryCnt++ == 100) {
-//                break;
-//            }
-//        }
+#if 0
+        auto tryCnt = 0;
+        //TODO: this very simple rule ensures that sources can only get buffer if more than 10% of the overall buffer exists
+        uint64_t upperBound = threadPool->getNumberOfThreads() * 10000;
+        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1 || taskQueue.size() > upperBound) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            waitCounter++;
+            NES_WARNING("Waiting");
+            //TODO: we have to do this because it could be that a source is stuck here and then the shutdown crashes, so basically we test 100x for 100ms
+            // and then release the break
+            if (tryCnt++ == 100) {
+                break;
+            }
+        }
+#endif
 
         //TODO: this is a problem now as it can become the bottleneck
         std::unique_lock workQueueLock(workMutex);

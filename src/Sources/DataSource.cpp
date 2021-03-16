@@ -37,7 +37,7 @@ namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId)
-    : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), queryManager(queryManager),
+    : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager->createLocalBufferManager(128)), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId),
       wasGracefullyStopped(true) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
