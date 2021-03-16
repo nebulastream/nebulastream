@@ -39,7 +39,7 @@ ThreadPool::~ThreadPool() {
 void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     while (running) {
         try {
-            switch (queryManager.lock()->processNextTask(running, workerContext)) {
+            switch (queryManager->processNextTask(running, workerContext)) {
                 case QueryManager::Ok: {
                     break;
                 }
@@ -63,7 +63,7 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
         }
     }
     try {
-        queryManager.lock()->processNextTask(running, workerContext);
+        queryManager->processNextTask(running, workerContext);
     } catch (std::exception& error) {
         NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
         NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
@@ -103,7 +103,7 @@ bool ThreadPool::stop() {
      * so they notice the change in the run variable */
     NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
     running = false;
-    queryManager.lock()->unblockThreads();
+    queryManager->unblockThreads();
     /* join all threads if possible */
     for (auto& thread : threads) {
         if (thread.joinable()) {
