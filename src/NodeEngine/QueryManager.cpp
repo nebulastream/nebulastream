@@ -28,6 +28,8 @@
 #include <memory>
 #include <utility>
 
+//#define QUERY_PROCESSING_WITH_SLOWDOWN
+
 namespace NES::NodeEngine {
 using std::string;
 namespace detail {
@@ -96,7 +98,6 @@ bool QueryManager::startThreadPool() {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     NES_ASSERT(threadPool == nullptr, "thread pool already running");
-//    threadBarrier = std::make_shared<ThreadBarrier>(numThreads);
     threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads);
     return threadPool->start();
 }
@@ -441,7 +442,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         }
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
-#if 0
+#ifdef QUERY_PROCESSING_WITH_SLOWDOWN //the following code is the old break that we had, we leave it in to maybe activate it again later
         auto tryCnt = 0;
         //TODO: this very simple rule ensures that sources can only get buffer if more than 10% of the overall buffer exists
         uint64_t upperBound = threadPool->getNumberOfThreads() * 10000;

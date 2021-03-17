@@ -53,10 +53,9 @@ class LocalBufferManager : public BufferRecycler {
     void destroy();
 
     /**
-     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
-     * @return a new buffer
-     */
-    TupleBuffer getBuffer();
+    * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
+    * @return a new buffer
+    */
     TupleBuffer getBufferBlocking();
 
     /**

@@ -96,8 +96,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
 
     uint64_t runCounter = 0;
     auto start = std::chrono::system_clock::now();
-    auto in_time_t = std::chrono::system_clock::to_time_t(start);
-    std::cout << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X")
+    auto inTime = std::chrono::system_clock::to_time_t(start);
+    std::cout << std::put_time(std::localtime(&inTime), "%Y-%m-%d %X")
               << " E2EBase: Started Measurement for query id=" << queryId << std::endl;
 
     while (runCounter < NUMBER_OF_MEASUREMENTS_TO_COLLECT) {
@@ -107,8 +107,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
         for (auto iter : queryStatisticsPtrs) {
             auto ts = std::chrono::system_clock::now();
-            auto in_time_t = std::chrono::system_clock::to_time_t(ts);
-            std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>"
+            auto timeNow = std::chrono::system_clock::to_time_t(ts);
+            std::cout << "Statistics  at " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
                       << iter->getQueryStatisticsAsString() << std::endl;
 
             runCounter++;
@@ -139,8 +139,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
     }
 
     auto stop = std::chrono::system_clock::now();
-    auto out_time_t = std::chrono::system_clock::to_time_t(stop);
-    std::cout << std::put_time(std::localtime(&out_time_t), "%Y-%m-%d %X")
+    auto outTime = std::chrono::system_clock::to_time_t(stop);
+    std::cout << std::put_time(std::localtime(&outTime), "%Y-%m-%d %X")
               << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
 
     if (subPlanIdToTuplelCnt.size() == 0) {
