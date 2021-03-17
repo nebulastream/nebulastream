@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -22,6 +23,7 @@
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
@@ -59,8 +61,34 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
                 continue;
             }
 
-            auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
             auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
+            auto targetQueryPlanItr = QueryPlanIterator(targetQueryPlan).begin();
+
+            auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
+            auto hostQueryPlanItr = QueryPlanIterator(hostQueryPlan).begin();
+
+            std::map<OperatorNodePtr, OperatorNodePtr> targetToHostOperatorMap;
+            while (*targetQueryPlanItr) {
+                bool foundMatch = false;
+                auto targetOperator = (*targetQueryPlanItr)->as<LogicalOperatorNode>();
+                if (!targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
+                    while (*hostQueryPlanItr) {
+                        auto hostOperator = (*hostQueryPlanItr)->as<LogicalOperatorNode>();
+                        if (!hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
+                            if (targetOperator->getSignature()->isEqual(hostOperator->getSignature())) {
+                                targetToHostOperatorMap[targetOperator] = hostOperator;
+                                foundMatch = true;
+                                break;
+                            }
+                        }
+                        ++hostQueryPlanItr;
+                    }
+                }
+                if (foundMatch) {
+                    break;
+                }
+                ++targetQueryPlanItr;
+            }
 
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
@@ -84,37 +112,23 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata
-            if (!areEqual) {
-                NES_WARNING("SignatureBasedPartialQueryMergerRule: Target and Host Shared Query MetaData are not equal");
+            if (targetToHostOperatorMap.empty()) {
+                NES_WARNING("SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
                 continue;
             }
 
-            std::vector<OperatorNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkOperators();
-            //Iterate over all target sink global query node
-            for (auto targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
-                //Check for the target sink global query node the corresponding address sink global query node id in the map
-                uint64_t hostSinkOperatorId = targetHostSinkNodeMap[targetSinkOperator->getId()];
+            NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
-                // Find the address sink global query node with the matching id
-                auto found =
-                    std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(), [hostSinkOperatorId](OperatorNodePtr hostSinkGQN) {
-                        return hostSinkGQN->getId() == hostSinkOperatorId;
-                    });
-
-                if (found == hostSinkGQNs.end()) {
-                    NES_THROW_RUNTIME_ERROR("SignatureBasedPartialQueryMergerRule: Unexpected behaviour");
-                }
-
-                //Remove all children of target sink global query node
-                targetSinkOperator->removeChildren();
-
-                //Add children of matched address sink global query node to the target sink global query node
-                for (auto hostChild : (*found)->getChildren()) {
-                    hostChild->addParent(targetSinkOperator);
-                }
+            //Iterate over all matched pairs of operators and merge the query plan
+            for (auto [targetOperator, hostOperator] : targetToHostOperatorMap) {
+                hostSharedQueryMetaData->mergeOperatorInto(targetOperator, hostOperator);
             }
 
-            NES_TRACE("SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
+            //Add all root operators from target query plan to host query plan
+            for(auto targetRootOperator: targetQueryPlan->getRootOperators()){
+                hostQueryPlan->addRootOperator(targetRootOperator);
+            }
+
             hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
             //Clear the target shared query metadata
             targetSharedQueryMetaData->clear();
