@@ -17,6 +17,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -27,7 +28,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <NodeEngine/LocalBufferManager.hpp>
 
 namespace NES {
 

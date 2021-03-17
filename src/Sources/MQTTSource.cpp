@@ -19,6 +19,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MQTTSource.hpp>
 #include <Util/Logger.hpp>
@@ -28,8 +29,6 @@
 #include <mqtt/async_client.h>
 #include <sstream>
 #include <string>
-#include <NodeEngine/LocalBufferManager.hpp>
-
 
 using namespace std;
 using namespace std::chrono;

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/SenseSource.hpp>
@@ -24,7 +25,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <NodeEngine/LocalBufferManager.hpp>
 using namespace std;
 
 namespace NES {

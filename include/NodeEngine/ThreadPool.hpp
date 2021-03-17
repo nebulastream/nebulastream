@@ -65,9 +65,7 @@ class ThreadPool {
        */
     bool stop();
 
-    bool isRunning() const {
-        return running;
-    }
+    bool isRunning() const { return running; }
 
   private:
     /**

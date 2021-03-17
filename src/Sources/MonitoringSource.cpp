@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include <Sources/MonitoringSource.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
+#include <Sources/MonitoringSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>

@@ -15,12 +15,12 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
 namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
@@ -36,7 +36,7 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
 
 std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
-//    auto buffer = this->bufferManager->getBufferBlocking();
+    //    auto buffer = this->bufferManager->getBufferBlocking();
 
     uint64_t numberOfTuples = 0;
     //if the memory area is smaller than a buffer
@@ -45,7 +45,8 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     } else {
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / schema->getSchemaSizeInBytes();
-        auto numberOfTuplesPerBuffer = std::floor(double(globalBufferManager->getBufferSize()) / double(schema->getSchemaSizeInBytes()));
+        auto numberOfTuplesPerBuffer =
+            std::floor(double(globalBufferManager->getBufferSize()) / double(schema->getSchemaSizeInBytes()));
         if (restTuples > numberOfTuplesPerBuffer) {
             numberOfTuples = numberOfTuplesPerBuffer;
         } else {
@@ -67,7 +68,7 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= globalBufferManager->getBufferSize(),
                     "value to write is larger than the buffer");
 
-//    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, offset);
+    //    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, offset);
     auto buffer = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, offset, this);
     refCnt++;
     if (memoryAreaSize > buffer.getBufferSize()) {
@@ -90,9 +91,7 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
 const std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
-void MemorySource::recyclePooledBuffer(NodeEngine::detail::MemorySegment*) {
-    refCnt--;
-}
+void MemorySource::recyclePooledBuffer(NodeEngine::detail::MemorySegment*) { refCnt--; }
 void MemorySource::recycleUnpooledBuffer(NodeEngine::detail::MemorySegment*) {}
 
 }// namespace NES

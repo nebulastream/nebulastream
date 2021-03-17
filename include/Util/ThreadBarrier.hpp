@@ -17,9 +17,9 @@
 #ifndef NES_THREADBARRIER_HPP
 #define NES_THREADBARRIER_HPP
 
+#include <NodeEngine/NesThread.hpp>
 #include <condition_variable>
 #include <mutex>
-#include <NodeEngine/NesThread.hpp>
 namespace NES {
 
 /**

@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 #define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 
-#include <Sources/DataSource.hpp>
 #include <NodeEngine/BufferRecycler.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES {
 

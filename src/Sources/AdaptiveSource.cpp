@@ -15,11 +15,11 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/AdaptiveSource.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cassert>
 #include <chrono>
 #include <limits>

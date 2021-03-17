@@ -51,7 +51,6 @@ class TupleBuffer {
     friend class LocalBufferManager;
 
   public:
-
     /**
      * @brief Creates a TupleBuffer of length bytes starting at ptr address. The parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed, which must be done by the user.
      * @param ptr
