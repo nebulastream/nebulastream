@@ -1,0 +1,244 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Nodes/Util/DumpContext.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Util/Logger.hpp>
+#include <gtest/gtest.h>
+
+#include <Catalogs/LogicalStream.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Phases/DefaultPhysicalOperatorProvider.hpp>
+#include <QueryCompiler/Phases/TranslateToPhysicalOperators.hpp>
+#include <iostream>
+
+using namespace std;
+
+namespace NES {
+
+class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
+  public:
+    static void SetUpTestCase() {
+        NES::setupLogging("TranslateToPhysicalOperatorPhaseTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup TranslateToPhysicalOperatorPhaseTest test class.");
+    }
+
+    void SetUp() {
+
+        pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+        pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
+        pred3 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "3"));
+        pred4 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "4"));
+        pred5 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "5"));
+        pred6 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "6"));
+        pred7 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "7"));
+        unionOp1 = LogicalOperatorFactory::createUnionOperator();
+        sourceOp1 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+        sourceOp2 = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("default_logical"));
+        filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
+        filterOp2 = LogicalOperatorFactory::createFilterOperator(pred2);
+        filterOp3 = LogicalOperatorFactory::createFilterOperator(pred3);
+        filterOp4 = LogicalOperatorFactory::createFilterOperator(pred4);
+        filterOp5 = LogicalOperatorFactory::createFilterOperator(pred5);
+        filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
+        filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
+        sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+        sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
+    }
+
+    void TearDown() {
+        NES_DEBUG("Tear down TranslateToPhysicalOperatorPhase Test.");
+    }
+
+  protected:
+    ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
+    LogicalOperatorNodePtr sourceOp1, sourceOp2, unionOp1;
+
+    LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
+    LogicalOperatorNodePtr sinkOp1, sinkOp2;
+};
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Filter -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Filter -- Physical Source 1
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Filter -- Source 1
+ *            /
+ *           /
+ * --- Sink 2
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Demultiplex Operator --- Physical Filter -- Physical Source 1
+ *                      /
+ *                     /
+ * --- Physical Sink 2
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexFilterQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    sinkOp2->addChild(filterOp1);
+    queryPlan->addRootOperator(sinkOp2);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalDemultiplexOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Filter --- Union --- Source 1
+ *                                 \
+ *                                  -- Source 2
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Filter --- Physical Multiple Operator --- Physical Source 1
+ *                                                                       \
+ *                                                                        --- Physical Source 2
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterMultiplexQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(unionOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    unionOp1->addChild(sourceOp2);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Filter   --- Source 1
+ *                        \
+ *                         --- Source 2
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1  --- Physical Filter --- Physical Demultiple Operator  --- Physical Source 1
+ *                                                                           \
+ *                                                                            --- Physical Source 2
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterImplicitMultiplexQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(filterOp1);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    filterOp1->addChild(sourceOp2);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalFilterOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMultiplexOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+
+}// namespace NES

@@ -22,6 +22,9 @@ add_source_nes(
         PhysicalFilterOperator.cpp
         PhysicalMapOperator.cpp
         PhysicalScanOperator.cpp
-
+        PhysicalMultiplexOperator.cpp
+        PhysicalDemultiplexOperator.cpp
 )
+
+add_subdirectory(Joining)
 

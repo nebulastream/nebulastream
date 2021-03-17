@@ -91,6 +91,11 @@ add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest
 target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
+### Translate Physical Operator Tests ###
+add_executable(translate-physical-operator-tests "UnitTests/QueryCompiler/TranslateToPhysicalOperatorPhaseTest.cpp")
+target_link_libraries(translate-physical-operator-tests nes ${GTEST_LIBRARIES})
+add_test(NAME translate-physical-operator-tests COMMAND translate-physical-operator-tests)
+
 ### Operator Code Generation Tests ###
 add_executable(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorCodeGenerationTest.cpp")
 target_link_libraries(operator-code-generation-tests nes ${GTEST_LIBRARIES})
@@ -215,9 +220,9 @@ target_link_libraries(translate-to-generatable-operator-phase-tests nes ${GTEST_
 add_test(NAME translate-to-generatable-operator-phase-tests COMMAND translate-to-generatable-operator-phase-tests)
 
 # QueryPlanIteratorTest
-add_executable(queryplan-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
-target_link_libraries(queryplan-iterator-test nes ${GTEST_LIBRARIES})
-add_test(NAME queryplan-iterator-test COMMAND queryplan-iterator-test)
+add_executable(queryplan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
+target_link_libraries(queryplan-util-iterator-test nes ${GTEST_LIBRARIES})
+add_test(NAME queryplan-util-iterator-test COMMAND queryplan-util-iterator-test)
 
 # ConvertLogicalToPhysicalSinkTest
 add_executable(convert-logical-to-physical-sink-tests "UnitTests/Phases/ConvertLogicalToPhysicalSinkTest.cpp")
