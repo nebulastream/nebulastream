@@ -22,6 +22,8 @@
 #include <random>
 #include <thread>
 
+#include <future>
+
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -57,7 +59,7 @@ DataSource::~DataSource() {
 
 bool DataSource::start() {
     NES_DEBUG("DataSource " << operatorId << ": start source " << this);
-    auto barrier = std::make_shared<ThreadBarrier>(2);
+    std::promise<bool> prom;
     std::unique_lock lock(startStopMutex);
     if (running) {
         NES_WARNING("DataSource " << operatorId << ": is already running " << this);
@@ -66,12 +68,11 @@ bool DataSource::start() {
     running = true;
     type = getType();
     NES_DEBUG("DataSource " << operatorId << ": Spawn thread");
-    thread = std::make_shared<std::thread>([this, barrier]() {
-        barrier->wait();
+    thread = std::make_shared<std::thread>([this, &prom]() {
+        prom.set_value(true);
         runningRoutine();
     });
-    barrier->wait();
-    return true;
+    return prom.get_future().get();
 }
 
 bool DataSource::stop(bool graceful) {

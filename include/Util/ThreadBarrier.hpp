@@ -44,7 +44,7 @@ class ThreadBarrier {
 
     ~ThreadBarrier() {
         std::unique_lock<std::mutex> lock(mutex);
-        NES_ASSERT2_FMT(count >= size, "destroying not completed thread barrier");
+        NES_ASSERT2_FMT(count >= size, "destroying not completed thread barrier count=" << count << " size=" << size);
         NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
     }
 
