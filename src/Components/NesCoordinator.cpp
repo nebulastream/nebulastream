@@ -348,6 +348,8 @@ MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringS
 
 GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan; }
 
+GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() { return globalExecutionPlan; }
+
 MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
 
 void NesCoordinator::onFatalError(int, std::string) {}

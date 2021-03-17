@@ -85,11 +85,13 @@ std::vector<uint64_t> MaintenanceService::firstStrat(uint64_t nodeId) {
         for(auto it2: it.second){
           uint64_t id = it2->getQueryId();
            if(std::find(parentQueryIds.begin(), parentQueryIds.end(),id) == parentQueryIds.end()){
-               queryCatalog->markQueryAs(id,QueryStatus::Restart);
-               queryRequestQueue->add(queryCatalog->getQueryCatalogEntry(id));
                parentQueryIds.push_back(id);
            }
         }
+    }
+    for(auto id : parentQueryIds){
+        queryCatalog->markQueryAs(id,QueryStatus::Restart);
+        queryRequestQueue->add(queryCatalog->getQueryCatalogEntry(id));
     }
     auto  ID = parentQueryIds.front();
     NES_DEBUG("ID of first query :" << std::to_string(ID));

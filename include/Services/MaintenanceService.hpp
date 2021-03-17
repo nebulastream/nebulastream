@@ -44,6 +44,7 @@ class MaintenanceService {
     ~MaintenanceService();
     /**
      * submit a request to take a node offline for maintenance
+     * @returns Vector of QueryIds to restart
      * @param nodeId
      * @param strategy
      */

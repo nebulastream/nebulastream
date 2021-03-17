@@ -29,6 +29,8 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -38,11 +40,6 @@ static uint64_t rpcPort = 4000;
 
 class MaintenanceServiceIntegrationTest : public testing::Test {
   public:
-    CoordinatorConfigPtr coConf;
-    WorkerConfigPtr wrkConf;
-    SourceConfigPtr srcConf;
-    NesCoordinatorPtr crd;
-
     static void SetUpTestCase() {
         NES::setupLogging("MaintenanceServiceTest.log", NES::LOG_DEBUG);
         NES_DEBUG("Setup MaintenanceService test class.");
@@ -51,162 +48,164 @@ class MaintenanceServiceIntegrationTest : public testing::Test {
     void SetUp() {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
-        coConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
-        srcConf = SourceConfig::create();
-        coConf->setRpcPort(rpcPort);
-        coConf->setRestPort(restPort);
-        wrkConf->setCoordinatorPort(rpcPort);
-        coConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        /**
-         * Coordinator set up
-         */
-        crd = std::make_shared<NesCoordinator>(coConf);
-        uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-        EXPECT_NE(port, 0);
-        NES_DEBUG("MaintenanceServiceTest: Coordinator started successfully");
-        uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
-
-     /**
-      * Building Topology made up of 14 nodes that has the following structure:
-      *
-      *
-      * PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
-      * |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |--PhysicalNode[id=8, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=12, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |--PhysicalNode[id=8, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=12, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=13, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=9, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |  |--PhysicalNode[id=13, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |--PhysicalNode[id=9, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-      * |  |  |--PhysicalNode[id=13, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
-     */
-        for(int i = 2; i<16; i++ ){
-            NES_DEBUG("MaintenanceServiceTest: Start worker " <<std::to_string(i));
-            wrkConf->resetWorkerOptions();
-            wrkConf->setCoordinatorPort(port);
-            wrkConf->setRpcPort(port + 10*i);
-            wrkConf->setDataPort(port + 10*i+1);
-            NodeType type;
-            if(i == 13 || i == 14 || i == 15){
-                type = NodeType::Sensor;
-            }
-            else{
-                type = NodeType::Worker;
-            }
-            NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, type);
-            bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
-            EXPECT_TRUE(retStart);
-            NES_DEBUG("MaintenanceServiceTest: Worker " << std::to_string(i) << " started successfully");
-            TopologyNodeId wrkTopologyNodeId = wrk->getTopologyNodeId();
-            NES_DEBUG("MaintenanceServiceTest: Worker " << std::to_string(i) <<" has id: " << std::to_string(wrkTopologyNodeId));
-            ASSERT_NE(wrkTopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
-            switch (i){
-                case 6:
-                    wrk->replaceParent(crdTopologyNodeId, 3);
-                    break;
-
-                case 7:
-                    wrk->replaceParent(crdTopologyNodeId, 3);
-                    wrk->addParent(4);
-                    break;
-
-                case 8:
-                    wrk->replaceParent(crdTopologyNodeId, 4);
-                    wrk->addParent(5);
-                    break;
-
-                case 9:
-                    wrk->replaceParent(crdTopologyNodeId, 2);
-                    wrk->addParent(6);
-                    break;
-
-                case 10:
-                    wrk->replaceParent(crdTopologyNodeId, 6);
-                    break;
-
-                case 11:
-                    wrk->replaceParent(crdTopologyNodeId, 7);
-                    wrk->addParent(8);
-                    break;
-
-                case 12:
-                    wrk->replaceParent(crdTopologyNodeId, 8);
-                    break;
-
-                case 13:
-                    wrk->replaceParent(crdTopologyNodeId, 9);
-                    wrk->addParent(10);
-                    break;
-
-                case 14:
-                    wrk->replaceParent(crdTopologyNodeId, 10);
-                    wrk->addParent(11);
-                    break;
-
-                case 15:
-                    wrk->replaceParent(crdTopologyNodeId, 11);
-                    wrk->addParent(12);
-                    break;
-
-            }
-        }
-        // Check if the topology matches the expected hierarchy
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 4);
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 2);
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren().size(), 1);
-        //mid level
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
-
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 2);
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
-
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[0]->getChildren().size(), 1);
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren().size(), 2);
-
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren()[0]->getChildren().size(), 2);
-        //bottom level
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
-
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren()[1]->getChildren().size(), 2);
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren()[0]->getChildren().size(), 2);
-
-        ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
     }
 
-    void TearDown() { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
+    void TearDown() { NES_DEBUG("TearDown MaintenanceServiceIntegration test class."); }
 };
 /**
  * compares path from source nodes to sink node with what is expected before and after maintenance
  */
-TEST_F(MaintenanceServiceIntegrationTest, DISABLED_findPathIgnoresNodesMarkedForMaintenanceTest) {
+TEST_F(MaintenanceServiceIntegrationTest, findPathIgnoresNodesMarkedForMaintenanceTest) {
+
+
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    coConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+    /**
+     * Coordinator set up
+     */
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+
+    /**
+     * Building Topology made up of 14 nodes that has the following structure:
+     *
+     *
+     * PhysicalNode[id=1, ip=127.0.0.1, resourceCapacity=65535, usedResource=0]
+     * |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |--PhysicalNode[id=8, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=12, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |--PhysicalNode[id=8, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=12, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |--PhysicalNode[id=3, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |--PhysicalNode[id=7, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=11, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=15, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |--PhysicalNode[id=6, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=10, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=14, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=13, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=9, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |  |--PhysicalNode[id=13, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |--PhysicalNode[id=2, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |--PhysicalNode[id=9, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+     * |  |  |--PhysicalNode[id=13, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
+    */
+    for(int i = 2; i<16; i++ ){
+        NES_DEBUG("MaintenanceServiceTest: Start worker " <<std::to_string(i));
+        wrkConf->resetWorkerOptions();
+        wrkConf->setCoordinatorPort(port);
+        wrkConf->setRpcPort(port + 10*i);
+        wrkConf->setDataPort(port + 10*i+1);
+        NodeType type;
+        if(i == 13 || i == 14 || i == 15){
+            type = NodeType::Sensor;
+        }
+        else{
+            type = NodeType::Worker;
+        }
+        NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, type);
+        bool retStart = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        EXPECT_TRUE(retStart);
+        NES_DEBUG("MaintenanceServiceTest: Worker " << std::to_string(i) << " started successfully");
+        TopologyNodeId wrkTopologyNodeId = wrk->getTopologyNodeId();
+        NES_DEBUG("MaintenanceServiceTest: Worker " << std::to_string(i) <<" has id: " << std::to_string(wrkTopologyNodeId));
+        ASSERT_NE(wrkTopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
+        switch (i){
+            case 6:
+                wrk->replaceParent(crdTopologyNodeId, 3);
+                break;
+
+            case 7:
+                wrk->replaceParent(crdTopologyNodeId, 3);
+                wrk->addParent(4);
+                break;
+
+            case 8:
+                wrk->replaceParent(crdTopologyNodeId, 4);
+                wrk->addParent(5);
+                break;
+
+            case 9:
+                wrk->replaceParent(crdTopologyNodeId, 2);
+                wrk->addParent(6);
+                break;
+
+            case 10:
+                wrk->replaceParent(crdTopologyNodeId, 6);
+                break;
+
+            case 11:
+                wrk->replaceParent(crdTopologyNodeId, 7);
+                wrk->addParent(8);
+                break;
+
+            case 12:
+                wrk->replaceParent(crdTopologyNodeId, 8);
+                break;
+
+            case 13:
+                wrk->replaceParent(crdTopologyNodeId, 9);
+                wrk->addParent(10);
+                break;
+
+            case 14:
+                wrk->replaceParent(crdTopologyNodeId, 10);
+                wrk->addParent(11);
+                break;
+
+            case 15:
+                wrk->replaceParent(crdTopologyNodeId, 11);
+                wrk->addParent(12);
+                break;
+
+        }
+    }
+    // Check if the topology matches the expected hierarchy
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren().size(), 4);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren().size(), 1);
+    //mid level
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren().size(), 2);
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[3]->getChildren()[0]->getChildren().size(), 2);
+    //bottom level
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[0]->getChildren()[0]->getChildren().size(), 1);
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[0]->getChildren()[1]->getChildren().size(), 2);
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[1]->getChildren()[1]->getChildren()[0]->getChildren().size(), 2);
+
+    ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     TopologyPtr topology = crd->getTopology();
     std::vector<TopologyNodePtr> sourceNodes{topology->findNodeWithId(13),topology->findNodeWithId(14),topology->findNodeWithId(15)};
@@ -279,10 +278,21 @@ TEST_F(MaintenanceServiceIntegrationTest, DISABLED_findPathIgnoresNodesMarkedFor
     EXPECT_TRUE(mThirdStartNodeParent3->getId() == 5);
     TopologyNodePtr mThirdStartNodeParent4 = mThirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(mThirdStartNodeParent4->getId() == 1);
-
+    //TODO: move to Unit Tests
 }
 
 TEST_F(MaintenanceServiceIntegrationTest, DISABLED_defTest) {
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
     srcConf->setSourceConfig("");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setNumberOfBuffersToProduce(3);
@@ -318,5 +328,142 @@ TEST_F(MaintenanceServiceIntegrationTest, DISABLED_defTest) {
     ASSERT_EQ(parentQueryIds.front(), queryId);
 
     }
+TEST_F(MaintenanceServiceIntegrationTest,Strat1Test){
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    wrk3->replaceParent(1,2);
+    wrk3->addParent(3);
+
+    TopologyPtr topo = crd->getTopology();
+    ASSERT_EQ(topo->getRoot()->getId(),1);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(),2);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(),1);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(),1);
+    NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/exdra.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("exdra");
+    srcConf->setNumberOfBuffersToProduce(1000);
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    wrk3->registerPhysicalStream(conf);
+    std::string filePath = "contTestOut.csv";
+    remove(filePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+    //register query
+    std::string queryString =
+        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+
+
+
+
+
+
+    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+//    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+//    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
+//    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
+//    ASSERT_FALSE(crd->getTopology()->findNodeWithId(3)->getMaintenanceFlag());
+
+    //std::vector<TopologyNodePtr> sourceNode = {crd->getTopology()->findNodeWithId(4)};
+    //std::vector<TopologyNodePtr> destNode = {crd->getTopology()->getRoot()};
+    //auto paths = crd->getTopology()->findPathBetween(sourceNode,destNode);
+    //ASSERT_EQ(paths[0]->getParents()[0]->as<TopologyNode>()->getId(),2);
+
+    //queryService->validateAndQueueStopRequest(queryId);
+    //EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    auto parentQueryIds =maintenanceService->submitMaintenanceRequest(2,1);
+   //auto pathsMaintenanceNode2 = crd->getTopology()->findPathBetween(sourceNode,destNode);
+
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+   auto exNodes = globalExecutionPlan->getAllExecutionNodes();
+   ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+   ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
+   ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+
+
+
+    //EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+
+
+
+//    bool retStopWrk = wrk->stop(false);
+//    EXPECT_TRUE(retStopWrk);
+//
+//    bool retStopCord = crd->stopCoordinator(false);
+//    cout << crd.use_count() << " use cnt coord" << endl;
+//    EXPECT_TRUE(retStopCord);
+}
+//TEST_F(MaintenanceServiceIntegrationTest,singleNodeTest){
+//    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+//    WorkerConfigPtr wrkConf = WorkerConfig::create();
+//    SourceConfigPtr srcConf = SourceConfig::create();
+//    coConf->setRpcPort(rpcPort);
+//    coConf->setRestPort(restPort);
+//    wrkConf->setCoordinatorPort(rpcPort);
+//    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+//    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+//    EXPECT_NE(port, 0);
+//    wrkConf->setCoordinatorPort(port);
+//    wrkConf->setRpcPort(port + 10);
+//    wrkConf->setDataPort(port + 11);
+//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+//    EXPECT_TRUE(retStart1);
+//
+//    std::string query = "Query::from(\"default_logical\").filter(Attribute(\"id\") <= 10).sink(PrintSinkDescriptor::create());";
+//    QueryServicePtr queryService = crd->getQueryService();
+//    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+//    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+//
+//    NES_DEBUG("MaintenanceServiceTest: Submit query");
+//
+//    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+//    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+//    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+//    ASSERT_TRUE(queryCatalog->isQueryRunning(1));
+//    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+//
+//}
 
 }//namespace NES
