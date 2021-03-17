@@ -224,9 +224,6 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuerie
     EXPECT_TRUE(root2Children.size() == 1);
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
-    NES_INFO(sharedQueryPlan1->toString());
-    NES_INFO(sharedQueryPlan2->toString());
-
     //execute
     auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
@@ -241,8 +238,6 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuerie
     //assert that the sink operators have same up-stream operator
     auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
     EXPECT_TRUE(updatedRootOperators1.size() == 2);
-
-    NES_INFO(updatedSharedQueryPlan1->toString());
 
     for (auto sink1Child : updatedRootOperators1[0]->getChildren()) {
         for (auto sink2Child : updatedRootOperators1[1]->getChildren()) {
