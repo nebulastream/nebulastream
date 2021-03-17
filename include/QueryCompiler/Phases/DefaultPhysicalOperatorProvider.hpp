@@ -10,8 +10,8 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider{
     void lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) override;
 
   protected:
-    void ingestDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode);
-    void ingestMulticastOperatorsAfter(LogicalOperatorNodePtr operatorNode);
+    void insetDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode);
+    void insertMulticastOperatorsAfter(LogicalOperatorNodePtr operatorNode);
     bool isDemulticast(LogicalOperatorNodePtr operatorNode);
     void lowerBinaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
     void lowerUnaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);

@@ -43,4 +43,23 @@ bool LogicalBinaryOperatorNode::inferSchema() {
     return true;
 }
 
+std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsBySchema(SchemaPtr schema) {
+    std::vector<OperatorNodePtr> operators;
+    for (auto child : getChildren()) {
+        auto childOperator = child->as<OperatorNode>();
+        if (childOperator->getOutputSchema()->equals(schema, false)){
+            operators.emplace_back(childOperator);
+        }
+    }
+    return operators;
+}
+
+std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getLeftOperators() {
+   return getOperatorsBySchema(getLeftInputSchema());
+}
+
+std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getRightOperators() {
+    return getOperatorsBySchema(getRightInputSchema());
+}
+
 }// namespace NES
