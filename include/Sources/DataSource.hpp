@@ -70,6 +70,9 @@ class DataSource : public NodeEngine::Reconfigurable {
 
     DataSource() = delete;
 
+    /**
+     * @brief This methods creates the local buffer pool and is necessary because we cannot do it in the constructor
+     */
     void open();
 
     /**

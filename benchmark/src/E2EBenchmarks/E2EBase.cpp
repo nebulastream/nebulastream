@@ -349,8 +349,6 @@ void E2EBase::setup() {
     crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
-    //jump to something ... script
-
     std::cout << "E2EBase: Start worker 1" << std::endl;
     NES::WorkerConfigPtr wrkConf = NES::WorkerConfig::create();
     wrkConf->setCoordinatorPort(port);

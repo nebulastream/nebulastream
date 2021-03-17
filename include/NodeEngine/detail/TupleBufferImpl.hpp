@@ -199,6 +199,13 @@ class MemorySegment {
 
   private:
 
+    /**
+     * @brief Private constructor for the memory Segment
+     * @param ptr
+     * @param size of the segment
+     * @param recycler
+     * @param recycleFunction
+     */
     explicit MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
                            std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool);
 

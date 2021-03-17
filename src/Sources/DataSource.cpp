@@ -37,6 +37,8 @@
 #include <zconf.h>
 namespace NES {
 
+const uint64_t numberOfBuffersInLocalBufferPool = 128;
+
 DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId)
     : running(false), thread(nullptr), schema(pSchema), globalBufferManager(bufferManager), queryManager(queryManager),
@@ -137,7 +139,7 @@ bool DataSource::isRunning() { return running; }
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
 void DataSource::open() {
-    bufferManager = globalBufferManager->createLocalBufferManager(128);
+    bufferManager = globalBufferManager->createLocalBufferManager(numberOfBuffersInLocalBufferPool);
 }
 
 void DataSource::runningRoutine() {
