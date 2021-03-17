@@ -43,8 +43,6 @@ using namespace std;
 
 namespace NES {
 
-using namespace NES::API;
-
 class QueryPlanIteratorTest : public testing::Test {
   public:
     static void SetUpTestCase() {
@@ -93,8 +91,6 @@ class QueryPlanIteratorTest : public testing::Test {
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};
-
-    NodeEngine::NodeEnginePtr nodeEngine;
 };
 
 /**

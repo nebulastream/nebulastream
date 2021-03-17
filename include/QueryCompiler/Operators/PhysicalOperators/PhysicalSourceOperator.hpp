@@ -9,7 +9,14 @@ namespace PhysicalOperators{
 
 class PhysicalSourceOperator: public PhysicalUnaryOperator {
   public:
-    PhysicalSourceOperator(OperatorId id);
+    PhysicalSourceOperator(OperatorId id, SourceDescriptorPtr sourceDescriptor);
+    static PhysicalOperatorPtr create(OperatorId id, SourceDescriptorPtr sourceDescriptor);
+    static PhysicalOperatorPtr create(SourceDescriptorPtr sourceDescriptor);
+    const std::string toString() const override;
+    OperatorNodePtr copy() override;
+
+  private:
+    SourceDescriptorPtr sourceDescriptor;
 
 };
 }

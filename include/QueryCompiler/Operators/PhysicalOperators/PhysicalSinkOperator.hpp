@@ -9,7 +9,14 @@ namespace PhysicalOperators{
 
 class PhysicalSinkOperator: public PhysicalUnaryOperator {
   public:
-    PhysicalSinkOperator(OperatorId id);
+    PhysicalSinkOperator(OperatorId id, SinkDescriptorPtr sinkDescriptor);
+    static PhysicalOperatorPtr create(OperatorId id, SinkDescriptorPtr sinkDescriptor);
+    static PhysicalOperatorPtr create(SinkDescriptorPtr sinkDescriptor);
+    const std::string toString() const override;
+    OperatorNodePtr copy() override;
+
+  private:
+    SinkDescriptorPtr sinkDescriptor;
 
 };
 }

@@ -8,11 +8,12 @@ namespace QueryCompilation {
 class TranslateToPhysicalOperators{
 
   public:
-    TranslateToPhysicalOperatorsPtr create();
+    TranslateToPhysicalOperators(PhysicalOperatorProviderPtr provider);
+    static TranslateToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
     PhysicalQueryPlanPtr apply(QueryPlanPtr queryPlan);
 
   private:
-    void processOperator(std::vector<OperatorNodePtr> operatorNode);
+    PhysicalOperatorProviderPtr provider;
 
 };
 

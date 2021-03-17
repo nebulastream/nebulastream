@@ -11,6 +11,10 @@ namespace PhysicalOperators{
 class PhysicalFilterOperator: public PhysicalUnaryOperator, public AbstractFilterOperator{
   public:
     PhysicalFilterOperator(OperatorId id, ExpressionNodePtr predicate);
+    static PhysicalOperatorPtr create(OperatorId id, ExpressionNodePtr predicate);
+    static PhysicalOperatorPtr create(ExpressionNodePtr predicate);
+    const std::string toString() const override;
+    OperatorNodePtr copy() override;
 
 };
 }

@@ -197,6 +197,16 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
     }
 }
 
+bool QueryPlan::replaceRootOperator(OperatorNodePtr oldRoot, OperatorNodePtr newRoot) {
+    for (uint64_t i = 0; i < rootOperators.size(); i++) {
+        if(rootOperators[i]==oldRoot){
+            rootOperators[i] = newRoot;
+            return true;
+        }
+    }
+    return false;
+}
+
 QueryPlanPtr QueryPlan::copy() {
     NES_INFO("QueryPlan: make copy of this query plan");
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed
