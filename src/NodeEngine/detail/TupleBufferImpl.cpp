@@ -72,6 +72,7 @@ MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycl
     if (!this->size) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid size");
     }
+    controlBlock->prepare();
 }
 
 MemorySegment::~MemorySegment() {
