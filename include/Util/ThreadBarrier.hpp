@@ -42,17 +42,22 @@ class ThreadBarrier {
 
     ThreadBarrier& operator=(const ThreadBarrier&) = delete;
 
+    ~ThreadBarrier() {
+        std::unique_lock<std::mutex> lock(mutex);
+        NES_ASSERT2_FMT(count >= size, "destroying not completed thread barrier");
+        NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
+    }
+
     /**
      * @brief This method will block the calling thread until N threads have invoke wait().
      */
     void wait() {
         std::unique_lock<std::mutex> lock(mutex);
+        NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
         if (++count >= size) {
-            NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
             cvar.notify_all();
         } else {
             while (count < size) {
-                NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
                 cvar.wait(lock);
             }
         }

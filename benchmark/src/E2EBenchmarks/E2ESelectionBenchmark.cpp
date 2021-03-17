@@ -19,7 +19,7 @@
 
 using namespace Benchmarking;
 
-const NES::DebugLevel LOG_LEVEL = NES::LOG_WARNING;
+const NES::DebugLevel LOG_LEVEL = NES::LOG_INFO;
 
 /**
  * @brief This benchmarks runs a map query on one worker and one coordinator
