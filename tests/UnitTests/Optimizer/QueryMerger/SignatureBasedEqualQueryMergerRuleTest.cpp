@@ -38,7 +38,7 @@
 
 using namespace NES;
 
-class SignatureBasedEqualQueryMergerRuleTest : public testing::Test {
+class SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;

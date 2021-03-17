@@ -65,13 +65,13 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
             auto targetQueryPlanItr = QueryPlanIterator(targetQueryPlan).begin();
 
             auto hostQueryPlan = hostSharedQueryMetaData->getQueryPlan();
-            auto hostQueryPlanItr = QueryPlanIterator(hostQueryPlan).begin();
 
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostOperatorMap;
             while (*targetQueryPlanItr) {
                 bool foundMatch = false;
                 auto targetOperator = (*targetQueryPlanItr)->as<LogicalOperatorNode>();
                 if (!targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
+                    auto hostQueryPlanItr = QueryPlanIterator(hostQueryPlan).begin();
                     while (*hostQueryPlanItr) {
                         auto hostOperator = (*hostQueryPlanItr)->as<LogicalOperatorNode>();
                         if (!hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
@@ -88,27 +88,6 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
                     break;
                 }
                 ++targetQueryPlanItr;
-            }
-
-            // Prepare a map of matching address and target sink global query nodes
-            // if there are no matching global query nodes then the shared query metadata are not matched
-            std::map<uint64_t, uint64_t> targetHostSinkNodeMap;
-            bool areEqual;
-            for (auto hostSink : hostQueryPlan->getSinkOperators()) {
-                areEqual = false;
-                for (auto targetSink : targetQueryPlan->getSinkOperators()) {
-                    //Check if the address and target sink signatures match each other
-                    if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
-                        targetHostSinkNodeMap[targetSink->getId()] = hostSink->getId();
-                        areEqual = true;
-                        break;
-                    }
-                }
-                if (!areEqual) {
-                    NES_WARNING("SignatureBasedPartialQueryMergerRule: There are not equal Target sink for Host sink "
-                                << hostSink->toString());
-                    break;
-                }
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata
