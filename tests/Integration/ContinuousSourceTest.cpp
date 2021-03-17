@@ -1497,57 +1497,8 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
  * Testing test harness CSV source
  */
 TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
-    struct Car {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-    };
+    uint64_t numBufferToProduce = 1000;
 
-    auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
-
-    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
-
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("timestamp") >= 100000))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    //register physical stream
-
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setLogicalStreamName("car");
-    sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
-    sourceConfig->setSourceFrequency(0);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(1000);
-    sourceConfig->setSkipHeader(false);
-
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    testHarness.addCSVSource(conf, carSchema);
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
-
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
-    };
-    std::vector<Output> expectedOutput = {{1, 1, 100000}};
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
-}
-
-/*
- * Testing test harness CSV source
- */
-TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
     struct Car {
         uint32_t key;
         uint32_t value;
@@ -1571,9 +1522,9 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
     sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
-    sourceConfig->setSourceFrequency(200);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(100);
+    sourceConfig->setNumberOfBuffersToProduce(numBufferToProduce);
     sourceConfig->setSkipHeader(false);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
@@ -1589,19 +1540,69 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
     std::vector<Output> expectedOutput = {};
-    for (uint64_t i=0; i<100; i++){
+    for (uint64_t i=0; i<numBufferToProduce; i++){
+        expectedOutput.push_back({1, 1, (i+1)*100});
+    }
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * Testing test harness CSV source
+ */
+TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
+    uint64_t numBufferToProduce = 200;
+
+    struct Car {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt32())
+        ->addField("value", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithFilterOperator = R"(Query::from("car"))";
+    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
+
+    //register physical stream
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->setPhysicalStreamName("car");
+    sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
+    sourceConfig->setSourceFrequency(100);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
+    sourceConfig->setNumberOfBuffersToProduce(numBufferToProduce);
+    sourceConfig->setSkipHeader(false);
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    testHarness.addCSVSource(conf, carSchema);
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    struct Output {
+        uint32_t key;
+        uint32_t value;
+        uint64_t timestamp;
+
+        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
+    };
+    std::vector<Output> expectedOutput = {};
+    for (uint64_t i=0; i<numBufferToProduce; i++){
         expectedOutput.push_back({1, 1, (i+1)*100});
     }
 
-    auto startTs = std::chrono::system_clock::now();
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     auto endTs = std::chrono::system_clock::now();
-
-    auto duration = std::chrono::duration_cast<chrono::seconds>(endTs-startTs).count();
-    NES_DEBUG("Continuous source test: test duration: " << duration);
-    // reading 100 buffers with source a frequency of 200ms should last for at least 20s
-//    ASSERT_TRUE(duration >= 20 );
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
