@@ -174,6 +174,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     write_buffer.getBuffer<uint32_t>()[0] = 45;
     write_buffer.setNumberOfTuples(1);
     auto opcSink = createOPCSink(test_schema, 0, nodeEngine, url, nodeId, user, password);
+
     NES_DEBUG("OPCSINKTEST::TEST_F(OPCSinkTest, OPCSinkValue) buffer before write: "
               << UtilityFunctions::prettyPrintTupleBuffer(write_buffer, test_schema));
     opcSink->writeData(write_buffer, wctx);
@@ -183,6 +184,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31338, PhysicalStreamConfig::createEmpty());
     auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId,
                                      user, password, 1);
+    opcSource->open();
     auto tuple_buffer = opcSource->receiveData();
     uint64_t value = 0;
     auto* tuple = (uint32_t*) tuple_buffer->getBuffer();

@@ -37,7 +37,7 @@ BinarySource::BinarySource(SchemaPtr schema, NodeEngine::BufferManagerPtr buffer
 }
 
 std::optional<NodeEngine::TupleBuffer> BinarySource::receiveData() {
-    auto buf = this->bufferManager->getBuffer();
+    auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     return buf;
 }

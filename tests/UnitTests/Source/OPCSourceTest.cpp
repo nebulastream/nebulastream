@@ -184,6 +184,8 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     t1.detach();
     auto test_schema = Schema::create()->addField("var", UINT32);
     auto opcSource = createOPCSource(test_schema, bufferManager, queryManager, url, nodeId, user, password, 1);
+    opcSource->open();
+
     p.get_future().get();
     auto tuple_buffer = opcSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());

@@ -59,7 +59,7 @@ std::optional<NodeEngine::TupleBuffer> ZmqSource::receiveData() {
             zmq::message_t new_data2;
             socket.recv(&new_data2);// actual data
 
-            auto buffer = bufferManager->getBuffer();
+            auto buffer = bufferManager->getBufferBlocking();
             buffer.setWatermark(currentTs);
             NES_DEBUG("ZMQSource  " << this << ": got buffer ");
 
