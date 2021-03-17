@@ -70,6 +70,8 @@ class DataSource : public NodeEngine::Reconfigurable {
 
     DataSource() = delete;
 
+    void open();
+
     /**
      * @brief method to start the source.
      * 1.) check if bool running is true, if true return if not start source
@@ -178,6 +180,7 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::chrono::milliseconds gatheringInterval;
     OperatorId operatorId;
     SourceType type;
+    NodeEngine::BufferManagerPtr globalBufferManager;
     NodeEngine::LocalBufferManagerPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
 

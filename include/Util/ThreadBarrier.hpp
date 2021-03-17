@@ -57,6 +57,7 @@ class ThreadBarrier {
         if (++count >= size) {
             cvar.notify_all();
         } else {
+            // while loop to avoid spurious wakeup
             while (count < size) {
                 cvar.wait(lock);
             }
