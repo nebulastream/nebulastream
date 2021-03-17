@@ -263,7 +263,8 @@ bool QueryPlan::removeRootOperatorFromPlan(OperatorNodePtr rootOperatorToRemove)
 }
 
 bool QueryPlan::removeOperatorFromPlan(OperatorNodePtr operatorToRemove) {
-    for (auto& child : operatorToRemove->getChildren()) {
+    auto children = operatorToRemove->getChildren();
+    for (auto& child : children) {
         if (child->getParents().size() == 1) {
             removeOperatorFromPlan(child->as<OperatorNode>());
         }
