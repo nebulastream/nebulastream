@@ -21,6 +21,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <deque>
 #include <memory>
+#include <mutex>
 
 namespace NES {
 
