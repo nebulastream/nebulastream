@@ -196,6 +196,13 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     bool isThreadPoolRunning() const;
 
+    /**
+     * @brief get number of tasks in the queue
+     * @return task count
+     */
+    uint64_t getNumberOfTasksInWorkerQueue();
+
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
