@@ -7,12 +7,13 @@
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalJ>
 #include <QueryCompiler/Phases/DefaultPhysicalOperatorProvider.hpp>
 namespace NES {
 namespace QueryCompilation {
@@ -25,13 +26,13 @@ bool DefaultPhysicalOperatorProvider::isDemulticast(LogicalOperatorNodePtr opera
     return operatorNode->getParents().size() > 1;
 }
 
-void DefaultPhysicalOperatorProvider::ingestDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::insetDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
     auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create();
     demultiplexOperator->setOutputSchema(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
 }
 
-void DefaultPhysicalOperatorProvider::ingestMulticastOperatorsAfter(LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::insertMulticastOperatorsAfter(LogicalOperatorNodePtr operatorNode) {
     auto multiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create();
     multiplexOperator->setOutputSchema(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndChildNodes(multiplexOperator);
@@ -39,7 +40,7 @@ void DefaultPhysicalOperatorProvider::ingestMulticastOperatorsAfter(LogicalOpera
 
 void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
     if (isDemulticast(operatorNode)) {
-        ingestDemulticastOperatorsBefore(operatorNode);
+        insetDemulticastOperatorsBefore(operatorNode);
     }
 
     if (operatorNode->isUnaryOperator()) {
@@ -53,7 +54,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(QueryPlanPtr queryPlan,
 
     // If a unary operator has more then one parent, we introduce a implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1) {
-        ingestMulticastOperatorsAfter(operatorNode);
+        insertMulticastOperatorsAfter(operatorNode);
     }
 
     NES_ASSERT(operatorNode->getParents().size() <= 1, "A unary operator should only have at most one parent.");
@@ -82,7 +83,7 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(QueryPlanPtr queryPlan
 
     if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         lowerUnionOperator(queryPlan, operatorNode);
-    } else if(operatorNode->instanceOf<JoinLogicalOperatorNode>()){
+    } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         lowerJoinOperator(queryPlan, operatorNode);
     }
 }
@@ -93,10 +94,22 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(QueryPlanPtr, LogicalOp
     operatorNode->replace(physicalMultiplexOperator);
 }
 
-void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-    auto physicalMultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create();
-    operatorNode->replace(physicalMultiplexOperator);
+    auto leftChildren = joinOperator->getLeftOperators();
+    auto rightChildren = joinOperator->getRightOperators();
+
+    auto leftChild = leftChildren[0];
+    auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getJoinDefinition());
+    leftChild->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+
+    auto rightChild = rightChildren[0];
+    auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getJoinDefinition());
+    rightChild->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+
+    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getJoinDefinition());
+
+    operatorNode->replace(joinSink);
 }
 
 }// namespace QueryCompilation
