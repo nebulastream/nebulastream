@@ -52,9 +52,9 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
 
 using namespace NES;
 using NodeEngine::MemoryLayoutPtr;

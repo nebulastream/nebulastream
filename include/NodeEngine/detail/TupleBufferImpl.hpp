@@ -198,7 +198,6 @@ class MemorySegment {
     ~MemorySegment();
 
   private:
-
     /**
      * @brief Private constructor for the memory Segment
      * @param ptr

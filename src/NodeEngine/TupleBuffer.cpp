@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
+#include <NodeEngine/BufferRecycler.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
-#include <NodeEngine/BufferRecycler.hpp>
 namespace NES::NodeEngine {
 
 TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent) {

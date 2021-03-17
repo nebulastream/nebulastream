@@ -30,11 +30,11 @@
 #include <string>
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Util/Logger.hpp>
 #include <open62541/types.h>
-#include <NodeEngine/LocalBufferManager.hpp>
 
 namespace NES {
 

@@ -97,8 +97,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
     uint64_t runCounter = 0;
     auto start = std::chrono::system_clock::now();
     auto inTime = std::chrono::system_clock::to_time_t(start);
-    std::cout << std::put_time(std::localtime(&inTime), "%Y-%m-%d %X")
-              << " E2EBase: Started Measurement for query id=" << queryId << std::endl;
+    std::cout << std::put_time(std::localtime(&inTime), "%Y-%m-%d %X") << " E2EBase: Started Measurement for query id=" << queryId
+              << std::endl;
 
     while (runCounter < NUMBER_OF_MEASUREMENTS_TO_COLLECT) {
         int64_t nextPeriodStartTime = EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS * 1000
@@ -426,34 +426,34 @@ void E2EBase::tearDown() {
         std::shared_ptr<std::promise<bool>> stopPromiseWrk1 = std::make_shared<std::promise<bool>>();
         std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
         std::thread t1([stopPromiseWrk1, stopPromiseCord]() {
-          std::future<bool> stopFutureWrk1 = stopPromiseWrk1->get_future();
-          bool satisfied = false;
-          while (!satisfied) {
-              switch (stopFutureWrk1.wait_for(std::chrono::seconds(1))) {
-                  case future_status::ready:  {
-                      satisfied = true;
-                  }
-                  case future_status::timeout:
-                  case future_status::deferred: {
-                      NES_WARNING("Waiting for stop");
-                      break;
-                  }
-              }
-          }
-          std::future<bool> stopFutureCord = stopPromiseCord->get_future();
-          satisfied = false;
-          while (!satisfied) {
-              switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
-                  case future_status::ready:  {
-                      satisfied = true;
-                  }
-                  case future_status::timeout:
-                  case future_status::deferred: {
-                      NES_WARNING("Waiting for stop");
-                      break;
-                  }
-              }
-          }
+            std::future<bool> stopFutureWrk1 = stopPromiseWrk1->get_future();
+            bool satisfied = false;
+            while (!satisfied) {
+                switch (stopFutureWrk1.wait_for(std::chrono::seconds(1))) {
+                    case future_status::ready: {
+                        satisfied = true;
+                    }
+                    case future_status::timeout:
+                    case future_status::deferred: {
+                        NES_WARNING("Waiting for stop");
+                        break;
+                    }
+                }
+            }
+            std::future<bool> stopFutureCord = stopPromiseCord->get_future();
+            satisfied = false;
+            while (!satisfied) {
+                switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
+                    case future_status::ready: {
+                        satisfied = true;
+                    }
+                    case future_status::timeout:
+                    case future_status::deferred: {
+                        NES_WARNING("Waiting for stop");
+                        break;
+                    }
+                }
+            }
         });
         bool retStopWrk1 = wrk1->stop(true);
         stopPromiseWrk1->set_value(retStopWrk1);

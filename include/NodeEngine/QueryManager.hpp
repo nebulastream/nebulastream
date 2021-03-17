@@ -244,7 +244,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint16_t numThreads;
 
     std::atomic<uint64_t> waitCounter;
-
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
