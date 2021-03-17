@@ -30,7 +30,6 @@ void ReconfigurationMessage::postReconfiguration() {
     //if ref count gets 0, we know all threads did the reconfiguration
     if (refCnt.fetch_sub(1) == 1) {
         instance->postReconfigurationCallback(*this);
-//        destroy();
     }
 }
 
