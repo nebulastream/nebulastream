@@ -281,7 +281,7 @@ class TestHarness {
                        << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
 
         if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath)) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false "
+            NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false, "
                                     "number of buffers to expect="
                                     << std::to_string(numberOfContentToExpect));
         }
