@@ -31,7 +31,7 @@ void ReconfigurationMessage::postReconfiguration() {
     if (refCnt.fetch_sub(1) == 1) {
         instance->postReconfigurationCallback(*this);
 //        destroy();
-    } 
+    }
 }
 
 void ReconfigurationMessage::destroy() {

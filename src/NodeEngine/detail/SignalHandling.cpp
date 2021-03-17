@@ -36,7 +36,7 @@ static std::vector<std::weak_ptr<ErrorListener>> globalErrorListeners;
  * @param stacktrace the stacktrace of where the error was raised
  */
 void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
-    NES_DEBUG("invokeErrorHandlers with buffer=" << buffer << " trace=" << stacktrace);
+    NES_TRACE("invokeErrorHandlers with buffer=" << buffer << " trace=" << stacktrace);
     std::unique_lock lock(globalErrorListenerMutex);
     auto exception = std::make_shared<NesRuntimeException>(buffer, stacktrace);
     for (auto& listener : globalErrorListeners) {
@@ -52,7 +52,7 @@ void invokeErrorHandlers(const std::string buffer, std::string&& stacktrace) {
  * @param listener the error listener to make system-wide
  */
 void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
-    NES_DEBUG("installGlobalErrorListener");
+    NES_TRACE("installGlobalErrorListener");
     std::unique_lock lock(globalErrorListenerMutex);
     if (listener) {
         globalErrorListeners.emplace_back(listener);
@@ -64,7 +64,7 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
  * @param listener the error listener to remove system-wide
  */
 void removeGlobalErrorListener(std::shared_ptr<ErrorListener> listener) {
-    NES_DEBUG("removeGlobalErrorListener");
+    NES_TRACE("removeGlobalErrorListener");
     std::unique_lock lock(globalErrorListenerMutex);
     for (auto it = globalErrorListeners.begin(); it != globalErrorListeners.end(); ++it) {
         if (it->lock().get() == listener.get()) {
