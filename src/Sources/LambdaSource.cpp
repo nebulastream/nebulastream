@@ -34,7 +34,7 @@ LambdaSource::LambdaSource(
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId),
-      generationFunction(std::move(generationFunction)) {
+      generationFunction(std::move(generationFunction)){
     NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     wasGracefullyStopped = false;
@@ -42,6 +42,7 @@ LambdaSource::LambdaSource(
 
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
+
     auto buffer = this->bufferManager->getBufferBlocking();
     auto numberOfTuplesToProduce = buffer.getBufferSize() / schema->getSchemaSizeInBytes();
 

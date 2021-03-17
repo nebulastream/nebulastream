@@ -46,7 +46,7 @@ int main() {
 
     string query =
         "Query::from(\"input\").windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-        "Seconds(1)), Sum(Attribute(\"value\"))).sink(NullOutputSinkDescriptor::create());";
+        "Milliseconds(100)), Sum(Attribute(\"value\"))).sink(NullOutputSinkDescriptor::create());";
 
     std::string benchmarkName = "E2EWindowBenchmark";
     std::string nesVersion = NES_VERSION;

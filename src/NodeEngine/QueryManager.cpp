@@ -401,6 +401,12 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
     return ret;
 }
 
+
+uint64_t QueryManager::getNumberOfTasksInWorkerQueue()
+{
+    return taskQueue.size();
+}
+
 void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
 #ifdef EXTENDEDDEBUGGING
