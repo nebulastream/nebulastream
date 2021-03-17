@@ -1602,8 +1602,6 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
-    auto endTs = std::chrono::system_clock::now();
-
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
