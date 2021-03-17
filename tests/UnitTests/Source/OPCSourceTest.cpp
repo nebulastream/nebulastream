@@ -187,6 +187,7 @@ TEST_F(OPCSourceTest, OPCSourceValue) {
     opcSource->open();
 
     p.get_future().get();
+    opcSource->open();
     auto tuple_buffer = opcSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
     uint64_t value = 0;
