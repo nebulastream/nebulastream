@@ -39,11 +39,11 @@ namespace NES {
 
 DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId)
-    : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager->createLocalBufferManager(128)), queryManager(queryManager),
+    : running(false), thread(nullptr), schema(pSchema), globalBufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId),
       wasGracefullyStopped(true) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
-    NES_ASSERT(this->bufferManager, "Invalid buffer manager");
+    NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
 }
 OperatorId DataSource::getOperatorId() { return operatorId; }
@@ -136,19 +136,14 @@ bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
+void DataSource::open() {
+    bufferManager = globalBufferManager->createLocalBufferManager(128);
+}
+
 void DataSource::runningRoutine() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());
-
-    if (!queryManager) {
-        NES_ERROR("query Manager not set");
-        throw std::logic_error("DataSource: QueryManager not set");
-    }
-    if (!bufferManager) {
-        NES_ERROR("bufferManager not set");
-        throw std::logic_error("DataSource: BufferManager not set");
-    }
 
     auto ts = std::chrono::system_clock::now();
     std::chrono::milliseconds lastTimeStampMillis = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch());
@@ -160,7 +155,7 @@ void DataSource::runningRoutine() {
     } else {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
-
+    open();
     uint64_t cnt = 0;
     while (running) {
         bool recNow = false;

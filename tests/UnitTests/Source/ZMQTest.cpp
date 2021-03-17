@@ -94,6 +94,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
         // Receive data.
+        zmq_source->open();
         auto tuple_buffer = zmq_source->receiveData();
 
         // Test received data.
