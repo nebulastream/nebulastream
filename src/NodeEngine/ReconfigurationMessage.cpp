@@ -27,11 +27,11 @@ void ReconfigurationMessage::postWait() {
 }
 
 void ReconfigurationMessage::postReconfiguration() {
-    //if ref count gets 0, we know all producers did the reconfiguration
+    //if ref count gets 0, we know all threads did the reconfiguration
     if (refCnt.fetch_sub(1) == 1) {
         instance->postReconfigurationCallback(*this);
-        destroy();
-    }
+//        destroy();
+    } 
 }
 
 void ReconfigurationMessage::destroy() {

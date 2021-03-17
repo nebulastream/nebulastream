@@ -500,6 +500,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
     NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
     NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
+    NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
     auto reconfigType = graceful ? SoftEndOfStream : HardEndOfStream;
     for (const auto& qep : operatorIdToQueryMap[sourceId]) {
         TupleBuffer buffer;
@@ -623,7 +624,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
 }
 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
-    NES_INFO("QueryManager::completedWork: Work for task=" << task.toString());
+    NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString());
     std::unique_lock lock(statisticsMutex);
     if (queryToStatisticsMap.contains(task.getPipeline()->getQepParentId())) {
         auto statistics = queryToStatisticsMap.find(task.getPipeline()->getQepParentId());

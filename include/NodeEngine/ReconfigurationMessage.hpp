@@ -162,10 +162,10 @@ class ReconfigurationMessage {
     /// pointer to reconfigurable instance
     ReconfigurablePtr instance;
 
-    /// pointer to initial thread barrier
+    /// initial thread barrier
     ThreadBarrierPtr syncBarrier;
 
-    /// pointer to last thread barrier
+    /// last thread barrier
     ThreadBarrierPtr postSyncBarrier;
 
     /// ref counter
