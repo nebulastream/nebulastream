@@ -436,7 +436,13 @@ void E2EBase::tearDown() {
                     }
                     case future_status::timeout:
                     case future_status::deferred: {
-                        NES_WARNING("Waiting for stop wrk cause #tasks in the queue: " << wrk1->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+                        if (wrk1->isWorkerRunning()) {
+                            NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
+                                        << wrk1->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+
+                        } else {
+                            NES_WARNING("worker stopped");
+                        }
                         break;
                     }
                 }
@@ -450,7 +456,13 @@ void E2EBase::tearDown() {
                     }
                     case future_status::timeout:
                     case future_status::deferred: {
-                        NES_WARNING("Waiting for stop crd cause #tasks in queue: " << crd->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+                        if (crd->isCoordinatorRunning()) {
+                            NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
+                                        << crd->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+
+                        } else {
+                            NES_WARNING("worker stopped");
+                        }
                         break;
                     }
                 }

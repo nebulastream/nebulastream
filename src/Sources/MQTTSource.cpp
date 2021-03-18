@@ -29,6 +29,7 @@
 #include <mqtt/async_client.h>
 #include <sstream>
 #include <string>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 
 using namespace std;
 using namespace std::chrono;
