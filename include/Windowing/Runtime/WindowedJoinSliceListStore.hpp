@@ -65,7 +65,7 @@ class WindowedJoinSliceListStore {
             auto slice = sliceMetaData[i];
             NES_TRACE("slice begin=" << slice.getStartTs() << " slice end =" << slice.getEndTs());
             if (slice.getStartTs() <= timestamp && slice.getEndTs() > timestamp) {
-                NES_DEBUG("return slice id=" << i);
+                NES_TRACE("return slice id=" << i);
                 return i;
             }
         }
