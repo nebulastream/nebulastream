@@ -17,7 +17,7 @@
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <Sources/MonitoringSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>

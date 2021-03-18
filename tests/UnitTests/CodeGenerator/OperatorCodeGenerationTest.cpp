@@ -59,7 +59,7 @@
 #include <iostream>
 #include <utility>
 
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>

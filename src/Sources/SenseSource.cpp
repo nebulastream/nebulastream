@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/SenseSource.hpp>

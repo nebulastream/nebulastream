@@ -404,7 +404,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     NES_DEBUG("refcnt nm " << networkManager.use_count());
     NES_DEBUG("refcnt qm " << queryManager.use_count());
 
-    bufferManager->clear();
+    bufferManager->destroy();
     bufferManager.reset();
     return !withError;
 }

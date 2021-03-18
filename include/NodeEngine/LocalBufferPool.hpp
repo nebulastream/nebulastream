@@ -14,14 +14,16 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_LOCALBUFFERMANAGER_HPP_
-#define NES_INCLUDE_NODEENGINE_LOCALBUFFERMANAGER_HPP_
+#ifndef NES_INCLUDE_NODEENGINE_LOCALBUFFERPOOL_HPP_
+#define NES_INCLUDE_NODEENGINE_LOCALBUFFERPOOL_HPP_
 
+#include <NodeEngine/AbstractBufferProvider.hpp>
 #include <NodeEngine/BufferRecycler.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <deque>
 #include <memory>
 #include <mutex>
+
 
 namespace NES {
 
@@ -36,22 +38,22 @@ class MemorySegment;
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */
-class LocalBufferManager : public BufferRecycler {
+class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
   public:
     /**
-     * @brief Construct a new LocalBufferManager
+     * @brief Construct a new LocalBufferPool
      * @param bufferManager the global buffer manager
      * @param availableBuffers deque of exclusive buffers
      * @param numberOfReservedBuffers number of exclusive bufferss
      */
-    explicit LocalBufferManager(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers,
+    explicit LocalBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers,
                                 size_t numberOfReservedBuffers);
-    ~LocalBufferManager();
+    ~LocalBufferPool();
 
     /**
      * @brief Destroys this buffer pool and returns own buffers to global pool
      */
-    void destroy();
+    void destroy() override;
 
     /**
     * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
@@ -88,4 +90,4 @@ class LocalBufferManager : public BufferRecycler {
 
 }// namespace NES
 
-#endif//NES_INCLUDE_NODEENGINE_LOCALBUFFERMANAGER_HPP_
+#endif//NES_INCLUDE_NODEENGINE_LOCALBUFFERPOOL_HPP_

@@ -184,7 +184,7 @@ class DataSource : public NodeEngine::Reconfigurable {
     OperatorId operatorId;
     SourceType type;
     NodeEngine::BufferManagerPtr globalBufferManager;
-    NodeEngine::LocalBufferManagerPtr bufferManager;
+    NodeEngine::FixedSizeBufferPoolPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
 
   private:

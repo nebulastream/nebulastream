@@ -53,7 +53,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 

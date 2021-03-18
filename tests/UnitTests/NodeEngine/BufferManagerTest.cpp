@@ -18,7 +18,7 @@
 #include <vector>
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
@@ -477,7 +477,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
     constexpr uint32_t producer_threads = 3;
     constexpr uint32_t consumer_threads = 4;
 
-    auto localPool = bufferManager->createLocalBufferManager(32);
+    auto localPool = bufferManager->createLocalBufferPool(32);
     for (int i = 0; i < producer_threads; i++) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, localPool]() {
             for (int j = 0; j < max_buffer; ++j) {
@@ -571,7 +571,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
             }
         });
     }
-    auto localPool = bufferManager->createLocalBufferManager(32);
+    auto localPool = bufferManager->createLocalBufferPool(32);
     for (int i = 0; i < consumer_threads; i++) {
         con_threads.emplace_back([&workQueue, &mutex, &cvar, localPool]() {
             std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
