@@ -254,7 +254,8 @@ bool QueryPlan::removeRootOperatorFromPlan(OperatorNodePtr rootOperatorToRemove)
     });
 
     if (found == rootOperators.end()) {
-        NES_ERROR("");
+        NES_ERROR("QueryPlan: Unable to locate input root operator to be removed in the query plan. "
+                  + rootOperatorToRemove->toString());
         return false;
     }
     removeOperatorFromPlan(rootOperatorToRemove);
