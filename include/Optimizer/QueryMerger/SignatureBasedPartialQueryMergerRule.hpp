@@ -60,8 +60,6 @@ typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPart
  *                                           GQN2({Map2},{Q1}) GQN6({Map1},{Q2})
  *                                                        \      /
  *                                                         \   /
- *                                                   GQN2({Map1},{Q1,Q2})
- *                                                           |
  *                                                  GQN3({Filter1},{Q1,Q2})
  *                                                           |
  *                                                GQN4({Source(Car)},{Q1,Q2})

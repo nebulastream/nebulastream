@@ -33,7 +33,7 @@
 
 using namespace NES;
 
-class SyntaxBasedEqualQueryMergerRuleTest : public testing::Test {
+class SyntaxBasedCompleteQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
@@ -57,7 +57,7 @@ class SyntaxBasedEqualQueryMergerRuleTest : public testing::Test {
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -126,7 +126,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
 
     for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
         for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_EQ(sink1Children, sink2Children);
+            EXPECT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -134,7 +134,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with multiple same source
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -220,7 +220,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithMultipleS
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different source
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -289,7 +289,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSourc
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
@@ -357,7 +357,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperators
 
     for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
         for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_EQ(sink1Children, sink2Children);
+            EXPECT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -365,7 +365,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperators
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperatorChildrenOrder) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
@@ -433,7 +433,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorC
 
     for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
         for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_EQ(sink1Children, sink2Children);
+            EXPECT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -441,7 +441,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorC
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperatorsWithDifferentChildren) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
@@ -520,7 +520,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithMergeOperators
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different filters
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -590,7 +590,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilte
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different filters
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -659,7 +659,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilte
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different map
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -729,7 +729,7 @@ TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAt
 /**
  * @brief Test applying SyntaxBasedEqualQueryMergerRule on Global query plan with two queries with different map
  */
-TEST_F(SyntaxBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
+TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();

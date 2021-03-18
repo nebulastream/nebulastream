@@ -267,7 +267,10 @@ bool QueryPlan::removeOperatorFromPlan(OperatorNodePtr operatorToRemove) {
     auto children = operatorToRemove->getChildren();
     for (auto& child : children) {
         if (child->getParents().size() == 1) {
-            removeOperatorFromPlan(child->as<OperatorNode>());
+            if (!removeOperatorFromPlan(child->as<OperatorNode>())) {
+                NES_ERROR("QueryPlan: unable to remove operator " + child->toString());
+                return false;
+            }
         }
         operatorToRemove->removeChild(child);
     }
