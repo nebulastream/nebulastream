@@ -29,15 +29,27 @@ GlobalQueryPlan::GlobalQueryPlan() : freeSharedQueryId(0) {}
 GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 
 bool GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
+    QueryId inputQueryPlanId = queryPlan->getQueryId();
+    if (inputQueryPlanId == INVALID_QUERY_ID) {
+        throw Exception("GlobalQueryPlan: Can not add query plan with invalid id.");
+    }
+
+    if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
+        throw Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId) + " already present.");
+    }
+
     auto sharedQueryMetadata = SharedQueryMetaData::create(queryPlan);
     return updateSharedQueryMetadata(sharedQueryMetadata);
 }
 
 void GlobalQueryPlan::removeQuery(QueryId queryId) {
-    NES_DEBUG("Removing query information from the meta data");
+    NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
     SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
     SharedQueryMetaDataPtr sharedQueryMetaData = sharedQueryIdToMetaDataMap[sharedQueryId];
-    sharedQueryMetaData->removeQueryId(queryId);
+    if (!sharedQueryMetaData->removeQueryId(queryId)) {
+        throw Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
+                        + " from shared query plan with id " + std::to_string(sharedQueryId));
+    }
     queryIdToSharedQueryIdMap.erase(queryId);
 }
 

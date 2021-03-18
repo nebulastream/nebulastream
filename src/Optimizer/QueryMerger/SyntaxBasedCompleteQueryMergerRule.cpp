@@ -68,18 +68,18 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQ
                 for (auto targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
                     uint64_t hostSinkOperatorId = targetToHostSinkOperatorMap[targetSinkOperator->getId()];
 
-                    auto found = std::find_if(hostSinkOperators.begin(), hostSinkOperators.end(),
-                                              [hostSinkOperatorId](OperatorNodePtr hostSinkOperator) {
-                                                  return hostSinkOperator->getId() == hostSinkOperatorId;
-                                              });
+                    auto hostSinkOperator = std::find_if(hostSinkOperators.begin(), hostSinkOperators.end(),
+                                                         [hostSinkOperatorId](OperatorNodePtr hostOperator) {
+                                                             return hostOperator->getId() == hostSinkOperatorId;
+                                                         });
 
-                    if (found == hostSinkOperators.end()) {
+                    if (hostSinkOperator == hostSinkOperators.end()) {
                         NES_THROW_RUNTIME_ERROR("SyntaxBasedCompleteQueryMergerRule: Unexpected behaviour");
                     }
 
                     //Remove all children of target sink global query node
-                    hostSharedQueryMetaData->mergeOperatorInto(targetSinkOperator, *found);
-                    hostQueryPlan->addRootOperator(*found);
+                    hostSharedQueryMetaData->mergeOperatorInto(targetSinkOperator, *hostSinkOperator);
+                    hostQueryPlan->addRootOperator(targetSinkOperator);
                 }
                 NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
