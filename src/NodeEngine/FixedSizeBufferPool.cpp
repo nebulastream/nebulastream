@@ -45,11 +45,6 @@ void FixedSizeBufferPool::destroy() {
         return;
     }
     auto ownedBufferManager = bufferManager.lock();
-    NES_ASSERT2_FMT(numberOfReservedBuffers == exclusiveBuffers.size(),
-                    "one or more buffers were not returned to the pool " << exclusiveBuffers.size() << " but expected "
-                                                                         << numberOfReservedBuffers);
-    NES_DEBUG("buffers before=" << ownedBufferManager->getAvailableBuffers()
-                                << " size of local buffers=" << exclusiveBuffers.size());
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
         auto memSegment = exclusiveBuffers.front();
@@ -87,13 +82,20 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
     std::unique_lock lock(mutex);
     NES_VERIFY(memSegment, "null memory segment");
-    if (!memSegment->isAvailable()) {
-        NES_THROW_RUNTIME_ERROR(
-            "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
+    if (isDestroyed) {
+        // return recycled buffer to the global pool
+        auto ownedBufferManager = bufferManager.lock();
+        memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
+        ownedBufferManager->recyclePooledBuffer(memSegment);
+    } else {
+        if (!memSegment->isAvailable()) {
+            NES_THROW_RUNTIME_ERROR(
+                "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
+        }
+        // add back an exclusive buffer to the local pool
+        exclusiveBuffers.emplace_back(memSegment);
+        cvar.notify_all();
     }
-    // add back an exclusive buffer to the local pool
-    exclusiveBuffers.emplace_back(memSegment);
-    cvar.notify_all();
 }
 
 void FixedSizeBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
