@@ -68,20 +68,20 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = executionContext->allocateTupleBuffer();
         // iterate over all keys in both window states and perform the join
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":: doing the nested loop join");
+        NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: doing the nested loop join");
         size_t numberOfFlushedRecords = 0;
         for (auto& leftHashTable : leftJoinState->rangeAll()) {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":: leftHashTable " << toString()
+            NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: leftHashTable " << toString()
                                                                << " check key=" << leftHashTable.first
                                                                << " nextEdge=" << leftHashTable.second->nextEdge);
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
-                NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":: rightHashTable " << toString()
+                NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: rightHashTable " << toString()
                                                                    << " check key=" << rightHashTable.first
                                                                    << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
                     if (leftHashTable.first == rightHashTable.first) {
 
-                        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
+                        NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
                                                                            << leftHashTable.first);
                         numberOfFlushedRecords += joinWindows(leftHashTable.first, leftHashTable.second, rightHashTable.second,
                                                               tupleBuffer, currentWatermark, lastWatermark);
@@ -94,7 +94,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             //write remaining buffer
             tupleBuffer.setOriginId(this->originId);
             tupleBuffer.setWatermark(currentWatermark);
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction "
+            NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
                       << id << ":: Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
                       << " records, content=" << UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, windowSchema)
                       << " originId=" << tupleBuffer.getOriginId() << " watermark=" << tupleBuffer.getWatermark()
@@ -125,7 +125,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     size_t joinWindows(KeyType key, Windowing::WindowedJoinSliceListStore<InputTypeLeft>* leftStore,
                        Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore, NodeEngine::TupleBuffer& tupleBuffer,
                        uint64_t currentWatermark, uint64_t lastWatermark) {
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
+        NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
                                                            << currentWatermark << " lastWatermark=" << lastWatermark);
         size_t numberOfFlushedRecords = 0;
         if (this->weakExecutionContext.expired()) {
@@ -164,16 +164,16 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         }
 
         if (currentWatermark > lastWatermark) {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << ":: joinWindows trigger because currentWatermark="
+            NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: joinWindows trigger because currentWatermark="
                                                                << currentWatermark << " > lastWatermark=" << lastWatermark);
             joinDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);
         } else {
-            NES_DEBUG("ExecutableNestedLoopJoinTriggerAction "
+            NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
                       << id << ":: aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
                       << " > lastWatermark=" << lastWatermark);
         }
 
-        NES_DEBUG("ExecutableNestedLoopJoinTriggerAction "
+        NES_TRACE("ExecutableNestedLoopJoinTriggerAction "
                   << id << ":: leftStore trigger Complete or combining window for slices=" << slicesLeft.size()
                   << " windows=" << windows.size());
         int64_t largestClosedWindow = 0;

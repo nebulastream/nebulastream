@@ -19,7 +19,7 @@
 
 using namespace Benchmarking;
 
-const NES::DebugLevel LOG_LEVEL = NES::LOG_WARNING;
+const NES::DebugLevel LOG_LEVEL = NES::LOG_DEBUG;
 
 /**
  * @brief This benchmarks runs a projection query on one worker and one coordinator
@@ -44,10 +44,9 @@ int main() {
     // source modes
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::JoinMode};
 
-
     string query = R"(Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).
-        window(TumblingWindow::of(EventTime(Attribute("timestamp")),
-        Milliseconds(100))).sink(NullOutputSinkDescriptor::create());)";
+    window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+    Milliseconds(100))).sink(NullOutputSinkDescriptor::create());)";
 
     std::string benchmarkName = "E2EJoinBenchmark";
     std::string nesVersion = NES_VERSION;
