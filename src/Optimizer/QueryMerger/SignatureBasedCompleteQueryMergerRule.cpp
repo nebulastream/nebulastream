@@ -90,7 +90,7 @@ bool SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQuery
             NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
             //Iterate over all matched pairs of sink operators and merge the query plan
-            for (auto [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
+            for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
                 auto targetSinkChildren = targetSinkOperator->getChildren();
                 auto hostSinkChildren = hostSinkOperator->getChildren();
                 for (auto childToMerge : targetSinkChildren) {

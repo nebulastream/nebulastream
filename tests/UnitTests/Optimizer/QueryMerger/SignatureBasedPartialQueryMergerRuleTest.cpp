@@ -154,7 +154,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 
     for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
         for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_EQ(sink1Children, sink2Children);
+            EXPECT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -241,12 +241,12 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuerie
 
     for (auto sink1Child : updatedRootOperators1[0]->getChildren()) {
         for (auto sink2Child : updatedRootOperators1[1]->getChildren()) {
-            ASSERT_NE(sink1Child, sink2Child);
+            EXPECT_NE(sink1Child, sink2Child);
             auto sink1ChildGrandChild = sink1Child->getChildren();
             auto sink2ChildGrandChild = sink2Child->getChildren();
-            ASSERT_TRUE(sink1ChildGrandChild.size() == 1);
-            ASSERT_TRUE(sink2ChildGrandChild.size() == 1);
-            ASSERT_EQ(sink1ChildGrandChild[0], sink2ChildGrandChild[0]);
+            EXPECT_TRUE(sink1ChildGrandChild.size() == 1);
+            EXPECT_TRUE(sink2ChildGrandChild.size() == 1);
+            EXPECT_EQ(sink1ChildGrandChild[0], sink2ChildGrandChild[0]);
         }
     }
 }
