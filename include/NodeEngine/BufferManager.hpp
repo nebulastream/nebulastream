@@ -19,6 +19,7 @@
 
 #include <NodeEngine/BufferRecycler.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/AbstractBufferProvider.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -54,7 +55,7 @@ class MemorySegment;
  * been returned to the BufferManager by some component.
  *
  */
-class BufferManager : public std::enable_shared_from_this<BufferManager>, public BufferRecycler {
+class BufferManager : public std::enable_shared_from_this<BufferManager>, public BufferRecycler, public AbstractBufferProvider {
     friend class TupleBuffer;
     friend class detail::MemorySegment;
 
@@ -155,7 +156,14 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
      * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
      */
-    LocalBufferManagerPtr createLocalBufferManager(size_t numberOfReservedBuffers);
+    LocalBufferPoolPtr createLocalBufferPool(size_t numberOfReservedBuffers);
+
+    /**
+      * @brief Create a local buffer manager that is assigned to one pipeline or thread
+      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
+      * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
+      */
+    FixedSizeBufferPoolPtr createFixedSizeBufferPool(size_t numberOfReservedBuffers);
 
     /**
      * @brief Recycle a pooled buffer by making it available to others
@@ -172,7 +180,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     /**
      * @brief this method clears all local buffers pools and remove all buffers from the global buffer manager
      */
-    void clear();
+    void destroy() override;
 
   private:
     std::vector<detail::MemorySegment> allBuffers;
@@ -188,7 +196,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     uint32_t numOfBuffers;
 
     std::atomic<bool> isConfigured;
-    std::vector<LocalBufferManagerPtr> localBufferPools;
+    std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
 };
 }// namespace NodeEngine
 

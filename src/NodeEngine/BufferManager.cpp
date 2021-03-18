@@ -15,7 +15,9 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/AbstractBufferProvider.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
@@ -32,7 +34,7 @@ BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers) : buffe
     configure(bufferSize, numOfBuffers);
 }
 
-void BufferManager::clear() {
+void BufferManager::destroy() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
     auto success = true;
     NES_DEBUG("Shutting down Buffer Manager " << this);
@@ -247,7 +249,7 @@ BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail
 
 void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 
-LocalBufferManagerPtr BufferManager::createLocalBufferManager(size_t numberOfReservedBuffers) {
+LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers) {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
     NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
@@ -256,7 +258,21 @@ LocalBufferManagerPtr BufferManager::createLocalBufferManager(size_t numberOfRes
         availableBuffers.pop_front();
         buffers.emplace_back(memSegment);
     }
-    auto ret = std::make_shared<LocalBufferManager>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+    auto ret = std::make_shared<LocalBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
+    localBufferPools.push_back(ret);
+    return ret;
+}
+
+FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers) {
+    std::unique_lock lock(availableBuffersMutex);
+    std::deque<detail::MemorySegment*> buffers;
+    NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
+    for (auto i = 0; i < numberOfReservedBuffers; ++i) {
+        auto memSegment = availableBuffers.front();
+        availableBuffers.pop_front();
+        buffers.emplace_back(memSegment);
+    }
+    auto ret = std::make_shared<FixedSizeBufferPool>(shared_from_this(), std::move(buffers), numberOfReservedBuffers);
     localBufferPools.push_back(ret);
     return ret;
 }

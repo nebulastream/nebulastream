@@ -32,8 +32,9 @@ namespace NES {
 
 namespace NodeEngine {
 class BufferManager;
-class LocalBufferManager;
+class LocalBufferPool;
 class TupleBuffer;
+class FixedSizeBufferPool;
 class BufferRecycler;
 
 namespace detail {
@@ -182,7 +183,8 @@ class BufferControlBlock {
  */
 class MemorySegment {
     friend class NES::NodeEngine::TupleBuffer;
-    friend class NES::NodeEngine::LocalBufferManager;
+    friend class NES::NodeEngine::LocalBufferPool;
+    friend class NES::NodeEngine::FixedSizeBufferPool;
     friend class NES::NodeEngine::BufferManager;
 
   public:

@@ -15,7 +15,7 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MemorySource.hpp>

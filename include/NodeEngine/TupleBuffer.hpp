@@ -48,7 +48,8 @@ namespace NES::NodeEngine {
 class TupleBuffer {
     friend class BufferManager;
     friend class detail::MemorySegment;
-    friend class LocalBufferManager;
+    friend class LocalBufferPool;
+    friend class FixedSizeBufferPool;
 
   public:
     /**

@@ -13,11 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>

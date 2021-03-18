@@ -48,8 +48,11 @@ class TupleBuffer;
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class LocalBufferManager;
-typedef std::shared_ptr<LocalBufferManager> LocalBufferManagerPtr;
+class LocalBufferPool;
+typedef std::shared_ptr<LocalBufferPool> LocalBufferPoolPtr;
+
+class FixedSizeBufferPool;
+typedef std::shared_ptr<FixedSizeBufferPool> FixedSizeBufferPoolPtr;
 
 class WorkerContext;
 typedef WorkerContext& WorkerContextRef;

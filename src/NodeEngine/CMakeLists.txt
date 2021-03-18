@@ -18,13 +18,14 @@ add_source_nes(
         QueryManager.cpp
         ReconfigurationMessage.cpp
         BufferManager.cpp
+        FixedSizeBufferPool.cpp
         ThreadPool.cpp
         Task.cpp
         TupleBuffer.cpp
         QueryStatistics.cpp
         NesThread.cpp
         WorkerContext.cpp
-        LocalBufferManager.cpp
+        LocalBufferPool.cpp
 )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)

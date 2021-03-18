@@ -23,7 +23,7 @@
 #include <thread>
 
 #include <future>
-
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -138,7 +138,7 @@ bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
-void DataSource::open() { bufferManager = globalBufferManager->createLocalBufferManager(numberOfBuffersInLocalBufferPool); }
+void DataSource::open() { bufferManager = globalBufferManager->createFixedSizeBufferPool(numberOfBuffersInLocalBufferPool); }
 
 void DataSource::runningRoutine() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
@@ -220,7 +220,7 @@ void DataSource::runningRoutine() {
     }
     // inject reconfiguration task containing end of stream
     queryManager->addEndOfStream(operatorId, wasGracefullyStopped);//
-    bufferManager.reset();
+    bufferManager->destroy();
     queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");
 }

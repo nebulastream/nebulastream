@@ -16,6 +16,7 @@
 
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
@@ -38,7 +39,7 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
   public:
     explicit ReconfigurationPipelineExecutionContext(QuerySubPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
-            queryExecutionPlanId, queryManager, LocalBufferManagerPtr(),
+            queryExecutionPlanId, queryManager, LocalBufferPoolPtr(),
             [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
             },
             [](TupleBuffer&) {
@@ -402,8 +403,8 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
 }
 
 
-uint64_t QueryManager::getNumberOfTasksInWorkerQueue()
-{
+uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
+    std::unique_lock workLock(workMutex);
     return taskQueue.size();
 }
 
