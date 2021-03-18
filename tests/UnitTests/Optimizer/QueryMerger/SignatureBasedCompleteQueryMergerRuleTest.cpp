@@ -1911,7 +1911,8 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithUni
  * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
-TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest,
+       testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
