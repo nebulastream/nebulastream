@@ -91,11 +91,16 @@ bool SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQuery
 
             //Iterate over all matched pairs of sink operators and merge the query plan
             for (auto [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
-                for (auto childToMerge : targetSinkOperator->getChildren()) {
-                    for (auto hostChild : hostSinkOperator->getChildren()) {
-                        hostSharedQueryMetaData->mergeOperatorInto(childToMerge->as<OperatorNode>(),
-                                                                   hostChild->as<OperatorNode>());
+                auto targetSinkChildren = targetSinkOperator->getChildren();
+                auto hostSinkChildren = hostSinkOperator->getChildren();
+                for (auto childToMerge : targetSinkChildren) {
+                    for (auto hostChild : hostSinkChildren) {
+                        bool addedNewParent = hostChild->addParent(targetSinkOperator);
+                        if (!addedNewParent) {
+                            NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                        }
                     }
+                    childToMerge->removeParent(targetSinkOperator);
                 }
                 hostQueryPlan->addRootOperator(targetSinkOperator);
             }

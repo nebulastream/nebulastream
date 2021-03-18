@@ -74,11 +74,21 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQ
                                                          });
 
                     if (hostSinkOperator == hostSinkOperators.end()) {
-                        NES_THROW_RUNTIME_ERROR("SyntaxBasedCompleteQueryMergerRule: Unexpected behaviour");
+                        NES_THROW_RUNTIME_ERROR("SyntaxBasedCompleteQueryMergerRule: Unexpected behaviour! matching host sink "
+                                                "pair not found in the host query plan.");
                     }
-
                     //Remove all children of target sink global query node
-                    hostSharedQueryMetaData->mergeOperatorInto(targetSinkOperator, *hostSinkOperator);
+                    auto targetSinkChildren = targetSinkOperator->getChildren();
+                    auto hostSinkChildren = (*hostSinkOperator)->getChildren();
+                    for (auto& childToMerge : targetSinkChildren) {
+                        for (auto& hostChild : hostSinkChildren) {
+                            bool addedNewParent = hostChild->addParent(targetSinkOperator);
+                            if (!addedNewParent) {
+                                NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Failed to add new parent");
+                            }
+                        }
+                        childToMerge->removeParent(targetSinkOperator);
+                    }
                     hostQueryPlan->addRootOperator(targetSinkOperator);
                 }
                 NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");

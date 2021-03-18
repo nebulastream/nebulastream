@@ -100,11 +100,17 @@ bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryP
 
             //Iterate over all matched pairs of operators and merge the query plan
             for (auto [targetOperator, hostOperator] : targetToHostOperatorMap) {
-                hostSharedQueryMetaData->mergeOperatorInto(targetOperator, hostOperator);
+                for (auto targetParent : targetOperator->getParents()) {
+                    bool addedNewParent = hostOperator->addParent(targetParent);
+                    if (!addedNewParent) {
+                        NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                    }
+                    targetOperator->removeParent(targetParent);
+                }
             }
 
             //Add all root operators from target query plan to host query plan
-            for(auto targetRootOperator: targetQueryPlan->getRootOperators()){
+            for (auto targetRootOperator : targetQueryPlan->getRootOperators()) {
                 hostQueryPlan->addRootOperator(targetRootOperator);
             }
 

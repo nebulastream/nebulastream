@@ -139,26 +139,5 @@ bool SharedQueryMetaData::addSharedQueryMetaData(SharedQueryMetaDataPtr queryMet
 
 std::vector<QueryId> SharedQueryMetaData::getQueryIds() { return queryIds; }
 
-bool SharedQueryMetaData::mergeOperatorInto(OperatorNodePtr operatorToMerge, OperatorNodePtr targetOperator) {
-
-    NES_DEBUG("SharedQueryMetaData: Merging operatorToMerge into target operator");
-    auto parentOperatorsToReassign = operatorToMerge->getParents();
-
-    for (auto newParent : parentOperatorsToReassign) {
-        bool removedOldChild = newParent->removeChild(operatorToMerge);
-        if (!removedOldChild) {
-            NES_ERROR("SharedQueryMetaData: Failed to remove old child");
-            return false;
-        }
-
-        bool addedNewChild = newParent->addChild(targetOperator);
-        if (!addedNewChild) {
-            NES_ERROR("");
-            return false;
-        }
-    }
-    return true;
-}
-
 QueryPlanPtr SharedQueryMetaData::getQueryPlan() { return queryPlan; }
 }// namespace NES
