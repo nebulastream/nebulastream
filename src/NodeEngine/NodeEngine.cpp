@@ -329,7 +329,6 @@ bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
 
 QueryManagerPtr NodeEngine::getQueryManager() { return queryManager; }
 
-
 bool NodeEngine::stop(bool markQueriesAsFailed) {
     //TODO: add check if still queries are running
     //TODO @Steffen: does it make sense to have force stop still?

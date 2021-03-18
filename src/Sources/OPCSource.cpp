@@ -35,6 +35,7 @@
 #include <Operators/OperatorId.hpp>
 #include <Util/Logger.hpp>
 #include <open62541/types.h>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 
 namespace NES {
 

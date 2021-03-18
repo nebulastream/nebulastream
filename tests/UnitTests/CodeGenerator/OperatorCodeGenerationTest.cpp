@@ -71,6 +71,7 @@
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 
 using std::cout;
 using std::endl;

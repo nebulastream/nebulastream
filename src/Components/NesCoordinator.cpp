@@ -119,6 +119,7 @@ NesCoordinator::~NesCoordinator() {
 }
 
 NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
+bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
 
 uint64_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start");

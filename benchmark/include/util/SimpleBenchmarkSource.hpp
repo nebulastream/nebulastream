@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 
 #if __linux
 #include <sys/syscall.h>
