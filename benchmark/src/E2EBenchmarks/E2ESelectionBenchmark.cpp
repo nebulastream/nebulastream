@@ -39,7 +39,7 @@ int main() {
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;
-    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 3, 1);
+    BenchmarkUtils::createRangeVector<uint16_t>(allDataSources, 1, 2, 1);
 
     // source modes are
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::MemMode};
