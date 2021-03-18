@@ -24,7 +24,6 @@
 #include <memory>
 #include <mutex>
 
-
 namespace NES {
 
 namespace NodeEngine {
