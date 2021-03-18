@@ -23,7 +23,6 @@
 #include <zmq.hpp>
 
 #include <Sources/DataSource.hpp>
-
 namespace NES {
 class TupleBuffer;
 /**
