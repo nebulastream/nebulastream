@@ -161,14 +161,6 @@ class SharedQueryMetaData {
      */
     void setAsOld();
 
-    /**
-     * @brief Assign all parent operators of the operatorToMerge to the target operator
-     * @param operatorToMerge: operator whose parent operators need to be assigned to target operator
-     * @param targetOperator: operator to which the parent operators of the target operator need to be assigned to
-     * @return true if successful else false
-     */
-    bool mergeOperatorInto(OperatorNodePtr operatorToMerge, OperatorNodePtr targetOperator);
-
   private:
     explicit SharedQueryMetaData(QueryPlanPtr queryPlan);
 
