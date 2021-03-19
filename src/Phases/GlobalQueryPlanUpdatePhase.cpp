@@ -49,7 +49,6 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
     try {
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
-
             if (queryRequest.getQueryStatus() == QueryStatus::MarkedForStop) {
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);

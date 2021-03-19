@@ -111,7 +111,7 @@ class ServerReadyMessage : public ExchangeMessage {
     ErrorType getErrorType() const { return withError; }
 
   private:
-    const ErrorType withError;
+    const ErrorType withError{kNoError};
 };
 
 class EndOfStreamMessage : public ExchangeMessage {

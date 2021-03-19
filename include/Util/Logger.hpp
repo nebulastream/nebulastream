@@ -386,7 +386,7 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     NESLogger->addAppender(file);
     NESLogger->addAppender(console);
 }
-static void shutdownLogging() { NESLogger->removeAllAppenders(); }
+
 #define NES_NOT_IMPLEMENTED()                                                                                                    \
     do {                                                                                                                         \
         NES_ERROR("Function Not Implemented!");                                                                                  \

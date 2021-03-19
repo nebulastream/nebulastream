@@ -40,15 +40,15 @@ ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNet
 
 bool ZmqServer::start() {
     NES_DEBUG("ZmqServer: Starting server..");
-    std::promise<bool> startPromise;
+    std::shared_ptr<std::promise<bool>> startPromise = std::make_shared<std::promise<bool>>();
     uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
     uint16_t numHandlerThreads = numNetworkThreads / 2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
-    routerThread = std::make_unique<std::thread>([this, numHandlerThreads, &startPromise]() {
+    routerThread = std::make_unique<std::thread>([this, numHandlerThreads, startPromise]() {
         setThreadName("zmq-router");
         routerLoop(numHandlerThreads, startPromise);
     });
-    return startPromise.get_future().get();
+    return startPromise->get_future().get();
 }
 
 ZmqServer::~ZmqServer() { stop(); }
@@ -94,7 +94,7 @@ bool ZmqServer::stop() {
     return true;
 }
 
-void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {
+void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::shared_ptr<std::promise<bool>> startPromise) {
     // option of linger time until port is closed
     int linger = -1;
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
@@ -110,7 +110,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
         NES_DEBUG("ZmqServer: Created socket on " << hostname << ":" << port);
     } catch (std::exception& ex) {
         NES_ERROR("ZmqServer: Error in routerLoop() " << ex.what());
-        startPromise.set_value(false);
+        startPromise->set_value(false);
         errorPromise.set_exception(std::make_exception_ptr(ex));
         return;
     }
@@ -126,7 +126,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
     // wait for the handlers to start
     barrier->wait();
     // unblock the thread that started the server
-    startPromise.set_value(true);
+    startPromise->set_value(true);
     bool shutdownComplete = false;
 
     try {

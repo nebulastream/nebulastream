@@ -175,7 +175,7 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
     schema->addField("f3", DataTypeFactory::createArray(42, DataTypeFactory::createInt8()));
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
-    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema);
+    auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(serializedSchema.get());
     EXPECT_TRUE(deserializedSchema->equals(schema));
 
     std::string json_string;

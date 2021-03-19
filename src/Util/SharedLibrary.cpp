@@ -57,7 +57,7 @@ SharedLibraryPtr SharedLibrary::load(const std::string& file_path) {
         NES_ERROR("Could not load shared library: " << file_path << "Error unknown!");
     }
 
-    return SharedLibraryPtr(new SharedLibrary(myso));
+    return std::make_shared<SharedLibrary>(myso);
 }
 
 }// namespace NES

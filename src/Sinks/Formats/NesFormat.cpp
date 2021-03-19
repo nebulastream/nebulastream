@@ -25,12 +25,12 @@
 namespace NES {
 
 NesFormat::NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {
-    serializedSchema = new SerializableSchema();
+    serializedSchema = std::make_shared<SerializableSchema>();
 }
 
 std::optional<NodeEngine::TupleBuffer> NesFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
-    SerializableSchema* protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema);
+    SerializableSchemaPtr protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
     bool success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSize());
     NES_ASSERT2_FMT(success, "cannot serialize");
     NES_DEBUG("NesFormat::getSchema: write schema"
