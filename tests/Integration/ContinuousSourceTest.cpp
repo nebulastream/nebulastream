@@ -1553,7 +1553,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
  * Testing test harness CSV source
  */
 TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
-    uint64_t numBufferToProduce = 200;
+    uint64_t numBuffersToProduce = 2000;
 
     struct Car {
         uint32_t key;
@@ -1580,7 +1580,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
     sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
     sourceConfig->setSourceFrequency(100);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(numBufferToProduce);
+    sourceConfig->setNumberOfBuffersToProduce(numBuffersToProduce);
     sourceConfig->setSkipHeader(false);
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
@@ -1596,11 +1596,11 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
     std::vector<Output> expectedOutput = {};
-    for (uint64_t i=0; i<numBufferToProduce; i++){
+    for (uint64_t i=0; i< numBuffersToProduce; i++){
         expectedOutput.push_back({1, 1, (i+1)*100});
     }
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", 180);
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
