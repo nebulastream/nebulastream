@@ -211,7 +211,7 @@ class TestHarness {
          * @return output string
          */
     template<typename T>
-    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName) {
+    std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
         if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
             NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
                                     << std::to_string(physicalStreamNames.size())
@@ -280,7 +280,7 @@ class TestHarness {
                    " Output struct:"
                        << std::to_string(sizeof(T)) << " Schema:" << std::to_string(outputSchemaSizeInBytes));
 
-        if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath)) {
+        if (!TestUtils::checkBinaryOutputContentLengthOrTimeout<T>(numberOfContentToExpect, filePath, testTimeout)) {
             NES_THROW_RUNTIME_ERROR("TestHarness: checkBinaryOutputContentLengthOrTimeout returns false, "
                                     "number of buffers to expect="
                                     << std::to_string(numberOfContentToExpect));

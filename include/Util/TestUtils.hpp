@@ -456,8 +456,8 @@ class TestUtils {
   * @return true if successful
   */
     template<typename T>
-    static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent, string outputFilePath) {
-        auto timeoutInSec = std::chrono::seconds(timeout);
+    static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent, string outputFilePath, uint64_t testTimeout=timeout) {
+        auto timeoutInSec = std::chrono::seconds(testTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
         while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
             sleep(1);
