@@ -69,9 +69,10 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
         }
         auto engine = std::make_shared<NodeEngine>(
             config, std::move(bufferManager), std::move(queryManager),
-            [hostname, port](std::shared_ptr<NodeEngine> engine) {
-                return Network::NetworkManager::create(
-                    hostname, port, Network::ExchangeProtocol(engine->getPartitionManager(), engine), engine->getBufferManager());
+            [hostname, port, numThreads](std::shared_ptr<NodeEngine> engine) {
+                return Network::NetworkManager::create(hostname, port,
+                                                       Network::ExchangeProtocol(engine->getPartitionManager(), engine),
+                                                       engine->getBufferManager(), numThreads);
             },
             std::move(partitionManager), std::move(compiler), nodeEngineId);
         installGlobalErrorListener(engine);
@@ -444,7 +445,7 @@ void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& b
         // partition is not registered, discard the buffer
         buffer.release();
         NES_ERROR("DataBuffer for " + nesPartition.toString() + " is not registered and was discarded!");
-        NES_THROW_RUNTIME_ERROR("NES Network Error: unhandled message");
+        //        NES_THROW_RUNTIME_ERROR("NES Network Error: unhandled message");
     }
 }
 

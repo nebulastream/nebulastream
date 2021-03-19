@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
@@ -25,23 +25,23 @@
 
 namespace NES {
 
-SyntaxBasedEqualQueryMergerRule::SyntaxBasedEqualQueryMergerRule() : processedNodes() {}
+SyntaxBasedCompleteQueryMergerRule::SyntaxBasedCompleteQueryMergerRule() : processedNodes() {}
 
-SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedEqualQueryMergerRule::create() {
-    return std::make_shared<SyntaxBasedEqualQueryMergerRule>(SyntaxBasedEqualQueryMergerRule());
+SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create() {
+    return std::make_shared<SyntaxBasedCompleteQueryMergerRule>(SyntaxBasedCompleteQueryMergerRule());
 }
 
-bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
+bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
-    NES_INFO("SyntaxBasedEqualQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
     if (allSharedQueryMetaData.size() == 1) {
-        NES_WARNING("SyntaxBasedEqualQueryMergerRule: Found only a single query metadata in the global query plan."
+        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("SyntaxBasedEqualQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
+    NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
     for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
         for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
 
@@ -57,34 +57,41 @@ bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQuer
             auto targetQueryPlan = targetSharedQueryMetaData->getQueryPlan();
 
             //create a map of matching target to address operator id map
-            std::map<uint64_t, uint64_t> targetHostOperatorMap;
+            std::map<uint64_t, uint64_t> targetToHostSinkOperatorMap;
 
             //Check if the target and address query plan are equal and return the target and address operator mappings
-            if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetHostOperatorMap)) {
+            if (areQueryPlansEqual(targetQueryPlan, hostQueryPlan, targetToHostSinkOperatorMap)) {
 
-                std::set<GlobalQueryNodePtr> hostSinkGQNs = hostSharedQueryMetaData->getSinkGlobalQueryNodes();
+                std::vector<OperatorNodePtr> hostSinkOperators = hostSharedQueryMetaData->getSinkOperators();
                 //Iterate over all target sink global query nodes and try to identify a matching address global query node
                 // using the target address operator map
-                for (auto targetSinkGQN : targetSharedQueryMetaData->getSinkGlobalQueryNodes()) {
-                    uint64_t hostSinkOperatorId = targetHostOperatorMap[targetSinkGQN->getOperator()->getId()];
+                for (auto targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
+                    uint64_t hostSinkOperatorId = targetToHostSinkOperatorMap[targetSinkOperator->getId()];
 
-                    auto found = std::find_if(hostSinkGQNs.begin(), hostSinkGQNs.end(),
-                                              [hostSinkOperatorId](GlobalQueryNodePtr hostSinkGQN) {
-                                                  return hostSinkGQN->getOperator()->getId() == hostSinkOperatorId;
-                                              });
+                    auto hostSinkOperator = std::find_if(hostSinkOperators.begin(), hostSinkOperators.end(),
+                                                         [hostSinkOperatorId](OperatorNodePtr hostOperator) {
+                                                             return hostOperator->getId() == hostSinkOperatorId;
+                                                         });
 
-                    if (found == hostSinkGQNs.end()) {
-                        NES_THROW_RUNTIME_ERROR("SyntaxBasedEqualQueryMergerRule: Unexpected behaviour");
+                    if (hostSinkOperator == hostSinkOperators.end()) {
+                        NES_THROW_RUNTIME_ERROR("SyntaxBasedCompleteQueryMergerRule: Unexpected behaviour! matching host sink "
+                                                "pair not found in the host query plan.");
                     }
                     //Remove all children of target sink global query node
-                    targetSinkGQN->removeChildren();
-
-                    //Add children of matched address sink global query node to the target sink global query node
-                    for (auto hostChild : (*found)->getChildren()) {
-                        hostChild->addParent(targetSinkGQN);
+                    auto targetSinkChildren = targetSinkOperator->getChildren();
+                    auto hostSinkChildren = (*hostSinkOperator)->getChildren();
+                    for (auto& childToMerge : targetSinkChildren) {
+                        for (auto& hostChild : hostSinkChildren) {
+                            bool addedNewParent = hostChild->addParent(targetSinkOperator);
+                            if (!addedNewParent) {
+                                NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Failed to add new parent");
+                            }
+                        }
+                        childToMerge->removeParent(targetSinkOperator);
                     }
+                    hostQueryPlan->addRootOperator(targetSinkOperator);
                 }
-                NES_TRACE("SyntaxBasedEqualQueryMergerRule: Merge target Shared metadata into address metadata");
+                NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
                 hostSharedQueryMetaData->addSharedQueryMetaData(targetSharedQueryMetaData);
                 //Clear the target shared query metadata
                 targetSharedQueryMetaData->clear();
@@ -100,16 +107,16 @@ bool SyntaxBasedEqualQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQuer
     return true;
 }
 
-bool SyntaxBasedEqualQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
-                                                         std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
+bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
+                                                            std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
-    NES_DEBUG("SyntaxBasedEqualQueryMergerRule: check if the target and address query plans are syntactically equal or not");
+    NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: check if the target and address query plans are syntactically equal or not");
     std::vector<OperatorNodePtr> targetSourceOperators = targetQueryPlan->getLeafOperators();
     std::vector<OperatorNodePtr> hostSourceOperators = hostQueryPlan->getLeafOperators();
 
     if (targetSourceOperators.size() != hostSourceOperators.size()) {
-        NES_WARNING(
-            "SyntaxBasedEqualQueryMergerRule: Not matched as number of sources in target and address query plans are different.");
+        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Not matched as number of sources in target and address query plans are "
+                    "different.");
         return false;
     }
 
@@ -124,23 +131,23 @@ bool SyntaxBasedEqualQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQuer
     return false;
 }
 
-bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
-                                                       std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
+bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
+                                                          std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
-    NES_TRACE("SyntaxBasedEqualQueryMergerRule: Check if the target and address operator are syntactically equal or not.");
+    NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if the target and address operator are syntactically equal or not.");
     if (targetHostOperatorMap.find(targetOperator->getId()) != targetHostOperatorMap.end()) {
         if (targetHostOperatorMap[targetOperator->getId()] == hostOperator->getId()) {
-            NES_TRACE("SyntaxBasedEqualQueryMergerRule: Already matched so skipping rest of the check.");
+            NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Already matched so skipping rest of the check.");
             return true;
         } else {
-            NES_WARNING("SyntaxBasedEqualQueryMergerRule: Not matched as target operator was matched to another number of "
+            NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Not matched as target operator was matched to another number of "
                         "sources in target and address query plans are different.");
             return false;
         }
     }
 
     if (targetOperator->instanceOf<SinkLogicalOperatorNode>() && hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-        NES_TRACE("SyntaxBasedEqualQueryMergerRule: Both address and target operators are of sink type.");
+        NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Both address and target operators are of sink type.");
         targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
         return true;
     }
@@ -148,11 +155,11 @@ bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOpe
     bool areParentsEqual;
     bool areChildrenEqual;
 
-    NES_TRACE("SyntaxBasedEqualQueryMergerRule: Compare address and target operators.");
+    NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Compare address and target operators.");
     if (targetOperator->equal(hostOperator)) {
         targetHostOperatorMap[targetOperator->getId()] = hostOperator->getId();
 
-        NES_TRACE("SyntaxBasedEqualQueryMergerRule: Check if parents of target and address operators are equal.");
+        NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if parents of target and address operators are equal.");
         for (auto& targetParent : targetOperator->getParents()) {
             areParentsEqual = false;
             for (auto& hostParent : hostOperator->getParents()) {
@@ -167,7 +174,7 @@ bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOpe
             }
         }
 
-        NES_TRACE("SyntaxBasedEqualQueryMergerRule: Check if children of target and address operators are equal.");
+        NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if children of target and address operators are equal.");
         for (auto& targetChild : targetOperator->getChildren()) {
             areChildrenEqual = false;
             for (auto& hostChild : hostOperator->getChildren()) {
@@ -183,7 +190,7 @@ bool SyntaxBasedEqualQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOpe
         }
         return true;
     }
-    NES_WARNING("SyntaxBasedEqualQueryMergerRule: Target and address operators are not matched.");
+    NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Target and address operators are not matched.");
     return false;
 }
 }// namespace NES

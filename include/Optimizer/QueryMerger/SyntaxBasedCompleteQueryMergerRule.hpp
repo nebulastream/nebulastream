@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SYNTAXBASEDEQUALQUERYMERGERRULE_HPP
-#define NES_SYNTAXBASEDEQUALQUERYMERGERRULE_HPP
+#ifndef NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP
+#define NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP
 
 #include <map>
 #include <memory>
@@ -38,8 +38,8 @@ typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
-class SyntaxBasedEqualQueryMergerRule;
-typedef std::shared_ptr<SyntaxBasedEqualQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
+class SyntaxBasedCompleteQueryMergerRule;
+typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
 
 /**
  * @brief SyntaxBasedEqualQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
@@ -82,7 +82,7 @@ typedef std::shared_ptr<SyntaxBasedEqualQueryMergerRule> SyntaxBasedEqualQueryMe
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class SyntaxBasedEqualQueryMergerRule {
+class SyntaxBasedCompleteQueryMergerRule {
 
   public:
     static SyntaxBasedEqualQueryMergerRulePtr create();
@@ -95,7 +95,7 @@ class SyntaxBasedEqualQueryMergerRule {
     bool apply(const GlobalQueryPlanPtr& globalQueryPlan);
 
   private:
-    explicit SyntaxBasedEqualQueryMergerRule();
+    explicit SyntaxBasedCompleteQueryMergerRule();
 
     /**
      * @brief identify if the query plans are equal or not
@@ -134,4 +134,4 @@ class SyntaxBasedEqualQueryMergerRule {
     std::vector<GlobalQueryNodePtr> processedNodes;
 };
 }// namespace NES
-#endif//NES_SYNTAXBASEDEQUALQUERYMERGERRULE_HPP
+#endif//NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP

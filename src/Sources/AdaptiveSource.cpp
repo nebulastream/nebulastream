@@ -15,11 +15,11 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/AdaptiveSource.hpp>
-#include <Util/UtilityFunctions.hpp>
-
 #include <Util/ThreadNaming.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cassert>
 #include <chrono>
 #include <limits>
@@ -48,17 +48,6 @@ std::optional<NodeEngine::TupleBuffer> AdaptiveSource::receiveData() {
 
 void AdaptiveSource::runningRoutine() {
     setThreadName("AdaptSrc-%d", operatorId);
-    std::string thName = "AdaptSrc-" + operatorId;
-
-    if (!bufferManager) {
-        NES_ERROR("AdaptiveSource:" << this << ", BufferManager not set");
-        throw std::logic_error("AdaptiveSource: BufferManager not set");
-    }
-
-    if (!queryManager) {
-        NES_ERROR("AdaptiveSource:" << this << ", QueryManager not set");
-        throw std::logic_error("AdaptiveSource: QueryManager not set");
-    }
 
     if (this->operatorId == 0) {
         NES_FATAL_ERROR("AdaptiveSource: No ID assigned. Running_routine is not possible!");
@@ -69,7 +58,7 @@ void AdaptiveSource::runningRoutine() {
     uint64_t cnt = 0;
 
     auto zeroSecInMillis = std::chrono::milliseconds(0);
-
+    open();
     while (this->isRunning()) {
         auto tsNow = std::chrono::system_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());

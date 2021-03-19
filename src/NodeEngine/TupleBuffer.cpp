@@ -14,12 +14,19 @@
     limitations under the License.
 */
 
+#include <NodeEngine/BufferRecycler.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
-
 namespace NES::NodeEngine {
 
+TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent) {
+    auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+        recycler->recyclePooledBuffer(segment);
+    };
+    auto memSegment = new detail::MemorySegment(ptr, length, parent, callback, true);
+    return TupleBuffer(memSegment->controlBlock, ptr, length);
+}
 TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr) {
     //nop
 }

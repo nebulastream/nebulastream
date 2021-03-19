@@ -18,6 +18,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <NodeEngine/QueryStatistics.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
@@ -79,13 +80,19 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
         try {
             //Prepare the response
             json::value result{};
-            std::map<uint64_t, std::string> queries = queryCatalog->getAllQueries();
+            std::map<uint64_t, QueryCatalogEntryPtr> queryCatalogEntries = queryCatalog->getAllQueryCatalogEntries();
 
-            for (auto [key, value] : queries) {
-                result[key] = json::value::string(value);
+            uint64_t index = 0;
+            for (auto& [queryId, catalogEntry] : queryCatalogEntries) {
+                json::value jsonEntry;
+                jsonEntry["queryId"] = json::value::number(queryId);
+                jsonEntry["queryString"] = json::value::string(catalogEntry->getQueryString());
+                jsonEntry["queryStatus"] = json::value::string(catalogEntry->getQueryStatusAsString());
+                jsonEntry["queryPlan"] = PlanJsonGenerator::getQueryPlanAsJson(catalogEntry->getQueryPlan());
+                result[index] = jsonEntry;
             }
 
-            if (queries.size() == 0) {
+            if (queryCatalogEntries.size() == 0) {
                 NES_DEBUG("QueryCatalogController: handleGet -queries: no registered query was found.");
                 noContentImpl(request);
             } else {

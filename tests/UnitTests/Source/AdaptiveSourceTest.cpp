@@ -82,7 +82,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
             std::vector<std::string> tokens;
             boost::algorithm::split(tokens, line, boost::is_any_of(","));
             uint64_t offset = 0;
-            offset += sizeof(UINT32);
+            offset += sizeof(uint32_t);
             uint32_t val = std::stoul(tokens[0].c_str());
             memcpy(tupleBuffer.getBufferAs<char>() + offset + i * 4096, &val, 4);
             ++i;
@@ -128,7 +128,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
 
     const DataSourcePtr source = createMockCSVAdaptiveSource(
         schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file, 1000);
-
+    source->open();
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
     }
@@ -159,6 +159,7 @@ TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
         createMockCSVAdaptiveSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                     initialGatheringInterval, path_to_file, intervalIncrease);
 
+    source->open();
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
     }

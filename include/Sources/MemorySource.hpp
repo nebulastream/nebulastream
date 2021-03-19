@@ -14,22 +14,27 @@
     limitations under the License.
 */
 
-/*#ifndef NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
+/*
+#ifndef NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 #define NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
 
+#include <NodeEngine/BufferRecycler.hpp>
 #include <Sources/DataSource.hpp>
 
 namespace NES {
 
-*//**
+*/
+/**
  * @brief Memory Source that reads from main memory and produces buffers.
  * The memory area out of which buffers will be produced must be initialized beforehand and allocated as a shared_ptr
  * that must have ownership of the area, i.e., it must control when to free it.
  * Do not use in distributed settings but only for single node dev and testing.
  *//*
-class MemorySource : public DataSource {
+
+class MemorySource : public DataSource, public NodeEngine::BufferRecycler {
   public:
-    *//**
+    */
+/**
      * @brief The constructor of a MemorySource
      * @param schema the schema of the source
      * @param memoryArea the non-null memory area that stores the data that will be used by the source
@@ -39,35 +44,47 @@ class MemorySource : public DataSource {
      * @param
      * @param operatorId the valid id of the source
      *//*
+
     explicit MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                           NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                           uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId);
-    *//**
+    */
+/**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt
      *//*
+
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
-    *//**
+    */
+/**
      * @brief Provides a string representation of the source
      * @return The string representation of the source
      *//*
+
     const std::string toString() const override;
 
-    *//**
+    */
+/**
      * @brief Provides the type of the source
      * @return the type of the source
      *//*
+
     SourceType getType() const override;
+    void recyclePooledBuffer(NodeEngine::detail::MemorySegment* buffer) override;
+    void recycleUnpooledBuffer(NodeEngine::detail::MemorySegment* buffer) override;
 
   private:
+    NodeEngine::BufferManagerPtr globalBufferManager;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
+    std::atomic<uint64_t> refCnt;
 };
 
 typedef std::shared_ptr<MemorySource> MemorySourcePtr;
 
 }// namespace NES
 
-#endif//NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_*/
+#endif//NES_INCLUDE_SOURCES_MEMORYSOURCE_HPP_
+*/

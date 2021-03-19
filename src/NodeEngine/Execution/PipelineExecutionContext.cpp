@@ -51,7 +51,7 @@ PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, Query
 
 PipelineExecutionContext::~PipelineExecutionContext() { NES_DEBUG("~PipelineExecutionContext() " << toString()); }
 
-TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return localBufferPool->getBuffer(); }
+TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext) {
     // call the function handler

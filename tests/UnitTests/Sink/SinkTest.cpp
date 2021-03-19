@@ -337,6 +337,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
         // Receive data.
+        zmq_source->open();
         auto schemaData = zmq_source->receiveData();
         TupleBuffer bufSchema = schemaData.value();
         std::string schemaStr;
@@ -385,6 +386,7 @@ TEST_F(SinkTest, testTextZMQSink) {
     // Start thread for receivingh the data.
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
+        zmq_source->open();
         auto bufferData = zmq_source->receiveData();
         TupleBuffer bufData = bufferData.value();
 
@@ -421,6 +423,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
 
     // Start thread for receivingh the data.
     auto receiving_thread = std::thread([&]() {
+        zmq_source->open();
         auto schemaData = zmq_source->receiveData();
         TupleBuffer bufSchema = schemaData.value();
         SerializableSchema* serializedSchema = new SerializableSchema();
@@ -466,6 +469,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
 
     // Start thread for receivingh the data.
     auto receiving_thread = std::thread([&]() {
+        zmq_source->open();
         auto schemaData = zmq_source->receiveData();
 
         auto bufferData = zmq_source->receiveData();

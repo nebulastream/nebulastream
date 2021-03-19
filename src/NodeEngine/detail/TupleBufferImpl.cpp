@@ -62,12 +62,28 @@ MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycl
     }
 }
 
+MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
+                             std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
+    : ptr(ptr), size(size) {
+    controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
+    if (!this->ptr) {
+        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
+    }
+    if (!this->size) {
+        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid size");
+    }
+    controlBlock->prepare();
+}
+
 MemorySegment::~MemorySegment() {
     if (ptr) {
         auto refCnt = controlBlock->getReferenceCount();
         if (refCnt != 0) {
             NES_ERROR("Expected 0 as ref cnt but got " << refCnt);
             NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid reference counter on mem segment dtor");
+        }
+        if ((ptr + size) != reinterpret_cast<uint8_t*>(controlBlock)) {
+            delete controlBlock;
         }
         free(ptr);
         ptr = nullptr;

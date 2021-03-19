@@ -22,10 +22,11 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
+#include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
-#include <Optimizer/QueryMerger/SignatureBasedEqualQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
@@ -37,7 +38,7 @@
 
 using namespace NES;
 
-class SignatureBasedEqualQueryMergerRuleTest : public testing::Test {
+class SignatureBasedCompleteQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
@@ -74,7 +75,7 @@ class SignatureBasedEqualQueryMergerRuleTest : public testing::Test {
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -114,40 +115,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto gqmToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(gqmToDeploy.size() == 2);
-
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
 
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1Children : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2Children : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1Children, sink2Children);
         }
     }
 }
@@ -158,7 +165,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueries) {
 //FIXME: This required 1402 and 1378 to be fixed
 // We need to do the attribute name resolution just as done in SQL systems to identify or distinguish attribute names
 // coming from same streams (in case of a self join)
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingEqualQueriesWithMultipleSameSources) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQueriesWithMultipleSameSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
 
@@ -203,42 +210,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingEqualQueriesW
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    ASSERT_EQ(sinkGQNs.size(), 2);
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator11->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator12->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
-    ASSERT_FALSE(sinkOperator1GQN->getChildren().empty());
-    ASSERT_FALSE(sinkOperator2GQN->getChildren().empty());
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -250,7 +261,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, DISABLED_testMergingEqualQueriesW
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different source
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -278,37 +289,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSo
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -316,7 +339,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentSo
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with same queries with unionWith operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperators) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck");
@@ -354,37 +377,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -392,7 +424,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with different order of unionWith operator children
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorChildrenOrder) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("car");
@@ -430,37 +462,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -468,7 +509,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with queries with unionWith operators but different children
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsWithDifferentChildren) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("bike");
@@ -506,37 +547,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -544,7 +597,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different filters
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFilters) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -573,37 +626,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -611,7 +676,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different filters
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFiltersField) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 40).sink(printSinkDescriptor);
@@ -639,37 +704,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -677,7 +754,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentFi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different map
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapAttribute) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -706,37 +783,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -744,7 +833,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMa
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different map
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMapValue) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -773,37 +862,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -811,7 +912,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentMa
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different window operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowTypes) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -853,37 +954,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -891,7 +1004,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different window operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWindowAggregations) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -933,37 +1046,48 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWi
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
 
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -971,7 +1095,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWi
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same window operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindows) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1013,37 +1137,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1055,7 +1188,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same window operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWindowsButDifferentOperatorOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1097,37 +1230,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1139,7 +1281,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWindows
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1177,37 +1319,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1219,7 +1370,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operator but in different order
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1257,37 +1408,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1299,7 +1459,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameProject
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different project operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentProjectOperatorOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1337,37 +1497,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentPr
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -1375,7 +1547,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentPr
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same watermark operators
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWatermarkOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1415,37 +1587,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWaterma
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
         bool found = false;
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
             if (sink1GQNChild->equal(sink2GQNChild)) {
                 found = true;
             }
@@ -1458,7 +1639,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithSameWaterma
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different watermark operators.
  * One query with IngestionTimeWatermarkStrategy and other with EventTimeWatermarkStrategy.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentWatermarkOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1499,37 +1680,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWa
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -1538,7 +1731,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithDifferentWa
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two identical queries with unionWith operators.
  * Each query have two sources and both using IngestionTimeWatermarkStrategy.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperatorsAndTwoIdenticalWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
@@ -1578,37 +1771,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -1618,7 +1820,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithUnionOperat
  * Each query has two sources with different watermark strategy. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
@@ -1660,37 +1862,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithUnionO
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -1700,7 +1911,8 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingEqualQueriesWithUnionO
  * Each query has two sources with different watermark strategies. One source with IngestionTimeWatermarkStrategy and other
  * with EventTimeWatermarkStrategy and in the second query the strategies are inverted.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest,
+       testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
@@ -1738,37 +1950,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingDistinctQueriesWithUni
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -1776,7 +2000,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingDistinctQueriesWithUni
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperator) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1823,37 +2047,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -1861,7 +2094,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentStreamOrder) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1908,37 +2141,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -1946,7 +2188,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentButEqualWindows) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -1993,37 +2235,46 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 1);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_EQ(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators1[1]->getChildren()) {
+            EXPECT_EQ(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }
@@ -2031,7 +2282,7 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same join operators.
  */
-TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
+TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOperatorWithDifferentWindows) {
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -2077,37 +2328,49 @@ TEST_F(SignatureBasedEqualQueryMergerRuleTest, testMergingQueriesWithJoinOperato
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    std::vector<GlobalQueryNodePtr> sinkGQNs = globalQueryPlan->getAllGlobalQueryNodesWithOperatorType<SinkLogicalOperatorNode>();
-
-    auto found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator1->getId();
-    });
-    GlobalQueryNodePtr sinkOperator1GQN = *found;
-
-    found = std::find_if(sinkGQNs.begin(), sinkGQNs.end(), [&](GlobalQueryNodePtr sinkGQN) {
-        return sinkGQN->getOperator()->getId() == sinkOperator2->getId();
-    });
-    GlobalQueryNodePtr sinkOperator2GQN = *found;
-
     //assert
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
-        }
-    }
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
 
-    sinkOperator2GQN->getChildren();
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedEqualQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
-    auto updatedGQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-    EXPECT_TRUE(updatedGQMToDeploy.size() == 2);
-    for (NodePtr sink1GQNChild : sinkOperator1GQN->getChildren()) {
-        for (auto sink2GQNChild : sinkOperator2GQN->getChildren()) {
-            ASSERT_NE(sink1GQNChild, sink2GQNChild);
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 2);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    auto updatedSharedQueryPlan2 = updatedSharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 1);
+    auto updatedRootOperators2 = updatedSharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators2.size() == 1);
+
+    //assert
+    for (auto sink1ChildOperator : updatedRootOperators1[0]->getChildren()) {
+        for (auto sink2ChildOperator : updatedRootOperators2[0]->getChildren()) {
+            EXPECT_NE(sink1ChildOperator, sink2ChildOperator);
         }
     }
 }

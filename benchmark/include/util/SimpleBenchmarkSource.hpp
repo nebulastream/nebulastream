@@ -19,6 +19,7 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryManager.hpp>
@@ -246,7 +247,7 @@ class SimpleBenchmarkSource : public DataSource {
         buf.setNumberOfTuples(curNumberOfTuplesPerBuffer);
 
         NES_DEBUG("SimpleBenchmarkSource: available buffer after creating one buffer are "
-                  << bufferManager->getAvailableBuffers());
+                  << bufferManager->getAvailableExclusiveBuffers());
         return buf;
     }
 

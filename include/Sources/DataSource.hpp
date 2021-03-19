@@ -71,6 +71,11 @@ class DataSource : public NodeEngine::Reconfigurable {
     DataSource() = delete;
 
     /**
+     * @brief This methods creates the local buffer pool and is necessary because we cannot do it in the constructor
+     */
+    void open();
+
+    /**
      * @brief method to start the source.
      * 1.) check if bool running is true, if true return if not start source
      * 2.) start new thread with runningRoutine
@@ -178,7 +183,8 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::chrono::milliseconds gatheringInterval;
     OperatorId operatorId;
     SourceType type;
-    NodeEngine::BufferManagerPtr bufferManager;
+    NodeEngine::BufferManagerPtr globalBufferManager;
+    NodeEngine::LocalBufferManagerPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
 
   private:

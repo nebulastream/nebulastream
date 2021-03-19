@@ -15,10 +15,10 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>
-#include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <sstream>

@@ -22,7 +22,7 @@
 
 using namespace std;
 const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
-const uint64_t EXPERIMENT_RUNTIME_IN_SECONDS = 5;
+const uint64_t NUMBER_OF_MEASUREMENTS_TO_COLLECT = 5;
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 const uint64_t STARTUP_SLEEP_INTERVAL_IN_SECONDS = 3;
 
@@ -78,52 +78,77 @@ E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64
     setup();
 }
 
-void E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
-    for (uint64_t i = 0; i < EXPERIMENT_RUNTIME_IN_SECONDS + 1; ++i) {
+std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
+    //check for start
+    bool readyToMeasure = false;
+
+    while (!readyToMeasure) {
+        auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
+        for (auto iter : queryStatisticsPtrs) {
+            if (iter->getProcessedTuple() != 0) {
+                readyToMeasure = true;
+            } else {
+                std::cout << "engine not ready yet" << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS));
+            }
+        }
+    }
+
+    uint64_t runCounter = 0;
+    auto start = std::chrono::system_clock::now();
+    auto inTime = std::chrono::system_clock::to_time_t(start);
+    std::cout << std::put_time(std::localtime(&inTime), "%Y-%m-%d %X") << " E2EBase: Started Measurement for query id=" << queryId
+              << std::endl;
+
+    while (runCounter < NUMBER_OF_MEASUREMENTS_TO_COLLECT) {
         int64_t nextPeriodStartTime = EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
         for (auto iter : queryStatisticsPtrs) {
-            auto start = std::chrono::system_clock::now();
-            auto in_time_t = std::chrono::system_clock::to_time_t(start);
-            std::cout << "Statistics  at " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " =>"
+            auto ts = std::chrono::system_clock::now();
+            auto timeNow = std::chrono::system_clock::to_time_t(ts);
+            std::cout << "Statistics  at " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
                       << iter->getQueryStatisticsAsString() << std::endl;
 
-            if (iter->getProcessedTuple() == 0) {
-                NES_ERROR("No Output produced on time " << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X"));
-            } else {
-                //if first iteration just push the first value
-                if (subPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
-                    subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
-                    subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
-                    subPlanIdToTuplelCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
-                }
+            runCounter++;
+            //if first iteration just push the first value
+            if (subPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
+                subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
+                subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
+                subPlanIdToTuplelCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
+            }
 
-                //if last iteration do last - first
-                if (i + 1 == EXPERIMENT_RUNTIME_IN_SECONDS + 1) {
-                    subPlanIdToTaskCnt[iter->getSubQueryId()] =
-                        iter->getProcessedTasks() - subPlanIdToTaskCnt[iter->getSubQueryId()];
-                    subPlanIdToBufferCnt[iter->getSubQueryId()] =
-                        iter->getProcessedBuffers() - subPlanIdToBufferCnt[iter->getSubQueryId()];
-                    subPlanIdToTuplelCnt[iter->getSubQueryId()] =
-                        iter->getProcessedTuple() - subPlanIdToTuplelCnt[iter->getSubQueryId()];
-                }
+            //if last iteration do last - first
+            if (runCounter) {
+                subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks() - subPlanIdToTaskCnt[iter->getSubQueryId()];
+                subPlanIdToBufferCnt[iter->getSubQueryId()] =
+                    iter->getProcessedBuffers() - subPlanIdToBufferCnt[iter->getSubQueryId()];
+                subPlanIdToTuplelCnt[iter->getSubQueryId()] =
+                    iter->getProcessedTuple() - subPlanIdToTuplelCnt[iter->getSubQueryId()];
             }
         }
 
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        while (curTime < nextPeriodStartTime && i + 1 < EXPERIMENT_RUNTIME_IN_SECONDS + 1) {
+        while (curTime < nextPeriodStartTime && runCounter != NUMBER_OF_MEASUREMENTS_TO_COLLECT) {
             std::this_thread::sleep_for(std::chrono::seconds(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS));
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
     }
+
+    auto stop = std::chrono::system_clock::now();
+    auto outTime = std::chrono::system_clock::to_time_t(stop);
+    std::cout << std::put_time(std::localtime(&outTime), "%Y-%m-%d %X")
+              << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
+
     if (subPlanIdToTuplelCnt.size() == 0) {
-        NES_ERROR("We cannot use this run as no data was measured");
-        assert(0);
+        NES_ASSERT(subPlanIdToTuplelCnt.size() == NUMBER_OF_MEASUREMENTS_TO_COLLECT,
+                   "We cannot use this run as no data was measured");
     }
+
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(stop.time_since_epoch() - start.time_since_epoch());
 }
 
 E2EBase::~E2EBase() {
@@ -352,19 +377,7 @@ void E2EBase::runQuery(std::string query) {
     //give the system some seconds to come to steady mode
     sleep(STARTUP_SLEEP_INTERVAL_IN_SECONDS);
 
-    auto start = std::chrono::system_clock::now();
-    auto in_time_t = std::chrono::system_clock::to_time_t(start);
-    std::cout << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X") << " E2EBase: Run Measurement for query id=" << queryId
-              << std::endl;
-    recordStatistics(wrk1->getNodeEngine());
-
-    auto stop = std::chrono::system_clock::now();
-    auto out_time_t = std::chrono::system_clock::to_time_t(stop);
-
-    std::cout << std::put_time(std::localtime(&out_time_t), "%Y-%m-%d %X")
-              << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
-
-    runtime = std::chrono::duration_cast<std::chrono::nanoseconds>(stop.time_since_epoch() - start.time_since_epoch());
+    runtime = recordStatistics(wrk1->getNodeEngine());
 }
 
 std::string E2EBase::getResult() {
@@ -393,6 +406,7 @@ std::string E2EBase::getResult() {
         << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << "," << std::fixed
         << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024 << std::endl;
 
+    std::cout << "tuples per sec=" << std::fixed << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << std::endl;
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
     return out.str();
 }
@@ -408,12 +422,47 @@ void E2EBase::tearDown() {
         }
 
         std::cout << "E2EBase: Stop worker 1" << std::endl;
-        bool retStopWrk1 = wrk1->stop(true);
-        NES_ASSERT(retStopWrk1, "retStopWrk1");
 
+        std::shared_ptr<std::promise<bool>> stopPromiseWrk1 = std::make_shared<std::promise<bool>>();
+        std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
+        std::thread t1([stopPromiseWrk1, stopPromiseCord]() {
+            std::future<bool> stopFutureWrk1 = stopPromiseWrk1->get_future();
+            bool satisfied = false;
+            while (!satisfied) {
+                switch (stopFutureWrk1.wait_for(std::chrono::seconds(1))) {
+                    case future_status::ready: {
+                        satisfied = true;
+                    }
+                    case future_status::timeout:
+                    case future_status::deferred: {
+                        NES_WARNING("Waiting for stop");
+                        break;
+                    }
+                }
+            }
+            std::future<bool> stopFutureCord = stopPromiseCord->get_future();
+            satisfied = false;
+            while (!satisfied) {
+                switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
+                    case future_status::ready: {
+                        satisfied = true;
+                    }
+                    case future_status::timeout:
+                    case future_status::deferred: {
+                        NES_WARNING("Waiting for stop");
+                        break;
+                    }
+                }
+            }
+        });
+        bool retStopWrk1 = wrk1->stop(true);
+        stopPromiseWrk1->set_value(retStopWrk1);
+        NES_ASSERT(retStopWrk1, "retStopWrk1");
         std::cout << "E2EBase: Stop Coordinator" << std::endl;
         bool retStopCord = crd->stopCoordinator(true);
+        stopPromiseCord->set_value(retStopCord);
         NES_ASSERT(retStopCord, "retStopCord");
+        t1.join();
         std::cout << "E2EBase: Test finished" << std::endl;
     } catch (...) {
         NES_ERROR("Error was thrown while query shutdown");

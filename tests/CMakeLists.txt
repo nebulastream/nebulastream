@@ -295,7 +295,7 @@ target_link_libraries(logical-source-expansion-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME logical-source-expansion-rule-test COMMAND logical-source-expansion-rule-test)
 
 ### Syntax Based Equal Query Merger Rule Test ###
-add_executable(syntax-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SyntaxBasedEqualQueryMergerRuleTest.cpp")
+add_executable(syntax-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRuleTest.cpp")
 target_link_libraries(syntax-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME syntax-based-equal-query-merger-rule-test COMMAND syntax-based-equal-query-merger-rule-test)
 
@@ -335,9 +335,14 @@ target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
 
 ### Signature Based Equal Query Merger Rule Test ###
-add_executable(signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedEqualQueryMergerRuleTest.cpp")
+add_executable(signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRuleTest.cpp")
 target_link_libraries(signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME signature-based-equal-query-merger-rule-test COMMAND signature-based-equal-query-merger-rule-test)
+
+### Signature Based Partial Query Merger Rule Test ###
+add_executable(signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedPartialQueryMergerRuleTest.cpp")
+target_link_libraries(signature-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME signature-based-partial-query-merger-rule-test COMMAND signature-based-partial-query-merger-rule-test)
 
 ### Join Handler Tests ###
 add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")

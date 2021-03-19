@@ -65,6 +65,8 @@ class ThreadPool {
        */
     bool stop();
 
+    bool isRunning() const { return running; }
+
   private:
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
@@ -108,7 +110,7 @@ class ThreadPool {
     std::atomic<uint16_t> numThreads;
     std::vector<std::thread> threads;
     std::mutex reconfigLock;
-    std::weak_ptr<QueryManager> queryManager;
+    std::shared_ptr<QueryManager> queryManager;
 };
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;

@@ -53,7 +53,7 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema) {
     // We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
     if (!onField->getStamp()->isNumeric()) {
-        NES_FATAL_ERROR("SumAggregationDescriptor: aggregations on non numeric fields is not supported.");
+        NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
     asField->setStamp(onField->getStamp());
 }
