@@ -21,7 +21,7 @@
 
 namespace NES::NodeEngine {
 LocalBufferPool::LocalBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
-                                       size_t numberOfReservedBuffers)
+                                 size_t numberOfReservedBuffers)
     : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers) {
 
     while (!buffers.empty()) {

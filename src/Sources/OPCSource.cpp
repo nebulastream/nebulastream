@@ -30,12 +30,12 @@
 #include <string>
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Util/Logger.hpp>
 #include <open62541/types.h>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
 
 namespace NES {
 

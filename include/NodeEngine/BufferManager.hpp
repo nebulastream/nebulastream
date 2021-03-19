@@ -17,9 +17,9 @@
 #ifndef _BUFFER_MANAGER_H
 #define _BUFFER_MANAGER_H
 
+#include <NodeEngine/AbstractBufferProvider.hpp>
 #include <NodeEngine/BufferRecycler.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeEngine/AbstractBufferProvider.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <deque>

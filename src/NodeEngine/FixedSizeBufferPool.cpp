@@ -75,7 +75,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
-                                    << memSegment->controlBlock->getReferenceCount());
+                                << memSegment->controlBlock->getReferenceCount());
     }
 }
 
@@ -89,8 +89,8 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
         ownedBufferManager->recyclePooledBuffer(memSegment);
     } else {
         if (!memSegment->isAvailable()) {
-            NES_THROW_RUNTIME_ERROR(
-                "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
+            NES_THROW_RUNTIME_ERROR("Recycling buffer callback invoked on used memory segment refcnt="
+                                    << memSegment->controlBlock->getReferenceCount());
         }
         // add back an exclusive buffer to the local pool
         exclusiveBuffers.emplace_back(memSegment);
