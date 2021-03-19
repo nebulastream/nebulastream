@@ -202,4 +202,37 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 1);
 }
 
+/**
+ * @brief In this test we execute query merger phase on a single query plan.
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
+
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
+    auto queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+
+    auto queryCatalog = std::make_shared<QueryCatalog>();
+    for (int i = 1; i <= 10; i++) {
+        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+        auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+        q1.getQueryPlan()->setQueryId(i);
+        queryCatalog->addNewQueryRequest(queryString, q1.getQueryPlan(), "TopDown");
+    }
+
+    std::vector<QueryCatalogEntry> batchOfQueryRequests;
+    auto allQueries = queryCatalog->getAllQueryCatalogEntries();
+    for (auto& [key, value] : allQueries) {
+        batchOfQueryRequests.emplace_back(value->copy());
+    }
+
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, true);
+    auto resultPlan = phase->execute(batchOfQueryRequests);
+    //Assert
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
+    globalQueryPlan->removeEmptySharedQueryMetaData();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
+}
 }// namespace NES

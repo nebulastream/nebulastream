@@ -97,8 +97,10 @@ void GlobalQueryPlan::removeEmptySharedQueryMetaData() {
         if ((sharedQueryMetaData->isDeployed() || sharedQueryMetaData->isNew()) && sharedQueryMetaData->isEmpty()) {
             NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
             sharedQueryIdToMetaDataMap.erase(itr++);
+        } else {
+            NES_INFO("Not Empty");
+            ++itr;
         }
-        ++itr;
     }
 }
 
@@ -107,7 +109,7 @@ std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getAllSharedQueryMetaData()
     std::vector<SharedQueryMetaDataPtr> sharedQueryMetaDataToDeploy;
     NES_TRACE("GlobalQueryPlan: Iterate over the Map of shared query metadata.");
     for (auto [sharedQueryId, sharedQueryMetaData] : sharedQueryIdToMetaDataMap) {
-        sharedQueryMetaDataToDeploy.push_back(sharedQueryMetaData);
+        sharedQueryMetaDataToDeploy.emplace_back(sharedQueryMetaData);
     }
     NES_TRACE("GlobalQueryPlan: Found " << sharedQueryMetaDataToDeploy.size() << "  Shared Query MetaData.");
     return sharedQueryMetaDataToDeploy;

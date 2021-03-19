@@ -66,7 +66,7 @@ class GlobalQueryPlanUpdatePhase {
      * @param queryRequests: a batch of query requests (in the form of Query Catalog Entry) to be processed to update global query plan
      * @return Shared pointer to the Global Query Plan for further processing
      */
-    GlobalQueryPlanPtr execute(const std::vector<QueryCatalogEntry> queryRequests);
+    GlobalQueryPlanPtr execute(const std::vector<QueryCatalogEntry>& queryRequests);
 
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,

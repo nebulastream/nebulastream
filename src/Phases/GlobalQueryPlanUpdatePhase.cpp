@@ -44,30 +44,55 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
         GlobalQueryPlanUpdatePhase(queryCatalog, streamCatalog, globalQueryPlan, enableQueryMerging));
 }
 
-GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry> queryRequests) {
+GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry>& queryRequests) {
     //FIXME: Proper error handling #1585
     try {
+//        std::stringstream recordedTimeStamp;
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
             if (queryRequest.getQueryStatus() == QueryStatus::MarkedForStop) {
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
             } else if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
+//                auto startOptimizerTime =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
+//                recordedTimeStamp << "QueryId, " << queryId << ",";
+
                 auto queryPlan = queryRequest.getQueryPlan();
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
                          << queryId << " status=" << queryRequest.getQueryStatusAsString());
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
+//                auto startTypeInferenceTime1 =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 queryPlan = typeInferencePhase->execute(queryPlan);
+//                auto endTypeInferenceTime1 =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
+//                recordedTimeStamp << "typeInference1Start," << startTypeInferenceTime1 << ",typeInference1End,"
+//                                  << endTypeInferenceTime1;
 
+//                auto startQueryRewritePhase =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                 queryPlan = queryRewritePhase->execute(queryPlan);
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during query rewrite phase for query: "
                                     + std::to_string(queryId));
                 }
+//                auto endQueryRewritePhase =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
+//                recordedTimeStamp << "startQueryRewritePhase," << startQueryRewritePhase << ",endQueryRewritePhase,"
+//                                  << endQueryRewritePhase;
 
+//                auto startTypeInferenceTime2 =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 queryPlan = typeInferencePhase->execute(queryPlan);
                 if (!queryPlan) {
@@ -75,8 +100,32 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                                     + std::to_string(queryId));
                 }
 
+//                auto endTypeInferenceTime2 =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
+
+//                recordedTimeStamp << "startTypeInferenceTime2," << startTypeInferenceTime2 << ",endTypeInferenceTime2,"
+//                                  << endTypeInferenceTime2;
+
+//                auto startAddGlobalQueryPlan =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryPlan);
+//                auto endAddGlobalQueryPlan =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
+
+//                recordedTimeStamp << "startAddGlobalQueryPlan," << startAddGlobalQueryPlan << ",endAddGlobalQueryPlan,"
+//                                  << endAddGlobalQueryPlan;
+
+//                auto endOptimizerTime =
+//                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+//                        .count();
+//
+//                recordedTimeStamp << "startOptimizerTime," << startOptimizerTime << ",endOptimizerTime," << endOptimizerTime
+//                                  << std::endl;
+
             } else {
                 NES_ERROR("QueryProcessingService: Request received for query with status " << queryRequest.getQueryStatus());
                 throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling},
@@ -84,10 +133,18 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
             }
         }
 
+//        auto startMergingPhase =
+//            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         if (enableQueryMerging) {
             NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
             queryMergerPhase->execute(globalQueryPlan);
         }
+//        auto endMergingPhase =
+//            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+//        recordedTimeStamp << "startMergingPhase," << startMergingPhase << ",endMergingPhase," << endMergingPhase << std::endl;
+
+//        std::cout << recordedTimeStamp.str();
+
         NES_DEBUG("GlobalQueryPlanUpdatePhase: Successfully updated global query plan");
         return globalQueryPlan;
     } catch (std::exception& ex) {

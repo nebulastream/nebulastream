@@ -25,7 +25,7 @@
 
 namespace NES {
 
-SyntaxBasedCompleteQueryMergerRule::SyntaxBasedCompleteQueryMergerRule() : processedNodes() {}
+SyntaxBasedCompleteQueryMergerRule::SyntaxBasedCompleteQueryMergerRule() {}
 
 SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create() {
     return std::make_shared<SyntaxBasedCompleteQueryMergerRule>(SyntaxBasedCompleteQueryMergerRule());

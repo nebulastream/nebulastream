@@ -109,29 +109,6 @@ class SyntaxBasedCompleteQueryMergerRule {
 
     bool areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
                           std::map<uint64_t, uint64_t>& targetHostOperatorMap);
-
-    /**
-     * @brief Check if the target GQN can be merged into address GQN
-     * For two GQNs to be merged:
-     *   - Their set of operators should be equal or they both have sink operators
-     *   - Their child and parent GQN nodes should be equal
-     * @param targetGQNode : the target GQN node
-     * @param hostGQNode : the address GQN node
-     * @param targetGQNToHostGQNMap : the map containing list of target and address pairs with eaqual operator sets
-     * @return true if the GQN can be merged else false
-     */
-    bool checkIfGQNCanMerge(const GlobalQueryNodePtr& targetGQNode, const GlobalQueryNodePtr& hostGQNode,
-                            std::map<GlobalQueryNodePtr, GlobalQueryNodePtr>& targetGQNToHostGQNMap);
-
-    /**
-     * @brief Check if the two set of GQNs are equal
-     * @param targetGQNs : the target GQNs
-     * @param hostGQNs : the source GQNs
-     * @return false if not equal else true
-     */
-    bool areGQNodesEqual(const std::vector<NodePtr>& targetGQNs, const std::vector<NodePtr>& hostGQNs);
-
-    std::vector<GlobalQueryNodePtr> processedNodes;
 };
 }// namespace NES
 #endif//NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP
