@@ -491,7 +491,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     }
 }
 
-TEST_F(ProjectionTest, tumblingWindowQueryTestWithProjection) {
+TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     // Create Operator Tree
