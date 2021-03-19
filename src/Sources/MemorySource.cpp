@@ -21,7 +21,8 @@
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-namespace NES {
+
+/*namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
@@ -94,4 +95,4 @@ NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
 void MemorySource::recyclePooledBuffer(NodeEngine::detail::MemorySegment*) { refCnt--; }
 void MemorySource::recycleUnpooledBuffer(NodeEngine::detail::MemorySegment*) {}
 
-}// namespace NES
+}*/// namespace NES

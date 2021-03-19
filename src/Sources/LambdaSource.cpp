@@ -26,7 +26,8 @@
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <utility>
-namespace NES {
+
+/*namespace NES {
 
 LambdaSource::LambdaSource(
     SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
@@ -64,4 +65,4 @@ bool LambdaSource::stop(bool) { return this->DataSource::stop(false); }
 
 SourceType LambdaSource::getType() const { return LAMBDA_SOURCE; }
 
-}// namespace NES
+}*/// namespace NES

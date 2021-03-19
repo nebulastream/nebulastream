@@ -33,6 +33,7 @@
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 
 namespace NES {
 
@@ -59,7 +60,15 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
         return createBinaryFileSource(binarySourceDescriptor->getSchema(), bufferManager, queryManager,
                                       binarySourceDescriptor->getFilePath(), operatorId);
-    } else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
+    }else if (sourceDescriptor->instanceOf<NettySourceDescriptor>()) {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
+        const NettySourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<NettySourceDescriptor>();
+        return createNettyFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
+                                   csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
+                                   csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
+                                   csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
+                                   csvSourceDescriptor->getSkipHeader(), operatorId,csvSourceDescriptor->getAddress());}
+    else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
         const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         return createCSVFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
@@ -103,20 +112,20 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
             sourceDescriptor->as<Network::NetworkSourceDescriptor>();
         return createNetworkSource(networkSourceDescriptor->getSchema(), bufferManager, queryManager, networkManager,
                                    networkSourceDescriptor->getNesPartition());
-    } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
+    }/* else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
         return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager,
                                   memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize(),
                                   memorySourceDescriptor->getNumBuffersToProcess(), memorySourceDescriptor->getFrequency(),
                                   operatorId);
-    } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
+    }*/ /*else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating lambda source");
         auto lambdaSourceDescriptor = sourceDescriptor->as<LambdaSourceDescriptor>();
         return createLambdaSource(lambdaSourceDescriptor->getSchema(), bufferManager, queryManager,
                                   lambdaSourceDescriptor->getNumBuffersToProcess(), lambdaSourceDescriptor->getFrequency(),
                                   std::move(lambdaSourceDescriptor->getGeneratorFunction()), operatorId);
-    } else {
+    }*/ else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
