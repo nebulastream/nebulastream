@@ -13,20 +13,9 @@
 # limitations under the License.
 
 add_source_nes(
-        PhysicalOperator.cpp
-        PhysicalUnaryOperator.cpp
-        PhysicalBinaryOperator.cpp
-        PhysicalSourceOperator.cpp
-        PhysicalSinkOperator.cpp
-        PhysicalEmitOperator.cpp
-        PhysicalFilterOperator.cpp
-        PhysicalMapOperator.cpp
-        PhysicalScanOperator.cpp
-        PhysicalMultiplexOperator.cpp
-        PhysicalDemultiplexOperator.cpp
-        PhysicalWatermarkAssignmentOperator
+        PhysicalSlicePreAggregationOperator.cpp
+        PhysicalWindowSinkOperator.cpp
+        PhysicalSliceSinkOperator.cpp
+        PhysicalSliceMergingOperator.cpp
 )
-
-add_subdirectory(Windowing)
-add_subdirectory(Joining)
 

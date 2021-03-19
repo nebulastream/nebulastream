@@ -15,7 +15,6 @@ class PhysicalFilterOperator: public PhysicalUnaryOperator, public AbstractFilte
     static PhysicalOperatorPtr create(ExpressionNodePtr predicate);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
 };
 }
 }

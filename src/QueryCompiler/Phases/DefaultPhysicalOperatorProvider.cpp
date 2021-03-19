@@ -5,6 +5,12 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
@@ -14,6 +20,11 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/DefaultPhysicalOperatorProvider.hpp>
 namespace NES {
 namespace QueryCompilation {
@@ -26,7 +37,7 @@ bool DefaultPhysicalOperatorProvider::isDemulticast(LogicalOperatorNodePtr opera
     return operatorNode->getParents().size() > 1;
 }
 
-void DefaultPhysicalOperatorProvider::insetDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::insertDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
     auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create();
     demultiplexOperator->setOutputSchema(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
@@ -40,7 +51,7 @@ void DefaultPhysicalOperatorProvider::insertMulticastOperatorsAfter(LogicalOpera
 
 void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
     if (isDemulticast(operatorNode)) {
-        insetDemulticastOperatorsBefore(operatorNode);
+        insertDemulticastOperatorsBefore(operatorNode);
     }
 
     if (operatorNode->isUnaryOperator()) {
@@ -73,18 +84,23 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(QueryPlanPtr queryPlan,
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
         auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(filterOperator->getPredicate());
         operatorNode->replace(physicalFilterOperator);
+    } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
+        lowerWindowOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
+        lowerWatermarkAssignmentOperator(queryPlan, operatorNode);
     } else {
         NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
 }
 
 void DefaultPhysicalOperatorProvider::lowerBinaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
-    NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
 
     if (operatorNode->instanceOf<UnionLogicalOperatorNode>()) {
         lowerUnionOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<JoinLogicalOperatorNode>()) {
         lowerJoinOperator(queryPlan, operatorNode);
+    } else {
+        NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
 }
 
@@ -94,22 +110,80 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(QueryPlanPtr, LogicalOp
     operatorNode->replace(physicalMultiplexOperator);
 }
 
+OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator,
+                                                                           std::vector<OperatorNodePtr> children) {
+    NES_ASSERT(!children.empty(), "Their should be children for operator " << joinOperator->toString());
+    if (children.size() > 1) {
+        auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create();
+        demultiplexOperator->setOutputSchema(joinOperator->getOutputSchema());
+        demultiplexOperator->addParent(joinOperator);
+        for (auto child : children) {
+            child->removeParent(joinOperator);
+            child->addParent(demultiplexOperator);
+        }
+        return demultiplexOperator;
+    }
+    return children[0];
+}
+
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
-    auto leftChildren = joinOperator->getLeftOperators();
-    auto rightChildren = joinOperator->getRightOperators();
 
-    auto leftChild = leftChildren[0];
+    auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftOperators());
     auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getJoinDefinition());
-    leftChild->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
+    leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
 
-    auto rightChild = rightChildren[0];
+    auto rightInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getRightOperators());
     auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getJoinDefinition());
-    rightChild->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
+    rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
 
     auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getJoinDefinition());
-
     operatorNode->replace(joinSink);
+}
+
+void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+    auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
+    auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
+        logicalWatermarkAssignment->getWatermarkStrategyDescriptor());
+    operatorNode->replace(physicalWatermarkAssignment);
+}
+
+void DefaultPhysicalOperatorProvider::lowerWindowOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+    if (operatorNode->instanceOf<CentralWindowOperator>()) {
+        // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
+        auto centralWindowOperator = operatorNode->as<CentralWindowOperator>();
+        auto windowDefinition = centralWindowOperator->getWindowDefinition();
+        auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowDefinition);
+        operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
+        auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowDefinition);
+        operatorNode->replace(windowSink);
+    } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
+        // Translate a slice creation operator in -> SlicePreAggregationOperator -> SliceSinkOperator
+        auto sliceCreationOperator = operatorNode->as<SliceCreationOperator>();
+        auto windowDefinition = sliceCreationOperator->getWindowDefinition();
+        auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowDefinition);
+        operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
+        auto sliceSink = PhysicalOperators::PhysicalSliceSinkOperator::create(windowDefinition);
+        operatorNode->replace(sliceSink);
+    } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
+        // Translate a slice merging operator in -> SliceMergingOperator -> SliceSinkOperator
+        auto sliceMergingOperator = operatorNode->as<SliceMergingOperator>();
+        auto windowDefinition = sliceMergingOperator->getWindowDefinition();
+        auto physicalSliceMergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(windowDefinition);
+        operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
+        auto sliceSink = PhysicalOperators::PhysicalSliceSinkOperator::create(windowDefinition);
+        operatorNode->replace(sliceSink);
+    } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
+        // Translate a window computation operator in -> PhysicalSliceMergingOperator -> PhysicalWindowSinkOperator
+        auto windowComputation = operatorNode->as<WindowComputationOperator>();
+        auto windowDefinition = windowComputation->getWindowDefinition();
+        auto physicalSliceMergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(windowDefinition);
+        operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
+        auto sliceSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowDefinition);
+        operatorNode->replace(sliceSink);
+    } else {
+        NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
+    }
 }
 
 }// namespace QueryCompilation

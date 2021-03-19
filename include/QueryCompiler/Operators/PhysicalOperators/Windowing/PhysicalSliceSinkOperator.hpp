@@ -1,5 +1,5 @@
-#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWSINKOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWSINKOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICESINKOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICESINKOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <Operators/AbstractOperators/AbstractWindowOperator.hpp>
@@ -8,9 +8,9 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-class PhysicalWindowSinkOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
+class PhysicalSliceSinkOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
   public:
-    PhysicalWindowSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    PhysicalSliceSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
     static PhysicalOperatorPtr create(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
     static PhysicalOperatorPtr create(Windowing::LogicalWindowDefinitionPtr windowDefinition);
     const std::string toString() const override;
@@ -21,4 +21,4 @@ class PhysicalWindowSinkOperator : public AbstractWindowOperator, public Physica
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWSINKOPERATOR_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICESINKOPERATOR_HPP_

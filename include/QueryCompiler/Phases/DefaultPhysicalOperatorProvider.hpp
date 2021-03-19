@@ -10,13 +10,17 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider{
     void lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) override;
 
   protected:
-    void insetDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode);
+    void insertDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode);
     void insertMulticastOperatorsAfter(LogicalOperatorNodePtr operatorNode);
     bool isDemulticast(LogicalOperatorNodePtr operatorNode);
+
     void lowerBinaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
     void lowerUnaryOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
     void lowerUnionOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    void lowerWindowOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    void lowerWatermarkAssignmentOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
     void lowerJoinOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
+    OperatorNodePtr getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, std::vector<OperatorNodePtr> children);
 };
 
 }
