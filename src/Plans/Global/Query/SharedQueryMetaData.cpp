@@ -119,6 +119,7 @@ void SharedQueryMetaData::clear() {
     NES_DEBUG("SharedQueryMetaData: clearing all metadata information.");
     queryIdToSinkOperatorMap.clear();
     sinkOperators.clear();
+    queryIds.clear();
     markAsNotDeployed();
 }
 

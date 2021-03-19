@@ -57,7 +57,6 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
 }
 
 bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
-    NES_DEBUG("QueryService : stopping query " << queryId);
     if (!queryCatalog->queryExists(queryId)) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
                                      + " in query catalog.");
@@ -67,6 +66,18 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
         return queryRequestQueue->add(entry);
     }
     return false;
+}
+
+uint64_t QueryService::addQueryRequest(std::string queryString, QueryPtr query, std::string placementStrategyName) {
+    NES_INFO("QueryService: Queuing the query for the execution");
+    auto queryPlan = query->getQueryPlan();
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
+    if (entry) {
+        queryRequestQueue->add(entry);
+        return queryPlan->getQueryId();
+    } else {
+        throw Exception("QueryService: unable to create query catalog entry");
+    }
 }
 
 }// namespace NES

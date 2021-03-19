@@ -27,6 +27,9 @@ namespace NES {
 class TopologyNode;
 typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
+class StreamCatalogEntry;
+typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
+
 /**
  * @brief one entry in the catalog contains
  *    - the dataSource that can be created there
@@ -39,6 +42,11 @@ typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 class StreamCatalogEntry {
 
   public:
+    static StreamCatalogEntryPtr create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+                                        TopologyNodePtr node);
+
+    static StreamCatalogEntryPtr create(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node);
+
     explicit StreamCatalogEntry(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
                                 TopologyNodePtr node);
 
@@ -76,7 +84,6 @@ class StreamCatalogEntry {
     std::string logicalStreamName;
     TopologyNodePtr node;
 };
-typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 
 }// namespace NES
 

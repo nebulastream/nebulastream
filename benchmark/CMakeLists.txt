@@ -55,7 +55,7 @@ if (NES_BUILD_BENCHMARKS)
     include_directories("include/")
 
     #-------------------------------##################------------------------------
-    #-------------------------------# Benchmark Suite#-----------------------------
+    #-------------------------------# Micro Benchmark Suite#-----------------------------
 
     ### Statemanager Benchmark ###
     add_executable(statemanager-benchmark "src/Micro-Benchmarks/StatemanagerBenchmark.cpp")
@@ -113,6 +113,11 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
 
+    ### Query Merger Benchmark ###
+    add_executable(query-merger-benchmark "src/Micro-Benchmarks/BenchmarkQueryMerger.cpp")
+    target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
+    add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=query-merger-benchmark.log --benchmark_out_format=json)
+
     ###########################  E2E Benchmarks ######################
     ### E2e Benchmark Runner ###
     add_executable(e2e-benchmark-runner "src/E2E-Benchmarks/E2ERunner.cpp")
@@ -126,6 +131,6 @@ if (NES_BUILD_BENCHMARKS)
     add_custom_target(run_e2e_benchmark COMMAND ctest -R ^e2e --output-on-failure)
     message("---Done building benchmarks")
 
-else(NES_BUILD_BENCHMARKS)
+else (NES_BUILD_BENCHMARKS)
     message("---Not building benchmarks!")
 endif (NES_BUILD_BENCHMARKS)

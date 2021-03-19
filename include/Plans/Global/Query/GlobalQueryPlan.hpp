@@ -111,8 +111,9 @@ class GlobalQueryPlan {
     GlobalQueryPlan();
 
     uint64_t freeSharedQueryId;
-    std::map<SharedQueryId, SharedQueryMetaDataPtr> sharedQueryIdToMetaDataMap;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
+    std::map<SharedQueryId, SharedQueryMetaDataPtr> sharedQueryIdToMetaDataMap;
+    std::vector<SharedQueryMetaDataPtr> addSharedQueryMetadata;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

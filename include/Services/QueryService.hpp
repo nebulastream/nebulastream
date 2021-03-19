@@ -52,6 +52,8 @@ class QueryService {
      */
     uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
 
+    uint64_t addQueryRequest(std::string queryString, QueryPtr queryPtr, std::string placementStrategyName);
+
     /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryId : query id of the query to be stopped.

@@ -30,6 +30,15 @@ StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, T
     // nop
 }
 
+StreamCatalogEntryPtr StreamCatalogEntry::create(std::string sourceType, std::string physicalStreamName,
+                                                 std::string logicalStreamName, TopologyNodePtr node) {
+    return std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, node);
+}
+
+StreamCatalogEntryPtr StreamCatalogEntry::create(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node) {
+    return std::make_shared<StreamCatalogEntry>(config, node);
+}
+
 std::string StreamCatalogEntry::getSourceType() { return sourceType; }
 
 TopologyNodePtr StreamCatalogEntry::getNode() { return node; }
@@ -44,5 +53,4 @@ std::string StreamCatalogEntry::toString() {
        << " on node=" + std::to_string(node->getId());
     return ss.str();
 }
-
 }// namespace NES
