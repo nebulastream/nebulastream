@@ -22,11 +22,11 @@
 #include <random>
 #include <thread>
 
-#include <future>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <future>
 
 #include <Sources/ZmqSource.hpp>
 

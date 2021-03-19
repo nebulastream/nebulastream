@@ -20,10 +20,10 @@
 #include <NodeEngine/AbstractBufferProvider.hpp>
 #include <NodeEngine/BufferRecycler.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
-#include <condition_variable>
 
 namespace NES {
 
@@ -47,7 +47,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
      * @param numberOfReservedBuffers number of exclusive bufferss
      */
     explicit FixedSizeBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers,
-                             size_t numberOfReservedBuffers);
+                                 size_t numberOfReservedBuffers);
     ~FixedSizeBufferPool();
 
     /**

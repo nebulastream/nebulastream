@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/AbstractBufferProvider.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>

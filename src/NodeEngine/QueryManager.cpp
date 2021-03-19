@@ -16,11 +16,11 @@
 
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
-#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -401,7 +401,6 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
                                                 << (ret ? "successful" : " not successful"));
     return ret;
 }
-
 
 uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
     std::unique_lock workLock(workMutex);

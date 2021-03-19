@@ -46,7 +46,7 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
      * @param numberOfReservedBuffers number of exclusive bufferss
      */
     explicit LocalBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers,
-                                size_t numberOfReservedBuffers);
+                             size_t numberOfReservedBuffers);
     ~LocalBufferPool();
 
     /**
