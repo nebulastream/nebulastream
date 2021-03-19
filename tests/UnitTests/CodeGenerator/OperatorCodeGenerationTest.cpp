@@ -59,6 +59,7 @@
 #include <iostream>
 #include <utility>
 
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
@@ -353,6 +354,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
 
     /* prepare input and output tuple buffer */
     auto schema = Schema::create()->addField("i64", DataTypeFactory::createUInt64());
+    source->open();
     auto buffer = source->receiveData().value();
 
     /* execute Stage */
@@ -401,6 +403,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationFilterPredicate) {
     auto stage = codeGenerator->compile(context);
 
     /* prepare input tuple buffer */
+    source->open();
     auto inputBuffer = source->receiveData().value();
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
@@ -534,6 +537,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     windowHandler->setup(executionContext);
 
     /* prepare input tuple buffer */
+    source->open();
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
@@ -747,6 +751,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto stage = codeGenerator->compile(context);
 
     /* prepare input tuple buffer */
+    source->open();
     auto optVal = source->receiveData();
     NES_ASSERT(optVal.has_value(), "invalid buffer");
     auto inputBuffer = *optVal;
@@ -806,6 +811,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     auto stage = codeGenerator->compile(context);
 
     /* prepare input tuple buffer */
+    source->open();
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
@@ -869,6 +875,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto stage = codeGenerator->compile(context);
 
     /* prepare input tuple buffer */
+    source->open();
     auto inputBuffer = source->receiveData().value();
 
     /* execute Stage */
@@ -962,6 +969,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     stage3->setup(*executionContext.get());
 
     /* prepare input tuple buffer */
+    source->open();
     auto inputBuffer = source->receiveData().value();
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
     cout << "buffer content=" << UtilityFunctions::prettyPrintTupleBuffer(inputBuffer, input_schema);
@@ -1070,7 +1078,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
         stage2->start(*executionContext.get());
         windowHandler->start();
         windowHandler->setup(executionContext);
-
+        source->open();
         /* prepare input tuple buffer */
         auto inputBuffer = source->receiveData().value();
 

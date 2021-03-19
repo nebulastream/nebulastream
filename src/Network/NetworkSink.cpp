@@ -57,7 +57,7 @@ const std::string NetworkSink::toString() const { return "NetworkSink: " + nesPa
 
 void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) {
     NES_DEBUG("NetworkSink: reconfigure() called " << nesPartition.toString() << " parent plan " << parentPlanId);
-    Reconfigurable::reconfigure(task, workerContext);
+    NES::SinkMedium::reconfigure(task, workerContext);
     switch (task.getType()) {
         case NodeEngine::Initialize: {
             auto channel = networkManager->registerSubpartitionProducer(nodeLocation, nesPartition, waitTime, retryTimes);
@@ -67,15 +67,30 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
                                                                       << NodeEngine::NesThread::getId());
             break;
         }
-        case NodeEngine::HardEndOfStream:
-        case NodeEngine::SoftEndOfStream: {
+        case NodeEngine::Destroy: {
             workerContext.releaseChannel(nesPartition.getOperatorId());
             NES_DEBUG("NetworkSink: reconfigure() released channel on " << nesPartition.toString() << " Thread "
                                                                         << NodeEngine::NesThread::getId());
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("unsupported");
+            break;
+        }
+    }
+}
+
+void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) {
+    NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId);
+    NES::SinkMedium::postReconfigurationCallback(task);
+    switch (task.getType()) {
+        case NodeEngine::HardEndOfStream:
+        case NodeEngine::SoftEndOfStream: {
+            auto newReconf = NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Destroy, shared_from_this());
+            queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
+            break;
+        }
+        default: {
+            break;
         }
     }
 }

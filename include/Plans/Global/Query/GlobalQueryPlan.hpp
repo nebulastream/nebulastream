@@ -75,21 +75,6 @@ class GlobalQueryPlan {
     void removeEmptySharedQueryMetaData();
 
     /**
-     * @brief Get all Global Query Nodes with NodeType operators
-     * @tparam NodeType: type of logical operator
-     * @return vector of global query nodes
-     */
-    template<class T>
-    std::vector<GlobalQueryNodePtr> getAllGlobalQueryNodesWithOperatorType() {
-        NES_DEBUG("GlobalQueryPlan: Get all Global query nodes with specific logical operators");
-        std::vector<GlobalQueryNodePtr> vector;
-        for (const auto& childGlobalQueryNode : root->getChildren()) {
-            childGlobalQueryNode->as<GlobalQueryNode>()->getNodesWithTypeHelper<T>(vector);
-        }
-        return vector;
-    }
-
-    /**
      * @brief Get the all the Query Meta Data to be deployed
      * @return vector of global query meta data to be deployed
      */
@@ -125,14 +110,7 @@ class GlobalQueryPlan {
   private:
     GlobalQueryPlan();
 
-    /**
-     * @brief Get next free node id
-     * @return next free id
-     */
-    uint64_t getNextFreeId();
-
-    uint64_t freeGlobalQueryNodeId;
-    GlobalQueryNodePtr root;
+    uint64_t freeSharedQueryId;
     std::map<SharedQueryId, SharedQueryMetaDataPtr> sharedQueryIdToMetaDataMap;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
 };

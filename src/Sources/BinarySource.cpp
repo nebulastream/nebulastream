@@ -14,13 +14,12 @@
     limitations under the License.
 */
 
+#include <NodeEngine/LocalBufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <assert.h>
-#include <sstream>
-
 #include <Sources/BinarySource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
+#include <sstream>
 
 namespace NES {
 

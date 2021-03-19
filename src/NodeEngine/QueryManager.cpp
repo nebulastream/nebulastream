@@ -28,6 +28,8 @@
 #include <memory>
 #include <utility>
 
+//#define QUERY_PROCESSING_WITH_SLOWDOWN
+
 namespace NES::NodeEngine {
 using std::string;
 namespace detail {
@@ -378,7 +380,10 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
         }
     }
 
-    NES_WARNING("Number of tasks in queue when stopped=" << taskQueue.size());
+    {
+        std::unique_lock taskLock(workMutex);
+        NES_WARNING("Number of tasks in queue when stopped=" << taskQueue.size());
+    }
     // TODO evaluate if we need to have this a wait instead of a get
     // TODO for instance we could wait N seconds and if the stopped is not succesful by then
     // TODO we need to trigger a hard local kill of a QEP
@@ -439,7 +444,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         }
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
         NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
-
+#ifdef QUERY_PROCESSING_WITH_SLOWDOWN//the following code is the old break that we had, we leave it in to maybe activate it again later
         auto tryCnt = 0;
         //TODO: this very simple rule ensures that sources can only get buffer if more than 10% of the overall buffer exists
         uint64_t upperBound = threadPool->getNumberOfThreads() * 10000;
@@ -447,12 +452,14 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
                || taskQueue.size() > upperBound) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             waitCounter++;
+            NES_DEBUG("Waiting");
             //TODO: we have to do this because it could be that a source is stuck here and then the shutdown crashes, so basically we test 100x for 100ms
             // and then release the break
             if (tryCnt++ == 100) {
                 break;
             }
         }
+#endif
 
         //TODO: this is a problem now as it can become the bottleneck
         std::unique_lock workQueueLock(workMutex);
@@ -468,6 +475,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
+    NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
@@ -483,8 +491,8 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
             taskQueue.emplace_back(pipeline, buffer);
         }
         cv.notify_all();
-        workMutex.unlock();
     }
+
     if (blocking) {
         task->postWait();
         task->postReconfiguration();
@@ -496,6 +504,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
     NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
     NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
+    NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
     auto reconfigType = graceful ? SoftEndOfStream : HardEndOfStream;
     for (const auto& qep : operatorIdToQueryMap[sourceId]) {
         TupleBuffer buffer;
@@ -559,7 +568,7 @@ QueryManager::ExecutionResult QueryManager::processNextTask(std::atomic<bool>& r
     }
     NES_DEBUG("QueryManager::getWork queue is not empty");
     // there is a potential task in the queue and the thread pool is running
-    if (running) {
+    if (running && !taskQueue.empty()) {
         auto task = taskQueue.front();
         NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         taskQueue.pop_front();
@@ -579,6 +588,7 @@ QueryManager::ExecutionResult QueryManager::processNextTask(std::atomic<bool>& r
 
 QueryManager::ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     std::unique_lock lock(workMutex);
+    //    this->threadBarrier->wait();
     // must run this to execute all pending reconfiguration task (Destroy)
     bool hitReconfiguration = false;
     while (!taskQueue.empty()) {
@@ -618,7 +628,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
 }
 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
-    NES_INFO("QueryManager::completedWork: Work for task=" << task.toString());
+    NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString());
     std::unique_lock lock(statisticsMutex);
     if (queryToStatisticsMap.contains(task.getPipeline()->getQepParentId())) {
         auto statistics = queryToStatisticsMap.find(task.getPipeline()->getQepParentId());

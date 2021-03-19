@@ -75,7 +75,7 @@ typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
 class SharedQueryMetaData {
 
   public:
-    static SharedQueryMetaDataPtr create(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    static SharedQueryMetaDataPtr create(QueryPlanPtr queryPlan);
 
     /**
      * @brief Add a global query metadata into this
@@ -85,23 +85,11 @@ class SharedQueryMetaData {
     bool addSharedQueryMetaData(SharedQueryMetaDataPtr queryMetaData);
 
     /**
-     * @brief Add a new Set of Global Query Node with sink operators
-     * @param globalQueryNodes :  the Global Query Node with sink operators
-     * @return true if successful else false
-     */
-    bool addSinkGlobalQueryNodes(QueryId queryId, const std::set<GlobalQueryNodePtr>& globalQueryNodes);
-
-    /**
      * @brief Remove a Query Id and associated Global Query Node with sink operators and clear the sink global query node lists
      * @param queryId : the original query Id
      * @return true if successful
      */
     bool removeQueryId(QueryId queryId);
-
-    /**
-     * @brief This method will recursively remove the child and its children GQN that have no or only 1 parent
-     */
-    void removeExclusiveChildren(GlobalQueryNodePtr globalQueryNode);
 
     /**
      * @brief Clear all MetaData information
@@ -144,16 +132,16 @@ class SharedQueryMetaData {
     bool isNew() const;
 
     /**
-     * @brief Get the set of Global Query Nodes with sink operators grouped together
-     * @return the set of Global Query Nodes with Sink Operators
+     * @brief Get the vector of sink operators sharing common upstream operators
+     * @return the vector of Sink Operators
      */
-    std::set<GlobalQueryNodePtr> getSinkGlobalQueryNodes();
+    std::vector<OperatorNodePtr> getSinkOperators();
 
     /**
-     * @brief Get the collection of registered query ids
-     * @return map of registered query ids and their sink global query nodes
+     * @brief Get the collection of registered query ids and their sink operators
+     * @return map of registered query ids and their sink operators
      */
-    std::map<QueryId, std::set<GlobalQueryNodePtr>> getQueryIdToSinkGQNMap();
+    std::map<QueryId, std::vector<OperatorNodePtr>> getQueryIdToSinkOperatorMap();
 
     /**
      * @brief Get the shared query id
@@ -174,11 +162,13 @@ class SharedQueryMetaData {
     void setAsOld();
 
   private:
-    explicit SharedQueryMetaData(QueryId queryId, std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes);
+    explicit SharedQueryMetaData(QueryPlanPtr queryPlan);
 
     SharedQueryId sharedQueryId;
-    std::map<QueryId, std::set<GlobalQueryNodePtr>> queryIdToSinkGQNMap;
-    std::set<GlobalQueryNodePtr> sinkGlobalQueryNodes;
+    QueryPlanPtr queryPlan;
+    std::map<QueryId, std::vector<OperatorNodePtr>> queryIdToSinkOperatorMap;
+    std::vector<QueryId> queryIds;
+    std::vector<OperatorNodePtr> sinkOperators;
     bool deployed;
     bool newMetaData;
 };

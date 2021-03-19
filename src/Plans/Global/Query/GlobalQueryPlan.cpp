@@ -24,83 +24,34 @@
 
 namespace NES {
 
-GlobalQueryPlan::GlobalQueryPlan() : freeGlobalQueryNodeId(0) { root = GlobalQueryNode::createEmpty(getNextFreeId()); }
+GlobalQueryPlan::GlobalQueryPlan() : freeSharedQueryId(0) {}
 
 GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 
 bool GlobalQueryPlan::addQueryPlan(QueryPlanPtr queryPlan) {
-    QueryId queryId = queryPlan->getQueryId();
-    NES_INFO("GlobalQueryPlan: adding the query plan for query: " << queryId << " to the global query plan.");
-    if (queryId == INVALID_QUERY_ID) {
-        NES_ERROR("GlobalQueryPlan: Found query plan without query id");
-        throw Exception("GlobalQueryPlan: Found query plan without query id");
+    QueryId inputQueryPlanId = queryPlan->getQueryId();
+    if (inputQueryPlanId == INVALID_QUERY_ID) {
+        throw Exception("GlobalQueryPlan: Can not add query plan with invalid id.");
     }
 
-    if (queryIdToSharedQueryIdMap.find(queryId) != queryIdToSharedQueryIdMap.end()) {
-        NES_ERROR("GlobalQueryPlan: Found existing entry for the query Id " << queryId);
-        throw Exception("GlobalQueryPlan: Entry for the queryId " + std::to_string(queryId)
-                        + " already present. Can't add same query multiple time.");
+    if (queryIdToSharedQueryIdMap.find(inputQueryPlanId) != queryIdToSharedQueryIdMap.end()) {
+        throw Exception("GlobalQueryPlan: Query plan with id " + std::to_string(inputQueryPlanId) + " already present.");
     }
 
-    const auto rootOperators = queryPlan->getRootOperators();
-    NES_TRACE("GlobalQueryPlan: adding the root nodes of the query plan for query: "
-              << queryId << " as children to the root node of the global query plan.");
-
-    std::map<uint64_t, GlobalQueryNodePtr> operatorToGQNMap;
-    std::set<GlobalQueryNodePtr> queryRootGQNs;
-    for (const auto& rootOperator : rootOperators) {
-        auto queryRootGQNode = GlobalQueryNode::create(getNextFreeId(), rootOperator->copy());
-        queryRootGQNs.insert(queryRootGQNode);
-        operatorToGQNMap[rootOperator->getId()] = queryRootGQNode;
-        root->addChild(queryRootGQNode);
-
-        std::vector<NodePtr> children = rootOperator->getChildren();
-        std::deque<NodePtr> nodesToProcess{children.begin(), children.end()};
-
-        while (!nodesToProcess.empty()) {
-
-            auto operatorToProcess = nodesToProcess.front()->as<OperatorNode>();
-            nodesToProcess.pop_front();
-            uint64_t operatorId = operatorToProcess->getId();
-            if (operatorToGQNMap[operatorId]) {
-                continue;
-            } else {
-                auto gqNode = GlobalQueryNode::create(getNextFreeId(), operatorToProcess->copy());
-                operatorToGQNMap[operatorToProcess->getId()] = gqNode;
-            }
-
-            //Add the link to parent GQN nodes
-            for (auto parent : operatorToProcess->getParents()) {
-
-                auto parentOperator = parent->as<OperatorNode>();
-                auto parentOperatorId = parentOperator->getId();
-                if (operatorToGQNMap[parentOperatorId]) {
-                    operatorToGQNMap[operatorId]->addParent(operatorToGQNMap[parentOperatorId]);
-                } else {
-                    NES_ERROR("GlobalQueryPlan: unable to find the parent global query node. This should not have occurred!");
-                    return false;
-                }
-            }
-
-            for (auto child : operatorToProcess->getChildren()) {
-                nodesToProcess.emplace_back(child);
-            }
-        }
-    }
-
-    auto sharedQueryMetadata = SharedQueryMetaData::create({queryId}, queryRootGQNs);
+    auto sharedQueryMetadata = SharedQueryMetaData::create(queryPlan);
     return updateSharedQueryMetadata(sharedQueryMetadata);
 }
 
 void GlobalQueryPlan::removeQuery(QueryId queryId) {
-    NES_DEBUG("Removing query information from the meta data");
+    NES_DEBUG("GlobalQueryPlan: Removing query information from the meta data");
     SharedQueryId sharedQueryId = queryIdToSharedQueryIdMap[queryId];
     SharedQueryMetaDataPtr sharedQueryMetaData = sharedQueryIdToMetaDataMap[sharedQueryId];
-    sharedQueryMetaData->removeQueryId(queryId);
+    if (!sharedQueryMetaData->removeQueryId(queryId)) {
+        throw Exception("GlobalQueryPlan: Unable to remove query with id " + std::to_string(queryId)
+                        + " from shared query plan with id " + std::to_string(sharedQueryId));
+    }
     queryIdToSharedQueryIdMap.erase(queryId);
 }
-
-uint64_t GlobalQueryPlan::getNextFreeId() { return freeGlobalQueryNodeId++; }
 
 std::vector<SharedQueryMetaDataPtr> GlobalQueryPlan::getSharedQueryMetaDataToDeploy() {
     NES_DEBUG("GlobalQueryPlan: Get the Global MetaData to be deployed.");
@@ -132,7 +83,7 @@ bool GlobalQueryPlan::updateSharedQueryMetadata(SharedQueryMetaDataPtr sharedQue
     sharedQueryIdToMetaDataMap[sharedQueryId] = sharedQueryMetaData;
 
     NES_TRACE("GlobalQueryPlan: Updating the Query Id to Shared Query Id map");
-    for (auto [queryId, sinkGQNs] : sharedQueryMetaData->getQueryIdToSinkGQNMap()) {
+    for (auto queryId : sharedQueryMetaData->getQueryIds()) {
         queryIdToSharedQueryIdMap[queryId] = sharedQueryId;
     }
     return true;

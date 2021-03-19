@@ -15,6 +15,7 @@
 add_subdirectory(Signature)
 
 add_source_nes(
-        SyntaxBasedEqualQueryMergerRule.cpp
-        SignatureBasedEqualQueryMergerRule.cpp
+        SyntaxBasedCompleteQueryMergerRule.cpp
+        SignatureBasedCompleteQueryMergerRule.cpp
+        SignatureBasedPartialQueryMergerRule.cpp
 )

@@ -40,7 +40,7 @@ bool QueryPlanIterator::iterator::operator!=(const iterator& other) const {
     return true;
 };
 
-NodePtr QueryPlanIterator::iterator::operator*() { return workStack.top(); }
+NodePtr QueryPlanIterator::iterator::operator*() { return workStack.empty() ? nullptr : workStack.top(); }
 
 QueryPlanIterator::iterator& QueryPlanIterator::iterator::operator++() {
     if (workStack.empty()) {

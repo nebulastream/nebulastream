@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIGNATUREBASEDEQUALQUERYMERGERRULE_HPP
-#define NES_SIGNATUREBASEDEQUALQUERYMERGERRULE_HPP
+#ifndef NES_SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
+#define NES_SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
 
 #include <memory>
 
@@ -26,8 +26,8 @@ typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 namespace NES::Optimizer {
 
-class SignatureBasedEqualQueryMergerRule;
-typedef std::shared_ptr<SignatureBasedEqualQueryMergerRule> SignatureBasedEqualQueryMergerRulePtr;
+class SignatureBasedCompleteQueryMergerRule;
+typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
 
 /**
  * @brief SignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
@@ -68,21 +68,21 @@ typedef std::shared_ptr<SignatureBasedEqualQueryMergerRule> SignatureBasedEqualQ
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class SignatureBasedEqualQueryMergerRule {
+class SignatureBasedCompleteQueryMergerRule {
 
   public:
-    static SignatureBasedEqualQueryMergerRulePtr create();
-    ~SignatureBasedEqualQueryMergerRule();
+    static SignatureBasedCompleteQueryMergerRulePtr create();
+    ~SignatureBasedCompleteQueryMergerRule();
 
     /**
      * @brief apply the rule on Global Query Plan
-     * @param globalQueryPlan : the global query plan
+     * @param globalQueryPlan: the global query plan
      */
     bool apply(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
-    explicit SignatureBasedEqualQueryMergerRule();
+    explicit SignatureBasedCompleteQueryMergerRule();
 };
 }// namespace NES::Optimizer
 
-#endif//NES_SIGNATUREBASEDEQUALQUERYMERGERRULE_HPP
+#endif//NES_SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP

@@ -183,10 +183,10 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             NES_DEBUG("Executing HardEndOfStream on qep " << queryId << " " << querySubPlanId);
             if (numOfProducers.fetch_sub(1) == 1) {
                 NES_DEBUG("Executing HardEndOfStream and going to stop for qep " << queryId << " " << querySubPlanId);
-                stop();
                 for (auto& sink : sinks) {
                     sink->postReconfigurationCallback(task);
                 }
+                stop();
             } else {
                 return;// we must not invoke end of stream on qep's sinks if the qep was not stopped
             }

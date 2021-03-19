@@ -45,7 +45,7 @@ class ComplexSequenceTest : public testing::Test {
 /*
  * @brief Test a query with a single window operator and a single join operator running on a single node
  */
-TEST_F(ComplexSequenceTest, complexTestSingleNodeSingleWindowSingleJoin) {
+TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -124,7 +124,7 @@ TEST_F(ComplexSequenceTest, complexTestSingleNodeSingleWindowSingleJoin) {
 /*
  * @brief Test a query with a single window operator and a single join operator running on a single node
  */
-TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
+TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeSingleWindowSingleJoin) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -231,7 +231,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
  *  |  |  SINK(21)
  *  |  |    SOURCE(2,window2)
  */
-TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
+TEST_F(ComplexSequenceTest, DISABLED_ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -349,7 +349,7 @@ TEST_F(ComplexSequenceTest, ComplexTestSingleNodeMultipleWindowsMultipleJoins) {
 /*
  * @brief Test a query with a single window operator and a single join operator running multiple nodes
  */
-TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoinsWithTopDown) {
+TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMultipleJoinsWithTopDown) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -508,7 +508,7 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
 /*
  * @brief Test a query with a single window operator and a single join operator running multiple nodes
  */
-TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoinsWithBottomUp) {
+TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMultipleJoinsWithBottomUp) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;

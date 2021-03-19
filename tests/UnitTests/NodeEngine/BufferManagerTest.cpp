@@ -482,7 +482,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
         prod_threads.emplace_back([&workQueue, &mutex, &cvar, localPool]() {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-                auto buf = localPool->getBuffer();
+                auto buf = localPool->getBufferBlocking();
                 uint32_t* writer = buf.getBufferAs<uint32_t>();
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     writer[k] = k;
@@ -583,7 +583,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
                 auto buf = workQueue.front();
                 workQueue.pop_front();
                 lock.unlock();
-                auto copied_buf = localPool->getBuffer();
+                auto copied_buf = localPool->getBufferBlocking();
                 memcpy(copied_buf.getBuffer(), buf.getBuffer(), buf.getBufferSize());
                 uint32_t* reader = copied_buf.getBufferAs<uint32_t>();
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
