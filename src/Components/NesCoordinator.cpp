@@ -138,16 +138,16 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     }));
 
     NES_DEBUG("NesCoordinator: startCoordinatorRPCServer: Building GRPC Server");
-    std::promise<bool> promRPC;
+    std::shared_ptr<std::promise<bool>> promRPC = std::make_shared<std::promise<bool>>();
 
-    rpcThread = std::make_shared<std::thread>(([&]() {
+    rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
         setThreadName("nesRPC");
 
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
         NES_DEBUG("NesCoordinator: buildAndStartGRPCServer: end listening");
     }));
-    promRPC.get_future().get();
+    promRPC->get_future().get();
 
     NES_DEBUG("NesCoordinator:buildAndStartGRPCServer: ready");
 
@@ -251,7 +251,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
     }
 }
 
-void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
+void NesCoordinator::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {
     grpc::ServerBuilder builder;
     NES_ASSERT(coordinatorEngine, "null coordinator engine");
     CoordinatorRPCServer service(coordinatorEngine);
@@ -259,8 +259,8 @@ void NesCoordinator::buildAndStartGRPCServer(std::promise<bool>& prom) {
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
-    rpcServer = builder.BuildAndStart();
-    prom.set_value(true);
+    rpcServer = std::move(builder.BuildAndStart());
+    prom->set_value(true);
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
     rpcServer->Wait();//blocking call
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServer end listening");

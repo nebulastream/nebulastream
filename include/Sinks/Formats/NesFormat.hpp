@@ -21,6 +21,7 @@
 namespace NES {
 
 class SerializableSchema;
+typedef std::shared_ptr<SerializableSchema> SerializableSchemaPtr;
 
 class NesFormat : public SinkFormat {
   public:
@@ -52,7 +53,8 @@ class NesFormat : public SinkFormat {
     SinkFormatTypes getSinkFormat();
 
   private:
-    SerializableSchema* serializedSchema;
+    SerializableSchemaPtr serializedSchema;
 };
+
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_
