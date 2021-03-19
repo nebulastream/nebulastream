@@ -697,7 +697,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
         "Point,13.759639,49.663155,a57b07e5-db32-479e-a273-690460f08b04\n3,1262343630020,Wind Turbine Data Generated for Nebula "
         "Stream,d3c88537-287c-4193-b971-d5ff913e07fe,Features,4575,0.163805,166353.078125,1262300400000,1262307581080,"
         "electricityGeneration,Point,7.799886,53.720783,049dc289-61cc-4b61-a2ab-27f59a7bfb4a\n4,1262343640030,Wind Turbine Data "
-        "Generated for Nebula "
+        "Generated for Nebla "
         "Stream,6649de13-b03d-43eb-83f3-6147b45c4808,Features,1358,0.584981,490703.968750,1262300400000,0,electricityGeneration,"
         "Point,7.109831,53.052448,4530ad62-d018-4017-a7ce-1243dbe01996\n5,1262343650040,Wind Turbine Data Generated for Nebula "
         "Stream,65460978-46d0-4b72-9a82-41d0bc280cf8,Features,1288,0.610928,141061.406250,1262300400000,1262311476342,"
