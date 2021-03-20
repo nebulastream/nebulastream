@@ -41,6 +41,7 @@ class SharedLibrary {
     }
 
     SharedLibrary(void* shared_lib);
+
   private:
     void* shared_lib;
 };
