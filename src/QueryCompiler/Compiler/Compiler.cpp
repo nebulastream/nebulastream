@@ -112,8 +112,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
 
 void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     std::stringstream compilerCall;
-    compilerCall << "/usr/bin/clang ";//TODO: remove
-//    compilerCall << CLANG_EXECUTABLE << " ";
+    compilerCall << CLANG_EXECUTABLE << " ";
 #if 0
 // TODO the coded below does not work as it cannot find ld
     pid_t compiler_pid;
@@ -204,7 +203,6 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
 }
 
 std::string Compiler::formatAndPrintSource(const std::string& filename) {
-    return "";//TODO: remove
     int ret = system("which clang-format > /dev/null");
 
     NES_ASSERT(ret == 0,

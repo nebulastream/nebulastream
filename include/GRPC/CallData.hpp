@@ -69,6 +69,5 @@ class CallData {
 };
 typedef std::shared_ptr<CallData> CallDataPtr;
 
-
 }// namespace NES
 #endif//NES_SRC_GRPC_CALLDATA_HPP_
