@@ -35,19 +35,26 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Phases/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/TranslateToPhysicalOperators.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
+#include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
+#include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
+#include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <iostream>
 
@@ -83,7 +90,19 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
         filterOp5 = LogicalOperatorFactory::createFilterOperator(pred5);
         filterOp6 = LogicalOperatorFactory::createFilterOperator(pred6);
         filterOp7 = LogicalOperatorFactory::createFilterOperator(pred7);
-        joinOp1 = LogicalOperatorFactory::createJoinOperator(nullptr)->as<JoinLogicalOperatorNode>();
+        projectPp = LogicalOperatorFactory::createProjectionOperator({});
+        {
+            Windowing::WindowTriggerPolicyPtr triggerPolicy = Windowing::OnTimeTriggerPolicyDescription::create(1000);
+            auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();
+            auto distrType = Windowing::DistributionCharacteristic::createCompleteWindowType();
+            Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
+                FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
+                Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
+                distrType, triggerPolicy, triggerAction, 1, 1);
+
+            joinOp1 = LogicalOperatorFactory::createJoinOperator(joinDef)->as<JoinLogicalOperatorNode>();
+        }
         sinkOp1 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
@@ -93,11 +112,13 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
                                                                 Windowing::DistributionCharacteristic::createCompleteWindowType(),
                                                                 1, triggerPolicy, triggerAction, 0);
 
-        watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+        watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+            Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
         centralWindowOperator = LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDefinition);
         sliceCreationOperator = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition);
         windowComputation = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition);
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
+        mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id")=10);
     }
 
     void TearDown() { NES_DEBUG("Tear down TranslateToPhysicalOperatorPhase Test."); }
@@ -108,6 +129,8 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
     LogicalOperatorNodePtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
     LogicalOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
     LogicalOperatorNodePtr sinkOp1, sinkOp2;
+    LogicalOperatorNodePtr mapOp;
+    LogicalOperatorNodePtr projectPp;
     JoinLogicalOperatorNodePtr joinOp1;
 };
 
@@ -493,7 +516,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateWindowQuery) {
 TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceCreationQuery) {
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(watermarkAssigner1);
-    queryPlan->appendOperatorAsNewRoot(centralWindowOperator);
+    queryPlan->appendOperatorAsNewRoot(sliceCreationOperator);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
 
     NES_DEBUG(queryPlan->toString());
@@ -507,11 +530,107 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceCreationQuery) {
 
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
     ++iterator;
-    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalWindowSinkOperator>());
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSliceSinkOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSlicePreAggregationOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalWatermarkAssignmentOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Slice Merging -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Slice Merging Operator --- Physical Slice Sink --- Physical Source 1
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceMergingQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(sliceMerging);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSliceSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSliceMergingOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Map -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Map Operator --- Physical Source 1
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateMapQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(mapOp);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalMapOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Project -- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Project Operator --- Physical Source 1
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateProjectQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(projectPp);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalProjectOperator>());
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }

@@ -13,26 +13,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <Operators/AbstractOperators/AbstractFilterOperator.hpp>
+#include <Operators/AbstractOperators/AbstractProjectionOperator.hpp>
 
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
-class PhysicalFilterOperator: public PhysicalUnaryOperator, public AbstractFilterOperator{
+class PhysicalProjectOperator: public AbstractProjectionOperator, public PhysicalUnaryOperator{
   public:
-    PhysicalFilterOperator(OperatorId id, ExpressionNodePtr predicate);
-    static PhysicalOperatorPtr create(OperatorId id, ExpressionNodePtr predicate);
-    static PhysicalOperatorPtr create(ExpressionNodePtr predicate);
+    PhysicalProjectOperator(OperatorId id, std::vector<ExpressionNodePtr> expressions);
+    static PhysicalOperatorPtr create(OperatorId id, std::vector<ExpressionNodePtr> expressions);
+    static PhysicalOperatorPtr create(std::vector<ExpressionNodePtr> expressions);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
 };
 }
 }
 }
 
-#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_
