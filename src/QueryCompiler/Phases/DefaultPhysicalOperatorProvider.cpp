@@ -1,7 +1,24 @@
+/*
+    Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
@@ -17,7 +34,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
@@ -88,6 +107,10 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(QueryPlanPtr queryPlan,
         lowerWindowOperator(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperatorNode>()) {
         lowerWatermarkAssignmentOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<MapLogicalOperatorNode>()) {
+        lowerMapOperator(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<ProjectionLogicalOperatorNode>()) {
+        lowerProjectOperator(queryPlan, operatorNode);
     } else {
         NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");
     }
@@ -108,6 +131,18 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(QueryPlanPtr, LogicalOp
     auto unaryOperator = operatorNode->as<UnionLogicalOperatorNode>();
     auto physicalMultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create();
     operatorNode->replace(physicalMultiplexOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerProjectOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+    auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
+    auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(projectOperator->getExpressions());
+    operatorNode->replace(physicalProjectOperator);
+}
+
+void DefaultPhysicalOperatorProvider::lowerMapOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+    auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getMapExpression());
+    operatorNode->replace(physicalMapOperator);
 }
 
 OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator,

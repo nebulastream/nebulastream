@@ -11,6 +11,10 @@ namespace PhysicalOperators{
 class PhysicalMapOperator: public PhysicalUnaryOperator, public AbstractMapOperator{
   public:
     PhysicalMapOperator(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression);
+    static PhysicalOperatorPtr create(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression);
+    static PhysicalOperatorPtr create(FieldAssignmentExpressionNodePtr mapExpression);
+    const std::string toString() const override;
+    OperatorNodePtr copy() override;
 
 };
 }

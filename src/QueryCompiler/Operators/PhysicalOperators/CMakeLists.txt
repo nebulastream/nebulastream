@@ -20,6 +20,7 @@ add_source_nes(
         PhysicalSinkOperator.cpp
         PhysicalEmitOperator.cpp
         PhysicalFilterOperator.cpp
+        PhysicalProjectOperator.cpp
         PhysicalMapOperator.cpp
         PhysicalScanOperator.cpp
         PhysicalMultiplexOperator.cpp
