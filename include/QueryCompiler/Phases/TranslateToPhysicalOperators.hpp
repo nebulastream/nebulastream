@@ -25,7 +25,7 @@ class TranslateToPhysicalOperators{
   public:
     TranslateToPhysicalOperators(PhysicalOperatorProviderPtr provider);
     static TranslateToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
-    PhysicalQueryPlanPtr apply(QueryPlanPtr queryPlan);
+    QueryPlanPtr apply(QueryPlanPtr queryPlan);
 
   private:
     PhysicalOperatorProviderPtr provider;
