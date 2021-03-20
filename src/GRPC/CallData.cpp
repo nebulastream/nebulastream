@@ -21,7 +21,6 @@ namespace NES {
 CallData::CallData(WorkerRPCServer::Service* service, grpc_impl::ServerCompletionQueue* cq)
     : service(service), completionQueue(cq), responder(&ctx), status(CREATE) {
     // Invoke the serving logic right away.
-//    proceed();
 }
 
 void CallData::proceed() {
@@ -40,8 +39,6 @@ void CallData::proceed() {
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
-//        CallDataPtr call = std::make_shared<CallData>(service, completionQueue);
-//        new CallData(service, completionQueue);
         service->RegisterQuery(&ctx, &request, &reply);
 
         // And we are done! Let the gRPC runtime know we've finished, using the
