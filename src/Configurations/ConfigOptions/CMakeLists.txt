@@ -16,5 +16,6 @@ add_source_nes(
         CoordinatorConfig.cpp
         WorkerConfig.cpp
         SourceConfig.cpp
+        E2EBenchmarkConfig.cpp
 )
 

@@ -150,12 +150,12 @@ if (NES_BUILD_BENCHMARKS)
     target_sources(e2e-join-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME e2e-join-query-benchmark COMMAND e2e-join-query-benchmark)
 
-    ### Output Channel Benchmark ###
-    add_executable(output-channel-benchmark "src/BenchmarkSuite/BenchmarkOutputChannel.cpp")
-    target_link_libraries(output-channel-benchmark nes)
-    target_sources(output-channel-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME output-channel-benchmark COMMAND output-channel-benchmark --benchmark_out=output-channel-benchmark.log --benchmark_out_format=json)
-
+    ### E2e Benchmark Runner ###
+    add_executable(e2e-benchmark-runner "src/E2EBenchmarks/E2ERunner.cpp")
+    target_link_libraries(e2e-benchmark-runner nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-benchmark-runner PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
+    target_sources(e2e-benchmark-runner PUBLIC "src/util/BenchmarkUtils.cpp")
+    add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner)
 
     add_custom_target(run_benchmark COMMAND ${CMAKE_CTEST_COMMAND})
     add_custom_target(run_e2e_benchmark COMMAND ctest -R ^e2e --output-on-failure)
