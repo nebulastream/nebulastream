@@ -14,7 +14,6 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
-
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
