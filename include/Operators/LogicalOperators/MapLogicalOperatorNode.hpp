@@ -43,9 +43,6 @@ class MapLogicalOperatorNode : public AbstractMapOperator, public LogicalUnaryOp
     const std::string toString() const override;
     OperatorNodePtr copy() override;
     std::string getStringBasedSignature() override;
-
-  private:
-    FieldAssignmentExpressionNodePtr mapExpression;
 };
 
 }// namespace NES
