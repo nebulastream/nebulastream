@@ -43,6 +43,8 @@ using namespace std;
 
 namespace NES {
 
+using namespace NES::API;
+
 class QueryPlanIteratorTest : public testing::Test {
   public:
     static void SetUpTestCase() {

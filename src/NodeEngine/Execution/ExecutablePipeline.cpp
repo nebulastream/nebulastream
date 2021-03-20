@@ -30,9 +30,10 @@ namespace NES::NodeEngine::Execution {
 ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId qepId,
                                        ExecutablePipelineStagePtr executablePipelineStage,
                                        PipelineExecutionContextPtr pipelineExecutionContext, uint32_t numOfProducingPipelines,
-                                       SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                       ExecutablePipelinePtr nextPipeline, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                        bool reconfiguration)
-    : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)), pipelineContext(std::move(pipelineExecutionContext)), inputSchema(inputSchema),
+    : pipelineStageId(pipelineStageId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
+      nextPipeline(std::move(nextPipeline)), pipelineContext(std::move(pipelineExecutionContext)), inputSchema(inputSchema),
       outputSchema(outputSchema), reconfiguration(reconfiguration), isRunning(reconfiguration),
       activeProducers(numOfProducingPipelines) {
     // nop
@@ -80,6 +81,8 @@ bool ExecutablePipeline::stop() {
     return false;
 }
 
+ExecutablePipelinePtr ExecutablePipeline::getNextPipeline() { return nextPipeline; }
+
 uint32_t ExecutablePipeline::getPipeStageId() { return pipelineStageId; }
 
 QuerySubPlanId ExecutablePipeline::getQepParentId() const { return qepId; }
@@ -90,9 +93,8 @@ PipelineStageArity ExecutablePipeline::getArity() { return executablePipelineSta
 
 ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const QuerySubPlanId querySubPlanId,
                                                  ExecutablePipelineStagePtr executablePipelineStage,
-                                                 PipelineExecutionContextPtr pipelineContext,
-                                                 uint32_t numOfProducingPipelines,
-                                                 SchemaPtr inputSchema,
+                                                 PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines,
+                                                 ExecutablePipelinePtr nextPipeline, SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema, bool reconfiguration) {
     NES_ASSERT2_FMT(executablePipelineStage != nullptr,
                     "Executable pipelinestage is null for " << pipelineStageId
@@ -112,7 +114,7 @@ ExecutablePipelinePtr ExecutablePipeline::create(uint32_t pipelineStageId, const
                     "invalid number of producers for " << pipelineStageId
                                                        << "within the following query sub plan: " << querySubPlanId);
     return std::make_shared<ExecutablePipeline>(pipelineStageId, querySubPlanId, executablePipelineStage, pipelineContext,
-                                                numOfProducingPipelines, inputSchema, outputSchema,
+                                                numOfProducingPipelines, nextPipeline, inputSchema, outputSchema,
                                                 reconfiguration);
 }
 
@@ -134,16 +136,14 @@ void ExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerContext
     for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
         operatorHandler->reconfigure(task, context);
     }
-
-    for (auto successorPipelines : successors) {
-        successorPipelines->reconfigure(task, context);
+    if (nextPipeline != nullptr) {
+        nextPipeline->reconfigure(task, context);
     }
 }
 
 void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& task) {
     NES_DEBUG("Going to execute postReconfigurationCallback on pipeline belonging to subplanId: " << qepId << " stage id: "
                                                                                                   << pipelineStageId);
-    auto queryManager = pipelineContext->getQueryManager();
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case SoftEndOfStream: {
@@ -157,26 +157,29 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                     operatorHandler->postReconfigurationCallback(task);
                 }
                 stop();
-
-                if (!hasSuccessors()) {
-                    NES_ASSERT2_FMT(!targetQep.expired(), "Invalid qep for reconfig of " << qepId << "/" << pipelineStageId);
+                //it the current pipeline is the last pipeline in the qep and thus we reconfigure the qep
+                if (nextPipeline == nullptr) {
+                    auto queryManager = pipelineContext->getQueryManager();
+                    NES_ASSERT2_FMT(!targetQep.expired(),
+                                    "Invalid qep for reconfig of subplanId: " << qepId << " stage id: " << pipelineStageId);
                     auto newReconf = ReconfigurationMessage(qepId, SoftEndOfStream, targetQep.lock(),
                                                             std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
                     queryManager->addReconfigurationMessage(qepId, newReconf, false);
-                } else {
-                    for (auto successorPipelines : successors) {
-                        auto newReconf = ReconfigurationMessage(qepId, SoftEndOfStream, successorPipelines,
-                                                                std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
-                        queryManager->addReconfigurationMessage(qepId, newReconf, false);
-                    }
+                    NES_DEBUG("Going to triggering reconfig whole plan belonging to subplanId: "
+                              << qepId << " stage id: " << pipelineStageId << " got SoftEndOfStream on last pipeline");
+                } else {//in this branch, we reoncfigure the next pipeline itself
+                    auto queryManager = pipelineContext->getQueryManager();
+                    auto newReconf = ReconfigurationMessage(qepId, SoftEndOfStream, nextPipeline,
+                                                            std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
+                    queryManager->addReconfigurationMessage(qepId, newReconf, false);
+                    NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: "
+                              << qepId << " stage id: " << nextPipeline->pipelineStageId
+                              << " got SoftEndOfStream  with nextPipeline");
                 }
-                NES_DEBUG("Going to reconfigure pipeline belonging to " << qepId << "/" << pipelineStageId
-                                                                        << " got SoftEndOfStream on last pipeline");
                 pipelineContext.reset();
             } else {
                 NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: "
-                          << qepId << " stage id: " << pipelineStageId
-                                                                                << " but refCount was " << (prevProducerCounter)
+                          << qepId << " stage id: " << pipelineStageId << " but refCount was " << (prevProducerCounter)
                           << " and now is " << (prevProducerCounter - 1));
             }
             break;
@@ -184,8 +187,8 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
         case HardEndOfStream: {
             NES_DEBUG("Going to reconfigure pipeline belonging to subplanId: " << qepId << " stage id: " << pipelineStageId
                                                                                << " got HardEndOfStream");
-            for (auto successorPipelines : successors) {
-                successorPipelines->postReconfigurationCallback(task);
+            if (nextPipeline != nullptr) {
+                nextPipeline->postReconfigurationCallback(task);
             }
             pipelineContext.reset();
             break;
@@ -198,19 +201,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
 
 void ExecutablePipeline::incrementProducerCount() {
     auto oldValue = activeProducers.fetch_add(1);
-        NES_DEBUG("ExecutablePipeline " << this << " has refCnt increased to " << (oldValue + 1));
+    NES_DEBUG("ExecutablePipeline " << this << " has refCnt increased to " << (oldValue + 1));
 }
-
-void ExecutablePipeline::addSuccessor(ExecutablePipelinePtr executablePipeline) {
-    executablePipeline->predecessors.emplace_back(this->executablePipelineThis::shared_from_this());
-    this->successors.emplace_back(executablePipeline);
-}
-
-void ExecutablePipeline::addPredecessor(ExecutablePipelinePtr executablePipeline) {
-    executablePipeline->successors.emplace_back(executablePipelineThis::shared_from_this());
-    this->predecessors.emplace_back(executablePipeline);
-}
-
-bool ExecutablePipeline::hasSuccessors() { return !successors.empty(); }
 
 }// namespace NES::NodeEngine::Execution

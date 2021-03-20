@@ -489,8 +489,8 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
-    auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
-                                                          1,  nullptr, nullptr, true);
+    auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, 1,
+                                                          nullptr, nullptr, nullptr, true);
     {
         std::unique_lock lock(workMutex);
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
@@ -542,7 +542,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
                                                                                                  inherited0::shared_from_this());
         auto pipeline = Execution::ExecutablePipeline::create(
             /** default pipeline Id*/ -1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
-            /** numberOfProducingPipelines**/ 1,  nullptr, nullptr, true);
+            /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
         {
             std::unique_lock lock(workMutex);
             for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
