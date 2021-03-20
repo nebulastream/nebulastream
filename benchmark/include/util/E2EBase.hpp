@@ -41,7 +41,7 @@ class E2EBase {
      * WindowMode = generate increasing time stamps in different buffers (each buffer will have time(0) time stamps
      * JoinMode = generate two sources with increasing timestamp
      */
-    enum class InputOutputMode { FileMode, CacheMode, MemMode, WindowMode, JoinMode };
+    enum class InputOutputMode { FileMode, CacheMode, MemMode, WindowMode, JoinMode, UndefinedInputMode };
 
     /**
      * @brief Method to perform the benchmark
@@ -57,6 +57,7 @@ class E2EBase {
     E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode);
     ~E2EBase();
     static std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode);
+    static E2EBase::InputOutputMode getInputOutputModeFromString(std::string mode);
     string getTsInRfc3339();
 
   private:

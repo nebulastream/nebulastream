@@ -15,19 +15,21 @@
 */
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
+#include <Configurations/ConfigOptions/E2EBenchmarkConfig.hpp>
 #include <chrono>
 #include <iostream>
 #include <string>
 #include <util/E2EBase.hpp>
 
 using namespace std;
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
-const uint64_t NUMBER_OF_MEASUREMENTS_TO_COLLECT = 5;
+
 const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
 const uint64_t STARTUP_SLEEP_INTERVAL_IN_SECONDS = 3;
+const uint64_t NUMBER_OF_MEASUREMENTS_TO_COLLECT = 5;
 
 const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
 const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
+const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
 
 static uint64_t portOffset = 13;
 
@@ -55,6 +57,22 @@ std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
         return "JoinMode";
     } else {
         return "Unknown mode";
+    }
+}
+
+E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode) {
+    if (mode == "FileMode") {
+        return E2EBase::InputOutputMode::FileMode;
+    } else if (mode == "CacheMode") {
+        return E2EBase::InputOutputMode::CacheMode;
+    } else if (mode == "MemoryMode") {
+        return E2EBase::InputOutputMode::MemMode;
+    } else if (mode == "WindowMode") {
+        return E2EBase::InputOutputMode::WindowMode;
+    } else if (mode == "JoinMode") {
+        return E2EBase::InputOutputMode::JoinMode;
+    } else {
+        return E2EBase::InputOutputMode::UndefinedInputMode;
     }
 }
 
