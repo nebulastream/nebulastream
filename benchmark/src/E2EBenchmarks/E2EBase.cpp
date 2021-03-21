@@ -13,9 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include "util/E2EBenchmarkConfig.hpp"
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
-#include <Configurations/ConfigOptions/E2EBenchmarkConfig.hpp>
 #include <chrono>
 #include <iostream>
 #include <string>
@@ -76,23 +76,24 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
     }
 }
 
-std::string E2EBase::runExperiment(std::string query) {
+std::string E2EBase::runExperiment() {
     std::cout << "setup experiment with parameter threadCntWorker=" << numberOfWorkerThreads
               << " threadCntCoordinator=" << numberOfCoordinatorThreads << " sourceCnt=" << sourceCnt
               << " mode=" << getInputOutputModeAsString(mode) << " query=" << query << std::endl;
 
     std::cout << "run query" << std::endl;
-    runQuery(query);
+    runQuery();
 
     std::cout << "E2EBase: output result" << std::endl;
     return getResult();
 }
 
-E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode)
-    : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt), mode(mode) {
+E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode, std::string query)
+    : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt), mode(mode), query(query) {
     std::cout << "run with configuration:"
               << " threadCntWorker=" << numberOfWorkerThreads << " threadCntCoordinator=" << numberOfCoordinatorThreads
-              << " sourceCnt=" << sourceCnt << " mode=" << getInputOutputModeAsString(mode);
+              << " sourceCnt=" << sourceCnt << " mode=" << getInputOutputModeAsString(mode)
+        << " query=" << query << std::endl;
     setup();
 }
 
@@ -195,6 +196,27 @@ void E2EBase::setupSources() {
     out << input;
     out.close();
     wrk1->registerLogicalStream("input", testSchemaFileName);
+
+    if(mode == InputOutputMode::Auto)
+    {
+        //stateless queries use memMode
+        if(query.find("join") == std::string::npos && query.find("window") == std::string::npos)
+        {
+            mode = InputOutputMode::MemMode;
+        }
+        else if(query.find("join") == std::string::npos && query.find("window") != std::string::npos)
+        {
+            mode = InputOutputMode::JoinMode;
+        }
+        else if(query.find("join") != std::string::npos && query.find("window") == std::string::npos)
+        {
+            mode = InputOutputMode::WindowMode;
+        }
+        else
+        {
+            NES_FATAL_ERROR("Modus not supported, only either stateless, or window or join queries are allowed currently");
+        }
+    }
 
     if (mode == InputOutputMode::FileMode) {
         std::cout << "file source mode" << std::endl;
@@ -387,7 +409,7 @@ void E2EBase::setup() {
     queryCatalog = crd->getQueryCatalog();
 }
 
-void E2EBase::runQuery(std::string query) {
+void E2EBase::runQuery() {
     std::cout << "E2EBase: Submit query=" << query << std::endl;
     queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");

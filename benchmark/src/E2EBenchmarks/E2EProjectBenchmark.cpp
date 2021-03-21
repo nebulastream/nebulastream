@@ -63,10 +63,10 @@ int main() {
                 std::cout << "dataSourceCnt=" << dataSourceCnt << std::endl;
                 for (auto sourceMode : allSourceModes) {
                     std::cout << "sourceMode=" << E2EBase::getInputOutputModeAsString(sourceMode) << " " << std::endl;
-                    auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode);
+                    auto test = std::make_shared<E2EBase>(workerThreadCnt, coordinatorThreadCnt, dataSourceCnt, sourceMode, query);
                     ss << test->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion << "," << workerThreadCnt << ","
                        << coordinatorThreadCnt << "," << dataSourceCnt << "," << E2EBase::getInputOutputModeAsString(sourceMode);
-                    ss << test->runExperiment(query);
+                    ss << test->runExperiment();
                 }
             }
         }

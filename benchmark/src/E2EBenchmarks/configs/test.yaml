@@ -1,0 +1,7 @@
+# ~~~ Configurations for the NES E2E Benchmark ~~~
+
+numberOfWorkerThreads: 1
+
+numberOfCoordinatorThreads: 1
+
+
