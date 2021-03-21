@@ -153,6 +153,7 @@ if (NES_BUILD_BENCHMARKS)
     ### E2e Benchmark Runner ###
     add_executable(e2e-benchmark-runner "src/E2EBenchmarks/E2ERunner.cpp")
     target_link_libraries(e2e-benchmark-runner nes libgbenchmark libgbenchmark_main pthread)
+    target_sources(e2e-benchmark-runner PUBLIC "src/E2EBenchmarks/E2EBenchmarkConfig.cpp")
     target_sources(e2e-benchmark-runner PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
     target_sources(e2e-benchmark-runner PUBLIC "src/util/BenchmarkUtils.cpp")
     add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner)

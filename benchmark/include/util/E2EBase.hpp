@@ -41,7 +41,7 @@ class E2EBase {
      * WindowMode = generate increasing time stamps in different buffers (each buffer will have time(0) time stamps
      * JoinMode = generate two sources with increasing timestamp
      */
-    enum class InputOutputMode { FileMode, CacheMode, MemMode, WindowMode, JoinMode, UndefinedInputMode };
+    enum class InputOutputMode { FileMode, CacheMode, MemMode, WindowMode, JoinMode, Auto, UndefinedInputMode };
 
     /**
      * @brief Method to perform the benchmark
@@ -52,9 +52,9 @@ class E2EBase {
      * @param query the query to be run
      * @return csv list of the results
      */
-    std::string runExperiment(std::string query);
+    std::string runExperiment();
 
-    E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode);
+    E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode, std::string query);
     ~E2EBase();
     static std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode);
     static E2EBase::InputOutputMode getInputOutputModeFromString(std::string mode);
@@ -65,7 +65,7 @@ class E2EBase {
      * @brief run the query and start the measurement
      * @param query to be run
      */
-    void runQuery(std::string query);
+    void runQuery();
 
     /**
      * @brief setup one coordinator and one worker
@@ -99,6 +99,7 @@ class E2EBase {
     uint64_t numberOfCoordinatorThreads;
     uint64_t sourceCnt;
     InputOutputMode mode;
+    std::string query;
 
     std::chrono::nanoseconds runtime;
     NES::NesCoordinatorPtr crd;

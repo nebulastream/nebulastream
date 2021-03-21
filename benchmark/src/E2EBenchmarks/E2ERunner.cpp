@@ -16,24 +16,13 @@
 
 #ifndef NES_BENCHMARK_INCLUDE_E2ETESTS_E2ERUNNER_HPP_
 #define NES_BENCHMARK_INCLUDE_E2ETESTS_E2ERUNNER_HPP_
-#include <Components/NesCoordinator.hpp>
-#include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/E2EBenchmarkConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Query/QueryId.hpp>
-#include <Services/QueryService.hpp>
+#include "util/E2EBenchmarkConfig.hpp"
+#include <Configurations/ConfigOption.hpp>
 #include <Util/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <benchmark/gbenchmark/src/gbenchmark/include/benchmark/benchmark.h>
-#include <chrono>
+#include <Version/version.hpp>
 #include <iostream>
 #include <util/E2EBase.hpp>
-#include <Configurations/ConfigOption.hpp>
-#include <Version/version.hpp>
 
 using namespace NES;
 using namespace std;
@@ -41,7 +30,7 @@ const std::string logo = "/*****************************************************
                          " *     _   _   ______    _____\n"
                          " *    | \\ | | |  ____|  / ____|\n"
                          " *    |  \\| | | |__    | (___\n"
-                         " *    | . ` | |  __|    \\___ \\     Benchmark Runner\n"
+                         " *    |     | |  __|    \\___ \\     Benchmark Runner\n"
                          " *    | |\\  | | |____   ____) |\n"
                          " *    |_| \\_| |______| |_____/\n"
                          " *\n"
@@ -71,9 +60,8 @@ int main(int argc, const char* argv[]) {
 
     NES::setLogLevel(NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
 
-    NES_INFO(
-        "start benchmark with numberOfWorkerThreads="
-        << benchmarkConfig->getNumberOfWorkerThreads()->getValue()
+    std::cout
+        << "start benchmark with numberOfWorkerThreads=" << benchmarkConfig->getNumberOfWorkerThreads()->getValue()
         << " numberOfCoordinatorThreads=" << benchmarkConfig->getNumberOfCoordinatorThreads()->getValue()
         << " numberOfBuffersToProduce=" << benchmarkConfig->getNumberOfBuffersToProduce()->getValue()
         << " numberOfBuffersInGlobalBufferManager=" << benchmarkConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()
@@ -82,9 +70,10 @@ int main(int argc, const char* argv[]) {
         << " bufferSizeInBytes=" << benchmarkConfig->getBufferSizeInBytes()->getValue()
         << " numberOfSources=" << benchmarkConfig->getNumberOfSources()->getValue()
         << " inputOutputMode=" << benchmarkConfig->getInputOutputMode()->getValue()
-        << " query=" << benchmarkConfig->getQuery()->getValue() << " logLevel=" << benchmarkConfig->getLogLevel()->getValue());
+        << " outputFile=" << benchmarkConfig->getOutputFile()->getValue() << " query=" << benchmarkConfig->getQuery()->getValue()
+        << " logLevel=" << benchmarkConfig->getLogLevel()->getValue() << std::endl;
 
-    std::string benchmarkName = "E2EBenchmarkRunner";
+    std::string benchmarkName = benchmarkConfig->getBenchmarkName()->getDefaultValue();
     std::string nesVersion = NES_VERSION;
 
     std::stringstream ss;
@@ -92,19 +81,30 @@ int main(int argc, const char* argv[]) {
           "ProcessedTuplesTotal,ProcessedBytesTotal,ThroughputInTupsPerSec,ThroughputInMBPerSec"
        << std::endl;
 
-    auto test = std::make_shared<E2EBase>(benchmarkConfig->getNumberOfWorkerThreads()->getValue(),
-                                          benchmarkConfig->getNumberOfCoordinatorThreads()->getValue(),
-                                          benchmarkConfig->getNumberOfSources()->getValue(),
-                                          E2EBase::getInputOutputModeFromString(benchmarkConfig->getInputOutputMode()->getValue()));
-    ss << test->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion << "," << benchmarkConfig->getNumberOfWorkerThreads() << ","
-       << benchmarkConfig->getNumberOfCoordinatorThreads() << "," << benchmarkConfig->getNumberOfSources() << ","
-       << benchmarkConfig->getInputOutputMode()->getValue();
-    ss << test->runExperiment(benchmarkConfig->getQuery()->getValue());
+    std::vector<string> workerThreadCnt = UtilityFunctions::split(benchmarkConfig->getNumberOfWorkerThreads()->getValue(), ',');
+    std::vector<string> coordinatorThreadCnt =
+        UtilityFunctions::split(benchmarkConfig->getNumberOfCoordinatorThreads()->getValue(), ',');
+    std::vector<string> sourceCnt = UtilityFunctions::split(benchmarkConfig->getNumberOfSources()->getValue(), ',');
+
+    NES_ASSERT(workerThreadCnt.size() == coordinatorThreadCnt.size() == sourceCnt.size(),
+               "worker threads, coordinator threads, and source cnt have to have the same count");
+
+    for (size_t i = 0; i < workerThreadCnt.size(); i++) {
+        std::cout << " run configuration workerThreads=" << workerThreadCnt[i]
+                  << " coordinatorThreads=" << coordinatorThreadCnt[i] << " sourceCnt=" << sourceCnt[i] << std::endl;
+        auto test =
+            std::make_shared<E2EBase>(stoi(workerThreadCnt[i]), stoi(coordinatorThreadCnt[i]), stoi(sourceCnt[i]),
+                                      E2EBase::getInputOutputModeFromString(benchmarkConfig->getInputOutputMode()->getValue()),
+                                      benchmarkConfig->getQuery()->getValue());
+        ss << test->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion << "," << workerThreadCnt[i] << ","
+           << coordinatorThreadCnt[i] << "," << sourceCnt[i] << "," << benchmarkConfig->getInputOutputMode()->getValue();
+        ss << test->runExperiment();
+    }
 
     std::cout << "result=" << std::endl;
     std::cout << ss.str() << std::endl;
 
-    std::ofstream out("E2ERunner.csv");
+    std::ofstream out(benchmarkConfig->getOutputFile()->getValue());
     out << ss.str();
     out.close();
     std::cout << "benchmark finish" << std::endl;

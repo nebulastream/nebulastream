@@ -17,19 +17,17 @@
 #ifndef NES_E2EBenchmarkConfig_HPP
 #define NES_E2EBenchmarkConfig_HPP
 
+#include <Configurations/ConfigOption.hpp>
 #include <map>
+#include <memory>
 #include <string>
-
-namespace NES {
 
 class E2EBenchmarkConfig;
 typedef std::shared_ptr<E2EBenchmarkConfig> E2EBenchmarkConfigPtr;
-
-template<class T>
-class ConfigOption;
-typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
-typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
-
+//template<class T>
+//class ConfigOption;
+typedef std::shared_ptr<NES::ConfigOption<uint32_t>> IntConfigOption;
+typedef std::shared_ptr<NES::ConfigOption<std::string>> StringConfigOption;
 /**
  * @brief object for storing worker configuration
  */
@@ -58,22 +56,32 @@ class E2EBenchmarkConfig {
     /**
      * @brief set the value for numberOfWorkerThreads
      */
-    void setNumberOfWorkerThreads(uint32_t numberOfWorkerThreads);
+    void setNumberOfWorkerThreads(std::string numberOfWorkerThreads);
 
     /**
      * @brief gets a ConfigOption object with numberOfWorkerThreads
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfWorkerThreads() const;
+    const StringConfigOption getNumberOfWorkerThreads() const;
 
     /**
     * @brief set the value for numberOfCoordinatorThreads
     */
-    void setNumberOfCoordinatorThreads(uint32_t numberOfCoordinatorThreads);
+    void setNumberOfCoordinatorThreads(std::string numberOfCoordinatorThreads);
 
     /**
      * @brief gets a ConfigOption object with numberOfCoordinatorThreads
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfCoordinatorThreads() const;
+    const StringConfigOption getNumberOfCoordinatorThreads() const;
+
+    /**
+       * @brief set the value for numberOfSources
+    */
+    void setNumberOfSources(std::string numberOfSources);
+
+    /**
+     * @brief gets a ConfigOption object with numberOfSources
+     */
+    const StringConfigOption getNumberOfSources() const;
 
     /**
     * @brief set the value for numberOfBuffersToProduce
@@ -83,7 +91,7 @@ class E2EBenchmarkConfig {
     /**
      * @brief gets a ConfigOption object with numberOfBuffersToProduce
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
+    const IntConfigOption getNumberOfBuffersToProduce() const;
 
     /**
      * @brief set the value for numberOfBuffersInGlobalBufferManager
@@ -93,7 +101,7 @@ class E2EBenchmarkConfig {
     /**
      * @brief gets a ConfigOption object with numberOfBuffersInGlobalBufferManager
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersInGlobalBufferManager() const;
+    const IntConfigOption getNumberOfBuffersInGlobalBufferManager() const;
 
     /**
      * @brief set the value for numberOfBuffersInTaskLocalBufferPool
@@ -103,7 +111,7 @@ class E2EBenchmarkConfig {
     /**
      * @brief gets a ConfigOption object with numberOfBuffersInTaskLocalBufferPool
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersInTaskLocalBufferPool() const;
+    const IntConfigOption getNumberOfBuffersInTaskLocalBufferPool() const;
 
     /**
      * @brief set the value for numberOfBuffersInSourceLocalBufferPool
@@ -113,7 +121,7 @@ class E2EBenchmarkConfig {
     /**
      * @brief gets a ConfigOption object with numberOfBuffersInSourceLocalBufferPool
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersInSourceLocalBufferPool() const;
+    const IntConfigOption getNumberOfBuffersInSourceLocalBufferPool() const;
 
     /**
        * @brief set the value for bufferSizeInBytes
@@ -123,17 +131,7 @@ class E2EBenchmarkConfig {
     /**
      * @brief gets a ConfigOption object with bufferSizeInBytes
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getBufferSizeInBytes() const;
-
-    /**
-       * @brief set the value for numberOfSources
-    */
-    void setNumberOfSources(uint32_t numberOfSources);
-
-    /**
-     * @brief gets a ConfigOption object with numberOfSources
-     */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfSources() const;
+    const IntConfigOption getBufferSizeInBytes() const;
 
     /**
      * @brief set the value for inputOutputMode
@@ -165,26 +163,50 @@ class E2EBenchmarkConfig {
      */
     StringConfigOption getLogLevel();
 
+    /**
+    * @brief gets a ConfigOption object with outputFile
+    */
+    StringConfigOption getOutputFile() const;
+
+    /**
+    * @brief set the value for outputFile
+    */
+    void setOutputFile(std::string outputFile);
+
+    /**
+    * @brief gets a ConfigOption object with benchmarkName
+    */
+    StringConfigOption getBenchmarkName() const;
+
+    /**
+    * @brief set the value for benchmarkName
+    */
+    void setBenchmarkName(std::string benchmarkName);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
      */
     E2EBenchmarkConfig();
 
-    IntConfigOption numberOfWorkerThreads;
-    IntConfigOption numberOfCoordinatorThreads;
+    //parameter that can be changed per run
+    StringConfigOption numberOfWorkerThreads;
+    StringConfigOption numberOfCoordinatorThreads;
+    StringConfigOption numberOfSources;
+
+    //paramter that are valid for the entire run for the config of the worker and coordinator
     IntConfigOption numberOfBuffersToProduce;
     IntConfigOption numberOfBuffersInGlobalBufferManager;
     IntConfigOption numberOfBuffersInTaskLocalBufferPool;
     IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     IntConfigOption bufferSizeInBytes;
-    IntConfigOption numberOfSources;
 
+    //general benchmark paramter for the entire run
     StringConfigOption inputOutputMode;
+    StringConfigOption outputFile;
+    StringConfigOption benchmarkName;
     StringConfigOption query;
     StringConfigOption logLevel;
 };
-
-}// namespace NES
 
 #endif//NES_E2EBenchmarkConfig_HPP
