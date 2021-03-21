@@ -55,12 +55,15 @@ std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
         return "WindowMode";
     } else if (mode == E2EBase::InputOutputMode::JoinMode) {
         return "JoinMode";
+    } else if (mode == E2EBase::InputOutputMode::Auto) {
+        return "Auto";
     } else {
         return "Unknown mode";
     }
 }
 
 E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode) {
+    std::cout << "modus=" << mode << std::endl;
     if (mode == "FileMode") {
         return E2EBase::InputOutputMode::FileMode;
     } else if (mode == "CacheMode") {
@@ -71,6 +74,8 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
         return E2EBase::InputOutputMode::WindowMode;
     } else if (mode == "JoinMode") {
         return E2EBase::InputOutputMode::JoinMode;
+    } else if (mode == "Auto") {
+        return E2EBase::InputOutputMode::Auto;
     } else {
         return E2EBase::InputOutputMode::UndefinedInputMode;
     }

@@ -42,8 +42,8 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
     numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 1024,
                                                                             "Number buffers in source local buffer pool.");
 
-    query = ConfigOption<std::string>::create("query", "127.0.0.1", "Query to be processed");
-    inputOutputMode = ConfigOption<std::string>::create("inputOutputMode", "auto", "modus of how to read data");
+    query = ConfigOption<std::string>::create("query", "", "Query to be processed");
+    inputOutputMode = ConfigOption<std::string>::create("inputOutputMode", "Auto", "modus of how to read data");
     outputFile = ConfigOption<std::string>::create("outputFile", "E2EBenchmarkRunner", "name of the benchmark");
     benchmarkName = ConfigOption<std::string>::create("benchmarkName", "E2ERunner.csv", "benchmark output file");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_NONE",
@@ -53,9 +53,7 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
 void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
 
     if (!filePath.empty() && std::filesystem::exists(filePath)) {
-
         NES_INFO("NesE2EBenchmarkConfig: Using config file with path: " << filePath << " .");
-
         Yaml::Node config = *(new Yaml::Node());
         Yaml::Parse(config, filePath.c_str());
         try {
@@ -67,9 +65,9 @@ void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& fil
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             setBufferSizeInBytes(config["bufferSizeInBytes"].As<uint32_t>());
             setNumberOfSources(config["numberOfSources"].As<std::string>());
-            setOutputFile(config["inputOutputMode"].As<std::string>());
+            setOutputFile(config["outputFile"].As<std::string>());
             setBenchmarkName(config["benchmarkName"].As<std::string>());
-            setInputOutputMode(config["outputFile"].As<std::string>());
+            setInputOutputMode(config["inputOutputMode"].As<std::string>());
             setQuery(config["query"].As<std::string>());
             setLogLevel(config["logLevel"].As<std::string>());
         } catch (std::exception& e) {
