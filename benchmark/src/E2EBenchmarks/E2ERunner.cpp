@@ -52,27 +52,28 @@ int main(int argc, const char* argv[]) {
     auto configPath = commandLineParams.find("--configPath");
 
     if (configPath != commandLineParams.end()) {
+        std::cout << "using config file=" << configPath->second << std::endl;
         benchmarkConfig->overwriteConfigWithYAMLFileInput(configPath->second);
     }
-    if (argc >= 1) {
+    else if (argc >= 1) {
         benchmarkConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
-
-    NES::setLogLevel(NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
 
     std::cout
         << "start benchmark with numberOfWorkerThreads=" << benchmarkConfig->getNumberOfWorkerThreads()->getValue()
         << " numberOfCoordinatorThreads=" << benchmarkConfig->getNumberOfCoordinatorThreads()->getValue()
         << " numberOfBuffersToProduce=" << benchmarkConfig->getNumberOfBuffersToProduce()->getValue()
+        << " numberOfSources=" << benchmarkConfig->getNumberOfSources()->getValue()
         << " numberOfBuffersInGlobalBufferManager=" << benchmarkConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()
         << " numberOfBuffersInTaskLocalBufferPool=" << benchmarkConfig->getNumberOfBuffersInTaskLocalBufferPool()->getValue()
         << " numberOfBuffersInSourceLocalBufferPool=" << benchmarkConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()
         << " bufferSizeInBytes=" << benchmarkConfig->getBufferSizeInBytes()->getValue()
-        << " numberOfSources=" << benchmarkConfig->getNumberOfSources()->getValue()
         << " inputOutputMode=" << benchmarkConfig->getInputOutputMode()->getValue()
-        << " outputFile=" << benchmarkConfig->getOutputFile()->getValue() << " query=" << benchmarkConfig->getQuery()->getValue()
+        << " outputFile=" << benchmarkConfig->getOutputFile()->getValue()
+        << " query=" << benchmarkConfig->getQuery()->getValue()
         << " logLevel=" << benchmarkConfig->getLogLevel()->getValue() << std::endl;
 
+    NES::setLogLevel(NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
     std::string benchmarkName = benchmarkConfig->getBenchmarkName()->getDefaultValue();
     std::string nesVersion = NES_VERSION;
 
@@ -86,7 +87,7 @@ int main(int argc, const char* argv[]) {
         UtilityFunctions::split(benchmarkConfig->getNumberOfCoordinatorThreads()->getValue(), ',');
     std::vector<string> sourceCnt = UtilityFunctions::split(benchmarkConfig->getNumberOfSources()->getValue(), ',');
 
-    NES_ASSERT(workerThreadCnt.size() == coordinatorThreadCnt.size() == sourceCnt.size(),
+    NES_ASSERT(workerThreadCnt.size() == coordinatorThreadCnt.size() && coordinatorThreadCnt.size()  == sourceCnt.size(),
                "worker threads, coordinator threads, and source cnt have to have the same count");
 
     for (size_t i = 0; i < workerThreadCnt.size(); i++) {

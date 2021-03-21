@@ -1,7 +1,21 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
 
-numberOfWorkerThreads: 1
+# Parameter that are changed per run with comma separated list
+numberOfWorkerThreads: 2
+numberOfCoordinatorThreads: 2
+numberOfSources: 1
 
-numberOfCoordinatorThreads: 1
-
+#paramter for all runs
+numberOfBuffersToProduce: 5000000
+numberOfBuffersInGlobalBufferManager: 1048576
+numberOfBuffersInTaskLocalBufferPool: 1024
+numberOfBuffersInSourceLocalBufferPool: 1024
+bufferSizeInBytes: 4096
+#
+##benchmark paramter for the entire ru
+inputOutputMode: Auto
+outputFile: out.csv
+benchmarkName: testBench
+query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
+logLevel: LOG_WARNING
 
