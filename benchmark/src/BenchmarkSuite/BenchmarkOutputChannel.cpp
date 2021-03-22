@@ -31,6 +31,9 @@
 
 namespace NES::Benchmarking {
 
+/**
+ * This benchmark measures the performance of the output channel. This is done by spawning a zmq server. 
+ */
 static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged, uint64_t numSenderThreads,
                                     uint64_t numServerThreads, uint64_t dataSize, uint32_t port, uint32_t rep) {
     std::promise<bool> completedProm;
