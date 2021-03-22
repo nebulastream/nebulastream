@@ -2607,23 +2607,23 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
 #define REPETITIONS 20
 BENCHMARK(BM_WriteRecordsRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 BENCHMARK(BM_WriteRecordsColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadRecordsRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadRecordsColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-
-BENCHMARK(BM_WriteFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-
-BENCHMARK(BM_ReadWholeRecordWithFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteWholeRecordWithFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WriteWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-
-BENCHMARK(BM_ReadingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WritingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_ReadingNumberOfFieldsColLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
-BENCHMARK(BM_WritingNumberOfFieldsColLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_ReadRecordsRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_ReadRecordsColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//
+//BENCHMARK(BM_WriteFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_WriteFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_ReadFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_ReadFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//
+//BENCHMARK(BM_ReadWholeRecordWithFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_ReadWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_WriteWholeRecordWithFieldColumnLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_WriteWholeRecordWithFieldRowLayoutNewLayout)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//
+//BENCHMARK(BM_ReadingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_WritingNumberOfFieldsRowLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_ReadingNumberOfFieldsColLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
+//BENCHMARK(BM_WritingNumberOfFieldsColLayoutNewLayout)->DenseRange(0, 15, 1)->Repetitions(REPETITIONS)->ReportAggregatesOnly(true);
 
 // A benchmark main is needed
 int main(int argc, char** argv) {
