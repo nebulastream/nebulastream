@@ -237,7 +237,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 2);
 
     //Apply L0 query merger rule
-    SyntaxBasedEqualQueryMergerRulePtr l0MergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    SyntaxBasedCompleteQueryMergerRulePtr l0MergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     l0MergerRule->apply(globalQueryPlan);
 
     //Get MetaData information
@@ -286,7 +286,7 @@ TEST_F(GlobalQueryPlanTest, testUpdateMetaDataInformationForGlobalQueryPlanWithM
     EXPECT_TRUE(listOfGQMsToDeploy.size() == 3);
 
     //Apply Syntax Based Equal Query Merger rule
-    SyntaxBasedEqualQueryMergerRulePtr syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    SyntaxBasedCompleteQueryMergerRulePtr syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //Get MetaData information

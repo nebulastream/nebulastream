@@ -20,7 +20,17 @@
 #include <memory>
 #include <vector>
 
+namespace z3 {
+class context;
+typedef std::shared_ptr<context> ContextPtr;
+}// namespace z3
+
 namespace NES {
+
+namespace Optimizer {
+class SignatureInferencePhase;
+typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
+}// namespace Optimizer
 
 class QueryCatalogEntry;
 
@@ -59,7 +69,8 @@ class GlobalQueryPlanUpdatePhase {
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging);
+                                                GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging,
+                                                z3::ContextPtr z3Context);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -70,7 +81,7 @@ class GlobalQueryPlanUpdatePhase {
 
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                        GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging);
+                                        GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging, z3::ContextPtr z3Context);
 
     bool enableQueryMerging;
     QueryCatalogPtr queryCatalog;
@@ -79,6 +90,8 @@ class GlobalQueryPlanUpdatePhase {
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
     QueryMergerPhasePtr queryMergerPhase;
+    Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
+    z3::ContextPtr z3Context;
 };
 }// namespace NES
 

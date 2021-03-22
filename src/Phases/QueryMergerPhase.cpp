@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Phases/QueryMergerPhase.hpp>
 #include <Util/Logger.hpp>
@@ -22,11 +23,14 @@ namespace NES {
 
 QueryMergerPhasePtr QueryMergerPhase::create() { return std::make_shared<QueryMergerPhase>(QueryMergerPhase()); }
 
-QueryMergerPhase::QueryMergerPhase() { this->syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create(); }
+QueryMergerPhase::QueryMergerPhase() {
+    syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    signatureBasedCompleteQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+}
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
     NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
-    return syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+    return signatureBasedCompleteQueryMergerRule->apply(globalQueryPlan);
 }
 
 }// namespace NES

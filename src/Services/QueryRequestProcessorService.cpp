@@ -38,6 +38,7 @@
 #include <Util/Logger.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
 #include <exception>
+#include <z3++.h>
 
 namespace NES {
 
@@ -54,8 +55,9 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
+    z3Context = std::make_shared<z3::context>();
     globalQueryPlanUpdatePhase =
-        GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, enableQueryMerging);
+        GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, enableQueryMerging, z3Context);
 }
 
 QueryRequestProcessorService::~QueryRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
@@ -78,11 +80,12 @@ void QueryRequestProcessorService::start() {
                 globalQueryPlanUpdatePhase->execute(queryRequests);
                 globalQueryPlan->removeEmptySharedQueryMetaData();
 
-                if (false) {
-                    auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
-                    for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
-                        SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
-                        NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
+                auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+                for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
+
+                    SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
+                    NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
+                    if (false) {
 
                         if (!sharedQueryMetaData->isNew()) {
                             NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
@@ -117,14 +120,15 @@ void QueryRequestProcessorService::start() {
                                         + std::to_string(sharedQueryId));
                             }
                         }
-                        //Mark the meta data as deployed
-                        sharedQueryMetaData->markAsDeployed();
-                        sharedQueryMetaData->setAsOld();
                     }
+                    //Mark the meta data as deployed
+                    sharedQueryMetaData->markAsDeployed();
+                    sharedQueryMetaData->setAsOld();
                 }
 
                 for (auto queryRequest : queryRequests) {
                     auto queryId = queryRequest.getQueryId();
+                    NES_ERROR(queryId);
                     if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } else {

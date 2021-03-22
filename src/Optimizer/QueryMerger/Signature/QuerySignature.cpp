@@ -47,10 +47,10 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     NES_TRACE("QuerySignature: Equating signatures");
 
-    if (!conditions || !other->getConditions()) {
+    /*    if (!conditions || !other->getConditions()) {
         NES_WARNING("QuerySignature: Can't compare equality between null signatures");
         return false;
-    }
+    }*/
 
     //Extract the Z3 context and initialize a solver
     z3::context& context = conditions->ctx();
@@ -58,10 +58,10 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     //Check the number of columns extracted by both queries
     auto otherColumns = other->columns;
-    if (columns.size() != otherColumns.size()) {
+    /*    if (columns.size() != otherColumns.size()) {
         NES_WARNING("QuerySignature: Both signatures have different column entries");
         return false;
-    }
+    }*/
 
     //Check if two columns are identical
     //If column from one signature doesn't exists in other signature then they are not equal.
@@ -69,16 +69,16 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
 
     //Iterate over all distinct schema maps
     // and identify if there is an equivalent schema map in the other signature
-    for (auto schemaMap : schemaFieldToExprMaps) {
+    for (auto& schemaMap : schemaFieldToExprMaps) {
         bool schemaExists = false;
         for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
              otherSchemaMapItr++) {
             bool schemaMatched = false;
             //Iterate over all the field expressions from one schema and other
             // and check if they are matching
-            for (auto [fieldName, fieldExpr] : schemaMap) {
+            for (auto& [fieldName, fieldExpr] : schemaMap) {
                 bool fieldMatch = false;
-                for (auto [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
+                for (auto& [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
                     if (z3::eq(*fieldExpr, *otherFieldExpr)) {
                         fieldMatch = true;
                         break;
@@ -134,8 +134,12 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     allConditions.push_back(to_expr(context, Z3_mk_eq(context, *conditions, *other->conditions)));
 
     //Create a negation of CNF of all conditions collected till now
+    //    const z3::expr& e = ;
+    //    Z3_solver_assert(context, solver, e);
     solver.add(!z3::mk_and(allConditions));
+    //    return true;
     NES_DEBUG("Solving: " << solver);
+
     return solver.check() == z3::unsat;
 }
 }// namespace NES::Optimizer
