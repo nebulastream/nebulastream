@@ -90,7 +90,8 @@ int main() {
     auto startTime =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     for (int i = 1; i <= 1000; i++) {
-        auto queryObj = std::make_shared<Query>(Query::from("benchmark").sink(NullOutputSinkDescriptor::create()));
+        auto queryObj = std::make_shared<Query>(
+            Query::from("benchmark").filter(Attribute("value") > 10).sink(NullOutputSinkDescriptor::create()));
         const QueryPlanPtr queryPlan = queryObj->getQueryPlan();
         queryPlan->setQueryId(i);
 
@@ -106,6 +107,7 @@ int main() {
     std::cout << queryCatalog->getAllQueryCatalogEntries().size();
     std::cout << "result=" << std::endl;
     ss << startTime << " , " << endTime;
+    ss << "Total Run (ms) " << endTime - startTime;
     std::cout << ss.str() << std::endl;
 
     std::ofstream out("E2EWindowBenchmark.csv");

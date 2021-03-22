@@ -28,7 +28,12 @@ class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class SyntaxBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
+typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQueryMergerRulePtr;
+
+namespace Optimizer {
+class SignatureBasedCompleteQueryMergerRule;
+typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
+}// namespace Optimizer
 
 class QueryMergerPhase {
 
@@ -44,7 +49,8 @@ class QueryMergerPhase {
 
   private:
     explicit QueryMergerPhase();
-    SyntaxBasedEqualQueryMergerRulePtr syntaxBasedEqualQueryMergerRule;
+    SyntaxBasedCompleteQueryMergerRulePtr syntaxBasedEqualQueryMergerRule;
+    Optimizer::SignatureBasedCompleteQueryMergerRulePtr signatureBasedCompleteQueryMergerRule;
 };
 }// namespace NES
 #endif//NES_QUERYMERGERPHASE_HPP

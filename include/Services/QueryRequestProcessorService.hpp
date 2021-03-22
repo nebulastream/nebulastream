@@ -19,6 +19,11 @@
 
 #include <memory>
 
+namespace z3 {
+class context;
+typedef std::shared_ptr<context> ContextPtr;
+}// namespace z3
+
 namespace NES {
 
 class GlobalQueryPlan;
@@ -99,6 +104,7 @@ class QueryRequestProcessorService {
     QueryRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
+    z3::ContextPtr z3Context;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP

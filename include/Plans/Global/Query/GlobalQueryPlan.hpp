@@ -106,6 +106,8 @@ class GlobalQueryPlan {
      * @return true if successful
      */
     bool updateSharedQueryMetadata(SharedQueryMetaDataPtr sharedQueryMetaData);
+    std::vector<SharedQueryMetaDataPtr> getAllNewSharedQueryMetaData();
+    std::vector<SharedQueryMetaDataPtr> getAllOldSharedQueryMetaData();
 
   private:
     GlobalQueryPlan();
@@ -113,7 +115,6 @@ class GlobalQueryPlan {
     uint64_t freeSharedQueryId;
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryMetaDataPtr> sharedQueryIdToMetaDataMap;
-    std::vector<SharedQueryMetaDataPtr> addSharedQueryMetadata;
 };
 }// namespace NES
 #endif//NES_GLOBALQUERYPLAN_HPP

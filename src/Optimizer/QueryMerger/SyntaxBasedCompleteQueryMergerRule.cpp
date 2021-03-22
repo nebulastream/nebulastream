@@ -27,27 +27,25 @@ namespace NES {
 
 SyntaxBasedCompleteQueryMergerRule::SyntaxBasedCompleteQueryMergerRule() {}
 
-SyntaxBasedEqualQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create() {
+SyntaxBasedCompleteQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create() {
     return std::make_shared<SyntaxBasedCompleteQueryMergerRule>(SyntaxBasedCompleteQueryMergerRule());
 }
 
 bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
     NES_INFO("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
-    std::vector<SharedQueryMetaDataPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
-    if (allSharedQueryMetaData.size() == 1) {
-        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found only a single query metadata in the global query plan."
+    std::vector<SharedQueryMetaDataPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
+    if (allNewSharedQueryMetaData.empty()) {
+        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Syntax Based Equal Query Merger Rule.");
         return true;
     }
 
+    std::vector<SharedQueryMetaDataPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: Iterating over all GQMs in the Global Query Plan");
-    for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
-        for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
-
-            auto targetSharedQueryMetaData = allSharedQueryMetaData[i];
-            auto hostSharedQueryMetaData = allSharedQueryMetaData[j];
-
+    for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
+        bool merged = false;
+        for (auto& hostSharedQueryMetaData : allOldSharedQueryMetaData) {
             if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
                 continue;
             }
@@ -65,7 +63,7 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQ
                 std::vector<OperatorNodePtr> hostSinkOperators = hostSharedQueryMetaData->getSinkOperators();
                 //Iterate over all target sink global query nodes and try to identify a matching address global query node
                 // using the target address operator map
-                for (auto targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
+                for (auto& targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
                     uint64_t hostSinkOperatorId = targetToHostSinkOperatorMap[targetSinkOperator->getId()];
 
                     auto hostSinkOperator = std::find_if(hostSinkOperators.begin(), hostSinkOperators.end(),
@@ -98,8 +96,12 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQ
                 //Update the shared query meta data
                 globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
                 // exit the for loop as we found a matching address shared query meta data
+                merged = true;
                 break;
             }
+        }
+        if (!merged) {
+            allOldSharedQueryMetaData.push_back(targetSharedQueryMetaData);
         }
     }
     //Remove all empty shared query metadata

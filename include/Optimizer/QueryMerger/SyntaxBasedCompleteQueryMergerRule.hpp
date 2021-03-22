@@ -39,7 +39,7 @@ class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
 
 class SyntaxBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
+typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQueryMergerRulePtr;
 
 /**
  * @brief SyntaxBasedEqualQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule
@@ -85,7 +85,7 @@ typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedEqualQuer
 class SyntaxBasedCompleteQueryMergerRule {
 
   public:
-    static SyntaxBasedEqualQueryMergerRulePtr create();
+    static SyntaxBasedCompleteQueryMergerRulePtr create();
 
     /**
      * @brief apply L0QueryMerger rule on the globalQuery plan
