@@ -36,6 +36,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
     DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayout& dynamicColLayout,
                               std::vector<COL_OFFSET_SIZE> columnOffsets);
     const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout.getFieldSizes(); }
+    std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const { return dynamicColLayout.getFieldIndexFromName(fieldName); };
 
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes

@@ -36,11 +36,10 @@ class DynamicRowLayout : public DynamicMemoryLayout {
     static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
     std::unique_ptr<DynamicLayoutBuffer> bind(TupleBuffer& tupleBuffer) override;
     const std::vector<FIELD_SIZE>& getFieldOffSets() const;
-    uint64_t getFieldIndexFromName() const; hier weiter machen
+
 
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;
-    std::map<std::string, uint64_t> nameFieldIndexMap
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

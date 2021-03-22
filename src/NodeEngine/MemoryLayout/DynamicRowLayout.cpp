@@ -27,14 +27,17 @@ DynamicRowLayout::DynamicRowLayout(bool checkBoundaries, SchemaPtr schema) : Dyn
     this->recordSize = schema->getSchemaSizeInBytes();
     this->fieldOffSets = std::vector<FIELD_OFFSET>();
     this->fieldSizes = std::vector<FIELD_SIZE>();
+    this->nameFieldIndexMap = std::map<std::string, uint64_t>();
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     uint64_t offsetCounter = 0;
-    for (auto const& field : schema->fields) {
+    for (size_t fieldIndex = 0; fieldIndex < schema->fields.size(); ++fieldIndex) {
+        auto const& field = schema->fields[fieldIndex];
         auto curFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
         fieldSizes.emplace_back(curFieldSize);
         fieldOffSets.emplace_back(offsetCounter);
         offsetCounter += curFieldSize;
+        nameFieldIndexMap[field->getName()] = fieldIndex;
     }
 }
 
@@ -57,4 +60,9 @@ std::unique_ptr<DynamicLayoutBuffer> DynamicRowLayout::bind(TupleBuffer& tupleBu
 
 DynamicMemoryLayoutPtr DynamicRowLayout::copy() const { return std::make_shared<DynamicRowLayout>(*this); }
 const std::vector<FIELD_SIZE>& DynamicRowLayout::getFieldOffSets() const { return fieldOffSets; }
+
+
+
+
+
 }// namespace NES::NodeEngine::DynamicMemoryLayout
