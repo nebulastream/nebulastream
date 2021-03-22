@@ -23,10 +23,11 @@ function plot_flamegraph()
 }
 
 
-usage="$(basename "$0") [-h] [-t <thread id>] [-l <flamegraph git location>] [-d <record duration in seconds] [-g <class or function name>] [-f <freq>] [-n <name output svg>]
+usage="$(basename "$0") [-h] [-p <process id>] [-t <thread id>] [-l <flamegraph git location>] [-d <record duration in seconds>] [-g <class or function name>] [-f <freq>] [-n <name output svg>] [-s]
 
 -- This script will create flamegraphs via arguments:
 	-h  show this help text
+	-p  id of process that will be recorded
 	-t  id of thread that will be recorded
 	-d  duration of perf record
 	-l  location of flamegraph git, if not set then flamegraph git will be downloaded
