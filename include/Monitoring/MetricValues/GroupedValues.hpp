@@ -31,6 +31,28 @@ struct GroupedValues {
     std::optional<std::unique_ptr<CpuMetrics>> cpuMetrics;
     std::optional<std::unique_ptr<NetworkMetrics>> networkMetrics;
     std::optional<std::unique_ptr<MemoryMetrics>> memoryMetrics;
+
+    web::json::value asJson() {
+        web::json::value metricsJson{};
+
+        if (diskMetrics.has_value()) {
+            metricsJson["disk"] =  diskMetrics.value()->toJson();
+        }
+
+        if (cpuMetrics.has_value()) {
+            metricsJson["cpu"] =  cpuMetrics.value()->toJson();
+        }
+
+        if (networkMetrics.has_value()) {
+            metricsJson["network"] =  networkMetrics.value()->toJson();
+        }
+
+        if (memoryMetrics.has_value()) {
+            metricsJson["memory"] =  memoryMetrics.value()->toJson();
+        }
+
+        return metricsJson;
+    };
 };
 
 }// namespace NES

@@ -69,5 +69,15 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& b
     return output;
 }
 
+web::json::value DiskMetrics::toJson() {
+    web::json::value metricsJson{};
+    metricsJson["F_BSIZE"] = web::json::value::number(fBsize);
+    metricsJson["F_FRSIZE"] = web::json::value::number(fFrsize);
+    metricsJson["F_BLOCKS"] = web::json::value::number(fBlocks);
+    metricsJson["F_BFREE"] = web::json::value::number(fBfree);
+    metricsJson["F_BAVAIL"] = web::json::value::number(fBavail);
+    return metricsJson;
+}
+
 SchemaPtr getSchema(const DiskMetrics&, const std::string& prefix) { return DiskMetrics::getSchema(prefix); }
 }// namespace NES

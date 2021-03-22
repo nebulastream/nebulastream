@@ -91,4 +91,21 @@ bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
 
 bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs == *this); }
 
+web::json::value MemoryMetrics::toJson() {
+    web::json::value metricsJson{};
+    metricsJson["TOTAL_RAM"] = web::json::value::number(TOTAL_RAM);
+    metricsJson["TOTAL_SWAP"] = web::json::value::number(TOTAL_SWAP);
+    metricsJson["FREE_RAM"] = web::json::value::number(FREE_RAM);
+    metricsJson["SHARED_RAM"] = web::json::value::number(SHARED_RAM);
+    metricsJson["BUFFER_RAM"] = web::json::value::number(BUFFER_RAM);
+    metricsJson["FREE_SWAP"] = web::json::value::number(FREE_SWAP);
+    metricsJson["TOTAL_HIGH"] = web::json::value::number(TOTAL_HIGH);
+    metricsJson["FREE_HIGH"] = web::json::value::number(FREE_HIGH);
+    metricsJson["PROCS"] = web::json::value::number(PROCS);
+    metricsJson["MEM_UNIT"] = web::json::value::number(MEM_UNIT);
+    metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
+    metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
+    metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
+    return metricsJson;}
+
 }// namespace NES

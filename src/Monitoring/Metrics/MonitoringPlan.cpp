@@ -181,6 +181,11 @@ bool MonitoringPlan::hasMetric(MetricValueType metric) const {
     }
 }
 
+SchemaPtr MonitoringPlan::createSchema() {
+    MetricGroupPtr metricGroup = createMetricGroup(MetricCatalog::NesMetrics());
+    return metricGroup->createSchema();
+}
+
 SerializableMonitoringPlan MonitoringPlan::serialize() const {
     SerializableMonitoringPlan serPlan;
     serPlan.set_cpumetrics(cpuMetrics);

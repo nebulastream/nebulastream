@@ -54,6 +54,15 @@ class CpuValues {
      */
     friend std::ostream& operator<<(std::ostream& os, const CpuValues& values);
 
+    /**
+     * @brief Returns the metrics as json
+     * @return Json containing the metrics
+     */
+    web::json::value toJson();
+
+    bool operator==(const CpuValues& rhs) const;
+    bool operator!=(const CpuValues& rhs) const;
+
     uint64_t user;
     uint64_t nice;
     uint64_t system;

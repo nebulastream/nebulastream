@@ -25,6 +25,8 @@
 
 namespace NES {
 
+NetworkMetrics::NetworkMetrics() : interfaceNum(0) {}
+
 NetworkValues NetworkMetrics::getNetworkValue(uint64_t interfaceNo) const {
     if (interfaceNo >= getInterfaceNum()) {
         NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(interfaceNo)
@@ -33,16 +35,22 @@ NetworkValues NetworkMetrics::getNetworkValue(uint64_t interfaceNo) const {
     return networkValues.at(interfaceNo);
 }
 
-void NetworkMetrics::addNetworkValues(NetworkValues&& nwValue) { networkValues.emplace_back(nwValue); }
+void NetworkMetrics::addNetworkValues(NetworkValues&& nwValue) {
+    networkValues.emplace_back(nwValue);
+    interfaceNum++;
+}
 
-uint64_t NetworkMetrics::getInterfaceNum() const { return networkValues.size(); }
+uint64_t NetworkMetrics::getInterfaceNum() const {
+    NES_ASSERT(interfaceNum == networkValues.size(), "NetworkMetrics: Interface numbers are not equal.");
+    return interfaceNum;
+}
 
 std::vector<std::string> NetworkMetrics::getInterfaceNames() {
     std::vector<std::string> keys;
     keys.reserve(networkValues.size());
 
     for (const auto& netVal : networkValues) {
-        keys.push_back(netVal.interfaceName);
+        keys.push_back(std::to_string(netVal.interfaceName));
     }
 
     return keys;
@@ -51,12 +59,13 @@ std::vector<std::string> NetworkMetrics::getInterfaceNames() {
 NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     auto output = NetworkMetrics();
     auto i = schema->getIndex(prefix + "INTERFACE_NO");
+    auto fieldName = schema->fields[i]->getName();
+    bool hasField = UtilityFunctions::endsWith(fieldName, prefix + "INTERFACE_NO");
 
-    if (i < schema->getSize() && buf.getNumberOfTuples() == 1
-        && UtilityFunctions::endsWith(schema->fields[i]->getName(), prefix + "INTERFACE_NO")) {
+    if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
         auto layout = NodeEngine::createRowLayout(schema);
-        auto numInt = layout->getValueField<uint16_t>(0, i)->read(buf);
+        auto numInt = layout->getValueField<uint64_t>(0, i)->read(buf);
 
         for (int n = 0; n < numInt; n++) {
             NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
@@ -71,9 +80,19 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
     return output;
 }
 
+web::json::value NetworkMetrics::toJson() {
+    web::json::value metricsJson{};
+
+    for (auto networkVal : networkValues) {
+        metricsJson[networkVal.interfaceName] = networkVal.toJson();
+    }
+
+    return metricsJson;
+}
+
 void writeToBuffer(const NetworkMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBufferAs<uint8_t>();
-    auto intNum = metrics.getInterfaceNum();
+    uint64_t intNum = metrics.getInterfaceNum();
 
     uint64_t totalSize = byteOffset + sizeof(uint64_t) + sizeof(NetworkValues) * intNum;
     NES_ASSERT(totalSize < buf.getBufferSize(), "NetworkMetrics: Content does not fit in TupleBuffer");
@@ -91,16 +110,31 @@ void writeToBuffer(const NetworkMetrics& metrics, NodeEngine::TupleBuffer& buf, 
 
 SchemaPtr getSchema(const NetworkMetrics& metrics, const std::string& prefix) {
     auto schema = Schema::create();
-    schema->addField(prefix + "INTERFACE_NO", BasicType::UINT16);
+    schema->addField(prefix + "INTERFACE_NO", BasicType::UINT64);
 
     for (uint64_t i = 0; i < metrics.getInterfaceNum(); i++) {
         auto interfacePrefix = prefix + "Intfs[" + std::to_string(i + 1) + "]_"
-            + UtilityFunctions::trim(metrics.getNetworkValue(i).interfaceName) + "_";
+            + UtilityFunctions::trim(std::to_string(metrics.getNetworkValue(i).interfaceName)) + "_";
 
         schema->copyFields(NetworkValues::getSchema(interfacePrefix));
     }
 
     return schema;
 }
+
+bool NetworkMetrics::operator==(const NetworkMetrics& rhs) const {
+    if (networkValues.size() != rhs.networkValues.size()) {
+        return false;
+    }
+
+    for (int64_t i = 0; i < networkValues.size(); i++) {
+        if (networkValues[i] != rhs.networkValues[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+bool NetworkMetrics::operator!=(const NetworkMetrics& rhs) const { return !(rhs == *this); }
 
 }// namespace NES

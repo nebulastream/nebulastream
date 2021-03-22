@@ -17,6 +17,7 @@
 #include <Services/MonitoringService.hpp>
 
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/BufferManager.hpp>
@@ -41,29 +42,25 @@ MonitoringService::~MonitoringService() {
     topology.reset();
 }
 
-std::tuple<SchemaPtr, NodeEngine::TupleBuffer>
-MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
+void MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan,
+                                                                 NodeEngine::TupleBuffer tupleBuffer) {
     if (!plan) {
         auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
         plan = MonitoringPlan::create(metrics);
     }
     std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
     NES_DEBUG("NesCoordinator: Requesting monitoring data from worker address= " + destAddress);
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = workerClient->requestMonitoringData(destAddress, plan, tupleBuffer);
-
-    return std::make_tuple(schema, tupleBuffer);
+    workerClient->requestMonitoringData(destAddress, plan, tupleBuffer);
 }
 
-web::json::value MonitoringService::requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort,
-                                                                MonitoringPlanPtr plan) {
-    auto [schema, tupleBuffer] = requestMonitoringData(ipAddress, grpcPort, plan);
-    web::json::value metricsJson{};
-    metricsJson["schema"] = web::json::value::string(schema->toString());
-    metricsJson["tupleBuffer"] = web::json::value::string(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+web::json::value MonitoringService::requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+    requestMonitoringData(ipAddress, grpcPort, plan, tupleBuffer);
+    auto schema = plan->createSchema();
+    GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
     tupleBuffer.release();
     schema.reset();
-    return metricsJson;
+    return parsedValues.asJson();
 }
 
 web::json::value MonitoringService::requestMonitoringDataAsJson(int64_t nodeId, MonitoringPlanPtr plan) {

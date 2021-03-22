@@ -69,6 +69,19 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf
     }
 }
 
+web::json::value CpuMetrics::toJson() {
+    web::json::value metricsJson{};
+
+    metricsJson["NUM_CORES"] = web::json::value::number(numCores);
+    metricsJson["TOTAL"] = total.toJson();
+
+    for (int n = 0; n < numCores; n++) {
+        metricsJson["CORE_" + std::to_string(n)] = cpuValues[n].toJson();
+    }
+
+    return metricsJson;
+}
+
 void writeToBuffer(const CpuMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBufferAs<uint8_t>();
     uint64_t totalSize = byteOffset + sizeof(uint16_t) + sizeof(CpuValues) * (metrics.getNumCores() + 1);
@@ -104,5 +117,21 @@ SchemaPtr getSchema(const CpuMetrics& metrics, const std::string& prefix) {
 
     return schema;
 }
+
+bool CpuMetrics::operator==(const CpuMetrics& rhs) const {
+    if (cpuValues.size() != rhs.cpuValues.size()) {
+        return false;
+    }
+
+    for (int i=0; i<cpuValues.size(); i++) {
+        if (cpuValues[i] != rhs.cpuValues[i]) {
+            return false;
+        }
+    }
+
+    return total == rhs.total && numCores == rhs.numCores;
+}
+
+bool CpuMetrics::operator!=(const CpuMetrics& rhs) const { return !(rhs == *this); }
 
 }// namespace NES

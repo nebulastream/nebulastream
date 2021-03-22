@@ -63,10 +63,19 @@ class CpuMetrics {
      */
     static CpuMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+    /**
+     * @brief Returns the metrics as json
+     * @return Json containing the metrics
+     */
+    web::json::value toJson();
+
+    bool operator==(const CpuMetrics& rhs) const;
+    bool operator!=(const CpuMetrics& rhs) const;
+
   private:
     CpuValues total;
-    std::vector<CpuValues> cpuValues;
     uint16_t numCores;
+    std::vector<CpuValues> cpuValues;
 };
 
 /**

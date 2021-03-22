@@ -42,6 +42,12 @@ class DiskMetrics {
      */
     static DiskMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+    /**
+     * @brief Returns the metrics as json
+     * @return Json containing the metrics
+     */
+    web::json::value toJson();
+
     uint64_t fBsize;
     uint64_t fFrsize;
     uint64_t fBlocks;

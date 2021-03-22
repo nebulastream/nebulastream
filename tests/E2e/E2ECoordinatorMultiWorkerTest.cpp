@@ -497,19 +497,23 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
     NES_INFO("RETURN: " << json_return.size());
     NES_INFO("RETURN: " << json_return);
 
-    std::string v1S = json_return.at("1").at("schema").as_string();
-    std::string v1T = json_return.at("1").at("tupleBuffer").as_string();
-    std::string v2S = json_return.at("2").at("schema").as_string();
-    std::string v2T = json_return.at("2").at("tupleBuffer").as_string();
-    std::string v3S = json_return.at("3").at("schema").as_string();
-    std::string v3T = json_return.at("3").at("tupleBuffer").as_string();
+    for (int i=1; i<=json_return.size(); i++) {
+        auto json = json_return[std::to_string(i)];
+        NES_INFO("SUB RETURN: " << json);
 
-    EXPECT_TRUE(!v1S.empty());
-    EXPECT_TRUE(!v1T.empty());
-    EXPECT_TRUE(!v2S.empty());
-    EXPECT_TRUE(!v2T.empty());
-    EXPECT_TRUE(!v3S.empty());
-    EXPECT_TRUE(!v3T.empty());
+        EXPECT_TRUE(json.has_field("disk"));
+        EXPECT_EQ(json["disk"].size(), 5);
+
+        EXPECT_TRUE(json.has_field("cpu"));
+        auto numCores = json["cpu"]["NUM_CORES"].as_integer();
+        EXPECT_EQ(json["cpu"].size(), numCores+2);
+
+        EXPECT_TRUE(json.has_field("network"));
+        EXPECT_TRUE(json["network"].size() > 0);
+
+        EXPECT_TRUE(json.has_field("memory"));
+        EXPECT_EQ(json["memory"].size(), 13);
+    }
 
     NES_INFO("Killing worker 1 process->PID: " << workerPid1);
     workerProc1.terminate();

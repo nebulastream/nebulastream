@@ -74,6 +74,23 @@ std::ostream& operator<<(std::ostream& os, const CpuValues& values) {
     return os;
 }
 
+web::json::value CpuValues::toJson() {
+    web::json::value metricsJson{};
+
+    metricsJson["USER"] = web::json::value::number(user);
+    metricsJson["NICE"] = web::json::value::number(nice);
+    metricsJson["SYSTEM"] = web::json::value::number(system);
+    metricsJson["IDLE"] = web::json::value::number(idle);
+    metricsJson["IOWAIT"] = web::json::value::number(iowait);
+    metricsJson["IRQ"] = web::json::value::number(irq);
+    metricsJson["SOFTIRQ"] = web::json::value::number(softirq);
+    metricsJson["STEAL"] = web::json::value::number(steal);
+    metricsJson["GUEST"] = web::json::value::number(guest);
+    metricsJson["GUESTNICE"] = web::json::value::number(guestnice);
+
+    return metricsJson;
+}
+
 void writeToBuffer(const CpuValues& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBufferAs<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(CpuValues) < buf.getBufferSize(), "CpuValues: Content does not fit in TupleBuffer");
@@ -81,5 +98,11 @@ void writeToBuffer(const CpuValues& metrics, NodeEngine::TupleBuffer& buf, uint6
     memcpy(tbuffer + byteOffset, &metrics, sizeof(CpuValues));
     buf.setNumberOfTuples(1);
 }
+
+bool CpuValues::operator==(const CpuValues& rhs) const {
+    return user == rhs.user && nice == rhs.nice && system == rhs.system && idle == rhs.idle && iowait == rhs.iowait
+        && irq == rhs.irq && softirq == rhs.softirq && steal == rhs.steal && guest == rhs.guest && guestnice == rhs.guestnice;
+}
+bool CpuValues::operator!=(const CpuValues& rhs) const { return !(rhs == *this); }
 
 }// namespace NES

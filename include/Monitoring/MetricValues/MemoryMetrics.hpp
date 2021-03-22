@@ -42,6 +42,12 @@ class MemoryMetrics {
      */
     static MemoryMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+    /**
+     * @brief Returns the metrics as json
+     * @return Json containing the metrics
+     */
+    web::json::value toJson();
+
     //equality operators
     bool operator==(const MemoryMetrics& rhs) const;
     bool operator!=(const MemoryMetrics& rhs) const;
