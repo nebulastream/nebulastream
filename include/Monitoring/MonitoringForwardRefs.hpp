@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <cpprest/json.h>
 
 namespace NES {
 class Schema;

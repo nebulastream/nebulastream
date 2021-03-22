@@ -45,7 +45,17 @@ class NetworkValues {
      */
     static NetworkValues fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
-    std::string interfaceName;
+    /**
+     * @brief Returns the metrics as json
+     * @return Json containing the metrics
+     */
+    web::json::value toJson();
+
+    bool operator==(const NetworkValues& rhs) const;
+    bool operator!=(const NetworkValues& rhs) const;
+
+  public:
+    uint64_t interfaceName;
 
     uint64_t rBytes;
     uint64_t rPackets;

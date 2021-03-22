@@ -26,7 +26,7 @@ namespace NES {
 class NetworkMetrics {
 
   public:
-    NetworkMetrics() = default;
+    NetworkMetrics();
 
     NetworkValues getNetworkValue(uint64_t interfaceNo) const;
 
@@ -45,8 +45,19 @@ class NetworkMetrics {
      */
     static NetworkMetrics fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix);
 
+    /**
+     * @brief Returns the metrics as json
+     * @return Json containing the metrics
+     */
+    web::json::value toJson();
+
   private:
+    uint64_t interfaceNum;
     std::vector<NetworkValues> networkValues;
+
+  public:
+    bool operator==(const NetworkMetrics& rhs) const;
+    bool operator!=(const NetworkMetrics& rhs) const;
 };
 
 /**

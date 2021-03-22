@@ -242,122 +242,6 @@ TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
     NES_INFO(metricGroup->createSchema()->toString());
 }
 
-//TODO: tests are needed for the serialization of all metrics
-TEST_F(MonitoringStackTest, testSerializationMetricsSingle) {
-    auto cpuStats = MetricUtils::CPUStats();
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-
-    auto measuredVal = cpuStats.measure().getTotal();
-    writeToBuffer(measuredVal, tupleBuffer, 0);
-
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
-    NES_DEBUG(measuredVal);
-}
-
-TEST_F(MonitoringStackTest, testSerializationMetricsNested) {
-    //TODO: assert missing
-    auto cpuStats = MetricUtils::CPUStats();
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-
-    auto measuredVal = cpuStats.measure();
-    writeToBuffer(measuredVal, tupleBuffer, 0);
-
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, getSchema(measuredVal, "")));
-    NES_DEBUG("Total: " << measuredVal.getTotal());
-    NES_DEBUG("CPU1: " << measuredVal.getValues(1));
-    NES_DEBUG("CPU" << measuredVal.getNumCores() << ": " << measuredVal.getValues(measuredVal.getNumCores() - 1));
-}
-
-TEST_F(MonitoringStackTest, testSerializationGroups) {
-    MetricGroupPtr metricGroup = MetricGroup::create();
-
-    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
-    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
-    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
-
-    // add with simple data types
-    metricGroup->add("simpleInt_", 1);
-
-    // add cpu stats
-    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
-
-    // add network stats
-    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
-
-    // add disk stats
-    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
-
-    // add mem stats
-    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    metricGroup->getSample(tupleBuffer);
-
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
-}
-
-TEST_F(MonitoringStackTest, testDeserializationMetricValues) {
-    MetricGroupPtr metricGroup = MetricGroup::create();
-
-    Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
-    Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
-    Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
-    Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
-
-    // add with simple data types
-    metricGroup->add("simpleInt_", 1);
-
-    // add cpu stats
-    metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
-
-    // add network stats
-    metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
-
-    // add disk stats
-    metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
-
-    // add mem stats
-    metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
-
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    metricGroup->getSample(tupleBuffer);
-
-    auto schema = metricGroup->createSchema();
-    auto deserMem = MemoryMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::MEMORY_METRICS_DESC);
-    EXPECT_TRUE(deserMem != MemoryMetrics{});
-    EXPECT_TRUE(deserMem.TOTAL_RAM == memStats.measure().TOTAL_RAM);
-
-    auto deserCpu = CpuMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::CPU_METRICS_DESC);
-    EXPECT_TRUE(deserCpu.getNumCores() == cpuStats.measure().getNumCores());
-    EXPECT_TRUE(deserCpu.getValues(1).user > 0);
-
-    auto deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::NETWORK_METRICS_DESC);
-    EXPECT_TRUE(deserNw.getInterfaceNum() == networkStats.measure().getInterfaceNum());
-
-    auto deserDisk = DiskMetrics::fromBuffer(schema, tupleBuffer, MonitoringPlan::DISK_METRICS_DESC);
-    EXPECT_TRUE(deserDisk.fBlocks == diskStats.measure().fBlocks);
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
-}
-
-TEST_F(MonitoringStackTest, testDeserializationMetricGroup) {
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-
-    //worker side
-    MetricGroupPtr metricGroup = plan->createMetricGroup(MetricCatalog::NesMetrics());
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    metricGroup->getSample(tupleBuffer);
-
-    // coordinator side
-    auto schema = metricGroup->createSchema();
-    GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
-
-    EXPECT_TRUE(parsedValues.cpuMetrics.value()->getTotal().user > 0);
-    EXPECT_TRUE(parsedValues.memoryMetrics.value()->FREE_RAM > 0);
-    EXPECT_TRUE(parsedValues.diskMetrics.value()->fBavail > 0);
-}
-
 TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
@@ -403,8 +287,7 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringStackTest, requestMonitoringData) {
-
+TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsBuffer) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
@@ -430,17 +313,81 @@ TEST_F(MonitoringStackTest, requestMonitoringData) {
     // requesting the monitoring data
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
+    auto schema = plan->createSchema();
+    EXPECT_TRUE(schema->getSize() > 1);
 
     auto iterations = 50;
 
     for (int i = 0; i <= iterations; i++) {
-        auto [schema, tupleBuffer] = crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan);
+        auto tupleBuffer = bufferManager->getBufferBlocking();
+        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
+        crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
 
-        NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
-        EXPECT_TRUE(schema->getSize() > 1);
+        NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
         EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
         tupleBuffer.release();
-        schema.reset();
+    }
+
+    //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
+
+    NES_INFO("MonitoringStackTest: Stopping worker");
+    bool retStopWrk1 = wrk1->stop(false);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("MonitoringStackTest: stopping coordinator");
+    bool retStopCord = crd->stopCoordinator(false);
+    EXPECT_TRUE(retStopCord);
+}
+
+TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsJson) {
+    crdConf->resetCoordinatorOptions();
+    wrkConf->resetWorkerOptions();
+
+    NES_INFO("MonitoringStackTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
+    uint64_t port = crd->startCoordinator(false);
+    EXPECT_NE(port, 0);
+    NES_INFO("MonitoringStackTest: Coordinator started successfully");
+
+    NES_INFO("MonitoringStackTest: Start worker 1");
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart1 = wrk1->start(false, false);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("MonitoringStackTest: Worker1 started successfully");
+
+    bool retConWrk1 = wrk1->connect();
+    EXPECT_TRUE(retConWrk1);
+    NES_INFO("MonitoringStackTest: Worker 1 connected ");
+
+    // requesting the monitoring data
+    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
+    auto plan = MonitoringPlan::create(metrics);
+    auto schema = plan->createSchema();
+    EXPECT_TRUE(schema->getSize() > 1);
+
+    auto iterations = 1;
+
+    for (int i = 0; i <= iterations; i++) {
+        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
+        auto json = crd->getMonitoringService()->requestMonitoringDataAsJson("127.0.0.1", port + 10, plan);
+
+        NES_INFO(json.to_string());
+        EXPECT_TRUE(json.has_field("disk"));
+        EXPECT_EQ(json["disk"].size(), 5);
+
+        EXPECT_TRUE(json.has_field("cpu"));
+        auto numCores = json["cpu"]["NUM_CORES"].as_integer();
+        EXPECT_EQ(json["cpu"].size(), numCores+2);
+
+        EXPECT_TRUE(json.has_field("network"));
+        EXPECT_TRUE(json["network"].size() > 0);
+
+        EXPECT_TRUE(json.has_field("memory"));
+        EXPECT_EQ(json["memory"].size(), 13);
     }
 
     //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));

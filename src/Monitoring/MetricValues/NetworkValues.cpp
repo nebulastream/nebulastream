@@ -21,11 +21,15 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
+#include <Common/DataTypes/FixedChar.hpp>
 
 namespace NES {
 
 SchemaPtr NetworkValues::getSchema(const std::string& prefix) {
+    DataTypePtr intNameField = std::make_shared<FixedChar>(20);
+
     SchemaPtr schema = Schema::create()
+                           ->addField(prefix + "name", BasicType::UINT64)
                            ->addField(prefix + "rBytes", BasicType::UINT64)
                            ->addField(prefix + "rPackets", BasicType::UINT64)
                            ->addField(prefix + "rErrs", BasicType::UINT64)
@@ -57,12 +61,14 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     if (buf.getNumberOfTuples() > 1) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
     }
-    if (!(UtilityFunctions::endsWith(schema->fields[i]->getName(), "rBytes")
-          && UtilityFunctions::endsWith(schema->fields[i + 15]->getName(), "tCompressed"))) {
+    if (!(UtilityFunctions::endsWith(schema->fields[i]->getName(), "name")
+          && UtilityFunctions::endsWith(schema->fields[i + 16]->getName(), "tCompressed"))) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
     auto layout = NodeEngine::createRowLayout(schema);
+
+    output.interfaceName = layout->getValueField<uint64_t>(0, i++)->read(buf);
 
     output.rBytes = layout->getValueField<uint64_t>(0, i++)->read(buf);
     output.rPackets = layout->getValueField<uint64_t>(0, i++)->read(buf);
@@ -85,6 +91,30 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     return output;
 }
 
+web::json::value NetworkValues::toJson() {
+    web::json::value metricsJson{};
+
+    metricsJson["R_BYTES"] = web::json::value::number(rBytes);
+    metricsJson["R_PACKETS"] = web::json::value::number(rPackets);
+    metricsJson["R_ERRS"] = web::json::value::number(rErrs);
+    metricsJson["R_DROP"] = web::json::value::number(rDrop);
+    metricsJson["R_FIFO"] = web::json::value::number(rFifo);
+    metricsJson["R_FRAME"] = web::json::value::number(rFrame);
+    metricsJson["R_COMPRESSED"] = web::json::value::number(rCompressed);
+    metricsJson["R_MULTICAST"] = web::json::value::number(rMulticast);
+
+    metricsJson["T_BYTES"] = web::json::value::number(tBytes);
+    metricsJson["T_PACKETS"] = web::json::value::number(tPackets);
+    metricsJson["T_ERRS"] = web::json::value::number(tErrs);
+    metricsJson["T_DROP"] = web::json::value::number(tDrop);
+    metricsJson["T_FIFO"] = web::json::value::number(tFifo);
+    metricsJson["T_COLLS"] = web::json::value::number(tColls);
+    metricsJson["T_CARRIER"] = web::json::value::number(tCarrier);
+    metricsJson["T_COMPRESSED"] = web::json::value::number(tCompressed);
+
+    return metricsJson;
+}
+
 void writeToBuffer(const NetworkValues& metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
     auto* tbuffer = buf.getBufferAs<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(NetworkValues) < buf.getBufferSize(), "NetworkValues: Content does not fit in TupleBuffer");
@@ -92,5 +122,14 @@ void writeToBuffer(const NetworkValues& metric, NodeEngine::TupleBuffer& buf, ui
     memcpy(tbuffer + byteOffset, &metric, sizeof(NetworkValues));
     buf.setNumberOfTuples(1);
 }
+
+bool NetworkValues::operator==(const NetworkValues& rhs) const {
+    return interfaceName == rhs.interfaceName && rBytes == rhs.rBytes && rPackets == rhs.rPackets && rErrs == rhs.rErrs
+        && rDrop == rhs.rDrop && rFifo == rhs.rFifo && rFrame == rhs.rFrame && rCompressed == rhs.rCompressed
+        && rMulticast == rhs.rMulticast && tBytes == rhs.tBytes && tPackets == rhs.tPackets && tErrs == rhs.tErrs
+        && tDrop == rhs.tDrop && tFifo == rhs.tFifo && tColls == rhs.tColls && tCarrier == rhs.tCarrier
+        && tCompressed == rhs.tCompressed;
+}
+bool NetworkValues::operator!=(const NetworkValues& rhs) const { return !(rhs == *this); }
 
 }// namespace NES

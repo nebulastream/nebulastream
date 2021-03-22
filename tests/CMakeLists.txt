@@ -469,6 +469,11 @@ add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.c
 target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
 
+# MonitoringSerializationTest
+add_executable(monitoring-serialization-test "UnitTests/Monitoring/MonitoringSerializationTest.cpp")
+target_link_libraries(monitoring-serialization-test nes ${GTEST_LIBRARIES})
+add_test(NAME monitoring-serialization-test COMMAND monitoring-serialization-test)
+
 ### MemorySourceIntegrationTest ###
 add_executable(memory-source-integration-test "Integration/MemorySourceIntegrationTest.cpp")
 target_link_libraries(memory-source-integration-test nes ${GTEST_LIBRARIES})

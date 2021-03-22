@@ -77,6 +77,12 @@ class MonitoringPlan {
     GroupedValues fromBuffer(std::shared_ptr<Schema> schema, NodeEngine::TupleBuffer& buf);
 
     /**
+     * @brief Returns the schema of the class.
+     * @return the schema
+     */
+    SchemaPtr createSchema();
+
+    /**
      * @brief Creates a serializable monitoring plan according to the Protobuf definition.
      * @return the serializable monitoring plan
      */
