@@ -34,6 +34,7 @@ class DynamicLayoutBuffer {
   public:
     DynamicLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity)
         : tupleBuffer(tupleBuffer), capacity(capacity), numberOfRecords(0) {}
+
     /**
      * @brief calculates the address/offset of ithRecord and jthField
      * @param ithRecord

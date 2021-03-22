@@ -684,4 +684,60 @@ TEST_F(DynamicMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout) {
     ASSERT_EQ(bindedColumnLayout->getNumberOfRecords(), NUM_TUPLES);
 }
 
+TEST_F(DynamicMemoryLayoutTest, getFieldViaFieldNameRowLayout) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+
+    DynamicRowLayoutPtr rowLayout;
+    ASSERT_NO_THROW(rowLayout = DynamicRowLayout::create(schema, true));
+    ASSERT_NE(rowLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    DynamicRowLayoutBufferPtr bindedRowLayout;
+    ASSERT_NO_THROW(bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+        static_cast<DynamicRowLayoutBuffer*>(rowLayout->bind(tupleBuffer).release())));
+    ASSERT_NE(bindedRowLayout, nullptr);
+
+
+    ASSERT_NO_THROW((DynamicRowLayoutField<uint8_t, true>::create("t1", bindedRowLayout)));
+    ASSERT_NO_THROW((DynamicRowLayoutField<uint16_t, true>::create("t2", bindedRowLayout)));
+    ASSERT_NO_THROW((DynamicRowLayoutField<uint32_t, true>::create("t3", bindedRowLayout)));
+
+
+
+    ASSERT_THROW((DynamicRowLayoutField<uint32_t, true>::create("t4", bindedRowLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicRowLayoutField<uint32_t, true>::create("t5", bindedRowLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicRowLayoutField<uint32_t, true>::create("t6", bindedRowLayout)), NES::NesRuntimeException);
+
+}
+
+TEST_F(DynamicMemoryLayoutTest, getFieldViaFieldNameColumnLayout) {
+    SchemaPtr schema =
+        Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
+
+    DynamicColumnLayoutPtr colLayout;
+    ASSERT_NO_THROW(colLayout = DynamicColumnLayout::create(schema, true));
+    ASSERT_NE(colLayout, nullptr);
+
+    auto tupleBuffer = bufferManager->getBufferBlocking();
+
+    DynamicColumnLayoutBufferPtr bindedColLayout;
+    ASSERT_NO_THROW(bindedColLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
+        static_cast<DynamicColumnLayoutBuffer*>(colLayout->bind(tupleBuffer).release())));
+    ASSERT_NE(bindedColLayout, nullptr);
+
+
+    ASSERT_NO_THROW((DynamicColumnLayoutField<uint8_t, true>::create("t1", bindedColLayout)));
+    ASSERT_NO_THROW((DynamicColumnLayoutField<uint16_t, true>::create("t2", bindedColLayout)));
+    ASSERT_NO_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t3", bindedColLayout)));
+
+
+
+    ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t4", bindedColLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t5", bindedColLayout)), NES::NesRuntimeException);
+    ASSERT_THROW((DynamicColumnLayoutField<uint32_t, true>::create("t6", bindedColLayout)), NES::NesRuntimeException);
+
+}
+
 }// namespace NES::NodeEngine::DynamicMemoryLayout

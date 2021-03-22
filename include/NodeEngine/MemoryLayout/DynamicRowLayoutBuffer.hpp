@@ -32,6 +32,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayout& dynamicRowLayout);
     FIELD_SIZE getRecordSize() { return dynamicRowLayout.getRecordSize(); }
     const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout.getFieldOffSets(); }
+    std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const { return dynamicRowLayout.getFieldIndexFromName(fieldName); };
 
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes

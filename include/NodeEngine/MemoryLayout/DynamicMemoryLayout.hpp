@@ -32,6 +32,7 @@ class DynamicMemoryLayout {
 
   public:
     DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize, std::vector<FIELD_SIZE>& fieldSizes);
+    std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const;
 
     virtual DynamicMemoryLayoutPtr copy() const = 0;
     /**
@@ -50,6 +51,7 @@ class DynamicMemoryLayout {
     bool checkBoundaryFieldChecks;
     uint64_t recordSize;
     std::vector<FIELD_SIZE> fieldSizes;
+    std::map<std::string, uint64_t> nameFieldIndexMap;
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

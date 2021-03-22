@@ -33,6 +33,7 @@ class DynamicRowLayoutField {
 
   public:
     static inline DynamicRowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, DynamicRowLayoutBufferPtr& layoutBuffer);
+    static inline DynamicRowLayoutField<T, boundaryChecks> create(std::string fieldName, DynamicRowLayoutBufferPtr& layoutBuffer);
     inline T& operator[](size_t recordIndex);
 
   private:
@@ -59,6 +60,17 @@ DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicRow
     auto offSet = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
     auto basePointer = bufferBasePointer + offSet;
     return DynamicRowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
+}
+
+template<class T, bool boundaryChecks>
+inline DynamicRowLayoutField<T, boundaryChecks>
+DynamicRowLayoutField<T, boundaryChecks>::create(std::string fieldName, DynamicRowLayoutBufferPtr& layoutBuffer) {
+    auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
+    if (fieldIndex.has_value()) {
+        return DynamicRowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);
+    } else {
+        NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
+    }
 }
 
 template<class T, bool boundaryChecks>
