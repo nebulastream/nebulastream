@@ -17,8 +17,8 @@
 #ifndef NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP
 #define NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP
 
+#include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <map>
-#include <memory>
 #include <vector>
 
 namespace NES {
@@ -34,9 +34,9 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class GlobalQueryNode;
 typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
+}// namespace NES
 
-class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+namespace NES::Optimizer {
 
 class SyntaxBasedCompleteQueryMergerRule;
 typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQueryMergerRulePtr;
@@ -82,17 +82,12 @@ typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQ
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class SyntaxBasedCompleteQueryMergerRule {
+class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
 
   public:
     static SyntaxBasedCompleteQueryMergerRulePtr create();
 
-    /**
-     * @brief apply L0QueryMerger rule on the globalQuery plan
-     * @param globalQueryPlan: the global query plan
-     * @return true if successful else false
-     */
-    bool apply(const GlobalQueryPlanPtr& globalQueryPlan);
+    bool apply(const GlobalQueryPlanPtr& globalQueryPlan) override;
 
   private:
     explicit SyntaxBasedCompleteQueryMergerRule();
@@ -110,5 +105,5 @@ class SyntaxBasedCompleteQueryMergerRule {
     bool areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
                           std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_SYNTAXBASEDCOMPLETEQUERYMERGERRULE_HPP

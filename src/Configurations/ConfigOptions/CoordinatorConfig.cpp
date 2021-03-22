@@ -42,10 +42,11 @@ CoordinatorConfig::CoordinatorConfig() {
         ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Number buffers in task local buffer pool.");
     numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 64,
                                                                             "Number buffers in source local buffer pool.");
-
     bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
+    queryMergerRule = ConfigOption<std::string>::create("queryMergerRule", "SyntaxBasedCompleteQueryMergerRule",
+                                                        "The rule to be used for performing query merging");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -67,6 +68,7 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
             setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
+            setQueryMergerRule(config["queryMergerRule"].As<std::string>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -105,6 +107,8 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setnumberOfBuffersPerPipeline(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool") {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
+            } else if (it->first == "--queryMergerRule") {
+                setQueryMergerRule(it->second);
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -129,6 +133,7 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    setQueryMergerRule(queryMergerRule->getDefaultValue());
 }
 
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
@@ -188,5 +193,9 @@ void CoordinatorConfig::setBufferSizeInBytes(uint64_t sizeInBytes) { bufferSizeI
 IntConfigOption CoordinatorConfig::getQueryBatchSize() { return queryBatchSize; }
 
 void CoordinatorConfig::setQueryBatchSize(uint32_t batchSize) { queryBatchSize->setValue(batchSize); }
+
+StringConfigOption CoordinatorConfig::getQueryMergerRule() { return queryMergerRule; }
+
+void CoordinatorConfig::setQueryMergerRule(std::string queryMergerRuleValue) { queryMergerRule->setValue(queryMergerRuleValue); }
 
 }// namespace NES

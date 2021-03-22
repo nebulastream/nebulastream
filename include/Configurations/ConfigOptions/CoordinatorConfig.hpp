@@ -215,6 +215,18 @@ class CoordinatorConfig {
      */
     void setQueryBatchSize(uint32_t batchSize);
 
+    /**
+     * @brief Get the query merger rule
+     * @return query merger rule selected by user
+     */
+    StringConfigOption getQueryMergerRule();
+
+    /**
+     * @brief Set the query merger rule
+     * @param queryMergerRule : the query merger rule name
+     */
+    void setQueryMergerRule(std::string queryMergerRule);
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -234,6 +246,7 @@ class CoordinatorConfig {
     IntConfigOption numWorkerThreads;
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
+    StringConfigOption queryMergerRule;
 };
 
 }// namespace NES

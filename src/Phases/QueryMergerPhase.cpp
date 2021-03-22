@@ -19,18 +19,33 @@
 #include <Phases/QueryMergerPhase.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
-QueryMergerPhasePtr QueryMergerPhase::create() { return std::make_shared<QueryMergerPhase>(QueryMergerPhase()); }
+QueryMergerPhasePtr QueryMergerPhase::create(std::string queryMergerRuleName) {
+    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(queryMergerRuleName));
+}
 
-QueryMergerPhase::QueryMergerPhase() {
-    syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
-    signatureBasedCompleteQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+QueryMergerPhase::QueryMergerPhase(std::string queryMergerRuleName) {
+
+    auto queryMergerEnum = stringToMergerRuleEnum.find(queryMergerRuleName);
+
+    if (queryMergerEnum == stringToMergerRuleEnum.end()) {
+        NES_FATAL_ERROR("Unhandled Query Merger Rule Type " << queryMergerRuleName);
+    }
+
+    switch (queryMergerEnum->second) {
+        case MergerRule::SyntaxBasedCompleteQueryMergerRule:
+            queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+            break;
+        case MergerRule::Z3SignatureBasedCompleteQueryMergerRule:
+            queryMergerRule = SignatureBasedCompleteQueryMergerRule::create();
+            break;
+    }
 }
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
     NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
-    return signatureBasedCompleteQueryMergerRule->apply(globalQueryPlan);
+    return queryMergerRule->apply(globalQueryPlan);
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

@@ -31,21 +31,21 @@
 namespace NES {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                       GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging,
-                                                       z3::ContextPtr z3Context)
+                                                       GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
+                                                       bool enableQueryMerging, std::string queryMergerRule)
     : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), streamCatalog(streamCatalog),
       globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
-    queryMergerPhase = QueryMergerPhase::create();
+    queryMergerPhase = Optimizer::QueryMergerPhase::create(queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryRewritePhase = QueryRewritePhase::create(streamCatalog);
     signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                                 GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging,
-                                                                 z3::ContextPtr z3Context) {
+                                                                 GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
+                                                                 bool enableQueryMerging, std::string queryMergerRule) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(
-        GlobalQueryPlanUpdatePhase(queryCatalog, streamCatalog, globalQueryPlan, enableQueryMerging, z3Context));
+        GlobalQueryPlanUpdatePhase(queryCatalog, streamCatalog, globalQueryPlan, z3Context, enableQueryMerging, queryMergerRule));
 }
 
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry>& queryRequests) {
@@ -106,17 +106,17 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
 
                 signatureInferencePhase->execute(queryPlan);
 
-                    //                auto endTypeInferenceTime2 =
-                    //                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    //                        .count();
+                //                auto endTypeInferenceTime2 =
+                //                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                //                        .count();
 
-                    //                recordedTimeStamp << "startTypeInferenceTime2," << startTypeInferenceTime2 << ",endTypeInferenceTime2,"
-                    //                                  << endTypeInferenceTime2;
+                //                recordedTimeStamp << "startTypeInferenceTime2," << startTypeInferenceTime2 << ",endTypeInferenceTime2,"
+                //                                  << endTypeInferenceTime2;
 
-                    //                auto startAddGlobalQueryPlan =
-                    //                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
-                    //                        .count();
-                    NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                //                auto startAddGlobalQueryPlan =
+                //                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                //                        .count();
+                NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryPlan);
                 //                auto endAddGlobalQueryPlan =
                 //                    std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())

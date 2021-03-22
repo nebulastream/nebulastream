@@ -17,6 +17,7 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <filesystem>
+#include <syscall.h>
 #include <util/BenchmarkUtils.hpp>
 #include <util/E2EBase.hpp>
 
@@ -73,8 +74,12 @@ void setUp() {
 int main() {
     NES::setupLogging("E2EMapBenchmark.log", LOG_LEVEL);
     std::cout << "Setup E2EMapBenchmark test class." << std::endl;
-
     setUp();
+
+    std::cout << __FUNCTION__ << " called by process " << ::getpid() << " and by thread id " << syscall(__NR_gettid)
+              << " (parent: " << ::getppid() << ")" << std::endl;
+
+    sleep(20);
 
     string query = "Query::from(\"benchmark\").sink(NullOutputSinkDescriptor::create());";
 

@@ -20,12 +20,9 @@
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <REST/RestServer.hpp>
 #include <Services/QueryRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
@@ -72,7 +69,7 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     globalQueryPlan = GlobalQueryPlan::create();
     queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(
         globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
-        coordinatorConfig->getEnableQueryMerging()->getValue());
+        coordinatorConfig->getEnableQueryMerging()->getValue(), coordinatorConfig->getQueryMergerRule()->getValue());
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue);
 }
 

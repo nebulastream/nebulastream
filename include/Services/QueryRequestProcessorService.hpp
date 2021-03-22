@@ -73,7 +73,8 @@ class QueryRequestProcessorService {
     explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                           QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                          QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging);
+                                          QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                          std::string queryMergerRule);
 
     ~QueryRequestProcessorService();
     /**
