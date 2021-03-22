@@ -17,12 +17,7 @@
 #ifndef NES_SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
 #define NES_SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
 
-#include <memory>
-
-namespace NES {
-class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
-}// namespace NES
+#include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
 namespace NES::Optimizer {
 
@@ -65,17 +60,13 @@ typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPart
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class SignatureBasedPartialQueryMergerRule {
+class SignatureBasedPartialQueryMergerRule : public BaseQueryMergerRule {
 
   public:
     static SignatureBasedPartialQueryMergerRulePtr create();
     ~SignatureBasedPartialQueryMergerRule();
 
-    /**
-     * @brief apply the rule on Global Query Plan
-     * @param globalQueryPlan : the global query plan
-     */
-    bool apply(GlobalQueryPlanPtr globalQueryPlan);
+    bool apply(const GlobalQueryPlanPtr& globalQueryPlan) override;
 
   private:
     explicit SignatureBasedPartialQueryMergerRule();

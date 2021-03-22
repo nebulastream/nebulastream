@@ -23,7 +23,7 @@
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 SyntaxBasedCompleteQueryMergerRule::SyntaxBasedCompleteQueryMergerRule() {}
 
@@ -195,4 +195,4 @@ bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(OperatorNodePtr target
     NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Target and address operators are not matched.");
     return false;
 }
-}// namespace NES
+}// namespace NES::Optimizer

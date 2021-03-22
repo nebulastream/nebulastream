@@ -39,7 +39,7 @@ SignatureBasedPartialQueryMergerRulePtr SignatureBasedPartialQueryMergerRule::cr
     return std::make_shared<SignatureBasedPartialQueryMergerRule>(SignatureBasedPartialQueryMergerRule());
 }
 
-bool SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
+bool SignatureBasedPartialQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
     NES_INFO("SignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
