@@ -66,9 +66,40 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
     bool pushRecord(std::tuple<Types...> record);
 
   private:
-    std::vector<COL_OFFSET_SIZE> columnOffsets;
+    template <size_t I = 0, typename... Ts>
+    typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFields(std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE> &fieldSizes);
+
+    template <size_t I = 0, typename... Ts>
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFields(std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE> &fieldSizes);
+
+
+  private:
+    const std::vector<COL_OFFSET_SIZE> columnOffsets;
     const DynamicColumnLayout& dynamicColLayout;
+    const uint8_t* basePointer;
 };
+
+template <size_t I, typename... Ts>
+typename std::enable_if<I == sizeof...(Ts), void>::type
+DynamicColumnLayoutBuffer::copyTupleFields(std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE> &fieldSizes)
+{
+    // Iterated through tuple, so simply return
+    ((void)tup);
+    ((void)fieldSizes);
+    return;
+}
+
+template <size_t I, typename... Ts>
+typename std::enable_if<(I < sizeof...(Ts)), void>::type
+DynamicColumnLayoutBuffer::copyTupleFields(std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE> &fieldSizes)
+{
+    // Get current type of tuple and cast address to this type pointer
+    auto address = basePointer + columnOffsets[I] + fieldSizes[I] * numberOfRecords;
+    *((typename std::tuple_element<I, std::tuple<Ts...>>::type *)(address)) = std::get<I>(tup);
+
+    // Get to the next field of tuple
+    copyTupleFields<I + 1>(tup, fieldSizes);
+}
 
 template<bool boundaryChecks, typename... Types>
 bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
@@ -76,23 +107,11 @@ bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
         NES_WARNING("TupleBuffer is full and thus no tuple can be added!");
         return false;
     }
-    auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
-    auto fieldSizes = dynamicColLayout.getFieldSizes();
 
-    auto address = &(byteBuffer[0]);
-    size_t tupleIndex = 0;
-    auto fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks);
+    copyTupleFields(record, this->getFieldSizes());
+    ++numberOfRecords;
 
-    // std::apply iterates over tuple and copies via memcpy the fields from retTuple to the buffer
-    std::apply(
-        [&tupleIndex, &address, &fieldAddress, fieldSizes, this](auto&&... args) {
-            ((fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks),
-              memcpy(fieldAddress, &args, fieldSizes[tupleIndex]), ++tupleIndex),
-             ...);
-        },
-        record);
-
-    tupleBuffer.setNumberOfTuples(++numberOfRecords);
+    tupleBuffer.setNumberOfTuples(numberOfRecords);
     return true;
 }
 
