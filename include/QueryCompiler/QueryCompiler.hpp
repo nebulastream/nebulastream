@@ -38,14 +38,14 @@ typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
  */
 class QueryCompiler {
   public:
-    QueryCompiler();
+    QueryCompiler(uint64_t numberOfBuffersPerPipeline);
     ~QueryCompiler() = default;
     /**
      * Creates a new query compiler
      * @param codeGenerator
      * @return
      */
-    static QueryCompilerPtr create();
+    static QueryCompilerPtr create(uint64_t numberOfBuffersPerPipeline);
     /**
      * @brief compiles a queryplan to a executable query plan
      * @param queryPlan
@@ -56,9 +56,11 @@ class QueryCompiler {
   private:
     void compilePipelineStages(GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder, CodeGeneratorPtr codeGenerator,
                                PipelineContextPtr context);
+
+    uint64_t numberOfBuffersPerPipeline;
 };
 
-QueryCompilerPtr createDefaultQueryCompiler();
+QueryCompilerPtr createDefaultQueryCompiler(uint64_t numberOfBuffersPerPipeline);
 
 }// namespace NES
 

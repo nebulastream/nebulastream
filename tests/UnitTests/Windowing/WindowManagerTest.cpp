@@ -100,7 +100,7 @@ class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExe
             [this](TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(operatorHandlers)){
+            std::move(operatorHandlers), 12){
             // nop
         };
 

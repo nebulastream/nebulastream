@@ -44,7 +44,7 @@ class OPCSource : public DataSource {
      * @param password for authentication if needed
      */
     OPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-              std::string url, UA_NodeId nodeId, std::string password, std::string user, OperatorId operatorId);
+              std::string url, UA_NodeId nodeId, std::string password, std::string user, OperatorId operatorId, size_t numSourceLocalBuffers);
 
     /**
      * @brief destructor of OPC source that disconnects the queue before deconstruction

@@ -27,11 +27,11 @@
 #include <utility>
 namespace NES {
 
-QueryCompiler::QueryCompiler() {
+QueryCompiler::QueryCompiler(uint64_t numberOfBuffersPerPipeline): numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
     // nop
 }
 
-QueryCompilerPtr QueryCompiler::create() { return std::make_shared<QueryCompiler>(); }
+QueryCompilerPtr QueryCompiler::create(uint64_t numberOfBuffersPerPipeline) { return std::make_shared<QueryCompiler>(numberOfBuffersPerPipeline); }
 
 // TODO compiler folks please check the following statements
 /**
@@ -153,7 +153,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                         queryManager->addWorkForNextPipeline(buffer, childPipeline);
                     }
                 },
-                holder.operatorHandlers);
+                holder.operatorHandlers, numberOfBuffersPerPipeline);
         } else {
             // invoke sink
             auto& sinks = builder.getSinks();
@@ -171,7 +171,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
                 [sinks, builder](NodeEngine::TupleBuffer&) {
                     NES_ERROR("QueryCompiler: we cant emit to a sink, if no worker context is provided");
                 },
-                holder.operatorHandlers);
+                holder.operatorHandlers, numberOfBuffersPerPipeline);
         }
         uint32_t numOfProducers = holder.producers.size();
         //This is not something to look at, please pass by
@@ -194,6 +194,6 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
     }
 }
 
-QueryCompilerPtr createDefaultQueryCompiler() { return QueryCompiler::create(); }
+QueryCompilerPtr createDefaultQueryCompiler(uint64_t numberOfBuffersPerPipeline) { return QueryCompiler::create(numberOfBuffersPerPipeline); }
 
 }// namespace NES

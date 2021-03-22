@@ -330,7 +330,7 @@ TEST_F(SinkTest, testCSVZMQSink) {
 
     // Create ZeroMQ Data Source.
     auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1, 12);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
@@ -380,7 +380,7 @@ TEST_F(SinkTest, testTextZMQSink) {
 
     // Create ZeroMQ Data Source.
     auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1, 12);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
@@ -418,7 +418,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
 
     // Create ZeroMQ Data Source.
     auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1, 12);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.
@@ -464,7 +464,7 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
 
     // Create ZeroMQ Data Source.
     auto zmq_source =
-        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1);
+        createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), "localhost", 666555, 1, 12);
     std::cout << zmq_source->toString() << std::endl;
 
     // Start thread for receivingh the data.

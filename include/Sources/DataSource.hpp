@@ -66,7 +66,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * @param schema of the data that this source produces
      */
     explicit DataSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                        OperatorId operatorId);
+                        OperatorId operatorId, size_t numSourceLocalBuffers);
 
     DataSource() = delete;
 
@@ -180,6 +180,7 @@ class DataSource : public NodeEngine::Reconfigurable {
     uint64_t generatedTuples;
     uint64_t generatedBuffers;
     uint64_t numBuffersToProcess;
+    uint64_t numSourceLocalBuffers;
     std::chrono::milliseconds gatheringInterval;
     OperatorId operatorId;
     SourceType type;

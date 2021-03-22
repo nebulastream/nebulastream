@@ -35,7 +35,7 @@ class MonitoringSource : public DefaultSource {
   public:
     MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, NodeEngine::BufferManagerPtr bufferManager,
                      NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, uint64_t frequency,
-                     OperatorId operatorId);
+                     OperatorId operatorId, size_t numSourceLocalBuffers);
 
     SourceType getType() const override;
 

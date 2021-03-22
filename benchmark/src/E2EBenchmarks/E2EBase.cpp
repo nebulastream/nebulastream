@@ -23,14 +23,6 @@
 
 using namespace std;
 
-const uint64_t EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS = 1;
-const uint64_t STARTUP_SLEEP_INTERVAL_IN_SECONDS = 3;
-const uint64_t NUMBER_OF_MEASUREMENTS_TO_COLLECT = 5;
-
-const uint64_t NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER = 1048576;
-const uint64_t BUFFER_SIZE_IN_BYTES = 4096;
-const uint64_t NUMBER_OF_BUFFER_TO_PRODUCE = 5000000;//5000000
-
 static uint64_t portOffset = 13;
 
 string E2EBase::getTsInRfc3339() {
@@ -82,9 +74,6 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
 }
 
 std::string E2EBase::runExperiment() {
-    std::cout << "setup experiment with parameter threadCntWorker=" << numberOfWorkerThreads
-              << " threadCntCoordinator=" << numberOfCoordinatorThreads << " sourceCnt=" << sourceCnt
-              << " mode=" << getInputOutputModeAsString(mode) << " query=" << query << std::endl;
 
     std::cout << "run query" << std::endl;
     runQuery();
@@ -93,12 +82,11 @@ std::string E2EBase::runExperiment() {
     return getResult();
 }
 
-E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode, std::string query)
-    : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt), mode(mode), query(query) {
+E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, E2EBenchmarkConfigPtr config)
+    : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt), config(config) {
     std::cout << "run with configuration:"
               << " threadCntWorker=" << numberOfWorkerThreads << " threadCntCoordinator=" << numberOfCoordinatorThreads
-              << " sourceCnt=" << sourceCnt << " mode=" << getInputOutputModeAsString(mode)
-        << " query=" << query << std::endl;
+              << " sourceCnt=" << sourceCnt << std::endl;
     setup();
 }
 
@@ -113,7 +101,7 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
                 readyToMeasure = true;
             } else {
                 std::cout << "engine not ready yet" << std::endl;
-                std::this_thread::sleep_for(std::chrono::seconds(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS));
+                std::this_thread::sleep_for(std::chrono::seconds(config->getExperimentMeasureIntervalInSeconds()->getValue()));
             }
         }
     }
@@ -124,8 +112,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
     std::cout << std::put_time(std::localtime(&inTime), "%Y-%m-%d %X") << " E2EBase: Started Measurement for query id=" << queryId
               << std::endl;
 
-    while (runCounter < NUMBER_OF_MEASUREMENTS_TO_COLLECT) {
-        int64_t nextPeriodStartTime = EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS * 1000
+    while (runCounter < config->getNumberOfMeasurementsToCollect()->getValue()) {
+        int64_t nextPeriodStartTime = config->getExperimentMeasureIntervalInSeconds()->getValue() * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
@@ -155,8 +143,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
 
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        while (curTime < nextPeriodStartTime && runCounter != NUMBER_OF_MEASUREMENTS_TO_COLLECT) {
-            std::this_thread::sleep_for(std::chrono::seconds(EXPERIMENT_MEARSUREMENT_INTERVAL_IN_SECONDS));
+        while (curTime < nextPeriodStartTime && runCounter != config->getNumberOfMeasurementsToCollect()->getValue()) {
+            std::this_thread::sleep_for(std::chrono::seconds(config->getExperimentMeasureIntervalInSeconds()->getValue()));
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
@@ -168,7 +156,7 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
               << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
 
     if (subPlanIdToTuplelCnt.size() == 0) {
-        NES_ASSERT(subPlanIdToTuplelCnt.size() == NUMBER_OF_MEASUREMENTS_TO_COLLECT,
+        NES_ASSERT(subPlanIdToTuplelCnt.size() == config->getNumberOfMeasurementsToCollect()->getValue(),
                    "We cannot use this run as no data was measured");
     }
 
@@ -202,23 +190,17 @@ void E2EBase::setupSources() {
     out.close();
     wrk1->registerLogicalStream("input", testSchemaFileName);
 
-    if(mode == InputOutputMode::Auto)
-    {
+    auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
+    auto query = config->getQuery()->getValue();
+    if (mode == InputOutputMode::Auto) {
         //stateless queries use memMode
-        if(query.find("join") == std::string::npos && query.find("window") == std::string::npos)
-        {
+        if (query.find("join") == std::string::npos && query.find("window") == std::string::npos) {
             mode = InputOutputMode::MemMode;
-        }
-        else if(query.find("join") == std::string::npos && query.find("window") != std::string::npos)
-        {
+        } else if (query.find("join") != std::string::npos && query.find("windowByKey") == std::string::npos) {
             mode = InputOutputMode::JoinMode;
-        }
-        else if(query.find("join") != std::string::npos && query.find("window") == std::string::npos)
-        {
+        } else if (query.find("join") == std::string::npos && query.find("windowByKey") != std::string::npos) {
             mode = InputOutputMode::WindowMode;
-        }
-        else
-        {
+        } else {
             NES_FATAL_ERROR("Modus not supported, only either stateless, or window or join queries are allowed currently");
         }
     }
@@ -230,7 +212,7 @@ void E2EBase::setupSources() {
         srcConf->setSourceConfig("../tests/test_data/benchmark.csv");
         srcConf->setNumberOfTuplesToProducePerBuffer(0);
         srcConf->setSourceFrequency(0);
-        srcConf->setNumberOfBuffersToProduce(NUMBER_OF_BUFFER_TO_PRODUCE);
+        srcConf->setNumberOfBuffersToProduce(config->getNumberOfBuffersToProduce()->getValue());
         srcConf->setLogicalStreamName("input");
         srcConf->setSkipHeader(true);
         //register physical stream
@@ -263,7 +245,7 @@ void E2EBase::setupSources() {
             }
 
             NES::AbstractPhysicalStreamConfigPtr conf = NES::MemorySourceStreamConfig::create(
-                "MemorySource", "test_stream", "input", memArea, memAreaSize, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+                "MemorySource", "test_stream", "input", memArea, memAreaSize, config->getNumberOfBuffersToProduce()->getValue(), 0);
 
             wrk1->registerPhysicalStream(conf);
         }
@@ -291,7 +273,7 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream" + std::to_string(i), "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+                "LambdaSource", "test_stream" + std::to_string(i), "input", func, config->getNumberOfBuffersToProduce()->getValue(), 0);
 
             wrk1->registerPhysicalStream(conf);
         }
@@ -318,7 +300,7 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream" + std::to_string(i), "input", func, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+                "LambdaSource", "test_stream" + std::to_string(i), "input", func, config->getNumberOfBuffersToProduce()->getValue(), 0);
 
             wrk1->registerPhysicalStream(conf);
         }
@@ -366,11 +348,11 @@ void E2EBase::setupSources() {
             wrk1->registerLogicalStream("input2", testSchemaFileName);
 
             NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream1", "input1", func1, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+                "LambdaSource", "test_stream1", "input1", func1, config->getNumberOfBuffersToProduce()->getValue(), 0);
             wrk1->registerPhysicalStream(conf1);
 
             NES::AbstractPhysicalStreamConfigPtr conf2 = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream2", "input2", func2, NUMBER_OF_BUFFER_TO_PRODUCE, 0);
+                "LambdaSource", "test_stream2", "input2", func2, config->getNumberOfBuffersToProduce()->getValue(), 0);
             wrk1->registerPhysicalStream(conf2);
         }
     } else {
@@ -385,8 +367,10 @@ void E2EBase::setup() {
 
     NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    crdConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
-    crdConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
+    crdConf->setNumberOfBuffersInGlobalBufferManager(config->getNumberOfBuffersInGlobalBufferManager()->getValue());
+    crdConf->setnumberOfBuffersPerPipeline(config->getnumberOfBuffersPerPipeline()->getValue());
+    crdConf->setNumberOfBuffersInSourceLocalBufferPool(config->getNumberOfBuffersInSourceLocalBufferPool()->getValue());
+    crdConf->setBufferSizeInBytes(config->getBufferSizeInBytes()->getValue());
     crdConf->setRpcPort(4000 + portOffset);
     crdConf->setRestPort(8081 + portOffset);
 
@@ -402,8 +386,10 @@ void E2EBase::setup() {
     std::cout << "Cport=" << port << " CsetRpcPort=" << 4000 + portOffset << " CsetRestPort=" << 8081 + portOffset
               << " WsetRpcPort=" << port + 10 + portOffset << " WsetDataPort=" << port + 11 + portOffset << std::endl;
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-    wrkConf->setNumberOfBuffers(NUMBER_OF_BUFFERS_IN_BUFFER_MANAGER);
-    wrkConf->setBufferSizeInBytes(BUFFER_SIZE_IN_BYTES);
+    wrkConf->setNumberOfBuffersInGlobalBufferManager(config->getNumberOfBuffersInGlobalBufferManager()->getValue());
+    wrkConf->setnumberOfBuffersPerPipeline(config->getnumberOfBuffersPerPipeline()->getValue());
+    wrkConf->setNumberOfBuffersInSourceLocalBufferPool(config->getNumberOfBuffersInSourceLocalBufferPool()->getValue());
+    wrkConf->setBufferSizeInBytes(config->getBufferSizeInBytes()->getValue());
     wrk1 = std::make_shared<NES::NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
@@ -415,12 +401,13 @@ void E2EBase::setup() {
 }
 
 void E2EBase::runQuery() {
-    std::cout << "E2EBase: Submit query=" << query << std::endl;
-    queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+
+    std::cout << "E2EBase: Submit query=" << config->getQuery()->getValue() << std::endl;
+    queryId = queryService->validateAndQueueAddRequest(config->getQuery()->getValue(), "BottomUp");
     NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
 
     //give the system some seconds to come to steady mode
-    sleep(STARTUP_SLEEP_INTERVAL_IN_SECONDS);
+    sleep(config->getStartupSleepIntervalInSeconds()->getValue());
 
     runtime = recordStatistics(wrk1->getNodeEngine());
 }
@@ -446,13 +433,14 @@ std::string E2EBase::getResult() {
         tuplesProcessed += val.second;
     }
 
-    out << "," << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
+    out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
         << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed
         << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << "," << std::fixed
-        << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024 << std::endl;
+        << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024;
 
-    std::cout << "tuples per sec=" << std::fixed << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << std::endl;
+    std::cout << "tuples per sec=" << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << std::endl;
     std::cout << "runtime in sec=" << runtime.count() << std::endl;
+
     return out.str();
 }
 

@@ -69,7 +69,7 @@ int main() {
             "BM_SimpleMapQuery",
             TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
             SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                          ingestionRate, 1),
+                                          ingestionRate, 1, 12),
             SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",BufferSize,SchemaSize",
             "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
     }

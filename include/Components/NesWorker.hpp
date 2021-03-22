@@ -28,8 +28,6 @@
 namespace NES {
 
 class NesWorker {
-    static constexpr auto DEFAULT_NUM_THREADS = 1;
-
   public:
     /**
      * @brief default constructor which creates a sensor node
@@ -187,7 +185,9 @@ class NesWorker {
     uint16_t localWorkerZmqPort;
     uint16_t numberOfSlots;
     uint16_t numWorkerThreads;
-    uint64_t numberOfBuffers;
+    uint32_t numberOfBuffersInGlobalBufferManager;
+    uint32_t numberOfBuffersPerPipeline;
+    uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
     NodeType type;
     std::atomic<bool> isRunning;

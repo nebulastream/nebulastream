@@ -26,10 +26,10 @@ E2EBenchmarkConfigPtr E2EBenchmarkConfig::create() { return std::make_shared<E2E
 E2EBenchmarkConfig::E2EBenchmarkConfig() {
     NES_INFO("Generated new Benchmark Config object. Configurations initialized with default values.");
 
-    numberOfWorkerThreads =
-        ConfigOption<std::string>::create("numberOfWorkerThreads", "1", "Comma separated list of number of worker threads in the NES Worker.");
-    numberOfCoordinatorThreads =
-        ConfigOption<std::string>::create("numberOfCoordinatorThreads", "1", "Comma separated list of number of worker threads in the NES Coordinator.");
+    numberOfWorkerThreads = ConfigOption<std::string>::create(
+        "numberOfWorkerThreads", "1", "Comma separated list of number of worker threads in the NES Worker.");
+    numberOfCoordinatorThreads = ConfigOption<std::string>::create(
+        "numberOfCoordinatorThreads", "1", "Comma separated list of number of worker threads in the NES Coordinator.");
     numberOfSources = ConfigOption<std::string>::create("numberOfSources", "1", "Comma separated list of number of sources.");
 
     numberOfBuffersToProduce =
@@ -37,8 +37,8 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
     bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 1024, "buffer size in bytes.");
     numberOfBuffersInGlobalBufferManager =
         ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1048576, "Number buffers in global buffer pool.");
-    numberOfBuffersInTaskLocalBufferPool =
-        ConfigOption<uint32_t>::create("numberOfBuffersInTaskLocalBufferPool", 1024, "Number buffers in task local buffer pool.");
+    numberOfBuffersPerPipeline =
+        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 1024, "Number buffers in task local buffer pool.");
     numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 1024,
                                                                             "Number buffers in source local buffer pool.");
 
@@ -48,6 +48,13 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
     benchmarkName = ConfigOption<std::string>::create("benchmarkName", "E2ERunner.csv", "benchmark output file");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_NONE",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
+
+    experimentMeasureIntervalInSeconds =
+        ConfigOption<uint32_t>::create("experimentMeasureIntervalInSeconds", 1, "measuring duration of one sample");
+    startupSleepIntervalInSeconds = ConfigOption<uint32_t>::create("startupSleepIntervalInSeconds", 3,
+                                                                   "Sleep until the benchmark starts after query submission");
+    numberOfMeasurementsToCollect =
+        ConfigOption<uint32_t>::create("numberOfMeasurementsToCollect", 5, "Number of measurements taken before terminate");
 }
 
 void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -61,7 +68,7 @@ void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& fil
             setNumberOfCoordinatorThreads(config["numberOfCoordinatorThreads"].As<std::string>());
             setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint32_t>());
             setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
-            setNumberOfBuffersInTaskLocalBufferPool(config["numberOfBuffersInTaskLocalBufferPool"].As<uint32_t>());
+            setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
             setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
             setBufferSizeInBytes(config["bufferSizeInBytes"].As<uint32_t>());
             setNumberOfSources(config["numberOfSources"].As<std::string>());
@@ -70,6 +77,10 @@ void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& fil
             setInputOutputMode(config["inputOutputMode"].As<std::string>());
             setQuery(config["query"].As<std::string>());
             setLogLevel(config["logLevel"].As<std::string>());
+            setExperimentMeasureIntervalInSeconds(config["experimentMeasureIntervalInSeconds"].As<uint32_t>());
+            setStartupSleepIntervalInSeconds(config["startupSleepIntervalInSeconds"].As<uint32_t>());
+            setNumberOfMeasurementsToCollect(config["numberOfMeasurementsToCollect"].As<uint32_t>());
+
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -93,8 +104,8 @@ void E2EBenchmarkConfig::overwriteConfigWithCommandLineInput(const std::map<std:
                 setNumberOfBuffersToProduce(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInGlobalBufferManager") {
                 setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
-            } else if (it->first == "--numberOfBuffersInTaskLocalBufferPool") {
-                setNumberOfBuffersInTaskLocalBufferPool(stoi(it->second));
+            } else if (it->first == "--numberOfBuffersPerPipeline") {
+                setnumberOfBuffersPerPipeline(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool") {
                 setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
             } else if (it->first == "--bufferSizeInBytes") {
@@ -111,6 +122,12 @@ void E2EBenchmarkConfig::overwriteConfigWithCommandLineInput(const std::map<std:
                 setBenchmarkName(it->second);
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
+            } else if (it->first == "--experimentMeasureIntervalInSeconds") {
+                setExperimentMeasureIntervalInSeconds(stoi(it->second));
+            } else if (it->first == "--startupSleepIntervalInSeconds") {
+                setStartupSleepIntervalInSeconds(stoi(it->second));
+            } else if (it->first == "--numberOfMeasurementsToCollect") {
+                setNumberOfMeasurementsToCollect(stoi(it->second));
             } else {
                 NES_WARNING("Unknown configuration value :" << it->first);
             }
@@ -128,7 +145,7 @@ void E2EBenchmarkConfig::resetOptions() {
     setNumberOfCoordinatorThreads(numberOfCoordinatorThreads->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
-    setNumberOfBuffersInTaskLocalBufferPool(numberOfBuffersInTaskLocalBufferPool->getDefaultValue());
+    setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setBufferSizeInBytes(bufferSizeInBytes->getDefaultValue());
     setNumberOfSources(numberOfSources->getDefaultValue());
@@ -137,6 +154,9 @@ void E2EBenchmarkConfig::resetOptions() {
     setLogLevel(logLevel->getDefaultValue());
     setOutputFile(outputFile->getDefaultValue());
     setBenchmarkName(benchmarkName->getDefaultValue());
+    setExperimentMeasureIntervalInSeconds(experimentMeasureIntervalInSeconds->getDefaultValue());
+    setStartupSleepIntervalInSeconds(startupSleepIntervalInSeconds->getDefaultValue());
+    setNumberOfMeasurementsToCollect(numberOfMeasurementsToCollect->getDefaultValue());
 }
 
 void E2EBenchmarkConfig::setNumberOfWorkerThreads(std::string numberOfWorkerThreads) {
@@ -151,8 +171,8 @@ void E2EBenchmarkConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToP
 void E2EBenchmarkConfig::setNumberOfBuffersInGlobalBufferManager(uint32_t numberOfBuffersInGlobalBufferManager) {
     E2EBenchmarkConfig::numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager);
 }
-void E2EBenchmarkConfig::setNumberOfBuffersInTaskLocalBufferPool(uint32_t numberOfBuffersInTaskLocalBufferPool) {
-    E2EBenchmarkConfig::numberOfBuffersInTaskLocalBufferPool->setValue(numberOfBuffersInTaskLocalBufferPool);
+void E2EBenchmarkConfig::setnumberOfBuffersPerPipeline(uint32_t numberOfBuffersPerPipeline) {
+    E2EBenchmarkConfig::numberOfBuffersPerPipeline->setValue(numberOfBuffersPerPipeline);
 }
 void E2EBenchmarkConfig::setNumberOfBuffersInSourceLocalBufferPool(uint32_t numberOfBuffersInSourceLocalBufferPool) {
     E2EBenchmarkConfig::numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool);
@@ -181,8 +201,8 @@ const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersInGlobalBufferManage
     return numberOfBuffersInGlobalBufferManager;
 }
 
-const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersInTaskLocalBufferPool() const {
-    return numberOfBuffersInTaskLocalBufferPool;
+const IntConfigOption E2EBenchmarkConfig::getnumberOfBuffersPerPipeline() const {
+    return numberOfBuffersPerPipeline;
 }
 
 const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersInSourceLocalBufferPool() const {
@@ -205,4 +225,37 @@ StringConfigOption E2EBenchmarkConfig::getBenchmarkName() const { return benchma
 
 void E2EBenchmarkConfig::setBenchmarkName(std::string benchmarkName) {
     E2EBenchmarkConfig::benchmarkName->setValue(benchmarkName);
+}
+const IntConfigOption E2EBenchmarkConfig::getExperimentMeasureIntervalInSeconds() const {
+    return experimentMeasureIntervalInSeconds;
+}
+void E2EBenchmarkConfig::setExperimentMeasureIntervalInSeconds(uint32_t experimentMeasureIntervalInSeconds) {
+    E2EBenchmarkConfig::experimentMeasureIntervalInSeconds->setValue(experimentMeasureIntervalInSeconds);
+}
+const IntConfigOption E2EBenchmarkConfig::getStartupSleepIntervalInSeconds() const { return startupSleepIntervalInSeconds; }
+void E2EBenchmarkConfig::setStartupSleepIntervalInSeconds(uint32_t startupSleepIntervalInSeconds) {
+    E2EBenchmarkConfig::startupSleepIntervalInSeconds->setValue(startupSleepIntervalInSeconds);
+}
+const IntConfigOption E2EBenchmarkConfig::getNumberOfMeasurementsToCollect() const { return numberOfMeasurementsToCollect; }
+void E2EBenchmarkConfig::setNumberOfMeasurementsToCollect(uint32_t numberOfMeasurementsToCollect) {
+    E2EBenchmarkConfig::numberOfMeasurementsToCollect->setValue(numberOfMeasurementsToCollect);
+}
+
+std::string E2EBenchmarkConfig::toString() {
+    std::stringstream ss;
+    ss << " numberOfWorkerThreads=" << getNumberOfWorkerThreads()->getValue()
+       << " numberOfCoordinatorThreads=" << getNumberOfCoordinatorThreads()->getValue()
+       << " numberOfBuffersToProduce=" << getNumberOfBuffersToProduce()->getValue()
+       << " numberOfSources=" << getNumberOfSources()->getValue()
+       << " numberOfBuffersInGlobalBufferManager=" << getNumberOfBuffersInGlobalBufferManager()->getValue()
+       << " numberOfBuffersPerPipeline=" << getnumberOfBuffersPerPipeline()->getValue()
+       << " numberOfBuffersInSourceLocalBufferPool=" << getNumberOfBuffersInSourceLocalBufferPool()->getValue()
+       << " bufferSizeInBytes=" << getBufferSizeInBytes()->getValue() << " inputOutputMode=" << getInputOutputMode()->getValue()
+       << " outputFile=" << getOutputFile()->getValue() << " query=" << getQuery()->getValue()
+       << " experimentMeasureIntervalInSeconds=" << getExperimentMeasureIntervalInSeconds()->getValue()
+       << " logLevel=" << getLogLevel()->getValue()
+       << " inputOutputMode=" << getInputOutputMode()->getValue()
+       << " startupSleepIntervalInSeconds=" << getStartupSleepIntervalInSeconds()->getValue()
+       << " numberOfMeasurementsToCollect=" << getNumberOfMeasurementsToCollect()->getValue() << std::endl;
+    return ss.str();
 }

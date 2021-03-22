@@ -81,7 +81,7 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024);
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     /* Will be called before a test is executed. */
@@ -108,7 +108,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
             [this](TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(operatorHandlers)){
+            std::move(operatorHandlers), 12){
             // nop
         };
 

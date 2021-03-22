@@ -31,7 +31,7 @@ class NetworkSource : public DataSource {
 
   public:
     NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                  NetworkManagerPtr networkManager, NesPartition nesPartition);
+                  NetworkManagerPtr networkManager, NesPartition nesPartition, size_t numSourceLocalBuffers);
 
     ~NetworkSource();
 

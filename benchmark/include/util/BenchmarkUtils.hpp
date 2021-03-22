@@ -140,7 +140,7 @@ class BenchmarkUtils {
                                 uint64_t zmqPort = distr(gen);                                                                   \
                                 NES_WARNING("BenchmarkUtils: Starting zmq on port " << zmqPort);                                 \
                                 auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", zmqPort, streamConf,               \
-                                                                                 workerThreads, bufferSize, numBuffers);         \
+                                                                                 workerThreads, bufferSize, numBuffers, 12, 12);         \
                                                                                                                                  \
                                 BenchmarkUtils::runSingleExperimentSeconds = experimentDuration;                                 \
                                 BenchmarkUtils::periodLengthInSeconds = periodLength;                                            \

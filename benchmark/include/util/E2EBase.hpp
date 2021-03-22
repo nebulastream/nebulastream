@@ -30,6 +30,7 @@
 #include <benchmark/gbenchmark/src/gbenchmark/include/benchmark/benchmark.h>
 #include <chrono>
 #include <iostream>
+#include <util/E2EBenchmarkConfig.hpp>
 
 class E2EBase {
   public:
@@ -54,7 +55,7 @@ class E2EBase {
      */
     std::string runExperiment();
 
-    E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, InputOutputMode mode, std::string query);
+    E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, E2EBenchmarkConfigPtr config);
     ~E2EBase();
     static std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode);
     static E2EBase::InputOutputMode getInputOutputModeFromString(std::string mode);
@@ -98,8 +99,6 @@ class E2EBase {
     uint64_t numberOfWorkerThreads;
     uint64_t numberOfCoordinatorThreads;
     uint64_t sourceCnt;
-    InputOutputMode mode;
-    std::string query;
 
     std::chrono::nanoseconds runtime;
     NES::NesCoordinatorPtr crd;
@@ -114,6 +113,7 @@ class E2EBase {
     NES::SchemaPtr schema;
 
     std::vector<uint8_t*> memoryAreas;
+    E2EBenchmarkConfigPtr config;
 };
 typedef std::shared_ptr<E2EBase> E2EBasePtr;
 

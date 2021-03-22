@@ -98,7 +98,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     uint64_t numberOfBuffers = 5;
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1);
+                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12);
     source->start();
 
     for (uint64_t i = 0; i < numberOfBuffers; i++) {

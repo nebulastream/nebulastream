@@ -107,7 +107,7 @@ class WindowSource : public NES::DefaultSource {
                  const uint64_t numbersOfBufferToProduce, uint64_t frequency, bool varyWatermark, bool decreaseTime,
                  int64_t timestamp)
         : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
-                        1),
+                        1, 12),
           varyWatermark(varyWatermark), decreaseTime(decreaseTime), timestamp(timestamp) {}
 
     std::optional<TupleBuffer> receiveData() override {
@@ -276,7 +276,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
+                                                                    nodeEngine->getQueryManager(), 1, 12);
 
     auto query = TestQuery::from(testSource->getSchema()).filter(Attribute("id") < 5).sink(DummySink::create());
 
@@ -330,7 +330,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
+                                                                    nodeEngine->getQueryManager(), 1, 12);
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id")).sink(DummySink::create());
@@ -866,7 +866,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     uint64_t expectedBuf = 20;
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1);
+                                                                     nodeEngine->getQueryManager(), 1, 12);
 
     auto query1 = TestQuery::from(testSource1->getSchema());
 
@@ -874,7 +874,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     // creating P2
     auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1);
+                                                                     nodeEngine->getQueryManager(), 1, 12);
     auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
 
     // creating P3
