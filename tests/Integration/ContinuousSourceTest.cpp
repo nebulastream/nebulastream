@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
@@ -26,8 +26,8 @@
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/TestHarness.hpp>
+#include <Util/TestUtils.hpp>
 #include <iostream>
 
 using namespace std;
@@ -1506,9 +1506,9 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1540,8 +1540,8 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
     std::vector<Output> expectedOutput = {};
-    for (uint64_t i=0; i<numBufferToProduce; i++){
-        expectedOutput.push_back({1, 1, (i+1)*100});
+    for (uint64_t i = 0; i < numBufferToProduce; i++) {
+        expectedOutput.push_back({1, 1, (i + 1) * 100});
     }
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
@@ -1562,9 +1562,9 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt32())
-        ->addField("value", DataTypeFactory::createUInt32())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt32())
+                         ->addField("value", DataTypeFactory::createUInt32())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1596,8 +1596,8 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
         bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
     };
     std::vector<Output> expectedOutput = {};
-    for (uint64_t i=0; i< numBuffersToProduce; i++){
-        expectedOutput.push_back({1, 1, (i+1)*100});
+    for (uint64_t i = 0; i < numBuffersToProduce; i++) {
+        expectedOutput.push_back({1, 1, (i + 1) * 100});
     }
 
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", 360);
