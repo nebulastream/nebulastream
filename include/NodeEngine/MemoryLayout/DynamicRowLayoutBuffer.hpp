@@ -61,9 +61,42 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     template<bool boundaryChecks, typename... Types>
     bool pushRecord(std::tuple<Types...> record);
 
+
+  private:
+    template <size_t I = 0, typename... Ts>
+    typename std::enable_if<I == sizeof...(Ts), void>::type copyTuple(std::tuple<Ts...> tup, uint8_t* address);
+
+    template <size_t I = 0, typename... Ts>
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTuple(std::tuple<Ts...> tup, uint8_t* address);
+
+
   private:
     const DynamicRowLayout& dynamicRowLayout;
+    const uint8_t* basePointer;
 };
+
+
+template <size_t I, typename... Ts>
+typename std::enable_if<I == sizeof...(Ts), void>::type
+DynamicRowLayoutBuffer::copyTuple(std::tuple<Ts...> tup, uint8_t* address)
+{
+    // Iterated through tuple, so simply return
+    ((void)address);
+    ((void)tup);
+    return;
+}
+
+template <size_t I, typename... Ts>
+typename std::enable_if<(I < sizeof...(Ts)), void>::type
+DynamicRowLayoutBuffer::copyTuple(std::tuple<Ts...> tup, uint8_t* address)
+{
+    // Get current type of tuple and cast address to this type pointer
+    *((typename std::tuple_element<I, std::tuple<Ts...>>::type *)(address)) = std::get<I>(tup);
+
+    // Get to the next field of tuple
+    copyTuple<I + 1>(tup, address + sizeof(typename std::tuple_element<I, std::tuple<Ts...>>::type));
+}
+
 
 template<bool boundaryChecks, typename... Types>
 bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
@@ -72,20 +105,13 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
         return false;
     }
 
-    uint64_t offSet = calcOffset(numberOfRecords, 0, boundaryChecks);
-    auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
-    auto fieldSizes = dynamicRowLayout.getFieldSizes();
-    auto address = &(byteBuffer[offSet]);
-    size_t fieldIndex = 0;
+    uint64_t offSet = (numberOfRecords * this->getRecordSize());
+    uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
+    ++numberOfRecords;
 
-    // std::apply iterates over tuple and copies via memcpy the fields from retTuple to the buffer
-    std::apply(
-        [&fieldIndex, &address, fieldSizes](auto&&... args) {
-            ((memcpy(address, &args, fieldSizes[fieldIndex]), address = address + fieldSizes[fieldIndex], ++fieldIndex), ...);
-        },
-        record);
+    copyTuple(record, address);
 
-    tupleBuffer.setNumberOfTuples(++numberOfRecords);
+    tupleBuffer.setNumberOfTuples(numberOfRecords);
     NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
 
     return true;
