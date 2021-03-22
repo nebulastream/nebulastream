@@ -1553,7 +1553,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
  * Testing test harness CSV source
  */
 TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
-    uint64_t numBuffersToProduce = 2000;
+    uint64_t numBuffersToProduce = 1000;
 
     struct Car {
         uint32_t key;
@@ -1600,7 +1600,7 @@ TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
         expectedOutput.push_back({1, 1, (i+1)*100});
     }
 
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", 180);
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", 360);
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
