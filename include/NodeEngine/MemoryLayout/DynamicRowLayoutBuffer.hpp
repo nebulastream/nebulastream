@@ -64,10 +64,10 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
   private:
     template <size_t I = 0, typename... Ts>
-    typename std::enable_if<I == sizeof...(Ts), void>::type copyTuple(std::tuple<Ts...> tup, uint8_t* address);
+    typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFields(std::tuple<Ts...> tup, uint8_t* address);
 
     template <size_t I = 0, typename... Ts>
-    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTuple(std::tuple<Ts...> tup, uint8_t* address);
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFields(std::tuple<Ts...> tup, uint8_t* address);
 
 
   private:
@@ -78,7 +78,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
 template <size_t I, typename... Ts>
 typename std::enable_if<I == sizeof...(Ts), void>::type
-DynamicRowLayoutBuffer::copyTuple(std::tuple<Ts...> tup, uint8_t* address)
+DynamicRowLayoutBuffer::copyTupleFields(std::tuple<Ts...> tup, uint8_t* address)
 {
     // Iterated through tuple, so simply return
     ((void)address);
@@ -88,13 +88,13 @@ DynamicRowLayoutBuffer::copyTuple(std::tuple<Ts...> tup, uint8_t* address)
 
 template <size_t I, typename... Ts>
 typename std::enable_if<(I < sizeof...(Ts)), void>::type
-DynamicRowLayoutBuffer::copyTuple(std::tuple<Ts...> tup, uint8_t* address)
+DynamicRowLayoutBuffer::copyTupleFields(std::tuple<Ts...> tup, uint8_t* address)
 {
     // Get current type of tuple and cast address to this type pointer
     *((typename std::tuple_element<I, std::tuple<Ts...>>::type *)(address)) = std::get<I>(tup);
 
     // Get to the next field of tuple
-    copyTuple<I + 1>(tup, address + sizeof(typename std::tuple_element<I, std::tuple<Ts...>>::type));
+    copyTupleFields<I + 1>(tup, address + sizeof(typename std::tuple_element<I, std::tuple<Ts...>>::type));
 }
 
 
@@ -109,7 +109,8 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
     ++numberOfRecords;
 
-    copyTuple(record, address);
+
+    copyTupleFields(record, address);
 
     tupleBuffer.setNumberOfTuples(numberOfRecords);
     NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
