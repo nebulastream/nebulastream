@@ -77,14 +77,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
 
     static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads,
-                                uint64_t bufferSize, uint64_t numBuffers);
+                                uint64_t bufferSize, uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline);
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
     explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&,
-                        QueryCompilerPtr&&, uint64_t nodeEngineId);
+                        QueryCompilerPtr&&, uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline);
 
     virtual ~NodeEngine();
 
@@ -254,6 +254,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::atomic<bool> isRunning;
     mutable std::recursive_mutex engineMutex;
     uint64_t nodeEngineId;
+    uint32_t numberOfBuffersInGlobalBufferManager;
+    uint32_t numberOfBuffersInSourceLocalBufferPool;
+    uint32_t numberOfBuffersPerPipeline;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

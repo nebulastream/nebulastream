@@ -38,7 +38,9 @@ NesWorker::NesWorker(WorkerConfigPtr workerConfig, NodeType type)
       localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
       localWorkerRpcPort(workerConfig->getRpcPort()->getValue()), localWorkerZmqPort(workerConfig->getDataPort()->getValue()),
       numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
-      numberOfBuffers(workerConfig->getNumberOfBuffers()->getValue()),
+      numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
+      numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
+      numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
       numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
       topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
@@ -121,7 +123,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     try {
         nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads, bufferSizeInBytes,
-                                                    numberOfBuffers);
+                                                    numberOfBuffersInGlobalBufferManager, numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline);
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");

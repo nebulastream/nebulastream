@@ -183,7 +183,7 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
 
     auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31338, PhysicalStreamConfig::createEmpty());
     auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId,
-                                     user, password, 1);
+                                     user, password, 1, 12);
     opcSource->open();
     auto tuple_buffer = opcSource->receiveData();
     uint64_t value = 0;

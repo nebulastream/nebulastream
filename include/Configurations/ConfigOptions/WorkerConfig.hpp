@@ -136,14 +136,34 @@ class WorkerConfig {
     void setBufferSizeInBytes(uint64_t sizeInBytes);
 
     /**
-    * @brief gets a ConfigOption object with number of buffers
-    */
-    IntConfigOption getNumberOfBuffers();
+     * @brief gets a ConfigOption object with number of numberOfBuffersInGlobalBufferManager
+     */
+    IntConfigOption getNumberOfBuffersInGlobalBufferManager();
 
     /**
-     * @brief set the value for number of buffers with the appropriate data format
+    * @brief gets a ConfigOption object with number of numberOfBuffersPerPipeline
+    */
+    IntConfigOption getnumberOfBuffersPerPipeline();
+
+    /**
+    * @brief gets a ConfigOption object with number of numberOfBuffersInSourceLocalBufferPool
+    */
+    IntConfigOption getNumberOfBuffersInSourceLocalBufferPool();
+
+    /**
+     * @brief set the value for number of numberOfBuffersInGlobalBufferManager
      */
-    void setNumberOfBuffers(uint64_t count);
+    void setNumberOfBuffersInGlobalBufferManager(uint64_t count);
+
+    /**
+     * @brief set the value for number of numberOfBuffersPerPipeline
+     */
+    void setnumberOfBuffersPerPipeline(uint64_t count);
+
+    /**
+     * @brief set the value for number of numberOfBuffersInSourceLocalBufferPool
+     */
+    void setNumberOfBuffersInSourceLocalBufferPool(uint64_t count);
 
     /**
      * @brief gets a ConfigOption object with parentId
@@ -177,7 +197,9 @@ class WorkerConfig {
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
     IntConfigOption numWorkerThreads;
-    IntConfigOption numberOfBuffers;
+    IntConfigOption numberOfBuffersInGlobalBufferManager;
+    IntConfigOption numberOfBuffersPerPipeline;
+    IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     IntConfigOption bufferSizeInBytes;
     StringConfigOption parentId;
     StringConfigOption logLevel;

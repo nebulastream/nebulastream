@@ -116,11 +116,11 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager);
         };
-        auto compiler = createDefaultQueryCompiler();
+        auto compiler = createDefaultQueryCompiler(12);
 
         auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(streamConf), std::move(bufferManager),
                                                              std::move(queryManager), std::move(networkManagerCreator),
-                                                             std::move(partitionManager), std::move(compiler), 0);
+                                                             std::move(partitionManager), std::move(compiler), 0, 1024, 12, 12);
         NES::NodeEngine::installGlobalErrorListener(mockEngine);
         return mockEngine;
     } catch (std::exception& err) {
@@ -246,14 +246,15 @@ class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExe
             },
             [sink](TupleBuffer&) {
             },
-            std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>())){
+            std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>()), 12){
             // nop
         };
 };
 
 auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
-    DataSourcePtr source = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+    DataSourcePtr source =
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, false);
     builder.addSource(source);
@@ -335,7 +336,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", false);
     builder1.addSource(source1);
@@ -353,7 +354,7 @@ TEST_F(EngineTest, testParallelDifferentSource) {
 
     GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2);
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12);
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", false);
     builder2.addSource(source2);
@@ -402,7 +403,7 @@ TEST_F(EngineTest, testParallelSameSource) {
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep1.txt", true);
     builder1.addSource(source1);
@@ -420,7 +421,7 @@ TEST_F(EngineTest, testParallelSameSource) {
 
     GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2);
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12);
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink2 = createTextFileSink(sch2, 0, engine, "qep2.txt", true);
     builder2.addSource(source2);
@@ -462,7 +463,7 @@ TEST_F(EngineTest, testParallelSameSink) {
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep12.txt", false);
     builder1.addSource(source1);
@@ -480,7 +481,7 @@ TEST_F(EngineTest, testParallelSameSink) {
 
     GeneratedQueryExecutionPlanBuilder builder2 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2);
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12);
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
     builder2.addSource(source2);
     builder2.addSink(sink1);
@@ -519,7 +520,7 @@ TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
     DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink1 = createTextFileSink(sch1, 0, engine, "qep3.txt", true);
     builder1.addSource(source1);
@@ -602,9 +603,11 @@ void assertKiller() {
         explicit MockedNodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId)
+                                  uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
+                                  uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager),
-                         std::move(compiler), nodeEngineId) {}
+                         std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+                         numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
             stop(false);
@@ -628,9 +631,11 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
         explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId)
+                                  uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
+                                  uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
-                         std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+                         std::move(partitionManager), std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+                         numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();
@@ -651,7 +656,8 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
 
     GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
-    DataSourcePtr source = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+    DataSourcePtr source =
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
     builder.addSource(source);
@@ -681,9 +687,11 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
         explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
                                   Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId)
+                                  uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
+                                  uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
-                         std::move(partitionManager), std::move(compiler), nodeEngineId) {}
+                         std::move(partitionManager), std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+                         numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
             auto str = exception->what();
@@ -702,7 +710,8 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31337);
 
     GeneratedQueryExecutionPlanBuilder builder = GeneratedQueryExecutionPlanBuilder::create();
-    DataSourcePtr source = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1);
+    DataSourcePtr source =
+        createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12);
     SchemaPtr sch = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink = createTextFileSink(sch, 0, engine, filePath, true);
     builder.addSource(source);

@@ -113,43 +113,7 @@ if (NES_BUILD_BENCHMARKS)
     target_link_libraries(dynamic-memory-layout-benchmark nes ${GBENCHMARK_LIBRARIES})
     add_test(NAME dynamic-memory-layout-benchmark COMMAND dynamic-memory-layout-benchmark --benchmark_out=dynamic-memory-layout-benchmark.log --benchmark_out_format=json)
 
-    ###########################  E2E Benchmarmks ######################
-
-    ### E2e Benchmark Project ###
-    add_executable(e2e-project-query-benchmark "src/E2EBenchmarks/E2EProjectBenchmark.cpp")
-    target_link_libraries(e2e-project-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-project-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
-    target_sources(e2e-project-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-project-query-benchmark COMMAND e2e-project-query-benchmark)
-
-    ### E2e Benchmark Select ###
-    add_executable(e2e-select-query-benchmark "src/E2EBenchmarks/E2ESelectionBenchmark.cpp")
-    target_link_libraries(e2e-select-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-select-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
-    target_sources(e2e-select-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-select-query-benchmark COMMAND e2e-select-query-benchmark)
-
-    ### E2e Benchmark Select ###
-    add_executable(e2e-map-query-benchmark "src/E2EBenchmarks/E2EMapBenchmark.cpp")
-    target_link_libraries(e2e-map-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-map-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
-    target_sources(e2e-map-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-map-query-benchmark COMMAND e2e-map-query-benchmark)
-
-    ### E2e Benchmark window ###
-    add_executable(e2e-window-query-benchmark "src/E2EBenchmarks/E2EWindowBenchmark.cpp")
-    target_link_libraries(e2e-window-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-window-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
-    target_sources(e2e-window-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-window-query-benchmark COMMAND e2e-window-query-benchmark)
-
-    ### E2e Benchmark join ###
-    add_executable(e2e-join-query-benchmark "src/E2EBenchmarks/E2EJoinBenchmark.cpp")
-    target_link_libraries(e2e-join-query-benchmark nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-join-query-benchmark PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
-    target_sources(e2e-join-query-benchmark PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-join-query-benchmark COMMAND e2e-join-query-benchmark)
-
+    ###########################  E2E Benchmarks ######################
     ### E2e Benchmark Runner ###
     add_executable(e2e-benchmark-runner "src/E2EBenchmarks/E2ERunner.cpp")
     target_link_libraries(e2e-benchmark-runner nes libgbenchmark libgbenchmark_main pthread)

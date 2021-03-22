@@ -42,7 +42,7 @@ class MemorySource : public DataSource, public NodeEngine::BufferRecycler {
      */
     explicit MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                           NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                          uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId);
+                          uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId, size_t numSourceLocalBuffers);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.
      * @return a nullopt

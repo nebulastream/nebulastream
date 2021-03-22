@@ -43,7 +43,7 @@ namespace NES {
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                                   NodeEngine::QueryManagerPtr queryManager,
-                                                                  OperatorId operatorId);
+                                                                  OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
@@ -58,7 +58,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                                    NodeEngine::QueryManagerPtr queryManager,
                                                                    uint64_t numbersOfBufferToProduce, uint64_t frequency,
-                                                                   OperatorId operatorId);
+                                                                   OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
@@ -68,7 +68,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
-                                                                 NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId);
+                                                                 NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create a lambda source
@@ -84,7 +84,7 @@ const DataSourcePtr createLambdaSource(
     SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
     uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    OperatorId operatorId);
+    OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create an empty zmq source
@@ -98,7 +98,7 @@ const DataSourcePtr createLambdaSource(
  */
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, const std::string& host, const uint16_t port,
-                                    OperatorId operatorId);
+                                    OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create a binary file source
@@ -111,7 +111,7 @@ const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerP
  */
 const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                            NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
-                                           OperatorId operatorId);
+                                           OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create a sense source
@@ -123,7 +123,7 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferM
  * @return a const data source pointer
  */
 const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                      NodeEngine::QueryManagerPtr queryManager, const std::string& udfs, OperatorId operatorId);
+                                      NodeEngine::QueryManagerPtr queryManager, const std::string& udfs, OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create a csvfile source
@@ -142,7 +142,7 @@ const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManage
 const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                         NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
                                         const std::string& delimiter, uint64_t numberOfTuplesToProducePerBuffer,
-                                        uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId);
+                                        uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief create a memory source
@@ -159,7 +159,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
                                        size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
-                                       OperatorId operatorId);
+                                       OperatorId operatorId, size_t numSourceLocalBuffers);
 
 /**
  * @brief function to create a network source
@@ -172,7 +172,7 @@ const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManag
  */
 const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                         NodeEngine::QueryManagerPtr queryManager, Network::NetworkManagerPtr networkManager,
-                                        Network::NesPartition nesPartition);
+                                        Network::NesPartition nesPartition, size_t numSourceLocalBuffers);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**
@@ -188,7 +188,7 @@ const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferMana
  */
 const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                       NodeEngine::QueryManagerPtr queryManager, std::string brokers, std::string topic,
-                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout, OperatorId operatorId);
+                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout, OperatorId operatorId, size_t numSourceLocalBuffers);
 #endif
 
 #ifdef ENABLE_OPC_BUILD
@@ -204,7 +204,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManage
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId, std::string user,
-                                    std::string password, OperatorId operatorId);
+                                    std::string password, OperatorId operatorId, size_t numSourceLocalBuffers);
 #endif
 
 #ifdef ENABLE_MQTT_BUILD
@@ -220,7 +220,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerP
  */
 const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                      NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId,
-                                     std::string user, std::string topic, OperatorId operatorId);
+                                     std::string user, std::string topic, OperatorId operatorId, size_t numSourceLocalBuffers);
 #endif
 
 }// namespace NES

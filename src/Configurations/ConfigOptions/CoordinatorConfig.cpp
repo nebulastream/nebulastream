@@ -36,7 +36,12 @@ CoordinatorConfig::CoordinatorConfig() {
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
-    numberOfBuffers = ConfigOption<uint32_t>::create("numberOfBuffers", 1024, "Number of buffers.");
+    numberOfBuffersInGlobalBufferManager =
+        ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1048576, "Number buffers in global buffer pool.");
+    numberOfBuffersPerPipeline =
+        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 1024, "Number buffers in task local buffer pool.");
+    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 1024,
+                                                                            "Number buffers in source local buffer pool.");
     bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
@@ -58,6 +63,9 @@ void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& file
             setEnableQueryMerging(config["enableQueryMerging"].As<bool>());
             setLogLevel(config["logLevel"].As<std::string>());
             setQueryBatchSize(config["queryBatchSize"].As<uint32_t>());
+            setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
+            setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
+            setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
         } catch (std::exception& e) {
             NES_ERROR("CoordinatorConfig: Error while initializing configuration parameters from YAML file. " << e.what());
             NES_WARNING("CoordinatorConfig: Keeping default values.");
@@ -90,6 +98,12 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setLogLevel(it->second);
             } else if (it->first == "--queryBatchSize") {
                 setQueryBatchSize(stoi(it->second));
+            } else if (it->first == "--numberOfBuffersInGlobalBufferManager") {
+                setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
+            } else if (it->first == "--numberOfBuffersPerPipeline") {
+                setnumberOfBuffersPerPipeline(stoi(it->second));
+            } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool") {
+                setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
             } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
@@ -111,6 +125,9 @@ void CoordinatorConfig::resetCoordinatorOptions() {
     setEnableQueryMerging(enableQueryMerging->getDefaultValue());
     setLogLevel(logLevel->getDefaultValue());
     setQueryBatchSize(queryBatchSize->getDefaultValue());
+    setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
+    setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
+    setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
 }
 
 StringConfigOption CoordinatorConfig::getRestIp() { return restIp; }
@@ -151,9 +168,13 @@ StringConfigOption CoordinatorConfig::getLogLevel() { return logLevel; }
 
 void CoordinatorConfig::setLogLevel(std::string logLevelValue) { logLevel->setValue(logLevelValue); }
 
-IntConfigOption CoordinatorConfig::getNumberOfBuffers() { return numberOfBuffers; }
+IntConfigOption CoordinatorConfig::getNumberOfBuffersInGlobalBufferManager() { return numberOfBuffersInGlobalBufferManager; }
+IntConfigOption CoordinatorConfig::getnumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
+IntConfigOption CoordinatorConfig::getNumberOfBuffersInSourceLocalBufferPool() { return numberOfBuffersInSourceLocalBufferPool; }
 
-void CoordinatorConfig::setNumberOfBuffers(uint64_t count) { numberOfBuffers->setValue(count); }
+void CoordinatorConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) { numberOfBuffersInGlobalBufferManager->setValue(count); }
+void CoordinatorConfig::setnumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
+void CoordinatorConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) { numberOfBuffersInSourceLocalBufferPool->setValue(count); }
 
 IntConfigOption CoordinatorConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
 

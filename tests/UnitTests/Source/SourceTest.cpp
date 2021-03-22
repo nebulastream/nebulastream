@@ -99,7 +99,7 @@ typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr, NodeEngine::Bu
                                                        NodeEngine::QueryManagerPtr queryManager, const std::string&);
 
 typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
-                                                        NodeEngine::QueryManagerPtr queryManager, const std::string&, uint64_t);
+                                                        NodeEngine::QueryManagerPtr queryManager, const std::string&, uint64_t, uint64_t);
 
 typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
                                                       NodeEngine::QueryManagerPtr queryManager, const std::string&,
@@ -149,7 +149,7 @@ TEST_F(SourceTest, testBinarySource) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source =
-        createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, 1);
+        createBinaryFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, 1, 12);
 
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -188,7 +188,7 @@ TEST_F(SourceTest, testCSVSourceOnePassOverFile) {
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, 0, frequency, false, 1);
+                                                     path_to_file, del, 0, 0, frequency, false, 1, 12);
 
     source->start();
 
@@ -244,7 +244,7 @@ TEST_F(SourceTest, testCSVSourceWithLoopOverFile) {
     uint64_t numberOfBuffers = 5;
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1);
+                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12);
 
     source->start();
 
@@ -280,7 +280,7 @@ TEST_F(SourceTest, testCSVSourceWatermark) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1);
+                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12);
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -324,7 +324,7 @@ TEST_F(SourceTest, testCSVSourceIntTypes) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1);
+                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12);
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -397,7 +397,7 @@ TEST_F(SourceTest, testCSVSourceFloatTypes) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1);
+                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12);
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -442,7 +442,7 @@ TEST_F(SourceTest, testCSVSourceBooleanTypes) {
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
     const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1);
+                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12);
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -487,7 +487,7 @@ TEST_F(SourceTest, testSenseSource) {
     uint64_t buffer_size = numberOfTuplesToProcess * tuple_size / numberOfBuffers;
     ASSERT_GT(buffer_size, 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1);
+    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1, 12);
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;
@@ -605,7 +605,7 @@ TEST_F(SourceTest, testLambdaSource) {
     };
 
     DataSourcePtr lambdaSource = createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                    numBuffers, std::chrono::milliseconds(0), func, 1);
+                                                    numBuffers, std::chrono::milliseconds(0), func, 1, 12);
 
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
@@ -634,7 +634,7 @@ TEST_F(SourceTest, testMonitoringSource) {
     auto plan = MonitoringPlan::create(metrics);
 
     auto source = std::make_shared<MonitoringSource>(plan, MetricCatalog::NesMetrics(), nodeEngine->getBufferManager(),
-                                                     nodeEngine->getQueryManager(), numBuffers, 1, 1);
+                                                     nodeEngine->getQueryManager(), numBuffers, 1, 1, 12);
 
     SchemaPtr schema = source->getSchema();
 

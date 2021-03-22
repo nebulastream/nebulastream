@@ -174,14 +174,34 @@ class CoordinatorConfig {
     void setBufferSizeInBytes(uint64_t sizeInBytes);
 
     /**
-    * @brief gets a ConfigOption object with number of buffers
+    * @brief gets a ConfigOption object with number of numberOfBuffersInGlobalBufferManager
     */
-    IntConfigOption getNumberOfBuffers();
+    IntConfigOption getNumberOfBuffersInGlobalBufferManager();
 
     /**
-     * @brief set the value for number of buffers with the appropriate data format
+    * @brief gets a ConfigOption object with number of numberOfBuffersPerPipeline
+    */
+    IntConfigOption getnumberOfBuffersPerPipeline();
+
+    /**
+    * @brief gets a ConfigOption object with number of numberOfBuffersInSourceLocalBufferPool
+    */
+    IntConfigOption getNumberOfBuffersInSourceLocalBufferPool();
+
+    /**
+     * @brief set the value for number of numberOfBuffersInGlobalBufferManager
      */
-    void setNumberOfBuffers(uint64_t count);
+    void setNumberOfBuffersInGlobalBufferManager(uint64_t count);
+
+    /**
+     * @brief set the value for number of numberOfBuffersPerPipeline
+     */
+    void setnumberOfBuffersPerPipeline(uint64_t count);
+
+    /**
+     * @brief set the value for number of numberOfBuffersInSourceLocalBufferPool
+     */
+    void setNumberOfBuffersInSourceLocalBufferPool(uint64_t count);
 
     /**
      * @brief Get the query batch size
@@ -206,7 +226,9 @@ class CoordinatorConfig {
     IntConfigOption restPort;
     IntConfigOption dataPort;
     IntConfigOption numberOfSlots;
-    IntConfigOption numberOfBuffers;
+    IntConfigOption numberOfBuffersInGlobalBufferManager;
+    IntConfigOption numberOfBuffersPerPipeline;
+    IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     IntConfigOption bufferSizeInBytes;
     BoolConfigOption enableQueryMerging;
     IntConfigOption numWorkerThreads;

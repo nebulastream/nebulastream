@@ -38,17 +38,18 @@ extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
-    return NodeEngine::create(hostname, port, config, 1, 4096, 1024);
+    return NodeEngine::create(hostname, port, config, 1, 4096, 1024, 128, 12);
 }
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
 NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads,
-                                 uint64_t bufferSize, uint64_t numBuffers) {
+                                 uint64_t bufferSize, uint64_t numberOfBuffersInGlobalBufferManager,
+                                 uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
-        auto bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
+        auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
         auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
@@ -62,7 +63,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
             NES_ERROR("NodeEngine: error while creating queryManager");
             throw Exception("Error while creating queryManager");
         }
-        auto compiler = createDefaultQueryCompiler();
+        auto compiler = createDefaultQueryCompiler(numberOfBuffersPerPipeline);
         if (!compiler) {
             NES_ERROR("NodeEngine: error while creating compiler");
             throw Exception("Error while creating compiler");
@@ -74,7 +75,8 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(), numThreads);
             },
-            std::move(partitionManager), std::move(compiler), nodeEngineId);
+            std::move(partitionManager), std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+            numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline);
         installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
@@ -86,8 +88,13 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
-                       Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId)
-    : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId) {
+                       Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId,
+                       uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool,
+                       uint64_t numberOfBuffersPerPipeline)
+    : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId),
+      numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+      numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
+      numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
 
     configs.push_back(config);
     NES_TRACE("NodeEngine() id=" << nodeEngineId);
@@ -173,7 +180,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
             }
-            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, self);
+            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, self,
+                                                                                 numberOfBuffersInSourceLocalBufferPool);
             qepBuilder.addSource(legacySource);
             NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
         }

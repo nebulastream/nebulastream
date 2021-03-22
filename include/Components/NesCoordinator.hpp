@@ -158,7 +158,9 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     uint16_t rpcPort;
     uint16_t numberOfSlots;
     uint16_t numberOfWorkerThreads;
-    uint64_t numberOfBuffers;
+    uint32_t numberOfBuffersInGlobalBufferManager;
+    uint32_t numberOfBuffersPerPipeline;
+    uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;

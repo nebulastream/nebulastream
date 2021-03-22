@@ -1,8 +1,8 @@
-# ~~~ Configurations for the NES E2E Benchmark ~~~
+# ~~~ Configurations for the NES E2E Selection Benchmark ~~~
 
 # Parameter that are changed per run with comma separated list
-numberOfWorkerThreads: 2
-numberOfCoordinatorThreads: 2
+numberOfWorkerThreads: 1
+numberOfCoordinatorThreads: 1
 numberOfSources: 1
 
 #paramter for all runs
@@ -14,8 +14,8 @@ bufferSizeInBytes: 4096
 
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
-outputFile: out.csv
-benchmarkName: testBench
+outputFile: E2ESelectionBenchmark.csv
+benchmarkName: E2ESelectionBenchmark
 query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter

@@ -38,7 +38,7 @@ class ZmqSource : public DataSource {
      * @param port of the source queue
      */
     explicit ZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                       const std::string& host, const uint16_t port, OperatorId operatorId);
+                       const std::string& host, const uint16_t port, OperatorId operatorId, size_t numSourceLocalBuffers);
 
     /**
      * @brief destructor of zmq sink that disconnects the queue before deconstruction

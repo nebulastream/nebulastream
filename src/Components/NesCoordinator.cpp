@@ -55,7 +55,9 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
-      numberOfBuffers(coordinatorConfig->getNumberOfBuffers()->getValue()),
+      numberOfBuffersInGlobalBufferManager(coordinatorConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
+      numberOfBuffersPerPipeline(coordinatorConfig->getnumberOfBuffersPerPipeline()->getValue()),
+      numberOfBuffersInSourceLocalBufferPool(coordinatorConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()),
       numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()), inherited0(), inherited1(), isRunning(false) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
@@ -163,7 +165,9 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     workerConfig->setNumberOfSlots(numberOfSlots);
     workerConfig->setNumWorkerThreads(numberOfWorkerThreads);
     workerConfig->setBufferSizeInBytes(bufferSizeInBytes);
-    workerConfig->setNumberOfBuffers(numberOfBuffers);
+    workerConfig->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
+    workerConfig->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
+    workerConfig->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
     worker = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 

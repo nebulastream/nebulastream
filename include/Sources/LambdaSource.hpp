@@ -36,7 +36,7 @@ class LambdaSource : public GeneratorSource {
     LambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                  uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
                  std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-                 OperatorId operatorId);
+                 OperatorId operatorId, size_t numSourceLocalBuffers);
 
     SourceType getType() const override;
 

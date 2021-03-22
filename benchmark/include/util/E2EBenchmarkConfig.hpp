@@ -104,14 +104,14 @@ class E2EBenchmarkConfig {
     const IntConfigOption getNumberOfBuffersInGlobalBufferManager() const;
 
     /**
-     * @brief set the value for numberOfBuffersInTaskLocalBufferPool
+     * @brief set the value for numberOfBuffersPerPipeline
      */
-    void setNumberOfBuffersInTaskLocalBufferPool(uint32_t numberOfBuffersInTaskLocalBufferPool);
+    void setnumberOfBuffersPerPipeline(uint32_t numberOfBuffersPerPipeline);
 
     /**
-     * @brief gets a ConfigOption object with numberOfBuffersInTaskLocalBufferPool
+     * @brief gets a ConfigOption object with numberOfBuffersPerPipeline
      */
-    const IntConfigOption getNumberOfBuffersInTaskLocalBufferPool() const;
+    const IntConfigOption getnumberOfBuffersPerPipeline() const;
 
     /**
      * @brief set the value for numberOfBuffersInSourceLocalBufferPool
@@ -183,6 +183,37 @@ class E2EBenchmarkConfig {
     */
     void setBenchmarkName(std::string benchmarkName);
 
+    /**
+    * @brief gets a ConfigOption object with experimentMeasureIntervalInSeconds
+    */
+    const IntConfigOption getExperimentMeasureIntervalInSeconds() const;
+
+    /**
+    * @brief set the value for experimentMeasureIntervalInSeconds
+    */
+    void setExperimentMeasureIntervalInSeconds(uint32_t experimentMeasureIntervalInSeconds);
+
+    /**
+    * @brief gets a ConfigOption object with startupSleepIntervalInSeconds
+    */
+    const IntConfigOption getStartupSleepIntervalInSeconds() const;
+
+    /**
+    * @brief set the value for startupSleepIntervalInSeconds
+    */
+    void setStartupSleepIntervalInSeconds(uint32_t startupSleepIntervalInSeconds);
+
+    /**
+    * @brief gets a ConfigOption object with numberOfMeasurementsToCollect
+    */
+    const IntConfigOption getNumberOfMeasurementsToCollect() const;
+
+    /**
+      * @brief set the value for numberOfMeasurementsToCollect
+    */
+    void setNumberOfMeasurementsToCollect(uint32_t numberOfMeasurementsToCollect);
+
+    std::string toString();
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -197,16 +228,20 @@ class E2EBenchmarkConfig {
     //paramter that are valid for the entire run for the config of the worker and coordinator
     IntConfigOption numberOfBuffersToProduce;
     IntConfigOption numberOfBuffersInGlobalBufferManager;
-    IntConfigOption numberOfBuffersInTaskLocalBufferPool;
+    IntConfigOption numberOfBuffersPerPipeline;
     IntConfigOption numberOfBuffersInSourceLocalBufferPool;
     IntConfigOption bufferSizeInBytes;
-
-    //general benchmark paramter for the entire run
+    StringConfigOption query;
     StringConfigOption inputOutputMode;
+
+    //general benchmark setup parameter
     StringConfigOption outputFile;
     StringConfigOption benchmarkName;
-    StringConfigOption query;
     StringConfigOption logLevel;
+
+    IntConfigOption experimentMeasureIntervalInSeconds;
+    IntConfigOption startupSleepIntervalInSeconds;
+    IntConfigOption numberOfMeasurementsToCollect;
 };
 
 #endif//NES_E2EBenchmarkConfig_HPP

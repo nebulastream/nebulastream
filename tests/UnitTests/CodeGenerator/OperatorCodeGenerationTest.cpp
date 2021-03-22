@@ -114,7 +114,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
             [this](TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(operatorHandlers)){
+            std::move(operatorHandlers), 12){
             // nop
         };
 
@@ -123,14 +123,14 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
 
 const DataSourcePtr createTestSourceCodeGen(NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("campaign_id", DataTypeFactory::createInt64()), bPtr, dPtr,
-                                           1, 1, 1);
+                                           1, 1, 1, 12);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
   public:
     SelectionDataGenSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12) {}
 
     ~SelectionDataGenSource() = default;
 
@@ -177,7 +177,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
     PredicateTestingDataGeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12) {}
 
     ~PredicateTestingDataGeneratorSource() = default;
 
@@ -233,7 +233,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
     WindowTestingDataGeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12) {}
 
     ~WindowTestingDataGeneratorSource() = default;
 
@@ -270,7 +270,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
   public:
     WindowTestingWindowGeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bPtr, NodeEngine::QueryManagerPtr dPtr,
                                        const uint64_t pNum_buffers_to_process)
-        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1) {}
+        : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12) {}
 
     ~WindowTestingWindowGeneratorSource() = default;
 

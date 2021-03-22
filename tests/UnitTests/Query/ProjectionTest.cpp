@@ -76,7 +76,7 @@ class ProjectionTest : public testing::Test {
                          ->addField("test$one", BasicType::INT64)
                          ->addField("test$value", BasicType::INT64);
         auto streamConf = PhysicalStreamConfig::createEmpty();
-        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024);
+        nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     /* Will be called before a test is executed. */
@@ -109,7 +109,7 @@ class WindowSource : public NES::DefaultSource {
                  const uint64_t numbersOfBufferToProduce, uint64_t frequency, bool varyWatermark, bool decreaseTime,
                  int64_t timestamp)
         : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
-                        1),
+                        1, 12),
           varyWatermark(varyWatermark), decreaseTime(decreaseTime), timestamp(timestamp) {}
 
     std::optional<TupleBuffer> receiveData() override {
@@ -283,7 +283,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
+                                                                    nodeEngine->getQueryManager(), 1, 12);
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
 
@@ -342,7 +342,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
+                                                                    nodeEngine->getQueryManager(), 1, 12);
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
 
@@ -400,7 +400,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
+                                                                    nodeEngine->getQueryManager(), 1, 12);
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
 
@@ -459,7 +459,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
+                                                                    nodeEngine->getQueryManager(), 1, 12);
 
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("asd")).sink(DummySink::create());
 
@@ -477,7 +477,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1);
+                                                                    nodeEngine->getQueryManager(), 1, 12);
 
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("asd")).sink(DummySink::create());
 
@@ -619,7 +619,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
             PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
             auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                             nodeEngine->getQueryManager(), 1);
+                                                                             nodeEngine->getQueryManager(), 1, 12);
 
             auto query1 = TestQuery::from(testSource1->getSchema());
 
@@ -627,7 +627,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
 
             // creating P2
             auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                             nodeEngine->getQueryManager(), 1);
+                                                                             nodeEngine->getQueryManager(), 1, 12);
             auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5).project(Attribute("id"));
 
             // creating P3
@@ -655,7 +655,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
     auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1);
+                                                                     nodeEngine->getQueryManager(), 1, 12);
 
     auto query1 = TestQuery::from(testSource1->getSchema());
 
@@ -663,7 +663,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
 
     // creating P2
     auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1);
+                                                                     nodeEngine->getQueryManager(), 1, 12);
     auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
 
     // creating P3

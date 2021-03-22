@@ -43,7 +43,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     explicit PipelineExecutionContext(QuerySubPlanId queryId, QueryManagerPtr queryManager, BufferManagerPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
-                                      std::vector<OperatorHandlerPtr> operatorHandlers);
+                                      std::vector<OperatorHandlerPtr> operatorHandlers, uint64_t numberOfBuffersPerPipeline);
 
     /**
      * @brief The PipelineExecutionContext is passed to the compiled pipeline and enables interaction with the NES runtime.
