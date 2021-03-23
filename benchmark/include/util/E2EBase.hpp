@@ -32,6 +32,7 @@
 #include <iostream>
 #include <util/E2EBenchmarkConfig.hpp>
 
+using namespace NES;
 class E2EBase {
   public:
     /**

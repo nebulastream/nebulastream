@@ -114,6 +114,7 @@ class BenchmarkUtils {
                              NodeEngine::NodeEnginePtr nodeEngine, NES::Query query);
 };
 
+//12,12 in the node engine are the new for source and pipeline local buffers, please change them accordingly
 #define BM_AddBenchmarkCustomBufferSize(benchmarkName, benchmarkQuery, benchmarkSource, benchmarkSink, csvHeaderString,          \
                                         customCSVOutputs)                                                                        \
     {                                                                                                                            \
