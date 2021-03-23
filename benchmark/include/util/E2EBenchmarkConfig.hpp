@@ -22,6 +22,7 @@
 #include <memory>
 #include <string>
 
+namespace NES {
 class E2EBenchmarkConfig;
 typedef std::shared_ptr<E2EBenchmarkConfig> E2EBenchmarkConfigPtr;
 //template<class T>
@@ -214,6 +215,7 @@ class E2EBenchmarkConfig {
     void setNumberOfMeasurementsToCollect(uint32_t numberOfMeasurementsToCollect);
 
     std::string toString();
+
   private:
     /**
      * @brief constructor to create a new coordinator option object initialized with default values as set below
@@ -243,5 +245,5 @@ class E2EBenchmarkConfig {
     IntConfigOption startupSleepIntervalInSeconds;
     IntConfigOption numberOfMeasurementsToCollect;
 };
-
+}// namespace NES
 #endif//NES_E2EBenchmarkConfig_HPP
