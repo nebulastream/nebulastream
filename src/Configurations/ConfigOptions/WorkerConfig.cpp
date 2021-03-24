@@ -181,9 +181,13 @@ IntConfigOption WorkerConfig::getNumberOfBuffersInGlobalBufferManager() { return
 IntConfigOption WorkerConfig::getnumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
 IntConfigOption WorkerConfig::getNumberOfBuffersInSourceLocalBufferPool() { return numberOfBuffersInSourceLocalBufferPool; }
 
-void WorkerConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) { numberOfBuffersInGlobalBufferManager->setValue(count); }
+void WorkerConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) {
+    numberOfBuffersInGlobalBufferManager->setValue(count);
+}
 void WorkerConfig::setnumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
-void WorkerConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) { numberOfBuffersInSourceLocalBufferPool->setValue(count); }
+void WorkerConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
+    numberOfBuffersInSourceLocalBufferPool->setValue(count);
+}
 
 IntConfigOption WorkerConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
 

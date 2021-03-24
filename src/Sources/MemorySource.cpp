@@ -25,9 +25,11 @@ namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                           uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId, size_t numSourceLocalBuffers)
-    : DataSource(std::move(schema), bufferManager, std::move(queryManager), operatorId, numSourceLocalBuffers), memoryArea(memoryArea),
-      memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), globalBufferManager(bufferManager), refCnt(0) {
+                           uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId,
+                           size_t numSourceLocalBuffers)
+    : DataSource(std::move(schema), bufferManager, std::move(queryManager), operatorId, numSourceLocalBuffers),
+      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), globalBufferManager(bufferManager),
+      refCnt(0) {
     this->numBuffersToProcess = numBuffersToProcess;
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);

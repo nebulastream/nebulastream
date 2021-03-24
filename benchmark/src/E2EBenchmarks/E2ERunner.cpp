@@ -60,7 +60,6 @@ int main(int argc, const char* argv[]) {
 
     std::cout << "start benchmark with " << benchmarkConfig->toString();
 
-
     NES::setLogLevel(NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
     std::string benchmarkName = benchmarkConfig->getBenchmarkName()->getDefaultValue();
     std::string nesVersion = NES_VERSION;
@@ -70,9 +69,8 @@ int main(int argc, const char* argv[]) {
     std::string changeableParameterString = "WorkerThreads,CoordinatorThreadCnt,SourceCnt";
     std::string benchmarkResultString = "ProcessedBuffersTotal,ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,"
                                         "ThroughputInTupsPerSec,ThroughputInMBPerSec";
-    std::string fixParameterString =
-        "NumberOfBuffersToProduce,NumberOfBuffersInGlobalBufferManager,numberOfBuffersPerPipeline,"
-        "NumberOfBuffersInSourceLocalBufferPool,BufferSizeInBytes,query,InputOutputMode";
+    std::string fixParameterString = "NumberOfBuffersToProduce,NumberOfBuffersInGlobalBufferManager,numberOfBuffersPerPipeline,"
+                                     "NumberOfBuffersInSourceLocalBufferPool,BufferSizeInBytes,query,InputOutputMode";
 
     //output csv header
     ss << resultPrefix << "," << changeableParameterString << "," << benchmarkResultString << "," << fixParameterString << "\n";
@@ -88,9 +86,8 @@ int main(int argc, const char* argv[]) {
     for (size_t i = 0; i < workerThreadCnt.size(); i++) {
         std::cout << " run configuration workerThreads=" << workerThreadCnt[i]
                   << " coordinatorThreads=" << coordinatorThreadCnt[i] << " sourceCnt=" << sourceCnt[i] << std::endl;
-        auto test =
-            std::make_shared<E2EBase>(stoi(workerThreadCnt[i]), stoi(coordinatorThreadCnt[i]), stoi(sourceCnt[i]),
-                                      benchmarkConfig);
+        auto test = std::make_shared<E2EBase>(stoi(workerThreadCnt[i]), stoi(coordinatorThreadCnt[i]), stoi(sourceCnt[i]),
+                                              benchmarkConfig);
 
         //print resultPrefix
         ss << test->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion;

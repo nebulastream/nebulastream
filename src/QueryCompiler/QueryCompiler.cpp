@@ -27,11 +27,13 @@
 #include <utility>
 namespace NES {
 
-QueryCompiler::QueryCompiler(uint64_t numberOfBuffersPerPipeline): numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
+QueryCompiler::QueryCompiler(uint64_t numberOfBuffersPerPipeline) : numberOfBuffersPerPipeline(numberOfBuffersPerPipeline) {
     // nop
 }
 
-QueryCompilerPtr QueryCompiler::create(uint64_t numberOfBuffersPerPipeline) { return std::make_shared<QueryCompiler>(numberOfBuffersPerPipeline); }
+QueryCompilerPtr QueryCompiler::create(uint64_t numberOfBuffersPerPipeline) {
+    return std::make_shared<QueryCompiler>(numberOfBuffersPerPipeline);
+}
 
 // TODO compiler folks please check the following statements
 /**
@@ -194,6 +196,8 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
     }
 }
 
-QueryCompilerPtr createDefaultQueryCompiler(uint64_t numberOfBuffersPerPipeline) { return QueryCompiler::create(numberOfBuffersPerPipeline); }
+QueryCompilerPtr createDefaultQueryCompiler(uint64_t numberOfBuffersPerPipeline) {
+    return QueryCompiler::create(numberOfBuffersPerPipeline);
+}
 
 }// namespace NES

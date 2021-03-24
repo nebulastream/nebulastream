@@ -83,7 +83,8 @@ std::string E2EBase::runExperiment() {
 }
 
 E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, E2EBenchmarkConfigPtr config)
-    : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt), config(config) {
+    : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt),
+      config(config) {
     std::cout << "run with configuration:"
               << " threadCntWorker=" << numberOfWorkerThreads << " threadCntCoordinator=" << numberOfCoordinatorThreads
               << " sourceCnt=" << sourceCnt << std::endl;
@@ -244,8 +245,9 @@ void E2EBase::setupSources() {
                 records[u].timestamp = u;
             }
 
-            NES::AbstractPhysicalStreamConfigPtr conf = NES::MemorySourceStreamConfig::create(
-                "MemorySource", "test_stream", "input", memArea, memAreaSize, config->getNumberOfBuffersToProduce()->getValue(), 0);
+            NES::AbstractPhysicalStreamConfigPtr conf =
+                NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, memAreaSize,
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0);
 
             wrk1->registerPhysicalStream(conf);
         }
@@ -272,8 +274,9 @@ void E2EBase::setupSources() {
                 return;
             };
 
-            NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream" + std::to_string(i), "input", func, config->getNumberOfBuffersToProduce()->getValue(), 0);
+            NES::AbstractPhysicalStreamConfigPtr conf =
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0);
 
             wrk1->registerPhysicalStream(conf);
         }
@@ -299,8 +302,9 @@ void E2EBase::setupSources() {
                 return;
             };
 
-            NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream" + std::to_string(i), "input", func, config->getNumberOfBuffersToProduce()->getValue(), 0);
+            NES::AbstractPhysicalStreamConfigPtr conf =
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0);
 
             wrk1->registerPhysicalStream(conf);
         }

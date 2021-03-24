@@ -173,9 +173,13 @@ IntConfigOption CoordinatorConfig::getNumberOfBuffersInGlobalBufferManager() { r
 IntConfigOption CoordinatorConfig::getnumberOfBuffersPerPipeline() { return numberOfBuffersPerPipeline; }
 IntConfigOption CoordinatorConfig::getNumberOfBuffersInSourceLocalBufferPool() { return numberOfBuffersInSourceLocalBufferPool; }
 
-void CoordinatorConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) { numberOfBuffersInGlobalBufferManager->setValue(count); }
+void CoordinatorConfig::setNumberOfBuffersInGlobalBufferManager(uint64_t count) {
+    numberOfBuffersInGlobalBufferManager->setValue(count);
+}
 void CoordinatorConfig::setnumberOfBuffersPerPipeline(uint64_t count) { numberOfBuffersPerPipeline->setValue(count); }
-void CoordinatorConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) { numberOfBuffersInSourceLocalBufferPool->setValue(count); }
+void CoordinatorConfig::setNumberOfBuffersInSourceLocalBufferPool(uint64_t count) {
+    numberOfBuffersInSourceLocalBufferPool->setValue(count);
+}
 
 IntConfigOption CoordinatorConfig::getBufferSizeInBytes() { return bufferSizeInBytes; }
 

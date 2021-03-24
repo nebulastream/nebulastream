@@ -23,7 +23,6 @@
 
 namespace NES::NodeEngine::Execution {
 
-
 PipelineExecutionContext::PipelineExecutionContext(QuerySubPlanId queryId, QueryManagerPtr queryManager,
                                                    BufferManagerPtr bufferManager,
                                                    std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
