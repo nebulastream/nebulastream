@@ -79,7 +79,6 @@ void QueryRequestProcessorService::start() {
             try {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(queryRequests);
-                globalQueryPlan->removeEmptySharedQueryMetaData();
 
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {

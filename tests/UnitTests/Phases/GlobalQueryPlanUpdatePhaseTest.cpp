@@ -220,7 +220,7 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     auto queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
 
     auto queryCatalog = std::make_shared<QueryCatalog>();
-    for (int i = 1; i <= 1000; i++) {
+    for (int i = 1; i <= 10; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
         auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
         q1.getQueryPlan()->setQueryId(i);
