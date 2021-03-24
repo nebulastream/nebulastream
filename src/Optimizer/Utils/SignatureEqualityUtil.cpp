@@ -25,7 +25,10 @@ SignatureEqualityUtilPtr SignatureEqualityUtil::create(z3::ContextPtr context) {
     return std::make_shared<SignatureEqualityUtil>(context);
 }
 
-SignatureEqualityUtil::SignatureEqualityUtil(z3::ContextPtr context) { solver = std::make_unique<z3::solver>(*context); }
+SignatureEqualityUtil::SignatureEqualityUtil(z3::ContextPtr context) {
+    this->context = context;
+    solver = std::make_unique<z3::solver>(*context);
+}
 
 bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySignaturePtr signature2) {
     NES_TRACE("QuerySignature: Equating signatures");
@@ -36,9 +39,6 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
         NES_WARNING("QuerySignature: Can't compare equality between null signatures");
         return false;
     }
-
-    //Extract the Z3 context and initialize a solver
-    z3::context& context = conditions->ctx();
 
     //Check the number of columns extracted by both queries
     auto otherColumns = signature2->getColumns();
@@ -93,7 +93,7 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     }
 
     //Compute all CNF conditions for check
-    z3::expr_vector allConditions(context);
+    z3::expr_vector allConditions(*context);
     //Check the number of window expressions extracted from both queries
     auto otherWindowExpressions = signature2->getWindowsExpressions();
     auto windowsExpressions = signature1->getWindowsExpressions();
@@ -113,15 +113,14 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
         //For each column expression of the column in other signature we try to create a DNF using
         // each column expression of the same column in this signature.
         z3::ExprPtr otherWindowExpression = otherWindowExpressions[windowExpression.first];
-        allConditions.push_back(to_expr(context, Z3_mk_eq(context, *otherWindowExpression, *windowExpression.second)));
+        allConditions.push_back(to_expr(*context, Z3_mk_eq(*context, *otherWindowExpression, *windowExpression.second)));
     }
 
     //Add conditions from both signature into the collection of all conditions
-    allConditions.push_back(to_expr(context, Z3_mk_eq(context, *conditions, *otherConditions)));
+    allConditions.push_back(to_expr(*context, Z3_mk_eq(*context, *conditions, *otherConditions)));
 
     //Create a negation of CNF of all conditions collected till now
-    Z3_solver_assert(context, *solver, !z3::mk_and(allConditions).simplify());
-        solver->add((*conditions != *otherConditions).simplify());
+    solver->add(!z3::mk_and(allConditions));
     bool equal = solver->check() == z3::unsat;
     solver->reset();
     return equal;
