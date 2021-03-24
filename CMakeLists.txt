@@ -75,12 +75,15 @@ message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # jemalloc
-#find_package(PkgConfig REQUIRED)
-#pkg_check_modules (JEMALLOC jemalloc)
-#pkg_search_module(JEMALLOC REQUIRED jemalloc)
-#include_directories(${JEMALLOC_INCLUDE_DIRS})
-#set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
-
+option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
+message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
+if(CMAKE_ENABLE_JEMALLOC)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules (JEMALLOC jemalloc)
+    pkg_search_module(JEMALLOC REQUIRED jemalloc)
+    include_directories(${JEMALLOC_INCLUDE_DIRS})
+    set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
+endif()
 # lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
