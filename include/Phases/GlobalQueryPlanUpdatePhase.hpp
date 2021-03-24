@@ -93,6 +93,7 @@ class GlobalQueryPlanUpdatePhase {
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     z3::ContextPtr z3Context;
+    std::string queryMergerRule;
 };
 }// namespace NES
 
