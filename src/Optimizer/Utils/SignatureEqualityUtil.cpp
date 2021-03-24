@@ -120,7 +120,7 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     allConditions.push_back(to_expr(*context, Z3_mk_eq(*context, *conditions, *otherConditions)));
 
     //Create a negation of CNF of all conditions collected till now
-    solver->add(!z3::mk_and(allConditions));
+    solver->add(!z3::mk_and(allConditions).simplify());
     bool equal = solver->check() == z3::unsat;
     solver->reset();
     return equal;
