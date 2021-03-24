@@ -18,8 +18,17 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
 namespace QueryCompilation {
+/**
+ * @brief This is a general interface, which provides the functionality to replace a logical
+ * operator with corresponding physical operators.
+ */
 class PhysicalOperatorProvider {
   public:
+    /**
+     * @brief Replaces this node with physical operators that express the same semantics.
+     * @param queryPlan the current query plan.
+     * @param operatorNode the operator that should be replaced.
+     */
     virtual void lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) = 0;
 };
 }// namespace QueryCompilation

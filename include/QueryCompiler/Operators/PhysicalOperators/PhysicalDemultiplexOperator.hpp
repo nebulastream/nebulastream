@@ -20,6 +20,17 @@ namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
+/**
+ * @brief The physical demultiplex operator
+ * This operator has one upstream operator and forwards it to multiple down-stream operators.
+ * Thus it has one child node and multiple parent nodes.
+ * Example query plan:
+ *                                             --- OperatorY --- Sink
+ *                                           /
+ * --- Data --- OperatorX --- Demultiplex ---
+ *                                           \
+ *                                            --- Sink
+ */
 class PhysicalDemultiplexOperator : public PhysicalUnaryOperator {
   public:
     PhysicalDemultiplexOperator(OperatorId id);

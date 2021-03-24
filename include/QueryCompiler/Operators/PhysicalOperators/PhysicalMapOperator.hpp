@@ -23,6 +23,9 @@ namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
+/**
+ * @brief Physical Map operator.
+ */
 class PhysicalMapOperator: public PhysicalUnaryOperator, public AbstractMapOperator{
   public:
     PhysicalMapOperator(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression);

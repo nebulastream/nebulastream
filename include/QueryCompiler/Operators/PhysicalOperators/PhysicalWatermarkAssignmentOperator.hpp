@@ -23,6 +23,9 @@ namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
+/**
+ * @brief Physical watermark assignment operator.
+ */
 class PhysicalWatermarkAssignmentOperator: public AbstractWatermarkAssignerOperator, public PhysicalUnaryOperator {
   public:
     PhysicalWatermarkAssignmentOperator(OperatorId id, const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);

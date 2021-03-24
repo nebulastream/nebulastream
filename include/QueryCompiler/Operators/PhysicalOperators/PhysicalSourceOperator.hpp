@@ -21,7 +21,9 @@
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
-
+/**
+ * @brief Physical Source operator.
+ */
 class PhysicalSourceOperator: public PhysicalUnaryOperator {
   public:
     PhysicalSourceOperator(OperatorId id, SourceDescriptorPtr sourceDescriptor);

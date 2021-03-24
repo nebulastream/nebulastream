@@ -19,6 +19,9 @@
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
+ */
 class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider{
   public:
     static PhysicalOperatorProviderPtr create();

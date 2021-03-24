@@ -22,7 +22,10 @@
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
-
+/**
+ * @brief Physical operator for the join build.
+ * This operator receives input records and adds them to its operator state.
+ */
 class PhysicalJoinBuildOperator: public PhysicalUnaryOperator, public AbstractJoinOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id,

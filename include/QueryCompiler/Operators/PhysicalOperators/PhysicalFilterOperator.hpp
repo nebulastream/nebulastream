@@ -23,6 +23,9 @@ namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
+/**
+ * @brief Physical Filter operator.
+ */
 class PhysicalFilterOperator: public PhysicalUnaryOperator, public AbstractFilterOperator{
   public:
     PhysicalFilterOperator(OperatorId id, ExpressionNodePtr predicate);

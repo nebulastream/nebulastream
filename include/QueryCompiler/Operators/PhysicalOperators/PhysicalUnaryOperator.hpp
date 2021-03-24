@@ -21,6 +21,10 @@ namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
+/**
+ * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperatorNode interfaces.
+ * A physical unary operator has exactly one child operators.
+ */
 class PhysicalUnaryOperator: public PhysicalOperator, public UnaryOperatorNode {
   protected:
     PhysicalUnaryOperator(OperatorId id);

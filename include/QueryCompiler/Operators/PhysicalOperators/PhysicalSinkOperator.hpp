@@ -22,6 +22,9 @@ namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
+/**
+ * @brief Physical Sink operator.
+ */
 class PhysicalSinkOperator: public PhysicalUnaryOperator {
   public:
     PhysicalSinkOperator(OperatorId id, SinkDescriptorPtr sinkDescriptor);
