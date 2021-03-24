@@ -23,7 +23,17 @@
 
 namespace NES{
 
+/**
+ * @brief Abstract join operator, contains the join definition.
+ */
 class AbstractJoinOperator{
+
+  public:
+    /**
+     * @brief get join definition.
+     * @return LogicalJoinDefinition
+     */
+    Join::LogicalJoinDefinitionPtr getJoinDefinition();
 
   protected:
     AbstractJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition);

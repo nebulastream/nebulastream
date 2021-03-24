@@ -23,6 +23,9 @@
 
 namespace NES {
 
+/**
+ * @brief Abstract window operator
+ */
 class AbstractWindowOperator {
   public:
     /**

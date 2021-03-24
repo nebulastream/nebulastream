@@ -21,6 +21,9 @@
 
 namespace NES{
 
+/**
+ * @brief Abstract map operator, defines the map expression.
+ */
 class AbstractMapOperator{
   public:
     /**

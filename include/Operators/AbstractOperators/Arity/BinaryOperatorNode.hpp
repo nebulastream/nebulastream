@@ -21,6 +21,9 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 namespace NES {
 
+/**
+ * @brief A binary operator with more the none input operator, thus it has a left and a right input schema.
+ */
 class BinaryOperatorNode : public virtual OperatorNode{
   public:
     explicit BinaryOperatorNode(OperatorId id);

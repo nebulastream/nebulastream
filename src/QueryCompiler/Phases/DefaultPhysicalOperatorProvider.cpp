@@ -180,6 +180,7 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(QueryPlan
     auto logicalWatermarkAssignment = operatorNode->as<WatermarkAssignerLogicalOperatorNode>();
     auto physicalWatermarkAssignment = PhysicalOperators::PhysicalWatermarkAssignmentOperator::create(
         logicalWatermarkAssignment->getWatermarkStrategyDescriptor());
+    physicalWatermarkAssignment->setOutputSchema(logicalWatermarkAssignment->getOutputSchema());
     operatorNode->replace(physicalWatermarkAssignment);
 }
 

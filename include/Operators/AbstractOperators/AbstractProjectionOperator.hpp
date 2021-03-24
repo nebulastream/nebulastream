@@ -21,9 +21,16 @@
 #include <Operators/OperatorForwardDeclaration.hpp>
 namespace NES{
 
+/**
+ * @brief Abstract projection operator, defines a list of fields which remain in the output schema.
+ */
 class AbstractProjectionOperator{
 
   public:
+    /**
+     * @brief returns the list of fields that remain in the output schema.
+     * @return  std::vector<ExpressionNodePtr>
+     */
     std::vector<ExpressionNodePtr> getExpressions();
 
   protected:
