@@ -52,6 +52,14 @@ class QueryService {
      */
     uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
 
+    /**
+     * @deprecated NOT TO BE USED
+     * @brief This method is used for submitting the queries directly to the system.
+     * @param queryString : Query string
+     * @param queryPtr : Query Object
+     * @param placementStrategyName : Name of the placement strategy
+     * @return query id
+     */
     uint64_t addQueryRequest(std::string queryString, QueryPtr queryPtr, std::string placementStrategyName);
 
     /**
