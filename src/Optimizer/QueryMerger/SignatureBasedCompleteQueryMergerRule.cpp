@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -26,12 +27,14 @@
 
 namespace NES::Optimizer {
 
-SignatureBasedCompleteQueryMergerRule::SignatureBasedCompleteQueryMergerRule() {}
+SignatureBasedCompleteQueryMergerRule::SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) {
+    signatureEqualityUtil = SignatureEqualityUtil::create(context);
+}
 
 SignatureBasedCompleteQueryMergerRule::~SignatureBasedCompleteQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
 
-SignatureBasedCompleteQueryMergerRulePtr SignatureBasedCompleteQueryMergerRule::create() {
-    return std::make_shared<SignatureBasedCompleteQueryMergerRule>(SignatureBasedCompleteQueryMergerRule());
+SignatureBasedCompleteQueryMergerRulePtr SignatureBasedCompleteQueryMergerRule::create(z3::ContextPtr context) {
+    return std::make_shared<SignatureBasedCompleteQueryMergerRule>(SignatureBasedCompleteQueryMergerRule(context));
 }
 
 bool SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
@@ -65,11 +68,16 @@ bool SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& glob
                 bool foundMatch = false;
                 for (auto& hostSink : hostQueryPlan->getSinkOperators()) {
                     //Check if the address and target sink operator signatures match each other
-                    if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
+                    if (signatureEqualityUtil->checkEquality(hostSink->getSignature(), targetSink->getSignature())) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
                         foundMatch = true;
                         break;
                     }
+/*                    if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
+                        targetToHostSinkOperatorMap[targetSink] = hostSink;
+                        foundMatch = true;
+                        break;
+                    }*/
                 }
                 if (!foundMatch) {
                     NES_WARNING("SignatureBasedCompleteQueryMergerRule: There are matching host sink for target sink "
@@ -112,7 +120,7 @@ bool SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& glob
             break;
         }
         if (!merged) {
-            allOldSharedQueryMetaData.push_back(targetSharedQueryMetaData);
+            allOldSharedQueryMetaData.emplace_back(targetSharedQueryMetaData);
         }
     }
     //Remove all empty shared query metadata

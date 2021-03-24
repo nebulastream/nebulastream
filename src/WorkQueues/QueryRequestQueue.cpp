@@ -60,12 +60,13 @@ std::vector<QueryCatalogEntry> QueryRequestQueue::getNextBatch() {
     });
     NES_INFO("QueryRequestQueue: Fetching Queries to Schedule");
     std::vector<QueryCatalogEntry> queriesToSchedule;
+    queriesToSchedule.reserve(batchSize);
     if (!schedulingQueue.empty()) {
         uint64_t currentBatchSize = 1;
         uint64_t totalQueriesToSchedule = schedulingQueue.size();
         //Prepare a batch of queries to schedule
         while (currentBatchSize <= batchSize || currentBatchSize == totalQueriesToSchedule) {
-            queriesToSchedule.push_back(schedulingQueue.front());
+            queriesToSchedule.emplace_back(schedulingQueue.front());
             schedulingQueue.pop_front();
             currentBatchSize++;
         }

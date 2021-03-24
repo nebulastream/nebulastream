@@ -15,61 +15,47 @@
 */
 
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
-                                         std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                                         std::map<std::string, z3::ExprPtr>&& windowsExpressions) {
-    return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions), std::move(columns),
-                                                           std::move(schemaFieldToExprMaps), std::move(windowsExpressions)));
+SignatureEqualityUtilPtr SignatureEqualityUtil::create(z3::ContextPtr context) {
+    return std::make_shared<SignatureEqualityUtil>(context);
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
-                               std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
-                               std::map<std::string, z3::ExprPtr>&& windowsExpressions)
-    : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),
-      windowsExpressions(std::move(windowsExpressions)) {}
+SignatureEqualityUtil::SignatureEqualityUtil(z3::ContextPtr context) { solver = std::make_unique<z3::solver>(*context); }
 
-z3::ExprPtr QuerySignature::getConditions() { return conditions; }
-
-const std::vector<std::string>& QuerySignature::getColumns() { return columns; }
-
-const std::map<std::string, z3::ExprPtr>& QuerySignature::getWindowsExpressions() { return windowsExpressions; }
-
-const std::vector<std::map<std::string, z3::ExprPtr>>& QuerySignature::getSchemaFieldToExprMaps() {
-    return schemaFieldToExprMaps;
-}
-
-bool QuerySignature::isEqual(QuerySignaturePtr other) {
-
+bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySignaturePtr signature2) {
     NES_TRACE("QuerySignature: Equating signatures");
 
-    /*    if (!conditions || !other->getConditions()) {
+    auto otherConditions = signature2->getConditions();
+    auto conditions = signature1->getConditions();
+    if (!conditions || !otherConditions) {
         NES_WARNING("QuerySignature: Can't compare equality between null signatures");
         return false;
-    }*/
+    }
 
     //Extract the Z3 context and initialize a solver
     z3::context& context = conditions->ctx();
-    z3::solver solver(context);
+    //    z3::solver solver(context);
 
     //Check the number of columns extracted by both queries
-    auto otherColumns = other->columns;
-    /*    if (columns.size() != otherColumns.size()) {
+    auto otherColumns = signature2->getColumns();
+    auto columns = signature1->getColumns();
+    if (columns.size() != otherColumns.size()) {
         NES_WARNING("QuerySignature: Both signatures have different column entries");
         return false;
-    }*/
+    }
 
     //Check if two columns are identical
     //If column from one signature doesn't exists in other signature then they are not equal.
-    auto otherSchemaFieldToExprMaps = other->getSchemaFieldToExprMaps();
+    auto otherSchemaFieldToExprMaps = signature2->getSchemaFieldToExprMaps();
 
     //Iterate over all distinct schema maps
     // and identify if there is an equivalent schema map in the other signature
-    for (auto& schemaMap : schemaFieldToExprMaps) {
+    for (auto& schemaMap : signature1->getSchemaFieldToExprMaps()) {
         bool schemaExists = false;
         for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
              otherSchemaMapItr++) {
@@ -110,7 +96,8 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     //Compute all CNF conditions for check
     z3::expr_vector allConditions(context);
     //Check the number of window expressions extracted from both queries
-    auto otherWindowExpressions = other->windowsExpressions;
+    auto otherWindowExpressions = signature2->getWindowsExpressions();
+    auto windowsExpressions = signature1->getWindowsExpressions();
     if (windowsExpressions.size() != otherWindowExpressions.size()) {
         NES_WARNING("QuerySignature: Both signatures have different window expressions");
         return false;
@@ -131,16 +118,18 @@ bool QuerySignature::isEqual(QuerySignaturePtr other) {
     }
 
     //Add conditions from both signature into the collection of all conditions
-    allConditions.push_back(to_expr(context, Z3_mk_eq(context, *conditions, *other->conditions)));
+    allConditions.push_back(to_expr(context, Z3_mk_eq(context, *conditions, *otherConditions)));
 
     //Create a negation of CNF of all conditions collected till now
     //    const z3::expr& e = ;
-    Z3_solver_assert(context, solver, !z3::mk_and(allConditions));
-    //    solver->add(!z3::mk_and(allConditions));
+    Z3_solver_assert(context, *solver, !z3::mk_and(allConditions).simplify());
+    //    solver->add((*conditions != *otherConditions).simplify());
     //    return true;
     //    NES_ERROR("Solving: " << *solver);
-    bool equal = solver.check() == z3::unsat;
-    solver.reset();
+    bool equal = solver->check() == z3::unsat;
+    solver->reset();
+    //    NES_ERROR("Solving: " << *solver);
     return equal;
 }
+
 }// namespace NES::Optimizer
