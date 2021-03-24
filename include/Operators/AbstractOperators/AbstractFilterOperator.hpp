@@ -20,9 +20,13 @@
 
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-
 namespace NES{
 
+/**
+ * @brief Abstract filter operator with a filter predicate.
+ * A filter operator evaluates the predicate for each input record and selects all records
+ * where the predicate qualifies.
+ */
 class AbstractFilterOperator {
 
   public:

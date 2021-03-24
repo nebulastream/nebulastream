@@ -20,6 +20,9 @@
 
 namespace NES{
 
+/**
+ * @brief Abstract Union Operator
+ */
 class AbstractUnionOperator{
 
   protected:

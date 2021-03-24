@@ -23,6 +23,9 @@
 
 namespace NES {
 
+/**
+ * @brief A unary operator with one input operator, it has exactly one input operator.
+ */
 class UnaryOperatorNode : public virtual OperatorNode {
   public:
     explicit UnaryOperatorNode(OperatorId id);

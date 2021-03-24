@@ -19,9 +19,17 @@
 #include <Windowing/WindowingForwardRefs.hpp>
 namespace NES{
 
+/**
+ * @brief Abstract watermark assignment operator.
+ * Defines a watermark strategy.
+ */
 class AbstractWatermarkAssignerOperator{
 
   public:
+    /**
+     * @brief Returns the watermark strategy.
+     * @return  Windowing::WatermarkStrategyDescriptorPtr
+     */
     Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
 
   protected:
