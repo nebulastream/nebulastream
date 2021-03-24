@@ -97,13 +97,6 @@ class QuerySignature {
      */
     const std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
 
-    /**
-     * @brief Validate if this signature is equal to input signature
-     * @param other : the signature to be compared against
-     * @return true if equal else false
-     */
-    bool isEqual(QuerySignaturePtr other);
-
   private:
     QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,

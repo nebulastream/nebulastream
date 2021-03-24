@@ -21,6 +21,9 @@
 
 namespace NES::Optimizer {
 
+class SignatureEqualityUtil;
+typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
+
 class SignatureBasedPartialQueryMergerRule;
 typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPartialQueryMergerRulePtr;
 
@@ -63,13 +66,14 @@ typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPart
 class SignatureBasedPartialQueryMergerRule : public BaseQueryMergerRule {
 
   public:
-    static SignatureBasedPartialQueryMergerRulePtr create();
+    static SignatureBasedPartialQueryMergerRulePtr create(z3::ContextPtr context);
     ~SignatureBasedPartialQueryMergerRule();
 
     bool apply(const GlobalQueryPlanPtr& globalQueryPlan) override;
 
   private:
-    explicit SignatureBasedPartialQueryMergerRule();
+    explicit SignatureBasedPartialQueryMergerRule(z3::ContextPtr context);
+    SignatureEqualityUtilPtr signatureEqualityUtil;
 };
 }// namespace NES::Optimizer
 
