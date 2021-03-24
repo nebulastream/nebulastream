@@ -28,7 +28,7 @@ const uint64_t NO_OF_DISTINCT_SOURCES = 2;
 const uint64_t NO_OF_QUERIES_TO_SEND = 1000;
 //const std::string QUERY_MERGER_RULE = "SyntaxBasedCompleteQueryMergerRule";
 const std::string QUERY_MERGER_RULE = "Z3SignatureBasedCompleteQueryMergerRule";
-const uint64_t NO_OF_EXP_RUN = 3;
+const uint64_t NO_OF_EXP_RUN = 1;
 uint64_t sourceCnt;
 
 std::chrono::nanoseconds runtime;
@@ -82,11 +82,9 @@ int main() {
         auto startTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         for (int i = 1; i <= NO_OF_QUERIES_TO_SEND; i++) {
-            auto subQuery = Query::from("benchmark1");
-            auto queryObj = std::make_shared<Query>(Query::from("benchmark0")
-                                                        .unionWith(&subQuery)
-                                                        .filter(Attribute("value") > 10)
-                                                        .sink(NullOutputSinkDescriptor::create()));
+            //            auto subQuery = Query::from("benchmark1");
+            auto queryObj = std::make_shared<Query>(
+                Query::from("benchmark0").filter(Attribute("value") > 10).sink(NullOutputSinkDescriptor::create()));
             const QueryPlanPtr queryPlan = queryObj->getQueryPlan();
             queryPlan->setQueryId(i);
             queryService->addQueryRequest(query, queryObj, "TopDown");

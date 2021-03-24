@@ -39,7 +39,6 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
 
     //Extract the Z3 context and initialize a solver
     z3::context& context = conditions->ctx();
-    //    z3::solver solver(context);
 
     //Check the number of columns extracted by both queries
     auto otherColumns = signature2->getColumns();
@@ -121,14 +120,10 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     allConditions.push_back(to_expr(context, Z3_mk_eq(context, *conditions, *otherConditions)));
 
     //Create a negation of CNF of all conditions collected till now
-    //    const z3::expr& e = ;
     Z3_solver_assert(context, *solver, !z3::mk_and(allConditions).simplify());
-    //    solver->add((*conditions != *otherConditions).simplify());
-    //    return true;
-    //    NES_ERROR("Solving: " << *solver);
+        solver->add((*conditions != *otherConditions).simplify());
     bool equal = solver->check() == z3::unsat;
     solver->reset();
-    //    NES_ERROR("Solving: " << *solver);
     return equal;
 }
 

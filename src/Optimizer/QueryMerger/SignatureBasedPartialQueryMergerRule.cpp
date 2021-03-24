@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/QueryMerger/SignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -29,14 +30,16 @@
 
 namespace NES::Optimizer {
 
-SignatureBasedPartialQueryMergerRule::SignatureBasedPartialQueryMergerRule() {}
+SignatureBasedPartialQueryMergerRule::SignatureBasedPartialQueryMergerRule(z3::ContextPtr context) {
+    signatureEqualityUtil = SignatureEqualityUtil::create(context);
+}
 
 SignatureBasedPartialQueryMergerRule::~SignatureBasedPartialQueryMergerRule() {
     NES_DEBUG("~SignatureBasedPartialQueryMergerRule()");
 }
 
-SignatureBasedPartialQueryMergerRulePtr SignatureBasedPartialQueryMergerRule::create() {
-    return std::make_shared<SignatureBasedPartialQueryMergerRule>(SignatureBasedPartialQueryMergerRule());
+SignatureBasedPartialQueryMergerRulePtr SignatureBasedPartialQueryMergerRule::create(z3::ContextPtr context) {
+    return std::make_shared<SignatureBasedPartialQueryMergerRule>(SignatureBasedPartialQueryMergerRule(context));
 }
 
 bool SignatureBasedPartialQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
@@ -75,7 +78,8 @@ bool SignatureBasedPartialQueryMergerRule::apply(const GlobalQueryPlanPtr& globa
                     while (*hostQueryPlanItr) {
                         auto hostOperator = (*hostQueryPlanItr)->as<LogicalOperatorNode>();
                         if (!hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-                            if (targetOperator->getSignature()->isEqual(hostOperator->getSignature())) {
+                            if (signatureEqualityUtil->checkEquality(targetOperator->getSignature(),
+                                                                     hostOperator->getSignature())) {
                                 targetToHostOperatorMap[targetOperator] = hostOperator;
                                 foundMatch = true;
                                 break;
