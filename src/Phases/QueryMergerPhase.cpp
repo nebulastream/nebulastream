@@ -21,16 +21,17 @@
 
 namespace NES::Optimizer {
 
-QueryMergerPhasePtr QueryMergerPhase::create(std::string queryMergerRuleName) {
-    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(queryMergerRuleName));
+QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, std::string queryMergerRuleName) {
+    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(context, queryMergerRuleName));
 }
 
-QueryMergerPhase::QueryMergerPhase(std::string queryMergerRuleName) {
+QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, std::string queryMergerRuleName) {
 
     auto queryMergerEnum = stringToMergerRuleEnum.find(queryMergerRuleName);
 
     if (queryMergerEnum == stringToMergerRuleEnum.end()) {
         NES_FATAL_ERROR("Unhandled Query Merger Rule Type " << queryMergerRuleName);
+        throw Exception("Unhandled Query Merger Rule Type " + queryMergerRuleName);
     }
 
     switch (queryMergerEnum->second) {
@@ -38,7 +39,7 @@ QueryMergerPhase::QueryMergerPhase(std::string queryMergerRuleName) {
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
         case MergerRule::Z3SignatureBasedCompleteQueryMergerRule:
-            queryMergerRule = SignatureBasedCompleteQueryMergerRule::create();
+            queryMergerRule = SignatureBasedCompleteQueryMergerRule::create(context);
             break;
     }
 }

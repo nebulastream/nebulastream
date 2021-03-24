@@ -129,7 +129,7 @@ void QueryRequestProcessorService::start() {
 
                 for (auto queryRequest : queryRequests) {
                     auto queryId = queryRequest.getQueryId();
-                    NES_ERROR(queryId);
+//                    NES_ERROR(queryId);
                     if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } else {

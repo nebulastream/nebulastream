@@ -52,7 +52,7 @@ class QueryMergerPhase {
         {"StringSignatureBasedPartialQueryMergerRule", MergerRule::StringSignatureBasedPartialQueryMergerRule},
     };
 
-    static QueryMergerPhasePtr create(std::string queryMergerRuleName);
+    static QueryMergerPhasePtr create(z3::ContextPtr context, std::string queryMergerRuleName);
 
     /**
      * @brief execute method to apply different query merger rules on the global query plan.
@@ -62,7 +62,7 @@ class QueryMergerPhase {
     bool execute(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
-    explicit QueryMergerPhase(std::string queryMergerRuleName);
+    explicit QueryMergerPhase(z3::ContextPtr context, std::string queryMergerRuleName);
     BaseQueryMergerRulePtr queryMergerRule;
 };
 }// namespace NES::Optimizer

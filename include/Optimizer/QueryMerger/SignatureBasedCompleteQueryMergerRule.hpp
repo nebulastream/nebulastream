@@ -19,7 +19,15 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
+namespace z3 {
+class context;
+typedef std::shared_ptr<context> ContextPtr;
+}// namespace z3
+
 namespace NES::Optimizer {
+
+class SignatureEqualityUtil;
+typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
 
 class SignatureBasedCompleteQueryMergerRule;
 typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
@@ -66,13 +74,14 @@ typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCom
 class SignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
 
   public:
-    static SignatureBasedCompleteQueryMergerRulePtr create();
+    static SignatureBasedCompleteQueryMergerRulePtr create(z3::ContextPtr context);
     ~SignatureBasedCompleteQueryMergerRule();
 
     bool apply(const GlobalQueryPlanPtr& globalQueryPlan) override;
 
   private:
-    explicit SignatureBasedCompleteQueryMergerRule();
+    explicit SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);
+    SignatureEqualityUtilPtr signatureEqualityUtil;
 };
 }// namespace NES::Optimizer
 
