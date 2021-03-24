@@ -66,16 +66,56 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
     z3::solver solver(*context);
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
 
-    for (int i = 0; i < filterOperators.size(); i++) {
-        Optimizer::QuerySignaturePtr qsp = filterOperators[i]->getSignature();
+    for (auto filterOp : filterOperators) {
+        Optimizer::QuerySignaturePtr qsp = filterOp->getSignature();
+
+        z3::ExprPtr conditions = qsp->getConditions();
         solver.add(*(qsp->getConditions()));
-    }
 
-    if(solver.check() == z3::unsat){
-        throw InvalidQueryException("SemanticQueryValidation: Unsatisfiable Query\n");
+        if(solver.check() == z3::unsat){
+            auto predicateStr = filterOp->getPredicate()->toString();
+            handleException(predicateStr);
+        }
     }
-
     return solver.check() != z3::unsat;
+}
+
+void NES::SemanticQueryValidation::handleException(std::string & predicateString) {
+    eraseAllSubStr(predicateString, "[INTEGER]");
+    eraseAllSubStr(predicateString, "(");
+    eraseAllSubStr(predicateString, ")");
+    eraseAllSubStr(predicateString, "FieldAccessNode");
+    eraseAllSubStr(predicateString, "ConstantValue");
+    eraseAllSubStr(predicateString, "BasicValue");
+    eraseAllSubStr(predicateString, "$");
+
+    findAndReplaceAll(predicateString, "&&", " && ");
+    findAndReplaceAll(predicateString, "||", " || ");
+
+    auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
+    for (auto logicalStream: allLogicalStreams){
+        eraseAllSubStr(predicateString, logicalStream.first);
+    } 
+    
+    throw InvalidQueryException("SemanticQueryValidation: Unsatisfiable Query due to filter condition:\n" 
+                                + predicateString + "\n");
+}
+
+void NES::SemanticQueryValidation::eraseAllSubStr(std::string & mainStr, const std::string & toErase) {
+    size_t pos = std::string::npos;
+    while ((pos  = mainStr.find(toErase) )!= std::string::npos)
+    {
+        mainStr.erase(pos, toErase.length());
+    }
+}
+
+void NES::SemanticQueryValidation::findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr) {
+    size_t pos = data.find(toSearch);
+    while( pos != std::string::npos)
+    {
+        data.replace(pos, toSearch.size(), replaceStr);
+        pos = data.find(toSearch, pos + replaceStr.size());
+    }
 }
 
 void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog){

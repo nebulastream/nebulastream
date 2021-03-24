@@ -34,6 +34,9 @@ class SemanticQueryValidation {
         StreamCatalogPtr streamCatalog;
         bool isLogicalStreamInCatalog(std::string streamname, std::map<std::string, std::string> allLogicalStreams);
         void sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
+        void handleException(std::string & predicateString);
+        void eraseAllSubStr(std::string & mainStr, const std::string & toErase);
+        void findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr);
     public:
         bool isSatisfiable(QueryPtr inputQuery);
         SemanticQueryValidation(StreamCatalogPtr scp);
