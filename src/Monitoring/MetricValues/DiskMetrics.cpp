@@ -15,7 +15,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -23,6 +23,7 @@
 #include <Util/UtilityFunctions.hpp>
 
 #include <cstring>
+#include <cpprest/json.h>
 
 namespace NES {
 

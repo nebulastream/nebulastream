@@ -497,7 +497,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
     NES_INFO("RETURN: " << json_return.size());
     NES_INFO("RETURN: " << json_return);
 
-    for (int i=1; i<=json_return.size(); i++) {
+    for (int i = 1; i <= json_return.size(); i++) {
         auto json = json_return[std::to_string(i)];
         NES_INFO("SUB RETURN: " << json);
 
@@ -506,7 +506,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
 
         EXPECT_TRUE(json.has_field("cpu"));
         auto numCores = json["cpu"]["NUM_CORES"].as_integer();
-        EXPECT_EQ(json["cpu"].size(), numCores+2);
+        EXPECT_EQ(json["cpu"].size(), numCores + 2);
 
         EXPECT_TRUE(json.has_field("network"));
         EXPECT_TRUE(json["network"].size() > 0);

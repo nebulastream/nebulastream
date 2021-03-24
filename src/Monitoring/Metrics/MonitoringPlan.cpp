@@ -17,7 +17,7 @@
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>

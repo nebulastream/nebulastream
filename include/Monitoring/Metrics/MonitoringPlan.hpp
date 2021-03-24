@@ -38,6 +38,9 @@ typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
 
+/**
+ * @brief The MonitoringPlan is a config class to represent what metrics shall be collected and how.
+ */
 class MonitoringPlan {
   public:
     static MonitoringPlanPtr create(const std::vector<MetricValueType>& metrics);

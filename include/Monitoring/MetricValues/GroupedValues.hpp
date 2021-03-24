@@ -18,7 +18,7 @@
 #define NES_INCLUDE_MONITORING_METRICVALUES_GROUPEDVALUES_HPP_
 
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/Metric.hpp>
@@ -32,27 +32,7 @@ struct GroupedValues {
     std::optional<std::unique_ptr<NetworkMetrics>> networkMetrics;
     std::optional<std::unique_ptr<MemoryMetrics>> memoryMetrics;
 
-    web::json::value asJson() {
-        web::json::value metricsJson{};
-
-        if (diskMetrics.has_value()) {
-            metricsJson["disk"] =  diskMetrics.value()->toJson();
-        }
-
-        if (cpuMetrics.has_value()) {
-            metricsJson["cpu"] =  cpuMetrics.value()->toJson();
-        }
-
-        if (networkMetrics.has_value()) {
-            metricsJson["network"] =  networkMetrics.value()->toJson();
-        }
-
-        if (memoryMetrics.has_value()) {
-            metricsJson["memory"] =  memoryMetrics.value()->toJson();
-        }
-
-        return metricsJson;
-    };
+    web::json::value asJson();
 };
 
 }// namespace NES

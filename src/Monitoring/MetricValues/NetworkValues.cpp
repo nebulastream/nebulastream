@@ -22,6 +22,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cstring>
 #include <Common/DataTypes/FixedChar.hpp>
+#include <cpprest/json.h>
 
 namespace NES {
 
@@ -62,7 +63,7 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
         NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
     }
     if (!(UtilityFunctions::endsWith(schema->fields[i]->getName(), "name")
-          && UtilityFunctions::endsWith(schema->fields[i + 16]->getName(), "tCompressed"))) {
+          && UtilityFunctions::endsWith(schema->fields[i + schema->getSize()-1]->getName(), "tCompressed"))) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
