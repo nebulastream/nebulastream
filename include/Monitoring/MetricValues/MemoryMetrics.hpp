@@ -22,6 +22,9 @@
 
 namespace NES {
 
+/**
+ * @brief MemoryMetrics class, that is responsible for collecting and managing memory metrics.
+ */
 class MemoryMetrics {
   public:
     MemoryMetrics() = default;

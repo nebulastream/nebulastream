@@ -20,7 +20,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
-#include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/Metrics/IntCounter.hpp>
@@ -329,8 +329,6 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsBuffer) {
         tupleBuffer.release();
     }
 
-    //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
-
     NES_INFO("MonitoringStackTest: Stopping worker");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
@@ -389,8 +387,6 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsJson) {
         EXPECT_TRUE(json.has_field("memory"));
         EXPECT_EQ(json["memory"].size(), 13);
     }
-
-    //NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
     NES_INFO("MonitoringStackTest: Stopping worker");
     bool retStopWrk1 = wrk1->stop(false);

@@ -22,12 +22,17 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <cpprest/json.h>
 
 namespace NES {
 class Schema;
 class MonitoringPlan;
 typedef std::shared_ptr<Schema> SchemaPtr;
 }// namespace NES
+
+namespace web {
+namespace json {
+class value;
+}
+}
 
 #endif//NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

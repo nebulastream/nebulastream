@@ -16,7 +16,7 @@
 
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/MetricValues/CpuValues.hpp>
-#include <Monitoring/MetricValues/DiscMetrics.hpp>
+#include <Monitoring/MetricValues/DiskMetrics.hpp>
 #include <Monitoring/MetricValues/MemoryMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
@@ -99,7 +99,7 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
                &tCompressed);
         auto outputValue = NetworkValues();
         // the name of the network interface
-        // TODO: add proper handling of ifname as string
+        // TODO: add proper handling of ifname as string (see issue #1725)
         outputValue.interfaceName = i++;
 
         // the received metric fields

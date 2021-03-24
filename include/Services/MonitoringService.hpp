@@ -35,6 +35,9 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 class MonitoringPlan;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
+/**
+ * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
+ */
 class MonitoringService {
   public:
     explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager);

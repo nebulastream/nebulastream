@@ -13,3 +13,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Monitoring/MetricValues/GroupedValues.hpp>
+#include <cpprest/json.h>
+
+web::json::value NES::GroupedValues::asJson()  {
+    web::json::value metricsJson{};
+
+    if (diskMetrics.has_value()) {
+        metricsJson["disk"] =  diskMetrics.value()->toJson();
+    }
+
+    if (cpuMetrics.has_value()) {
+        metricsJson["cpu"] =  cpuMetrics.value()->toJson();
+    }
+
+    if (networkMetrics.has_value()) {
+        metricsJson["network"] =  networkMetrics.value()->toJson();
+    }
+
+    if (memoryMetrics.has_value()) {
+        metricsJson["memory"] =  memoryMetrics.value()->toJson();
+    }
+
+    return metricsJson;
+}

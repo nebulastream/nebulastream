@@ -23,6 +23,9 @@
 
 namespace NES {
 
+/**
+ * @brief NetworkMetrics class, that is responsible for collecting and managing network metrics.
+ */
 class NetworkMetrics {
 
   public:
