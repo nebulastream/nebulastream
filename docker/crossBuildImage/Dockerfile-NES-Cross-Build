@@ -56,6 +56,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -o 
   doxygen:arm64 \
   graphviz:arm64 \
   libz3-dev:arm64 && \
+  libjemalloc-dev:arm64 \
   apt-get clean -qq
 
 RUN mkdir -p /opt/sysroots/aarch64-linux-gnu/usr && \

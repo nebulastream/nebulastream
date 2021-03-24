@@ -27,6 +27,7 @@ sudo apt-get update -qq && sudo apt-get install -qq \
   libcpprest-dev \
   libmbedtls-dev \
   libssl-dev \
+  libjemalloc-dev \
   clang-format \
   librdkafka1 \
   librdkafka++1 \

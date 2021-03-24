@@ -19,6 +19,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libeigen3-dev \
   libzmqpp-dev \
   libmbedtls-dev \
+  libjemalloc-dev \
   git \
   wget \
   python3.8 \
