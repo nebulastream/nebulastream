@@ -45,6 +45,7 @@ class SignatureEqualityUtil {
     bool checkEquality(QuerySignaturePtr signature1, QuerySignaturePtr signature2);
 
   private:
+    z3::ContextPtr context;
     z3::SolverPtr solver;
 };
 }// namespace NES::Optimizer
