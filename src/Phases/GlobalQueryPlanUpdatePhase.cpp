@@ -34,7 +34,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
                                                        GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
                                                        bool enableQueryMerging, std::string queryMergerRule)
     : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), streamCatalog(streamCatalog),
-      globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
+      globalQueryPlan(globalQueryPlan), z3Context(z3Context), queryMergerRule(queryMergerRule) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryRewritePhase = QueryRewritePhase::create(streamCatalog);
@@ -51,7 +51,6 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry>& queryRequests) {
     //FIXME: Proper error handling #1585
     try {
-        //        std::stringstream recordedTimeStamp;
         //TODO: Parallelize this loop
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
@@ -68,8 +67,10 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 queryPlan = typeInferencePhase->execute(queryPlan);
 
-                NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
-                signatureInferencePhase->execute(queryPlan);
+                if (queryMergerRule.find("Z3") != std::string::npos) {
+                    NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
+                    signatureInferencePhase->execute(queryPlan);
+                }
 
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                 queryPlan = queryRewritePhase->execute(queryPlan);
