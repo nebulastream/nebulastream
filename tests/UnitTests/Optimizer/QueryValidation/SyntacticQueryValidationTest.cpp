@@ -39,7 +39,7 @@ class SyntacticQueryValidationTest : public testing::Test {
     void TestForException(std::string queryString){
         PrintQString(queryString);  
         SyntacticQueryValidation syntacticQueryValidation;
-        EXPECT_THROW(syntacticQueryValidation.isValid(queryString), InvalidQueryException);
+        EXPECT_THROW(syntacticQueryValidation.checkValidity(queryString), InvalidQueryException);
     }
 };
 
@@ -52,7 +52,7 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); "
     ;
 
-    ASSERT_EQ(syntacticQueryValidation.isValid(queryString), true);
+    syntacticQueryValidation.checkValidity(queryString);
 }
 
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {

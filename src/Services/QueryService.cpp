@@ -47,7 +47,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     NES_INFO("QueryService: Executing Syntactic validation");
     try{
         SyntacticQueryValidation syntacticQueryValidation;
-        syntacticQueryValidation.isValid(queryString);
+        syntacticQueryValidation.checkValidity(queryString);
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
@@ -70,7 +70,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         NES_INFO("QueryService: Executing Semantic validation");
         try{
             SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalog);
-            semanticQueryValidation->isSatisfiable(query);
+            semanticQueryValidation->checkSatisfiability(query);
         } catch (const std::exception& exc) {
             NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));
             queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);

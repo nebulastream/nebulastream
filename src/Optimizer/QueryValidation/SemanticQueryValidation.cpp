@@ -41,7 +41,7 @@ SemanticQueryValidationPtr NES::SemanticQueryValidation::create(StreamCatalogPtr
     return std::make_shared<SemanticQueryValidation>(scp);
 }
 
-bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
+void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
 
     z3::ContextPtr context = std::make_shared<z3::context>();
     
@@ -77,7 +77,6 @@ bool NES::SemanticQueryValidation::isSatisfiable(QueryPtr inputQuery) {
             handleException(predicateStr);
         }
     }
-    return solver.check() != z3::unsat;
 }
 
 void NES::SemanticQueryValidation::handleException(std::string & predicateString) {

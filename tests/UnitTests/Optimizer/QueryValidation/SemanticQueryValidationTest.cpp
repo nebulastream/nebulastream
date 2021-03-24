@@ -43,7 +43,7 @@ class SemanticQueryValidationTest : public testing::Test {
         SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
         QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
-        semanticQueryValidation->isSatisfiable(filterQuery);
+        semanticQueryValidation->checkSatisfiability(filterQuery);
     }
 
     void TestForException(std::string queryString){
@@ -118,7 +118,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
 
     filterQuery->sink(FileSinkDescriptor::create(""));
     
-    semanticQueryValidation->isSatisfiable(filterQuery);
+    semanticQueryValidation->checkSatisfiability(filterQuery);
 }
 
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
@@ -139,7 +139,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     
     filterQuery->sink(FileSinkDescriptor::create(""));
 
-    EXPECT_THROW(semanticQueryValidation->isSatisfiable(filterQuery), InvalidQueryException);
+    EXPECT_THROW(semanticQueryValidation->checkSatisfiability(filterQuery), InvalidQueryException);
 }
 
 
@@ -202,7 +202,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_projectionTest) {
                      .map(Attribute("value") = Attribute("value") + 2)
                      .sink(FileSinkDescriptor::create(""));
 
-    semanticQueryValidation->isSatisfiable(std::make_shared<Query>(query));
+    semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query));
 
 }
 
@@ -218,7 +218,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_projectionNegativeTest) {
                      .filter(Attribute("id") < 42)
                      .sink(FileSinkDescriptor::create(""));
 
-    semanticQueryValidation->isSatisfiable(std::make_shared<Query>(query));
+    semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query));
 
 }
 
