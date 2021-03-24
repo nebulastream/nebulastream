@@ -47,7 +47,7 @@ class RESTEndpointTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down RESTEndpointTest test class."); }
 };
 
-TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
+TEST_F(RESTEndpointTest, DISABLED_testGetExecutionPlanFromWithSingleWorker) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
