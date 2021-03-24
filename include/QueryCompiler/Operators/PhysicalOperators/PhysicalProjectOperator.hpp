@@ -22,7 +22,9 @@
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
-
+/**
+ * @brief Physical projection operator.
+ */
 class PhysicalProjectOperator: public AbstractProjectionOperator, public PhysicalUnaryOperator{
   public:
     PhysicalProjectOperator(OperatorId id, std::vector<ExpressionNodePtr> expressions);

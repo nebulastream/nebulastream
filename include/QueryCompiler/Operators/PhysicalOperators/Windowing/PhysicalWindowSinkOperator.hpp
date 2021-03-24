@@ -23,6 +23,10 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief Physical operator for all window sinks.
+ * A window sink computes the final window result using the window slice store.
+ */
 class PhysicalWindowSinkOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
   public:
     PhysicalWindowSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);

@@ -20,6 +20,10 @@
 namespace NES{
 namespace QueryCompilation {
 
+/**
+ * @brief This phase translates a query plan of logical operators into a query plan of physical operators.
+ * The translation of individual operators is defined by the physical operator provider to improve extendability.
+ */
 class TranslateToPhysicalOperators{
 
   public:

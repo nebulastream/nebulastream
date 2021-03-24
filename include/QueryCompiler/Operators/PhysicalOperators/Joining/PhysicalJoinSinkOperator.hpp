@@ -20,7 +20,10 @@
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
-
+/**
+ * @brief Physical operator for the join sink.
+ * This operator queries the operator state and computes final join results.
+ */
 class PhysicalJoinSinkOperator: public PhysicalBinaryOperator, public AbstractJoinOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id,

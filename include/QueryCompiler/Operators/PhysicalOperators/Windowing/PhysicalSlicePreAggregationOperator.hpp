@@ -23,6 +23,10 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief Physical operator for slice pre-aggregation.
+ * This operator receives records and pre-aggregates values in a slice store.
+ */
 class PhysicalSlicePreAggregationOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
   public:
     PhysicalSlicePreAggregationOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);

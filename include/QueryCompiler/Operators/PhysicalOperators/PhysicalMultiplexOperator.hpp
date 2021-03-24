@@ -15,12 +15,25 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
-
-class PhysicalMultiplexOperator : public PhysicalUnaryOperator {
+/**
+ * @brief The physical multiplex operator
+ * This operator has multiple upstream operators and forwards it to exactly one down-stream operator.
+ * Thus it has multiple child nodes and one parent nodes.
+ * Example query plan:
+ *
+ * Sink --- OperatorX ---
+ *                       \
+ *                        --- Multiplex --- OperatorZ --- DataSource
+ *                       /
+ * Sink --- OperatorY ---
+ *
+ */
+class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperatorNode {
   public:
     PhysicalMultiplexOperator(OperatorId id);
     static PhysicalOperatorPtr create(OperatorId id = UtilityFunctions::getNextOperatorId());

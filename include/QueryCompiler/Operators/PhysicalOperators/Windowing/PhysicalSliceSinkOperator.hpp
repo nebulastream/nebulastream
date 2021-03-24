@@ -23,6 +23,11 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief Physical slice sink operator.
+ * A slice sink, passes pre-aggregated slices to the downstream operator.
+ * A slice is a non overlapping fraction of one or multiple final windows.
+ */
 class PhysicalSliceSinkOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
   public:
     PhysicalSliceSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);

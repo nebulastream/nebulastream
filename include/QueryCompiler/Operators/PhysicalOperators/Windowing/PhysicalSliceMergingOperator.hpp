@@ -23,6 +23,10 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
+/**
+ * @brief Physical operator for slice merging.
+ * This operator receives pre-aggregated slices, e.g., from the slice merger, and merges them in its local operator state.
+ */
 class PhysicalSliceMergingOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
   public:
     PhysicalSliceMergingOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);

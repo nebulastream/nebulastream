@@ -21,6 +21,10 @@ namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
+/**
+ * @brief Physical Binary operator combines the PhysicalOperator and BinaryOperatorNode interfaces.
+ * A physical binary operator has exactly two children operators.
+ */
 class PhysicalBinaryOperator: public PhysicalOperator, public BinaryOperatorNode {
   protected:
     PhysicalBinaryOperator(OperatorId id);
