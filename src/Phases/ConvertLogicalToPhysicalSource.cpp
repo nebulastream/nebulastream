@@ -37,7 +37,8 @@
 namespace NES {
 
 DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
-                                                               NodeEngine::NodeEnginePtr nodeEngine, size_t numSourceLocalBuffers) {
+                                                               NodeEngine::NodeEnginePtr nodeEngine,
+                                                               size_t numSourceLocalBuffers) {
     NES_ASSERT(nodeEngine, "invalid engine");
     auto bufferManager = nodeEngine->getBufferManager();
     auto queryManager = nodeEngine->getQueryManager();
@@ -53,7 +54,8 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const DefaultSourceDescriptorPtr defaultSourceDescriptor = sourceDescriptor->as<DefaultSourceDescriptor>();
         return createDefaultDataSourceWithSchemaForVarBuffers(defaultSourceDescriptor->getSchema(), bufferManager, queryManager,
                                                               defaultSourceDescriptor->getNumbersOfBufferToProduce(),
-                                                              defaultSourceDescriptor->getFrequencyCount(), operatorId, numSourceLocalBuffers);
+                                                              defaultSourceDescriptor->getFrequencyCount(), operatorId,
+                                                              numSourceLocalBuffers);
     } else if (sourceDescriptor->instanceOf<BinarySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Binary File source");
         const BinarySourceDescriptorPtr binarySourceDescriptor = sourceDescriptor->as<BinarySourceDescriptor>();
@@ -82,7 +84,8 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const MQTTSourceDescriptorPtr mqttSourceDescriptor = sourceDescriptor->as<MQTTSourceDescriptor>();
         return createMQTTSource(mqttSourceDescriptor->getSchema(), bufferManager, queryManager,
                                 mqttSourceDescriptor->getServerAddress(), mqttSourceDescriptor->getClientId(),
-                                mqttSourceDescriptor->getUser(), mqttSourceDescriptor->getTopic(), operatorId, numSourceLocalBuffers);
+                                mqttSourceDescriptor->getUser(), mqttSourceDescriptor->getTopic(), operatorId,
+                                numSourceLocalBuffers);
 #endif
 #ifdef ENABLE_OPC_BUILD
     } else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {

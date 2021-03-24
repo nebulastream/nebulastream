@@ -740,7 +740,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         std::thread receivingThread([&]() {
             // register the incoming channel
-            NetworkSource source(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition, 64);
+            NetworkSource source(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition,
+                                 64);
             EXPECT_TRUE(source.start());
             EXPECT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
             completed.get_future().get();
@@ -818,8 +819,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                 .setQuerySubPlanId(1);
 
     // creating query plan
-    auto testSource =
-        createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), 1, 64);
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
+                                                                    nodeEngine->getQueryManager(), 1, 64);
     auto networkSink = std::make_shared<NetworkSink>(schema, 2, netManager, nodeLocation, nesPartition,
                                                      nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
 

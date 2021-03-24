@@ -45,21 +45,23 @@
 namespace NES {
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                                                  NodeEngine::QueryManagerPtr queryManager,
-                                                                  OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1000, operatorId, numSourceLocalBuffers);
+                                                                  NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
+                                                                  size_t numSourceLocalBuffers) {
+    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, /*bufferCnt*/ 1, /*frequency*/ 1000, operatorId,
+                                           numSourceLocalBuffers);
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                                                    NodeEngine::QueryManagerPtr queryManager,
                                                                    uint64_t numbersOfBufferToProduce, uint64_t frequency,
                                                                    OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId, numSourceLocalBuffers);
+    return std::make_shared<DefaultSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId,
+                                           numSourceLocalBuffers);
 }
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::BufferManagerPtr bufferManager,
-                                                                 NodeEngine::QueryManagerPtr queryManager,
-                                                                 OperatorId operatorId, size_t numSourceLocalBuffers) {
+                                                                 NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId,
+                                                                 size_t numSourceLocalBuffers) {
     return std::make_shared<DefaultSource>(Schema::create()->addField("id", DataTypeFactory::createUInt64()), bufferManager,
                                            queryManager, /**bufferCnt*/ 1, /*frequency*/ 1000, operatorId, numSourceLocalBuffers);
 }
@@ -86,7 +88,8 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferM
 }
 
 const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                      NodeEngine::QueryManagerPtr queryManager, const std::string& udfs, OperatorId operatorId, size_t numSourceLocalBuffers) {
+                                      NodeEngine::QueryManagerPtr queryManager, const std::string& udfs, OperatorId operatorId,
+                                      size_t numSourceLocalBuffers) {
     return std::make_shared<SenseSource>(schema, bufferManager, queryManager, udfs, operatorId, numSourceLocalBuffers);
 }
 
@@ -111,14 +114,15 @@ const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManag
 const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                         NodeEngine::QueryManagerPtr queryManager, Network::NetworkManagerPtr networkManager,
                                         Network::NesPartition nesPartition, size_t numSourceLocalBuffers) {
-    return std::make_shared<Network::NetworkSource>(schema, bufferManager, queryManager, networkManager, nesPartition, numSourceLocalBuffers);
+    return std::make_shared<Network::NetworkSource>(schema, bufferManager, queryManager, networkManager, nesPartition,
+                                                    numSourceLocalBuffers);
 }
 
 #ifdef ENABLE_KAFKA_BUILD
 const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                       NodeEngine::QueryManagerPtr queryManager, std::string brokers, std::string topic,
-                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout,
-                                      OperatorId operatorId, size_t numSourceLocalBuffers) {
+                                      std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout, OperatorId operatorId,
+                                      size_t numSourceLocalBuffers) {
     return std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, groupId, autoCommit,
                                          kafkaConsumerTimeout, operatorId, numSourceLocalBuffers);
 }
@@ -128,14 +132,16 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManage
 const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId, std::string user,
                                     std::string password, OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId, numSourceLocalBuffers);
+    return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId,
+                                       numSourceLocalBuffers);
 }
 #endif
 #ifdef ENABLE_MQTT_BUILD
 const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                      NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId,
                                      std::string user, std::string topic, OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<MQTTSource>(schema, bufferManager, queryManager, serverAddress, clientId, user, topic, operatorId, numSourceLocalBuffers);
+    return std::make_shared<MQTTSource>(schema, bufferManager, queryManager, serverAddress, clientId, user, topic, operatorId,
+                                        numSourceLocalBuffers);
 }
 #endif
 }// namespace NES

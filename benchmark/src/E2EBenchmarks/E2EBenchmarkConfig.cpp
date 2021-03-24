@@ -201,9 +201,7 @@ const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersInGlobalBufferManage
     return numberOfBuffersInGlobalBufferManager;
 }
 
-const IntConfigOption E2EBenchmarkConfig::getnumberOfBuffersPerPipeline() const {
-    return numberOfBuffersPerPipeline;
-}
+const IntConfigOption E2EBenchmarkConfig::getnumberOfBuffersPerPipeline() const { return numberOfBuffersPerPipeline; }
 
 const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersInSourceLocalBufferPool() const {
     return numberOfBuffersInSourceLocalBufferPool;
@@ -253,8 +251,7 @@ std::string E2EBenchmarkConfig::toString() {
        << " bufferSizeInBytes=" << getBufferSizeInBytes()->getValue() << " inputOutputMode=" << getInputOutputMode()->getValue()
        << " outputFile=" << getOutputFile()->getValue() << " query=" << getQuery()->getValue()
        << " experimentMeasureIntervalInSeconds=" << getExperimentMeasureIntervalInSeconds()->getValue()
-       << " logLevel=" << getLogLevel()->getValue()
-       << " inputOutputMode=" << getInputOutputMode()->getValue()
+       << " logLevel=" << getLogLevel()->getValue() << " inputOutputMode=" << getInputOutputMode()->getValue()
        << " startupSleepIntervalInSeconds=" << getStartupSleepIntervalInSeconds()->getValue()
        << " numberOfMeasurementsToCollect=" << getNumberOfMeasurementsToCollect()->getValue() << std::endl;
     return ss.str();
