@@ -97,42 +97,42 @@ class E2EBenchmarkConfig {
     /**
      * @brief set the value for numberOfBuffersInGlobalBufferManager
      */
-    void setNumberOfBuffersInGlobalBufferManager(uint32_t numberOfBuffersInGlobalBufferManager);
+    void setNumberOfBuffersInGlobalBufferManager(std::string numberOfBuffersInGlobalBufferManager);
 
     /**
      * @brief gets a ConfigOption object with numberOfBuffersInGlobalBufferManager
      */
-    const IntConfigOption getNumberOfBuffersInGlobalBufferManager() const;
+    const StringConfigOption getNumberOfBuffersInGlobalBufferManager() const;
 
     /**
      * @brief set the value for numberOfBuffersPerPipeline
      */
-    void setnumberOfBuffersPerPipeline(uint32_t numberOfBuffersPerPipeline);
+    void setNumberOfBuffersPerPipeline(std::string numberOfBuffersPerPipeline);
 
     /**
      * @brief gets a ConfigOption object with numberOfBuffersPerPipeline
      */
-    const IntConfigOption getnumberOfBuffersPerPipeline() const;
+    const StringConfigOption getNumberOfBuffersPerPipeline() const;
 
     /**
      * @brief set the value for numberOfBuffersInSourceLocalBufferPool
      */
-    void setNumberOfBuffersInSourceLocalBufferPool(uint32_t numberOfBuffersInSourceLocalBufferPool);
+    void setNumberOfBuffersInSourceLocalBufferPool(std::string numberOfBuffersInSourceLocalBufferPool);
 
     /**
      * @brief gets a ConfigOption object with numberOfBuffersInSourceLocalBufferPool
      */
-    const IntConfigOption getNumberOfBuffersInSourceLocalBufferPool() const;
+    const StringConfigOption getNumberOfBuffersInSourceLocalBufferPool() const;
 
     /**
        * @brief set the value for bufferSizeInBytes
     */
-    void setBufferSizeInBytes(uint32_t bufferSizeInBytes);
+    void setBufferSizeInBytes(std::string bufferSizeInBytes);
 
     /**
      * @brief gets a ConfigOption object with bufferSizeInBytes
      */
-    const IntConfigOption getBufferSizeInBytes() const;
+    const StringConfigOption getBufferSizeInBytes() const;
 
     /**
      * @brief set the value for inputOutputMode
@@ -227,12 +227,12 @@ class E2EBenchmarkConfig {
     StringConfigOption numberOfCoordinatorThreads;
     StringConfigOption numberOfSources;
 
-    //paramter that are valid for the entire run for the config of the worker and coordinator
+    //parameter that are valid for the entire run for the config of the worker and coordinator
     IntConfigOption numberOfBuffersToProduce;
-    IntConfigOption numberOfBuffersInGlobalBufferManager;
-    IntConfigOption numberOfBuffersPerPipeline;
-    IntConfigOption numberOfBuffersInSourceLocalBufferPool;
-    IntConfigOption bufferSizeInBytes;
+    StringConfigOption numberOfBuffersInGlobalBufferManager;
+    StringConfigOption numberOfBuffersPerPipeline;
+    StringConfigOption numberOfBuffersInSourceLocalBufferPool;
+    StringConfigOption bufferSizeInBytes;
     StringConfigOption query;
     StringConfigOption inputOutputMode;
 
