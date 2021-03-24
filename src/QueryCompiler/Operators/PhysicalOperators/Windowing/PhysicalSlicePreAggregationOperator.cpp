@@ -28,7 +28,7 @@ PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(OperatorId id, W
 }
 
 PhysicalSlicePreAggregationOperator::PhysicalSlicePreAggregationOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), AbstractWindowOperator(windowDefinition), PhysicalUnaryOperator(id){};
+    : OperatorNode(id), PhysicalWindowOperator(id, windowDefinition){};
 
 const std::string PhysicalSlicePreAggregationOperator::toString() const {
     return "PhysicalWindowPreAggregationOperator";

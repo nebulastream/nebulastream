@@ -13,13 +13,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#include <Operators/AbstractOperators/AbstractFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 
 namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
-AbstractFilterOperator::AbstractFilterOperator(ExpressionNodePtr predicate) : predicate(predicate) {}
+PhysicalJoinOperator::PhysicalJoinOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition)
+    : OperatorNode(id), PhysicalBinaryOperator(id), joinDefinition(joinDefinition) {};
 
-ExpressionNodePtr AbstractFilterOperator::getPredicate() { return predicate; }
+Join::LogicalJoinDefinitionPtr PhysicalJoinOperator::getJoinDefinition() {
+    return joinDefinition;
+}
 
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
 }// namespace NES

@@ -28,7 +28,7 @@ PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id, Join::Logica
 }
 
 PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition)
-    : OperatorNode(id), PhysicalBinaryOperator(id), AbstractJoinOperator(joinDefinition) {};
+    : OperatorNode(id), PhysicalJoinOperator(id, joinDefinition) {};
 
 const std::string PhysicalJoinSinkOperator::toString() const {
     return "PhysicalJoinSinkOperator";

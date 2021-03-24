@@ -15,26 +15,24 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
-#include <Operators/AbstractOperators/AbstractJoinOperator.hpp>
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 /**
  * @brief Physical operator for the join sink.
  * This operator queries the operator state and computes final join results.
  */
-class PhysicalJoinSinkOperator: public PhysicalBinaryOperator, public AbstractJoinOperator {
+class PhysicalJoinSinkOperator : public PhysicalJoinOperator {
   public:
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      Join::LogicalJoinDefinitionPtr joinDefinition);
+    static PhysicalOperatorPtr create(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition);
     static PhysicalOperatorPtr create(Join::LogicalJoinDefinitionPtr joinDefinition);
     PhysicalJoinSinkOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_

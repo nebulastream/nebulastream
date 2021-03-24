@@ -17,7 +17,6 @@
 #ifndef PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 #define PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/AbstractOperators/AbstractProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
@@ -26,10 +25,16 @@ namespace NES {
 /**
  * @brief projection operator, which contains an resets the output schema
  */
-class ProjectionLogicalOperatorNode : public AbstractProjectionOperator, public LogicalUnaryOperatorNode{
+class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, OperatorId id);
     ~ProjectionLogicalOperatorNode() = default;
+
+    /**
+     * @brief returns the list of fields that remain in the output schema.
+     * @return  std::vector<ExpressionNodePtr>
+     */
+    std::vector<ExpressionNodePtr> getExpressions();
 
     /**
      * @brief check if two operators have the same output schema
@@ -49,6 +54,8 @@ class ProjectionLogicalOperatorNode : public AbstractProjectionOperator, public 
 
     std::string getStringBasedSignature() override;
 
+  private:
+    std::vector<ExpressionNodePtr> expressions;
 };
 
 }// namespace NES

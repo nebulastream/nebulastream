@@ -28,7 +28,7 @@ PhysicalOperatorPtr PhysicalWindowSinkOperator::create(OperatorId id, Windowing:
 }
 
 PhysicalWindowSinkOperator::PhysicalWindowSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), AbstractWindowOperator(windowDefinition), PhysicalUnaryOperator(id){};
+    : OperatorNode(id), PhysicalWindowOperator(id, windowDefinition){};
 
 const std::string PhysicalWindowSinkOperator::toString() const {
     return "PhysicalWindowSinkOperator";

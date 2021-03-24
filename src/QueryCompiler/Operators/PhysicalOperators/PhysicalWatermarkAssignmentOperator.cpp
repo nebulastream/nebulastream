@@ -21,11 +21,15 @@ namespace PhysicalOperators {
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     OperatorId id, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : OperatorNode(id), AbstractWatermarkAssignerOperator(watermarkStrategyDescriptor), PhysicalUnaryOperator(id) {}
+    : OperatorNode(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor), PhysicalUnaryOperator(id) {}
 PhysicalOperatorPtr
 PhysicalWatermarkAssignmentOperator::create(OperatorId id,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, watermarkStrategyDescriptor);
+}
+
+Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::getWatermarkStrategyDescriptor() const {
+    return watermarkStrategyDescriptor;
 }
 
 PhysicalOperatorPtr

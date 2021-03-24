@@ -20,7 +20,7 @@ namespace PhysicalOperators{
 
 PhysicalProjectOperator::
 PhysicalProjectOperator(OperatorId id, std::vector<ExpressionNodePtr> expressions):
-    OperatorNode(id), AbstractProjectionOperator(expressions), PhysicalUnaryOperator(id) {}
+    OperatorNode(id), expressions(expressions), PhysicalUnaryOperator(id) {}
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, std::vector<ExpressionNodePtr> expressions) {
     return std::make_shared<PhysicalProjectOperator>(id, expressions);
@@ -28,6 +28,10 @@ PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, std::vector<E
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(std::vector<ExpressionNodePtr> expressions) {
     return create(UtilityFunctions::getNextOperatorId(), expressions);
+}
+
+std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() {
+    return expressions;
 }
 
 const std::string PhysicalProjectOperator::toString() const { return "PhysicalProjectOperator"; }

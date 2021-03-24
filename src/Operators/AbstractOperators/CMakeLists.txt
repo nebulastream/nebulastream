@@ -13,13 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        AbstractFilterOperator.cpp
-        AbstractMapOperator.cpp
-        AbstractProjectionOperator.cpp
-        AbstractUnionOperator.cpp
-        AbstractJoinOperator.cpp
-        AbstractWatermarkAssignerOperator
-        AbstractWindowOperator.cpp
 )
 
 add_subdirectory(Arity)

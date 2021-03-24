@@ -17,7 +17,6 @@
 #ifndef FILTER_LOGICAL_OPERATOR_NODE_HPP
 #define FILTER_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/AbstractOperators/AbstractFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 
 namespace NES {
@@ -25,10 +24,17 @@ namespace NES {
 /**
  * @brief Filter operator, which contains an expression as a predicate.
  */
-class FilterLogicalOperatorNode : public AbstractFilterOperator, public LogicalUnaryOperatorNode {
+class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit FilterLogicalOperatorNode(const ExpressionNodePtr, OperatorId id);
     ~FilterLogicalOperatorNode() = default;
+
+    /**
+   * @brief get the filter predicate.
+   * @return PredicatePtr
+   */
+    ExpressionNodePtr getPredicate();
+
 
     /**
      * @brief check if two operators have the same filter predicate.
@@ -47,6 +53,9 @@ class FilterLogicalOperatorNode : public AbstractFilterOperator, public LogicalU
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     std::string getStringBasedSignature() override;
+
+  private:
+    ExpressionNodePtr predicate;
 };
 
 }// namespace NES

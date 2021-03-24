@@ -18,7 +18,6 @@
 #define Join_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
-#include <Operators/AbstractOperators/AbstractJoinOperator.hpp>
 
 #include <memory>
 #include <z3++.h>
@@ -28,10 +27,16 @@ namespace NES {
 /**
  * @brief Join operator, which contains an expression as a predicate.
  */
-class JoinLogicalOperatorNode : public AbstractJoinOperator, public LogicalBinaryOperatorNode {
+class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
   public:
     explicit JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
     ~JoinLogicalOperatorNode() = default;
+
+    /**
+ * @brief get join definition.
+ * @return LogicalJoinDefinition
+ */
+    Join::LogicalJoinDefinitionPtr getJoinDefinition();
 
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
@@ -40,8 +45,10 @@ class JoinLogicalOperatorNode : public AbstractJoinOperator, public LogicalBinar
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
 
-    Join::LogicalJoinDefinitionPtr getJoinDefinition();
     std::string getStringBasedSignature() override;
+
+  private:
+    Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 }// namespace NES
 #endif// Join_LOGICAL_OPERATOR_NODE_HPP

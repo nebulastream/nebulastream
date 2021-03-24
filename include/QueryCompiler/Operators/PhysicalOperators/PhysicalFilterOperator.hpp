@@ -17,7 +17,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <Operators/AbstractOperators/AbstractFilterOperator.hpp>
 
 namespace NES{
 namespace QueryCompilation{
@@ -26,13 +25,21 @@ namespace PhysicalOperators{
 /**
  * @brief Physical Filter operator.
  */
-class PhysicalFilterOperator: public PhysicalUnaryOperator, public AbstractFilterOperator{
+class PhysicalFilterOperator: public PhysicalUnaryOperator{
   public:
     PhysicalFilterOperator(OperatorId id, ExpressionNodePtr predicate);
     static PhysicalOperatorPtr create(OperatorId id, ExpressionNodePtr predicate);
     static PhysicalOperatorPtr create(ExpressionNodePtr predicate);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
+    /**
+   * @brief get the filter predicate.
+   * @return PredicatePtr
+   */
+    ExpressionNodePtr getPredicate();
+  private:
+    ExpressionNodePtr predicate;
 };
 }
 }

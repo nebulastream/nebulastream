@@ -21,7 +21,11 @@ namespace PhysicalOperators{
 
 PhysicalMapOperator::
 PhysicalMapOperator(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression):
-    OperatorNode(id), PhysicalUnaryOperator(id), AbstractMapOperator(mapExpression) {}
+    OperatorNode(id), PhysicalUnaryOperator(id), mapExpression(mapExpression) {}
+
+FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() {
+    return mapExpression;
+}
 
 PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression) {
     return std::make_shared<PhysicalMapOperator>(id, mapExpression);

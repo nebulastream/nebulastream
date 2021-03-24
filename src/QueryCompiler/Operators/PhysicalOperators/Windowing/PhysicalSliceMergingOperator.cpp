@@ -28,7 +28,7 @@ PhysicalOperatorPtr PhysicalSliceMergingOperator::create(OperatorId id, Windowin
 }
 
 PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), AbstractWindowOperator(windowDefinition), PhysicalUnaryOperator(id){};
+    : OperatorNode(id), PhysicalWindowOperator(id, windowDefinition){};
 
 const std::string PhysicalSliceMergingOperator::toString() const {
     return "PhysicalSliceMergingOperator";

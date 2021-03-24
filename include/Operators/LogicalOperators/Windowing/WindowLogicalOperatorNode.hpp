@@ -31,6 +31,9 @@ class WindowLogicalOperatorNode : public WindowOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     virtual bool inferSchema();
     std::string getStringBasedSignature() override;
+
+  protected:
+    Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
 }// namespace NES
