@@ -25,16 +25,12 @@
 
 namespace NES {
 
-bool NES::SyntacticQueryValidation::isValid(std::string inputQuery) {
+void NES::SyntacticQueryValidation::checkValidity(std::string inputQuery) {
     try{
         QueryPtr multipleFilterQuery = UtilityFunctions::createQueryFromCodeString(inputQuery);
     } catch(const std::exception& ex) {
         handleException(ex);
-        return false;
-    } catch(...) {
-        return false;
     }
-    return true;
 }
 
 void NES::SyntacticQueryValidation::handleException(const std::exception& ex){

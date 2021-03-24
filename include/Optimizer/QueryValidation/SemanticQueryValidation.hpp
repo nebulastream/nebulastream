@@ -38,7 +38,7 @@ class SemanticQueryValidation {
         void eraseAllSubStr(std::string & mainStr, const std::string & toErase);
         void findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr);
     public:
-        bool isSatisfiable(QueryPtr inputQuery);
+        void checkSatisfiability(QueryPtr inputQuery);
         SemanticQueryValidation(StreamCatalogPtr scp);
         static SemanticQueryValidationPtr create(StreamCatalogPtr scp);
 };
