@@ -121,6 +121,7 @@ cp -r -v -L /usr/include/librdkafka* /opt/sysroots/aarch64-linux-gnu/usr/include
 cp -r -v -L /usr/include/libpaho-mqttpp3* /opt/sysroots/aarch64-linux-gnu/include/ && \
 cp -r -v -L /usr/include/libpaho-mqtt3as* /opt/sysroots/aarch64-linux-gnu/include/ && \
 cp -r -v -L /usr/include/boost/graph/graphviz* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
+cp -r -v -L /usr/include/jemalloc* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 cp -r -v -L /usr/include/mbedtls* /opt/sysroots/aarch64-linux-gnu/usr/include/ && \
 
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libz3* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
@@ -146,6 +147,9 @@ sed -i -- 's|/include|/usr/include|g' /opt/sysroots/aarch64-linux-gnu/usr/lib/cm
 cp -r -v -L /usr/local/lib/libopen62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
 cp -r -v -L /usr/local/lib/cmake/open62541* /opt/sysroots/aarch64-linux-gnu/usr/lib/cmake/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/librdkafka* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/libmbed* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/libjemalloc* /opt/sysroots/aarch64-linux-gnu/usr/lib/ && \
+cp -r -v -L /usr/lib/aarch64-linux-gnu/pkgconfig/jemalloc* /opt/sysroots/aarch64-linux-gnu/usr/lib/pkgconfig/ && \
 cp -r -v -L /usr/lib/aarch64-linux-gnu/libmbed* /opt/sysroots/aarch64-linux-gnu/usr/lib/
 
 RUN cd && git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
