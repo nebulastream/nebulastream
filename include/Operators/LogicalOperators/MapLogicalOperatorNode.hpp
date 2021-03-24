@@ -18,7 +18,6 @@
 #define MAP_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
-#include <Operators/AbstractOperators/AbstractMapOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -26,9 +25,15 @@ namespace NES {
 /**
  * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
  */
-class MapLogicalOperatorNode : public AbstractMapOperator, public LogicalUnaryOperatorNode {
+class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
+
+    /**
+    * @brief Returns the expression of this map operator
+    * @return FieldAssignmentExpressionNodePtr
+    */
+    FieldAssignmentExpressionNodePtr getMapExpression();
 
     /**
      * @brief Infers the schema of the map operator. We support two cases:
@@ -43,6 +48,9 @@ class MapLogicalOperatorNode : public AbstractMapOperator, public LogicalUnaryOp
     const std::string toString() const override;
     OperatorNodePtr copy() override;
     std::string getStringBasedSignature() override;
+
+  private:
+    const FieldAssignmentExpressionNodePtr mapExpression;
 };
 
 }// namespace NES

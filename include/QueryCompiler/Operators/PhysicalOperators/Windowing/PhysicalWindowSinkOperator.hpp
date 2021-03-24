@@ -16,8 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWSINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWSINKOPERATOR_HPP_
 
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <Operators/AbstractOperators/AbstractWindowOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -27,7 +26,7 @@ namespace PhysicalOperators {
  * @brief Physical operator for all window sinks.
  * A window sink computes the final window result using the window slice store.
  */
-class PhysicalWindowSinkOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
+class PhysicalWindowSinkOperator : public PhysicalWindowOperator {
   public:
     PhysicalWindowSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
     static PhysicalOperatorPtr create(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);

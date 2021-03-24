@@ -17,25 +17,32 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <Operators/AbstractOperators/AbstractProjectionOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
+
 /**
  * @brief Physical projection operator.
  */
-class PhysicalProjectOperator: public AbstractProjectionOperator, public PhysicalUnaryOperator{
+class PhysicalProjectOperator : public PhysicalUnaryOperator {
   public:
     PhysicalProjectOperator(OperatorId id, std::vector<ExpressionNodePtr> expressions);
     static PhysicalOperatorPtr create(OperatorId id, std::vector<ExpressionNodePtr> expressions);
     static PhysicalOperatorPtr create(std::vector<ExpressionNodePtr> expressions);
+    /**
+     * @brief returns the list of fields that remain in the output schema.
+     * @return  std::vector<ExpressionNodePtr>
+     */
+    std::vector<ExpressionNodePtr> getExpressions();
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
+  private:
+    std::vector<ExpressionNodePtr> expressions;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_

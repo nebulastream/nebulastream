@@ -13,16 +13,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
-#include <Operators/AbstractOperators/AbstractWatermarkAssignerOperator.hpp>
 namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
-AbstractWatermarkAssignerOperator::AbstractWatermarkAssignerOperator(
-    const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
+PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition)
+    : OperatorNode(id), PhysicalUnaryOperator(id), windowDefinition(windowDefinition){};
 
-Windowing::WatermarkStrategyDescriptorPtr AbstractWatermarkAssignerOperator::getWatermarkStrategyDescriptor() const {
-    return watermarkStrategyDescriptor;
+Windowing::LogicalWindowDefinitionPtr PhysicalWindowOperator::getWindowDefinition() const {
+    return windowDefinition;
 }
 
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
 }// namespace NES

@@ -17,7 +17,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <Operators/AbstractOperators/AbstractMapOperator.hpp>
 
 namespace NES{
 namespace QueryCompilation{
@@ -26,13 +25,22 @@ namespace PhysicalOperators{
 /**
  * @brief Physical Map operator.
  */
-class PhysicalMapOperator: public PhysicalUnaryOperator, public AbstractMapOperator{
+class PhysicalMapOperator: public PhysicalUnaryOperator{
   public:
     PhysicalMapOperator(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression);
     static PhysicalOperatorPtr create(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression);
     static PhysicalOperatorPtr create(FieldAssignmentExpressionNodePtr mapExpression);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
+    /**
+     * @brief Returns the expression of this map operator
+     * @return FieldAssignmentExpressionNodePtr
+     */
+    FieldAssignmentExpressionNodePtr getMapExpression();
+
+  protected:
+    const FieldAssignmentExpressionNodePtr mapExpression;
 
 };
 }

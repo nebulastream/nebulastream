@@ -17,7 +17,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALWATERMARKASSIGNMENTOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <Operators/AbstractOperators/AbstractWatermarkAssignerOperator.hpp>
 
 namespace NES{
 namespace QueryCompilation{
@@ -26,13 +25,23 @@ namespace PhysicalOperators{
 /**
  * @brief Physical watermark assignment operator.
  */
-class PhysicalWatermarkAssignmentOperator: public AbstractWatermarkAssignerOperator, public PhysicalUnaryOperator {
+class PhysicalWatermarkAssignmentOperator: public PhysicalUnaryOperator {
   public:
     PhysicalWatermarkAssignmentOperator(OperatorId id, const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     static PhysicalOperatorPtr create(OperatorId id, const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     static PhysicalOperatorPtr create(Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
+    /**
+* @brief Returns the watermark strategy.
+* @return  Windowing::WatermarkStrategyDescriptorPtr
+*/
+    Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
+
+  private:
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
+
 
 };
 }

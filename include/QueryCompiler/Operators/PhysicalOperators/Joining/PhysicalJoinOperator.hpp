@@ -13,33 +13,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-
-#ifndef NES_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ABSTRACTJOINOPERATOR_HPP_
-#define NES_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ABSTRACTJOINOPERATOR_HPP_
-
-#include <Operators/OperatorForwardDeclaration.hpp>
-#include <Windowing/JoinForwardRefs.hpp>
+#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES{
-
+namespace QueryCompilation{
+namespace PhysicalOperators{
 /**
- * @brief Abstract join operator, contains the join definition.
+ * @brief Physical operator for the join build.
+ * This operator receives input records and adds them to its operator state.
  */
-class AbstractJoinOperator{
-
+class PhysicalJoinOperator: public PhysicalBinaryOperator {
   public:
-    /**
-     * @brief get join definition.
-     * @return LogicalJoinDefinition
-     */
     Join::LogicalJoinDefinitionPtr getJoinDefinition();
-
   protected:
-    AbstractJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition);
+    PhysicalJoinOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition);
+
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
-
 }
-
-#endif//NES_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ABSTRACTJOINOPERATOR_HPP_
+}
+}
+#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_

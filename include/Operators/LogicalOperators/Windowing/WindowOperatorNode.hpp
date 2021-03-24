@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_WINDOWING_WINDOWOPERATORNODE_HPP_
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
-#include <Operators/AbstractOperators/AbstractWindowOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 
@@ -26,9 +25,17 @@ namespace NES {
 class WindowOperatorNode;
 typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
-class WindowOperatorNode : public AbstractWindowOperator, public LogicalUnaryOperatorNode {
+class WindowOperatorNode : public LogicalUnaryOperatorNode {
   public:
     WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);
+    /**
+    * @brief Gets the window definition of the window operator.
+    * @return LogicalWindowDefinitionPtr
+    */
+    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() const;
+
+  protected:
+    const Windowing::LogicalWindowDefinitionPtr windowDefinition;
 };
 
 }// namespace NES

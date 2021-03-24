@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
+        PhysicalJoinOperator.cpp
         PhysicalJoinBuildOperator.cpp
         PhysicalJoinSinkOperator.cpp
 )

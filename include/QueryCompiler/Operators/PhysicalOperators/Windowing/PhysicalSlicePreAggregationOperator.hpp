@@ -16,9 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWAGGREGATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWAGGREGATION_HPP_
 
-#include <Operators/AbstractOperators/AbstractWindowOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
@@ -27,7 +25,7 @@ namespace PhysicalOperators {
  * @brief Physical operator for slice pre-aggregation.
  * This operator receives records and pre-aggregates values in a slice store.
  */
-class PhysicalSlicePreAggregationOperator : public AbstractWindowOperator, public PhysicalUnaryOperator {
+class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator {
   public:
     PhysicalSlicePreAggregationOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
     static PhysicalOperatorPtr create(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);

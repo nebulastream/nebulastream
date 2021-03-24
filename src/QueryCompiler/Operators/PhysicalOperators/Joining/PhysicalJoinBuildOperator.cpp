@@ -28,7 +28,7 @@ PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id, Join::Logic
 }
 
 PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition)
-    : OperatorNode(id), PhysicalUnaryOperator(id), AbstractJoinOperator(joinDefinition) {};
+    : OperatorNode(id), PhysicalJoinOperator(id, joinDefinition) {};
 
 const std::string PhysicalJoinBuildOperator::toString() const {
     return "PhysicalJoinBuildOperator";

@@ -22,7 +22,7 @@ PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id) {
     return std::make_shared<PhysicalMultiplexOperator>(id);
 }
 
-PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id) : OperatorNode(id), PhysicalUnaryOperator(id) {}
+PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id) : OperatorNode(id), PhysicalOperator(id), ExchangeOperatorNode(id) {}
 
 const std::string PhysicalMultiplexOperator::toString() const {
     return "PhysicalMultiplexOperator";

@@ -13,6 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
+        PhysicalWindowOperator.cpp
         PhysicalSlicePreAggregationOperator.cpp
         PhysicalWindowSinkOperator.cpp
         PhysicalSliceSinkOperator.cpp
