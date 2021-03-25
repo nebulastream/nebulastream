@@ -157,7 +157,7 @@ class WindowedQuery{
     * @brief: sets the Attribute for the keyBy Operation. Creates a KeyedWindowedQuery object.
     * @param onKey
     */
-    KeyedWindowedQuery keyBy(ExpressionItem onKey);
+    KeyedWindowedQuery byKey(ExpressionItem onKey) const;
 
     /**
    * @brief: Calls internally the original window() function and returns the Query&

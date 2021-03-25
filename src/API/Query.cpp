@@ -73,7 +73,8 @@ namespace WindowOperatorBuilder {
 WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType)
     : originalQuery(originalQuery), windowType(windowType) {}
 
-KeyedWindowedQuery WindowedQuery::keyBy(ExpressionItem onKey) const {
+//KeyedWindowedQuery keyBy(ExpressionItem onKey);
+KeyedWindowedQuery WindowedQuery::byKey(ExpressionItem onKey) const {
     return KeyedWindowedQuery(originalQuery, windowType, onKey);
 }
 
