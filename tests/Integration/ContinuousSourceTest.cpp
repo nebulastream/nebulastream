@@ -1552,7 +1552,8 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
 /*
  * Testing test harness CSV source
  */
-TEST_F(ContinuousSourceTest, testWithManyInputBufferAndLargeFrequency) {
+TEST_F(ContinuousSourceTest, DISABLED_testWithManyInputBufferAndLargeFrequency) {
+    //TODO: will be addressed with issue #1737
     uint64_t numBuffersToProduce = 1000;
 
     struct Car {
