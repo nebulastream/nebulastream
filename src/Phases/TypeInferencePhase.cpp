@@ -55,7 +55,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
                 SchemaPtr schema = Schema::create();
                 auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
                 schema = schema->copyFields(originalSchema);
-                auto qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
+                std::string qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;
                 //perform attribute name resolution
                 for (auto& field : schema->fields) {
                     field->setName(qualifierName + field->getName());

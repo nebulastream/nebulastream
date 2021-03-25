@@ -425,7 +425,8 @@ void E2EBase::tearDown() {
 
         std::shared_ptr<std::promise<bool>> stopPromiseWrk1 = std::make_shared<std::promise<bool>>();
         std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
-        std::thread t1([stopPromiseWrk1, stopPromiseCord]() {
+
+        std::thread t1([this, stopPromiseWrk1, stopPromiseCord]() {
             std::future<bool> stopFutureWrk1 = stopPromiseWrk1->get_future();
             bool satisfied = false;
             while (!satisfied) {
@@ -435,7 +436,12 @@ void E2EBase::tearDown() {
                     }
                     case future_status::timeout:
                     case future_status::deferred: {
-                        NES_WARNING("Waiting for stop");
+                        if (wrk1->isWorkerRunning()) {
+                            NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
+                                        << wrk1->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+                        } else {
+                            NES_WARNING("worker stopped");
+                        }
                         break;
                     }
                 }
@@ -449,7 +455,12 @@ void E2EBase::tearDown() {
                     }
                     case future_status::timeout:
                     case future_status::deferred: {
-                        NES_WARNING("Waiting for stop");
+                        if (crd->isCoordinatorRunning()) {
+                            NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
+                                        << crd->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+                        } else {
+                            NES_WARNING("worker stopped");
+                        }
                         break;
                     }
                 }

@@ -70,7 +70,9 @@ bool NesWorker::setWithParent(std::string parentId) {
 void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
     //TODO: somehow we need this although it is not called at all
     // Spawn a new CallData instance to serve new clients.
-    new CallData(&service, completionQueue.get());
+
+    CallDataPtr call = std::make_shared<CallData>(&service, completionQueue.get());
+    call->proceed();
     void* tag;// uniquely identifies a request.
     bool ok;  //
     while (true) {
@@ -90,14 +92,14 @@ void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
     }
 }
 
-void NesWorker::buildAndStartGRPCServer(std::promise<bool>& prom) {
+void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {
     WorkerRPCServer service(nodeEngine);
     ServerBuilder builder;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     completionQueue = builder.AddCompletionQueue();
-    rpcServer = builder.BuildAndStart();
-    prom.set_value(true);
+    rpcServer = std::move(builder.BuildAndStart());
+    prom->set_value(true);
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress);
     //this call is already blocking
     handleRpcs(service);
@@ -128,14 +130,14 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
     rpcAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
     NES_DEBUG("NesWorker: startWorkerRPCServer for accepting messages for address=" << rpcAddress);
-    std::promise<bool> promRPC;
+    std::shared_ptr<std::promise<bool>> promRPC = std::make_shared<std::promise<bool>>();
 
-    rpcThread = std::make_shared<std::thread>(([&]() {
+    rpcThread = std::make_shared<std::thread>(([this, promRPC]() {
         NES_DEBUG("NesWorker: buildAndStartGRPCServer");
         buildAndStartGRPCServer(promRPC);
         NES_DEBUG("NesWorker: buildAndStartGRPCServer: end listening");
     }));
-    promRPC.get_future().get();
+    promRPC->get_future().get();
     NES_DEBUG("NesWorker:buildAndStartGRPCServer: ready");
 
     if (withConnect) {
@@ -179,6 +181,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 }
 
 NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
+
+bool NesWorker::isWorkerRunning() { return isRunning; }
 
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");

@@ -44,9 +44,9 @@ int main() {
     // source modes
     std::vector<E2EBase::InputOutputMode> allSourceModes{E2EBase::InputOutputMode::JoinMode};
 
-    string query =
-        "Query::from(\"input1\").joinWith(Query::from(\"input2\"), Attribute(\"id\"), Attribute(\"id\"), "
-        "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Milliseconds(1000))).sink(NullOutputSinkDescriptor::create());";
+    string query = R"(Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).
+    window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+    Milliseconds(100))).sink(NullOutputSinkDescriptor::create());)";
 
     std::string benchmarkName = "E2EJoinBenchmark";
     std::string nesVersion = NES_VERSION;

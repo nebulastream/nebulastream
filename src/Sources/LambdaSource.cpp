@@ -18,7 +18,7 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
@@ -43,6 +43,7 @@ LambdaSource::LambdaSource(
 
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
+
     auto buffer = this->bufferManager->getBufferBlocking();
     auto numberOfTuplesToProduce = buffer.getBufferSize() / schema->getSchemaSizeInBytes();
 

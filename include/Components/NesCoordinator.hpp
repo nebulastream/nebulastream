@@ -139,11 +139,17 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     void onFatalError(int signalNumber, std::string string) override;
     void onFatalException(const std::shared_ptr<std::exception> ptr, std::string string) override;
 
+    /**
+     * @brief Method to check if a coordinator is still running
+     * @return running status of the coordinator
+     */
+    bool isCoordinatorRunning();
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
      */
-    void buildAndStartGRPCServer(std::promise<bool>& prom);
+    void buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom);
 
   private:
     std::string restIp;

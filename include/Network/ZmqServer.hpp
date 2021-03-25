@@ -79,7 +79,7 @@ class ZmqServer : public boost::noncopyable {
      * @param numHandlerThreads number of HandlerThreads
      * @param startPromise the promise that is passed to the thread
      */
-    void routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise);
+    void routerLoop(uint16_t numHandlerThreads, std::shared_ptr<std::promise<bool>> startPromise);
 
     /**
      * @brief handler thread where threads are passed from the frontend loop

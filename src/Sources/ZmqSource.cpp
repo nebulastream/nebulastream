@@ -14,8 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/ZmqSource.hpp>
 #include <Util/Logger.hpp>

@@ -52,7 +52,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param emitToQueryManagerFunctionHandler an handler to receive emitted buffers, which are then dispatched to the query manager.
      * @param operatorHandlers a list of operator handlers managed by the pipeline execution context.
      */
-    explicit PipelineExecutionContext(QuerySubPlanId queryId, QueryManagerPtr queryManager, LocalBufferManagerPtr bufferManager,
+    explicit PipelineExecutionContext(QuerySubPlanId queryId, QueryManagerPtr queryManager, LocalBufferPoolPtr bufferManager,
                                       std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
                                       std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
                                       std::vector<OperatorHandlerPtr> operatorHandlers);
@@ -120,7 +120,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     /**
      * @brief Reference to the buffer manager to enable buffer allocation
      */
-    LocalBufferManagerPtr localBufferPool;
+    LocalBufferPoolPtr localBufferPool;
     /**
      * @brief The emit function handler to react on an emitted tuple buffer.
      */

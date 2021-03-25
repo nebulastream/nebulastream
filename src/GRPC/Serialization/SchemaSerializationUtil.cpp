@@ -22,7 +22,7 @@
 
 namespace NES {
 
-SerializableSchema* SchemaSerializationUtil::serializeSchema(SchemaPtr schema, SerializableSchema* serializedSchema) {
+SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(SchemaPtr schema, SerializableSchema* serializedSchema) {
     NES_DEBUG("SchemaSerializationUtil:: serialize schema " << schema->toString());
     // serialize all field in schema
     for (const auto& field : schema->fields) {
@@ -31,7 +31,7 @@ SerializableSchema* SchemaSerializationUtil::serializeSchema(SchemaPtr schema, S
         // serialize data type
         DataTypeSerializationUtil::serializeDataType(field->getDataType(), serializedField->mutable_type());
     }
-    return serializedSchema;
+    return std::make_shared<SerializableSchema>(*serializedSchema);
 }
 
 SchemaPtr SchemaSerializationUtil::deserializeSchema(SerializableSchema* serializedSchema) {

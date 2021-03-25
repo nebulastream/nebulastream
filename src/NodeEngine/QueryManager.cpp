@@ -20,6 +20,7 @@
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -38,7 +39,7 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
   public:
     explicit ReconfigurationPipelineExecutionContext(QuerySubPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
-            queryExecutionPlanId, queryManager, LocalBufferManagerPtr(),
+            queryExecutionPlanId, queryManager, LocalBufferPoolPtr(),
             [](TupleBuffer&, NES::NodeEngine::WorkerContext&) {
             },
             [](TupleBuffer&) {
@@ -401,6 +402,11 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
     return ret;
 }
 
+uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
+    std::unique_lock workLock(workMutex);
+    return taskQueue.size();
+}
+
 void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
     std::shared_lock queryLock(queryMutex);// we need this lock because operatorIdToQueryMap can be concurrently modified
 #ifdef EXTENDEDDEBUGGING
@@ -465,7 +471,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
         std::unique_lock workQueueLock(workMutex);
         taskQueue.emplace_back(qep->getPipeline(operatorIdToPipelineStage[operatorId]), buf);
 
-        NES_DEBUG("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
+        NES_TRACE("QueryManager: added Task for addWork" << taskQueue.back().toString() << " for query " << operatorId
                                                          << " for QEP " << qep << " inputBuffer " << buf
                                                          << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
         cv.notify_all();
@@ -553,9 +559,8 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
 }
 
 QueryManager::ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, WorkerContext& workerContext) {
-    NES_DEBUG("QueryManager: QueryManager::getWork wait get lock");
+    NES_TRACE("QueryManager: QueryManager::getWork wait get lock");
     std::unique_lock lock(workMutex);
-    NES_DEBUG("QueryManager:getWork wait got lock");
     // wait while queue is empty but thread pool is running
     while (taskQueue.empty() && running) {
         cv.wait(lock);
@@ -566,7 +571,7 @@ QueryManager::ExecutionResult QueryManager::processNextTask(std::atomic<bool>& r
             return terminateLoop(workerContext);
         }
     }
-    NES_DEBUG("QueryManager::getWork queue is not empty");
+    NES_TRACE("QueryManager::getWork queue is not empty");
     // there is a potential task in the queue and the thread pool is running
     if (running && !taskQueue.empty()) {
         auto task = taskQueue.front();
@@ -618,7 +623,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
     // dispatch buffer as task
     auto it = runningQEPs.find(nextPipeline->getQepParentId());
     if (it != runningQEPs.end() && it->second->getStatus() == Execution::Running) {
-        NES_DEBUG("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline "
+        NES_TRACE("QueryManager: added Task for next pipeline  " << taskQueue.back().toString() << " for nextPipeline "
                                                                  << nextPipeline->getPipeStageId() << " inputBuffer " << buffer);
         taskQueue.emplace_back(std::move(nextPipeline), buffer);
         cv.notify_all();

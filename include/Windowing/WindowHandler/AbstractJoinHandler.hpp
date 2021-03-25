@@ -144,10 +144,10 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
                                      [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
                                          return a.second < b.second;
                                      });
-                NES_DEBUG("getMinWatermark() originIdToMaxTsMapLeft return min=" << min->second);
+                NES_TRACE("getMinWatermark() originIdToMaxTsMapLeft return min=" << min->second);
                 return min->second;
             } else {
-                NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
+                NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
                           "originIdToMaxTsMapLeft="
                           << originIdToMaxTsMapLeft.size() << " expected mappings=" << numberOfInputEdgesLeft);
                 return 0;//TODO: we have to figure out how many downstream positions are there
@@ -159,10 +159,10 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
                                      [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
                                          return a.second < b.second;
                                      });
-                NES_DEBUG("getMinWatermark() originIdToMaxTsMapRight return min=" << min->second);
+                NES_TRACE("getMinWatermark() originIdToMaxTsMapRight return min=" << min->second);
                 return min->second;
             } else {
-                NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
+                NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
                           "originIdToMaxTsMapRight="
                           << originIdToMaxTsMapRight.size() << " expected mappings=" << numberOfInputEdgesRight);
                 return 0;//TODO: we have to figure out how many downstream positions are there

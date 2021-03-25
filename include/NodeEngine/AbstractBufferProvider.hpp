@@ -13,11 +13,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#ifndef NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_
+#define NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_
 
-#ifndef __VERSION_HPP__
-#define __VERSION_HPP__
-#define NES_VERSION_MAJOR 0
-#define NES_VERSION_MINOR 0
-#define NES_VERSION_PATCH 351
-constexpr char const* NES_VERSION = "0.0.351";
-#endif
+class AbstractBufferProvider {
+  public:
+    virtual ~AbstractBufferProvider() {
+        // nop
+    }
+
+    virtual void destroy() = 0;
+};
+
+#endif//NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_

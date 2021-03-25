@@ -45,8 +45,10 @@ class CallData {
     // The means of communication with the gRPC runtime for an asynchronous
     // server.
     WorkerRPCServer::Service* service;
+
     // The producer-consumer queue where for asynchronous server notifications.
     grpc_impl::ServerCompletionQueue* completionQueue;
+
     // Context for the rpc, allowing to tweak aspects of it such as the use
     // of compression, authentication, as well as to send metadata back to the
     // client.
@@ -54,6 +56,7 @@ class CallData {
 
     // What we get from the client.
     RegisterQueryRequest request;
+
     // What we send back to the client.
     RegisterQueryReply reply;
 
@@ -64,5 +67,7 @@ class CallData {
     enum CallStatus { CREATE, PROCESS, FINISH };
     CallStatus status;// The current serving state.
 };
+typedef std::shared_ptr<CallData> CallDataPtr;
+
 }// namespace NES
 #endif//NES_SRC_GRPC_CALLDATA_HPP_

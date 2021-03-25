@@ -15,7 +15,7 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/AdaptiveSource.hpp>
 #include <Util/ThreadNaming.hpp>

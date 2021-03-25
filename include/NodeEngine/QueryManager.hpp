@@ -196,6 +196,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     bool isThreadPoolRunning() const;
 
+    /**
+     * @brief get number of tasks in the queue
+     * @return task count
+     */
+    uint64_t getNumberOfTasksInWorkerQueue() const;
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -232,7 +238,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
     std::shared_mutex queryMutex;
-    std::mutex workMutex;
+    mutable std::mutex workMutex;
 
     std::condition_variable cv;
 

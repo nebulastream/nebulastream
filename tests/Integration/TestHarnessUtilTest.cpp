@@ -686,4 +686,5 @@ TEST_F(TestHarnessUtilTest, DISABLED_testHarnessUtilPushToWrongSource) {
 
     EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 0), NesRuntimeException);
 }
+
 }// namespace NES

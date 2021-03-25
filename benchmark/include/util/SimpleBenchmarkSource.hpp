@@ -19,7 +19,8 @@
 
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryManager.hpp>

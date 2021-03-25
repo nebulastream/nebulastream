@@ -19,7 +19,7 @@
 
 using namespace Benchmarking;
 
-const NES::DebugLevel LOG_LEVEL = NES::LOG_INFO;
+const NES::DebugLevel LOG_LEVEL = NES::LOG_NONE;
 
 /**
  * @brief This benchmarks runs a map query on one worker and one coordinator
@@ -31,11 +31,11 @@ int main() {
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allWorkerThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 16, 24, 2);//1 5 9 13
+    BenchmarkUtils::createRangeVector<uint16_t>(allWorkerThreads, 2, 3, 1);//1 5 9 13
 
     // Number of workerThreads in nodeEngine
     std::vector<uint16_t> allCoordinatorThreads;
-    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 16, 24, 2);//1 5 9 13
+    BenchmarkUtils::createRangeVector<uint16_t>(allCoordinatorThreads, 2, 3, 1);//1 5 9 13
 
     // Number of dataSources
     std::vector<uint16_t> allDataSources;

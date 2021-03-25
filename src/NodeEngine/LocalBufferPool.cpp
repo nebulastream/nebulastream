@@ -15,13 +15,13 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferManager.hpp>
+#include <NodeEngine/LocalBufferPool.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 
 namespace NES::NodeEngine {
-LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
-                                       size_t numberOfReservedBuffers)
+LocalBufferPool::LocalBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
+                                 size_t numberOfReservedBuffers)
     : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers) {
 
     while (!buffers.empty()) {
@@ -34,12 +34,12 @@ LocalBufferManager::LocalBufferManager(BufferManagerPtr bufferManager, std::dequ
     }
 }
 
-LocalBufferManager::~LocalBufferManager() {
+LocalBufferPool::~LocalBufferPool() {
     // nop
 }
 
-void LocalBufferManager::destroy() {
-    NES_DEBUG("Destroying LocalBufferManager");
+void LocalBufferPool::destroy() {
+    NES_DEBUG("Destroying LocalBufferPool");
     std::unique_lock lock(mutex);
     auto ownedBufferManager = bufferManager.lock();
     NES_ASSERT2_FMT(numberOfReservedBuffers == exclusiveBuffers.size(),
@@ -58,12 +58,12 @@ void LocalBufferManager::destroy() {
                                << " size of local buffers=" << exclusiveBuffers.size());
 }
 
-size_t LocalBufferManager::getAvailableExclusiveBuffers() const {
+size_t LocalBufferPool::getAvailableExclusiveBuffers() const {
     std::unique_lock lock(mutex);
     return exclusiveBuffers.size();
 }
 
-TupleBuffer LocalBufferManager::getBufferBlocking() {
+TupleBuffer LocalBufferPool::getBufferBlocking() {
     {
         // try to get an exclusive buffer
         std::unique_lock lock(mutex);
@@ -86,7 +86,7 @@ TupleBuffer LocalBufferManager::getBufferBlocking() {
     return bufferManager.lock()->getBufferBlocking();
 }
 
-void LocalBufferManager::recyclePooledBuffer(detail::MemorySegment* memSegment) {
+void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
     std::unique_lock lock(mutex);
     NES_VERIFY(memSegment, "null memory segment");
     if (!memSegment->isAvailable()) {
@@ -97,7 +97,7 @@ void LocalBufferManager::recyclePooledBuffer(detail::MemorySegment* memSegment) 
     exclusiveBuffers.emplace_back(memSegment);
 }
 
-void LocalBufferManager::recycleUnpooledBuffer(detail::MemorySegment*) {
+void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {
     NES_THROW_RUNTIME_ERROR("This feature is not supported here");
 }
 }// namespace NES::NodeEngine
