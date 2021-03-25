@@ -18,13 +18,12 @@
 #define MQTTSINK_HPP
 
 #ifdef ENABLE_MQTT_BUILD
+#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Util/MQTTClientWrapper.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Util/MQTTClientWrapper.hpp>
-#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
-
 
 namespace NES {
 /**
@@ -45,10 +44,11 @@ class MQTTSink : public SinkMedium {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
-     // TODO change MSGS to Messages
+    // TODO change MSGS to Messages
     MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
-             const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const MQTTSinkDescriptor::TimeUnits timeUnit,
-             uint64_t messageDelay, const MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient);
+             const std::string topic, const std::string user, uint64_t maxBufferedMSGs,
+             const MQTTSinkDescriptor::TimeUnits timeUnit, uint64_t messageDelay,
+             const MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient);
     ~MQTTSink();
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;

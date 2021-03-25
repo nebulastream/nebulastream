@@ -116,8 +116,8 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @return MQTT sink
      */
     explicit MQTTSinkDescriptor(const std::string address, const std::string clientId, const std::string topic,
-                                const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
-                                uint64_t messageDelay, const ServiceQualities qualityOfService, bool asynchronousClient);
+                                const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit, uint64_t messageDelay,
+                                const ServiceQualities qualityOfService, bool asynchronousClient);
 
     std::string address;
     std::string clientId;

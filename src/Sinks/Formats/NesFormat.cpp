@@ -57,7 +57,5 @@ std::string NesFormat::toString() { return "NES_FORMAT"; }
 
 FormatTypes NesFormat::getSinkFormat() { return NES_FORMAT; }
 
-FormatIterator NesFormat::getTupleIterator(NodeEngine::TupleBuffer&) {
-    NES_NOT_IMPLEMENTED();
-}
+FormatIterator NesFormat::getTupleIterator(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

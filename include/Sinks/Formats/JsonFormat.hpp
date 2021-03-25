@@ -56,7 +56,6 @@ class JsonFormat : public SinkFormat {
      * @return sink format
      */
     FormatTypes getSinkFormat();
-
 };
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

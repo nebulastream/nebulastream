@@ -1132,8 +1132,7 @@ OperatorSerializationUtil::serializeSinkDescriptor(SinkDescriptorPtr sinkDescrip
         mqttSerializedSinkDescriptor.set_asynchronousclient(mqttSinkDescriptor->getAsynchronousClient());
 
         sinkDetails->mutable_sinkdescriptor()->PackFrom(mqttSerializedSinkDescriptor);
-    }
-    else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
+    } else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>()) {
         // serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
                   "SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor");
@@ -1233,8 +1232,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
             (MQTTSinkDescriptor::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
             (MQTTSinkDescriptor::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
             serializedSinkDescriptor.asynchronousclient());
-    }
-    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
+    } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();

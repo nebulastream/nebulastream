@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_
 #define NES_INCLUDE_NODEENGINE_DETAIL_TUPLEBUFFERIMPL_HPP_
 
+#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 #include <atomic>
 #include <functional>
-#include <API/Schema.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <deque>

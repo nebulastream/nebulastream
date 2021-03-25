@@ -92,9 +92,10 @@ class MQTTTSinkTest : public testing::Test {
         return buffer;
     }
 
-    bool createMQTTSinkConnectToBrokerWriteData(uint64_t numTuples, uint64_t maxBufferedMSGs, MQTTSinkDescriptor::TimeUnits timeUnit,
-                                                uint64_t msgDelay, MQTTSinkDescriptor::ServiceQualities qualityOfService,
-                                                bool asynchronousClient, bool printBuffer) {
+    bool createMQTTSinkConnectToBrokerWriteData(uint64_t numTuples, uint64_t maxBufferedMSGs,
+                                                MQTTSinkDescriptor::TimeUnits timeUnit, uint64_t msgDelay,
+                                                MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient,
+                                                bool printBuffer) {
         // Create MQTT Sink
         NodeEngine::WorkerContext workerContext(NodeEngine::NesThread::getId());
         SinkFormatPtr format = std::make_shared<JsonFormat>(testSchema, nodeEngine->getBufferManager());
@@ -177,8 +178,9 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTbrokerDeathToClientStopAsynchronous) {
 
 /* - MQTT Client kill disconnect and reconnect to broker, payloads lost? --------------------------- */
 TEST_F(MQTTTSinkTest, DISABLED_testMQTTsendMassiveDataQuicklyAsynchronous) {
-    bool bufferDataSuccessfullyWrittenToBroker = createMQTTSinkConnectToBrokerWriteData(
-        50000, 1000, MQTTSinkDescriptor::TimeUnits::nanoseconds, 100000, MQTTSinkDescriptor::ServiceQualities::atLeastOnce, true, false);
+    bool bufferDataSuccessfullyWrittenToBroker =
+        createMQTTSinkConnectToBrokerWriteData(50000, 1000, MQTTSinkDescriptor::TimeUnits::nanoseconds, 100000,
+                                               MQTTSinkDescriptor::ServiceQualities::atLeastOnce, true, false);
     ASSERT_EQ(true, bufferDataSuccessfullyWrittenToBroker);
 }
 
