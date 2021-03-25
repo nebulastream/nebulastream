@@ -67,6 +67,27 @@ JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, Exp
 
 }// namespace JoinOperatorBuilder
 
+WindowOperatorBuilder::WindowedQuery Query::window(const Windowing::WindowTypePtr windowType){return WindowOperatorBuilder::WindowedQuery(*this, windowType);}
+
+namespace WindowOperatorBuilder {
+WindowedQuery::WindowedQuery(Query& originalQuery, WindowTypePtr windowType)
+    : originalQuery(originalQuery), windowType(windowType) {}
+
+KeyedWindowedQuery WindowedQuery::keyBy(ExpressionItem onKey) const {
+    return KeyedWindowedQuery(originalQuery, windowType, onKey);
+}
+
+Query& WindowedQuery::apply(const Windowing::WindowAggregationPtr aggregation) {
+    return originalQuery.window(windowType, aggregation);
+}
+
+KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, WindowTypePtr windowType, ExpressionItem onKey)
+    : originalQuery(originalQuery), windowType(windowType), onKey(onKey) {}
+
+Query& KeyedWindowedQuery::apply(onKey) { return originalQuery.windowByKey(onKey, windowType, aggregation); }
+
+} //namespace WindowOperatorBuilder
+
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
 Query::Query(const Query& query) : queryPlan(query.queryPlan) {}
