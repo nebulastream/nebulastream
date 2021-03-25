@@ -67,8 +67,8 @@ void setUp() {
  * @brief This benchmarks time taken in the preparation of Global Query Plan after merging @param{NO_OF_QUERIES_TO_SEND} number of queries.
  */
 int main() {
-    NES::setupLogging("E2EMapBenchmark.log", LOG_LEVEL);
-    std::cout << "Setup E2EMapBenchmark test class." << std::endl;
+    NES::setupLogging("BenchmarkQueryMerger.log", LOG_LEVEL);
+    std::cout << "Setup BenchmarkQueryMerger test class." << std::endl;
     std::stringstream benchmarkOutput;
     benchmarkOutput
         << "Time,BM_Name,Merge_Rule,Num_of_Phy_Src,Num_Of_Queries,NES_Version,Run_Num,Start_Time,End_Time,Total_Run_Time"
@@ -92,7 +92,7 @@ int main() {
 
         auto lastQuery = queryCatalog->getQueryCatalogEntry(NO_OF_QUERIES_TO_SEND);
         while (lastQuery->getQueryStatus() != QueryStatus::Running) {
-            sleep(1);
+            sleep(.1);
         }
 
         auto endTime =
