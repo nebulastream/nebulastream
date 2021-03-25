@@ -70,7 +70,7 @@ JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, Exp
 WindowOperatorBuilder::WindowedQuery Query::window(const Windowing::WindowTypePtr windowType){return WindowOperatorBuilder::WindowedQuery(*this, windowType);}
 
 namespace WindowOperatorBuilder {
-WindowedQuery::WindowedQuery(Query& originalQuery, WindowTypePtr windowType)
+WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType)
     : originalQuery(originalQuery), windowType(windowType) {}
 
 KeyedWindowedQuery WindowedQuery::keyBy(ExpressionItem onKey) const {
@@ -81,10 +81,10 @@ Query& WindowedQuery::apply(const Windowing::WindowAggregationPtr aggregation) {
     return originalQuery.window(windowType, aggregation);
 }
 
-KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, WindowTypePtr windowType, ExpressionItem onKey)
+KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionItem onKey)
     : originalQuery(originalQuery), windowType(windowType), onKey(onKey) {}
 
-Query& KeyedWindowedQuery::apply(onKey) { return originalQuery.windowByKey(onKey, windowType, aggregation); }
+Query& KeyedWindowedQuery::apply(Windowing::WindowAggregationPtr aggregation) { return originalQuery.windowByKey(onKey, windowType, aggregation); }
 
 } //namespace WindowOperatorBuilder
 
