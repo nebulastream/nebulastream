@@ -112,20 +112,20 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
             sourceDescriptor->as<Network::NetworkSourceDescriptor>();
         return createNetworkSource(networkSourceDescriptor->getSchema(), bufferManager, queryManager, networkManager,
                                    networkSourceDescriptor->getNesPartition());
-    }/* else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
+    } else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto memorySourceDescriptor = sourceDescriptor->as<MemorySourceDescriptor>();
         return createMemorySource(memorySourceDescriptor->getSchema(), bufferManager, queryManager,
                                   memorySourceDescriptor->getMemoryArea(), memorySourceDescriptor->getMemoryAreaSize(),
                                   memorySourceDescriptor->getNumBuffersToProcess(), memorySourceDescriptor->getFrequency(),
                                   operatorId);
-    }*/ /*else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
+    } else if (sourceDescriptor->instanceOf<LambdaSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating lambda source");
         auto lambdaSourceDescriptor = sourceDescriptor->as<LambdaSourceDescriptor>();
         return createLambdaSource(lambdaSourceDescriptor->getSchema(), bufferManager, queryManager,
                                   lambdaSourceDescriptor->getNumBuffersToProcess(), lambdaSourceDescriptor->getFrequency(),
                                   std::move(lambdaSourceDescriptor->getGeneratorFunction()), operatorId);
-    }*/ else {
+    } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }

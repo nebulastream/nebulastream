@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-/*#ifndef INCLUDE_SOURCESINK_LambdaSource_HPP_
+#ifndef INCLUDE_SOURCESINK_LambdaSource_HPP_
 #define INCLUDE_SOURCESINK_LambdaSource_HPP_
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
@@ -25,14 +25,14 @@ namespace NES {
 
 class LambdaSource : public GeneratorSource {
   public:
-    *//**
+    /**
    * @brief The constructor of a Lambda Source
    * @param schema the schema of the source
    * @param bufferManager valid pointer to the buffer manager
    * @param queryManager valid pointer to the query manager
      *
    * @param operatorId the valid id of the source
-   *//*
+   */
     LambdaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                  uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
                  std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
@@ -42,19 +42,12 @@ class LambdaSource : public GeneratorSource {
 
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
-    *//**
-     * @brief method to stop the source.
-     * 1.) check if bool running is false, if false return, if not stop source
-     * 2.) stop thread by join
-     *//*
-    bool stop(bool graceful) override;*/
-
     /**
      * @brief method to stop the source.
      * 1.) check if bool running is false, if false return, if not stop source
      * 2.) stop thread by join
      */
-   /* bool stop(bool graceful) override;
+    bool stop(bool graceful) override;
 
   private:
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
@@ -63,7 +56,4 @@ class LambdaSource : public GeneratorSource {
 typedef std::shared_ptr<LambdaSource> LambdaSourcePtr;
 
 }// namespace NES
-#endif
-    INCLUDE_SOURCESINK_LambdaSource_HPP_
-
-*/
+#endif /* INCLUDE_SOURCESINK_LambdaSource_HPP_ */
