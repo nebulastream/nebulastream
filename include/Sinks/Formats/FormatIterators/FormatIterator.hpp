@@ -21,7 +21,6 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Sinks/Formats/FormatType.hpp>
 
-
 namespace NES {
 
 /**
@@ -70,19 +69,7 @@ class FormatIterator {
          * @brief Accesses the TupleBuffer at the current bufferIndex and returns the address at that index
          * @return
          */
-        Iterator* operator*() { return this; };
-
-        friend bool operator==(const Iterator& a, const Iterator& b) {
-            return a.tupleOffset == b.tupleOffset && a.sinkFormatType == b.sinkFormatType && a.currentSeek == b.currentSeek
-                && a.fieldNames == b.fieldNames;
-        };
-        friend bool operator!=(const Iterator& a, const Iterator& b) {
-            return a.tupleOffset != b.tupleOffset || a.sinkFormatType != b.sinkFormatType || a.currentSeek != b.currentSeek
-                || a.fieldNames != b.fieldNames;
-        };
-
-        std::string getData() {
-
+        std::string operator*() {
             switch (sinkFormatType) {
                 case FormatTypes::JSON_FORMAT: return dataJson();
                 case FormatTypes::TEXT_FORMAT:
@@ -91,6 +78,9 @@ class FormatIterator {
                 default: NES_NOT_IMPLEMENTED();
             }
         };
+
+        friend bool operator==(const Iterator& a, const Iterator& b) { return a.currentSeek == b.currentSeek; };
+        friend bool operator!=(const Iterator& a, const Iterator& b) { return a.currentSeek != b.currentSeek; };
 
       private:
         /**
