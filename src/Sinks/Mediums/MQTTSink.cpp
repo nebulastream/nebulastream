@@ -81,9 +81,8 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
         // and afterwards sent to an MQTT broker, via the MQTT client
 
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
-            auto jsonPayload = (*formattedTuple).getData();
-            NES_TRACE("MQTTSink::writeData Sending Payload: " << jsonPayload);
-            client->sendPayload(jsonPayload);
+            NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
+            client->sendPayload(formattedTuple);
             std::this_thread::sleep_for(minDelayBetweenSends);
         }
 
