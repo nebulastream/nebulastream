@@ -55,6 +55,7 @@ SchemaPtr NetworkValues::getSchema(const std::string& prefix) {
 NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, const std::string& prefix) {
     NetworkValues output{};
     auto i = schema->getIndex(prefix);
+    auto nvSchemaSize = NetworkValues::getSchema("")->getSize();
 
     if (i >= schema->getSize()) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Prefix " + prefix + " could not be found in schema:\n" + schema->toString());
@@ -62,8 +63,11 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     if (buf.getNumberOfTuples() > 1) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Tuple size should be 1, but is " + std::to_string(buf.getNumberOfTuples()));
     }
-    if (!(UtilityFunctions::endsWith(schema->fields[i]->getName(), "name")
-          && UtilityFunctions::endsWith(schema->fields[i + schema->getSize()-1]->getName(), "tCompressed"))) {
+
+    auto hasName = UtilityFunctions::endsWith(schema->fields[i]->getName(), "name");
+    auto hasLastField = UtilityFunctions::endsWith(schema->fields[i + nvSchemaSize - 1]->getName(), "tCompressed");
+
+    if (!hasName || !hasLastField) {
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
