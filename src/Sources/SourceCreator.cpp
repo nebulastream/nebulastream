@@ -28,6 +28,7 @@
 #include <Sources/KafkaSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MemorySource.hpp>
+#include <Sources/NettySource.hpp>
 #include <Sources/OPCSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -102,6 +103,18 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
                                        numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, skipHeader,
                                        operatorId, numSourceLocalBuffers);
 }
+
+const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                          NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
+                                          const std::string& delimiter, uint64_t numberOfTuplesToProducePerBuffer,
+                                          uint64_t numbersOfBufferToProduce, uint64_t frequency, bool skipHeader,
+                                          OperatorId operatorId, const std::string& address, size_t numSourceLocalBuffers) {
+    return std::make_shared<NettySource>(schema, bufferManager, queryManager, pathToFile, delimiter,
+                                         numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency,
+                                         skipHeader, operatorId,address,numSourceLocalBuffers);
+}
+
+
 
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,

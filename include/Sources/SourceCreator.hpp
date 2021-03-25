@@ -164,6 +164,18 @@ const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManag
                                        size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
                                        OperatorId operatorId, size_t numSourceLocalBuffers);
 
+const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                          NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
+                                          const std::string& delimiter,uint64_t numberOfTuplesToProducePerBuffer,
+                                          uint64_t numBuffersToProcess,uint64_t frequency, bool skipHeader, OperatorId operatorId,const std::string& address
+                                          , size_t numSourceLocalBuffers);
+
+/**
+ * @brief function to create a ysb source
+ * @param schema of data source
+ * @return a const data source pointer
+ */
+
 /**
  * @brief function to create a network source
  * @param schema

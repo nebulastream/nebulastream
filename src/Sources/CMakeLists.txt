@@ -24,6 +24,7 @@ add_source_nes(
         AdaptiveSource.cpp
         MonitoringSource.cpp
         MemorySource.cpp
+        NettySource.cpp
         LambdaSource.cpp
 )
 

@@ -19,6 +19,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NettySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
@@ -38,7 +39,9 @@ PhysicalStreamConfig::PhysicalStreamConfig(SourceConfigPtr sourceConfig)
       numberOfTuplesToProducePerBuffer(sourceConfig->getNumberOfTuplesToProducePerBuffer()->getValue()),
       numberOfBuffersToProduce(sourceConfig->getNumberOfBuffersToProduce()->getValue()),
       physicalStreamName(sourceConfig->getPhysicalStreamName()->getValue()),
-      logicalStreamName(sourceConfig->getLogicalStreamName()->getValue()), skipHeader(sourceConfig->getSkipHeader()->getValue()) {
+      logicalStreamName(sourceConfig->getLogicalStreamName()->getValue()), skipHeader(sourceConfig->getSkipHeader()->getValue()),
+      address(sourceConfig->getAddress()->getValue())
+{
     NES_INFO("PhysicalStreamConfig: Created source with config: " << this->toString());
 };
 
@@ -55,6 +58,7 @@ const std::string PhysicalStreamConfig::toString() {
 const std::string PhysicalStreamConfig::getSourceType() { return sourceType; }
 
 const std::string PhysicalStreamConfig::getSourceConfig() const { return sourceConfig; }
+const std::string PhysicalStreamConfig::getAddress() const { return address; }
 
 std::chrono::milliseconds PhysicalStreamConfig::getSourceFrequency() const { return sourceFrequency; }
 
@@ -78,6 +82,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     std::string conf = config->getSourceConfig();
     std::chrono::milliseconds frequency = config->getSourceFrequency();
     uint64_t numBuffers = config->getNumberOfBuffersToProduce();
+    std::string address = config ->getAddress();
     bool skipHeader = config->getSkipHeader();
 
     uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
@@ -92,6 +97,10 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     } else if (type == "SenseSource") {
         NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
+    }else if (type == "NettySource") {
+        NES_DEBUG("PhysicalStreamConfig: create Netty source for " << conf << " buffers");
+        return NettySourceDescriptor::create(schema, streamName, conf, /**delimiter*/ ",", numberOfTuplesToProducePerBuffer,
+                                           numBuffers, frequency.count(), skipHeader,address);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
     }

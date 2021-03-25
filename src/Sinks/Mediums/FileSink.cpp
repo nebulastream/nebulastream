@@ -22,6 +22,8 @@
 #include <string>
 #include <utility>
 
+using Clock = std::chrono::high_resolution_clock;
+
 namespace NES {
 
 SinkMediumTypes FileSink::getSinkMediumType() { return FILE_SINK; }
@@ -108,7 +110,15 @@ bool FileSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
             outputFile.write((char*) buffer.getBuffer(),
                              buffer.getNumberOfTuples() * sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
         } else {
-            outputFile.write((char*) buffer.getBuffer(), buffer.getNumberOfTuples());
+
+          /*  std::string a = " hello ";
+            const char *b = (char*) buffer.getBuffer();
+            std::string c = a + b;
+            const char *C = c.c_str();*/
+
+            outputFile.write((char*) buffer.getBuffer(),buffer.getNumberOfTuples());
+
+
         }
     }
     outputFile.flush();
