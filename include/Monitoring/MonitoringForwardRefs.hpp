@@ -33,6 +33,6 @@ namespace web {
 namespace json {
 class value;
 }
-}
+}// namespace web
 
 #endif//NES_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

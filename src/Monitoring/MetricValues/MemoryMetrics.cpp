@@ -21,8 +21,8 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cstring>
 #include <cpprest/json.h>
+#include <cstring>
 
 namespace NES {
 
@@ -107,6 +107,7 @@ web::json::value MemoryMetrics::toJson() {
     metricsJson["LOADS_1MIN"] = web::json::value::number(LOADS_1MIN);
     metricsJson["LOADS_5MIN"] = web::json::value::number(LOADS_5MIN);
     metricsJson["LOADS_15MIN"] = web::json::value::number(LOADS_15MIN);
-    return metricsJson;}
+    return metricsJson;
+}
 
 }// namespace NES

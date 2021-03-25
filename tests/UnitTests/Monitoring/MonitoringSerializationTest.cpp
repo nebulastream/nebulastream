@@ -91,7 +91,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
-    EXPECT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     CpuMetrics deserVal = CpuMetrics::fromBuffer(schema, tupleBuffer, "");
     EXPECT_EQ(measuredVal, deserVal);
@@ -105,7 +105,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkValue) {
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, measuredVal.getSchema("")));
-    EXPECT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     NetworkValues deserNw = NetworkValues::fromBuffer(measuredVal.getSchema(""), tupleBuffer, "");
     EXPECT_EQ(measuredVal, deserNw);
@@ -120,7 +120,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
     writeToBuffer(measuredVal, tupleBuffer, 0);
 
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
-    EXPECT_TRUE(tupleBuffer.getNumberOfTuples()==1);
+    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
 
     NetworkMetrics deserNw = NetworkMetrics::fromBuffer(schema, tupleBuffer, "");
     EXPECT_EQ(measuredVal, deserNw);

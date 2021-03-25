@@ -16,23 +16,23 @@
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <cpprest/json.h>
 
-web::json::value NES::GroupedValues::asJson()  {
+web::json::value NES::GroupedValues::asJson() {
     web::json::value metricsJson{};
 
     if (diskMetrics.has_value()) {
-        metricsJson["disk"] =  diskMetrics.value()->toJson();
+        metricsJson["disk"] = diskMetrics.value()->toJson();
     }
 
     if (cpuMetrics.has_value()) {
-        metricsJson["cpu"] =  cpuMetrics.value()->toJson();
+        metricsJson["cpu"] = cpuMetrics.value()->toJson();
     }
 
     if (networkMetrics.has_value()) {
-        metricsJson["network"] =  networkMetrics.value()->toJson();
+        metricsJson["network"] = networkMetrics.value()->toJson();
     }
 
     if (memoryMetrics.has_value()) {
-        metricsJson["memory"] =  memoryMetrics.value()->toJson();
+        metricsJson["memory"] = memoryMetrics.value()->toJson();
     }
 
     return metricsJson;

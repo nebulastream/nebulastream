@@ -320,7 +320,8 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsBuffer) {
 
     for (int i = 0; i <= iterations; i++) {
         auto tupleBuffer = bufferManager->getBufferBlocking();
-        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
+        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+                 + std::to_string(port + 10));
         crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
 
         NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
@@ -370,7 +371,8 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsJson) {
     auto iterations = 1;
 
     for (int i = 0; i <= iterations; i++) {
-        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
+        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
+                 + std::to_string(port + 10));
         auto json = crd->getMonitoringService()->requestMonitoringDataAsJson("127.0.0.1", port + 10, plan);
 
         NES_INFO(json.to_string());
@@ -379,7 +381,7 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsJson) {
 
         EXPECT_TRUE(json.has_field("cpu"));
         auto numCores = json["cpu"]["NUM_CORES"].as_integer();
-        EXPECT_EQ(json["cpu"].size(), numCores+2);
+        EXPECT_EQ(json["cpu"].size(), numCores + 2);
 
         EXPECT_TRUE(json.has_field("network"));
         EXPECT_TRUE(json["network"].size() > 0);
