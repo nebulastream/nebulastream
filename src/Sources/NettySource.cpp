@@ -28,7 +28,6 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <arpa/inet.h>
-#include <assert.h>
 #include <boost/algorithm/string.hpp>
 #include <chrono>
 #include <iostream>
