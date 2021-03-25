@@ -22,7 +22,6 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
-#include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/NettySource.hpp>
 #include <Util/Logger.hpp>
