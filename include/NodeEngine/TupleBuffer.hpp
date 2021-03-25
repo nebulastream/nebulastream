@@ -45,8 +45,6 @@ namespace NES::NodeEngine {
  * Reminder: this class should be header-only to help inlining
  */
 
-typedef std::shared_ptr<TupleBuffer> TupleBufferPtr ;
-
 class TupleBuffer {
     friend class BufferManager;
     friend class detail::MemorySegment;
@@ -64,8 +62,6 @@ class TupleBuffer {
     static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
 
     TupleBuffer(const TupleBuffer& other) noexcept;
-
-    TupleBuffer(const TupleBufferPtr other) noexcept;
 
     TupleBuffer(TupleBuffer&& other) noexcept;
 

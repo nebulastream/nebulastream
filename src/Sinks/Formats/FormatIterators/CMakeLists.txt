@@ -13,6 +13,5 @@
 # limitations under the License.
 
 add_source_nes(
-        SinkFormatIterator.cpp
-        JsonFormatIterator.cpp
+        FormatIterator.cpp
 )

@@ -71,10 +71,8 @@ std::vector<NodeEngine::TupleBuffer> TextFormat::getData(NodeEngine::TupleBuffer
 
 std::string TextFormat::toString() { return "TEXT_FORMAT"; }
 
-SinkFormatTypes TextFormat::getSinkFormat() { return TEXT_FORMAT; }
+FormatTypes TextFormat::getSinkFormat() { return TEXT_FORMAT; }
 
-SinkFormatIteratorPtr TextFormat::getTupleIterator(NodeEngine::TupleBuffer&) {
-    NES_NOT_IMPLEMENTED();
-}
+FormatIterator TextFormat::getTupleIterator(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
 
 }// namespace NES

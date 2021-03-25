@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include <Sinks/Formats/FormatIterators/ExampleItr.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 #include <z3++.h>
@@ -63,6 +64,12 @@ TEST_F(Z3ValidationTest, deMorganDualityValidation) {
     NES_INFO("Content of the solver: " << s);
     NES_INFO("Statement folding inside z3 solver: " << s.to_smt2());
     ASSERT_EQ(s.check(), unsat);
+
+    ExampleItr itr;
+    for(auto i : itr){
+        std::cout<< i << std::endl;
+    }
+
 }
 
 /**

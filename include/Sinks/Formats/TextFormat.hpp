@@ -36,7 +36,7 @@ class TextFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    SinkFormatIteratorPtr getTupleIterator(NodeEngine::TupleBuffer& inputBuffer);
+    FormatIterator getTupleIterator(NodeEngine::TupleBuffer& inputBuffer);
 
     /**
     * @brief method to write the schema of the data
@@ -54,7 +54,7 @@ class TextFormat : public SinkFormat {
      * @brief return sink format
      * @return sink format
      */
-    SinkFormatTypes getSinkFormat();
+    FormatTypes getSinkFormat();
 };
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_TEXTFORMAT_HPP_

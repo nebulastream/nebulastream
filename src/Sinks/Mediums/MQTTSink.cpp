@@ -14,15 +14,15 @@
     limitations under the License.
 */
 #ifdef ENABLE_MQTT_BUILD
+#include <NodeEngine/QueryManager.hpp>
+#include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>
-#include <NodeEngine/QueryManager.hpp>
-#include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
-#include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 
 namespace NES {
 /*
@@ -36,27 +36,30 @@ const uint32_t NANO_TO_SECONDS_MULTIPLIER = 1000000000;
 SinkMediumTypes MQTTSink::getSinkMediumType() { return MQTT_SINK; }
 
 MQTTSink::MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
-                   const std::string topic, const std::string user, uint64_t maxBufferedMSGs, const MQTTSinkDescriptor::TimeUnits timeUnit,
-                   uint64_t messageDelay, const MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient)
+                   const std::string topic, const std::string user, uint64_t maxBufferedMSGs,
+                   const MQTTSinkDescriptor::TimeUnits timeUnit, uint64_t messageDelay,
+                   const MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient)
     : SinkMedium(sinkFormat, parentPlanId), address(address), clientId(clientId), topic(topic), user(user),
       maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
       asynchronousClient(asynchronousClient), connected(false) {
 
-    minDelayBetweenSends = std::chrono::nanoseconds(messageDelay * ((timeUnit == MQTTSinkDescriptor::TimeUnits::milliseconds)
-                                    ? NANO_TO_MILLI_SECONDS_MULTIPLIER
-                                    : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSinkDescriptor::TimeUnits::nanoseconds) |
-                                                                    (timeUnit == MQTTSinkDescriptor::TimeUnits::nanoseconds))));
+    minDelayBetweenSends =
+        std::chrono::nanoseconds(messageDelay
+                                 * ((timeUnit == MQTTSinkDescriptor::TimeUnits::milliseconds)
+                                        ? NANO_TO_MILLI_SECONDS_MULTIPLIER
+                                        : (NANO_TO_SECONDS_MULTIPLIER * (timeUnit != MQTTSinkDescriptor::TimeUnits::nanoseconds)
+                                           | (timeUnit == MQTTSinkDescriptor::TimeUnits::nanoseconds))));
     std::cout << "DELAY: " << minDelayBetweenSends.count();
 
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient, address, clientId, maxBufferedMSGs, topic, qualityOfService);
-    NES_DEBUG("MQTTSink::~MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
+    NES_TRACE("MQTTSink::MQTTSink " << this->toString() << ": Init MQTT Sink to " << address);
 }
 
 MQTTSink::~MQTTSink() {
-    NES_DEBUG("MQTTSink::~MQTTSink: destructor called");
+    NES_TRACE("MQTTSink::~MQTTSink: destructor called");
     bool success = disconnect();
     if (success) {
-        NES_DEBUG("MQTTSink::~MQTTSink " << this << ": MQTT Sink Destroyed");
+        NES_TRACE("MQTTSink::~MQTTSink " << this << ": MQTT Sink Destroyed");
     } else {
         NES_ERROR("MQTTSink::~MQTTSink " << this << ": Destroy MQTT Sink failed cause it could not be disconnected");
         throw Exception("MQTT Sink destruction failed");
@@ -65,11 +68,7 @@ MQTTSink::~MQTTSink() {
 
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
-    if (!connected) {
-        NES_DEBUG("MQTTSink::writeData  " << this << ": cannot write buffer " << inputBuffer
-                                          << " because queue is not connected");
-        throw Exception("Write to zmq sink failed");
-    }
+    NES_ASSERT(connected, "MQTTSink::writeData: cannot write buffer because client is not connected");
 
     if (!inputBuffer.isValid()) {
         NES_ERROR("MQTTSink::writeData input buffer invalid");
@@ -81,14 +80,12 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
-        auto formatIterator = sinkFormat->getTupleIterator(inputBuffer);
-        auto begin = formatIterator->begin()->as<JsonFormatIterator::jsonIterator>();
-        auto end   =   formatIterator->end()->as<JsonFormatIterator::jsonIterator>();
-        while (begin->operator!=(end)) {
-            NES_TRACE("MQTTSink::writeData Sending Payload: " << begin->getCurrentTupleAsJson());
-            client->sendPayload(begin->getCurrentTupleAsJson());
+
+        for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
+            auto jsonPayload = (*formattedTuple).getData();
+            NES_TRACE("MQTTSink::writeData Sending Payload: " << jsonPayload);
+            client->sendPayload(jsonPayload);
             std::this_thread::sleep_for(minDelayBetweenSends);
-            begin->operator++();
         }
 
         // When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
@@ -105,6 +102,7 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
 }
 
 const std::string MQTTSink::toString() const {
+    std::unique_lock lock(writeMutex);
     std::stringstream ss;
     ss << "MQTT_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
@@ -123,6 +121,7 @@ const std::string MQTTSink::toString() const {
 }
 
 bool MQTTSink::connect() {
+    std::unique_lock lock(writeMutex);
     if (!connected) {
         try {
             auto connOpts = mqtt::connect_options_builder()
@@ -148,6 +147,7 @@ bool MQTTSink::connect() {
 }
 
 bool MQTTSink::disconnect() {
+    std::unique_lock lock(writeMutex);
     if (connected) {
         client->disconnect();
         connected = false;
