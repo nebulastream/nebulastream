@@ -40,10 +40,11 @@
 #include <vector>
 
 #define PORT 5000
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
 
 using Clock = std::chrono::high_resolution_clock;
-
+std::stringstream readStream;
+int sock = 0;
 namespace NES {
 
 NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
@@ -80,6 +81,37 @@ NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMa
                                       << numberOfTuplesToProducePerBuffer << "loopOnFile=" << loopOnFile);
 
     fileEnded = false;
+
+//connection to netty socket
+    struct sockaddr_in serv_addr;
+    sock = 0;
+    //int valread;
+
+    //bool readData = true;
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        NES_ERROR("\n Socket creation error \n");
+        return;
+    }
+
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+    //172.16.0.254
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if (inet_pton(AF_INET,address.c_str(), &serv_addr.sin_addr) <= 0) {
+        NES_ERROR(" Invalid address/ Address not supported ");
+        NES_ERROR(address.c_str());
+        return;
+    }
+
+    if (connect(sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
+        NES_ERROR("Connection Failed");
+        return;
+    }
+    char* hello = "0:bids\n";
+
+    send(sock, hello, strlen(hello), 0);
+
 }
 
 std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
@@ -108,47 +140,27 @@ void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
     }
 
     std::regex validity("^[a-zA-Z0-9,]+$");
-    int sock = 0, valread;
-    struct sockaddr_in serv_addr;
-    char* hello = "0:bids\n";
-    char buffer[1024] = {0};
-    std::stringstream readStream;
-    bool readData = true;
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        NES_ERROR("\n Socket creation error \n");
-        return;
-    }
+    char buffer[4096] = {0};
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-    //172.16.0.254
-    // Convert IPv4 and IPv6 addresses from text to binary form
-    if (inet_pton(AF_INET,address.c_str(), &serv_addr.sin_addr) <= 0) {
-        NES_ERROR(" Invalid address/ Address not supported ");
-        NES_ERROR(address.c_str());
-        return;
-    }
 
-    if (connect(sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0) {
-        NES_ERROR("Connection Failed");
-        return;
-    }
-    send(sock, hello, strlen(hello), 0);
+
+
     uint64_t tupCnt = 0;
-    while (readData) {
-        buf.setNumberOfTuples(0);
+    //while (readData) {
+        //buf.setNumberOfTuples(0);
+
         bzero(buffer, BUFFER_SIZE);
 
-        valread = read(sock, buffer, BUFFER_SIZE);
-
-        if (valread <= 0) {
+        //valread =
+    read(sock, buffer, BUFFER_SIZE);
+        /*if (valread <= 0) {
             break;
-        }
+        }*/
 
         readStream << buffer;
 
         // Continue reading while end is not found.
-        readData = readStream.str().find("end;") == std::string::npos;
+       // readData = readStream.str().find("end;") == std::string::npos;
         std::vector<std::string> parsed;
         boost::algorithm::split(parsed, buffer, boost::is_any_of("\n"));
 
@@ -166,7 +178,6 @@ void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
                 tupCnt = 0;
             }
 
-
             if (std::regex_match(parsed[i].c_str(),validity) && tokens.size() == 5 && !tokens[2].empty() && !tokens[0].empty() && !tokens[1].empty()) {
                 tokens.push_back(std::to_string(
                     std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count()));
@@ -181,7 +192,10 @@ void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
                      * TODO: this requires underflow/overflow checks
                      * TODO: our types need their own sto/strto methods
 */
-
+                   /*     NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
+                                        "Overflow detected: buffer size = " << buf.getBufferSize()
+                                                                            << " position = " << (offset + tupCnt * tupleSize)
+                                                                            << " field size " << fieldSize);*/
                         if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
 
                             uint64_t val = std::stoull(tokens[j].c_str());
@@ -229,6 +243,8 @@ void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
                 tupCnt++;
             } else {
                 NES_WARNING("Incomplete token received " << parsed[i]);
+                NES_INFO( " buffer size " << buf.getBufferSize());
+
                 readStream.clear();
                 if (!parsed[i].empty()) {
                     NES_WARNING("Appending incomplete token at the beginning of the readStream" << parsed[i]);
@@ -242,15 +258,17 @@ void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
             readStream.clear();
         }
 
-    }
+   // }
 
 
     buf.setNumberOfTuples(tupCnt);
     NES_TRACE("NettySource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
+
     //update statistics
     generatedTuples += tupCnt;
     generatedBuffers++;
+
 }
 
 SourceType NettySource::getType() const { return CSV_SOURCE; }

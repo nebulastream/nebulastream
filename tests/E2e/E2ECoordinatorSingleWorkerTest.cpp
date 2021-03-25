@@ -648,7 +648,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     string path2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
                    + " --dataPort=" + worker1DataPort
                    + " --logicalStreamName=Rating --physicalStreamName=test_stream --sourceType=NettySource "
-                     "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 --address=127.0.0.1";
+                     "--sourceConfig=../tests/test_data/QnV_short.csv --numberOfBuffersToProduce=0 --sourceFrequency=1 --address=127.0.0.1";
 
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
@@ -658,11 +658,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"Rating\\\")."
-          "windowByKey(Attribute(\\\"auctionId\\\"), "
+    ss << "\"Query::from(\\\"Rating\\\")"
+         /* ".windowByKey(Attribute(\\\"auctionId\\\"), "
           "TumblingWindow::of(EventTime(Attribute(\\\"processingTime\\\")), Seconds(2)), "
-          "Max(Attribute(\\\"bidPrice\\\")))."
-          "window(TumblingWindow::of(EventTime(Attribute(\\\"start\\\")),Seconds(2)), Max(Attribute(\\\"bidPrice\\\")))"
+          "Max(Attribute(\\\"bidPrice\\\")))"
+          ".window(TumblingWindow::of(EventTime(Attribute(\\\"start\\\")),Seconds(2)), Max(Attribute(\\\"bidPrice\\\")))"*/
           ".sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
