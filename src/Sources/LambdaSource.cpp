@@ -26,6 +26,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <utility>
+
 namespace NES {
 
 LambdaSource::LambdaSource(
