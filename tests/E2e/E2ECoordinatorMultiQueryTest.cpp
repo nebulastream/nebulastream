@@ -417,9 +417,9 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-          "TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), "
-          "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10))) "
+          ".byKey(Attribute(\\\"id\\\"))"
+          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -429,9 +429,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-           "TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)), "
-           "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\") "
+           ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)))"
+           ".byKey(Attribute(\\\"id\\\"),"
+           ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -529,9 +530,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-          "SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), "
-          "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\")"
+          ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)))"
+          ".byKey(Attribute(\\\"id\\\"))"
+          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -541,9 +543,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-           "SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)), "
-           "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\")"
+           ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)))"
+           ".byKey(Attribute(\\\\\\\"id\\\\\\\")\")"
+           ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
