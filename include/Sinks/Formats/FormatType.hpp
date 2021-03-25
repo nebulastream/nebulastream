@@ -22,6 +22,6 @@ namespace NES {
  * @brief Format types supported by NES
  */
 enum FormatTypes { CSV_FORMAT, JSON_FORMAT, NES_FORMAT, TEXT_FORMAT };
-}
+}// namespace NES
 
 #endif//NES_FORMATTYPE_HPP

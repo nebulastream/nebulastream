@@ -120,7 +120,8 @@ const DataSinkPtr createOPCSink(SchemaPtr schema, QuerySubPlanId parentPlanId, N
 const DataSinkPtr createMQTTSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine,
                                  const std::string address, const std::string clientId, const std::string topic,
                                  const std::string user, uint64_t maxBufferedMSGs, const MQTTSinkDescriptor::TimeUnits timeUnit,
-                                 uint64_t msgDelay, MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient) {
+                                 uint64_t msgDelay, MQTTSinkDescriptor::ServiceQualities qualityOfService,
+                                 bool asynchronousClient) {
     SinkFormatPtr format = std::make_shared<JsonFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<MQTTSink>(format, parentPlanId, address, clientId, topic, user, maxBufferedMSGs, timeUnit, msgDelay,
                                       qualityOfService, asynchronousClient);

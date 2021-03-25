@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 
 namespace NES {
 

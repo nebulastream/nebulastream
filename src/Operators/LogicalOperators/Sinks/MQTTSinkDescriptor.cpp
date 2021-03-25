@@ -19,8 +19,7 @@
 namespace NES {
 MQTTSinkDescriptor::MQTTSinkDescriptor(const std::string address, const std::string clientId, const std::string topic,
                                        const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
-                                       uint64_t messageDelay, const ServiceQualities qualityOfService,
-                                       bool asynchronousClient)
+                                       uint64_t messageDelay, const ServiceQualities qualityOfService, bool asynchronousClient)
     : address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
       messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient) {}
 

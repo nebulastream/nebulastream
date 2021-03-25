@@ -18,7 +18,6 @@
 #include <Util/Logger.hpp>
 #include <Util/MQTTClientWrapper.hpp>
 
-
 namespace NES {
 const std::chrono::duration<int64_t> MAX_WAIT_FOR_BROKER_CONNECT = std::chrono::seconds(20);
 MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId,
