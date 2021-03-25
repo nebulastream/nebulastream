@@ -27,10 +27,21 @@ namespace NES {
 
 void NES::SyntacticQueryValidation::checkValidity(std::string inputQuery) {
     try{
-        QueryPtr multipleFilterQuery = UtilityFunctions::createQueryFromCodeString(inputQuery);
+        QueryPtr query = UtilityFunctions::createQueryFromCodeString(inputQuery);
     } catch(const std::exception& ex) {
         handleException(ex);
     }
+}
+
+QueryPtr NES::SyntacticQueryValidation::checkValidityAndGetQuery(std::string inputQuery) {
+    QueryPtr query;
+    try{
+        query = UtilityFunctions::createQueryFromCodeString(inputQuery);
+        return query;
+    } catch(const std::exception& ex) {
+        handleException(ex);
+    }
+    return query;
 }
 
 void NES::SyntacticQueryValidation::handleException(const std::exception& ex){

@@ -45,9 +45,10 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     QueryId queryId = PlanIdGenerator::getNextQueryId();
 
     NES_INFO("QueryService: Executing Syntactic validation");
+    QueryPtr query;
     try{
         SyntacticQueryValidation syntacticQueryValidation;
-        syntacticQueryValidation.checkValidity(queryString);
+        query = syntacticQueryValidation.checkValidityAndGetQuery(queryString);
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
@@ -60,8 +61,8 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
         throw InvalidArgumentException("placementStrategyName", placementStrategyName);
     }
-    NES_INFO("QueryService: Parsing and converting user query string");
-    QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
+    // NES_INFO("QueryService: Parsing and converting user query string");
+    // QueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);

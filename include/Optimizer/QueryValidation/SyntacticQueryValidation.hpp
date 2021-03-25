@@ -31,6 +31,7 @@ class SyntacticQueryValidation {
         void handleException(const std::exception& ex);
     public:
         void checkValidity(std::string inputQuery);
+        QueryPtr checkValidityAndGetQuery(std::string inputQuery);
 };
 
 typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
