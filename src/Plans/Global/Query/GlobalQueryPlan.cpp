@@ -99,10 +99,9 @@ void GlobalQueryPlan::removeEmptySharedQueryMetaData() {
         if ((sharedQueryMetaData->isDeployed() || sharedQueryMetaData->isNew()) && sharedQueryMetaData->isEmpty()) {
             NES_TRACE("GlobalQueryPlan: Removing! found an empty query meta data.");
             sharedQueryIdToMetaDataMap.erase(itr++);
-        } else {
-            NES_INFO("Not Empty");
-            ++itr;
+            continue;
         }
+        itr++;
     }
 }
 

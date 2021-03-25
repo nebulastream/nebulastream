@@ -51,14 +51,13 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
 GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry>& queryRequests) {
     //FIXME: Proper error handling #1585
     try {
-        //TODO: Parallelize this loop
+        //TODO: Parallelize this loop #1738
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
             if (queryRequest.getQueryStatus() == QueryStatus::MarkedForStop) {
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
             } else if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
-
                 auto queryPlan = queryRequest.getQueryPlan();
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
                          << queryId << " status=" << queryRequest.getQueryStatusAsString());

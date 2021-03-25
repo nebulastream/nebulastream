@@ -22,6 +22,24 @@
 
 namespace NES::Optimizer {
 
+enum class QueryMergerRule {
+    SyntaxBasedCompleteQueryMergerRule,
+    SyntaxBasedPartialQueryMergerRule,
+    Z3SignatureBasedCompleteQueryMergerRule,
+    Z3SignatureBasedPartialQueryMergerRule,
+    StringSignatureBasedCompleteQueryMergerRule,
+    StringSignatureBasedPartialQueryMergerRule
+};
+
+static const std::map<std::string, QueryMergerRule> stringToMergerRuleEnum{
+    {"SyntaxBasedCompleteQueryMergerRule", QueryMergerRule::SyntaxBasedCompleteQueryMergerRule},
+    {"SyntaxBasedPartialQueryMergerRule", QueryMergerRule::SyntaxBasedPartialQueryMergerRule},
+    {"Z3SignatureBasedCompleteQueryMergerRule", QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule},
+    {"Z3SignatureBasedPartialQueryMergerRule", QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule},
+    {"StringSignatureBasedCompleteQueryMergerRule", QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule},
+    {"StringSignatureBasedPartialQueryMergerRule", QueryMergerRule::StringSignatureBasedPartialQueryMergerRule},
+};
+
 class QueryMergerPhase;
 typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 
@@ -34,23 +52,6 @@ typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCom
 class QueryMergerPhase {
 
   public:
-    enum class MergerRule {
-        SyntaxBasedCompleteQueryMergerRule,
-        SyntaxBasedPartialQueryMergerRule,
-        Z3SignatureBasedCompleteQueryMergerRule,
-        Z3SignatureBasedPartialQueryMergerRule,
-        StringSignatureBasedCompleteQueryMergerRule,
-        StringSignatureBasedPartialQueryMergerRule
-    };
-
-    std::map<std::string, MergerRule> stringToMergerRuleEnum{
-        {"SyntaxBasedCompleteQueryMergerRule", MergerRule::SyntaxBasedCompleteQueryMergerRule},
-        {"SyntaxBasedPartialQueryMergerRule", MergerRule::SyntaxBasedPartialQueryMergerRule},
-        {"Z3SignatureBasedCompleteQueryMergerRule", MergerRule::Z3SignatureBasedCompleteQueryMergerRule},
-        {"Z3SignatureBasedPartialQueryMergerRule", MergerRule::Z3SignatureBasedPartialQueryMergerRule},
-        {"StringSignatureBasedCompleteQueryMergerRule", MergerRule::StringSignatureBasedCompleteQueryMergerRule},
-        {"StringSignatureBasedPartialQueryMergerRule", MergerRule::StringSignatureBasedPartialQueryMergerRule},
-    };
 
     static QueryMergerPhasePtr create(z3::ContextPtr context, std::string queryMergerRuleName);
 

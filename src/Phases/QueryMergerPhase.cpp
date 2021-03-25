@@ -26,19 +26,17 @@ QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, std::string
 }
 
 QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, std::string queryMergerRuleName) {
-
     auto queryMergerEnum = stringToMergerRuleEnum.find(queryMergerRuleName);
-
     if (queryMergerEnum == stringToMergerRuleEnum.end()) {
         NES_FATAL_ERROR("Unhandled Query Merger Rule Type " << queryMergerRuleName);
         throw Exception("Unhandled Query Merger Rule Type " + queryMergerRuleName);
     }
 
     switch (queryMergerEnum->second) {
-        case MergerRule::SyntaxBasedCompleteQueryMergerRule:
+        case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
-        case MergerRule::Z3SignatureBasedCompleteQueryMergerRule:
+        case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
             queryMergerRule = SignatureBasedCompleteQueryMergerRule::create(context);
             break;
     }

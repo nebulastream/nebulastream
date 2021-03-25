@@ -35,6 +35,9 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 class SignatureEqualityUtil;
 typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
 
+/**
+ * @brief This is a utility to compare two signatures
+ */
 class SignatureEqualityUtil {
 
   public:
@@ -42,6 +45,12 @@ class SignatureEqualityUtil {
 
     SignatureEqualityUtil(z3::ContextPtr context);
 
+    /**
+     * @brief Check equality of the given signatures
+     * @param signature1
+     * @param signature2
+     * @return true if tey are equal else false
+     */
     bool checkEquality(QuerySignaturePtr signature1, QuerySignaturePtr signature2);
 
   private:

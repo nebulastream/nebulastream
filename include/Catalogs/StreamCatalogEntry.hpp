@@ -42,9 +42,23 @@ typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 class StreamCatalogEntry {
 
   public:
+    /**
+     * @brief Create the shared pointer for the stream catalog entry
+     * @param sourceType: the source type
+     * @param physicalStreamName: physical stream name
+     * @param logicalStreamName: the logical stream name
+     * @param node: the topology node
+     * @return shared pointer to stream catalog
+     */
     static StreamCatalogEntryPtr create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
                                         TopologyNodePtr node);
 
+    /**
+     * @brief Create the shared pointer for the stream catalog entry
+     * @param config : the physical stream config
+     * @param node : the topology node
+     * @return shared pointer to stream catalog
+     */
     static StreamCatalogEntryPtr create(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node);
 
     explicit StreamCatalogEntry(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
