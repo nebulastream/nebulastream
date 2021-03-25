@@ -15,14 +15,14 @@
 */
 
 #include <API/Schema.hpp>
+#include <Common/DataTypes/FixedChar.hpp>
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <cstring>
-#include <Common/DataTypes/FixedChar.hpp>
 #include <cpprest/json.h>
+#include <cstring>
 
 namespace NES {
 

@@ -52,7 +52,8 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return the tuple buffer
      */
-    void requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan, NodeEngine::TupleBuffer tupleBuffer);
+    void requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan,
+                               NodeEngine::TupleBuffer tupleBuffer);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.

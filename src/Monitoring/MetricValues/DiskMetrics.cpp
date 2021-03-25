@@ -22,8 +22,8 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-#include <cstring>
 #include <cpprest/json.h>
+#include <cstring>
 
 namespace NES {
 
