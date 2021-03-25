@@ -38,7 +38,7 @@ class JsonFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    SinkFormatIteratorPtr getTupleIterator(NodeEngine::TupleBuffer& inputBuffer);
+    FormatIterator getTupleIterator(NodeEngine::TupleBuffer& inputBuffer);
 
     /**
     * @brief method to write the schema of the data
@@ -56,7 +56,7 @@ class JsonFormat : public SinkFormat {
      * @brief return sink format
      * @return sink format
      */
-    SinkFormatTypes getSinkFormat();
+    FormatTypes getSinkFormat();
 
 };
 }// namespace NES

@@ -18,15 +18,13 @@
 #define NES_INCLUDE_SINKS_SINKFORMAT_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Sinks/Formats/FormatIterators/SinkFormatIterator.hpp>
+#include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
 
 #include <fstream>
 /**
  * @brief this class covers the different output formats that we offer in NES
  */
 namespace NES {
-
-enum SinkFormatTypes { CSV_FORMAT, JSON_FORMAT, NES_FORMAT, TEXT_FORMAT };
 
 class SinkFormat {
   public:
@@ -49,7 +47,7 @@ class SinkFormat {
     * @param a tuple buffer pointer
     * @return TupleBuffer iterator
      */
-    virtual SinkFormatIteratorPtr getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) = 0;
+    virtual FormatIterator getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) = 0;
 
     /**
     * @brief method to write the schema of the data
@@ -63,7 +61,7 @@ class SinkFormat {
      */
     virtual std::string toString() = 0;
 
-    virtual SinkFormatTypes getSinkFormat() = 0;
+    virtual FormatTypes getSinkFormat() = 0;
 
     SchemaPtr getSchemaPtr();
     void setSchemaPtr(SchemaPtr schema);

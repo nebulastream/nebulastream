@@ -16,23 +16,10 @@
 
 #include <API/Schema.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <Sinks/Formats/JsonFormat.hpp>
-#include <Util/Logger.hpp>
-#include <iostream>
+#include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
 
 namespace NES {
 
-JsonFormat::JsonFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager) {}
-
-std::vector<NodeEngine::TupleBuffer> JsonFormat::getData(NodeEngine::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
-
-std::optional<NodeEngine::TupleBuffer> JsonFormat::getSchema() { NES_NOT_IMPLEMENTED(); }
-
-std::string JsonFormat::toString() { return "JSON_FORMAT"; }
-FormatTypes JsonFormat::getSinkFormat() { return JSON_FORMAT; }
-
-FormatIterator JsonFormat::getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) {
-    return FormatIterator(schema, inputBuffer, JSON_FORMAT);
-}
-
+FormatIterator::FormatIterator(SchemaPtr schema, NodeEngine::TupleBuffer buffer, FormatTypes formatType)
+    : schema(schema), buffer(buffer), sinkFormatType(formatType){};
 }// namespace NES
