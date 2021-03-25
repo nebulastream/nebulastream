@@ -141,6 +141,7 @@ class JoinCondition {
 
 namespace WindowOperatorBuilder{
 
+class WindowedQuery;
 class KeyedWindowedQuery;
 
 class WindowedQuery{
@@ -208,6 +209,7 @@ class Query {
 
     friend class JoinOperatorBuilder::JoinCondition;// we need that because we make the original joinWith() private
     friend class WindowOperatorBuilder::WindowedQuery;
+    friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
     WindowOperatorBuilder::WindowedQuery window(const Windowing::WindowTypePtr windowType);
 
