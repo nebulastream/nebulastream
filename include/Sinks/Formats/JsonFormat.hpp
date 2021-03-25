@@ -18,7 +18,6 @@
 #define NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
-#include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 namespace NES {
 
 class JsonFormat : public SinkFormat {

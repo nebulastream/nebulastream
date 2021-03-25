@@ -15,7 +15,6 @@
 */
 #ifdef ENABLE_MQTT_BUILD
 #include <NodeEngine/QueryManager.hpp>
-#include <Sinks/Formats/FormatIterators/JsonFormatIterator.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -102,7 +101,6 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
 }
 
 const std::string MQTTSink::toString() const {
-    std::unique_lock lock(writeMutex);
     std::stringstream ss;
     ss << "MQTT_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
