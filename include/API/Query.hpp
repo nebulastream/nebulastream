@@ -139,6 +139,63 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
+namespace WindowOperatorBuilder{
+
+class KeyedWindowedQuery;
+
+class WindowedQuery{
+  public:
+    /**
+    * @brief: Constructor. Initialises always originalQuery, windowType
+    * @param originalQuery
+    * @param windowType
+    */
+    WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType);
+
+    /**
+    * @brief: sets the Attribute for the keyBy Operation. Creates a KeyedWindowedQuery object.
+    * @param onKey
+    */
+    KeyedWindowedQuery keyBy(ExpressionItem onKey);
+
+    /**
+   * @brief: Calls internally the original window() function and returns the Query&
+   * @param aggregation
+   */
+    Query& apply(const Windowing::WindowAggregationPtr aggregation);
+
+  private:
+    Query& originalQuery;
+    Windowing::WindowTypePtr windowType;
+};
+
+class KeyedWindowedQuery{
+  public:
+    /**
+    * @brief: Constructor. Initialises always originalQuery, windowType, onKey
+    * @param originalQuery
+    * @param windowType
+    */
+    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionItem onKey);
+
+    /**
+    * @brief: Calls internally the original windowByKey() function and returns the Query&
+    * @param aggregation
+    */
+    Query& apply(const Windowing::WindowAggregationPtr aggregation);
+
+  private:
+    Query& originalQuery;
+    Windowing::WindowTypePtr windowType;
+    ExpressionItem onKey;
+};
+
+
+}// namespace WindowOperatorBuilder
+
+
+
+
 /**
  * User interface to create stream processing queries.
  * The current api exposes method to create queries using all currently supported operators.
@@ -150,6 +207,10 @@ class Query {
     ~Query() = default;
 
     friend class JoinOperatorBuilder::JoinCondition;// we need that because we make the original joinWith() private
+    friend class WindowOperatorBuilder::WindowedQuery;
+
+    WindowOperatorBuilder::WindowedQuery window(const Windowing::WindowTypePtr windowType);
+
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
@@ -212,14 +273,6 @@ class Query {
      */
     Query& filter(const ExpressionNodePtr filterExpression);
 
-    /**
-     * @brief: Creates a window aggregation.
-     * @param windowType Window definition.
-     * @param aggregation Window aggregation function.
-     * @return query.
-     */
-    Query& windowByKey(const ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
-                       const Windowing::WindowAggregationPtr aggregation);
 
     /**
      * @brief: Create watermark assginer operator.
@@ -228,14 +281,6 @@ class Query {
      * @return query.
      */
     Query& assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
-
-    /**
-     * @brief: Creates a window aggregation.
-     * @param windowType Window definition.
-     * @param aggregation Window aggregation function.
-     * @return query.
-     */
-    Query& window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation);
 
     /**
      * @brief: Map records according to a map expression.
@@ -278,6 +323,26 @@ class Query {
      */
     Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                     const Windowing::WindowTypePtr windowType);
+
+    /**
+     * @new change: similar to join, the original window and windowByKey become private --> only internal use
+     * @brief: Creates a window aggregation.
+     * @param windowType Window definition.
+     * @param aggregation Window aggregation function.
+     * @return query.
+     */
+    Query& window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation);
+
+    /**
+      * @brief: Creates a window aggregation.
+      * @param windowType Window definition.
+      * @param aggregation Window aggregation function.
+      * @return query.
+      */
+    Query& windowByKey(const ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
+                       const Windowing::WindowAggregationPtr aggregation);
+
+
 };
 
 typedef std::shared_ptr<Query> QueryPtr;
