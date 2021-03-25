@@ -493,7 +493,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
+              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT32))->addField(createField(\\\"id\\\",UINT32))->"
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
@@ -515,7 +515,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ss << "{\"userQuery\" : ";
     ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
           "TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), "
-          "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+          "Max(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -631,11 +631,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     std::stringstream schema;
 
     schema << "{\"streamName\" : \"Rating\",\"schema\" : \"Schema::create()->"
+              "addField(\\\"auctionId\\\", UINT32)->"
               "addField(createField(\\\"eventTime\\\", UINT64))->"
-              "addField(\\\"auctionId\\\", DataTypeFactory::createFixedChar(32))->"
-              "addField(\\\"personId\\\", ""DataTypeFactory::createFixedChar(32))->"
-              "addField(\\\"bidId\\\", DataTypeFactory::createFixedChar(32))->"
-              "addField(createField(\\\"bidPrice\\\", UINT64))->"
+              "addField(\\\"personId\\\", UINT32)->"
+              "addField(\\\"bidId\\\", UINT32)->"
+              "addField(createField(\\\"bidPrice\\\", UINT32))->"
               "addField(createField(\\\"processingTime\\\", UINT64));\"}";
 
 
@@ -658,7 +658,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"Rating\\\").sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"Rating\\\")."
+          "windowByKey(Attribute(\\\"auctionId\\\"), "
+          "TumblingWindow::of(EventTime(Attribute(\\\"processingTime\\\")), Seconds(2)), "
+          "Max(Attribute(\\\"bidPrice\\\")))."
+          "window(TumblingWindow::of(EventTime(Attribute(\\\"start\\\")),Seconds(2)), Max(Attribute(\\\"bidPrice\\\")))"
+          ".sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
