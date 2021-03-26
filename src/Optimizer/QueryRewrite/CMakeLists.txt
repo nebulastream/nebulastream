@@ -14,10 +14,11 @@
 
 add_source_nes(
         AttributeSortRule.cpp
+        BinaryOperatorSortRule.cpp
+        DistributedJoinRule.cpp
+        DistributedWindowRule.cpp
         FilterPushDownRule.cpp
         LogicalSourceExpansionRule.cpp
-        DistributedWindowRule.cpp
-        DistributedJoinRule.cpp
-        RenameStreamToProjectOperatorRule.cpp
         ProjectBeforeUnionOperatorRule.cpp
+        RenameStreamToProjectOperatorRule.cpp
 )
