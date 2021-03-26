@@ -15,14 +15,10 @@
 */
 
 #include <gtest/gtest.h>
-
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
-
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include "Exceptions/InvalidQueryException.hpp"
-
-
+#include <Exceptions/InvalidQueryException.hpp>
 
 namespace NES {
 

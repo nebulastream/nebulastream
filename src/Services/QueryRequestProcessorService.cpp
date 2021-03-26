@@ -148,7 +148,7 @@ void QueryRequestProcessorService::start() {
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-                    queryCatalog->setQueryFaliureReason(queryId, ex.what());
+                    queryCatalog->setQueryFailureReason(queryId, ex.what());
                 }
             } catch (TypeInferenceException& ex) {
                 NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());

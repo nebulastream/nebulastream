@@ -54,7 +54,7 @@ class QueryCatalog {
                                             const QueryPlanPtr queryPlan,
                                             const std::string& optimizationStrategyName);
 
-    void setQueryFaliureReason(QueryId queryId, const std::string& faliureReason);
+    void setQueryFailureReason(QueryId queryId, const std::string& failureReason);
 
     /**
      * @brief register a request for stopping a query and add it to the scheduling queue.

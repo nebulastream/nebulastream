@@ -79,13 +79,12 @@ QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& querySt
         std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Failed);
     queries[queryId] = queryCatalogEntry;
     return queryCatalogEntry;
-
 }
 
-void QueryCatalog::setQueryFaliureReason(QueryId queryId, const std::string& faliureReason) {
+void QueryCatalog::setQueryFailureReason(QueryId queryId, const std::string& failureReason) {
+    std::unique_lock lock(catalogMutex);
     QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
-    queryCatalogEntry->setFaliureReason(faliureReason);
-
+    queryCatalogEntry->setFailureReason(failureReason);
 }
 
 QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(QueryId queryId) {

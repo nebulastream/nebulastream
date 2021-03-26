@@ -14,16 +14,13 @@
     limitations under the License.
 */
 
-
 #include <gtest/gtest.h>
-
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include "Exceptions/InvalidQueryException.hpp"
-
 
 namespace NES {
 
@@ -142,7 +139,6 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     EXPECT_THROW(semanticQueryValidation->checkSatisfiability(filterQuery), InvalidQueryException);
 }
 
-
 TEST_F(SemanticQueryValidationTest, invalidLogicalStreamTest) {
     NES_INFO("Invalid logical stream");
 
@@ -162,7 +158,6 @@ TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
     
     TestForException(queryString);
 }
-
 
 TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTest) {
     NES_INFO("asOperatorTest");
@@ -221,6 +216,5 @@ TEST_F(SemanticQueryValidationTest, DISABLED_projectionNegativeTest) {
     semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query));
 
 }
-
 
 }// namespace NES

@@ -28,9 +28,19 @@ namespace NES {
  */
 class SyntacticQueryValidation {
     private:
+        /**
+         * @brief Throws InvalidQueryException with formatted exception message
+         */
         void handleException(const std::exception& ex);
     public:
+        /**
+         * @brief Checks the syntactic validity of a Query string
+         */
         void checkValidity(std::string inputQuery);
+        
+        /**
+         * @brief Checks the syntactic validity of a Query string and returns the created Query object
+         */
         QueryPtr checkValidityAndGetQuery(std::string inputQuery);
 };
 
