@@ -47,10 +47,12 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     NES_INFO("QueryService: Executing Syntactic validation");
     QueryPtr query;
     try{
+        // Checking the syntactic validity and compiling the query string to an object 
         SyntacticQueryValidation syntacticQueryValidation;
         query = syntacticQueryValidation.checkValidityAndGetQuery(queryString);
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
+        // On compilation error we record the query to the catalog as failed
         queryCatalog->recordInvalidQuery(queryString, queryId, QueryPlan::create(), placementStrategyName);
         queryCatalog->setQueryFailureReason(queryId, exc.what());
         throw InvalidQueryException(exc.what());
@@ -65,12 +67,15 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
 
+    // Execute only if the semantic validation flag is enabled
     if (enableSemanticQueryValidation){
         NES_INFO("QueryService: Executing Semantic validation");
         try{
+            // Checking semantic validity
             SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalog);
             semanticQueryValidation->checkSatisfiability(query);
         } catch (const std::exception& exc) {
+            // If semantically invalid, we record the query to the catalog as failed
             NES_ERROR("QueryService: Semantic Query Validation: " + std::string(exc.what()));
             queryCatalog->recordInvalidQuery(queryString, queryId, queryPlan, placementStrategyName);
             queryCatalog->setQueryFailureReason(queryId, exc.what());

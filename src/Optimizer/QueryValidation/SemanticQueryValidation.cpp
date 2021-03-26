@@ -43,12 +43,14 @@ SemanticQueryValidationPtr NES::SemanticQueryValidation::create(StreamCatalogPtr
 
 void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
 
+    // Creating a z3 context for the signature inference and the z3 solver
     z3::ContextPtr context = std::make_shared<z3::context>();
     
     auto queryPlan = inputQuery->getQueryPlan();
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context);
     
+    // Checking if the stream source can be found in the stream catalog
     sourceValidityCheck(queryPlan, streamCatalog);
 
     try {
@@ -56,22 +58,26 @@ void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
         signatureInferencePhase->execute(queryPlan);
     } catch(std::exception& e) {
         std::string errorMessage = e.what();
+
+        // Handling nonexistend field
         if(errorMessage.find("FieldAccessExpression:") != std::string::npos){
-            // handle nonexistend field
             throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
         }
-
         throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
     }
+
     z3::solver solver(*context);
     auto filterOperators = queryPlan->getOperatorByType<FilterLogicalOperatorNode>();
 
+    // Looping through all filter operators of the Query, checking for contradicting conditions.
     for (auto filterOp : filterOperators) {
         Optimizer::QuerySignaturePtr qsp = filterOp->getSignature();
 
+        // Adding the conditions to the z3 SMT solver
         z3::ExprPtr conditions = qsp->getConditions();
         solver.add(*(qsp->getConditions()));
 
+        // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
         if(solver.check() == z3::unsat){
             auto predicateStr = filterOp->getPredicate()->toString();
             handleException(predicateStr);
@@ -80,6 +86,8 @@ void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
 }
 
 void NES::SemanticQueryValidation::handleException(std::string & predicateString) {
+
+    // Removing unnecessary data from the error messages for better readability
     eraseAllSubStr(predicateString, "[INTEGER]");
     eraseAllSubStr(predicateString, "(");
     eraseAllSubStr(predicateString, ")");
@@ -88,9 +96,11 @@ void NES::SemanticQueryValidation::handleException(std::string & predicateString
     eraseAllSubStr(predicateString, "BasicValue");
     eraseAllSubStr(predicateString, "$");
 
+    // Adding whitespace between bool operators for better readability
     findAndReplaceAll(predicateString, "&&", " && ");
     findAndReplaceAll(predicateString, "||", " || ");
 
+    // Removing logical stream names for better readability
     auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
     for (auto logicalStream: allLogicalStreams){
         eraseAllSubStr(predicateString, logicalStream.first);
@@ -119,14 +129,17 @@ void NES::SemanticQueryValidation::findAndReplaceAll(std::string & data, std::st
 
 void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog){
 
+    // Getting the source operators from the query plan 
     auto sourceOperators = queryPlan->getSourceOperators();
 
     for (auto source : sourceOperators) {
         auto sourceDescriptor = source->getSourceDescriptor();
 
+        // Filtering for logical stream sources
         if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
             auto streamName = sourceDescriptor->getStreamName();
 
+            // Making sure that all logical stream sources are present in the stream catalog 
             if(!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)){
                 throw InvalidQueryException("SemanticQueryValidation: The logical stream " + streamName
                                         + " could not be found in the StreamCatalog\n");

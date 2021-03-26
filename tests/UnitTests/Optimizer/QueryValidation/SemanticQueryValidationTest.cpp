@@ -48,6 +48,7 @@ class SemanticQueryValidationTest : public testing::Test {
     }
 };
 
+// Positive test for a semantically valid query
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithSingleFilter) {
     NES_INFO("Satisfiable Query with single filter");
 
@@ -58,6 +59,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithSingleFilter) {
     CallValidation(queryString);
 }
 
+// Positive test for a semantically valid query with an AND condition
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLogicalExpression) {
     NES_INFO("Satisfiable Query with logical expression");
 
@@ -68,6 +70,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLogicalExpression) {
     CallValidation(queryString);
 }
 
+// Test a query with contradicting filters in an AND condition
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLogicalExpression) {
     NES_INFO("Unatisfiable Query with logical expression");
 
@@ -78,6 +81,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLogicalExpression) {
     TestForException(queryString);
 }
 
+// Positive test for a semantically valid query with multiple filter operators
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithMultipleFilters) {
     NES_INFO("Satisfiable Query with multiple filters");
 
@@ -88,6 +92,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithMultipleFilters) {
     CallValidation(queryString);
 }
 
+// Test a query with contradicting filters over multiple filter operators
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithMultipleFilters) {
     NES_INFO("Unsatisfiable Query with multiple filters");
 
@@ -98,6 +103,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithMultipleFilters) {
     TestForException(queryString);
 }
 
+// Positive test for a semantically valid query with programmatically added filter operators
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Satisfiable Query with later added filters");
 
@@ -118,6 +124,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
     semanticQueryValidation->checkSatisfiability(filterQuery);
 }
 
+// Test a query with contradicting filters over multiple programmatically added filter operators
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Unatisfiable Query with later added filters");
 
@@ -139,6 +146,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     EXPECT_THROW(semanticQueryValidation->checkSatisfiability(filterQuery), InvalidQueryException);
 }
 
+// Test a query with an invalid logical stream name
 TEST_F(SemanticQueryValidationTest, invalidLogicalStreamTest) {
     NES_INFO("Invalid logical stream");
 
@@ -149,6 +157,7 @@ TEST_F(SemanticQueryValidationTest, invalidLogicalStreamTest) {
     TestForException(queryString);
 }
 
+// Test a query with invalid attributes
 TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
     NES_INFO("Invalid attributes in logical stream");
 
@@ -159,8 +168,10 @@ TEST_F(SemanticQueryValidationTest, invalidAttributesInLogicalStreamTest) {
     TestForException(queryString);
 }
 
-TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTest) {
-    NES_INFO("asOperatorTest");
+// Test a query with a valid "as" operator
+// This test is disabled, because the signature inference breaks when using this operator
+TEST_F(SemanticQueryValidationTest, DISABLED_validAsOperatorTest) {
+    NES_INFO("Valid as operator test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
@@ -172,8 +183,10 @@ TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorTest) {
     CallValidation(queryString);
 }
 
-TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorNegativeTest) {
-    NES_INFO("asOperatorNegativeTest");
+// Test a query with a, invalid "as" operator
+// This test is disabled, because the signature inference breaks when using this operator
+TEST_F(SemanticQueryValidationTest, DISABLED_invalidAsOperatorTest) {
+    NES_INFO("Invalid as operator test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
@@ -182,11 +195,13 @@ TEST_F(SemanticQueryValidationTest, DISABLED_asOperatorNegativeTest) {
         "Query::from(\"default_logical\").as(\"value\").filter(Attribute(\"value\") > 100); "
         ;
     
-    CallValidation(queryString);
+    TestForException(queryString);
 }
 
-TEST_F(SemanticQueryValidationTest, DISABLED_projectionTest) {
-    NES_INFO("projectionTest");
+// Test a query with a valid "project" operator
+// This test is disabled, because the signature inference breaks when using this operator
+TEST_F(SemanticQueryValidationTest, DISABLED_validProjectionTest) {
+    NES_INFO("Valid projection test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
@@ -198,11 +213,12 @@ TEST_F(SemanticQueryValidationTest, DISABLED_projectionTest) {
                      .sink(FileSinkDescriptor::create(""));
 
     semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query));
-
 }
 
-TEST_F(SemanticQueryValidationTest, DISABLED_projectionNegativeTest) {
-    NES_INFO("projectionNegativeTest");
+// Test a query with an invalid "project" operator
+// This test is disabled, because the signature inference breaks when using this operator
+TEST_F(SemanticQueryValidationTest, DISABLED_invalidProjectionTest) {
+    NES_INFO("Invalid projection test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
@@ -213,8 +229,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_projectionNegativeTest) {
                      .filter(Attribute("id") < 42)
                      .sink(FileSinkDescriptor::create(""));
 
-    semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query));
-
+    EXPECT_THROW(semanticQueryValidation->checkSatisfiability(std::make_shared<Query>(query)), InvalidQueryException);
 }
 
 }// namespace NES

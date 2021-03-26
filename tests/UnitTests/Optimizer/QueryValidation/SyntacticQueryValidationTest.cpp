@@ -39,6 +39,7 @@ class SyntacticQueryValidationTest : public testing::Test {
     }
 };
 
+// Positive test for a syntactically valid query
 TEST_F(SyntacticQueryValidationTest, validQueryTest) {
     NES_INFO("Valid Query test");
 
@@ -51,10 +52,10 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
     syntacticQueryValidation.checkValidity(queryString);
 }
 
+// Test a query with missing ; at line end
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
     NES_INFO("Missing semicolon test");
 
-    // missing ; at line end
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100) "
     ;
@@ -62,10 +63,10 @@ TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
     TestForException(queryString);
 }
 
+// Test a query where filter is misspelled as fliter
 TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
     NES_INFO("Typo in filter test");
 
-    // filter is misspelled as fliter
     std::string queryString =
         "Query::from(\"default_logical\").fliter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); "
     ;
@@ -73,6 +74,7 @@ TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
     TestForException(queryString);
 }
 
+// Test a query where a closing parenthesis is missing
 TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
     NES_INFO("Missing closing parenthesis test");
 
@@ -83,6 +85,7 @@ TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
     TestForException(queryString);
 }
 
+// Test a query where a boolean operator is invalid (& instead of &&)
 TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
     NES_INFO("Invalid bool operator test");
 
