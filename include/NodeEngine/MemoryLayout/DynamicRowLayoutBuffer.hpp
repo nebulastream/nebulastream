@@ -45,7 +45,6 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
-     * This function will memcpy every field into a predeclared tuple via std::apply(). The tuple will then be returned.
      * @tparam Types
      * @param record
      */
@@ -54,7 +53,6 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
     /**
      * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
-     * This function will memcpy every field from record to the associated buffer via std::apply()
      * @tparam Types
      * @param record
      */
@@ -64,7 +62,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
   private:
     /**
-     * copies fields of tuple sequentially to address
+     * Copies fields of tuple sequentially to address
      */
     template <size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
@@ -72,7 +70,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
 
     /**
-     * copies fields of tuple sequentially from address
+     * Copies fields of tuple sequentially from address
      */
     template <size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
@@ -152,6 +150,9 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
 
 template<bool boundaryChecks, typename... Types>
 std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
+    if (recordIndex >= capacity) {
+        NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutBuffer: Trying to access a record above capacity");
+    }
 
     std::tuple<Types...> retTuple;
 
