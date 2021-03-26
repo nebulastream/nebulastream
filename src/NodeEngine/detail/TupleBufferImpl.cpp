@@ -194,6 +194,7 @@ bool BufferControlBlock::release() {
     uint32_t prevRefCnt;
     if ((prevRefCnt = referenceCounter.fetch_sub(1)) == 1) {
         numberOfTuples.store(0);
+//        numberOfTuples = 0;
         recycleCallback(owner, owningBufferRecycler.load());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
@@ -219,7 +220,7 @@ bool BufferControlBlock::release() {
 
 uint64_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; }
 
-void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
+void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples.store(numberOfTuples, std::memory_order_release); }
 
 uint64_t BufferControlBlock::getWatermark() const { return watermark; }
 
