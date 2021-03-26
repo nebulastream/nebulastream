@@ -27,9 +27,9 @@ namespace PhysicalOperators{
  */
 class PhysicalSinkOperator: public PhysicalUnaryOperator {
   public:
-    PhysicalSinkOperator(OperatorId id, SinkDescriptorPtr sinkDescriptor);
-    static PhysicalOperatorPtr create(OperatorId id, SinkDescriptorPtr sinkDescriptor);
-    static PhysicalOperatorPtr create(SinkDescriptorPtr sinkDescriptor);
+    PhysicalSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

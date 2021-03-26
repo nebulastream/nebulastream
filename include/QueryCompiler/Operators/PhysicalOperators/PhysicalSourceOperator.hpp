@@ -18,26 +18,26 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 /**
  * @brief Physical Source operator.
  */
-class PhysicalSourceOperator: public PhysicalUnaryOperator {
+class PhysicalSourceOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalSourceOperator(OperatorId id, SourceDescriptorPtr sourceDescriptor);
-    static PhysicalOperatorPtr create(OperatorId id, SourceDescriptorPtr sourceDescriptor);
-    static PhysicalOperatorPtr create(SourceDescriptorPtr sourceDescriptor);
+    PhysicalSourceOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      SourceDescriptorPtr sourceDescriptor);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;
-
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSOURCEOPERATOR_HPP_

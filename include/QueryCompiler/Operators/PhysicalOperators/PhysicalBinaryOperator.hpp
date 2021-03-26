@@ -15,23 +15,23 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
 /**
  * @brief Physical Binary operator combines the PhysicalOperator and BinaryOperatorNode interfaces.
  * A physical binary operator has exactly two children operators.
  */
-class PhysicalBinaryOperator: public PhysicalOperator, public BinaryOperatorNode {
+class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperatorNode {
   protected:
-    PhysicalBinaryOperator(OperatorId id);
+    PhysicalBinaryOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema);
 };
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_

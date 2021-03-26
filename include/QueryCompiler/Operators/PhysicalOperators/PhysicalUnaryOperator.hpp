@@ -27,7 +27,7 @@ namespace PhysicalOperators{
  */
 class PhysicalUnaryOperator: public PhysicalOperator, public UnaryOperatorNode {
   protected:
-    PhysicalUnaryOperator(OperatorId id);
+    PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
 };
 
 }

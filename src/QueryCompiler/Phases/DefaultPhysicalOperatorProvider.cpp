@@ -57,7 +57,9 @@ bool DefaultPhysicalOperatorProvider::isDemulticast(LogicalOperatorNodePtr opera
 }
 
 void DefaultPhysicalOperatorProvider::insertDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
-    auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create();
+    auto operatorOutputSchema = operatorNode->getOutputSchema();
+    // A demultiplex operator has the same output schema as its child operator.
+    auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorOutputSchema);
     demultiplexOperator->setOutputSchema(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
 }
@@ -91,17 +93,21 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(QueryPlanPtr queryPlan,
 
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         auto logicalSourceOperator = operatorNode->as<SourceLogicalOperatorNode>();
-        auto physicalSourceOperator =
-            PhysicalOperators::PhysicalSourceOperator::create(logicalSourceOperator->getSourceDescriptor());
+        auto physicalSourceOperator = PhysicalOperators::PhysicalSourceOperator::create(
+            logicalSourceOperator->getInputSchema(), logicalSourceOperator->getOutputSchema(),
+            logicalSourceOperator->getSourceDescriptor());
         operatorNode->replace(physicalSourceOperator);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         auto logicalSinkOperator = operatorNode->as<SinkLogicalOperatorNode>();
-        auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(logicalSinkOperator->getSinkDescriptor());
+        auto physicalSinkOperator = PhysicalOperators::PhysicalSinkOperator::create(logicalSinkOperator->getInputSchema(),
+                                                                                    logicalSinkOperator->getOutputSchema(),
+                                                                                    logicalSinkOperator->getSinkDescriptor());
         operatorNode->replace(physicalSinkOperator);
         queryPlan->replaceRootOperator(logicalSinkOperator, physicalSinkOperator);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterOperator = operatorNode->as<FilterLogicalOperatorNode>();
-        auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(filterOperator->getPredicate());
+        auto physicalFilterOperator = PhysicalOperators::PhysicalFilterOperator::create(
+            filterOperator->getInputSchema(), filterOperator->getOutputSchema(), filterOperator->getPredicate());
         operatorNode->replace(physicalFilterOperator);
     } else if (operatorNode->instanceOf<WindowOperatorNode>()) {
         lowerWindowOperator(queryPlan, operatorNode);
@@ -128,28 +134,37 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(QueryPlanPtr queryPlan
 }
 
 void DefaultPhysicalOperatorProvider::lowerUnionOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
-    auto unaryOperator = operatorNode->as<UnionLogicalOperatorNode>();
-    auto physicalMultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create();
+
+    auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
+    // this assumes that we applies the ProjectBeforeUnionRule and the input across all children is the same.
+    NES_ASSERT(!unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema()),
+               "The children of a union operator should have the same schema.");
+    auto physicalMultiplexOperator =
+        PhysicalOperators::PhysicalMultiplexOperator::create(unionOperator->getLeftInputSchema(),
+                                                             unionOperator->getOutputSchema());
     operatorNode->replace(physicalMultiplexOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerProjectOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto projectOperator = operatorNode->as<ProjectionLogicalOperatorNode>();
-    auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(projectOperator->getExpressions());
+    auto physicalProjectOperator = PhysicalOperators::PhysicalProjectOperator::create(
+        projectOperator->getInputSchema(), projectOperator->getOutputSchema(), projectOperator->getExpressions());
     operatorNode->replace(physicalProjectOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto mapOperator = operatorNode->as<MapLogicalOperatorNode>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(mapOperator->getMapExpression());
+    auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(
+        mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapExpression());
     operatorNode->replace(physicalMapOperator);
 }
 
 OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator,
+                                                                           SchemaPtr outputSchema,
                                                                            std::vector<OperatorNodePtr> children) {
     NES_ASSERT(!children.empty(), "Their should be children for operator " << joinOperator->toString());
     if (children.size() > 1) {
-        auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create();
+        auto demultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(outputSchema, outputSchema);
         demultiplexOperator->setOutputSchema(joinOperator->getOutputSchema());
         demultiplexOperator->addParent(joinOperator);
         for (auto child : children) {
@@ -164,15 +179,21 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(JoinL
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
 
-    auto leftInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getLeftOperators());
-    auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getJoinDefinition());
+    auto leftInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
+    auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(
+        joinOperator->getLeftInputSchema(), joinOperator->getOutputSchema(), joinOperator->getJoinDefinition());
     leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
 
-    auto rightInputOperator = getJoinBuildInputOperator(joinOperator, joinOperator->getRightOperators());
-    auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(joinOperator->getJoinDefinition());
+    auto rightInputOperator =
+        getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
+    auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(
+        joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(), joinOperator->getJoinDefinition());
     rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
 
-    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getJoinDefinition());
+    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(
+        joinOperator->getLeftInputSchema(), joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(),
+        joinOperator->getJoinDefinition());
     operatorNode->replace(joinSink);
 }
 
@@ -185,6 +206,7 @@ void DefaultPhysicalOperatorProvider::lowerWatermarkAssignmentOperator(QueryPlan
 }
 
 void DefaultPhysicalOperatorProvider::lowerWindowOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
+   
     if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
         auto centralWindowOperator = operatorNode->as<CentralWindowOperator>();

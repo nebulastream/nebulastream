@@ -20,8 +20,15 @@ namespace QueryCompilation{
 namespace PhysicalOperators{
 
 PhysicalBinaryOperator::
-PhysicalBinaryOperator(OperatorId id):
-    OperatorNode(id), PhysicalOperator(id), BinaryOperatorNode(id) {}
+PhysicalBinaryOperator(OperatorId id,
+                           SchemaPtr leftSchema,
+                           SchemaPtr rightSchema,
+                           SchemaPtr outputSchema):
+    OperatorNode(id), PhysicalOperator(id), BinaryOperatorNode(id) {
+    BinaryOperatorNode::setLeftInputSchema(leftSchema);
+    BinaryOperatorNode::setRightInputSchema(rightSchema);
+    BinaryOperatorNode::setOutputSchema(outputSchema);
+}
 
 }
 }

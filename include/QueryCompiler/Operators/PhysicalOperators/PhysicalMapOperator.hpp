@@ -18,18 +18,21 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
 /**
  * @brief Physical Map operator.
  */
-class PhysicalMapOperator: public PhysicalUnaryOperator{
+class PhysicalMapOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalMapOperator(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression);
-    static PhysicalOperatorPtr create(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression);
-    static PhysicalOperatorPtr create(FieldAssignmentExpressionNodePtr mapExpression);
+    PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                        FieldAssignmentExpressionNodePtr mapExpression);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      FieldAssignmentExpressionNodePtr mapExpression);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      FieldAssignmentExpressionNodePtr mapExpression);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
@@ -41,10 +44,9 @@ class PhysicalMapOperator: public PhysicalUnaryOperator{
 
   protected:
     const FieldAssignmentExpressionNodePtr mapExpression;
-
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPOPERATOR_HPP_

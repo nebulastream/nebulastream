@@ -18,16 +18,18 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id) {
-    return std::make_shared<PhysicalDemultiplexOperator>(id);
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, SchemaPtr inputSchema) {
+    return std::make_shared<PhysicalDemultiplexOperator>(id, inputSchema);
+}
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(SchemaPtr inputSchema) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema);
 }
 
-PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id) : OperatorNode(id), PhysicalUnaryOperator(id) {}
+PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, SchemaPtr inputSchema)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
 
-const std::string PhysicalDemultiplexOperator::toString() const {
-    return "PhysicalDemultiplexOperator";
-}
-OperatorNodePtr PhysicalDemultiplexOperator::copy() { return create(id); }
+const std::string PhysicalDemultiplexOperator::toString() const { return "PhysicalDemultiplexOperator"; }
+OperatorNodePtr PhysicalDemultiplexOperator::copy() { return create(id, inputSchema); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

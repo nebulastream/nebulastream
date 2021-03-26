@@ -19,23 +19,24 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalJoinBuildOperator::create(Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return create(UtilityFunctions::getNextOperatorId(), joinDefinition);
+PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                      Join::LogicalJoinDefinitionPtr joinDefinition) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, joinDefinition);
 }
 
-PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return std::make_shared<PhysicalJoinBuildOperator>(id, joinDefinition);
+PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                      Join::LogicalJoinDefinitionPtr joinDefinition) {
+    return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, joinDefinition);
 }
 
-PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition)
-    : OperatorNode(id), PhysicalJoinOperator(id, joinDefinition) {};
+PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                     Join::LogicalJoinDefinitionPtr joinDefinition)
+    : OperatorNode(id), PhysicalJoinOperator(joinDefinition), PhysicalUnaryOperator(id, inputSchema, outputSchema){};
 
-const std::string PhysicalJoinBuildOperator::toString() const {
-    return "PhysicalJoinBuildOperator";
-}
+const std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }
 
 OperatorNodePtr PhysicalJoinBuildOperator::copy() {
-    return create(id, joinDefinition);
+    return create(id, inputSchema, outputSchema, joinDefinition);
 }
 
 }// namespace PhysicalOperators

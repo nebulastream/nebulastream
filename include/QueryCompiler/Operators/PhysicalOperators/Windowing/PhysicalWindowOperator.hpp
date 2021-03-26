@@ -11,7 +11,7 @@ namespace PhysicalOperators {
  */
 class PhysicalWindowOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalWindowOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    PhysicalWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
 
     /**
     * @brief Gets the window definition of the window operator.

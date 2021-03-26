@@ -18,11 +18,19 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id) {
-    return std::make_shared<PhysicalMultiplexOperator>(id);
+PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema) {
+    return std::make_shared<PhysicalMultiplexOperator>(id, inputSchema, outputSchema);
 }
 
-PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id) : OperatorNode(id), PhysicalOperator(id), ExchangeOperatorNode(id) {}
+PhysicalOperatorPtr PhysicalMultiplexOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema);
+}
+
+PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema) :
+                                                                                                                     OperatorNode(id), PhysicalOperator(id), ExchangeOperatorNode(id) {
+    ExchangeOperatorNode::setInputSchema(inputSchema);
+    ExchangeOperatorNode::setOutputSchema(outputSchema);
+}
 
 const std::string PhysicalMultiplexOperator::toString() const {
     return "PhysicalMultiplexOperator";

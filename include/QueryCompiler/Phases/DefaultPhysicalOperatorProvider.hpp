@@ -40,7 +40,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider{
     void lowerWindowOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
     void lowerWatermarkAssignmentOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
     void lowerJoinOperator(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode);
-    OperatorNodePtr getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, std::vector<OperatorNodePtr> children);
+    OperatorNodePtr getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, SchemaPtr schema, std::vector<OperatorNodePtr> children);
 };
 
 }

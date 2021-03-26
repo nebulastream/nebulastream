@@ -23,11 +23,14 @@ namespace PhysicalOperators {
  * @brief Physical operator for the join sink.
  * This operator queries the operator state and computes final join results.
  */
-class PhysicalJoinSinkOperator : public PhysicalJoinOperator {
+class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator {
   public:
-    static PhysicalOperatorPtr create(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition);
-    static PhysicalOperatorPtr create(Join::LogicalJoinDefinitionPtr joinDefinition);
-    PhysicalJoinSinkOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
+                                      SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition);
+    static PhysicalOperatorPtr create(SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema,
+                                      Join::LogicalJoinDefinitionPtr joinDefinition);
+    PhysicalJoinSinkOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema,
+                             Join::LogicalJoinDefinitionPtr joinDefinition);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 };

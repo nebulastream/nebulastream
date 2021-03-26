@@ -19,23 +19,23 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalSliceSinkOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return create(UtilityFunctions::getNextOperatorId(), windowDefinition);
+PhysicalOperatorPtr PhysicalSliceSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
 }
 
-PhysicalOperatorPtr PhysicalSliceSinkOperator::create(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalSliceSinkOperator>(id, windowDefinition);
+PhysicalOperatorPtr PhysicalSliceSinkOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
+    return std::make_shared<PhysicalSliceSinkOperator>(id, inputSchema, outputSchema, windowDefinition);
 }
 
-PhysicalSliceSinkOperator::PhysicalSliceSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), PhysicalWindowOperator(id, windowDefinition) {};
+PhysicalSliceSinkOperator::PhysicalSliceSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition)
+    : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, windowDefinition) {};
 
 const std::string PhysicalSliceSinkOperator::toString() const {
     return "PhysicalSliceSinkOperator";
 }
 
 OperatorNodePtr PhysicalSliceSinkOperator::copy() {
-    return create(id, windowDefinition);
+    return create(id, inputSchema, outputSchema, windowDefinition);
 }
 
 }// namespace PhysicalOperators
