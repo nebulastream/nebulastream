@@ -63,13 +63,14 @@ int main() {
     BenchmarkUtils::createRangeVector<uint64_t>(allSelectivities, 500, 600, 100);
 
     for (auto selectivity : allSelectivities) {
-        BM_AddBenchmark(
-            "BM_SimpleFilterQuery", TestQuery::from(thisSchema).filter(Attribute("test$key") < selectivity).sink(DummySink::create()),
-            SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                          ingestionRate, 1),
-            SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",Selectivity,BufferSize,SchemaSize",
-            "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + ","
-                + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
+        BM_AddBenchmark("BM_SimpleFilterQuery",
+                        TestQuery::from(thisSchema).filter(Attribute("test$key") < selectivity).sink(DummySink::create()),
+                        SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                      benchmarkSchema, ingestionRate, 1),
+                        SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
+                        ",Selectivity,BufferSize,SchemaSize",
+                        "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + ","
+                            + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
     }
 
     //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------

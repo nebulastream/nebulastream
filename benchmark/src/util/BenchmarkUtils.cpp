@@ -110,12 +110,12 @@ std::string BenchmarkUtils::getCurDateTimeStringWithNESVersion() {
 }
 
 std::string BenchmarkUtils::getStatisticsAsCSV(NodeEngine::QueryStatistics* statistic, SchemaPtr schema) {
-    return "," + std::to_string(statistic->getProcessedBuffers()) +
-        "," + std::to_string(statistic->getProcessedTasks()) + ","
+    return "," + std::to_string(statistic->getProcessedBuffers()) + "," + std::to_string(statistic->getProcessedTasks()) + ","
         + std::to_string(statistic->getProcessedTuple()) + ","
-        + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes())
-        + "," + std::to_string(statistic->getProcessedTuple() / BenchmarkUtils::runSingleExperimentSeconds)
-        + "," + std::to_string((statistic->getProcessedTuple() * schema->getSchemaSizeInBytes()) / (1024 * 1024 * BenchmarkUtils::runSingleExperimentSeconds));
+        + std::to_string(statistic->getProcessedTuple() * schema->getSchemaSizeInBytes()) + ","
+        + std::to_string(statistic->getProcessedTuple() / BenchmarkUtils::runSingleExperimentSeconds) + ","
+        + std::to_string((statistic->getProcessedTuple() * schema->getSchemaSizeInBytes())
+                         / (1024 * 1024 * BenchmarkUtils::runSingleExperimentSeconds));
 }
 
 void BenchmarkUtils::printOutConsole(NodeEngine::QueryStatistics* statistic, SchemaPtr schema) {
@@ -163,7 +163,7 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
      */
 }
 
-std::string BenchmarkUtils::getTsInRfc3339(){
+std::string BenchmarkUtils::getTsInRfc3339() {
     const auto now_ms = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
     const auto now_s = std::chrono::time_point_cast<std::chrono::seconds>(now_ms);
     const auto millis = now_ms - now_s;
