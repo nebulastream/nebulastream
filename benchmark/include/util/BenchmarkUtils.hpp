@@ -134,8 +134,7 @@ class BenchmarkUtils {
             benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);                \
             benchmarkFile << "Time,BM_Name,NES_Version,WorkerThreads,CoordinatorThreadCnt,SourceCnt,Mode,ProcessedBuffersTotal," \
                           << "ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,ThroughputInTupsPerSec,"              \
-                          << "ThroughputInMBPerSec,Ingestionrate,RunSingleExperiment,PeriodLength"                               \
-                          << (csvHeaderString) << "\n";                                                                          \
+                          << "ThroughputInMBPerSec,Ingestionrate,RunSingleExperiment,PeriodLength" << (csvHeaderString) << "\n"; \
             benchmarkFile.close();                                                                                               \
                                                                                                                                  \
             for (auto ingestionRate : allIngestionRates) {                                                                       \
@@ -175,17 +174,17 @@ class BenchmarkUtils {
                                 benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv",                 \
                                                    std::ios_base::app);                                                          \
                                                                                                                                  \
-                                benchmarkFile << BenchmarkUtils::getTsInRfc3339() << "," <<(benchmarkName) << ",\""                          \
-                                              << NES_VERSION << "\"," << std::to_string(workerThreads) << ","                 \
-                                              << "CoordinatorThreadCnt," << std::to_string(sourceCnt)                        \
-                                              << ",MemoryMode" << BenchmarkUtils::getStatisticsAsCSV(statisticsVec[statisticsVec.size() - 1], thisSchema)  \
-                                              << "," << std::to_string(ingestionRate) << ","                                        \
-                                              << std::to_string(BenchmarkUtils::runSingleExperimentSeconds) << ","           \
-                                              << std::to_string(BenchmarkUtils::periodLengthInSeconds)                       \
-                                              << (customCSVOutputs) << "\n";                                                 \
+                                benchmarkFile                                                                                    \
+                                    << BenchmarkUtils::getTsInRfc3339() << "," << (benchmarkName) << ",\"" << NES_VERSION        \
+                                    << "\"," << std::to_string(workerThreads) << ","                                             \
+                                    << "CoordinatorThreadCnt," << std::to_string(sourceCnt) << ",MemoryMode"                     \
+                                    << BenchmarkUtils::getStatisticsAsCSV(statisticsVec[statisticsVec.size() - 1], thisSchema)   \
+                                    << "," << std::to_string(ingestionRate) << ","                                               \
+                                    << std::to_string(BenchmarkUtils::runSingleExperimentSeconds) << ","                         \
+                                    << std::to_string(BenchmarkUtils::periodLengthInSeconds) << (customCSVOutputs) << "\n";      \
                                 benchmarkFile.close();                                                                           \
                                                                                                                                  \
-                                for (auto statistic : statisticsVec) {                                                            \
+                                for (auto statistic : statisticsVec) {                                                           \
                                     delete statistic;                                                                            \
                                 }                                                                                                \
                                 std::ifstream t(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv");                   \
