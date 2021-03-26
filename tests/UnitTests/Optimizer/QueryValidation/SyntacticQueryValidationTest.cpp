@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Exceptions/InvalidQueryException.hpp>
+#include <gtest/gtest.h>
 
 namespace NES {
 
@@ -31,9 +31,9 @@ class SyntacticQueryValidationTest : public testing::Test {
     void TearDown() { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
 
     void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
-    
-    void TestForException(std::string queryString){
-        PrintQString(queryString);  
+
+    void TestForException(std::string queryString) {
+        PrintQString(queryString);
         SyntacticQueryValidation syntacticQueryValidation;
         EXPECT_THROW(syntacticQueryValidation.checkValidity(queryString), InvalidQueryException);
     }
@@ -45,9 +45,7 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 
     SyntacticQueryValidation syntacticQueryValidation;
 
-    std::string queryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); "
-    ;
+    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); ";
 
     syntacticQueryValidation.checkValidity(queryString);
 }
@@ -56,9 +54,7 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
     NES_INFO("Missing semicolon test");
 
-    std::string queryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100) "
-    ;
+    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100) ";
 
     TestForException(queryString);
 }
@@ -67,9 +63,7 @@ TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
 TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
     NES_INFO("Typo in filter test");
 
-    std::string queryString =
-        "Query::from(\"default_logical\").fliter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); "
-    ;
+    std::string queryString = "Query::from(\"default_logical\").fliter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); ";
 
     TestForException(queryString);
 }
@@ -78,9 +72,7 @@ TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
 TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
     NES_INFO("Missing closing parenthesis test");
 
-    std::string queryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100; "
-    ;
+    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100; ";
 
     TestForException(queryString);
 }
@@ -89,9 +81,7 @@ TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
 TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
     NES_INFO("Invalid bool operator test");
 
-    std::string queryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 & Attribute(\"id\") < 100); "
-    ;
+    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 & Attribute(\"id\") < 100); ";
 
     TestForException(queryString);
 }

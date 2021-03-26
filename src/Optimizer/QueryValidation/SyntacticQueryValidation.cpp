@@ -14,57 +14,56 @@
     limitations under the License.
 */
 
-
-#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
+#include "Exceptions/InvalidQueryException.hpp"
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
-#include "Exceptions/InvalidQueryException.hpp"
 
 namespace NES {
 
 void NES::SyntacticQueryValidation::checkValidity(std::string inputQuery) {
-    try{
+    try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
         QueryPtr query = UtilityFunctions::createQueryFromCodeString(inputQuery);
-    } catch(const std::exception& ex) {
+    } catch (const std::exception& ex) {
         handleException(ex);
     }
 }
 
 QueryPtr NES::SyntacticQueryValidation::checkValidityAndGetQuery(std::string inputQuery) {
     QueryPtr query;
-    try{
+    try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
         // If it's successful, we return the created object
         query = UtilityFunctions::createQueryFromCodeString(inputQuery);
         return query;
-    } catch(const std::exception& ex) {
+    } catch (const std::exception& ex) {
         handleException(ex);
     }
     return query;
 }
 
-void NES::SyntacticQueryValidation::handleException(const std::exception& ex){
+void NES::SyntacticQueryValidation::handleException(const std::exception& ex) {
 
     // We only keep the meaningful part of the exception message for better readability
     std::string error_message = ex.what();
     std::string start_str = "error: ";
-    std::string end_str = "^"; // arrow pointing to the syntax error (from gcc)
+    std::string end_str = "^";// arrow pointing to the syntax error (from gcc)
 
     int start_idx = error_message.find(start_str) + start_str.length();
     int end_idx = error_message.find(end_str) + end_str.length();
-    std::string clean_error_message; 
-    
+    std::string clean_error_message;
+
     // If "error:" and "^" are present, we only keep the part of the message that's in between them
-    if(start_idx == -1 || end_idx == -1){
+    if (start_idx == -1 || end_idx == -1) {
         clean_error_message = error_message;
     } else {
-        clean_error_message = error_message.substr(start_idx, end_idx-start_idx); 
+        clean_error_message = error_message.substr(start_idx, end_idx - start_idx);
     }
     clean_error_message = "SyntacticQueryValidation:\n" + clean_error_message;
     throw InvalidQueryException(clean_error_message + "\n");

@@ -70,9 +70,8 @@ QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& querySt
     return queryCatalogEntry;
 }
 
-QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& queryString, const QueryId queryId, 
-                                                      const QueryPlanPtr queryPlan,
-                                                      const std::string& optimizationStrategyName) {
+QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& queryString, const QueryId queryId,
+                                                      const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Creating query catalog entry for invalid query with id " << queryId);
     QueryCatalogEntryPtr queryCatalogEntry =

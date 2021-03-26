@@ -38,7 +38,8 @@ typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 class QueryService {
 
   public:
-    explicit QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog, bool enableSemanticQueryValidation);
+    explicit QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
+                          bool enableSemanticQueryValidation);
 
     ~QueryService();
 

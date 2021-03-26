@@ -14,30 +14,27 @@
     limitations under the License.
 */
 
-
-#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
-#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
+#include <Phases/TypeInferencePhase.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
-#include <Exceptions/InvalidQueryException.hpp>
 
 namespace NES {
 
-NES::SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr scp) {
-    streamCatalog = scp;
-}
+NES::SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr scp) { streamCatalog = scp; }
 
-SemanticQueryValidationPtr NES::SemanticQueryValidation::create(StreamCatalogPtr scp){
+SemanticQueryValidationPtr NES::SemanticQueryValidation::create(StreamCatalogPtr scp) {
     return std::make_shared<SemanticQueryValidation>(scp);
 }
 
@@ -45,22 +42,22 @@ void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
 
     // Creating a z3 context for the signature inference and the z3 solver
     z3::ContextPtr context = std::make_shared<z3::context>();
-    
+
     auto queryPlan = inputQuery->getQueryPlan();
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    
+
     // Checking if the stream source can be found in the stream catalog
     sourceValidityCheck(queryPlan, streamCatalog);
 
     try {
         typeInferencePhase->execute(queryPlan);
         signatureInferencePhase->execute(queryPlan);
-    } catch(std::exception& e) {
+    } catch (std::exception& e) {
         std::string errorMessage = e.what();
 
         // Handling nonexistend field
-        if(errorMessage.find("FieldAccessExpression:") != std::string::npos){
+        if (errorMessage.find("FieldAccessExpression:") != std::string::npos) {
             throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
         }
         throw InvalidQueryException("SemanticQueryValidation: " + errorMessage + "\n");
@@ -78,14 +75,14 @@ void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
         solver.add(*(qsp->getConditions()));
 
         // If the filter conditions are unsatisfiable, we report the one that broke satisfiability
-        if(solver.check() == z3::unsat){
+        if (solver.check() == z3::unsat) {
             auto predicateStr = filterOp->getPredicate()->toString();
             handleException(predicateStr);
         }
     }
 }
 
-void NES::SemanticQueryValidation::handleException(std::string & predicateString) {
+void NES::SemanticQueryValidation::handleException(std::string& predicateString) {
 
     // Removing unnecessary data from the error messages for better readability
     eraseAllSubStr(predicateString, "[INTEGER]");
@@ -102,34 +99,32 @@ void NES::SemanticQueryValidation::handleException(std::string & predicateString
 
     // Removing logical stream names for better readability
     auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
-    for (auto logicalStream: allLogicalStreams){
+    for (auto logicalStream : allLogicalStreams) {
         eraseAllSubStr(predicateString, logicalStream.first);
-    } 
-    
-    throw InvalidQueryException("SemanticQueryValidation: Unsatisfiable Query due to filter condition:\n" 
-                                + predicateString + "\n");
+    }
+
+    throw InvalidQueryException("SemanticQueryValidation: Unsatisfiable Query due to filter condition:\n" + predicateString
+                                + "\n");
 }
 
-void NES::SemanticQueryValidation::eraseAllSubStr(std::string & mainStr, const std::string & toErase) {
+void NES::SemanticQueryValidation::eraseAllSubStr(std::string& mainStr, const std::string& toErase) {
     size_t pos = std::string::npos;
-    while ((pos  = mainStr.find(toErase) )!= std::string::npos)
-    {
+    while ((pos = mainStr.find(toErase)) != std::string::npos) {
         mainStr.erase(pos, toErase.length());
     }
 }
 
-void NES::SemanticQueryValidation::findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr) {
+void NES::SemanticQueryValidation::findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr) {
     size_t pos = data.find(toSearch);
-    while( pos != std::string::npos)
-    {
+    while (pos != std::string::npos) {
         data.replace(pos, toSearch.size(), replaceStr);
         pos = data.find(toSearch, pos + replaceStr.size());
     }
 }
 
-void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog){
+void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
-    // Getting the source operators from the query plan 
+    // Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators();
 
     for (auto source : sourceOperators) {
@@ -139,10 +134,10 @@ void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPl
         if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
             auto streamName = sourceDescriptor->getStreamName();
 
-            // Making sure that all logical stream sources are present in the stream catalog 
-            if(!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)){
+            // Making sure that all logical stream sources are present in the stream catalog
+            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)) {
                 throw InvalidQueryException("SemanticQueryValidation: The logical stream " + streamName
-                                        + " could not be found in the StreamCatalog\n");
+                                            + " could not be found in the StreamCatalog\n");
             }
         }
     }

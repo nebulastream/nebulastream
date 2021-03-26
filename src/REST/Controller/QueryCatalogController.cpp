@@ -110,7 +110,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
             RuntimeUtils::printStackTrace();
             internalServerErrorImpl(request);
         }
-        
+
     } else if (path[1] == "getNumberOfProducedBuffers") {
         //Check if the path contains the query id
         auto param = parameters.find("queryId");
