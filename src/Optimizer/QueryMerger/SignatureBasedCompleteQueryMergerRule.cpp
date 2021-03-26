@@ -73,7 +73,7 @@ bool SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& glob
                         foundMatch = true;
                         break;
                     }
-/*                    if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
+                    /*                    if (hostSink->getSignature()->isEqual(targetSink->getSignature())) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
                         foundMatch = true;
                         break;
