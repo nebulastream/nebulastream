@@ -63,11 +63,22 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
 
   private:
+    /**
+     * copies fields of tuple sequentially to address
+     */
     template <size_t I = 0, typename... Ts>
-    typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFields(std::tuple<Ts...> tup, uint8_t* address);
+    typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
+    template <size_t I = 0, typename... Ts>
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
 
+    /**
+     * copies fields of tuple sequentially from address
+     */
     template <size_t I = 0, typename... Ts>
-    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFields(std::tuple<Ts...> tup, uint8_t* address);
+    typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
+    template <size_t I = 0, typename... Ts>
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
+
 
 
   private:
@@ -78,7 +89,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
 template <size_t I, typename... Ts>
 typename std::enable_if<I == sizeof...(Ts), void>::type
-DynamicRowLayoutBuffer::copyTupleFields(std::tuple<Ts...> tup, uint8_t* address)
+DynamicRowLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address)
 {
     // Iterated through tuple, so simply return
     ((void)address);
@@ -88,14 +99,36 @@ DynamicRowLayoutBuffer::copyTupleFields(std::tuple<Ts...> tup, uint8_t* address)
 
 template <size_t I, typename... Ts>
 typename std::enable_if<(I < sizeof...(Ts)), void>::type
-DynamicRowLayoutBuffer::copyTupleFields(std::tuple<Ts...> tup, uint8_t* address)
+DynamicRowLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address)
 {
     // Get current type of tuple and cast address to this type pointer
     *((typename std::tuple_element<I, std::tuple<Ts...>>::type *)(address)) = std::get<I>(tup);
 
-    // Get to the next field of tuple
-    copyTupleFields<I + 1>(tup, address + sizeof(typename std::tuple_element<I, std::tuple<Ts...>>::type));
+    // Go to the next field of tuple
+    copyTupleFieldsToBuffer<I + 1>(tup, address + sizeof(typename std::tuple_element<I, std::tuple<Ts...>>::type));
 }
+
+template <size_t I, typename... Ts>
+typename std::enable_if<I == sizeof...(Ts), void>::type
+DynamicRowLayoutBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address)
+{
+    // Iterated through tuple, so simply return
+    ((void)address);
+    ((void)tup);
+    return;
+}
+
+template <size_t I, typename... Ts>
+typename std::enable_if<(I < sizeof...(Ts)), void>::type
+DynamicRowLayoutBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address)
+{
+    // Get current type of tuple and cast address to this type pointer
+    std::get<I>(tup) = *((typename std::tuple_element<I, std::tuple<Ts...>>::type *)(address));
+
+    // Go to the next field of tuple
+    copyTupleFieldsFromBuffer<I + 1>(tup, address + sizeof(typename std::tuple_element<I, std::tuple<Ts...>>::type));
+}
+
 
 
 template<bool boundaryChecks, typename... Types>
@@ -109,8 +142,7 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
     uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
     ++numberOfRecords;
 
-
-    copyTupleFields(record, address);
+    copyTupleFieldsToBuffer(record, address);
 
     tupleBuffer.setNumberOfTuples(numberOfRecords);
     NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
@@ -120,21 +152,14 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
 
 template<bool boundaryChecks, typename... Types>
 std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
-    uint64_t offSet = calcOffset(recordIndex, 0, boundaryChecks);
-    auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
 
     std::tuple<Types...> retTuple;
-    auto fieldSizes = dynamicRowLayout.getFieldSizes();
 
-    auto address = &(byteBuffer[offSet]);
-    size_t fieldIndex = 0;
+    uint64_t offSet = (recordIndex * this->getRecordSize());
+    uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
 
-    // std::apply iterates over tuple and copies via memcpy the fields into retTuple
-    std::apply(
-        [&fieldIndex, &address, fieldSizes](auto&&... args) {
-            ((memcpy(&args, address, fieldSizes[fieldIndex]), address = address + fieldSizes[fieldIndex], ++fieldIndex), ...);
-        },
-        retTuple);
+    copyTupleFieldsFromBuffer(retTuple, address);
+
     return retTuple;
 }
 
