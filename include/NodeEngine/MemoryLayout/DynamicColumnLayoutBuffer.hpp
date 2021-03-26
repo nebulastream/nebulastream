@@ -116,6 +116,7 @@ DynamicColumnLayoutBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uin
     // Iterated through tuple, so simply return
     ((void)tup);
     ((void)fieldSizes);
+    ((void)recordIndex);
     return;
 }
 
