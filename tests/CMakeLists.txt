@@ -150,14 +150,14 @@ if (NES_USE_OPC)
 endif (NES_USE_OPC)
 
 ### MQTT Tests ###
-if(NES_USE_MQTT)
+if (NES_USE_MQTT)
     add_executable(mqtt-source-tests "UnitTests/Source/MQTTSourceTest.cpp" UnitTests/Source/MQTTSourceTest.cpp)
     add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
     target_link_libraries(mqtt-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     target_link_libraries(mqtt-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME mqtt-source-tests COMMAND mqtt-source-tests)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
-endif(NES_USE_MQTT)
+endif (NES_USE_MQTT)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
@@ -378,6 +378,11 @@ add_test(NAME project-before-union-operator-rule-test COMMAND project-before-uni
 add_executable(millisecond-interval-tests "UnitTests/Source/MillisecondIntervalTest.cpp")
 target_link_libraries(millisecond-interval-tests nes ${GTEST_LIBRARIES})
 add_test(NAME millisecond-interval-tests COMMAND millisecond-interval-tests)
+
+### Binary Operator Sort Rule Tests ###
+add_executable(binary-operator-sort-rule-tests "UnitTests/Optimizer/QueryRewrite/BinaryOperatorSortRuleTest.cpp")
+target_link_libraries(binary-operator-sort-rule-tests nes ${GTEST_LIBRARIES})
+add_test(NAME binary-operator-sort-rule-tests COMMAND binary-operator-sort-rule-tests)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
