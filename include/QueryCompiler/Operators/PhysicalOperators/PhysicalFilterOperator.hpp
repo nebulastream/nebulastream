@@ -27,9 +27,9 @@ namespace PhysicalOperators{
  */
 class PhysicalFilterOperator: public PhysicalUnaryOperator{
   public:
-    PhysicalFilterOperator(OperatorId id, ExpressionNodePtr predicate);
-    static PhysicalOperatorPtr create(OperatorId id, ExpressionNodePtr predicate);
-    static PhysicalOperatorPtr create(ExpressionNodePtr predicate);
+    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,ExpressionNodePtr predicate);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

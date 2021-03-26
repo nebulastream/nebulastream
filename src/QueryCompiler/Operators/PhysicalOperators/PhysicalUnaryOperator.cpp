@@ -20,8 +20,11 @@ namespace QueryCompilation{
 namespace PhysicalOperators{
 
 PhysicalUnaryOperator::
-PhysicalUnaryOperator(OperatorId id):
-    OperatorNode(id), PhysicalOperator(id), UnaryOperatorNode(id) {}
+PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema):
+    OperatorNode(id), PhysicalOperator(id), UnaryOperatorNode(id) {
+    UnaryOperatorNode::setInputSchema(inputSchema);
+    UnaryOperatorNode::setOutputSchema(outputSchema);
+}
 
 }
 }

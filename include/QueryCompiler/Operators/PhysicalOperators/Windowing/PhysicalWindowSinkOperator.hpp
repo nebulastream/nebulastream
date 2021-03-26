@@ -28,9 +28,9 @@ namespace PhysicalOperators {
  */
 class PhysicalWindowSinkOperator : public PhysicalWindowOperator {
   public:
-    PhysicalWindowSinkOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
-    static PhysicalOperatorPtr create(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
-    static PhysicalOperatorPtr create(Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    PhysicalWindowSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

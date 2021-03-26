@@ -20,24 +20,24 @@ namespace QueryCompilation{
 namespace PhysicalOperators{
 
 PhysicalMapOperator::
-PhysicalMapOperator(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression):
-    OperatorNode(id), PhysicalUnaryOperator(id), mapExpression(mapExpression) {}
+PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression):
+    OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), mapExpression(mapExpression) {}
 
 FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() {
     return mapExpression;
 }
 
-PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id, FieldAssignmentExpressionNodePtr mapExpression) {
-    return std::make_shared<PhysicalMapOperator>(id, mapExpression);
+PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id,SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
+    return std::make_shared<PhysicalMapOperator>(id, inputSchema, outputSchema, mapExpression);
 }
 
-PhysicalOperatorPtr PhysicalMapOperator::create(FieldAssignmentExpressionNodePtr mapExpression) {
-    return create(UtilityFunctions::getNextOperatorId(), mapExpression);
+PhysicalOperatorPtr PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,FieldAssignmentExpressionNodePtr mapExpression) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, mapExpression);
 }
 
 const std::string PhysicalMapOperator::toString() const { return "PhysicalMapOperator"; }
 
-OperatorNodePtr PhysicalMapOperator::copy() { return create(id, getMapExpression()); }
+OperatorNodePtr PhysicalMapOperator::copy() { return create(id, inputSchema, outputSchema, getMapExpression()); }
 
 }
 }

@@ -28,9 +28,12 @@ namespace PhysicalOperators {
  */
 class PhysicalSliceMergingOperator : public PhysicalWindowOperator {
   public:
-    PhysicalSliceMergingOperator(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
-    static PhysicalOperatorPtr create(OperatorId id, Windowing::LogicalWindowDefinitionPtr windowDefinition);
-    static PhysicalOperatorPtr create(Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    PhysicalSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                 Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      Windowing::LogicalWindowDefinitionPtr windowDefinition);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 };

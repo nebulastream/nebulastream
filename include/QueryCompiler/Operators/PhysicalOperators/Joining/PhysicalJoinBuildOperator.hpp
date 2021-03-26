@@ -17,27 +17,31 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINBUILDOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 /**
  * @brief Physical operator for the join build.
  * This operator receives input records and adds them to its operator state.
  */
-class PhysicalJoinBuildOperator: public PhysicalJoinOperator {
+class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator {
   public:
-    static PhysicalOperatorPtr create(OperatorId id,
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                       Join::LogicalJoinDefinitionPtr joinDefinition);
-    static PhysicalOperatorPtr create(Join::LogicalJoinDefinitionPtr joinDefinition);
-    PhysicalJoinBuildOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      Join::LogicalJoinDefinitionPtr joinDefinition);
+    PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                              Join::LogicalJoinDefinitionPtr joinDefinition);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
   private:
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINBUILDOPERATOR_HPP_

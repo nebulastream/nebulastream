@@ -17,22 +17,23 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 /**
  * @brief Physical operator for the join build.
  * This operator receives input records and adds them to its operator state.
  */
-class PhysicalJoinOperator: public PhysicalBinaryOperator {
+class PhysicalJoinOperator {
   public:
     Join::LogicalJoinDefinitionPtr getJoinDefinition();
+
   protected:
-    PhysicalJoinOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition);
+    PhysicalJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition);
 
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_

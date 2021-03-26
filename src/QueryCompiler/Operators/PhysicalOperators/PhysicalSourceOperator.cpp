@@ -19,20 +19,23 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id, SourceDescriptorPtr sourceDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id), sourceDescriptor(sourceDescriptor) {}
+PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                               SourceDescriptorPtr sourceDescriptor)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), sourceDescriptor(sourceDescriptor) {}
 
-PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id, SourceDescriptorPtr sourceDescriptor) {
-    return std::make_shared<PhysicalSourceOperator>(id, sourceDescriptor);
+PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                   SourceDescriptorPtr sourceDescriptor) {
+    return std::make_shared<PhysicalSourceOperator>(id, inputSchema, outputSchema, sourceDescriptor);
 }
 
-PhysicalOperatorPtr PhysicalSourceOperator::create(SourceDescriptorPtr sourceDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), sourceDescriptor);
+PhysicalOperatorPtr PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                   SourceDescriptorPtr sourceDescriptor) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, sourceDescriptor);
 }
 
 const std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }
 
-OperatorNodePtr PhysicalSourceOperator::copy() { return create(id, sourceDescriptor); }
+OperatorNodePtr PhysicalSourceOperator::copy() { return create(id, inputSchema, outputSchema, sourceDescriptor); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

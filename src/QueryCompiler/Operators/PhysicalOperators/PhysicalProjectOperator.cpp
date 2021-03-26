@@ -19,15 +19,15 @@ namespace QueryCompilation{
 namespace PhysicalOperators{
 
 PhysicalProjectOperator::
-PhysicalProjectOperator(OperatorId id, std::vector<ExpressionNodePtr> expressions):
-    OperatorNode(id), expressions(expressions), PhysicalUnaryOperator(id) {}
+PhysicalProjectOperator(OperatorId id,SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions):
+    OperatorNode(id), expressions(expressions), PhysicalUnaryOperator(id, inputSchema, outputSchema) {}
 
-PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, std::vector<ExpressionNodePtr> expressions) {
-    return std::make_shared<PhysicalProjectOperator>(id, expressions);
+PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
+    return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, expressions);
 }
 
-PhysicalOperatorPtr PhysicalProjectOperator::create(std::vector<ExpressionNodePtr> expressions) {
-    return create(UtilityFunctions::getNextOperatorId(), expressions);
+PhysicalOperatorPtr PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expressions);
 }
 
 std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() {

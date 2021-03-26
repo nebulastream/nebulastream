@@ -20,22 +20,22 @@ namespace QueryCompilation{
 namespace PhysicalOperators{
 
 PhysicalFilterOperator::
-    PhysicalFilterOperator(OperatorId id, ExpressionNodePtr predicate):
-              OperatorNode(id), PhysicalUnaryOperator(id), predicate(predicate) {}
+    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate):
+              OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(predicate) {}
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id, ExpressionNodePtr expression) {
-    return std::make_shared<PhysicalFilterOperator>(id, expression);
+PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
+    return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
 }
 
 ExpressionNodePtr PhysicalFilterOperator::getPredicate() { return predicate; }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(ExpressionNodePtr expression) {
-    return create(UtilityFunctions::getNextOperatorId(), expression);
+PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expression);
 }
 
 const std::string PhysicalFilterOperator::toString() const { return "PhysicalFilterOperator"; }
 
-OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, getPredicate()); }
+OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, inputSchema, outputSchema, getPredicate()); }
 
 }
 }

@@ -19,23 +19,24 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalJoinSinkOperator::create(Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return create(UtilityFunctions::getNextOperatorId(), joinDefinition);
+PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
+                                                     SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition) {
+    return create(UtilityFunctions::getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinDefinition);
 }
 
-PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return std::make_shared<PhysicalJoinSinkOperator>(id, joinDefinition);
+PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
+                                                     SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition) {
+    return std::make_shared<PhysicalJoinSinkOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinDefinition);
 }
 
-PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id, Join::LogicalJoinDefinitionPtr joinDefinition)
-    : OperatorNode(id), PhysicalJoinOperator(id, joinDefinition) {};
+PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
+                                                   SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition)
+    : OperatorNode(id), PhysicalJoinOperator(joinDefinition), PhysicalBinaryOperator(id, leftInputSchema, rightInputSchema, outputSchema){};
 
-const std::string PhysicalJoinSinkOperator::toString() const {
-    return "PhysicalJoinSinkOperator";
-}
+const std::string PhysicalJoinSinkOperator::toString() const { return "PhysicalJoinSinkOperator"; }
 
 OperatorNodePtr PhysicalJoinSinkOperator::copy() {
-    return create(id, joinDefinition);
+    return create(id, leftInputSchema, rightInputSchema, outputSchema, joinDefinition);
 }
 
 }// namespace PhysicalOperators
