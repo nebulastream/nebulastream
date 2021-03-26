@@ -29,7 +29,7 @@
 #include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
-#include "Exceptions/InvalidQueryException.hpp"
+#include <Exceptions/InvalidQueryException.hpp>
 
 namespace NES {
 
@@ -119,7 +119,6 @@ void NES::SemanticQueryValidation::findAndReplaceAll(std::string & data, std::st
 
 void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog){
 
-    auto allLogicalStreams = streamCatalog->getAllLogicalStreamAsString();
     auto sourceOperators = queryPlan->getSourceOperators();
 
     for (auto source : sourceOperators) {
@@ -128,21 +127,12 @@ void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPl
         if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
             auto streamName = sourceDescriptor->getStreamName();
 
-            if(!isLogicalStreamInCatalog(streamName, allLogicalStreams)){
+            if(!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName)){
                 throw InvalidQueryException("SemanticQueryValidation: The logical stream " + streamName
                                         + " could not be found in the StreamCatalog\n");
             }
         }
     }
-}
-
-bool NES::SemanticQueryValidation::isLogicalStreamInCatalog(std::string streamname, std::map<std::string, std::string> allLogicalStreams) {
-    for (auto logicalStream : allLogicalStreams){
-        if(logicalStream.first == streamname){
-            return true;
-        }
-    }
-    return false;
 }
 
 }// namespace NES

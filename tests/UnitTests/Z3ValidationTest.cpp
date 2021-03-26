@@ -19,19 +19,6 @@
 #include <memory>
 #include <z3++.h>
 
-#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
-#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
-
-#include <API/Expressions/Expressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <iostream>
-
 using namespace z3;
 namespace NES {
 class Z3ValidationTest : public testing::Test {

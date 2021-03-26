@@ -195,7 +195,6 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     for (const auto& arg : flags->getFlags()) {
         compilerCall << arg << " ";
     }
-    // auto ret = system(compilerCall.str().c_str());
 
     FILE *fp;
     char buffer[10000];
@@ -203,7 +202,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     fp = popen(compilerCall.str().c_str(), "r");
 
     if (fp == NULL) {
-        printf("Failed to run command\n" );
+        NES_ERROR("Compiler: failed to run command\n" );
         return;
     }
     std::ostringstream strstream;

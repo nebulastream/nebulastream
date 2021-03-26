@@ -259,6 +259,8 @@ class CoordinatorConfig {
     StringConfigOption logLevel;
     IntConfigOption queryBatchSize;
     StringConfigOption queryMergerRule;
+
+    // temorary flag:
     BoolConfigOption enableSemanticQueryValidation;
 };
 
