@@ -52,7 +52,6 @@ typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCom
 class QueryMergerPhase {
 
   public:
-
     static QueryMergerPhasePtr create(z3::ContextPtr context, std::string queryMergerRuleName);
 
     /**
