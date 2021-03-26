@@ -196,21 +196,31 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
         compilerCall << arg << " ";
     }
 
-    FILE *fp;
+    // Creating a pointer to an open stream and a buffer, to read the output of the compiler
+    FILE *fp; 
     char buffer[10000];
+
+    // Redirecting stderr to stdout, to be able to read error messages
     compilerCall << " 2>&1";
+
+    // Calling the compiler in a new process
     fp = popen(compilerCall.str().c_str(), "r");
 
     if (fp == NULL) {
         NES_ERROR("Compiler: failed to run command\n" );
         return;
     }
+
+    // Collecting the output of the compiler to a string stream
     std::ostringstream strstream;
     while (fgets(buffer, sizeof(buffer), fp) != NULL) {
         strstream << buffer;
     }
+
+    // Closing the stream, which also gives us the exit status of the compiler call 
     auto ret = pclose(fp);
 
+    // If the compilation did't return with 0, we throw an exception containing the compiler output
     if (ret != 0) {
         NES_ERROR("Compiler: compilation failed");
         throw std::runtime_error(strstream.str());
