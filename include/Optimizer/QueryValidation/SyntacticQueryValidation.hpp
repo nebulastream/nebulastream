@@ -27,21 +27,22 @@ namespace NES {
  * @brief This class is responsible for Syntactic Query Validation
  */
 class SyntacticQueryValidation {
-    private:
-        /**
+  private:
+    /**
          * @brief Throws InvalidQueryException with formatted exception message
          */
-        void handleException(const std::exception& ex);
-    public:
-        /**
+    void handleException(const std::exception& ex);
+
+  public:
+    /**
          * @brief Checks the syntactic validity of a Query string
          */
-        void checkValidity(std::string inputQuery);
-        
-        /**
+    void checkValidity(std::string inputQuery);
+
+    /**
          * @brief Checks the syntactic validity of a Query string and returns the created Query object
          */
-        QueryPtr checkValidityAndGetQuery(std::string inputQuery);
+    QueryPtr checkValidityAndGetQuery(std::string inputQuery);
 };
 
 typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;

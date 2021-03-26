@@ -50,8 +50,7 @@ class QueryCatalog {
     QueryCatalogEntryPtr addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan,
                                             const std::string& optimizationStrategyName);
 
-    QueryCatalogEntryPtr recordInvalidQuery(const std::string& queryString, const QueryId queryId, 
-                                            const QueryPlanPtr queryPlan,
+    QueryCatalogEntryPtr recordInvalidQuery(const std::string& queryString, const QueryId queryId, const QueryPlanPtr queryPlan,
                                             const std::string& optimizationStrategyName);
 
     void setQueryFailureReason(QueryId queryId, const std::string& failureReason);

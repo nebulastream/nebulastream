@@ -15,25 +15,26 @@
 */
 
 #include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
-#include <Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
+#include <Exceptions/QueryNotFoundException.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
+#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
-#include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
-#include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-
 
 namespace NES {
 
-QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog, bool enableSemanticQueryValidation)
-    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), streamCatalog(streamCatalog), enableSemanticQueryValidation(enableSemanticQueryValidation) {
+QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
+                           bool enableSemanticQueryValidation)
+    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), streamCatalog(streamCatalog),
+      enableSemanticQueryValidation(enableSemanticQueryValidation) {
     NES_DEBUG("QueryService()");
 }
 
@@ -46,8 +47,8 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
 
     NES_INFO("QueryService: Executing Syntactic validation");
     QueryPtr query;
-    try{
-        // Checking the syntactic validity and compiling the query string to an object 
+    try {
+        // Checking the syntactic validity and compiling the query string to an object
         SyntacticQueryValidation syntacticQueryValidation;
         query = syntacticQueryValidation.checkValidityAndGetQuery(queryString);
     } catch (const std::exception& exc) {
@@ -63,14 +64,14 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
         throw InvalidArgumentException("placementStrategyName", placementStrategyName);
     }
-    
+
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
 
     // Execute only if the semantic validation flag is enabled
-    if (enableSemanticQueryValidation){
+    if (enableSemanticQueryValidation) {
         NES_INFO("QueryService: Executing Semantic validation");
-        try{
+        try {
             // Checking semantic validity
             SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalog);
             semanticQueryValidation->checkSatisfiability(query);

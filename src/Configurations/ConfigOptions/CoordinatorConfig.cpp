@@ -49,7 +49,8 @@ CoordinatorConfig::CoordinatorConfig() {
     queryMergerRule = ConfigOption<std::string>::create("queryMergerRule", "SyntaxBasedCompleteQueryMergerRule",
                                                         "The rule to be used for performing query merging");
 
-    enableSemanticQueryValidation = ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
+    enableSemanticQueryValidation =
+        ConfigOption<bool>::create("enableSemanticQueryValidation", false, "Enable semantic query validation feature");
 }
 
 void CoordinatorConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath) {
@@ -115,7 +116,7 @@ void CoordinatorConfig::overwriteConfigWithCommandLineInput(const std::map<std::
                 setQueryMergerRule(it->second);
             } else if (it->first == "--enableSemanticQueryValidation") {
                 setEnableSemanticQueryValidation((it->second == "true"));
-            }else {
+            } else {
                 NES_WARNING("Unknow configuration value :" << it->first);
             }
         }
@@ -211,4 +212,4 @@ void CoordinatorConfig::setEnableSemanticQueryValidation(bool enableSemanticQuer
     CoordinatorConfig::enableSemanticQueryValidation->setValue(enableSemanticQueryValidation);
 }
 
-} // namespace NES
+}// namespace NES

@@ -197,7 +197,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     }
 
     // Creating a pointer to an open stream and a buffer, to read the output of the compiler
-    FILE *fp; 
+    FILE* fp;
     char buffer[10000];
 
     // Redirecting stderr to stdout, to be able to read error messages
@@ -207,7 +207,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
     fp = popen(compilerCall.str().c_str(), "r");
 
     if (fp == NULL) {
-        NES_ERROR("Compiler: failed to run command\n" );
+        NES_ERROR("Compiler: failed to run command\n");
         return;
     }
 
@@ -217,7 +217,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
         strstream << buffer;
     }
 
-    // Closing the stream, which also gives us the exit status of the compiler call 
+    // Closing the stream, which also gives us the exit status of the compiler call
     auto ret = pclose(fp);
 
     // If the compilation did't return with 0, we throw an exception containing the compiler output

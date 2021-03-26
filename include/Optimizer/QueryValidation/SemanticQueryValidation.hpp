@@ -30,44 +30,44 @@ typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
  * @brief This class is responsible for Semantic Query Validation
  */
 class SemanticQueryValidation {
-    private:
-        StreamCatalogPtr streamCatalog;
-        
-        /**
+  private:
+    StreamCatalogPtr streamCatalog;
+
+    /**
          * @brief Checks if the stream source in the provided QueryPlan is valid
          */
-        void sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
+    void sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog);
 
-        /**
+    /**
          * @brief Throws InvalidQueryException with formatted exception message
          */
-        void handleException(std::string & predicateString);
-        
-        /**
+    void handleException(std::string& predicateString);
+
+    /**
          * @brief Deletes a substring from a string
          */
-        void eraseAllSubStr(std::string & mainStr, const std::string & toErase);
+    void eraseAllSubStr(std::string& mainStr, const std::string& toErase);
 
-        /**
+    /**
          * @brief Replaces all occurances of a substring in a string
          */
-        void findAndReplaceAll(std::string & data, std::string toSearch, std::string replaceStr);
-    public:
+    void findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr);
 
-        /**
+  public:
+    /**
          * @brief Checks the semantic validity of a Query object
          */
-        void checkSatisfiability(QueryPtr inputQuery);
+    void checkSatisfiability(QueryPtr inputQuery);
 
-        /**
+    /**
          * @brief Constructor for the SemanticQueryValidation class
          */
-        SemanticQueryValidation(StreamCatalogPtr scp);
+    SemanticQueryValidation(StreamCatalogPtr scp);
 
-        /**
+    /**
          * @brief Creates an instance of SemanticQueryValidation
          */
-        static SemanticQueryValidationPtr create(StreamCatalogPtr scp);
+    static SemanticQueryValidationPtr create(StreamCatalogPtr scp);
 };
 
 typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;

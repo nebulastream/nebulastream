@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include "Exceptions/InvalidQueryException.hpp"
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
@@ -22,7 +23,6 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
-#include "Exceptions/InvalidQueryException.hpp"
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
@@ -162,7 +162,7 @@ void QueryRequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
             } catch (InvalidQueryException& ex) {
                 NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
-            }catch (Exception& ex) {
+            } catch (Exception& ex) {
                 NES_FATAL_ERROR(
                     "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
                 shutDown();
