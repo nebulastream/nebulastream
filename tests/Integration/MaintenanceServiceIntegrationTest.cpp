@@ -328,7 +328,7 @@ TEST_F(MaintenanceServiceIntegrationTest, DISABLED_defTest) {
     ASSERT_EQ(parentQueryIds.front(), queryId);
 
     }
-TEST_F(MaintenanceServiceIntegrationTest,Strat1Test){
+TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithOneQueryTest){
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -392,78 +392,108 @@ TEST_F(MaintenanceServiceIntegrationTest,Strat1Test){
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-
-
-
-
-
-
     auto globalExecutionPlan = crd->getGlobalExecutionPlan();
-//    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
-//    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
-//    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-//    ASSERT_FALSE(crd->getTopology()->findNodeWithId(3)->getMaintenanceFlag());
-
-    //std::vector<TopologyNodePtr> sourceNode = {crd->getTopology()->findNodeWithId(4)};
-    //std::vector<TopologyNodePtr> destNode = {crd->getTopology()->getRoot()};
-    //auto paths = crd->getTopology()->findPathBetween(sourceNode,destNode);
-    //ASSERT_EQ(paths[0]->getParents()[0]->as<TopologyNode>()->getId(),2);
-
-    //queryService->validateAndQueueStopRequest(queryId);
-    //EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
     auto parentQueryIds =maintenanceService->submitMaintenanceRequest(2,1);
-   //auto pathsMaintenanceNode2 = crd->getTopology()->findPathBetween(sourceNode,destNode);
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-   auto exNodes = globalExecutionPlan->getAllExecutionNodes();
-   ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
-   ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-   ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+    auto exNodes = globalExecutionPlan->getAllExecutionNodes();
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
 
-
-
-    //EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
-
-
-
-
-//    bool retStopWrk = wrk->stop(false);
-//    EXPECT_TRUE(retStopWrk);
-//
-//    bool retStopCord = crd->stopCoordinator(false);
-//    cout << crd.use_count() << " use cnt coord" << endl;
-//    EXPECT_TRUE(retStopCord);
 }
-//TEST_F(MaintenanceServiceIntegrationTest,singleNodeTest){
-//    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
-//    WorkerConfigPtr wrkConf = WorkerConfig::create();
-//    SourceConfigPtr srcConf = SourceConfig::create();
-//    coConf->setRpcPort(rpcPort);
-//    coConf->setRestPort(restPort);
-//    wrkConf->setCoordinatorPort(rpcPort);
-//    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
-//    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
-//    EXPECT_NE(port, 0);
-//    wrkConf->setCoordinatorPort(port);
-//    wrkConf->setRpcPort(port + 10);
-//    wrkConf->setDataPort(port + 11);
-//    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
-//    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-//    EXPECT_TRUE(retStart1);
-//
-//    std::string query = "Query::from(\"default_logical\").filter(Attribute(\"id\") <= 10).sink(PrintSinkDescriptor::create());";
-//    QueryServicePtr queryService = crd->getQueryService();
-//    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-//    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
-//
-//    NES_DEBUG("MaintenanceServiceTest: Submit query");
-//
-//    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-//    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
-//    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-//    ASSERT_TRUE(queryCatalog->isQueryRunning(1));
-//    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
-//
-//}
+TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    wrk3->replaceParent(1,2);
+    wrk3->addParent(3);
+
+    wrkConf->setRpcPort(port + 40);
+    wrkConf->setDataPort(port + 41);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    wrk4->replaceParent(1,2);
+    wrk3->addParent(4);
+
+    wrkConf->setRpcPort(port + 50);
+    wrkConf->setDataPort(port + 51);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart5);
+    wrk4->replaceParent(1,3);
+    wrk3->addParent(4);
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/exdra.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("exdra");
+    srcConf->setNumberOfBuffersToProduce(1000);
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    wrk4->registerPhysicalStream(conf);
+    wrk5->registerPhysicalStream(conf);
+    std::string filePath = "contTestOut.csv";
+    remove(filePath.c_str());
+
+    std::string query1 =
+        R"(Query::from("exdra").filter(Attribute("id") < 42).sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string query2 =
+        R"(Query::from("exdra").filter(Attribute("id") < 10).sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+
+    QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
+    QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+
+    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+    auto executionNodes = globalExecutionPlan->getAllExecutionNodes();
+    ASSERT_TRUE(executionNodes.size() == 4);
+    auto parentQueryIds = maintenanceService->submitMaintenanceRequest(2,1);
+    ASSERT_TRUE(parentQueryIds.size() == 2);
+
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
+    auto exNodes = globalExecutionPlan->getAllExecutionNodes();
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+
+}
 
 }//namespace NES
