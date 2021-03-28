@@ -56,7 +56,12 @@ const std::string SinkLogicalOperatorNode::toString() const {
 }
 
 std::string SinkLogicalOperatorNode::getStringBasedSignature() {
-    return "SINK()." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    std::stringstream stringSignature;
+    stringSignature << "SINK().";
+    for (auto child : children) {
+        stringSignature << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
+    }
+    return stringSignature.str();
 }
 
 OperatorNodePtr SinkLogicalOperatorNode::copy() {

@@ -112,6 +112,7 @@ bool StringSignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr
             //Update the shared query meta data
             globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
             // exit the for loop as we found a matching address shared query meta data
+            merged = true;
             break;
         }
         if (!merged) {
