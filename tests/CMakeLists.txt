@@ -334,7 +334,7 @@ add_executable(query-signature-util-tests "UnitTests/Optimizer/Utils/QuerySignat
 target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
-### Signature Inference Phase Test ###
+### Z3 Signature Inference Phase Test ###
 add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/Z3SignatureInferencePhaseTest.cpp")
 target_link_libraries(z3-signature-inference-phase-test nes ${GTEST_LIBRARIES})
 add_test(NAME z3-signature-inference-phase-test COMMAND z3-signature-inference-phase-test)
@@ -344,15 +344,20 @@ add_executable(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
 
-### Signature Based Equal Query Merger Rule Test ###
+### Z3 Signature Based Equal Query Merger Rule Test ###
 add_executable(z3-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRuleTest.cpp")
 target_link_libraries(z3-signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME z3-signature-based-equal-query-merger-rule-test COMMAND z3-signature-based-equal-query-merger-rule-test)
 
-### Signature Based Partial Query Merger Rule Test ###
+### Z3 Signature Based Partial Query Merger Rule Test ###
 add_executable(z3-signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRuleTest.cpp")
 target_link_libraries(z3-signature-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
 add_test(NAME z3-signature-based-partial-query-merger-rule-test COMMAND z3-signature-based-partial-query-merger-rule-test)
+
+### String Signature Based Complete Query Merger Rule Test ###
+add_executable(string-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRuleTest.cpp")
+target_link_libraries(string-signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME string-signature-based-equal-query-merger-rule-test COMMAND string-signature-based-equal-query-merger-rule-test)
 
 ### Join Handler Tests ###
 add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")
