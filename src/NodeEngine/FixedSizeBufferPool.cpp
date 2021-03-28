@@ -66,12 +66,14 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
     // try to get an exclusive buffer
     std::unique_lock lock(mutex);
     while (exclusiveBuffers.size() == 0) {
+        NES_DEBUG("FixedSizeBufferPool:: Waiting for buffer");
         cvar.wait(lock);
     }
     auto memSegment = exclusiveBuffers.front();
     NES_VERIFY(memSegment, "null memory segment");
     exclusiveBuffers.pop_front();
     if (memSegment->controlBlock->prepare()) {
+        NES_DEBUG("FixedSizeBufferPool:: Prepare buffer");
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
         NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "

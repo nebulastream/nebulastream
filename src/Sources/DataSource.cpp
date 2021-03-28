@@ -190,14 +190,17 @@ void DataSource::runningRoutine() {
 
         //repeat test
         if (!recNow) {
+            NES_DEBUG("DataSource::sleeping ");
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
             continue;
         }
-
+        NES_DEBUG("DataSource::awake");
         //check if already produced enough buffer
         if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
+            NES_DEBUG("DataSource::before receiveData");
             auto optBuf = receiveData();
-
+            NES_DEBUG("DataSource::after receiveData");
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
@@ -205,6 +208,9 @@ void DataSource::runningRoutine() {
                                         << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                         << " iteration=" << cnt << " operatorId=" << this->operatorId
                                         << " orgID=" << this->operatorId);
+                if(buf.getNumberOfTuples() == 0){
+                    running = false;
+                }
                 buf.setOriginId(operatorId);
                 queryManager->addWork(operatorId, buf);
                 cnt++;

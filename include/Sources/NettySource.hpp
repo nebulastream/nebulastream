@@ -122,5 +122,4 @@ typedef std::shared_ptr<NettySource> NettySourcePtr;
 }// namespace NES
 
 #endif
- INCLUDE_CSVSOURCE_H_
 
