@@ -18,7 +18,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
@@ -27,31 +27,28 @@
 
 namespace NES::Optimizer {
 
-Z3SignatureBasedCompleteQueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) {
-    signatureEqualityUtil = SignatureEqualityUtil::create(context);
+StringSignatureBasedCompleteQueryMergerRule::StringSignatureBasedCompleteQueryMergerRule() {}
+
+StringSignatureBasedCompleteQueryMergerRule::~StringSignatureBasedCompleteQueryMergerRule() {
+    NES_DEBUG("~StringSignatureBasedCompleteQueryMergerRule()");
 }
 
-Z3SignatureBasedCompleteQueryMergerRule::~Z3SignatureBasedCompleteQueryMergerRule() {
-    NES_DEBUG("~Z3SignatureBasedCompleteQueryMergerRule()");
+StringSignatureBasedCompleteQueryMergerRulePtr StringSignatureBasedCompleteQueryMergerRule::create() {
+    return std::make_shared<StringSignatureBasedCompleteQueryMergerRule>(StringSignatureBasedCompleteQueryMergerRule());
 }
 
-Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRule::create(z3::ContextPtr context) {
-    return std::make_shared<Z3SignatureBasedCompleteQueryMergerRule>(Z3SignatureBasedCompleteQueryMergerRule(context));
-}
+bool StringSignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
-bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
-
-    NES_INFO(
-        "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
     if (allNewSharedQueryMetaData.empty()) {
-        NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
+        NES_WARNING("SyntaxBasedCompleteQueryMergerRule: Found no new query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
     std::vector<SharedQueryMetaDataPtr> allOldSharedQueryMetaData = globalQueryPlan->getAllOldSharedQueryMetaData();
-    NES_DEBUG("Z3SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("SignatureBasedCompleteQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
         bool merged = false;
@@ -71,14 +68,14 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
                 bool foundMatch = false;
                 for (auto& hostSink : hostQueryPlan->getSinkOperators()) {
                     //Check if the address and target sink operator signatures match each other
-                    if (signatureEqualityUtil->checkEquality(hostSink->getSignature(), targetSink->getSignature())) {
+                    if (hostSink->getStringBasedSignature().compare(targetSink->getStringBasedSignature()) == 0) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
                         foundMatch = true;
                         break;
                     }
                 }
                 if (!foundMatch) {
-                    NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: There are no matching host sink for target sink "
+                    NES_WARNING("SignatureBasedCompleteQueryMergerRule: There are matching host sink for target sink "
                                 << targetSink->toString());
                     targetToHostSinkOperatorMap.clear();
                     break;
@@ -87,11 +84,11 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (targetToHostSinkOperatorMap.empty()) {
-                NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
+                NES_WARNING("SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
                 continue;
             }
 
-            NES_TRACE("Z3SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+            NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
 
             //Iterate over all matched pairs of sink operators and merge the query plan
             for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
@@ -101,7 +98,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
                     for (auto& hostChild : hostSinkChildren) {
                         bool addedNewParent = hostChild->addParent(targetSinkOperator);
                         if (!addedNewParent) {
-                            NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                            NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
                         }
                     }
                     childToMerge->removeParent(targetSinkOperator);
@@ -115,7 +112,6 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
             //Update the shared query meta data
             globalQueryPlan->updateSharedQueryMetadata(hostSharedQueryMetaData);
             // exit the for loop as we found a matching address shared query meta data
-            merged = true;
             break;
         }
         if (!merged) {
