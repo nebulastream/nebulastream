@@ -42,7 +42,7 @@ const std::string JoinLogicalOperatorNode::toString() const {
 std::string JoinLogicalOperatorNode::getStringBasedSignature() {
     std::stringstream ss;
     ss << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
-    ss << "RIGHT-KEY=" << joinDefinition->getRightJoinKey() << ",";
+    ss << "RIGHT-KEY=" << joinDefinition->getRightJoinKey()->toString() << ",";
     ss << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
     ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
     ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
