@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
-#define NES_SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
+#ifndef NES_Z3SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
+#define NES_Z3SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
@@ -29,8 +29,8 @@ namespace NES::Optimizer {
 class SignatureEqualityUtil;
 typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
 
-class SignatureBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
+class Z3SignatureBasedCompleteQueryMergerRule;
+typedef std::shared_ptr<Z3SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
 
 /**
  * @brief SignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule
@@ -71,18 +71,18 @@ typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCom
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class SignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
+class Z3SignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
 
   public:
     static SignatureBasedCompleteQueryMergerRulePtr create(z3::ContextPtr context);
-    ~SignatureBasedCompleteQueryMergerRule();
+    ~Z3SignatureBasedCompleteQueryMergerRule();
 
     bool apply(const GlobalQueryPlanPtr& globalQueryPlan) override;
 
   private:
-    explicit SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);
+    explicit Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context);
     SignatureEqualityUtilPtr signatureEqualityUtil;
 };
 }// namespace NES::Optimizer
 
-#endif//NES_SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
+#endif//NES_Z3SIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP
