@@ -46,8 +46,8 @@ typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 class SyntaxBasedCompleteQueryMergerRule;
 typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQueryMergerRulePtr;
 
-class SignatureBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
+class Z3SignatureBasedCompleteQueryMergerRule;
+typedef std::shared_ptr<Z3SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
 
 class QueryMergerPhase {
 

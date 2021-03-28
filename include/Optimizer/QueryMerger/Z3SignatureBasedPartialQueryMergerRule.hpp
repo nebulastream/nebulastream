@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
-#define NES_SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
+#ifndef NES_Z3SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
+#define NES_Z3SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
@@ -24,8 +24,8 @@ namespace NES::Optimizer {
 class SignatureEqualityUtil;
 typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
 
-class SignatureBasedPartialQueryMergerRule;
-typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPartialQueryMergerRulePtr;
+class Z3SignatureBasedPartialQueryMergerRule;
+typedef std::shared_ptr<Z3SignatureBasedPartialQueryMergerRule> Z3SignatureBasedPartialQueryMergerRulePtr;
 
 /**
  * @brief SignatureBasedPartialQueryMergerRule is responsible for merging together all Queries sharing a common upstream operator
@@ -63,18 +63,18 @@ typedef std::shared_ptr<SignatureBasedPartialQueryMergerRule> SignatureBasedPart
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class SignatureBasedPartialQueryMergerRule : public BaseQueryMergerRule {
+class Z3SignatureBasedPartialQueryMergerRule : public BaseQueryMergerRule {
 
   public:
-    static SignatureBasedPartialQueryMergerRulePtr create(z3::ContextPtr context);
-    ~SignatureBasedPartialQueryMergerRule();
+    static Z3SignatureBasedPartialQueryMergerRulePtr create(z3::ContextPtr context);
+    ~Z3SignatureBasedPartialQueryMergerRule();
 
     bool apply(const GlobalQueryPlanPtr& globalQueryPlan) override;
 
   private:
-    explicit SignatureBasedPartialQueryMergerRule(z3::ContextPtr context);
+    explicit Z3SignatureBasedPartialQueryMergerRule(z3::ContextPtr context);
     SignatureEqualityUtilPtr signatureEqualityUtil;
 };
 }// namespace NES::Optimizer
 
-#endif//NES_SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP
+#endif//NES_Z3SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP

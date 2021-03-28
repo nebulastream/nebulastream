@@ -15,31 +15,31 @@
 */
 
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context) : context(context) {
-    NES_DEBUG("Z3ExpressionInferencePhase()");
+Z3SignatureInferencePhase::Z3SignatureInferencePhase(z3::ContextPtr context) : context(context) {
+    NES_DEBUG("Z3SignatureInferencePhase()");
 }
 
-SignatureInferencePhase::~SignatureInferencePhase() { NES_DEBUG("~Z3ExpressionInferencePhase()"); }
+Z3SignatureInferencePhase::~Z3SignatureInferencePhase() { NES_DEBUG("~Z3SignatureInferencePhase()"); }
 
-Z3ExpressionInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context) {
-    return std::make_shared<SignatureInferencePhase>(SignatureInferencePhase(context));
+Z3SignatureInferencePhasePtr Z3SignatureInferencePhase::create(z3::ContextPtr context) {
+    return std::make_shared<Z3SignatureInferencePhase>(Z3SignatureInferencePhase(context));
 }
 
-void SignatureInferencePhase::execute(QueryPlanPtr queryPlan) {
-    NES_INFO("Z3ExpressionInferencePhase: computing Z3 expressions for the query " << queryPlan->getQueryId());
+void Z3SignatureInferencePhase::execute(QueryPlanPtr queryPlan) {
+    NES_INFO("Z3SignatureInferencePhase: computing Z3 expressions for the query " << queryPlan->getQueryId());
     auto sinkOperators = queryPlan->getRootOperators();
     for (auto& sinkOperator : sinkOperators) {
         sinkOperator->as<LogicalOperatorNode>()->inferSignature(context);
     }
 }
 
-z3::ContextPtr SignatureInferencePhase::getContext() const { return context; }
+z3::ContextPtr Z3SignatureInferencePhase::getContext() const { return context; }
 
 }// namespace NES::Optimizer

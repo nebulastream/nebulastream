@@ -335,9 +335,9 @@ target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
 ### Signature Inference Phase Test ###
-add_executable(signature-inference-phase-test "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp")
-target_link_libraries(signature-inference-phase-test nes ${GTEST_LIBRARIES})
-add_test(NAME signature-inference-phase-test COMMAND signature-inference-phase-test)
+add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/Z3SignatureInferencePhaseTest.cpp")
+target_link_libraries(z3-signature-inference-phase-test nes ${GTEST_LIBRARIES})
+add_test(NAME z3-signature-inference-phase-test COMMAND z3-signature-inference-phase-test)
 
 ### Circular Buffer Tests ###
 add_executable(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
@@ -345,14 +345,14 @@ target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
 
 ### Signature Based Equal Query Merger Rule Test ###
-add_executable(signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRuleTest.cpp")
-target_link_libraries(signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
-add_test(NAME signature-based-equal-query-merger-rule-test COMMAND signature-based-equal-query-merger-rule-test)
+add_executable(z3-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRuleTest.cpp")
+target_link_libraries(z3-signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME z3-signature-based-equal-query-merger-rule-test COMMAND z3-signature-based-equal-query-merger-rule-test)
 
 ### Signature Based Partial Query Merger Rule Test ###
-add_executable(signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedPartialQueryMergerRuleTest.cpp")
-target_link_libraries(signature-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
-add_test(NAME signature-based-partial-query-merger-rule-test COMMAND signature-based-partial-query-merger-rule-test)
+add_executable(z3-signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRuleTest.cpp")
+target_link_libraries(z3-signature-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME z3-signature-based-partial-query-merger-rule-test COMMAND z3-signature-based-partial-query-merger-rule-test)
 
 ### Join Handler Tests ###
 add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")

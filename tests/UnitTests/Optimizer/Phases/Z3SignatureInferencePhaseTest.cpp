@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -32,31 +32,31 @@
 
 namespace NES::Optimizer {
 
-class SignatureInferencePhaseTest : public testing::Test {
+class Z3SignatureInferencePhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("Z3ExpressionInferencePhaseTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup Z3ExpressionInferencePhaseTest test case.");
+        NES::setupLogging("Z3SignatureInferencePhaseTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup Z3SignatureInferencePhaseTest test case.");
     }
 
     /* Will be called before a  test is executed. */
     void SetUp() {}
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Tear down Z3ExpressionInferencePhaseTest test case."); }
+    void TearDown() { NES_INFO("Tear down Z3SignatureInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down Z3ExpressionInferencePhaseTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down Z3SignatureInferencePhaseTest test class."); }
 };
 
 /**
  * @brief In this test we execute query merger phase on a single invalid query plan.
  */
-TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
+TEST_F(Z3SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
 
     //Prepare
-    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query without assigning it a query id.");
+    NES_INFO("Z3SignatureInferencePhaseTest: Create a new query without assigning it a query id.");
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
@@ -67,7 +67,7 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = SignatureInferencePhase::create(context);
+    auto signatureInferencePhase = Z3SignatureInferencePhase::create(context);
 
     auto query1 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan1 = query1.getQueryPlan();

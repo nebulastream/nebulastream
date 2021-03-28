@@ -18,7 +18,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
@@ -27,17 +27,17 @@
 
 namespace NES::Optimizer {
 
-SignatureBasedCompleteQueryMergerRule::SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) {
+Z3SignatureBasedCompleteQueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule(z3::ContextPtr context) {
     signatureEqualityUtil = SignatureEqualityUtil::create(context);
 }
 
-SignatureBasedCompleteQueryMergerRule::~SignatureBasedCompleteQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
+Z3SignatureBasedCompleteQueryMergerRule::~Z3SignatureBasedCompleteQueryMergerRule() { NES_DEBUG("~EqualQueryMergerRule()"); }
 
-SignatureBasedCompleteQueryMergerRulePtr SignatureBasedCompleteQueryMergerRule::create(z3::ContextPtr context) {
-    return std::make_shared<SignatureBasedCompleteQueryMergerRule>(SignatureBasedCompleteQueryMergerRule(context));
+SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRule::create(z3::ContextPtr context) {
+    return std::make_shared<Z3SignatureBasedCompleteQueryMergerRule>(Z3SignatureBasedCompleteQueryMergerRule(context));
 }
 
-bool SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
+bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
 
     NES_INFO("SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
