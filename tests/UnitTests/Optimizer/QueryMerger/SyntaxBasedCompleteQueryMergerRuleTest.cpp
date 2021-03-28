@@ -110,7 +110,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -192,7 +192,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithMultip
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -262,7 +262,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentSo
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -341,7 +341,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOperat
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -417,7 +417,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -493,7 +493,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithMergeOperat
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -563,7 +563,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -632,7 +632,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentFi
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -702,7 +702,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -772,7 +772,7 @@ TEST_F(SyntaxBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferentMa
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+    auto syntaxBasedEqualQueryMergerRule = Optimizer::SyntaxBasedCompleteQueryMergerRule::create();
     syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert

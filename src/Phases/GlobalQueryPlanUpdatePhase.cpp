@@ -18,6 +18,7 @@
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryMergerPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
@@ -30,23 +31,27 @@
 namespace NES {
 
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                       GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging)
+                                                       GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
+                                                       bool enableQueryMerging, std::string queryMergerRule)
     : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), streamCatalog(streamCatalog),
-      globalQueryPlan(globalQueryPlan) {
-    queryMergerPhase = QueryMergerPhase::create();
+      globalQueryPlan(globalQueryPlan), z3Context(z3Context), queryMergerRule(queryMergerRule) {
+    queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryRewritePhase = QueryRewritePhase::create(streamCatalog);
+    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                                 GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging) {
+                                                                 GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
+                                                                 bool enableQueryMerging, std::string queryMergerRule) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(
-        GlobalQueryPlanUpdatePhase(queryCatalog, streamCatalog, globalQueryPlan, enableQueryMerging));
+        GlobalQueryPlanUpdatePhase(queryCatalog, streamCatalog, globalQueryPlan, z3Context, enableQueryMerging, queryMergerRule));
 }
 
-GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry> queryRequests) {
+GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry>& queryRequests) {
     //FIXME: Proper error handling #1585
     try {
+        //TODO: Parallelize this loop #1738
         for (auto queryRequest : queryRequests) {
             QueryId queryId = queryRequest.getQueryId();
             if (queryRequest.getQueryStatus() == QueryStatus::MarkedForStop) {
@@ -60,6 +65,11 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCa
 
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 queryPlan = typeInferencePhase->execute(queryPlan);
+
+                if (queryMergerRule.find("Z3") != std::string::npos) {
+                    NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
+                    signatureInferencePhase->execute(queryPlan);
+                }
 
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                 queryPlan = queryRewritePhase->execute(queryPlan);

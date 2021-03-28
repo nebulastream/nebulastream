@@ -114,12 +114,17 @@ class QueryCatalogEntry {
      */
     QueryCatalogEntry copy();
 
+    void setFailureReason(std::string failureReason);
+
+    std::string getFailureReason();
+
   private:
     QueryId queryId;
     std::string queryString;
     std::string queryPlacementStrategy;
     QueryPlanPtr queryPlanPtr;
     QueryStatus queryStatus;
+    std::string failureReason;
 };
 typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
 }// namespace NES

@@ -89,7 +89,9 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                 jsonEntry["queryString"] = json::value::string(catalogEntry->getQueryString());
                 jsonEntry["queryStatus"] = json::value::string(catalogEntry->getQueryStatusAsString());
                 jsonEntry["queryPlan"] = PlanJsonGenerator::getQueryPlanAsJson(catalogEntry->getQueryPlan());
+                jsonEntry["queryInfo"] = json::value::string(catalogEntry->getFailureReason());
                 result[index] = jsonEntry;
+                index++;
             }
 
             if (queryCatalogEntries.size() == 0) {
@@ -109,6 +111,7 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
             RuntimeUtils::printStackTrace();
             internalServerErrorImpl(request);
         }
+
     } else if (path[1] == "getNumberOfProducedBuffers") {
         //Check if the path contains the query id
         auto param = parameters.find("queryId");

@@ -15,5 +15,6 @@
 add_subdirectory(QueryPlacement)
 add_subdirectory(QueryRewrite)
 add_subdirectory(QueryMerger)
+add_subdirectory(QueryValidation)
 add_subdirectory(Utils)
 add_subdirectory(Phases)

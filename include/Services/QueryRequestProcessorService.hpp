@@ -19,6 +19,11 @@
 
 #include <memory>
 
+namespace z3 {
+class context;
+typedef std::shared_ptr<context> ContextPtr;
+}// namespace z3
+
 namespace NES {
 
 class GlobalQueryPlan;
@@ -68,7 +73,8 @@ class QueryRequestProcessorService {
     explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                           QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                          QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging);
+                                          QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                          std::string queryMergerRule);
 
     ~QueryRequestProcessorService();
     /**
@@ -99,6 +105,7 @@ class QueryRequestProcessorService {
     QueryRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
+    z3::ContextPtr z3Context;
 };
 }// namespace NES
 #endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include "Exceptions/InvalidQueryException.hpp"
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
@@ -38,13 +39,15 @@
 #include <Util/Logger.hpp>
 #include <WorkQueues/QueryRequestQueue.hpp>
 #include <exception>
+#include <z3++.h>
 
 namespace NES {
 
 QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                            QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                                            StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                                           QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging)
+                                                           QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                                           std::string queryMergerRule)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       globalQueryPlan(globalQueryPlan) {
 
@@ -54,8 +57,9 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
     queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
-    globalQueryPlanUpdatePhase =
-        GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, enableQueryMerging);
+    z3Context = std::make_shared<z3::context>();
+    globalQueryPlanUpdatePhase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context,
+                                                                    enableQueryMerging, queryMergerRule);
 }
 
 QueryRequestProcessorService::~QueryRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
@@ -79,6 +83,7 @@ void QueryRequestProcessorService::start() {
 
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
+
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
@@ -113,6 +118,7 @@ void QueryRequestProcessorService::start() {
                                     + std::to_string(sharedQueryId));
                         }
                     }
+
                     //Mark the meta data as deployed
                     sharedQueryMetaData->markAsDeployed();
                     sharedQueryMetaData->setAsOld();
@@ -142,6 +148,7 @@ void QueryRequestProcessorService::start() {
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                    queryCatalog->setQueryFailureReason(queryId, ex.what());
                 }
             } catch (TypeInferenceException& ex) {
                 NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
@@ -153,6 +160,8 @@ void QueryRequestProcessorService::start() {
                 NES_ERROR("QueryRequestProcessingService QueryNotFoundException: " << ex.what());
             } catch (QueryUndeploymentException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
+            } catch (InvalidQueryException& ex) {
+                NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
             } catch (Exception& ex) {
                 NES_FATAL_ERROR(
                     "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
@@ -173,6 +182,7 @@ bool QueryRequestProcessorService::isQueryProcessorRunning() {
 
 void QueryRequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
+    NES_ERROR("Shutting Down");
     if (queryProcessorRunning) {
         this->queryProcessorRunning = false;
         queryRequestQueue->insertPoisonPill();

@@ -20,7 +20,20 @@
 #include <memory>
 #include <vector>
 
+namespace z3 {
+class context;
+typedef std::shared_ptr<context> ContextPtr;
+}// namespace z3
+
 namespace NES {
+
+namespace Optimizer {
+class SignatureInferencePhase;
+typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
+
+class QueryMergerPhase;
+typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
+}// namespace Optimizer
 
 class QueryCatalogEntry;
 
@@ -35,9 +48,6 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
 class QueryRewritePhase;
 typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
-
-class QueryMergerPhase;
-typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
@@ -59,18 +69,20 @@ class GlobalQueryPlanUpdatePhase {
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging);
+                                                GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
+                                                bool enableQueryMerging, std::string queryMergerRule);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
      * @param queryRequests: a batch of query requests (in the form of Query Catalog Entry) to be processed to update global query plan
      * @return Shared pointer to the Global Query Plan for further processing
      */
-    GlobalQueryPlanPtr execute(const std::vector<QueryCatalogEntry> queryRequests);
+    GlobalQueryPlanPtr execute(const std::vector<QueryCatalogEntry>& queryRequests);
 
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                        GlobalQueryPlanPtr globalQueryPlan, bool enableQueryMerging);
+                                        GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context, bool enableQueryMerging,
+                                        std::string queryMergerRule);
 
     bool enableQueryMerging;
     QueryCatalogPtr queryCatalog;
@@ -78,7 +90,10 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
-    QueryMergerPhasePtr queryMergerPhase;
+    Optimizer::QueryMergerPhasePtr queryMergerPhase;
+    Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
+    z3::ContextPtr z3Context;
+    std::string queryMergerRule;
 };
 }// namespace NES
 

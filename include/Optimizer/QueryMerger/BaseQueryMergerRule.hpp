@@ -14,10 +14,26 @@
     limitations under the License.
 */
 
-#ifndef __VERSION_HPP__
-#define __VERSION_HPP__
-#define NES_VERSION_MAJOR 0
-#define NES_VERSION_MINOR 0
-#define NES_VERSION_PATCH 360
-constexpr char const* NES_VERSION = "0.0.360";
-#endif
+#ifndef NES_BASEQUERYMERGERRULE_HPP
+#define NES_BASEQUERYMERGERRULE_HPP
+
+#include <memory>
+
+namespace NES {
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+class BaseQueryMergerRule {
+
+  public:
+    /**
+     * @brief apply the rule on Global Query Plan
+     * @param globalQueryPlan: the global query plan
+     */
+    virtual bool apply(const GlobalQueryPlanPtr& globalQueryPlan) = 0;
+};
+typedef std::shared_ptr<BaseQueryMergerRule> BaseQueryMergerRulePtr;
+}// namespace NES::Optimizer
+#endif//NES_BASEQUERYMERGERRULE_HPP

@@ -70,6 +70,22 @@ QueryCatalogEntryPtr QueryCatalog::addNewQueryRequest(const std::string& querySt
     return queryCatalogEntry;
 }
 
+QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& queryString, const QueryId queryId,
+                                                      const QueryPlanPtr queryPlan, const std::string& optimizationStrategyName) {
+    std::unique_lock lock(catalogMutex);
+    NES_INFO("QueryCatalog: Creating query catalog entry for invalid query with id " << queryId);
+    QueryCatalogEntryPtr queryCatalogEntry =
+        std::make_shared<QueryCatalogEntry>(queryId, queryString, optimizationStrategyName, queryPlan, QueryStatus::Failed);
+    queries[queryId] = queryCatalogEntry;
+    return queryCatalogEntry;
+}
+
+void QueryCatalog::setQueryFailureReason(QueryId queryId, const std::string& failureReason) {
+    std::unique_lock lock(catalogMutex);
+    QueryCatalogEntryPtr queryCatalogEntry = getQueryCatalogEntry(queryId);
+    queryCatalogEntry->setFailureReason(failureReason);
+}
+
 QueryCatalogEntryPtr QueryCatalog::addQueryStopRequest(QueryId queryId) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Validating with old query status.");

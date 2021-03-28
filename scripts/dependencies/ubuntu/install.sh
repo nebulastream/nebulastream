@@ -60,7 +60,7 @@ cd ${HOME} && git clone https://github.com/eclipse/paho.mqtt.c.git && \
 
 git clone --branch v1.28.1 https://github.com/grpc/grpc.git && \
   cd grpc && git submodule update --init --jobs 1 && mkdir -p build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && \
-  make -j && sudo make install && cd .. && cd .. && rm -rf grpc
+  make -j3 && sudo make install && cd .. && cd .. && rm -rf grpc
 
 
 

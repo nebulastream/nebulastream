@@ -23,9 +23,9 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include <z3++.h>
 
 namespace NES {
 
@@ -38,13 +38,15 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() {}
+    void SetUp() { context = std::make_shared<z3::context>(); }
 
     /* Will be called before a test is executed. */
     void TearDown() { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test class."); }
+
+    z3::ContextPtr context;
 };
 
 /**
@@ -59,7 +61,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleInvalidQu
     auto queryCatalog = std::make_shared<QueryCatalog>();
     auto streamCatalog = std::make_shared<StreamCatalog>();
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, true);
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "SyntaxBasedCompleteQueryMergerRule");
     auto catalogEntry1 = QueryCatalogEntry(-1, "", "topdown", q1.getQueryPlan(), Scheduling);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
     //Assert
@@ -81,7 +84,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForSingleQueryPlan
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto streamCatalog = std::make_shared<StreamCatalog>();
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, true);
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "SyntaxBasedCompleteQueryMergerRule");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1->copy()};
     auto resultPlan = phase->execute(batchOfQueryRequests);
@@ -107,7 +111,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForDuplicateValidQ
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto streamCatalog = std::make_shared<StreamCatalog>();
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, true);
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "SyntaxBasedCompleteQueryMergerRule");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1->copy(), catalogEntry1->copy()};
@@ -133,7 +138,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto streamCatalog = std::make_shared<StreamCatalog>();
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, true);
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "SyntaxBasedCompleteQueryMergerRule");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1);
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2);
@@ -159,7 +165,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForAValidQueryPlan
     auto queryCatalog = std::make_shared<QueryCatalog>();
     auto streamCatalog = std::make_shared<StreamCatalog>();
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, true);
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "SyntaxBasedCompleteQueryMergerRule");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = QueryCatalogEntry(1, "", "topdown", q1.getQueryPlan(), Failed);
     std::vector<QueryCatalogEntry> batchOfQueryRequests = {catalogEntry1};
@@ -186,7 +193,8 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
     auto streamCatalog = std::make_shared<StreamCatalog>();
     const auto globalQueryPlan = GlobalQueryPlan::create();
-    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, true);
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "SyntaxBasedCompleteQueryMergerRule");
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the batch of query plan with duplicate query plans.");
     auto catalogEntry1 = queryCatalog->getQueryCatalogEntry(1)->copy();
     auto catalogEntry2 = queryCatalog->getQueryCatalogEntry(2)->copy();
@@ -202,4 +210,38 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, executeQueryMergerPhaseForMultipleValidQu
     ASSERT_EQ(sharedQueryMetadataToDeploy.size(), 1);
 }
 
+/**
+ * @brief In this test we execute query merger phase on a single query plan.
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
+
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
+    auto queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+
+    auto queryCatalog = std::make_shared<QueryCatalog>();
+    for (int i = 1; i <= 10; i++) {
+        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+        auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+        q1.getQueryPlan()->setQueryId(i);
+        queryCatalog->addNewQueryRequest(queryString, q1.getQueryPlan(), "TopDown");
+    }
+
+    std::vector<QueryCatalogEntry> batchOfQueryRequests;
+    auto allQueries = queryCatalog->getAllQueryCatalogEntries();
+    for (auto& [key, value] : allQueries) {
+        batchOfQueryRequests.emplace_back(value->copy());
+    }
+
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "Z3SignatureBasedCompleteQueryMergerRule");
+    auto resultPlan = phase->execute(batchOfQueryRequests);
+    //Assert
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
+    globalQueryPlan->removeEmptySharedQueryMetaData();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
+}
 }// namespace NES

@@ -14,19 +14,37 @@
     limitations under the License.
 */
 
+#include <Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Phases/QueryMergerPhase.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
-QueryMergerPhasePtr QueryMergerPhase::create() { return std::make_shared<QueryMergerPhase>(QueryMergerPhase()); }
+QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, std::string queryMergerRuleName) {
+    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(context, queryMergerRuleName));
+}
 
-QueryMergerPhase::QueryMergerPhase() { this->syntaxBasedEqualQueryMergerRule = SyntaxBasedCompleteQueryMergerRule::create(); }
+QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, std::string queryMergerRuleName) {
+    auto queryMergerEnum = stringToMergerRuleEnum.find(queryMergerRuleName);
+    if (queryMergerEnum == stringToMergerRuleEnum.end()) {
+        NES_FATAL_ERROR("Unhandled Query Merger Rule Type " << queryMergerRuleName);
+        throw Exception("Unhandled Query Merger Rule Type " + queryMergerRuleName);
+    }
+
+    switch (queryMergerEnum->second) {
+        case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
+            queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
+            break;
+        case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
+            queryMergerRule = SignatureBasedCompleteQueryMergerRule::create(context);
+            break;
+    }
+}
 
 bool QueryMergerPhase::execute(GlobalQueryPlanPtr globalQueryPlan) {
     NES_DEBUG("QueryMergerPhase: Executing query merger phase.");
-    return syntaxBasedEqualQueryMergerRule->apply(globalQueryPlan);
+    return queryMergerRule->apply(globalQueryPlan);
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

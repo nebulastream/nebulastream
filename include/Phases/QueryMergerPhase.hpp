@@ -17,23 +17,42 @@
 #ifndef NES_QUERYMERGERPHASE_HPP
 #define NES_QUERYMERGERPHASE_HPP
 
-#include <memory>
+#include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
+#include <iostream>
 
-namespace NES {
+namespace NES::Optimizer {
+
+enum class QueryMergerRule {
+    SyntaxBasedCompleteQueryMergerRule,
+    SyntaxBasedPartialQueryMergerRule,
+    Z3SignatureBasedCompleteQueryMergerRule,
+    Z3SignatureBasedPartialQueryMergerRule,
+    StringSignatureBasedCompleteQueryMergerRule,
+    StringSignatureBasedPartialQueryMergerRule
+};
+
+static const std::map<std::string, QueryMergerRule> stringToMergerRuleEnum{
+    {"SyntaxBasedCompleteQueryMergerRule", QueryMergerRule::SyntaxBasedCompleteQueryMergerRule},
+    {"SyntaxBasedPartialQueryMergerRule", QueryMergerRule::SyntaxBasedPartialQueryMergerRule},
+    {"Z3SignatureBasedCompleteQueryMergerRule", QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule},
+    {"Z3SignatureBasedPartialQueryMergerRule", QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule},
+    {"StringSignatureBasedCompleteQueryMergerRule", QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule},
+    {"StringSignatureBasedPartialQueryMergerRule", QueryMergerRule::StringSignatureBasedPartialQueryMergerRule},
+};
 
 class QueryMergerPhase;
 typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 
-class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
-
 class SyntaxBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedEqualQueryMergerRulePtr;
+typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQueryMergerRulePtr;
+
+class SignatureBasedCompleteQueryMergerRule;
+typedef std::shared_ptr<SignatureBasedCompleteQueryMergerRule> SignatureBasedCompleteQueryMergerRulePtr;
 
 class QueryMergerPhase {
 
   public:
-    static QueryMergerPhasePtr create();
+    static QueryMergerPhasePtr create(z3::ContextPtr context, std::string queryMergerRuleName);
 
     /**
      * @brief execute method to apply different query merger rules on the global query plan.
@@ -43,8 +62,8 @@ class QueryMergerPhase {
     bool execute(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
-    explicit QueryMergerPhase();
-    SyntaxBasedEqualQueryMergerRulePtr syntaxBasedEqualQueryMergerRule;
+    explicit QueryMergerPhase(z3::ContextPtr context, std::string queryMergerRuleName);
+    BaseQueryMergerRulePtr queryMergerRule;
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_QUERYMERGERPHASE_HPP

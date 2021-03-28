@@ -12,11 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Signature)
-
 add_source_nes(
-        BaseQueryMergerRule.cpp
-        SyntaxBasedCompleteQueryMergerRule.cpp
-        SignatureBasedCompleteQueryMergerRule.cpp
-        SignatureBasedPartialQueryMergerRule.cpp
+        SemanticQueryValidation.cpp
+        SyntacticQueryValidation.cpp
 )

@@ -31,6 +31,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <z3++.h>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -86,7 +87,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
@@ -118,7 +120,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
@@ -148,7 +151,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
@@ -180,7 +184,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
@@ -212,7 +217,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
@@ -244,7 +250,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
@@ -275,7 +282,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
@@ -304,7 +312,8 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
@@ -333,7 +342,8 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
@@ -366,7 +376,8 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     auto sig2 = logicalOperator22->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
@@ -401,7 +412,8 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     auto sig2 = logicalOperator22->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
@@ -432,7 +444,8 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
@@ -454,7 +467,8 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
@@ -478,7 +492,8 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
     auto sig2 = logicalOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
@@ -508,7 +523,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     auto sig2 = projectionOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources) {
@@ -538,7 +554,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
     auto sig2 = projectionOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperators) {
@@ -567,7 +584,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
     auto sig2 = projectionOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperator) {
@@ -599,7 +617,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator) {
@@ -629,7 +648,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
     auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
-    EXPECT_TRUE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator) {
@@ -660,7 +680,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
     auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentLateness) {
@@ -692,7 +713,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentField) {
@@ -724,7 +746,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     auto sig2 = watermarkOperator2->getSignature();
 
     //Assert
-    ASSERT_FALSE(sig1->isEqual(sig2));
+    auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
+    EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
 //FIXME: fix this test in the next issue

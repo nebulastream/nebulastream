@@ -31,6 +31,7 @@
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <z3++.h>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -138,7 +139,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -225,7 +226,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuerie
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -305,7 +306,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferent
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert

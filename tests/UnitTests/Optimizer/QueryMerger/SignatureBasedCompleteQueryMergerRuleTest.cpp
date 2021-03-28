@@ -31,6 +31,7 @@
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <z3++.h>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -138,7 +139,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -233,7 +234,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQueri
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -312,7 +313,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -400,7 +401,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOpe
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -485,7 +486,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOpe
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -570,7 +571,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOpe
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -649,7 +650,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -727,7 +728,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -806,7 +807,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -885,7 +886,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -977,7 +978,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1067,8 +1068,9 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     auto root2Children = rootOperators2[0]->getChildren();
     EXPECT_TRUE(root2Children.size() == 1);
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
+
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1160,7 +1162,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWind
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1253,7 +1255,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWind
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1342,7 +1344,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProj
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1431,7 +1433,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProj
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1520,7 +1522,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1610,7 +1612,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWate
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1703,7 +1705,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDifferen
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1794,7 +1796,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionOpe
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1885,7 +1887,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueriesWithUni
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -1973,7 +1975,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest,
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -2067,10 +2069,10 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOper
 
     auto root2Children = rootOperators2[0]->getChildren();
     EXPECT_TRUE(root2Children.size() == 1);
-    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size());
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -2164,7 +2166,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOper
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -2258,7 +2260,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOper
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -2351,7 +2353,7 @@ TEST_F(SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOper
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create();
+    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedCompleteQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert

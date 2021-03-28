@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
@@ -86,7 +87,9 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     ASSERT_EQ(mapOperators1.size(), 1);
     ASSERT_EQ(mapOperators2.size(), 1);
 
-    EXPECT_TRUE(mapOperators1[0]->getSignature()->isEqual(mapOperators2[0]->getSignature()));
+    auto signatureEqualityChecker = SignatureEqualityUtil::create(context);
+
+    EXPECT_TRUE(signatureEqualityChecker->checkEquality(mapOperators1[0]->getSignature(), mapOperators2[0]->getSignature()));
 
     auto srcOperators1 = plan1->getOperatorByType<SourceLogicalOperatorNode>();
     auto srcOperators2 = plan2->getOperatorByType<SourceLogicalOperatorNode>();
@@ -94,6 +97,6 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
     ASSERT_EQ(srcOperators1.size(), 1);
     ASSERT_EQ(srcOperators2.size(), 1);
 
-    EXPECT_TRUE(srcOperators1[0]->getSignature()->isEqual(srcOperators2[0]->getSignature()));
+    EXPECT_TRUE(signatureEqualityChecker->checkEquality(srcOperators1[0]->getSignature(), srcOperators2[0]->getSignature()));
 }
 }// namespace NES::Optimizer

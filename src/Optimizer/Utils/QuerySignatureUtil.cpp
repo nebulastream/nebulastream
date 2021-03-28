@@ -66,7 +66,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForOperator(z3::Contex
         return createQuerySignatureForSource(context, sourceOperator);
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for Sink operator");
-        NES_ASSERT(children.size() == 1 && children[0], "Sink operator should only have one and non null children.");
+        NES_ASSERT(!children.empty(), "Sink operator should have atleast one children.");
         return children[0]->as<LogicalOperatorNode>()->getSignature();
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         NES_TRACE("QuerySignatureUtil: Computing Signature for filter operator");
