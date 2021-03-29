@@ -638,10 +638,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
                 getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
                     tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->getUpperBound())))));
-            } else if (auto floatType =
-                DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
-                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
-                    tf->createValueType(DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getUpperBound())))));
+            } else if (auto floatType = DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(
+                    DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getUpperBound())))));
             }
             break;
         }
@@ -649,10 +648,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
                 getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
                     tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->getLowerBound())))));
-            } else if (auto floatType =
-                DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
-                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
-                    tf->createValueType(DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getLowerBound())))));
+            } else if (auto floatType = DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(
+                    DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getLowerBound())))));
             }
             break;
         }

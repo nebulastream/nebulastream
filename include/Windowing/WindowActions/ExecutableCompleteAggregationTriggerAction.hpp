@@ -179,7 +179,7 @@ class ExecutableCompleteAggregationTriggerAction
             if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
                 partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->getLowerBound());
             } else if (auto floatType =
-                DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
+                           DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
                 partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->getLowerBound());
             }
         }

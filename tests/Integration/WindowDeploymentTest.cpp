@@ -1816,9 +1816,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createInt32())
-        ->addField("value", DataTypeFactory::createInt32())
-        ->addField("timestamp", DataTypeFactory::createInt64());
+                         ->addField("key", DataTypeFactory::createInt32())
+                         ->addField("value", DataTypeFactory::createInt32())
+                         ->addField("timestamp", DataTypeFactory::createInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1864,9 +1864,9 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     };
 
     auto carSchema = Schema::create()
-        ->addField("value", DataTypeFactory::createUInt64())
-        ->addField("id", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("id", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
@@ -1899,14 +1899,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
         }
     };
 
-    std::vector<Output> expectedOutput = {
-        {0, 10000, 1, 9},
-        {10000, 20000, 1, 19},
-        {0, 10000, 4, 1},
-        {0, 10000, 11, 3},
-        {0, 10000, 12, 1},
-        {0, 10000, 16, 2}
-    };
+    std::vector<Output> expectedOutput = {{0, 10000, 1, 9},  {10000, 20000, 1, 19}, {0, 10000, 4, 1},
+                                          {0, 10000, 11, 3}, {0, 10000, 12, 1},     {0, 10000, 16, 2}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
