@@ -28,7 +28,14 @@ class BinaryOperatorSortRule;
 typedef std::shared_ptr<BinaryOperatorSortRule> BinaryOperatorSortRulePtr;
 
 /**
- * @brief This rule sorts children of a binary operator by qualifier name.
+ * @brief This rule sorts children of a binary operators (Join and Union) by qualifier name.
+ *
+ * Example:
+ *     1. Query::from("car").unionWith(Query::from("truck")).sink(); =>  Query::from("truck").unionWith(Query::from("car")).sink();
+ *
+ *     2. Query::from("truck").unionWith(Query::from("car")).sink(); =>  Query::from("truck").unionWith(Query::from("car")).sink();
+ *
+ *     3. Query::from("car").joinWith(Query::from("truck")).sink(); =>  Query::from("truck").joinWith(Query::from("car")).sink();
  */
 class BinaryOperatorSortRule : public BaseRewriteRule {
 
@@ -38,6 +45,11 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
 
   private:
+
+    /**
+     * @brief This method takes input as a binary operator and sort the children alphabetically based on stream qualifier name
+     * @param binaryOperator : the input binary operator
+     */
     void sortChildren(BinaryOperatorNodePtr binaryOperator);
 
     BinaryOperatorSortRule();
