@@ -1806,7 +1806,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
 }
 
 /*
- * @brief Test if the max aggregation can be deployed
+ * @brief Test if the max aggregation of negative values can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
     struct Car {
@@ -1854,7 +1854,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
 }
 
 /*
- * @brief Test if the max aggregation can be deployed
+ * @brief Test if the max aggregation with uint64 data type can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField) {
     struct Car {
@@ -1962,7 +1962,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
 }
 
 /*
- * @brief Test if the min aggregation can be deployed
+ * @brief Test if the min aggregation with float data type can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
     struct Car {
