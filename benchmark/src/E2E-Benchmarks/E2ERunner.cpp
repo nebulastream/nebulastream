@@ -28,25 +28,40 @@ using namespace NES;
 using namespace std;
 using namespace Benchmarking;
 
-std::vector<uint64_t> split(const std::string& s, char delim) {
-    std::stringstream ss(s);
+/**
+ * This function splits a string by a delimiter into a vector
+ * @param s
+ * @param delim
+ * @return
+ **/
+std::vector<uint64_t> split(const std::string& str, char delim) {
+    std::stringstream ss(str);
     std::string item;
     std::vector<std::uint64_t> elems;
     while (std::getline(ss, item, delim)) {
+        //split element by delim and push it to a vector
         elems.push_back(stoi(item));
     }
     return elems;
 }
 
+/**
+ * This function takes a config and provide the following options
+ *      - if "," is between values, we use each value for one run
+ *      - if "-" is between values, we interprete them as start, stop, and increment to create value ranges
+ *      - if only one value, the we do nothing
+ * @param str
+ * @return
+ * **/
 std::vector<uint64_t> getParameterFromString(std::string str) {
     std::vector<uint64_t> retVec;
-    if (str.find(",") != string::npos) {
+    if (str.find(",") != string::npos) {//if comma separated, we create one test run for each of the values
         retVec = split(str, ',');
-    } else if (str.find("-") != string::npos) {
+    } else if (str.find("-") != string::npos) {//if - separated, we will create a range from start to end with increment
         auto tempVec = split(str, '-');
         NES_ASSERT(tempVec.size() == 3, " wrong number of parameter");
         BenchmarkUtils::createRangeVector<uint64_t>(retVec, tempVec[0], tempVec[1], tempVec[2]);
-    } else {
+    } else {//if only one value we will just push it
         retVec.push_back(stoi(str));
     }
     return retVec;
@@ -63,15 +78,6 @@ void padParamters(std::map<std::string, std::vector<uint64_t>>& parameterNameToV
             }
         }
     }
-
-//    std::cout << "parameter map for changing paramters=" << std::endl;
-//    for (auto& param : parameterNameToValueVectorMap) {
-//        std::cout << "name=" << param.first << "params=";
-//        for (auto i : param.second) {
-//            std::cout << i << ',';
-//        }
-//        std::cout << std::endl;
-//    }
 }
 
 const std::string logo = "/********************************************************\n"

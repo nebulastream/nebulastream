@@ -85,8 +85,7 @@ std::string E2EBase::runExperiment() {
 
 E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt,
                  uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersPerPipeline,
-                 uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t bufferSizeInBytes,
-                 E2EBenchmarkConfigPtr config)
+                 uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t bufferSizeInBytes, E2EBenchmarkConfigPtr config)
     : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline),
@@ -97,8 +96,7 @@ E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64
               << " sourceCnt=" << sourceCnt << " numberOfBuffersInGlobalBufferManager=" << numberOfBuffersInGlobalBufferManager
               << " numberOfBuffersPerPipeline=" << numberOfBuffersPerPipeline
               << " numberOfBuffersInSourceLocalBufferPool=" << numberOfBuffersInSourceLocalBufferPool
-              << " bufferSizeInBytes=" << bufferSizeInBytes
-              << std::endl;
+              << " bufferSizeInBytes=" << bufferSizeInBytes << std::endl;
     setup();
 }
 
@@ -175,8 +173,7 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
                    "We cannot use this run as no data was measured");
     }
     std::cout << "content of map" << std::endl;
-    for(auto& val : subPlanIdToTuplelCnt)
-    {
+    for (auto& val : subPlanIdToTuplelCnt) {
         std::cout << "first=" << val.first << " second=" << val.second << std::endl;
     }
 
