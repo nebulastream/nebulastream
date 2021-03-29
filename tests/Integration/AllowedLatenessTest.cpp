@@ -107,8 +107,8 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_0ms) {
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(0), "
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
-                   ".byKey(Attribute(\"id\")) "
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".byKey(Attribute(\"id\"))"
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(inOrderConf, inputSchema);
@@ -127,9 +127,9 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_10ms) {
     string query = "Query::from(\"inOrderStream\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(10), "
                    "Milliseconds()))"
-                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)) "
+                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))) "
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(inOrderConf, inputSchema);
@@ -148,11 +148,10 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_10ms) {
  */
 TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_250ms) {
     string query = "Query::from(\"inOrderStream\")"
-                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(250), "
-                   "Milliseconds()))"
-                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))"
-                   ".keyBy(Attribute(\"id\"))"
-                   "apply(Sum(Attribute(\"value\"))))";
+                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(250), Milliseconds()))"
+                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
+                   ".byKey(Attribute(\"id\"))"
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(inOrderConf, inputSchema);
@@ -175,7 +174,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_0ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(outOfOrderConf, inputSchema);
@@ -197,7 +196,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_10ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(outOfOrderConf, inputSchema);
@@ -220,7 +219,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_OO_250ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(outOfOrderConf, inputSchema);
@@ -243,7 +242,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_0ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(inOrderConf, inputSchema);
@@ -266,7 +265,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_10ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(inOrderConf, inputSchema);
@@ -291,7 +290,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_IO_250ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(inOrderConf, inputSchema);
@@ -316,7 +315,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_0ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(outOfOrderConf, inputSchema);
@@ -340,7 +339,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_10ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(outOfOrderConf, inputSchema);
     testHarness.addCSVSource(outOfOrderConf, inputSchema);
@@ -364,7 +363,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_FT_OO_250ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addCSVSource(outOfOrderConf, inputSchema);
@@ -398,7 +397,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_0ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addNonSourceWorker();
@@ -429,7 +428,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_10ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addNonSourceWorker();
@@ -462,7 +461,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_IO_250ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addNonSourceWorker();
@@ -495,7 +494,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_0ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addNonSourceWorker();
@@ -527,7 +526,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_10ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addNonSourceWorker();
@@ -560,7 +559,7 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_MPS_HT_OO_250ms) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))";
+                   ".apply(Sum(Attribute(\"value\")))";
 
     TestHarness testHarness = TestHarness(query, restPort, rpcPort);
     testHarness.addNonSourceWorker();

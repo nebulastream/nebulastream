@@ -101,9 +101,9 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -199,9 +199,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -290,10 +290,10 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
 
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = "Query::from(\"window\")"
-                   ".windowByKey(Attribute(\"id\"), "
-                   "SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)), Sum(Attribute(\"value\")))"
-                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5)), "
-                   "Sum(Attribute(\"value\")))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)))"
+                   ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5))) "
+                   ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
@@ -392,10 +392,9 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = "Query::from(\"window\")"
-                   ".windowByKey(Attribute(\"id\"), "
-                   "SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)), Sum(Attribute(\"value\")))"
-                   ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"end\")),Seconds(10),Seconds(5)), "
-                   "Sum(Attribute(\"value\")))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"end\")),Seconds(10),Seconds(5))).byKey(Attribute(\"id\")). "
+                   "apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
 
@@ -491,9 +490,9 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
-        .windowByKey(Attribute("id"), SlidingWindow::of(EventTime(Attribute("start")),Seconds(1),Milliseconds(500)), Sum(Attribute("value")))
+        .window(SlidingWindow::of(EventTime(Attribute("start")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -603,8 +602,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
 
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
-        .windowByKey(Attribute("id"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)), Sum(Attribute("value")))
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -713,10 +712,10 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     NES_DEBUG("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
-        .windowByKey(Attribute("id"), SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)), Sum(Attribute("value")))
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(1)), Sum(Attribute("value")))
+        .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
-        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -872,8 +871,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     NES_INFO("MultipleWindowsTest: Submit query");
 
     string query = R"(Query::from("window")
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
@@ -1039,9 +1038,9 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
 
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
-        .windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("start")), Seconds(2)), Sum(Attribute("value")))
+        .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 

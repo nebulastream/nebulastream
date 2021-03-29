@@ -399,7 +399,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     ss << "{\"userQuery\" : ";
     ss << "\"Query::from(\\\"window\\\")"
           ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
-          ".byKey(Attribute(\\\"id\\\")"
+          ".byKey(Attribute(\\\"id\\\"))"
           ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";

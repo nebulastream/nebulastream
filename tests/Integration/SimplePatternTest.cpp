@@ -360,7 +360,7 @@ TEST_F(SimplePatternTest, testPatternWithWindowandAggregation) {
 
     //register query
     std::string query =
-        R"(Pattern::from("QnV").windowByKey(Attribute("sensor_id"), SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(15), Minutes(5)), Sum(Attribute("quantity"))).filter(Attribute("quantity") > 105).sink(FileSinkDescriptor::create(")"
+        R"(Pattern::from("QnV").window(SlidingWindow::of(EventTime(Attribute("timestamp")), Minutes(15), Minutes(5))).byKey(Attribute("sensor_id")).apply(Sum(Attribute("quantity"))).filter(Attribute("quantity") > 105).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
