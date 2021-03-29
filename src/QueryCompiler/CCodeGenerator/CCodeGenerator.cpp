@@ -629,8 +629,10 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
 
-    // set the default value for window state
-
+    // set the default value for window state based on the aggregation function:
+    // max: initialize with the lower bound of the data type
+    // min: initialize with the upper bound of the data type
+    // count & max: initialize with 0
     switch (window->getWindowAggregation()->getType()) {
         case Windowing::WindowAggregationDescriptor::Min: {
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
