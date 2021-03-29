@@ -266,12 +266,12 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
     Query subQuery1 = Query::from("src2");
     Query subQuery2 = Query::from("src2");
     Query query = Query::from("src1")
-        .unionWith(&subQuery1)
-        .joinWith(subQuery2)
-        .where(Attribute("id"))
-        .equalsTo(Attribute("id"))
-        .window(windowType1)
-        .sink(printSinkDescriptor);
+                      .unionWith(&subQuery1)
+                      .joinWith(subQuery2)
+                      .where(Attribute("id"))
+                      .equalsTo(Attribute("id"))
+                      .window(windowType1)
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto unionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
