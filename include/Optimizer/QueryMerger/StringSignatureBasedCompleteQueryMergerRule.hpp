@@ -72,7 +72,7 @@ class StringSignatureBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
     static StringSignatureBasedCompleteQueryMergerRulePtr create();
     ~StringSignatureBasedCompleteQueryMergerRule();
 
-    bool apply(const GlobalQueryPlanPtr& globalQueryPlan) override;
+    bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
   private:
     explicit StringSignatureBasedCompleteQueryMergerRule();
