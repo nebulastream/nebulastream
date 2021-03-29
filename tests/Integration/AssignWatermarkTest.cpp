@@ -121,7 +121,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))) "
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))"
+                   ".apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -239,7 +239,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
                    "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))) "
                    ".byKey(Attribute(\"id\"))"
-                   ".apply(Sum(Attribute(\"value\"))))"
+                   ".apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -338,7 +338,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
         "Milliseconds()))"
         ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500))) "
         ".byKey(Attribute(\"id\"))"
-        ".apply(Sum(Attribute(\"value\"))))"
+        ".apply(Sum(Attribute(\"value\")))"
         ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -457,7 +457,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
         ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50),Milliseconds()))"
         ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)))"
         ".byKey(Attribute(\"id\"))"
-        ".apply(Sum(Attribute(\"value\"))))"
+        ".apply(Sum(Attribute(\"value\")))"
         ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 

@@ -515,7 +515,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ss << "{\"userQuery\" : ";
     ss << "\"Query::from(\\\"window\\\")"
           ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
-          ".byKey(Attribute(\\\"id\\\")"
+          ".byKey(Attribute(\\\"id\\\"))"
           ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
@@ -582,7 +582,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << "\"Query::from(\\\"window\\\")"
-          ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)))."
+          ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)))"
           ".byKey(Attribute(\\\"id\\\"))"
           ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;

@@ -332,9 +332,8 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
     string query =
         "Query::from(\"window\")"
         ".project(Attribute(\"id\").rename(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").rename(\"newValue\"))"
-        ".windowByKey(Attribute(\"newId\"), "
-        "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-        "Seconds(1)), Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
+        ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Seconds(1)))"
+        ".byKey(Attribute(\"newId\")).apply(Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
