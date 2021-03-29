@@ -45,7 +45,6 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
 
   private:
-
     /**
      * @brief This method takes input as a binary operator and sort the children alphabetically based on stream qualifier name
      * @param binaryOperator : the input binary operator
