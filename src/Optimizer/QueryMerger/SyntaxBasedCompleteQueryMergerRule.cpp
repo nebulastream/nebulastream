@@ -31,7 +31,7 @@ SyntaxBasedCompleteQueryMergerRulePtr SyntaxBasedCompleteQueryMergerRule::create
     return std::make_shared<SyntaxBasedCompleteQueryMergerRule>(SyntaxBasedCompleteQueryMergerRule());
 }
 
-bool SyntaxBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
+bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
     NES_INFO("SyntaxBasedCompleteQueryMergerRule: Applying Syntax Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();

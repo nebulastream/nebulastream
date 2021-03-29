@@ -39,8 +39,7 @@ Z3SignatureBasedCompleteQueryMergerRulePtr Z3SignatureBasedCompleteQueryMergerRu
     return std::make_shared<Z3SignatureBasedCompleteQueryMergerRule>(Z3SignatureBasedCompleteQueryMergerRule(context));
 }
 
-bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
-
+bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
     NES_INFO(
         "Z3SignatureBasedCompleteQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allNewSharedQueryMetaData = globalQueryPlan->getAllNewSharedQueryMetaData();
@@ -56,7 +55,6 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
     for (auto& targetSharedQueryMetaData : allNewSharedQueryMetaData) {
         bool merged = false;
         for (auto& hostSharedQueryMetaData : allOldSharedQueryMetaData) {
-
             if (targetSharedQueryMetaData->getSharedQueryId() == hostSharedQueryMetaData->getSharedQueryId()) {
                 continue;
             }
@@ -67,9 +65,11 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
             // Prepare a map of matching address and target sink global query nodes
             // if there are no matching global query nodes then the shared query metadata are not matched
             std::map<OperatorNodePtr, OperatorNodePtr> targetToHostSinkOperatorMap;
-            for (auto& targetSink : targetQueryPlan->getSinkOperators()) {
-                bool foundMatch = false;
-                for (auto& hostSink : hostQueryPlan->getSinkOperators()) {
+            auto targetSinks = targetQueryPlan->getSinkOperators();
+            bool foundMatch = false;
+            for (auto& targetSink : targetSinks) {
+                auto hostSinks = hostQueryPlan->getSinkOperators();
+                for (auto& hostSink : hostSinks) {
                     //Check if the address and target sink operator signatures match each other
                     if (signatureEqualityUtil->checkEquality(hostSink->getSignature(), targetSink->getSignature())) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
@@ -80,13 +80,12 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
                 if (!foundMatch) {
                     NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: There are no matching host sink for target sink "
                                 << targetSink->toString());
-                    targetToHostSinkOperatorMap.clear();
                     break;
                 }
             }
 
             //Not all sinks found an equivalent entry in the target shared query metadata
-            if (targetToHostSinkOperatorMap.empty()) {
+            if (!foundMatch) {
                 NES_WARNING("Z3SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
                 continue;
             }
@@ -95,8 +94,11 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
 
             //Iterate over all matched pairs of sink operators and merge the query plan
             for (auto& [targetSinkOperator, hostSinkOperator] : targetToHostSinkOperatorMap) {
+                //Get children of target and host sink operators
                 auto targetSinkChildren = targetSinkOperator->getChildren();
                 auto hostSinkChildren = hostSinkOperator->getChildren();
+                //Iterate over target children operators and migrate their parents to the host children operators.
+                // Once done, remove the target parent from the target children.
                 for (auto& childToMerge : targetSinkChildren) {
                     for (auto& hostChild : hostSinkChildren) {
                         bool addedNewParent = hostChild->addParent(targetSinkOperator);
@@ -106,6 +108,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(const GlobalQueryPlanPtr& gl
                     }
                     childToMerge->removeParent(targetSinkOperator);
                 }
+                //Add target sink operator as root to the host query plan.
                 hostQueryPlan->addRootOperator(targetSinkOperator);
             }
 
