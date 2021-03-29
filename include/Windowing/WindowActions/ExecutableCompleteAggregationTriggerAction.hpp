@@ -162,14 +162,25 @@ class ExecutableCompleteAggregationTriggerAction
 
         auto recordsPerWindow = std::vector<uint64_t>(windows.size(), 0);
 
-        // if the aggregation function is Min, we should not initialize partialFinalAggregates with 0
         auto partialFinalAggregates = std::vector<PartialAggregateType>(windows.size());
+
+        // if the aggregation function is Min,  we should initialize the partialFinalAggregates with the upper bound of the data type
         if (windowDefinition->getWindowAggregation()->getType() == WindowAggregationDescriptor::Min) {
             if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
                 partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->getUpperBound());
             } else if (auto floatType =
                            DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
                 partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->getUpperBound());
+            }
+        }
+
+        // if the aggregation function is Max, we should initialize the partialFinalAggregates with the lower bound of the data type
+        if (windowDefinition->getWindowAggregation()->getType() == WindowAggregationDescriptor::Max) {
+            if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->getLowerBound());
+            } else if (auto floatType =
+                DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->getLowerBound());
             }
         }
 
