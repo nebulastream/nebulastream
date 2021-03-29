@@ -36,12 +36,12 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
         ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 5000000, "Number of buffers to produce.");
 
     bufferSizeInBytes = ConfigOption<std::string>::create("bufferSizeInBytes", "1024", "buffer size in bytes.");
-    numberOfBuffersInGlobalBufferManager =
-        ConfigOption<std::string>::create("numberOfBuffersInGlobalBufferManager", "10000", "Number buffers in global buffer pool.");
+    numberOfBuffersInGlobalBufferManager = ConfigOption<std::string>::create("numberOfBuffersInGlobalBufferManager", "10000",
+                                                                             "Number buffers in global buffer pool.");
     numberOfBuffersPerPipeline =
         ConfigOption<std::string>::create("numberOfBuffersPerPipeline", "1024", "Number buffers in pipeline local buffer pool.");
     numberOfBuffersInSourceLocalBufferPool = ConfigOption<std::string>::create("numberOfBuffersInSourceLocalBufferPool", "1024",
-                                                                            "Number buffers in source local buffer pool.");
+                                                                               "Number buffers in source local buffer pool.");
 
     query = ConfigOption<std::string>::create("query", "", "Query to be processed");
     inputOutputMode = ConfigOption<std::string>::create("inputOutputMode", "Auto", "modus of how to read data");
