@@ -89,6 +89,7 @@ const std::string logo = "/*****************************************************
                          " *    |_| \\_| |______| |_____/\n"
                          " *\n"
                          " ********************************************************/";
+
 int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
@@ -106,6 +107,13 @@ int main(int argc, const char* argv[]) {
     auto configPath = commandLineParams.find("--configPath");
 
     if (configPath != commandLineParams.end()) {
+        ifstream input_stream;
+        input_stream.open(configPath->second.c_str(), ios::in);
+        if(!input_stream)
+        {
+            std::cout << "FILE NOT FOUND in " << configPath->second << std::endl;
+            return -1;
+        }
         std::cout << "using config file=" << configPath->second << std::endl;
         benchmarkConfig->overwriteConfigWithYAMLFileInput(configPath->second);
     } else if (argc >= 1) {
@@ -122,7 +130,7 @@ int main(int argc, const char* argv[]) {
     std::string resultPrefix = "Time,BM_Name,NES_Version";
     std::string changeableParameterString = "WorkerThreads,CoordinatorThreadCnt,SourceCnt";
     std::string benchmarkResultString = "ProcessedBuffersTotal,ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,"
-                                        "ThroughputInTupsPerSec,ThroughputInMBPerSec";
+                                        "ThroughputInTupsPerSec,ThroughputInMBPerSec,AvgLatencyInMs";
     std::string fixParameterString = "NumberOfBuffersToProduce,NumberOfBuffersInGlobalBufferManager,numberOfBuffersPerPipeline,"
                                      "NumberOfBuffersInSourceLocalBufferPool,BufferSizeInBytes,query,InputOutputMode";
 

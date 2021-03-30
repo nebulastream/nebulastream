@@ -78,6 +78,8 @@ class Task {
 
     uint64_t getId();
 
+    TupleBuffer& getBufferRef();
+
   private:
     Execution::ExecutablePipelinePtr pipeline;
     TupleBuffer buf;

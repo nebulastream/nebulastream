@@ -634,7 +634,6 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
     NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString());
-    std::unique_lock lock(statisticsMutex);
     if (queryToStatisticsMap.contains(task.getPipeline()->getQepParentId())) {
         auto statistics = queryToStatisticsMap.find(task.getPipeline()->getQepParentId());
 
@@ -643,8 +642,16 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
             statistics->incProcessedWatermarks();
         } else if (!task.getPipeline()->isReconfiguration()) {
             statistics->incProcessedBuffers();
+            auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::
+                                                                             now().time_since_epoch()).count();
+            auto diff = now - latency[2];
+//            NES_ERROR("read lat2=" << latency[2] << " now=" << now << " diff=" << diff);
+            statistics->incLatencySum(diff);
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
+
+
     } else {
         NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");
     }

@@ -38,6 +38,8 @@ bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
 
 Execution::ExecutablePipelinePtr Task::getPipeline() { return pipeline; }
 
+TupleBuffer& Task::getBufferRef() {return buf;}
+
 bool Task::operator!() const { return pipeline == nullptr; }
 
 Task::operator bool() const { return pipeline != nullptr; }

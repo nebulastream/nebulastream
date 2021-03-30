@@ -140,16 +140,19 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
                 subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
                 subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
                 subPlanIdToTuplelCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
+                subPlanIdToLatencyCnt[iter->getSubQueryId()] = iter->getLatencySum();
             }
 
-            //if last iteration do last - first
             if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
+                //if last iteration do last - first
                 std::cout << "last measurement runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
                 subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks() - subPlanIdToTaskCnt[iter->getSubQueryId()];
                 subPlanIdToBufferCnt[iter->getSubQueryId()] =
                     iter->getProcessedBuffers() - subPlanIdToBufferCnt[iter->getSubQueryId()];
                 subPlanIdToTuplelCnt[iter->getSubQueryId()] =
                     iter->getProcessedTuple() - subPlanIdToTuplelCnt[iter->getSubQueryId()];
+                subPlanIdToLatencyCnt[iter->getSubQueryId()] =
+                    iter->getLatencySum() - subPlanIdToLatencyCnt[iter->getSubQueryId()];
             }
         }//end of for
 
@@ -172,6 +175,7 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
         NES_ASSERT(subPlanIdToTuplelCnt.size() == config->getNumberOfMeasurementsToCollect()->getValue(),
                    "We cannot use this run as no data was measured");
     }
+
     std::cout << "content of map" << std::endl;
     for (auto& val : subPlanIdToTuplelCnt) {
         std::cout << "first=" << val.first << " second=" << val.second << std::endl;
@@ -188,6 +192,7 @@ E2EBase::~E2EBase() {
     subPlanIdToTaskCnt.clear();
     subPlanIdToBufferCnt.clear();
     subPlanIdToTuplelCnt.clear();
+    subPlanIdToLatencyCnt.clear();
     queryService.reset();
     queryCatalog.reset();
 }
@@ -223,6 +228,7 @@ void E2EBase::setupSources() {
     }
 
     if (mode == InputOutputMode::FileMode) {
+        NES_NOT_IMPLEMENTED();
         std::cout << "file source mode" << std::endl;
         NES::SourceConfigPtr srcConf = NES::SourceConfig::create();
         srcConf->setSourceType("CSVSource");
@@ -239,6 +245,7 @@ void E2EBase::setupSources() {
             wrk1->registerPhysicalStream(inputStream);
         }
     } else if (mode == InputOutputMode::CacheMode) {
+        NES_NOT_IMPLEMENTED();
         std::cout << "cache mode" << std::endl;
         struct Record {
             uint64_t id;
@@ -280,13 +287,17 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-                //                auto ts = time(0);//TODO activate this later if we really use it
-                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                for (auto u = 1u; u < numberOfTuplesToProduce - 1; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = u;
                 }
+                records[0].id = 123;
+                records[0].value = 123;
+//                records[0].timestamp = std::chrono::system_clock::now().time_since_epoch().count();
+                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::
+                                                                                             now().time_since_epoch()).count();
                 return;
             };
 
@@ -444,6 +455,7 @@ std::string E2EBase::getResult() {
     uint64_t tuplesProcessed = 0;
     uint64_t bufferProcessed = 0;
     uint64_t tasksProcessed = 0;
+    uint64_t latencySum = 0;
 
     //sum up the values
     for (auto& val : subPlanIdToTaskCnt) {
@@ -457,11 +469,18 @@ std::string E2EBase::getResult() {
     for (auto& val : subPlanIdToTuplelCnt) {
         tuplesProcessed += val.second;
     }
+
+    for (auto& val : subPlanIdToLatencyCnt) {
+        latencySum += val.second;
+    }
+
+    std::cout << "latency sum=" << latencySum << " in ms=" << std::chrono::milliseconds(latencySum).count() << std::endl;
     double runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 
     out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
         << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed << int(tuplesProcessed / runtimeInSec) << ","
-        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024;
+        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
+        << latencySum / bufferProcessed;
 
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
     std::cout << "tuples=" << tuplesProcessed << std::endl;
@@ -469,6 +488,7 @@ std::string E2EBase::getResult() {
     std::cout << "runtime in sec=" << runtimeInSec << std::endl;
     std::cout << "throughput MB/se=" << (tuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
               << std::endl;
+    std::cout << "AvgLatencyInMs=" << latencySum / bufferProcessed << std::endl;
 
     return out.str();
 }

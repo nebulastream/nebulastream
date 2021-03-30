@@ -115,6 +115,7 @@ class E2EBase {
     std::map<uint64_t, uint64_t> subPlanIdToTaskCnt;
     std::map<uint64_t, uint64_t> subPlanIdToBufferCnt;
     std::map<uint64_t, uint64_t> subPlanIdToTuplelCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToLatencyCnt;
     NES::QueryServicePtr queryService;
     QueryId queryId;
     NES::QueryCatalogPtr queryCatalog;
