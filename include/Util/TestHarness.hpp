@@ -31,11 +31,11 @@
  */
 namespace NES {
 
-enum TestHarnessSourceType { CSVSource, MemorySource, NonSource};
+enum TestHarnessWorkerType { CSVSource, MemorySource, NonSource};
 
-struct TestHarnessSource {
+struct TestHarnessWorker {
     NesWorkerPtr wrk;
-    TestHarnessSourceType type;
+    TestHarnessWorkerType type;
     std::string logicalStreamName;
     std::string physicalStreamName;
     SchemaPtr schema;
@@ -52,8 +52,8 @@ class TestHarness {
          * @param restPort port for the rest service
          * @param rpcPort for for the grpc
          */
-    TestHarness(std::string queryWithoutSink, uint16_t restPort = 8081, uint16_t rpcPort = 4000)
-        : ipAddress("127.0.0.1"), queryWithoutSink(queryWithoutSink), bufferSize(4096) {
+    TestHarness(std::string queryWithoutSink, uint16_t restPort = 8081, uint16_t rpcPort = 4000, uint64_t memSrcFrequency=0, uint64_t memSrcNumBuffToProcess=1)
+        : ipAddress("127.0.0.1"), queryWithoutSink(queryWithoutSink), bufferSize(4096), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
         NES_INFO("TestHarness: Start coordinator");
         crdConf = CoordinatorConfig::create();
         crdConf->resetCoordinatorOptions();
@@ -75,24 +75,21 @@ class TestHarness {
          */
     template<typename T>
     void pushElement(T element, uint64_t sourceIdx) {
-        // compute the index of the csv/memory source relative to all workers, including nonSource workers
-//        sourceIdx = sourceIdx - nonSourceWorkerCount;
-//        if (sourceIdx >= sourceSchemas.size()) {
-//            NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
-//        }
+        if (sourceIdx >= testHarnessWorkers.size()) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: sourceIdx is out of bound");
+        }
 
-//        if (!std::is_class<T>::value) {
-//            NES_THROW_RUNTIME_ERROR("TestHarness: tuples must be instances of struct");
-//        }
+        if (!std::is_class<T>::value) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: tuples must be instances of struct");
+        }
 
-//        if (sizeof(T) != sourceSchemas.at(sourceIdx)->getSchemaSizeInBytes()) {
-//            NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
-//        }
+        if (sizeof(T) != testHarnessWorkers.at(sourceIdx).schema->getSchemaSizeInBytes()) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
+        }
 
         auto* memArea = reinterpret_cast<uint8_t*>(malloc(sizeof(T)));
         memcpy(memArea, reinterpret_cast<uint8_t*>(&element), sizeof(T));
-        testHarnessSources.at(sourceIdx).record.push_back(memArea);
-//        records[sourceIdx].push_back(memArea);
+        testHarnessWorkers.at(sourceIdx).record.push_back(memArea);
     }
 
     /**
@@ -101,8 +98,7 @@ class TestHarness {
          * @param schema schema of the source
          * @param physical stream name
          */
-    void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema, std::string physicalStreamName, uint64_t parentId) {
-        NES_DEBUG("TestHarness parentId " << parentId);
+    void checkAndAddSource(std::string logicalStreamName, SchemaPtr schema) {
         // Check if logical stream already exists
         if (!crd->getStreamCatalog()->testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
             NES_TRACE("TestHarness: logical source does not exist in the stream catalog, adding a new logical stream "
@@ -118,10 +114,6 @@ class TestHarness {
                 crd->getStreamCatalog()->addLogicalStream(logicalStreamName, schema);
             }
         }
-
-        physicalStreamNames.push_back(physicalStreamName);
-        logicalStreamNames.push_back(logicalStreamName);
-        sourceSchemas.push_back(schema);
     }
 
     /**
@@ -135,17 +127,15 @@ class TestHarness {
         // set the localWorkerRpcPort and localWorkerZmqPort based on the number of workers
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
-        wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
-        wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
+        wrkConf->setRpcPort(crdPort + (testHarnessWorkers.size() + 1) * 20);
+        wrkConf->setDataPort(crdPort + (testHarnessWorkers.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         wrk->replaceParent(crd->getTopology()->getRoot()->getId(), parentId);
-        workerPtrs.push_back(wrk);
 
         std::vector<uint8_t*> currentSourceRecords;
 
-
-        TestHarnessSource currentMemorySource = TestHarnessSource();
+        TestHarnessWorker currentMemorySource = TestHarnessWorker();
         currentMemorySource.wrk = wrk;
         currentMemorySource.type = MemorySource;
         currentMemorySource.record = currentSourceRecords;
@@ -153,18 +143,14 @@ class TestHarness {
         currentMemorySource.logicalStreamName = logicalStreamName;
         currentMemorySource.physicalStreamName = physicalStreamName;
 
-        testHarnessSources.push_back(currentMemorySource);
+        testHarnessWorkers.push_back(currentMemorySource);
 
         NES_ASSERT(parentId != INVALID_TOPOLOGY_NODE_ID, "The provided ParentId is an INVALID_TOPOLOGY_NODE_ID");
         // check if record may span multiple buffers
         NES_ASSERT2_FMT(bufferSize % schema->getSchemaSizeInBytes() == 0,
                         "TestHarness: A record might span multiple buffers and this is not supported bufferSize="
                             << bufferSize << " recordSize=" << schema->getSchemaSizeInBytes());
-        checkAndAddSource(logicalStreamName, schema, physicalStreamName, parentId);
-
-        sourceTypes.push_back(MemorySource);
-        records.push_back(currentSourceRecords);
-
+        checkAndAddSource(logicalStreamName, schema);
     }
 
     /**
@@ -187,27 +173,20 @@ class TestHarness {
     void addCSVSource(PhysicalStreamConfigPtr csvSourceConf, SchemaPtr schema, uint64_t parentId) {
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
-        wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
-        wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
+        wrkConf->setRpcPort(crdPort + (testHarnessWorkers.size() + 1) * 20);
+        wrkConf->setDataPort(crdPort + (testHarnessWorkers.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         wrk->replaceParent(crd->getTopology()->getRoot()->getId(), parentId);
-        workerPtrs.push_back(wrk);
 
-        TestHarnessSource currentCsvSource = TestHarnessSource();
+        TestHarnessWorker currentCsvSource = TestHarnessWorker();
         currentCsvSource.wrk = wrk;
         currentCsvSource.type = CSVSource;
         currentCsvSource.csvSourceConfig = csvSourceConf;
 
-        testHarnessSources.push_back(currentCsvSource);
+        testHarnessWorkers.push_back(currentCsvSource);
 
-        checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema, csvSourceConf->getPhysicalStreamName(), parentId);
-
-        csvSourceConfs.push_back(csvSourceConf);
-        sourceTypes.push_back(CSVSource);
-
-        std::vector<uint8_t*> currentSourceRecords;
-        records.push_back(currentSourceRecords);
+        checkAndAddSource(csvSourceConf->getLogicalStreamName(), schema);
     }
 
     /**
@@ -228,17 +207,16 @@ class TestHarness {
         nonSourceWorkerCount++;
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(crdPort);
-        wrkConf->setRpcPort(crdPort + (workerPtrs.size() + 1) * 20);
-        wrkConf->setDataPort(crdPort + (workerPtrs.size() + 1) * 20 + 1);
+        wrkConf->setRpcPort(crdPort + (testHarnessWorkers.size() + 1) * 20);
+        wrkConf->setDataPort(crdPort + (testHarnessWorkers.size() + 1) * 20 + 1);
         auto wrk = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
         wrk->start(/**blocking**/ false, /**withConnect**/ true);
         wrk->replaceParent(crd->getTopology()->getRoot()->getId(), parentId);
-        workerPtrs.push_back(wrk);
 
-        TestHarnessSource currentNonSource = TestHarnessSource();
+        TestHarnessWorker currentNonSource = TestHarnessWorker();
         currentNonSource.wrk = wrk;
         currentNonSource.type = NonSource;
-        testHarnessSources.push_back(currentNonSource);
+        testHarnessWorkers.push_back(currentNonSource);
     }
 
     /**
@@ -249,7 +227,7 @@ class TestHarness {
         addNonSourceWorker(crdTopologyNodeId);
     }
 
-    uint64_t getWorkerCount() { return workerPtrs.size(); }
+    uint64_t getWorkerCount() { return testHarnessWorkers.size(); }
 
     /**
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
@@ -260,18 +238,10 @@ class TestHarness {
          */
     template<typename T>
     std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
-        if (physicalStreamNames.size() == 0 || logicalStreamNames.size() == 0 || workerPtrs.size() == 0) {
-            NES_THROW_RUNTIME_ERROR("TestHarness: source not added properly: number of added physycal streams = "
-                                    << std::to_string(physicalStreamNames.size())
-                                    << " number of added logical streams = " << std::to_string(logicalStreamNames.size())
-                                    << " number of added workers = " << std::to_string(workerPtrs.size())
-                                    << " number of content to expect = " << std::to_string(numberOfContentToExpect));
-        }
-
         QueryServicePtr queryService = crd->getQueryService();
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-        for (TestHarnessSource s: testHarnessSources) {
+        for (TestHarnessWorker s: testHarnessWorkers) {
             if (s.type == CSVSource) {
                 s.wrk->registerPhysicalStream(s.csvSourceConfig);
             } else if (s.type == MemorySource) {
@@ -288,40 +258,12 @@ class TestHarness {
                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
                 }
 
-                //TODO: we have to fix those hard values
                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
                     "MemorySource", s.physicalStreamName, s.logicalStreamName, memArea, memAreaSize,
-                    /** numberOfBuffers*/ 1, /** frequency*/ 0);
+                    /** numberOfBuffers*/ memSrcNumBuffToProcess, /** frequency*/ memSrcFrequency);
                 s.wrk->registerPhysicalStream(conf);
             }
         }
-
-        // add value collected by the record vector to the memory source
-//        for (int i = 0; i < sourceTypes.size(); ++i) {
-//            if (sourceTypes[i] == CSVSource) {
-//                // use the given csv source
-//                workerPtrs[i]->registerPhysicalStream(csvSourceConfs[i]);
-//            } else if (sourceTypes[i] == MemorySource) {
-//                // create and populate memory source
-//                auto currentSourceNumOfRecords = records.at(i).size();
-//                auto tupleSize = sourceSchemas.at(i)->getSchemaSizeInBytes();
-//                auto memAreaSize = currentSourceNumOfRecords * tupleSize;
-//                auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
-//
-//                auto currentRecords = records.at(i);
-//                for (int j = 0; j < currentSourceNumOfRecords; ++j) {
-//                    memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
-//                }
-//
-//                //TODO: we have to fix those hard values
-//                AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-//                    "MemorySource", physicalStreamNames.at(i), logicalStreamNames.at(i), memArea, memAreaSize,
-//                    /** numberOfBuffers*/ 1, /** frequency*/ 0);
-//                workerPtrs[i]->registerPhysicalStream(conf);
-//            } else {
-//                NES_THROW_RUNTIME_ERROR("TestHarness:getOutput: Unknown source type:" << std::to_string(sourceTypes[i]));
-//            }
-//        }
 
         // local fs
         std::string filePath = "testHarness.out";
@@ -382,8 +324,8 @@ class TestHarness {
         ifs.read(buff, length);
         std::vector<T> actualOutput(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff) + length / sizeof(T));
 
-        for (NesWorkerPtr wrk : workerPtrs) {
-            wrk->stop(false);
+        for (TestHarnessWorker s: testHarnessWorkers) {
+            s.wrk->stop(false);
         }
         crd->stopCoordinator(false);
 
@@ -396,7 +338,7 @@ class TestHarness {
      * @brief get the id of worker at a particular index
      * @param workerIdx index of the worker in the test harness
      */
-    uint64_t getWorkerId(uint64_t workerIdx) { return workerPtrs.at(workerIdx)->getTopologyNodeId(); }
+    uint64_t getWorkerId(uint64_t workerIdx) { return testHarnessWorkers.at(workerIdx).wrk->getTopologyNodeId(); }
 
   private:
     CoordinatorConfigPtr crdConf;
@@ -406,19 +348,13 @@ class TestHarness {
     std::string ipAddress;
 
     std::string queryWithoutSink;
-
-    std::vector<NesWorkerPtr> workerPtrs;
-    std::vector<std::vector<uint8_t*>> records;
-    std::vector<uint64_t> counters;
-    std::vector<SchemaPtr> sourceSchemas;
-    std::vector<std::string> physicalStreamNames;
-    std::vector<std::string> logicalStreamNames;
-    std::vector<PhysicalStreamConfigPtr> csvSourceConfs;
-    std::vector<TestHarnessSourceType> sourceTypes;
     uint64_t bufferSize;
     uint64_t nonSourceWorkerCount;
 
-    std::vector<TestHarnessSource> testHarnessSources;
+    uint64_t memSrcFrequency;
+    uint64_t memSrcNumBuffToProcess;
+
+    std::vector<TestHarnessWorker> testHarnessWorkers;
 };
 }// namespace NES
 
