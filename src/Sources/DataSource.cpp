@@ -190,12 +190,10 @@ void DataSource::runningRoutine() {
 
         //repeat test
         if (!recNow) {
-            NES_DEBUG("DataSource::sleeping ");
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-
             continue;
         }
-        NES_DEBUG("DataSource::awake");
+
         //check if already produced enough buffer
         if (cnt < numBuffersToProcess || numBuffersToProcess == 0) {
             NES_DEBUG("DataSource::before receiveData");

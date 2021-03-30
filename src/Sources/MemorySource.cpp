@@ -21,7 +21,6 @@
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-
 namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
