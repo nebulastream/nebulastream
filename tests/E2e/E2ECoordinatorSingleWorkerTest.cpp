@@ -659,10 +659,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
     ss << "\"Query::from(\\\"Rating\\\")"
-         /* ".windowByKey(Attribute(\\\"auctionId\\\"), "
+          ".windowByKey(Attribute(\\\"auctionId\\\"), "
           "TumblingWindow::of(EventTime(Attribute(\\\"processingTime\\\")), Seconds(2)), "
           "Max(Attribute(\\\"bidPrice\\\")))"
-          ".window(TumblingWindow::of(EventTime(Attribute(\\\"start\\\")),Seconds(2)), Max(Attribute(\\\"bidPrice\\\")))"*/
+          ".window(TumblingWindow::of(EventTime(Attribute(\\\"start\\\")),Seconds(2)), Max(Attribute(\\\"bidPrice\\\")))"
           ".sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";

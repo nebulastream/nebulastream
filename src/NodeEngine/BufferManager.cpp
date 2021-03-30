@@ -266,6 +266,7 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
 FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers) {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
+    NES_DEBUG("BufferManager:: " << "availableBuffers.size(): " << availableBuffers.size() << " numberOfReservedBuffers: " << numberOfReservedBuffers);
     NES_ASSERT2_FMT(availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers");//TODO improve error
     for (auto i = 0; i < numberOfReservedBuffers; ++i) {
         auto memSegment = availableBuffers.front();

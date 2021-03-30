@@ -14,8 +14,6 @@
     limitations under the License.
 */
 
-
-
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -30,6 +28,7 @@
 #include <boost/algorithm/string.hpp>
 #include <chrono>
 #include <iostream>
+#include <queue>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -43,7 +42,9 @@
 using Clock = std::chrono::high_resolution_clock;
 //std::stringstream readStream;
 std::string str;
+int size = 0;
 int sock = 0;
+
 namespace NES {
 
 NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
@@ -56,7 +57,8 @@ NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMa
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();
     this->address = address;
-  /*  NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
+
+    /*  NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval
                                       << " numBuff=" << this->numBuffersToProcess << " numberOfTuplesToProducePerBuffer="
                                       << numberOfTuplesToProducePerBuffer << "endlessRepeat=" << endlessRepeat);
 */
@@ -113,19 +115,16 @@ NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMa
 
 }
 
+
 std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
     NES_DEBUG("NettySource::receiveData called");
-    auto buf = this->bufferManager->getBufferBlocking();
+
+    //auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("NettySource::new Buffer");
-    //fillBuffer(buf);
+    auto buf = bufferManager->getBufferBlocking();
     fillSocket(buf);
     NES_DEBUG("NettySource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples());
- /*   if (buf.getNumberOfTuples() == 0) {
-        return std::nullopt;
-    } else {
-        return buf;
-    }
-*/
+
      return buf;
 }
 
@@ -137,166 +136,153 @@ const std::string NettySource::toString() const {
 }
 
 void NettySource::fillSocket(NodeEngine::TupleBuffer& buf) {
-    NES_DEBUG("NettySource::inside Fill Socket");
-    std::vector<PhysicalTypePtr> physicalTypes;
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto field : schema->fields) {
-        NES_DEBUG("NettySource::schema size" << schema->getSize() << " schema bytes" << schema->getSchemaSizeInBytes());
 
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physicalField);
-    }
+         uint64_t tupCnt = 0;
 
-    std::regex validity("^[a-zA-Z0-9,]+$");
-    char buffer[4096] = {0};
-
-
-
-
-    uint64_t tupCnt = 0;
-    //while (readData) {
-        //buf.setNumberOfTuples(0);
-
-        bzero(buffer, BUFFER_SIZE);
-
-        //valread =
-    int valread = read(sock, buffer, BUFFER_SIZE);
-    NES_DEBUG("NettySource:: Read Buffer");
-        if (valread <= 0) {
-            buf.setNumberOfTuples(0);
-            return;
+        NES_DEBUG("NettySource::inside Fill Socket");
+        std::vector<PhysicalTypePtr> physicalTypes;
+        DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+        for (auto field : schema->fields) {
+            //NES_DEBUG("NettySource::schema size" << schema->getSize() << " schema bytes" << schema->getSchemaSizeInBytes());
+            auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+            physicalTypes.push_back(physicalField);
         }
+
+        std::regex validity("^[a-zA-Z0-9,]+$");
 
         //readStream << buffer;
 
         // Continue reading while end is not found.
-       // readData = readStream.str().find("end;") == std::string::npos;
-        std::vector<std::string> parsed;
-        boost::algorithm::split(parsed, buffer, boost::is_any_of("\n"));
-
+        // readData = readStream.str().find("end;") == std::string::npos;
+        std::deque<std::string> parsed;
         //bool clearedReadStream = false;
+         while(tupCnt * schema->getSchemaSizeInBytes() + schema->getSchemaSizeInBytes() < buf.getBufferSize()) {
 
-        for (int i = 0; i < parsed.size(); i++) {
-            //NES_DEBUG("NettySource:: Inside For loop");
-
-            std::vector<std::string> tokens;
-            boost::algorithm::split(tokens, parsed[i], boost::is_any_of(","));
-            if(tokens.size() != 5) {
-                str = str + parsed[i];
-                boost::algorithm::split(tokens, str, boost::is_any_of(","));
+            if (parsed.empty()) {
+                char buffer[4096] = {0};
+                bzero(buffer, BUFFER_SIZE);
+                int valread = read(sock, buffer, BUFFER_SIZE);
+                NES_DEBUG("NettySource:: Read Buffer");
+                if (valread <= 0) {
+                    NES_TRACE("NettySource::fillBuffer: read produced buffer= "
+                              << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+                    buf.setNumberOfTuples(0);
+                    return;
+                }
+                boost::algorithm::split(parsed, buffer, boost::is_any_of("\n"));
             }
-            else
-                str = parsed[i];
+            else {
+                std::string strd = parsed.front();
+                parsed.pop_front();
+                //NES_DEBUG("NettySource:: Inside For loop");
+                std::vector<std::string> tokens;
+                boost::algorithm::split(tokens, strd, boost::is_any_of(","));
+                if (tokens.size() != 5) {
+                    str = str + strd;
+                    boost::algorithm::split(tokens, str, boost::is_any_of(","));
+                } else
+                    str = strd;
 
-            if ((tupCnt * schema->getSchemaSizeInBytes()) + schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
-                buf.setNumberOfTuples(tupCnt);
-                NES_DEBUG("NettySource::fillBuffer: read produced buffer= " << buf.getNumberOfTuples() );
-                NES_TRACE("NettySource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
-                queryManager->addWork(operatorId, buf);
-                buf = bufferManager->getBufferBlocking();
-                tupCnt = 0;
-            }
-            if(std::regex_match(parsed[i].c_str(),validity)) {
-                if (tokens.size() == 5 && !tokens[2].empty() && !tokens[0].empty() && !tokens[1].empty() && !tokens[4].empty()) {
-                    tokens.push_back(std::to_string(
-                        std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count()));
-                    uint64_t offset = 0;
-                    for (uint64_t j = 0; j < schema->getSize(); j++) {
-                        auto field = physicalTypes[j];
-                        uint64_t fieldSize = field->size();
+                /* if ((tupCnt * schema->getSchemaSizeInBytes()) + schema->getSchemaSizeInBytes() > buf.getBufferSize()) {
+                    buf.setNumberOfTuples(tupCnt);
+                    NES_DEBUG("NettySource::fillBuffer: read produced buffer= " << buf.getNumberOfTuples());
+                    NES_TRACE("NettySource::fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
+                    queryManager->addWork(operatorId, buf);
+                    buf = bufferManager->getBufferBlocking();
+                    tupCnt = 0;
+                }*/
+                if (std::regex_match(strd.c_str(), validity)) {
+                    if (tokens.size() == 5 && !tokens[2].empty() && !tokens[0].empty() && !tokens[1].empty()
+                        && !tokens[4].empty()) {
+                        tokens.push_back(std::to_string(
+                            std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now().time_since_epoch()).count()));
+                        uint64_t offset = 0;
+                        for (uint64_t j = 0; j < schema->getSize(); j++) {
+                            auto field = physicalTypes[j];
+                            uint64_t fieldSize = field->size();
 
-                        if (field->isBasicType()) {
-                            auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
-                            /*     * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
-                     * TODO: this requires underflow/overflow checks
-                     * TODO: our types need their own sto/strto methods
-*/
-                            /*     NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
-                                        "Overflow detected: buffer size = " << buf.getBufferSize()
-                                                                            << " position = " << (offset + tupCnt * tupleSize)
-                                                                            << " field size " << fieldSize);*/
-                            if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
+                            if (field->isBasicType()) {
+                                auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
+                                /*     * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
+                         * TODO: this requires underflow/overflow checks
+                         * TODO: our types need their own sto/strto methods
+    */
+                                /*     NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
+                                            "Overflow detected: buffer size = " << buf.getBufferSize()
+                                                                                << " position = " << (offset + tupCnt * tupleSize)
+                                                                                << " field size " << fieldSize);*/
+                                if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
 
-                                uint64_t val = std::stoull(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_64) {
-                                int64_t val = std::stoll(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_32) {
-                                //NES_DEBUG("NettySource:: " << parsed[i].c_str());
-                                uint32_t val = std::stoul(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_32) {
-                                int32_t val = std::stol(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
-                                uint16_t val = std::stol(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_16) {
-                                int16_t val = std::stol(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
-                                uint8_t val = std::stoi(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_8) {
-                                int8_t val = std::stoi(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_8) {
-                                int8_t val = std::stoi(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::DOUBLE) {
-                                double val = std::stod(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::FLOAT) {
-                                float val = std::stof(tokens[j].c_str());
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
-                            } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::BOOLEAN) {
-                                bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
-                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                    uint64_t val = std::stoull(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_64) {
+                                    int64_t val = std::stoll(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_32) {
+                                    //NES_DEBUG("NettySource:: " << parsed[i].c_str());
+                                    uint32_t val = std::stoul(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_32) {
+                                    int32_t val = std::stol(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
+                                    uint16_t val = std::stol(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_16) {
+                                    int16_t val = std::stol(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
+                                    uint8_t val = std::stoi(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_8) {
+                                    int8_t val = std::stoi(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_8) {
+                                    int8_t val = std::stoi(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::DOUBLE) {
+                                    double val = std::stod(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::FLOAT) {
+                                    float val = std::stof(tokens[j].c_str());
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::BOOLEAN) {
+                                    bool val = (strcasecmp(tokens[j].c_str(), "true") == 0 || atoi(tokens[j].c_str()) != 0);
+                                    memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
+                                }
+                            } else {
+                                memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
                             }
-                        } else {
-                            memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
-                        }
 
-                        offset += fieldSize;
+                            offset += fieldSize;
+                        }
+                        tupCnt++;
+                        str.clear();
+                    } else {
+                        NES_WARNING("Incomplete token received " << strd);
+                        //NES_INFO(" buffer size " << buf.getBufferSize());
+                        tupCnt++;
                     }
+                } else {
+                    NES_WARNING("Wrong token" << strd);
                     tupCnt++;
                     str.clear();
-                } else {
-                    NES_WARNING("Incomplete token received " << parsed[i]);
-                    NES_INFO(" buffer size " << buf.getBufferSize());
-                    tupCnt++;
-                    // readStream.clear();
-                    if (!parsed[i].empty()) {
-                        NES_WARNING("Appending incomplete token at the beginning of the readStream" << parsed[i]);
-                        // str = parsed[i];
-                    }
-                    //  clearedReadStream=true;
                 }
-            }else{
-                NES_WARNING("Wrong token" << parsed[i]);
-                tupCnt++;
-                str.clear();
+
+                buf.setNumberOfTuples(tupCnt);
             }
         }
-    NES_DEBUG("NettySource:: Outside For loop");
 
 
-    /*  if(!clearedReadStream){
-          readStream.clear();
-      }*/
-
-   // }
-
-
-    buf.setNumberOfTuples(tupCnt);
+   // buf.setNumberOfTuples(tupCnt);
+    NES_DEBUG("NettySource:: Buffer Full: ");
     NES_TRACE("NettySource:: fillBuffer: read produced buffer= " << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
 
 
     //update statistics
     generatedTuples += tupCnt;
     generatedBuffers++;
-    NES_DEBUG("NettySource:: generatedTuples" << generatedTuples << ": Buffer " << generatedBuffers);
+    NES_DEBUG("NettySource:: generatedTuples: " << generatedTuples << ": Buffercount " << generatedBuffers);
 
 }
 

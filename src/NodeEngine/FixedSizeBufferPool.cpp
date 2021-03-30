@@ -70,6 +70,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
         cvar.wait(lock);
     }
     auto memSegment = exclusiveBuffers.front();
+    NES_DEBUG("FixedSizeBufferPool:: Reference Count: " <<memSegment->controlBlock->getReferenceCount());
     NES_VERIFY(memSegment, "null memory segment");
     exclusiveBuffers.pop_front();
     if (memSegment->controlBlock->prepare()) {
