@@ -124,7 +124,7 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin
 /*
  * @brief Test a query with a single window operator and a single join operator running on a single node
  */
-TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeSingleWindowSingleJoin) {
+TEST_F(ComplexSequenceTest, complexTestDistributedNodeSingleWindowSingleJoin) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
@@ -508,7 +508,7 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
 /*
  * @brief Test a query with a single window operator and a single join operator running multiple nodes
  */
-TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMultipleJoinsWithBottomUp) {
+TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoinsWithBottomUp) {
     struct Window1 {
         uint64_t id1;
         uint64_t timestamp;
