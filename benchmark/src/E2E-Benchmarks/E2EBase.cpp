@@ -126,33 +126,67 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
         int64_t nextPeriodStartTime = config->getExperimentMeasureIntervalInSeconds()->getValue() * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
-        for (auto iter : queryStatisticsPtrs) {
+        //get data from worker
+        auto queryStatisticsWorkerPtrs = nodeEngine->getQueryStatistics(queryId);
+        for (auto iter : queryStatisticsWorkerPtrs) {
             auto ts = std::chrono::system_clock::now();
             auto timeNow = std::chrono::system_clock::to_time_t(ts);
-            std::cout << "Statistics  at " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
+            std::cout << "Statistics at worker " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
                       << iter->getQueryStatisticsAsString() << std::endl;
 
             //if first iteration just push the first value
-            if (subPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
-                std::cout << "first measurement runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
+            if (workerSubPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
+                std::cout << "first measurement wrk runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
                           << std::endl;
-                subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
-                subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
-                subPlanIdToTuplelCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
-                subPlanIdToLatencyCnt[iter->getSubQueryId()] = iter->getLatencySum();
+                workerSubPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
+                workerSubPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
+                workerSubPlanIdToTupleCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
+                workerSubPlanIdToLatencyCnt[iter->getSubQueryId()] = iter->getLatencySum();
             }
 
             if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
                 //if last iteration do last - first
-                std::cout << "last measurement runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
-                subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks() - subPlanIdToTaskCnt[iter->getSubQueryId()];
-                subPlanIdToBufferCnt[iter->getSubQueryId()] =
-                    iter->getProcessedBuffers() - subPlanIdToBufferCnt[iter->getSubQueryId()];
-                subPlanIdToTuplelCnt[iter->getSubQueryId()] =
-                    iter->getProcessedTuple() - subPlanIdToTuplelCnt[iter->getSubQueryId()];
-                subPlanIdToLatencyCnt[iter->getSubQueryId()] =
-                    iter->getLatencySum() - subPlanIdToLatencyCnt[iter->getSubQueryId()];
+                std::cout << "last measurement wrk runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
+                workerSubPlanIdToTaskCnt[iter->getSubQueryId()] =
+                    iter->getProcessedTasks() - workerSubPlanIdToTaskCnt[iter->getSubQueryId()];
+                workerSubPlanIdToBufferCnt[iter->getSubQueryId()] =
+                    iter->getProcessedBuffers() - workerSubPlanIdToBufferCnt[iter->getSubQueryId()];
+                workerSubPlanIdToTupleCnt[iter->getSubQueryId()] =
+                    iter->getProcessedTuple() - workerSubPlanIdToTupleCnt[iter->getSubQueryId()];
+                workerSubPlanIdToLatencyCnt[iter->getSubQueryId()] =
+                    iter->getLatencySum() - workerSubPlanIdToLatencyCnt[iter->getSubQueryId()];
+            }
+        }//end of for
+
+        //get data from coordinator
+        auto queryStatisticsCoordinatorPtrs = crd->getNodeEngine()->getQueryStatistics(queryId);
+        for (auto iter : queryStatisticsCoordinatorPtrs) {
+            auto ts = std::chrono::system_clock::now();
+            auto timeNow = std::chrono::system_clock::to_time_t(ts);
+            std::cout << "Statistics at coordinator " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
+                      << iter->getQueryStatisticsAsString() << std::endl;
+
+            //if first iteration just push the first value
+            if (coordinatorSubPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
+                std::cout << "first measurement crd  runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
+                          << std::endl;
+                coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
+                coordinatorSubPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
+                coordinatorSubPlanIdToTupleCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
+                coordinatorSubPlanIdToLatencyCnt[iter->getSubQueryId()] = iter->getLatencySum();
+            }
+
+            if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
+                //if last iteration do last - first
+                std::cout << "last measurement crd runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
+                coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()] =
+                    iter->getProcessedTasks() - coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()];
+                coordinatorSubPlanIdToBufferCnt[iter->getSubQueryId()] =
+                    iter->getProcessedBuffers() - coordinatorSubPlanIdToBufferCnt[iter->getSubQueryId()];
+                coordinatorSubPlanIdToTupleCnt[iter->getSubQueryId()] =
+                    iter->getProcessedTuple() - coordinatorSubPlanIdToTupleCnt[iter->getSubQueryId()];
+                coordinatorSubPlanIdToLatencyCnt[iter->getSubQueryId()] =
+                    iter->getLatencySum() - coordinatorSubPlanIdToLatencyCnt[iter->getSubQueryId()];
             }
         }//end of for
 
@@ -171,13 +205,13 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
     std::cout << std::put_time(std::localtime(&outTime), "%Y-%m-%d %X")
               << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
 
-    if (subPlanIdToTuplelCnt.size() == 0) {
-        NES_ASSERT(subPlanIdToTuplelCnt.size() == config->getNumberOfMeasurementsToCollect()->getValue(),
+    if (workerSubPlanIdToTupleCnt.size() == 0) {
+        NES_ASSERT(workerSubPlanIdToTupleCnt.size() == config->getNumberOfMeasurementsToCollect()->getValue(),
                    "We cannot use this run as no data was measured");
     }
 
     std::cout << "content of map" << std::endl;
-    for (auto& val : subPlanIdToTuplelCnt) {
+    for (auto& val : workerSubPlanIdToTupleCnt) {
         std::cout << "first=" << val.first << " second=" << val.second << std::endl;
     }
 
@@ -189,10 +223,10 @@ E2EBase::~E2EBase() {
     tearDown();
     crd.reset();
     wrk1.reset();
-    subPlanIdToTaskCnt.clear();
-    subPlanIdToBufferCnt.clear();
-    subPlanIdToTuplelCnt.clear();
-    subPlanIdToLatencyCnt.clear();
+    workerSubPlanIdToTaskCnt.clear();
+    workerSubPlanIdToBufferCnt.clear();
+    workerSubPlanIdToTupleCnt.clear();
+    workerSubPlanIdToLatencyCnt.clear();
     queryService.reset();
     queryCatalog.reset();
 }
@@ -295,9 +329,9 @@ void E2EBase::setupSources() {
                 }
                 records[0].id = 123;
                 records[0].value = 123;
-//                records[0].timestamp = std::chrono::system_clock::now().time_since_epoch().count();
-                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::
-                                                                                             now().time_since_epoch()).count();
+                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                                           .count();
                 return;
             };
 
@@ -319,13 +353,21 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-                auto ts = time(0);
-                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::high_resolution_clock::now().time_since_epoch())
+                              .count();
+                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
                 }
+
+                records[0].id = 123;
+                records[0].value = 123;
+                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                                           .count();
                 return;
             };
 
@@ -347,13 +389,22 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-                auto ts = time(0);
-                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::high_resolution_clock::now().time_since_epoch())
+                              .count();
+
+                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
                 }
+                records[0].id = 123;
+                records[0].value = 123;
+                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                                           .count();
+
                 return;
             };
 
@@ -365,13 +416,20 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-                auto ts = time(0);
-                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::high_resolution_clock::now().time_since_epoch())
+                              .count();
+                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
                 }
+                records[0].id = 123;
+                records[0].value = 123;
+                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                                           .count();
                 return;
             };
 
@@ -452,43 +510,79 @@ std::string E2EBase::getResult() {
     std::stringstream out;
     out.precision(1);
 
-    uint64_t tuplesProcessed = 0;
-    uint64_t bufferProcessed = 0;
-    uint64_t tasksProcessed = 0;
-    uint64_t latencySum = 0;
+    uint64_t workerTuplesProcessed = 0;
+    uint64_t workerBufferProcessed = 0;
+    uint64_t workerTasksProcessed = 0;
+    uint64_t workerLatencySum = 0;
 
-    //sum up the values
-    for (auto& val : subPlanIdToTaskCnt) {
-        tasksProcessed += val.second;
+    uint64_t coordinatorTuplesProcessed = 0;
+    uint64_t coordinatorBufferProcessed = 0;
+    uint64_t coordinatorTasksProcessed = 0;
+    uint64_t coordinatorLatencySum = 0;
+
+    //sum up the values for worker
+    for (auto& val : workerSubPlanIdToTaskCnt) {
+        workerTasksProcessed += val.second;
     }
 
-    for (auto& val : subPlanIdToBufferCnt) {
-        bufferProcessed += val.second;
+    for (auto& val : workerSubPlanIdToBufferCnt) {
+        workerBufferProcessed += val.second;
     }
 
-    for (auto& val : subPlanIdToTuplelCnt) {
-        tuplesProcessed += val.second;
+    for (auto& val : workerSubPlanIdToTupleCnt) {
+        workerTuplesProcessed += val.second;
     }
 
-    for (auto& val : subPlanIdToLatencyCnt) {
-        latencySum += val.second;
+    for (auto& val : workerSubPlanIdToLatencyCnt) {
+        workerLatencySum += val.second;
     }
 
-    std::cout << "latency sum=" << latencySum << " in ms=" << std::chrono::milliseconds(latencySum).count() << std::endl;
+    //sum up the values for coordinator
+    for (auto& val : coordinatorSubPlanIdToTaskCnt) {
+        coordinatorTasksProcessed += val.second;
+    }
+
+    for (auto& val : coordinatorSubPlanIdToBufferCnt) {
+        coordinatorBufferProcessed += val.second;
+    }
+
+    for (auto& val : coordinatorSubPlanIdToTupleCnt) {
+        coordinatorTuplesProcessed += val.second;
+    }
+
+    for (auto& val : coordinatorSubPlanIdToLatencyCnt) {
+        coordinatorLatencySum += val.second;
+    }
+
+
+    std::cout << "latency sum=" << workerLatencySum << " in ms=" << std::chrono::milliseconds(workerLatencySum).count() << std::endl;
     double runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 
-    out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
-        << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed << int(tuplesProcessed / runtimeInSec) << ","
-        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
-        << latencySum / bufferProcessed;
+    out << workerBufferProcessed << "," << workerTasksProcessed << "," << workerTuplesProcessed << ","
+        << workerTuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed << int(workerTuplesProcessed / runtimeInSec) << ","
+        << std::fixed << (workerTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
+        << workerLatencySum / workerBufferProcessed;
+
+    out << coordinatorBufferProcessed << "," << coordinatorTasksProcessed << "," << coordinatorTuplesProcessed << ","
+        << coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed << int(coordinatorTuplesProcessed / runtimeInSec) << ","
+        << std::fixed << (coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
+        << coordinatorLatencySum / coordinatorBufferProcessed;
+
 
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
-    std::cout << "tuples=" << tuplesProcessed << std::endl;
-    std::cout << "tuples per sec=" << int(tuplesProcessed / runtimeInSec) << std::endl;
-    std::cout << "runtime in sec=" << runtimeInSec << std::endl;
-    std::cout << "throughput MB/se=" << (tuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
+    std::cout << "worker tuples=" << workerTuplesProcessed << std::endl;
+    std::cout << "worker tuples per sec=" << int(workerTuplesProcessed / runtimeInSec) << std::endl;
+    std::cout << "worker runtime in sec=" << runtimeInSec << std::endl;
+    std::cout << "worker throughput MB/se=" << (workerTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
               << std::endl;
-    std::cout << "AvgLatencyInMs=" << latencySum / bufferProcessed << std::endl;
+    std::cout << "worker avgLatencyInMs=" << workerLatencySum / workerBufferProcessed << std::endl;
+    std::cout << "coordinator tuples=" << coordinatorTuplesProcessed << std::endl;
+    std::cout << "coordinator tuples per sec=" << int(coordinatorTuplesProcessed / runtimeInSec) << std::endl;
+    std::cout << "coordinator runtime in sec=" << runtimeInSec << std::endl;
+    std::cout << "coordinator throughput MB/se=" << (coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
+              << std::endl;
+    std::cout << "coordinator avgLatencyInMs=" << coordinatorLatencySum / coordinatorBufferProcessed << std::endl;
+
 
     return out.str();
 }

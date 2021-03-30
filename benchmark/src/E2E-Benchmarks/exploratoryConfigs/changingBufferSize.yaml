@@ -13,8 +13,8 @@ bufferSizeInBytes: 4096,8192,16384,32768,65536,131072,262144,524288,1048576,2097
 
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
-outputFile: out.csv
-benchmarkName: testBench
+outputFile: changingBufferSize.csv
+benchmarkName: changingBufferSize
 query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter

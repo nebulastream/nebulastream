@@ -112,10 +112,16 @@ class E2EBase {
     NES::NesCoordinatorPtr crd;
     NES::NesWorkerPtr wrk1;
 
-    std::map<uint64_t, uint64_t> subPlanIdToTaskCnt;
-    std::map<uint64_t, uint64_t> subPlanIdToBufferCnt;
-    std::map<uint64_t, uint64_t> subPlanIdToTuplelCnt;
-    std::map<uint64_t, uint64_t> subPlanIdToLatencyCnt;
+    std::map<uint64_t, uint64_t> workerSubPlanIdToTaskCnt;
+    std::map<uint64_t, uint64_t> workerSubPlanIdToBufferCnt;
+    std::map<uint64_t, uint64_t> workerSubPlanIdToTupleCnt;
+    std::map<uint64_t, uint64_t> workerSubPlanIdToLatencyCnt;
+
+    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToTaskCnt;
+    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToBufferCnt;
+    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToTupleCnt;
+    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToLatencyCnt;
+
     NES::QueryServicePtr queryService;
     QueryId queryId;
     NES::QueryCatalogPtr queryCatalog;
