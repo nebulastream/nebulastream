@@ -21,7 +21,6 @@ import os
 import stat
 import subprocess
 import re
-import ast
 
 import matplotlib.pyplot as plt
 import pandas as pd
