@@ -545,7 +545,7 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ss2 << "{\"userQuery\" : ";
     ss2 << "\"Query::from(\\\"window\\\")"
            ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)))"
-           ".byKey(Attribute(\\\\\\\"id\\\\\\\")\")"
+           ".byKey(Attribute(\\\"id\\\"))"
            ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
