@@ -150,14 +150,14 @@ if (NES_USE_OPC)
 endif (NES_USE_OPC)
 
 ### MQTT Tests ###
-if(NES_USE_MQTT)
+if (NES_USE_MQTT)
     add_executable(mqtt-source-tests "UnitTests/Source/MQTTSourceTest.cpp" UnitTests/Source/MQTTSourceTest.cpp)
     add_executable(mqtt-sink-tests "UnitTests/Sink/MQTTSinkTest.cpp")
     target_link_libraries(mqtt-source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     target_link_libraries(mqtt-sink-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
     add_test(NAME mqtt-source-tests COMMAND mqtt-source-tests)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
-endif(NES_USE_MQTT)
+endif (NES_USE_MQTT)
 
 ### Memory Layout Tests ###
 add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
@@ -334,25 +334,30 @@ add_executable(query-signature-util-tests "UnitTests/Optimizer/Utils/QuerySignat
 target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
-### Signature Inference Phase Test ###
-add_executable(signature-inference-phase-test "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp")
-target_link_libraries(signature-inference-phase-test nes ${GTEST_LIBRARIES})
-add_test(NAME signature-inference-phase-test COMMAND signature-inference-phase-test)
+### Z3 Signature Inference Phase Test ###
+add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/Z3SignatureInferencePhaseTest.cpp")
+target_link_libraries(z3-signature-inference-phase-test nes ${GTEST_LIBRARIES})
+add_test(NAME z3-signature-inference-phase-test COMMAND z3-signature-inference-phase-test)
 
 ### Circular Buffer Tests ###
 add_executable(circular-buffer-tests "UnitTests/Source/CircularBufferTest.cpp")
 target_link_libraries(circular-buffer-tests nes ${GTEST_LIBRARIES})
 add_test(NAME circular-buffer-tests COMMAND circular-buffer-tests)
 
-### Signature Based Equal Query Merger Rule Test ###
-add_executable(signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRuleTest.cpp")
-target_link_libraries(signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
-add_test(NAME signature-based-equal-query-merger-rule-test COMMAND signature-based-equal-query-merger-rule-test)
+### Z3 Signature Based Equal Query Merger Rule Test ###
+add_executable(z3-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRuleTest.cpp")
+target_link_libraries(z3-signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME z3-signature-based-equal-query-merger-rule-test COMMAND z3-signature-based-equal-query-merger-rule-test)
 
-### Signature Based Partial Query Merger Rule Test ###
-add_executable(signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/SignatureBasedPartialQueryMergerRuleTest.cpp")
-target_link_libraries(signature-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
-add_test(NAME signature-based-partial-query-merger-rule-test COMMAND signature-based-partial-query-merger-rule-test)
+### Z3 Signature Based Partial Query Merger Rule Test ###
+add_executable(z3-signature-based-partial-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRuleTest.cpp")
+target_link_libraries(z3-signature-based-partial-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME z3-signature-based-partial-query-merger-rule-test COMMAND z3-signature-based-partial-query-merger-rule-test)
+
+### String Signature Based Complete Query Merger Rule Test ###
+add_executable(string-signature-based-equal-query-merger-rule-test "UnitTests/Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRuleTest.cpp")
+target_link_libraries(string-signature-based-equal-query-merger-rule-test nes ${GTEST_LIBRARIES})
+add_test(NAME string-signature-based-equal-query-merger-rule-test COMMAND string-signature-based-equal-query-merger-rule-test)
 
 ### Join Handler Tests ###
 add_executable(join-handler-tests "UnitTests/JoinHandlerTest.cpp")
@@ -378,6 +383,11 @@ add_test(NAME project-before-union-operator-rule-test COMMAND project-before-uni
 add_executable(millisecond-interval-tests "UnitTests/Source/MillisecondIntervalTest.cpp")
 target_link_libraries(millisecond-interval-tests nes ${GTEST_LIBRARIES})
 add_test(NAME millisecond-interval-tests COMMAND millisecond-interval-tests)
+
+### Binary Operator Sort Rule Tests ###
+add_executable(binary-operator-sort-rule-tests "UnitTests/Optimizer/QueryRewrite/BinaryOperatorSortRuleTest.cpp")
+target_link_libraries(binary-operator-sort-rule-tests nes ${GTEST_LIBRARIES})
+add_test(NAME binary-operator-sort-rule-tests COMMAND binary-operator-sort-rule-tests)
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###

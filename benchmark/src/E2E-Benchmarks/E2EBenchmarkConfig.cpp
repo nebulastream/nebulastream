@@ -34,13 +34,14 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
 
     numberOfBuffersToProduce =
         ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 5000000, "Number of buffers to produce.");
-    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 1024, "buffer size in bytes.");
-    numberOfBuffersInGlobalBufferManager =
-        ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1048576, "Number buffers in global buffer pool.");
+
+    bufferSizeInBytes = ConfigOption<std::string>::create("bufferSizeInBytes", "1024", "buffer size in bytes.");
+    numberOfBuffersInGlobalBufferManager = ConfigOption<std::string>::create("numberOfBuffersInGlobalBufferManager", "10000",
+                                                                             "Number buffers in global buffer pool.");
     numberOfBuffersPerPipeline =
-        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 1024, "Number buffers in task local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 1024,
-                                                                            "Number buffers in source local buffer pool.");
+        ConfigOption<std::string>::create("numberOfBuffersPerPipeline", "1024", "Number buffers in pipeline local buffer pool.");
+    numberOfBuffersInSourceLocalBufferPool = ConfigOption<std::string>::create("numberOfBuffersInSourceLocalBufferPool", "1024",
+                                                                               "Number buffers in source local buffer pool.");
 
     query = ConfigOption<std::string>::create("query", "", "Query to be processed");
     inputOutputMode = ConfigOption<std::string>::create("inputOutputMode", "Auto", "modus of how to read data");
@@ -67,10 +68,10 @@ void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& fil
             setNumberOfWorkerThreads(config["numberOfWorkerThreads"].As<std::string>());
             setNumberOfCoordinatorThreads(config["numberOfCoordinatorThreads"].As<std::string>());
             setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint32_t>());
-            setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<uint32_t>());
-            setnumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<uint32_t>());
-            setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<uint32_t>());
-            setBufferSizeInBytes(config["bufferSizeInBytes"].As<uint32_t>());
+            setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<std::string>());
+            setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<std::string>());
+            setNumberOfBuffersInSourceLocalBufferPool(config["numberOfBuffersInSourceLocalBufferPool"].As<std::string>());
+            setBufferSizeInBytes(config["bufferSizeInBytes"].As<std::string>());
             setNumberOfSources(config["numberOfSources"].As<std::string>());
             setOutputFile(config["outputFile"].As<std::string>());
             setBenchmarkName(config["benchmarkName"].As<std::string>());
@@ -103,13 +104,13 @@ void E2EBenchmarkConfig::overwriteConfigWithCommandLineInput(const std::map<std:
             } else if (it->first == "--numberOfBuffersToProduce") {
                 setNumberOfBuffersToProduce(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInGlobalBufferManager") {
-                setNumberOfBuffersInGlobalBufferManager(stoi(it->second));
+                setNumberOfBuffersInGlobalBufferManager(it->second);
             } else if (it->first == "--numberOfBuffersPerPipeline") {
-                setnumberOfBuffersPerPipeline(stoi(it->second));
+                setNumberOfBuffersPerPipeline(it->second);
             } else if (it->first == "--numberOfBuffersInSourceLocalBufferPool") {
-                setNumberOfBuffersInSourceLocalBufferPool(stoi(it->second));
+                setNumberOfBuffersInSourceLocalBufferPool(it->second);
             } else if (it->first == "--bufferSizeInBytes") {
-                setBufferSizeInBytes(stoi(it->second));
+                setBufferSizeInBytes(it->second);
             } else if (it->first == "--numberOfSources") {
                 setNumberOfSources(it->second);
             } else if (it->first == "--inputOutputMode") {
@@ -145,7 +146,7 @@ void E2EBenchmarkConfig::resetOptions() {
     setNumberOfCoordinatorThreads(numberOfCoordinatorThreads->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
-    setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
+    setNumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
     setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
     setBufferSizeInBytes(bufferSizeInBytes->getDefaultValue());
     setNumberOfSources(numberOfSources->getDefaultValue());
@@ -168,16 +169,16 @@ void E2EBenchmarkConfig::setNumberOfCoordinatorThreads(std::string numberOfCoord
 void E2EBenchmarkConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce) {
     E2EBenchmarkConfig::numberOfBuffersToProduce->setValue(numberOfBuffersToProduce);
 }
-void E2EBenchmarkConfig::setNumberOfBuffersInGlobalBufferManager(uint32_t numberOfBuffersInGlobalBufferManager) {
+void E2EBenchmarkConfig::setNumberOfBuffersInGlobalBufferManager(std::string numberOfBuffersInGlobalBufferManager) {
     E2EBenchmarkConfig::numberOfBuffersInGlobalBufferManager->setValue(numberOfBuffersInGlobalBufferManager);
 }
-void E2EBenchmarkConfig::setnumberOfBuffersPerPipeline(uint32_t numberOfBuffersPerPipeline) {
+void E2EBenchmarkConfig::setNumberOfBuffersPerPipeline(std::string numberOfBuffersPerPipeline) {
     E2EBenchmarkConfig::numberOfBuffersPerPipeline->setValue(numberOfBuffersPerPipeline);
 }
-void E2EBenchmarkConfig::setNumberOfBuffersInSourceLocalBufferPool(uint32_t numberOfBuffersInSourceLocalBufferPool) {
+void E2EBenchmarkConfig::setNumberOfBuffersInSourceLocalBufferPool(std::string numberOfBuffersInSourceLocalBufferPool) {
     E2EBenchmarkConfig::numberOfBuffersInSourceLocalBufferPool->setValue(numberOfBuffersInSourceLocalBufferPool);
 }
-void E2EBenchmarkConfig::setBufferSizeInBytes(uint32_t bufferSizeInBytes) {
+void E2EBenchmarkConfig::setBufferSizeInBytes(std::string bufferSizeInBytes) {
     E2EBenchmarkConfig::bufferSizeInBytes->setValue(bufferSizeInBytes);
 }
 void E2EBenchmarkConfig::setNumberOfSources(std::string numberOfSources) {
@@ -197,17 +198,17 @@ const StringConfigOption E2EBenchmarkConfig::getNumberOfSources() const { return
 
 const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
-const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersInGlobalBufferManager() const {
+const StringConfigOption E2EBenchmarkConfig::getNumberOfBuffersInGlobalBufferManager() const {
     return numberOfBuffersInGlobalBufferManager;
 }
 
-const IntConfigOption E2EBenchmarkConfig::getnumberOfBuffersPerPipeline() const { return numberOfBuffersPerPipeline; }
+const StringConfigOption E2EBenchmarkConfig::getNumberOfBuffersPerPipeline() const { return numberOfBuffersPerPipeline; }
 
-const IntConfigOption E2EBenchmarkConfig::getNumberOfBuffersInSourceLocalBufferPool() const {
+const StringConfigOption E2EBenchmarkConfig::getNumberOfBuffersInSourceLocalBufferPool() const {
     return numberOfBuffersInSourceLocalBufferPool;
 }
 
-const IntConfigOption E2EBenchmarkConfig::getBufferSizeInBytes() const { return bufferSizeInBytes; }
+const StringConfigOption E2EBenchmarkConfig::getBufferSizeInBytes() const { return bufferSizeInBytes; }
 
 StringConfigOption E2EBenchmarkConfig::getInputOutputMode() { return inputOutputMode; }
 
@@ -246,7 +247,7 @@ std::string E2EBenchmarkConfig::toString() {
        << " numberOfBuffersToProduce=" << getNumberOfBuffersToProduce()->getValue()
        << " numberOfSources=" << getNumberOfSources()->getValue()
        << " numberOfBuffersInGlobalBufferManager=" << getNumberOfBuffersInGlobalBufferManager()->getValue()
-       << " numberOfBuffersPerPipeline=" << getnumberOfBuffersPerPipeline()->getValue()
+       << " numberOfBuffersPerPipeline=" << getNumberOfBuffersPerPipeline()->getValue()
        << " numberOfBuffersInSourceLocalBufferPool=" << getNumberOfBuffersInSourceLocalBufferPool()->getValue()
        << " bufferSizeInBytes=" << getBufferSizeInBytes()->getValue() << " inputOutputMode=" << getInputOutputMode()->getValue()
        << " outputFile=" << getOutputFile()->getValue() << " query=" << getQuery()->getValue()

@@ -14,5 +14,5 @@
 # limitations under the License.
 
 add_source_nes(
-        SignatureInferencePhase.cpp
+        Z3SignatureInferencePhase.cpp
 )

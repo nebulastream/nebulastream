@@ -18,7 +18,7 @@
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
-#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryMergerPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
@@ -38,7 +38,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryRewritePhase = QueryRewritePhase::create(streamCatalog);
-    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context);
+    signatureInferencePhase = Optimizer::Z3SignatureInferencePhase::create(this->z3Context);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,

@@ -17,6 +17,9 @@
 #include <Common/DataTypes/Array.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -626,17 +629,29 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     auto windowStateVariableDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
 
-    // set the default value for window state
-
+    // set the default value for window state based on the aggregation function:
+    // max: initialize with the lower bound of the data type
+    // min: initialize with the upper bound of the data type
+    // count & sum: initialize with 0
     switch (window->getWindowAggregation()->getType()) {
         case Windowing::WindowAggregationDescriptor::Min: {
-            getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MAX"))));
+            if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
+                    tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->getUpperBound())))));
+            } else if (auto floatType = DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(
+                    DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getUpperBound())))));
+            }
             break;
         }
         case Windowing::WindowAggregationDescriptor::Max: {
-            getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
-                tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "INT64_MIN"))));
+            if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
+                    tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->getLowerBound())))));
+            } else if (auto floatType = DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(
+                    DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getLowerBound())))));
+            }
             break;
         }
         case Windowing::WindowAggregationDescriptor::Sum: {

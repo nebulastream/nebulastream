@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_SIGNATUREINFERENCEPHASE_HPP
-#define NES_SIGNATUREINFERENCEPHASE_HPP
+#ifndef NES_Z3SIGNATUREINFERENCEPHASE_HPP
+#define NES_Z3SIGNATUREINFERENCEPHASE_HPP
 
 #include <memory>
 
@@ -31,20 +31,20 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 namespace NES::Optimizer {
 
-class SignatureInferencePhase;
-typedef std::shared_ptr<SignatureInferencePhase> Z3ExpressionInferencePhasePtr;
+class Z3SignatureInferencePhase;
+typedef std::shared_ptr<Z3SignatureInferencePhase> Z3SignatureInferencePhasePtr;
 
 /**
  * @brief This class is responsible for computing the Z3 expression for all operators within a query
  */
-class SignatureInferencePhase {
+class Z3SignatureInferencePhase {
 
   public:
     /**
-     * @brief Create instance of Z3ExpressionInferencePhase class
-     * @return shared instance of the Z3ExpressionInferencePhase
+     * @brief Create instance of Z3SignatureInferencePhase class
+     * @return shared instance of the Z3SignatureInferencePhase
      */
-    static Z3ExpressionInferencePhasePtr create(z3::ContextPtr context);
+    static Z3SignatureInferencePhasePtr create(z3::ContextPtr context);
 
     /**
      * @brief this method will compute the Z3 expression for all operators of the input query plan
@@ -58,12 +58,12 @@ class SignatureInferencePhase {
      */
     z3::ContextPtr getContext() const;
 
-    ~SignatureInferencePhase();
+    ~Z3SignatureInferencePhase();
 
   private:
-    explicit SignatureInferencePhase(z3::ContextPtr context);
+    explicit Z3SignatureInferencePhase(z3::ContextPtr context);
     z3::ContextPtr context;
 };
 }// namespace NES::Optimizer
 
-#endif//NES_SIGNATUREINFERENCEPHASE_HPP
+#endif//NES_Z3SIGNATUREINFERENCEPHASE_HPP

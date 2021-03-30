@@ -18,6 +18,7 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <chrono>
 #include <iostream>
+#include <locale>// std::locale, std::numpunct, std::use_facet
 #include <string>
 #include <util/E2EBase.hpp>
 
@@ -82,12 +83,20 @@ std::string E2EBase::runExperiment() {
     return getResult();
 }
 
-E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt, E2EBenchmarkConfigPtr config)
+E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt,
+                 uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersPerPipeline,
+                 uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t bufferSizeInBytes, E2EBenchmarkConfigPtr config)
     : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt),
+      numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
+      numberOfBuffersPerPipeline(numberOfBuffersPerPipeline),
+      numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool), bufferSizeInBytes(bufferSizeInBytes),
       config(config) {
     std::cout << "run with configuration:"
               << " threadCntWorker=" << numberOfWorkerThreads << " threadCntCoordinator=" << numberOfCoordinatorThreads
-              << " sourceCnt=" << sourceCnt << std::endl;
+              << " sourceCnt=" << sourceCnt << " numberOfBuffersInGlobalBufferManager=" << numberOfBuffersInGlobalBufferManager
+              << " numberOfBuffersPerPipeline=" << numberOfBuffersPerPipeline
+              << " numberOfBuffersInSourceLocalBufferPool=" << numberOfBuffersInSourceLocalBufferPool
+              << " bufferSizeInBytes=" << bufferSizeInBytes << std::endl;
     setup();
 }
 
@@ -107,13 +116,13 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
         }
     }
 
-    uint64_t runCounter = 0;
+    uint64_t runCounter = 1;
     auto start = std::chrono::system_clock::now();
     auto inTime = std::chrono::system_clock::to_time_t(start);
     std::cout << std::put_time(std::localtime(&inTime), "%Y-%m-%d %X") << " E2EBase: Started Measurement for query id=" << queryId
               << std::endl;
 
-    while (runCounter < config->getNumberOfMeasurementsToCollect()->getValue()) {
+    while (runCounter <= config->getNumberOfMeasurementsToCollect()->getValue()) {
         int64_t nextPeriodStartTime = config->getExperimentMeasureIntervalInSeconds()->getValue() * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
@@ -124,23 +133,25 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
             std::cout << "Statistics  at " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
                       << iter->getQueryStatisticsAsString() << std::endl;
 
-            runCounter++;
             //if first iteration just push the first value
             if (subPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
+                std::cout << "first measurement runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
+                          << std::endl;
                 subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
                 subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
                 subPlanIdToTuplelCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
             }
 
             //if last iteration do last - first
-            if (runCounter) {
+            if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
+                std::cout << "last measurement runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
                 subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks() - subPlanIdToTaskCnt[iter->getSubQueryId()];
                 subPlanIdToBufferCnt[iter->getSubQueryId()] =
                     iter->getProcessedBuffers() - subPlanIdToBufferCnt[iter->getSubQueryId()];
                 subPlanIdToTuplelCnt[iter->getSubQueryId()] =
                     iter->getProcessedTuple() - subPlanIdToTuplelCnt[iter->getSubQueryId()];
             }
-        }
+        }//end of for
 
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -149,6 +160,7 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
         }
+        runCounter++;
     }
 
     auto stop = std::chrono::system_clock::now();
@@ -159,6 +171,10 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
     if (subPlanIdToTuplelCnt.size() == 0) {
         NES_ASSERT(subPlanIdToTuplelCnt.size() == config->getNumberOfMeasurementsToCollect()->getValue(),
                    "We cannot use this run as no data was measured");
+    }
+    std::cout << "content of map" << std::endl;
+    for (auto& val : subPlanIdToTuplelCnt) {
+        std::cout << "first=" << val.first << " second=" << val.second << std::endl;
     }
 
     return std::chrono::duration_cast<std::chrono::nanoseconds>(stop.time_since_epoch() - start.time_since_epoch());
@@ -371,10 +387,10 @@ void E2EBase::setup() {
 
     NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
     crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
-    crdConf->setNumberOfBuffersInGlobalBufferManager(config->getNumberOfBuffersInGlobalBufferManager()->getValue());
-    crdConf->setnumberOfBuffersPerPipeline(config->getnumberOfBuffersPerPipeline()->getValue());
-    crdConf->setNumberOfBuffersInSourceLocalBufferPool(config->getNumberOfBuffersInSourceLocalBufferPool()->getValue());
-    crdConf->setBufferSizeInBytes(config->getBufferSizeInBytes()->getValue());
+    crdConf->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
+    crdConf->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
+    crdConf->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
+    crdConf->setBufferSizeInBytes(bufferSizeInBytes);
     crdConf->setRpcPort(4000 + portOffset);
     crdConf->setRestPort(8081 + portOffset);
 
@@ -390,10 +406,10 @@ void E2EBase::setup() {
     std::cout << "Cport=" << port << " CsetRpcPort=" << 4000 + portOffset << " CsetRestPort=" << 8081 + portOffset
               << " WsetRpcPort=" << port + 10 + portOffset << " WsetDataPort=" << port + 11 + portOffset << std::endl;
     wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-    wrkConf->setNumberOfBuffersInGlobalBufferManager(config->getNumberOfBuffersInGlobalBufferManager()->getValue());
-    wrkConf->setnumberOfBuffersPerPipeline(config->getnumberOfBuffersPerPipeline()->getValue());
-    wrkConf->setNumberOfBuffersInSourceLocalBufferPool(config->getNumberOfBuffersInSourceLocalBufferPool()->getValue());
-    wrkConf->setBufferSizeInBytes(config->getBufferSizeInBytes()->getValue());
+    wrkConf->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
+    wrkConf->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
+    wrkConf->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
+    wrkConf->setBufferSizeInBytes(bufferSizeInBytes);
     wrk1 = std::make_shared<NES::NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
@@ -416,13 +432,18 @@ void E2EBase::runQuery() {
     runtime = recordStatistics(wrk1->getNodeEngine());
 }
 
+struct space_out : std::numpunct<char> {
+    char do_thousands_sep() const { return '.'; }   // separate with spaces
+    std::string do_grouping() const { return "\3"; }// groups of 1 digit
+};
+
 std::string E2EBase::getResult() {
     std::stringstream out;
     out.precision(1);
 
-    auto tuplesProcessed = 0;
-    auto bufferProcessed = 0;
-    auto tasksProcessed = 0;
+    uint64_t tuplesProcessed = 0;
+    uint64_t bufferProcessed = 0;
+    uint64_t tasksProcessed = 0;
 
     //sum up the values
     for (auto& val : subPlanIdToTaskCnt) {
@@ -436,14 +457,18 @@ std::string E2EBase::getResult() {
     for (auto& val : subPlanIdToTuplelCnt) {
         tuplesProcessed += val.second;
     }
+    double runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 
     out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
-        << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed
-        << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << "," << std::fixed
-        << (tuplesProcessed * schema->getSchemaSizeInBytes() * 1'000'000'000.0) / runtime.count() / 1024 / 1024;
+        << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed << int(tuplesProcessed / runtimeInSec) << ","
+        << std::fixed << (tuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024;
 
-    std::cout << "tuples per sec=" << int(tuplesProcessed * 1'000'000'000.0 / runtime.count()) << std::endl;
-    std::cout << "runtime in sec=" << runtime.count() << std::endl;
+    std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
+    std::cout << "tuples=" << tuplesProcessed << std::endl;
+    std::cout << "tuples per sec=" << int(tuplesProcessed / runtimeInSec) << std::endl;
+    std::cout << "runtime in sec=" << runtimeInSec << std::endl;
+    std::cout << "throughput MB/se=" << (tuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
+              << std::endl;
 
     return out.str();
 }

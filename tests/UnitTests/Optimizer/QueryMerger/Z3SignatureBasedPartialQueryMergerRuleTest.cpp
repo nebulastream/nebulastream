@@ -26,8 +26,8 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
-#include <Optimizer/QueryMerger/SignatureBasedPartialQueryMergerRule.hpp>
-#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
 #include <iostream>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -39,7 +39,7 @@
 
 using namespace NES;
 
-class SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
+class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
 
   public:
     SchemaPtr schema;
@@ -47,8 +47,8 @@ class SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
 
     /* Will be called before all tests in this class are started. */
     static void SetUpTestCase() {
-        NES::setupLogging("SignatureBasedEqualQueryMergerRuleTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup SignatureBasedEqualQueryMergerRuleTest test case.");
+        NES::setupLogging("Z3SignatureBasedPartialQueryMergerRuleTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
@@ -67,16 +67,16 @@ class SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup EqualQueryMergerRuleTest test case."); }
+    void TearDown() { NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down EqualQueryMergerRuleTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down Z3SignatureBasedPartialQueryMergerRuleTest test class."); }
 };
 
 /**
  * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with same queries
  */
-TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -108,7 +108,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -139,7 +139,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create(context);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -163,7 +163,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
 /**
  * @brief Test applying SignatureBasedPartialQueryMergerRuleTest on Global query plan with partially same queries
  */
-TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries) {
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQueries) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car")
@@ -195,7 +195,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuerie
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -226,7 +226,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuerie
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create(context);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert
@@ -255,7 +255,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuerie
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with different source
  */
-TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
+TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferentSources) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query1 = Query::from("car").map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
@@ -275,7 +275,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferent
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -306,7 +306,7 @@ TEST_F(SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDifferent
     EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
 
     //execute
-    auto signatureBasedEqualQueryMergerRule = Optimizer::SignatureBasedPartialQueryMergerRule::create(context);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedPartialQueryMergerRule::create(context);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     //assert

@@ -32,7 +32,7 @@ class BaseQueryMergerRule {
      * @brief apply the rule on Global Query Plan
      * @param globalQueryPlan: the global query plan
      */
-    virtual bool apply(const GlobalQueryPlanPtr& globalQueryPlan) = 0;
+    virtual bool apply(GlobalQueryPlanPtr globalQueryPlan) = 0;
 };
 typedef std::shared_ptr<BaseQueryMergerRule> BaseQueryMergerRulePtr;
 }// namespace NES::Optimizer

@@ -14,8 +14,9 @@
     limitations under the License.
 */
 
-#include <Optimizer/QueryMerger/SignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
 #include <Phases/QueryMergerPhase.hpp>
 #include <Util/Logger.hpp>
 
@@ -37,7 +38,10 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, std::string queryMerg
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
         case QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule:
-            queryMergerRule = SignatureBasedCompleteQueryMergerRule::create(context);
+            queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
+            break;
+        case QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule:
+            queryMergerRule = StringSignatureBasedCompleteQueryMergerRule::create();
             break;
     }
 }

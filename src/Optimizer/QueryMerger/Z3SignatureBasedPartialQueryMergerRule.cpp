@@ -19,7 +19,7 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
-#include <Optimizer/QueryMerger/SignatureBasedPartialQueryMergerRule.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedPartialQueryMergerRule.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
@@ -30,29 +30,29 @@
 
 namespace NES::Optimizer {
 
-SignatureBasedPartialQueryMergerRule::SignatureBasedPartialQueryMergerRule(z3::ContextPtr context) {
+Z3SignatureBasedPartialQueryMergerRule::Z3SignatureBasedPartialQueryMergerRule(z3::ContextPtr context) {
     signatureEqualityUtil = SignatureEqualityUtil::create(context);
 }
 
-SignatureBasedPartialQueryMergerRule::~SignatureBasedPartialQueryMergerRule() {
-    NES_DEBUG("~SignatureBasedPartialQueryMergerRule()");
+Z3SignatureBasedPartialQueryMergerRule::~Z3SignatureBasedPartialQueryMergerRule() {
+    NES_DEBUG("~Z3SignatureBasedPartialQueryMergerRule()");
 }
 
-SignatureBasedPartialQueryMergerRulePtr SignatureBasedPartialQueryMergerRule::create(z3::ContextPtr context) {
-    return std::make_shared<SignatureBasedPartialQueryMergerRule>(SignatureBasedPartialQueryMergerRule(context));
+Z3SignatureBasedPartialQueryMergerRulePtr Z3SignatureBasedPartialQueryMergerRule::create(z3::ContextPtr context) {
+    return std::make_shared<Z3SignatureBasedPartialQueryMergerRule>(Z3SignatureBasedPartialQueryMergerRule(context));
 }
 
-bool SignatureBasedPartialQueryMergerRule::apply(const GlobalQueryPlanPtr& globalQueryPlan) {
+bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
 
-    NES_INFO("SignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
+    NES_INFO("Z3SignatureBasedPartialQueryMergerRule: Applying Signature Based Equal Query Merger Rule to the Global Query Plan");
     std::vector<SharedQueryMetaDataPtr> allSharedQueryMetaData = globalQueryPlan->getAllSharedQueryMetaData();
     if (allSharedQueryMetaData.size() == 1) {
-        NES_WARNING("SignatureBasedPartialQueryMergerRule: Found only a single query metadata in the global query plan."
+        NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Found only a single query metadata in the global query plan."
                     " Skipping the Signature Based Equal Query Merger Rule.");
         return true;
     }
 
-    NES_DEBUG("SignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
+    NES_DEBUG("Z3SignatureBasedPartialQueryMergerRule: Iterating over all Shared Query MetaData in the Global Query Plan");
     //Iterate over all shared query metadata to identify equal shared metadata
     for (uint16_t i = 0; i < allSharedQueryMetaData.size() - 1; i++) {
         for (uint16_t j = i + 1; j < allSharedQueryMetaData.size(); j++) {
@@ -96,18 +96,18 @@ bool SignatureBasedPartialQueryMergerRule::apply(const GlobalQueryPlanPtr& globa
 
             //Not all sinks found an equivalent entry in the target shared query metadata
             if (targetToHostOperatorMap.empty()) {
-                NES_WARNING("SignatureBasedCompleteQueryMergerRule: Target and Host Shared Query MetaData are not equal");
+                NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Target and Host Shared Query MetaData are not equal");
                 continue;
             }
 
-            NES_TRACE("SignatureBasedCompleteQueryMergerRule: Merge target Shared metadata into address metadata");
+            NES_TRACE("Z3SignatureBasedPartialQueryMergerRule: Merge target Shared metadata into address metadata");
 
             //Iterate over all matched pairs of operators and merge the query plan
             for (auto [targetOperator, hostOperator] : targetToHostOperatorMap) {
                 for (auto targetParent : targetOperator->getParents()) {
                     bool addedNewParent = hostOperator->addParent(targetParent);
                     if (!addedNewParent) {
-                        NES_WARNING("SignatureBasedCompleteQueryMergerRule: Failed to add new parent");
+                        NES_WARNING("Z3SignatureBasedPartialQueryMergerRule: Failed to add new parent");
                     }
                     targetOperator->removeParent(targetParent);
                 }

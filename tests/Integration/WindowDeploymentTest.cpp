@@ -1806,6 +1806,108 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
 }
 
 /*
+ * @brief Test if the max aggregation of negative values can be deployed
+ */
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
+    struct Car {
+        int32_t key;
+        int32_t value;
+        int64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+                         ->addField("key", DataTypeFactory::createInt32())
+                         ->addField("value", DataTypeFactory::createInt32())
+                         ->addField("timestamp", DataTypeFactory::createInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Max(Attribute("value"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    testHarness.pushElement<Car>({1, -15, 1000}, 0);
+    testHarness.pushElement<Car>({1, -99, 1500}, 0);
+    testHarness.pushElement<Car>({1, -20, 2000}, 0);
+
+    struct Output {
+        int64_t start;
+        int64_t end;
+        int32_t key;
+        int32_t value;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value == rhs.value && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, -15}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
+ * @brief Test if the max aggregation with uint64 data type can be deployed
+ */
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField) {
+    struct Car {
+        uint64_t key;
+        uint64_t value;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+                         ->addField("value", DataTypeFactory::createUInt64())
+                         ->addField("id", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)), Max(Attribute("value"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceType("CSVSource");
+    sourceConfig->setLogicalStreamName("car");
+    sourceConfig->setPhysicalStreamName("car");
+    sourceConfig->setSourceConfig("../tests/test_data/window.csv");
+    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
+    sourceConfig->setNumberOfBuffersToProduce(1);
+    sourceConfig->setSkipHeader(false);
+
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    testHarness.addCSVSource(conf, carSchema);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        uint64_t key;
+        uint64_t value;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value == rhs.value && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{0, 10000, 1, 9},  {10000, 20000, 1, 19}, {0, 10000, 4, 1},
+                                          {0, 10000, 11, 3}, {0, 10000, 12, 1},     {0, 10000, 16, 2}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
  * @brief Test if the min aggregation can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
@@ -1854,7 +1956,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMinAggregation) {
 }
 
 /*
- * @brief Test if the min aggregation can be deployed
+ * @brief Test if the min aggregation with float data type can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
     struct Car {
