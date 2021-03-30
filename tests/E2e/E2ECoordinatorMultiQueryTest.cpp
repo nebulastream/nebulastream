@@ -1,12 +1,9 @@
 /*
     Copyright (C) 2020 by the NebulaStream project (https://nebula.stream)
-
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-
         https://www.apache.org/licenses/LICENSE-2.0
-
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -417,9 +414,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10))) "
-          ".byKey(Attribute(\\\"id\\\"))"
-          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
+          ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -429,10 +425,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\") "
-           ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)))"
-           ".byKey(Attribute(\\\"id\\\"))"
-           ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)))"
+           ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -530,10 +524,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\")"
-          ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)))"
-          ".byKey(Attribute(\\\"id\\\"))"
-          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\").window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)))"
+          ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -543,10 +535,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
 
     std::stringstream ss2;
     ss2 << "{\"userQuery\" : ";
-    ss2 << "\"Query::from(\\\"window\\\")"
-           ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)))"
-           ".byKey(Attribute(\\\"id\\\"))"
-           ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss2 << "\"Query::from(\\\"window\\\").window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20), Seconds(10)))"
+           ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
     ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
