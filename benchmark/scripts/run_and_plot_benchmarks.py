@@ -21,6 +21,7 @@ import os
 import stat
 import subprocess
 import re
+import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -114,8 +115,10 @@ def parseArguments():
 						help="Python file that will be used for plotting")
 	parser.add_argument("-jrb", "--just-run-benchmark", action="store", dest="justRunBenchmark",
 						help="Execute the benchmark binaries that generate the CSV files")
-	parser.add_argument("-ba", "--benchmarks-with-args", nargs="+", action="store", dest="benchmarkWithArgs", type=str,
+	parser.add_argument("-ba", "--benchmarks-with-args", nargs="+", action="store", dest="benchmarkWithArgs",
 						help="Expects a space separated list of \"name of binary, args\" \"name of binary, args\" ...")
+
+
 
 	args = parser.parse_args()
 	return (args)
@@ -220,7 +223,7 @@ def runAllBenchmarks(allBenchmarks, benchmarkFolder, dryRun):
 		benchmark = allBenchmarks[benchmarkName]
 		beforeFolders = getAllFolders(os.getcwd())
 
-		print(f"\nRunning benchmark {benchmark.name}...")
+		print(f"\nRunning benchmark without args {benchmark.name}...")
 
 		cmdString = f"{benchmark.executable}"
 		if not dryRun:
@@ -554,7 +557,7 @@ def runBenchmarksWithArgs(options):
 
 	startTimeStamp = datetime.now()
 	cnt = 0
-	print(f"\nRunning benchmark {benchmark.name}...")
+	print(f"\nRunning benchmark with args {benchmark.name}...")
 	for benchmark in allBenchmarks:
 		cmdString = f"{benchmark.executable} {benchmark.benchmarkArgs}"
 		printHighlight(f"Executing {cmdString}")
@@ -584,5 +587,4 @@ if __name__ == '__main__':
 	elif options.benchmarkWithArgs:
 		runBenchmarksWithArgs(options)
 	else:
-	
 		runAndPlotBenchmark(options)
