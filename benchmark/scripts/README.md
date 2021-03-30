@@ -1,3 +1,5 @@
+# Usage for run_and_plot_benchmarks.py
+
 usage: run_and_plot_benchmarks.py [-h] [-b BENCHMARKNAMES [BENCHMARKNAMES ...]] [-f BENCHMARKFOLDER] [-nc] [-m RUNMESSAGE] [-d]
                                   [-r RESULTFOLDER] [-jp JUSTPLOT] [-jpf JUSTPLOTFILE] [-jrb JUSTRUNBENCHMARK]
                                   [-ba BENCHMARKWITHARGS [BENCHMARKWITHARGS ...]]
