@@ -115,7 +115,7 @@ def parseArguments():
 	parser.add_argument("-jrb", "--just-run-benchmark", action="store", dest="justRunBenchmark",
 						help="Execute the benchmark binaries that generate the CSV files")
 	parser.add_argument("-ba", "--benchmarks-with-args", nargs="+", action="store", dest="benchmarkWithArgs", type=str,
-						help="Expects a list of [[\"name of binary\", \"args\"], [\"name of binary\", \"args\"], ...]")
+						help="Expects a space separated list of \"name of binary, args\" \"name of binary, args\" ...")
 
 	args = parser.parse_args()
 	return (args)

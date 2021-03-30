@@ -26,4 +26,4 @@ optional arguments:
   -jrb JUSTRUNBENCHMARK, --just-run-benchmark JUSTRUNBENCHMARK
                         Execute the benchmark binaries that generate the CSV files
   -ba BENCHMARKWITHARGS [BENCHMARKWITHARGS ...], --benchmarks-with-args BENCHMARKWITHARGS [BENCHMARKWITHARGS ...]
-                        Expects a list of [["name of binary", "args"], ["name of binary", "args"], ...]
+                        Expects a space separated list of "name of binary, args" "name of binary, args" ...
