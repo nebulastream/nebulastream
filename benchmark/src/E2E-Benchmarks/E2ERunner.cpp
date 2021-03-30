@@ -129,8 +129,10 @@ int main(int argc, const char* argv[]) {
     std::stringstream ss;
     std::string resultPrefix = "Time,BM_Name,NES_Version";
     std::string changeableParameterString = "WorkerThreads,CoordinatorThreadCnt,SourceCnt";
-    std::string benchmarkResultString = "ProcessedBuffersTotal,ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,"
-                                        "ThroughputInTupsPerSec,ThroughputInMBPerSec,AvgLatencyInMs";
+    std::string benchmarkResultString = "WrK_ProcessedBuffersTotal,WrK_ProcessedTasksTotal,WrK_ProcessedTuplesTotal,WrK_ProcessedBytesTotal,WrK_"
+                                        "ThroughputInTupsPerSec,WrK_ThroughputInMBPerSec,WrK_AvgLatencyInMs,"
+                                        "CrD_ProcessedBuffersTotal,CrD_ProcessedTasksTotal,CrD_ProcessedTuplesTotal,CrD_ProcessedBytesTotal,CrD_"
+                                        "ThroughputInTupsPerSec,CrD_ThroughputInMBPerSec,CrD_AvgLatencyInMs";
     std::string fixParameterString = "NumberOfBuffersToProduce,NumberOfBuffersInGlobalBufferManager,numberOfBuffersPerPipeline,"
                                      "NumberOfBuffersInSourceLocalBufferPool,BufferSizeInBytes,query,InputOutputMode";
 

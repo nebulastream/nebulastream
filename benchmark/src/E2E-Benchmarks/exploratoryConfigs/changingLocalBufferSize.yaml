@@ -7,14 +7,14 @@ numberOfSources: 4
 
 # engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 1000000
-numberOfBuffersPerPipeline: 1024
-numberOfBuffersInSourceLocalBufferPool: 1024
-bufferSizeInBytes: 4096,8192,16384,32768,65536,131072,262144,524288,1048576,2097152,4194304,8388608,16777216
+numberOfBuffersPerPipeline: 1024,2048,4096,8192,16384,32768,65536,131072
+numberOfBuffersInSourceLocalBufferPool: 1024,2048,4096,8192,16384,32768,65536,131072
+bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
-outputFile: out.csv
-benchmarkName: testBench
+outputFile: changingLocalBufferSize.csv
+benchmarkName: changingLocalBufferSize
 query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
