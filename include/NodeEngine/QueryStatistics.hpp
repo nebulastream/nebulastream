@@ -79,6 +79,17 @@ class QueryStatistics {
     void incProcessedTuple(uint64_t tupleCnt);
 
     /**
+    * @brief increment
+    */
+    void incLatencySum(uint64_t latency);
+
+    /**
+     * @brief get sum of all latencies
+     * @return value
+     */
+    const std::atomic<uint64_t> getLatencySum() const;
+
+    /**
     * @brief increment processedWatermarks
     */
     void incProcessedWatermarks();
@@ -112,6 +123,7 @@ class QueryStatistics {
     std::atomic<uint64_t> processedTuple;
     std::atomic<uint64_t> processedBuffers;
     std::atomic<uint64_t> processedWatermarks;
+    std::atomic<uint64_t> latencySum;
     std::atomic<uint64_t> queryId;
     std::atomic<uint64_t> subQueryId;
 };
