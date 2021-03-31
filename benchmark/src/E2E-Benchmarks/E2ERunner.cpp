@@ -181,8 +181,9 @@ int main(int argc, const char* argv[]) {
            << ",";
 
         //print benchmarkResultString
-        std::string result = testRun->runExperiment();
-        ss << result.c_str() << ",";
+//        std::string result = testRun->runExperiment();
+//        ss << result.c_str() << ",";
+        ss << testRun->runExperiment() << ",";
 
         //print fixParameterString
         ss << benchmarkConfig->getNumberOfBuffersToProduce()->getValue() << ",";

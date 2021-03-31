@@ -146,7 +146,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
 
             if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
                 //if last iteration do last - first
-                std::cout << "last measurement wrk runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
+                std::cout << "last measurement wrk runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
+                          << std::endl;
                 workerSubPlanIdToTaskCnt[iter->getSubQueryId()] =
                     iter->getProcessedTasks() - workerSubPlanIdToTaskCnt[iter->getSubQueryId()];
                 workerSubPlanIdToBufferCnt[iter->getSubQueryId()] =
@@ -178,7 +179,8 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
 
             if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
                 //if last iteration do last - first
-                std::cout << "last measurement crd runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
+                std::cout << "last measurement crd runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
+                          << std::endl;
                 coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()] =
                     iter->getProcessedTasks() - coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()];
                 coordinatorSubPlanIdToBufferCnt[iter->getSubQueryId()] =
@@ -508,7 +510,7 @@ struct space_out : std::numpunct<char> {
 
 std::string E2EBase::getResult() {
     std::stringstream out;
-    out.precision(1);
+    //    out.precision(1);
 
     uint64_t workerTuplesProcessed = 0;
     uint64_t workerBufferProcessed = 0;
@@ -554,35 +556,39 @@ std::string E2EBase::getResult() {
         coordinatorLatencySum += val.second;
     }
 
+    std::cout << "latency sum=" << workerLatencySum << " in ms=" << std::chrono::milliseconds(workerLatencySum).count()
+              << std::endl;
+    uint64_t runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 
-    std::cout << "latency sum=" << workerLatencySum << " in ms=" << std::chrono::milliseconds(workerLatencySum).count() << std::endl;
-    double runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
+    uint64_t wrkThroughputInTupsPerSec = workerTuplesProcessed / runtimeInSec;
+    uint64_t wrkThroughputInMBPerSec =
+        (workerTuplesProcessed * schema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
+    uint64_t wrkAvgLatencyInMs = workerLatencySum / workerBufferProcessed;
+
+    uint64_t crdThroughputInTupsPerSec = coordinatorTuplesProcessed / runtimeInSec;
+    uint64_t crdThroughputInMBPerSec =
+        (coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
+    uint64_t crdAvgLatencyInMs = coordinatorLatencySum / coordinatorBufferProcessed;
 
     out << workerBufferProcessed << "," << workerTasksProcessed << "," << workerTuplesProcessed << ","
-        << workerTuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed << int(workerTuplesProcessed / runtimeInSec) << ","
-        << std::fixed << (workerTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
-        << workerLatencySum / workerBufferProcessed;
+        << workerTuplesProcessed * schema->getSchemaSizeInBytes() << "," << wrkThroughputInTupsPerSec << ","
+        << wrkThroughputInMBPerSec << "," << wrkAvgLatencyInMs << ",";
 
     out << coordinatorBufferProcessed << "," << coordinatorTasksProcessed << "," << coordinatorTuplesProcessed << ","
-        << coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() << "," << std::fixed << int(coordinatorTuplesProcessed / runtimeInSec) << ","
-        << std::fixed << (coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
-        << coordinatorLatencySum / coordinatorBufferProcessed;
+        << coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() << "," << crdThroughputInTupsPerSec << ","
+        << crdThroughputInMBPerSec << "," << crdAvgLatencyInMs;
 
-
-    std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
+    //    std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
     std::cout << "worker tuples=" << workerTuplesProcessed << std::endl;
-    std::cout << "worker tuples per sec=" << int(workerTuplesProcessed / runtimeInSec) << std::endl;
+    std::cout << "worker tuples per sec=" << wrkThroughputInTupsPerSec << std::endl;
     std::cout << "worker runtime in sec=" << runtimeInSec << std::endl;
-    std::cout << "worker throughput MB/se=" << (workerTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
-              << std::endl;
-    std::cout << "worker avgLatencyInMs=" << workerLatencySum / workerBufferProcessed << std::endl;
+    std::cout << "worker throughput MB/se=" << wrkThroughputInMBPerSec << std::endl;
+    std::cout << "worker avgLatencyInMs=" << wrkAvgLatencyInMs << std::endl;
     std::cout << "coordinator tuples=" << coordinatorTuplesProcessed << std::endl;
-    std::cout << "coordinator tuples per sec=" << int(coordinatorTuplesProcessed / runtimeInSec) << std::endl;
+    std::cout << "coordinator tuples per sec=" << crdThroughputInTupsPerSec << std::endl;
     std::cout << "coordinator runtime in sec=" << runtimeInSec << std::endl;
-    std::cout << "coordinator throughput MB/se=" << (coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() / runtimeInSec) / 1024 / 1024
-              << std::endl;
-    std::cout << "coordinator avgLatencyInMs=" << coordinatorLatencySum / coordinatorBufferProcessed << std::endl;
-
+    std::cout << "coordinator throughput MB/se=" << crdThroughputInMBPerSec << std::endl;
+    std::cout << "coordinator avgLatencyInMs=" << crdAvgLatencyInMs << std::endl;
 
     return out.str();
 }
