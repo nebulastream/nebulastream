@@ -15,15 +15,16 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
-PhysicalFilterOperator::
-    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate):
-              OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(predicate) {}
+PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                               ExpressionNodePtr predicate)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(predicate) {}
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
+PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                   ExpressionNodePtr expression) {
     return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
 }
 
@@ -37,6 +38,6 @@ const std::string PhysicalFilterOperator::toString() const { return "PhysicalFil
 
 OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, inputSchema, outputSchema, getPredicate()); }
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES

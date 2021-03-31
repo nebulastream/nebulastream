@@ -14,12 +14,12 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
-PhysicalOperator::PhysicalOperator(OperatorId id): OperatorNode(id) {}
+PhysicalOperator::PhysicalOperator(OperatorId id) : OperatorNode(id) {}
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES

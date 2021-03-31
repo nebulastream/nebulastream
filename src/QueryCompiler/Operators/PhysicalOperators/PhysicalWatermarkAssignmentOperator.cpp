@@ -20,12 +20,14 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
-    OperatorId id, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
-    : OperatorNode(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor), PhysicalUnaryOperator(id) {}
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
+      watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
 PhysicalOperatorPtr
-PhysicalWatermarkAssignmentOperator::create(OperatorId id,
+PhysicalWatermarkAssignmentOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, watermarkStrategyDescriptor);
+    return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
 
 Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::getWatermarkStrategyDescriptor() const {
@@ -33,13 +35,16 @@ Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::g
 }
 
 PhysicalOperatorPtr
-PhysicalWatermarkAssignmentOperator::create(Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
-    return create(UtilityFunctions::getNextOperatorId(), watermarkStrategyDescriptor);
+PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                            Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
 
 const std::string PhysicalWatermarkAssignmentOperator::toString() const { return "PhysicalWatermarkAssignmentOperator"; }
 
-OperatorNodePtr PhysicalWatermarkAssignmentOperator::copy() { return create(id, getWatermarkStrategyDescriptor()); }
+OperatorNodePtr PhysicalWatermarkAssignmentOperator::copy() {
+    return create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
+}
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

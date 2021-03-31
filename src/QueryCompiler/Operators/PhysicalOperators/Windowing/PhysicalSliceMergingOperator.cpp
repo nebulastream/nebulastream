@@ -19,24 +19,23 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
+PhysicalOperatorPtr PhysicalSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                         Windowing::WindowOperatorHandlerPtr handler) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, handler);
 }
 
-PhysicalOperatorPtr PhysicalSliceMergingOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalSliceMergingOperator>(id, inputSchema, outputSchema, windowDefinition);
+PhysicalOperatorPtr PhysicalSliceMergingOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                         Windowing::WindowOperatorHandlerPtr handler) {
+    return std::make_shared<PhysicalSliceMergingOperator>(id, inputSchema, outputSchema, handler);
 }
 
-PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, windowDefinition){};
+PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                           Windowing::WindowOperatorHandlerPtr handler)
+    : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, handler){};
 
-const std::string PhysicalSliceMergingOperator::toString() const {
-    return "PhysicalSliceMergingOperator";
-}
+const std::string PhysicalSliceMergingOperator::toString() const { return "PhysicalSliceMergingOperator"; }
 
-OperatorNodePtr PhysicalSliceMergingOperator::copy() {
-    return create(id, inputSchema, outputSchema, windowDefinition);
-}
+OperatorNodePtr PhysicalSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

@@ -19,12 +19,9 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalJoinOperator::PhysicalJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition)
-    : joinDefinition(joinDefinition) {};
+PhysicalJoinOperator::PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler) : operatorHandler(operatorHandler){};
 
-Join::LogicalJoinDefinitionPtr PhysicalJoinOperator::getJoinDefinition() {
-    return joinDefinition;
-}
+Join::JoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler() { return operatorHandler; }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

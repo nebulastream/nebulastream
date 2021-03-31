@@ -20,23 +20,24 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                                     SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return create(UtilityFunctions::getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinDefinition);
+                                                     SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr joinOperatorHandler) {
+    return create(UtilityFunctions::getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
 PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                                     SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return std::make_shared<PhysicalJoinSinkOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinDefinition);
+                                                     SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr joinOperatorHandler) {
+    return std::make_shared<PhysicalJoinSinkOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
 PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                                   SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition)
-    : OperatorNode(id), PhysicalJoinOperator(joinDefinition), PhysicalBinaryOperator(id, leftInputSchema, rightInputSchema, outputSchema){};
+                                                   SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr joinOperatorHandler)
+    : OperatorNode(id), PhysicalJoinOperator(joinOperatorHandler),
+      PhysicalBinaryOperator(id, leftInputSchema, rightInputSchema, outputSchema){};
 
 const std::string PhysicalJoinSinkOperator::toString() const { return "PhysicalJoinSinkOperator"; }
 
 OperatorNodePtr PhysicalJoinSinkOperator::copy() {
-    return create(id, leftInputSchema, rightInputSchema, outputSchema, joinDefinition);
+    return create(id, leftInputSchema, rightInputSchema, outputSchema, operatorHandler);
 }
 
 }// namespace PhysicalOperators

@@ -29,16 +29,13 @@ namespace PhysicalOperators {
 class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Join::LogicalJoinDefinitionPtr joinDefinition);
+                                      Join::JoinOperatorHandlerPtr operatorHandler);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Join::LogicalJoinDefinitionPtr joinDefinition);
+                                      Join::JoinOperatorHandlerPtr operatorHandler);
     PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                              Join::LogicalJoinDefinitionPtr joinDefinition);
+                              Join::JoinOperatorHandlerPtr operatorHandler);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
-  private:
-    Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

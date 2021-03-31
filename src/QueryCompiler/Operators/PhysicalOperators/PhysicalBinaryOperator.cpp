@@ -15,21 +15,17 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
-PhysicalBinaryOperator::
-PhysicalBinaryOperator(OperatorId id,
-                           SchemaPtr leftSchema,
-                           SchemaPtr rightSchema,
-                           SchemaPtr outputSchema):
-    OperatorNode(id), PhysicalOperator(id), BinaryOperatorNode(id) {
+PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema)
+    : OperatorNode(id), PhysicalOperator(id), BinaryOperatorNode(id) {
     BinaryOperatorNode::setLeftInputSchema(leftSchema);
     BinaryOperatorNode::setRightInputSchema(rightSchema);
     BinaryOperatorNode::setOutputSchema(outputSchema);
 }
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES

@@ -20,24 +20,22 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                      Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, joinDefinition);
+                                                      Join::JoinOperatorHandlerPtr operatorHandler) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
 }
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                      Join::LogicalJoinDefinitionPtr joinDefinition) {
-    return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, joinDefinition);
+                                                      Join::JoinOperatorHandlerPtr operatorHandler) {
+    return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler);
 }
 
 PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                     Join::LogicalJoinDefinitionPtr joinDefinition)
-    : OperatorNode(id), PhysicalJoinOperator(joinDefinition), PhysicalUnaryOperator(id, inputSchema, outputSchema){};
+                                                     Join::JoinOperatorHandlerPtr operatorHandler)
+    : OperatorNode(id), PhysicalJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema){};
 
 const std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }
 
-OperatorNodePtr PhysicalJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, joinDefinition);
-}
+OperatorNodePtr PhysicalJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
