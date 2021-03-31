@@ -18,6 +18,27 @@
 #include <memory>
 namespace NES {
 
+namespace Join {
+class LogicalJoinDefinition;
+typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
+
+class JoinOperatorHandler;
+typedef std::shared_ptr<JoinOperatorHandler> JoinOperatorHandlerPtr;
+}// namespace NES::Join
+
+namespace Windowing {
+
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+
+class WindowOperatorHandler;
+typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
+
+class WatermarkStrategyDescriptor;
+typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
+
+}// namespace NES::Windowing
+
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
