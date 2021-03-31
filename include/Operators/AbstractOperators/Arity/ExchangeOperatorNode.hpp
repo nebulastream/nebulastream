@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_EXCHANGEOPERATORNODE_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_EXCHANGEOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Operators/OperatorNode.hpp>
 

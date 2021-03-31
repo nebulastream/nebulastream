@@ -18,6 +18,7 @@
 #define SPLIT_LOGICAL_OPERATOR_NODE_HPP
 
 #include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES {
 
