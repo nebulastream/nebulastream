@@ -17,9 +17,9 @@
 #ifndef INCLUDE_UTIL_LOGGER_HPP_
 #define INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
-#include <Util/DisableWarningsPragma.hpp>
 #include <Exceptions/NesRuntimeException.hpp>
 #include <NodeEngine/ErrorListener.hpp>
+#include <Util/DisableWarningsPragma.hpp>
 #include <Util/StacktraceLoader.hpp>
 #include <iostream>
 #include <log4cxx/consoleappender.h>
