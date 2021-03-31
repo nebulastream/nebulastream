@@ -18,11 +18,9 @@ add_source_nes(
         PhysicalBinaryOperator.cpp
         PhysicalSourceOperator.cpp
         PhysicalSinkOperator.cpp
-        PhysicalEmitOperator.cpp
         PhysicalFilterOperator.cpp
         PhysicalProjectOperator.cpp
         PhysicalMapOperator.cpp
-        PhysicalScanOperator.cpp
         PhysicalMultiplexOperator.cpp
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator

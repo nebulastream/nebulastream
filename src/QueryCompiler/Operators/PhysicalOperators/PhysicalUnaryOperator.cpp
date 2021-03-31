@@ -15,17 +15,16 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
-PhysicalUnaryOperator::
-PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema):
-    OperatorNode(id), PhysicalOperator(id), UnaryOperatorNode(id) {
+PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema)
+    : OperatorNode(id), PhysicalOperator(id), UnaryOperatorNode(id) {
     UnaryOperatorNode::setInputSchema(inputSchema);
     UnaryOperatorNode::setOutputSchema(outputSchema);
 }
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES

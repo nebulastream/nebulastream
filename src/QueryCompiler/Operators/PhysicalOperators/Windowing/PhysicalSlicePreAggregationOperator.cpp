@@ -19,24 +19,24 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
+PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                                Windowing::WindowOperatorHandlerPtr handler) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, handler);
 }
 
-PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition) {
-    return std::make_shared<PhysicalSlicePreAggregationOperator>(id, inputSchema, outputSchema, windowDefinition);
+PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                                Windowing::WindowOperatorHandlerPtr handler) {
+    return std::make_shared<PhysicalSlicePreAggregationOperator>(id, inputSchema, outputSchema, handler);
 }
 
-PhysicalSlicePreAggregationOperator::PhysicalSlicePreAggregationOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition)
-    : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, windowDefinition){};
+PhysicalSlicePreAggregationOperator::PhysicalSlicePreAggregationOperator(OperatorId id, SchemaPtr inputSchema,
+                                                                         SchemaPtr outputSchema,
+                                                                         Windowing::WindowOperatorHandlerPtr handler)
+    : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, handler){};
 
-const std::string PhysicalSlicePreAggregationOperator::toString() const {
-    return "PhysicalWindowPreAggregationOperator";
-}
+const std::string PhysicalSlicePreAggregationOperator::toString() const { return "PhysicalWindowPreAggregationOperator"; }
 
-OperatorNodePtr PhysicalSlicePreAggregationOperator::copy() {
-    return create(id, inputSchema, outputSchema, windowDefinition);
-}
+OperatorNodePtr PhysicalSlicePreAggregationOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

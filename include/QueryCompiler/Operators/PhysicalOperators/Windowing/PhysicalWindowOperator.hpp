@@ -11,16 +11,16 @@ namespace PhysicalOperators {
  */
 class PhysicalWindowOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDefinitionPtr windowDefinition);
+    PhysicalWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr operatorHandler);
 
     /**
-    * @brief Gets the window definition of the window operator.
-    * @return LogicalWindowDefinitionPtr
+    * @brief Gets the window handler of the window operator.
+    * @return WindowOperatorHandlerPtr
     */
-    Windowing::LogicalWindowDefinitionPtr getWindowDefinition() const;
-  protected:
+    Windowing::WindowOperatorHandlerPtr getOperatorHandler() const;
 
-    Windowing::LogicalWindowDefinitionPtr windowDefinition;
+  protected:
+    Windowing::WindowOperatorHandlerPtr operatorHandler;
 
 };
 }// namespace PhysicalOperators

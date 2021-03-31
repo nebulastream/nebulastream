@@ -16,6 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
@@ -26,11 +27,11 @@ namespace PhysicalOperators {
 class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                      SchemaPtr outputSchema, Join::LogicalJoinDefinitionPtr joinDefinition);
+                                      SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
     static PhysicalOperatorPtr create(SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema,
-                                      Join::LogicalJoinDefinitionPtr joinDefinition);
+                                      Join::JoinOperatorHandlerPtr operatorHandler);
     PhysicalJoinSinkOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema,
-                             Join::LogicalJoinDefinitionPtr joinDefinition);
+                             Join::JoinOperatorHandlerPtr operatorHandler);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 };

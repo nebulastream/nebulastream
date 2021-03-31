@@ -18,24 +18,22 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema) {
-    return std::make_shared<PhysicalMultiplexOperator>(id, inputSchema, outputSchema);
+PhysicalOperatorPtr PhysicalMultiplexOperator::create(OperatorId id, SchemaPtr schema) {
+    return std::make_shared<PhysicalMultiplexOperator>(id, schema);
 }
 
-PhysicalOperatorPtr PhysicalMultiplexOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema);
+PhysicalOperatorPtr PhysicalMultiplexOperator::create(SchemaPtr schema) {
+    return create(UtilityFunctions::getNextOperatorId(), schema);
 }
 
-PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema) :
-                                                                                                                     OperatorNode(id), PhysicalOperator(id), ExchangeOperatorNode(id) {
-    ExchangeOperatorNode::setInputSchema(inputSchema);
-    ExchangeOperatorNode::setOutputSchema(outputSchema);
+PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, SchemaPtr schema)
+    : OperatorNode(id), PhysicalOperator(id), ExchangeOperatorNode(id) {
+    ExchangeOperatorNode::setInputSchema(schema);
+    ExchangeOperatorNode::setOutputSchema(schema);
 }
 
-const std::string PhysicalMultiplexOperator::toString() const {
-    return "PhysicalMultiplexOperator";
-}
-OperatorNodePtr PhysicalMultiplexOperator::copy() { return create(id); }
+const std::string PhysicalMultiplexOperator::toString() const { return "PhysicalMultiplexOperator"; }
+OperatorNodePtr PhysicalMultiplexOperator::copy() { return create(id, inputSchema); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

@@ -14,30 +14,30 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
-PhysicalProjectOperator::
-PhysicalProjectOperator(OperatorId id,SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions):
-    OperatorNode(id), expressions(expressions), PhysicalUnaryOperator(id, inputSchema, outputSchema) {}
+PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                 std::vector<ExpressionNodePtr> expressions)
+    : OperatorNode(id), expressions(expressions), PhysicalUnaryOperator(id, inputSchema, outputSchema) {}
 
-PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
+PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                    std::vector<ExpressionNodePtr> expressions) {
     return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, expressions);
 }
 
-PhysicalOperatorPtr PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
+PhysicalOperatorPtr PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                    std::vector<ExpressionNodePtr> expressions) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expressions);
 }
 
-std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() {
-    return expressions;
-}
+std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions() { return expressions; }
 
 const std::string PhysicalProjectOperator::toString() const { return "PhysicalProjectOperator"; }
 
-OperatorNodePtr PhysicalProjectOperator::copy() { return create(id, getExpressions()); }
+OperatorNodePtr PhysicalProjectOperator::copy() { return create(id, inputSchema, outputSchema, getExpressions()); }
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES

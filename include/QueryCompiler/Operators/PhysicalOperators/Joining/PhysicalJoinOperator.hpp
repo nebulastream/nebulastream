@@ -26,12 +26,12 @@ namespace PhysicalOperators {
  */
 class PhysicalJoinOperator {
   public:
-    Join::LogicalJoinDefinitionPtr getJoinDefinition();
+    Join::JoinOperatorHandlerPtr getJoinHandler();
 
   protected:
-    PhysicalJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition);
+    PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler);
 
-    Join::LogicalJoinDefinitionPtr joinDefinition;
+    Join::JoinOperatorHandlerPtr operatorHandler;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
