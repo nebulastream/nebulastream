@@ -21,6 +21,7 @@ import os
 import stat
 import subprocess
 import re
+import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -33,11 +34,12 @@ LOG_FILE = "run_benchmarks_general.log"
 
 class Benchmark(object):
 	"""docstring for Benchmark"""
-	def __init__(self, name, executable, customPlottingFile):
+	def __init__(self, name, executable, customPlottingFile, benchmarkArgs):
 		self.name = name
 		self.executable = executable
 		self.customPlottingFile = customPlottingFile
 		self.resultCsvFiles = set([])
+		self.benchmarkArgs = benchmarkArgs
 
 	def __str__(self):
 		return self.getInfo()
@@ -94,28 +96,32 @@ def print2Log(message, file=__file__):
 
 
 def parseArguments():
-    parser = ArgumentParser()
-    parser.add_argument("-b", "--benchmarks", nargs="+", action="store", dest="benchmarkNames",
-                        help="Name of benchmark executables that should be run, if none then all benchmark executables are used. Regex is supported")
-    parser.add_argument("-f", "--folder", action="store", dest="benchmarkFolder",
-                        help="Folder in which all benchmark executables lie")
-    parser.add_argument("-nc", "--no-confirmation", action="store_false", dest="noConfirmation",
-                        help="If this flag is set then the script will not ask if it should run the found benchmarks")
-    parser.add_argument("-m", "--message", action="store", dest="runMessage",
-                        help="If a message is present, then this will be written into the log file. This may help if one executes different benchmarks")
-    parser.add_argument("-d", "--dry-run", action="store_true", dest="dryRun",
-                        help="If this flag is set, then the benchmarks will not be executed, so a dry run is performed")
-    parser.add_argument("-r", "--result-folder", action="store", dest="resultFolder",
-                        help="Folder in which all benchmark results shall be written. If not set then a new folder will be created")
-    parser.add_argument("-jp", "--just-plot", action="store", dest="justPlot",
-                        help="CSV file that will be used as data for plotting")
-    parser.add_argument("-jpf", "--just-plot-file", action="store", dest="justPlotFile",
-                        help="Python file that will be used for plotting")
-    parser.add_argument("-jrb", "--just-run-benchmark", action="store", dest="justRunBenchmark",
-                        help="Execute the benchmark binaries are generate the CSV files")
+	parser = ArgumentParser()
+	parser.add_argument("-b", "--benchmarks", nargs="+", action="store", dest="benchmarkNames",
+						help="Name of benchmark executables that should be run, if none then all benchmark executables are used. Regex is supported")
+	parser.add_argument("-f", "--folder", action="store", dest="benchmarkFolder",
+						help="Folder in which all benchmark executables lie")
+	parser.add_argument("-nc", "--no-confirmation", action="store_false", dest="noConfirmation",
+						help="If this flag is set then the script will not ask if it should run the found benchmarks")
+	parser.add_argument("-m", "--message", action="store", dest="runMessage",
+						help="If a message is present, then this will be written into the log file. This may help if one executes different benchmarks")
+	parser.add_argument("-d", "--dry-run", action="store_true", dest="dryRun",
+						help="If this flag is set, then the benchmarks will not be executed, so a dry run is performed")
+	parser.add_argument("-r", "--result-folder", action="store", dest="resultFolder",
+						help="Folder in which all benchmark results shall be written. If not set then a new folder will be created")
+	parser.add_argument("-jp", "--just-plot", action="store", dest="justPlot",
+						help="CSV file that will be used as data for plotting")
+	parser.add_argument("-jpf", "--just-plot-file", action="store", dest="justPlotFile",
+						help="Python file that will be used for plotting")
+	parser.add_argument("-jrb", "--just-run-benchmark", action="store", dest="justRunBenchmark",
+						help="Execute the benchmark binaries that generate the CSV files")
+	parser.add_argument("-ba", "--benchmarks-with-args", nargs="+", action="store", dest="benchmarkWithArgs",
+						help="Expects a space separated list of \"name of binary, args\" \"name of binary, args\" ...")
 
-    args = parser.parse_args()
-    return (args)
+
+
+	args = parser.parse_args()
+	return (args)
 
 def fileFolderExists(file):
 	return os.path.exists(file)
@@ -191,7 +197,7 @@ def findAllValidBenchmarks(benchmarkFolder, validBenchmarkNames, fileDirectory):
 
 		fullFileNamePath = os.path.join(benchmarkFolder, fileName)
 		if "benchmark" in fileName and os.path.isfile(fullFileNamePath) and (stat.S_IXUSR & os.stat(fullFileNamePath)[stat.ST_MODE]):
-			benchmark = Benchmark(fileName, fullFileNamePath, customPlottingFile(fileName, fileDirectory))
+			benchmark = Benchmark(fileName, fullFileNamePath, customPlottingFile(fileName, fileDirectory), "")
 			validBenchmarksDict.update({benchmark.name : benchmark})
 
 	return {benchmarkName : benchmark 	for benchmarkName,benchmark in validBenchmarksDict.items()
@@ -217,7 +223,7 @@ def runAllBenchmarks(allBenchmarks, benchmarkFolder, dryRun):
 		benchmark = allBenchmarks[benchmarkName]
 		beforeFolders = getAllFolders(os.getcwd())
 
-		print(f"\nRunning benchmark {benchmark.name}...")
+		print(f"\nRunning benchmark without args {benchmark.name}...")
 
 		cmdString = f"{benchmark.executable}"
 		if not dryRun:
@@ -440,7 +446,7 @@ def plotSingleCSVFile(options):
 	else:
 		customPlotFile = None
 
-	tmpBenchmark = Benchmark("Just Plotting", "Just Plotting", customPlotFile)
+	tmpBenchmark = Benchmark("Just Plotting", "Just Plotting", customPlotFile, "")
 	tmpBenchmark.resultCsvFiles.add(options.justPlot)
 
 	allValidBenchmark = {tmpBenchmark.name : tmpBenchmark}
@@ -456,74 +462,129 @@ def plotSingleCSVFile(options):
 
 
 def runBenchmarks(options):
-    global LOG_FILE
+	global LOG_FILE
 
-    if not fileFolderExists(options.benchmarkFolder):
-        print(f"{options.benchmarkFolder} does not exist!")
-        exit(1)
+	if not fileFolderExists(options.benchmarkFolder):
+		print(f"{options.benchmarkFolder} does not exist!")
+		exit(1)
 
-    fileDirectory = os.path.dirname(os.path.realpath(__file__))
-    oldCWD = os.getcwd()
-    resultFolder = datetime.now().strftime('benchmark_%Y%m%d_%H%M%S')
-    if options.resultFolder:
-        resultFolder = options.resultFolder
+	fileDirectory = os.path.dirname(os.path.realpath(__file__))
+	oldCWD = os.getcwd()
+	resultFolder = datetime.now().strftime('benchmark_%Y%m%d_%H%M%S')
+	if options.resultFolder:
+		resultFolder = options.resultFolder
 
-    resultFolderMessage = f"Result folder is {resultFolder}\n"
-    print2Log(resultFolderMessage)
-    printHighlight(resultFolderMessage)
+	resultFolderMessage = f"Result folder is {resultFolder}\n"
+	print2Log(resultFolderMessage)
+	printHighlight(resultFolderMessage)
 
-    LOG_FILE = os.path.abspath(os.path.join(resultFolder, LOG_FILE))
-    createFolder(resultFolder)
-    changeWorkingDirectory(resultFolder)
+	LOG_FILE = os.path.abspath(os.path.join(resultFolder, LOG_FILE))
+	createFolder(resultFolder)
+	changeWorkingDirectory(resultFolder)
 
-    benchmarkFolder = os.path.join(oldCWD, options.benchmarkFolder)
-    validBenchmarkNames = options.benchmarkNames if options.benchmarkNames else "."
-    validBenchmarks = findAllValidBenchmarks(benchmarkFolder, validBenchmarkNames, fileDirectory)
+	benchmarkFolder = os.path.join(oldCWD, options.benchmarkFolder)
+	validBenchmarkNames = options.benchmarkNames if options.benchmarkNames else "."
+	validBenchmarks = findAllValidBenchmarks(benchmarkFolder, validBenchmarkNames, fileDirectory)
 
-    printAllBenchmarks(validBenchmarks)
-    if not validBenchmarks:
-        print("Could not find any benchmarks. Please adjust -b param!")
-        exit(1)
+	printAllBenchmarks(validBenchmarks)
+	if not validBenchmarks:
+		print("Could not find any benchmarks. Please adjust -b param!")
+		exit(1)
 
-    if options.noConfirmation:
-        confirmation = confirmInput("Do you want to execute above benchmarks? [Y/n]: ")
-        if not confirmation:
-            print("Exiting script now...")
-            exit(1)
+	if options.noConfirmation:
+		confirmation = confirmInput("Do you want to execute above benchmarks? [Y/n]: ")
+		if not confirmation:
+			print("Exiting script now...")
+			exit(1)
 
-    if options.runMessage:
-        print2Log(options.runMessage)
+	if options.runMessage:
+		print2Log(options.runMessage)
 
-    startTimeStamp = datetime.now()
-    errRunBenchmarks = runAllBenchmarks(validBenchmarks, benchmarkFolder, options.dryRun)
+	startTimeStamp = datetime.now()
+	errRunBenchmarks = runAllBenchmarks(validBenchmarks, benchmarkFolder, options.dryRun)
 
-    endTimeStamp = datetime.now()
+	endTimeStamp = datetime.now()
 
-    print("\n\n---------------------------------------------------")
-    message = f"Running benchmark errors = {errRunBenchmarks}"
-    if errRunBenchmarks == 0:
-        printSuccess(message)
-    else:
-        printFail(message)
+	print("\n\n---------------------------------------------------")
+	message = f"Running benchmark errors = {errRunBenchmarks}"
+	if errRunBenchmarks == 0:
+		printSuccess(message)
+	else:
+		printFail(message)
 
-    print("---------------------------------------------------")
+	print("---------------------------------------------------")
 
-    delta = endTimeStamp - startTimeStamp
+	delta = endTimeStamp - startTimeStamp
 
-    hours = int(delta.total_seconds() // 3600)
-    minutes = int(delta.total_seconds() % 3600) // 60
-    message = f"Running benchmarks and plotting took: {hours}h{minutes}m"
-    printHighlight(message)
-    print2Log(message)
+	hours = int(delta.total_seconds() // 3600)
+	minutes = int(delta.total_seconds() % 3600) // 60
+	message = f"Running benchmarks and plotting took: {hours}h{minutes}m"
+	printHighlight(message)
+	print2Log(message)
+
+
+def runBenchmarksWithArgs(options):
+	# Check if options.benchmarkFolder is set. If yes, then skip searching for nebulastream folder
+	if not options.benchmarkFolder:
+		benchmarkFolder = ""
+		for dirPath, dirNames, fileNames in os.walk("/"):
+			for dirName in dirNames:
+				if dirName == "benchmark" and "build" in str(dirPath) and "nebulastream" in str(dirPath):
+					benchmarkFolder = os.path.join(dirPath, dirName)
+					break
+
+	else:
+		benchmarkFolder = options.benchmarkFolder
+
+	allBenchmarks = []
+	for item in options.benchmarkWithArgs:
+		exe = str(item).split(",")[0].replace("]", "").replace("[", "").replace("'", "").strip()
+		args = str(item).split(",")[1].replace("[", "").replace("]", "").replace("'", "").strip()
+		print(f"Searching for {exe} in {benchmarkFolder}...")
+		for fileName in os.listdir(benchmarkFolder):
+			success = False
+			fullFileNamePath = os.path.join(benchmarkFolder, fileName)
+			if exe in fileName and os.path.isfile(fullFileNamePath) and (stat.S_IXUSR & os.stat(fullFileNamePath)[stat.ST_MODE]):
+				benchmark = Benchmark(fileName, fullFileNamePath, "", args)
+				allBenchmarks.append(benchmark)
+				printSuccess(f"Found {exe} with {args}!\n")
+				success = True
+				break
+
+		if not success:
+			printFail(f"Could not found {exe} in {benchmarkFolder}!\n")
+
+
+	startTimeStamp = datetime.now()
+	cnt = 0
+	print(f"\nRunning benchmark with args {benchmark.name}...")
+	for benchmark in allBenchmarks:
+		cmdString = f"{benchmark.executable} {benchmark.benchmarkArgs}"
+		printHighlight(f"Executing {cmdString}")
+		try:
+			with open("/dev/null") as f:
+				subprocess.check_call(cmdString.split(), stdout=f)
+		except Exception as e:
+			printFail(e)
+			printFail(f"Could not run {benchmark.name}!!!\n")
+			continue
+
+		delta = datetime.now() - startTimeStamp
+		hours = int(delta.total_seconds() // 3600)
+		minutes = int(delta.total_seconds() % 3600) // 60
+		cnt += 1
+		printSuccess(f"Done running benchmark #{cnt} {benchmark.name} in {hours}h{minutes}m!\n")
 
 
 if __name__ == '__main__':
 
-    options = parseArguments()
+	options = parseArguments()
 
-    if options.justPlot:
-        plotSingleCSVFile(options)
-    elif options.justRunBenchmark:
-        runBenchmarks(options)
-    else:
-        runAndPlotBenchmark(options)
+	if options.justPlot:
+		plotSingleCSVFile(options)
+	elif options.justRunBenchmark:
+		runBenchmarks(options)
+	elif options.benchmarkWithArgs:
+		runBenchmarksWithArgs(options)
+	else:
+		runAndPlotBenchmark(options)
