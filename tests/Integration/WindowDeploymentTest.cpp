@@ -1822,7 +1822,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithWindowOperator =
-        R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Max(Attribute("value"))))";
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Max(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
@@ -1870,7 +1870,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithWindowOperator =
-        R"(Query::from("car").windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10)), Max(Attribute("value"))))";
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(10))).byKey(Attribute("id")).apply(Max(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
     SourceConfigPtr sourceConfig = SourceConfig::create();
