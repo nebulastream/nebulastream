@@ -17,7 +17,7 @@
 #ifndef INCLUDE_UTIL_LOGGER_HPP_
 #define INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
-
+#include <Util/DisableWarningsPragma.hpp>
 #include <Exceptions/NesRuntimeException.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <Util/StacktraceLoader.hpp>
@@ -51,6 +51,8 @@ static std::string getDebugLevelAsString(DebugLevel level) {
     }
 }
 
+DISABLE_WARNING_PUSH
+DISABLE_WARNING_UNREFERENCED_FUNCTION
 static DebugLevel getStringAsDebugLevel(std::string level) {
     if (level == "LOG_NONE") {
         return LOG_NONE;
@@ -66,6 +68,7 @@ static DebugLevel getStringAsDebugLevel(std::string level) {
         throw std::runtime_error("Logger: Debug level unknown: " + level);
     }
 }
+DISABLE_WARNING_POP
 
 static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 }// namespace NES
@@ -369,7 +372,8 @@ static void setLogLevel(DebugLevel level) {
     }
 #endif
 }
-
+DISABLE_WARNING_PUSH
+DISABLE_WARNING_UNREFERENCED_FUNCTION
 static void setupLogging(std::string logFileName, DebugLevel level) {
     std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
@@ -386,6 +390,7 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     NESLogger->addAppender(file);
     NESLogger->addAppender(console);
 }
+DISABLE_WARNING_UNREFERENCED_FUNCTION
 
 #define NES_NOT_IMPLEMENTED()                                                                                                    \
     do {                                                                                                                         \
