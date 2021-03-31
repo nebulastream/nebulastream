@@ -61,8 +61,9 @@ bool NettySourceDescriptor::getSkipHeader() const { return skipHeader; }
 uint64_t NettySourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
 
 uint64_t NettySourceDescriptor::getNumberOfTuplesToProducePerBuffer() const { return numberOfTuplesToProducePerBuffer; }
+std::chrono::milliseconds NettySourceDescriptor::getFrequency() const { return frequency; }
 
-uint64_t NettySourceDescriptor::getFrequency() const { return frequency; }
+uint64_t NettySourceDescriptor::getFrequencyCount() const { return frequency.count(); }
 
 bool NettySourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<NettySourceDescriptor>())
@@ -75,7 +76,7 @@ bool NettySourceDescriptor::equal(SourceDescriptorPtr other) {
 
 std::string NettySourceDescriptor::toString() {
     return "NettySourceDescriptor(" + filePath + "," + delimiter + ", " + std::to_string(numBuffersToProcess) + ", "
-        + std::to_string(frequency) + ")";
+        + std::to_string(frequency.count()) + "ms)";
 }
 
 

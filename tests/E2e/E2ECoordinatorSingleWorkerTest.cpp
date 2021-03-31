@@ -660,8 +660,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     ss << "{\"userQuery\" : ";
     ss << "\"Query::from(\\\"Rating\\\")"
           ".windowByKey(Attribute(\\\"auctionId\\\"), "
-          "TumblingWindow::of(EventTime(Attribute(\\\"processingTime\\\")), Seconds(2)), "
-          "Max(Attribute(\\\"bidPrice\\\")))"
+          "TumblingWindow::of(EventTime(Attribute(\\\"eventTime\\\")), Seconds(2)), "
+          "Sum(Attribute(\\\"bidPrice\\\")))"
           ".window(TumblingWindow::of(EventTime(Attribute(\\\"start\\\")),Seconds(2)), Max(Attribute(\\\"bidPrice\\\")))"
           ".sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;

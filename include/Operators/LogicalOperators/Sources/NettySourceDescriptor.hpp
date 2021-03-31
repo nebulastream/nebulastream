@@ -59,7 +59,8 @@ class NettySourceDescriptor : public SourceDescriptor {
     /**
      * @brief get the frequency of reading the csv file
      */
-    uint64_t getFrequency() const;
+    std::chrono::milliseconds getFrequency() const;
+    uint64_t getFrequencyCount() const;
 
     /**
      * @brief get the value of the skipHeader
@@ -88,7 +89,7 @@ class NettySourceDescriptor : public SourceDescriptor {
     std::string delimiter;
     uint64_t numBuffersToProcess;
     uint64_t numberOfTuplesToProducePerBuffer;
-    uint64_t frequency;
+    std::chrono::milliseconds frequency;
     std::string address;
     bool skipHeader;
 };

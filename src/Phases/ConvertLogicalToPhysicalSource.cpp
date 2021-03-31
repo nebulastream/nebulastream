@@ -68,7 +68,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         return createNettyFileSource(csvSourceDescriptor->getSchema(), bufferManager, queryManager,
                                      csvSourceDescriptor->getFilePath(), csvSourceDescriptor->getDelimiter(),
                                      csvSourceDescriptor->getNumberOfTuplesToProducePerBuffer(),
-                                     csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequency(),
+                                     csvSourceDescriptor->getNumBuffersToProcess(), csvSourceDescriptor->getFrequencyCount(),
                                      csvSourceDescriptor->getSkipHeader(), operatorId,csvSourceDescriptor->getAddress(),numSourceLocalBuffers);}
     else if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
