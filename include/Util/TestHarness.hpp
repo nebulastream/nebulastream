@@ -238,6 +238,18 @@ class TestHarness {
          */
     template<typename T>
     std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
+        uint64_t sourceCount = 0;
+        for (TestHarnessWorker s: testHarnessWorkers){
+            if (s.type == CSVSource || s.type == MemorySource) {
+                sourceCount++;
+            }
+        }
+        if (testHarnessWorkers.size() == 0) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: No worker added to the test harness");
+        } else if (sourceCount == 0) {
+            NES_THROW_RUNTIME_ERROR("TestHarness: No worker with source added to the test harness");
+        }
+
         QueryServicePtr queryService = crd->getQueryService();
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
