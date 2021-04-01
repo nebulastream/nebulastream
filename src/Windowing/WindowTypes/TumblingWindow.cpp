@@ -37,9 +37,9 @@ void TumblingWindow::triggerWindows(std::vector<WindowState>& windows, uint64_t 
     NES_TRACE("TumblingWindow::triggerWindows windows before=" << windows.size());
     //lastStart = last window that starts before the watermark
     long lastStart = lastWatermark - ((lastWatermark + size.getTime()) % size.getTime());
-  /*  NES_DEBUG("TumblingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime()
+    NES_DEBUG("TumblingWindow::triggerWindows= lastStart=" << lastStart << " size.getTime()=" << size.getTime()
                                                            << " lastWatermark=" << lastWatermark
-                                                           << " currentWatermark=" << currentWatermark);*/
+                                                           << " currentWatermark=" << currentWatermark);
     for (long windowStart = lastStart; windowStart + size.getTime() <= currentWatermark; windowStart += size.getTime()) {
         NES_TRACE("TumblingWindow::triggerWindows  add window start =" << windowStart << " end=" << windowStart + size.getTime());
         windows.emplace_back(windowStart, windowStart + size.getTime());
