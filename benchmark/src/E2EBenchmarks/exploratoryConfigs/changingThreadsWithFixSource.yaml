@@ -13,8 +13,8 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
-outputFile: changingThreadsAndSource.csv
-benchmarkName: changingThreadsAndSource
+outputFile: changingThreadsWithFixSource.csv
+benchmarkName: changingThreadsWithFixSource
 query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
