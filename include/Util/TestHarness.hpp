@@ -33,6 +33,7 @@ namespace NES {
 
 enum TestHarnessWorkerType { CSVSource, MemorySource, NonSource};
 
+// A struct to keep each worker and its source configuration together
 struct TestHarnessWorker {
     NesWorkerPtr wrk;
     TestHarnessWorkerType type;
@@ -239,8 +240,8 @@ class TestHarness {
     template<typename T>
     std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
         uint64_t sourceCount = 0;
-        for (TestHarnessWorker s: testHarnessWorkers){
-            if (s.type == CSVSource || s.type == MemorySource) {
+        for (TestHarnessWorker worker : testHarnessWorkers){
+            if (worker.type == CSVSource || worker.type == MemorySource) {
                 sourceCount++;
             }
         }
@@ -253,27 +254,27 @@ class TestHarness {
         QueryServicePtr queryService = crd->getQueryService();
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-        for (TestHarnessWorker s: testHarnessWorkers) {
-            if (s.type == CSVSource) {
-                s.wrk->registerPhysicalStream(s.csvSourceConfig);
-            } else if (s.type == MemorySource) {
+        for (TestHarnessWorker worker : testHarnessWorkers) {
+            if (worker.type == CSVSource) {
+                worker.wrk->registerPhysicalStream(worker.csvSourceConfig);
+            } else if (worker.type == MemorySource) {
                 // create and populate memory source
-                auto currentSourceNumOfRecords = s.record.size();
-                auto tupleSize = s.schema->getSchemaSizeInBytes();
+                auto currentSourceNumOfRecords = worker.record.size();
+                auto tupleSize = worker.schema->getSchemaSizeInBytes();
                 NES_DEBUG("Tuple Size: " << tupleSize);
                 NES_DEBUG("currentSourceNumOfRecords: " << currentSourceNumOfRecords);
                 auto memAreaSize = currentSourceNumOfRecords * tupleSize;
                 auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
-                auto currentRecords = s.record;
+                auto currentRecords = worker.record;
                 for (int j = 0; j < currentSourceNumOfRecords; ++j) {
                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
                 }
 
                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                    "MemorySource", s.physicalStreamName, s.logicalStreamName, memArea, memAreaSize,
+                    "MemorySource", worker.physicalStreamName, worker.logicalStreamName, memArea, memAreaSize,
                     /** numberOfBuffers*/ memSrcNumBuffToProcess, /** frequency*/ memSrcFrequency);
-                s.wrk->registerPhysicalStream(conf);
+                worker.wrk->registerPhysicalStream(conf);
             }
         }
 
@@ -336,8 +337,8 @@ class TestHarness {
         ifs.read(buff, length);
         std::vector<T> actualOutput(reinterpret_cast<T*>(buff), reinterpret_cast<T*>(buff) + length / sizeof(T));
 
-        for (TestHarnessWorker s: testHarnessWorkers) {
-            s.wrk->stop(false);
+        for (TestHarnessWorker worker : testHarnessWorkers) {
+            worker.wrk->stop(false);
         }
         crd->stopCoordinator(false);
 
