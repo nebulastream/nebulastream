@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
+#include <E2EBenchmarks/E2EBase.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <filesystem>
 #include <util/BenchmarkUtils.hpp>
-#include <util/E2EBase.hpp>
 
 using namespace Benchmarking;
 

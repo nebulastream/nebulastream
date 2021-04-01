@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include "../../include/util/E2EBenchmarkConfig.hpp"
+#include "E2EBenchmarks/E2EBenchmarkConfig.hpp"
 #include <Util/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <filesystem>
@@ -47,6 +47,7 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
     inputOutputMode = ConfigOption<std::string>::create("inputOutputMode", "Auto", "modus of how to read data");
     outputFile = ConfigOption<std::string>::create("outputFile", "E2EBenchmarkRunner", "name of the benchmark");
     benchmarkName = ConfigOption<std::string>::create("benchmarkName", "E2ERunner.csv", "benchmark output file");
+    scalability = ConfigOption<std::string>::create("scalability", "scale-up", "scale-out or scale-up");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_NONE",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
 
@@ -75,13 +76,13 @@ void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& fil
             setNumberOfSources(config["numberOfSources"].As<std::string>());
             setOutputFile(config["outputFile"].As<std::string>());
             setBenchmarkName(config["benchmarkName"].As<std::string>());
+            setScalability(config["scalability"].As<std::string>());
             setInputOutputMode(config["inputOutputMode"].As<std::string>());
             setQuery(config["query"].As<std::string>());
             setLogLevel(config["logLevel"].As<std::string>());
             setExperimentMeasureIntervalInSeconds(config["experimentMeasureIntervalInSeconds"].As<uint32_t>());
             setStartupSleepIntervalInSeconds(config["startupSleepIntervalInSeconds"].As<uint32_t>());
             setNumberOfMeasurementsToCollect(config["numberOfMeasurementsToCollect"].As<uint32_t>());
-
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file. Keeping default "
                       "values. "
@@ -121,6 +122,8 @@ void E2EBenchmarkConfig::overwriteConfigWithCommandLineInput(const std::map<std:
                 setOutputFile(it->second);
             } else if (it->first == "--benchmarkName") {
                 setBenchmarkName(it->second);
+            } else if (it->first == "--scalability") {
+                setScalability(it->second);
             } else if (it->first == "--logLevel") {
                 setLogLevel(it->second);
             } else if (it->first == "--experimentMeasureIntervalInSeconds") {
@@ -155,6 +158,7 @@ void E2EBenchmarkConfig::resetOptions() {
     setLogLevel(logLevel->getDefaultValue());
     setOutputFile(outputFile->getDefaultValue());
     setBenchmarkName(benchmarkName->getDefaultValue());
+    setScalability(scalability->getDefaultValue());
     setExperimentMeasureIntervalInSeconds(experimentMeasureIntervalInSeconds->getDefaultValue());
     setStartupSleepIntervalInSeconds(startupSleepIntervalInSeconds->getDefaultValue());
     setNumberOfMeasurementsToCollect(numberOfMeasurementsToCollect->getDefaultValue());
@@ -187,6 +191,11 @@ void E2EBenchmarkConfig::setNumberOfSources(std::string numberOfSources) {
 void E2EBenchmarkConfig::setInputOutputMode(std::string inputOutputMode) {
     E2EBenchmarkConfig::inputOutputMode->setValue(inputOutputMode);
 }
+
+void E2EBenchmarkConfig::setScalability(std::string scalability){
+    E2EBenchmarkConfig::scalability->setValue(scalability);
+}
+
 void E2EBenchmarkConfig::setQuery(std::string query) { E2EBenchmarkConfig::query->setValue(query); }
 void E2EBenchmarkConfig::setLogLevel(std::string logLevel) { E2EBenchmarkConfig::logLevel->setValue(logLevel); }
 
@@ -211,6 +220,8 @@ const StringConfigOption E2EBenchmarkConfig::getNumberOfBuffersInSourceLocalBuff
 const StringConfigOption E2EBenchmarkConfig::getBufferSizeInBytes() const { return bufferSizeInBytes; }
 
 StringConfigOption E2EBenchmarkConfig::getInputOutputMode() { return inputOutputMode; }
+
+StringConfigOption E2EBenchmarkConfig::getScalability() { return scalability; }
 
 StringConfigOption E2EBenchmarkConfig::getQuery() { return query; }
 

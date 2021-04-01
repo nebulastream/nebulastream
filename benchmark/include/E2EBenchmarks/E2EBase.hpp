@@ -21,6 +21,7 @@
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <E2EBenchmarks/E2EBenchmarkConfig.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
@@ -30,7 +31,6 @@
 #include <benchmark/gbenchmark/src/gbenchmark/include/benchmark/benchmark.h>
 #include <chrono>
 #include <iostream>
-#include <util/E2EBenchmarkConfig.hpp>
 
 using namespace NES;
 class E2EBase {
@@ -94,9 +94,8 @@ class E2EBase {
 
     /**
      * @brief start the measurement of the throughput, will read the stats of the worker ever n second
-     * @param nodeEngine
      */
-    std::chrono::nanoseconds recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine);
+    std::chrono::nanoseconds recordStatistics();
 
   private:
     uint64_t numberOfWorkerThreads;
@@ -110,17 +109,13 @@ class E2EBase {
 
     std::chrono::nanoseconds runtime;
     NES::NesCoordinatorPtr crd;
-    NES::NesWorkerPtr wrk1;
+    NES::NesWorkerPtr wrk;
 
-    std::map<uint64_t, uint64_t> workerSubPlanIdToTaskCnt;
-    std::map<uint64_t, uint64_t> workerSubPlanIdToBufferCnt;
-    std::map<uint64_t, uint64_t> workerSubPlanIdToTupleCnt;
-    std::map<uint64_t, uint64_t> workerSubPlanIdToLatencyCnt;
-
-    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToTaskCnt;
-    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToBufferCnt;
-    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToTupleCnt;
-    std::map<uint64_t, uint64_t> coordinatorSubPlanIdToLatencyCnt;
+    //maps top sum up the results from the individual pipelines and sources
+    std::map<uint64_t, uint64_t> subPlanIdToTaskCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToBufferCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToTupleCnt;
+    std::map<uint64_t, uint64_t> subPlanIdToLatencyCnt;
 
     NES::QueryServicePtr queryService;
     QueryId queryId;
