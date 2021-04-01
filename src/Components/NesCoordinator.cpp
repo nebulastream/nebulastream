@@ -284,5 +284,6 @@ GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
+const CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() const { return coordinatorEngine; }
 
 }// namespace NES

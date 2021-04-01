@@ -16,13 +16,13 @@
 
 #ifndef NES_BENCHMARK_INCLUDE_E2ETESTS_E2ERUNNER_HPP_
 #define NES_BENCHMARK_INCLUDE_E2ETESTS_E2ERUNNER_HPP_
-#include "util/E2EBenchmarkConfig.hpp"
+#include "E2EBenchmarks/E2EBenchmarkConfig.hpp"
 #include <Configurations/ConfigOption.hpp>
+#include <E2EBenchmarks/E2EBase.hpp>
 #include <Util/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
 #include <util/BenchmarkUtils.hpp>
-#include <util/E2EBase.hpp>
 
 using namespace NES;
 using namespace std;
@@ -129,10 +129,9 @@ int main(int argc, const char* argv[]) {
     std::stringstream ss;
     std::string resultPrefix = "Time,BM_Name,NES_Version";
     std::string changeableParameterString = "WorkerThreads,CoordinatorThreadCnt,SourceCnt";
-    std::string benchmarkResultString = "WrK_ProcessedBuffersTotal,WrK_ProcessedTasksTotal,WrK_ProcessedTuplesTotal,WrK_ProcessedBytesTotal,WrK_"
-                                        "ThroughputInTupsPerSec,WrK_ThroughputInMBPerSec,WrK_AvgLatencyInMs,"
-                                        "CrD_ProcessedBuffersTotal,CrD_ProcessedTasksTotal,CrD_ProcessedTuplesTotal,CrD_ProcessedBytesTotal,CrD_"
-                                        "ThroughputInTupsPerSec,CrD_ThroughputInMBPerSec,CrD_AvgLatencyInMs";
+    std::string benchmarkResultString = "ProcessedBuffersTotal,ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,"
+                                        "ThroughputInTupsPerSec,ThroughputInMBPerSec,AvgLatencyInMs";
+
     std::string fixParameterString = "NumberOfBuffersToProduce,NumberOfBuffersInGlobalBufferManager,numberOfBuffersPerPipeline,"
                                      "NumberOfBuffersInSourceLocalBufferPool,BufferSizeInBytes,query,InputOutputMode";
 
@@ -180,9 +179,6 @@ int main(int argc, const char* argv[]) {
            << parameterNameToValueVectorMap["coordinatorThreads"].at(i) << "," << parameterNameToValueVectorMap["sources"].at(i)
            << ",";
 
-        //print benchmarkResultString
-//        std::string result = testRun->runExperiment();
-//        ss << result.c_str() << ",";
         ss << testRun->runExperiment() << ",";
 
         //print fixParameterString

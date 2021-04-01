@@ -13,14 +13,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include "util/E2EBenchmarkConfig.hpp"
+#include "E2EBenchmarks/E2EBenchmarkConfig.hpp"
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <E2EBenchmarks/E2EBase.hpp>
+
 #include <chrono>
 #include <iostream>
-#include <locale>// std::locale, std::numpunct, std::use_facet
 #include <string>
-#include <util/E2EBase.hpp>
 
 using namespace std;
 
@@ -96,13 +97,14 @@ E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64
               << " sourceCnt=" << sourceCnt << " numberOfBuffersInGlobalBufferManager=" << numberOfBuffersInGlobalBufferManager
               << " numberOfBuffersPerPipeline=" << numberOfBuffersPerPipeline
               << " numberOfBuffersInSourceLocalBufferPool=" << numberOfBuffersInSourceLocalBufferPool
-              << " bufferSizeInBytes=" << bufferSizeInBytes << std::endl;
+              << " bufferSizeInBytes=" << bufferSizeInBytes << " scalability=" << config->getScalability() << std::endl;
     setup();
 }
 
-std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePtr nodeEngine) {
+std::chrono::nanoseconds E2EBase::recordStatistics() {
     //check for start
     bool readyToMeasure = false;
+    NodeEngine::NodeEnginePtr nodeEngine = crd->getNodeEngine();
 
     while (!readyToMeasure) {
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
@@ -126,39 +128,6 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
         int64_t nextPeriodStartTime = config->getExperimentMeasureIntervalInSeconds()->getValue() * 1000
             + std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        //get data from worker
-        auto queryStatisticsWorkerPtrs = nodeEngine->getQueryStatistics(queryId);
-        for (auto iter : queryStatisticsWorkerPtrs) {
-            auto ts = std::chrono::system_clock::now();
-            auto timeNow = std::chrono::system_clock::to_time_t(ts);
-            std::cout << "Statistics at worker " << std::put_time(std::localtime(&timeNow), "%Y-%m-%d %X") << " =>"
-                      << iter->getQueryStatisticsAsString() << std::endl;
-
-            //if first iteration just push the first value
-            if (workerSubPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
-                std::cout << "first measurement wrk runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
-                          << std::endl;
-                workerSubPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
-                workerSubPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
-                workerSubPlanIdToTupleCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
-                workerSubPlanIdToLatencyCnt[iter->getSubQueryId()] = iter->getLatencySum();
-            }
-
-            if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
-                //if last iteration do last - first
-                std::cout << "last measurement wrk runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
-                          << std::endl;
-                workerSubPlanIdToTaskCnt[iter->getSubQueryId()] =
-                    iter->getProcessedTasks() - workerSubPlanIdToTaskCnt[iter->getSubQueryId()];
-                workerSubPlanIdToBufferCnt[iter->getSubQueryId()] =
-                    iter->getProcessedBuffers() - workerSubPlanIdToBufferCnt[iter->getSubQueryId()];
-                workerSubPlanIdToTupleCnt[iter->getSubQueryId()] =
-                    iter->getProcessedTuple() - workerSubPlanIdToTupleCnt[iter->getSubQueryId()];
-                workerSubPlanIdToLatencyCnt[iter->getSubQueryId()] =
-                    iter->getLatencySum() - workerSubPlanIdToLatencyCnt[iter->getSubQueryId()];
-            }
-        }//end of for
-
         //get data from coordinator
         auto queryStatisticsCoordinatorPtrs = crd->getNodeEngine()->getQueryStatistics(queryId);
         for (auto iter : queryStatisticsCoordinatorPtrs) {
@@ -168,27 +137,25 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
                       << iter->getQueryStatisticsAsString() << std::endl;
 
             //if first iteration just push the first value
-            if (coordinatorSubPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
-                std::cout << "first measurement crd  runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
+            if (subPlanIdToTaskCnt.count(iter->getSubQueryId()) == 0) {
+                std::cout << "first measurement runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
                           << std::endl;
-                coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
-                coordinatorSubPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
-                coordinatorSubPlanIdToTupleCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
-                coordinatorSubPlanIdToLatencyCnt[iter->getSubQueryId()] = iter->getLatencySum();
+                subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks();
+                subPlanIdToBufferCnt[iter->getSubQueryId()] = iter->getProcessedBuffers();
+                subPlanIdToTupleCnt[iter->getSubQueryId()] = iter->getProcessedTuple();
+                subPlanIdToLatencyCnt[iter->getSubQueryId()] = iter->getLatencySum();
             }
 
             if (runCounter == config->getNumberOfMeasurementsToCollect()->getValue()) {
                 //if last iteration do last - first
-                std::cout << "last measurement crd runCounter= " << runCounter << " for subId=" << iter->getSubQueryId()
-                          << std::endl;
-                coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()] =
-                    iter->getProcessedTasks() - coordinatorSubPlanIdToTaskCnt[iter->getSubQueryId()];
-                coordinatorSubPlanIdToBufferCnt[iter->getSubQueryId()] =
-                    iter->getProcessedBuffers() - coordinatorSubPlanIdToBufferCnt[iter->getSubQueryId()];
-                coordinatorSubPlanIdToTupleCnt[iter->getSubQueryId()] =
-                    iter->getProcessedTuple() - coordinatorSubPlanIdToTupleCnt[iter->getSubQueryId()];
-                coordinatorSubPlanIdToLatencyCnt[iter->getSubQueryId()] =
-                    iter->getLatencySum() - coordinatorSubPlanIdToLatencyCnt[iter->getSubQueryId()];
+                std::cout << "last measurement runCounter= " << runCounter << " for subId=" << iter->getSubQueryId() << std::endl;
+                subPlanIdToTaskCnt[iter->getSubQueryId()] = iter->getProcessedTasks() - subPlanIdToTaskCnt[iter->getSubQueryId()];
+                subPlanIdToBufferCnt[iter->getSubQueryId()] =
+                    iter->getProcessedBuffers() - subPlanIdToBufferCnt[iter->getSubQueryId()];
+                subPlanIdToTupleCnt[iter->getSubQueryId()] =
+                    iter->getProcessedTuple() - subPlanIdToTupleCnt[iter->getSubQueryId()];
+                subPlanIdToLatencyCnt[iter->getSubQueryId()] =
+                    iter->getLatencySum() - subPlanIdToLatencyCnt[iter->getSubQueryId()];
             }
         }//end of for
 
@@ -207,13 +174,13 @@ std::chrono::nanoseconds E2EBase::recordStatistics(NES::NodeEngine::NodeEnginePt
     std::cout << std::put_time(std::localtime(&outTime), "%Y-%m-%d %X")
               << " E2EBase: Finished Measurement for query id=" << queryId << std::endl;
 
-    if (workerSubPlanIdToTupleCnt.size() == 0) {
-        NES_ASSERT(workerSubPlanIdToTupleCnt.size() == config->getNumberOfMeasurementsToCollect()->getValue(),
+    if (subPlanIdToTupleCnt.size() == 0) {
+        NES_ASSERT(subPlanIdToTupleCnt.size() == config->getNumberOfMeasurementsToCollect()->getValue(),
                    "We cannot use this run as no data was measured");
     }
 
-    std::cout << "content of map" << std::endl;
-    for (auto& val : workerSubPlanIdToTupleCnt) {
+    std::cout << "content of map for debug" << std::endl;
+    for (auto& val : subPlanIdToTupleCnt) {
         std::cout << "first=" << val.first << " second=" << val.second << std::endl;
     }
 
@@ -224,11 +191,11 @@ E2EBase::~E2EBase() {
     std::cout << "~E2EBase" << std::endl;
     tearDown();
     crd.reset();
-    wrk1.reset();
-    workerSubPlanIdToTaskCnt.clear();
-    workerSubPlanIdToBufferCnt.clear();
-    workerSubPlanIdToTupleCnt.clear();
-    workerSubPlanIdToLatencyCnt.clear();
+    wrk.reset();
+    subPlanIdToTaskCnt.clear();
+    subPlanIdToBufferCnt.clear();
+    subPlanIdToTupleCnt.clear();
+    subPlanIdToLatencyCnt.clear();
     queryService.reset();
     queryCatalog.reset();
 }
@@ -246,7 +213,8 @@ void E2EBase::setupSources() {
     std::ofstream out(testSchemaFileName);
     out << input;
     out.close();
-    wrk1->registerLogicalStream("input", testSchemaFileName);
+
+    crd->getCoordinatorEngine()->registerLogicalStream("input", input);
 
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
     auto query = config->getQuery()->getValue();
@@ -278,7 +246,7 @@ void E2EBase::setupSources() {
         for (uint64_t i = 0; i < sourceCnt; i++) {
             srcConf->setPhysicalStreamName("test_stream" + std::to_string(i));
             NES::PhysicalStreamConfigPtr inputStream = NES::PhysicalStreamConfig::create(srcConf);
-            wrk1->registerPhysicalStream(inputStream);
+            wrk->registerPhysicalStream(inputStream);
         }
     } else if (mode == InputOutputMode::CacheMode) {
         NES_NOT_IMPLEMENTED();
@@ -308,7 +276,7 @@ void E2EBase::setupSources() {
                 NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, memAreaSize,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0);
 
-            wrk1->registerPhysicalStream(conf);
+            wrk->registerPhysicalStream(conf);
         }
     } else if (mode == InputOutputMode::MemMode) {
         std::cout << "memory source mode" << std::endl;
@@ -341,9 +309,15 @@ void E2EBase::setupSources() {
                 NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0);
 
-            wrk1->registerPhysicalStream(conf);
+            if (config->getScalability()->getValue() == "scale-out") {
+                wrk->registerPhysicalStream(conf);
+            } else {
+                crd->getCoordinatorEngine()->registerPhysicalStream(1, "LambdaSource", "test_stream", "input");
+                crd->getNodeEngine()->setConfig(conf);
+            }
         }
     } else if (mode == InputOutputMode::WindowMode) {
+        NES_NOT_IMPLEMENTED();
         std::cout << "windowmode source mode" << std::endl;
 
         for (uint64_t i = 0; i < sourceCnt; i++) {
@@ -377,11 +351,11 @@ void E2EBase::setupSources() {
                 NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0);
 
-            wrk1->registerPhysicalStream(conf);
+            wrk->registerPhysicalStream(conf);
         }
     } else if (mode == InputOutputMode::JoinMode) {
         std::cout << "joinmode source mode" << std::endl;
-
+        NES_NOT_IMPLEMENTED();
         for (uint64_t i = 0; i < sourceCnt; i++) {
             auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 struct Record {
@@ -435,16 +409,16 @@ void E2EBase::setupSources() {
                 return;
             };
 
-            wrk1->registerLogicalStream("input1", testSchemaFileName);
-            wrk1->registerLogicalStream("input2", testSchemaFileName);
+            wrk->registerLogicalStream("input1", testSchemaFileName);
+            wrk->registerLogicalStream("input2", testSchemaFileName);
 
             NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
                 "LambdaSource", "test_stream1", "input1", func1, config->getNumberOfBuffersToProduce()->getValue(), 0);
-            wrk1->registerPhysicalStream(conf1);
+            wrk->registerPhysicalStream(conf1);
 
             NES::AbstractPhysicalStreamConfigPtr conf2 = NES::LambdaSourceStreamConfig::create(
                 "LambdaSource", "test_stream2", "input2", func2, config->getNumberOfBuffersToProduce()->getValue(), 0);
-            wrk1->registerPhysicalStream(conf2);
+            wrk->registerPhysicalStream(conf2);
         }
     } else {
         NES_ASSERT2_FMT(false, "input output mode not supported " << getInputOutputModeAsString(mode));
@@ -469,21 +443,23 @@ void E2EBase::setup() {
     crd = std::make_shared<NES::NesCoordinator>(crdConf);
     uint64_t port = crd->startCoordinator(/**blocking**/ false);
 
-    std::cout << "E2EBase: Start worker 1" << std::endl;
-    NES::WorkerConfigPtr wrkConf = NES::WorkerConfig::create();
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10 + portOffset);
-    wrkConf->setDataPort(port + 11 + portOffset);
-    std::cout << "Cport=" << port << " CsetRpcPort=" << 4000 + portOffset << " CsetRestPort=" << 8081 + portOffset
-              << " WsetRpcPort=" << port + 10 + portOffset << " WsetDataPort=" << port + 11 + portOffset << std::endl;
-    wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
-    wrkConf->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
-    wrkConf->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
-    wrkConf->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
-    wrkConf->setBufferSizeInBytes(bufferSizeInBytes);
-    wrk1 = std::make_shared<NES::NesWorker>(wrkConf, NodeType::Sensor);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    NES_ASSERT(retStart1, "retStart1");
+    if (config->getScalability()->getValue() == "scale-out") {
+        std::cout << "E2EBase: Start worker 1" << std::endl;
+        NES::WorkerConfigPtr wrkConf = NES::WorkerConfig::create();
+        wrkConf->setCoordinatorPort(port);
+        wrkConf->setRpcPort(port + 10 + portOffset);
+        wrkConf->setDataPort(port + 11 + portOffset);
+        std::cout << "Cport=" << port << " CsetRpcPort=" << 4000 + portOffset << " CsetRestPort=" << 8081 + portOffset
+                  << " WsetRpcPort=" << port + 10 + portOffset << " WsetDataPort=" << port + 11 + portOffset << std::endl;
+        wrkConf->setNumWorkerThreads(numberOfWorkerThreads);
+        wrkConf->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
+        wrkConf->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
+        wrkConf->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
+        wrkConf->setBufferSizeInBytes(bufferSizeInBytes);
+        wrk = std::make_shared<NES::NesWorker>(wrkConf, NodeType::Sensor);
+        bool retStart1 = wrk->start(/**blocking**/ false, /**withConnect**/ true);
+        NES_ASSERT(retStart1, "retStart1");
+    }
 
     setupSources();
 
@@ -500,7 +476,7 @@ void E2EBase::runQuery() {
     //give the system some seconds to come to steady mode
     sleep(config->getStartupSleepIntervalInSeconds()->getValue());
 
-    runtime = recordStatistics(wrk1->getNodeEngine());
+    runtime = recordStatistics();
 }
 
 struct space_out : std::numpunct<char> {
@@ -512,83 +488,45 @@ std::string E2EBase::getResult() {
     std::stringstream out;
     //    out.precision(1);
 
-    uint64_t workerTuplesProcessed = 0;
-    uint64_t workerBufferProcessed = 0;
-    uint64_t workerTasksProcessed = 0;
-    uint64_t workerLatencySum = 0;
-
-    uint64_t coordinatorTuplesProcessed = 0;
-    uint64_t coordinatorBufferProcessed = 0;
-    uint64_t coordinatorTasksProcessed = 0;
-    uint64_t coordinatorLatencySum = 0;
+    uint64_t tuplesProcessed = 0;
+    uint64_t bufferProcessed = 0;
+    uint64_t tasksProcessed = 0;
+    uint64_t latencySum = 0;
 
     //sum up the values for worker
-    for (auto& val : workerSubPlanIdToTaskCnt) {
-        workerTasksProcessed += val.second;
+    for (auto& val : subPlanIdToTaskCnt) {
+        tasksProcessed += val.second;
     }
 
-    for (auto& val : workerSubPlanIdToBufferCnt) {
-        workerBufferProcessed += val.second;
+    for (auto& val : subPlanIdToBufferCnt) {
+        bufferProcessed += val.second;
     }
 
-    for (auto& val : workerSubPlanIdToTupleCnt) {
-        workerTuplesProcessed += val.second;
+    for (auto& val : subPlanIdToTupleCnt) {
+        tuplesProcessed += val.second;
     }
 
-    for (auto& val : workerSubPlanIdToLatencyCnt) {
-        workerLatencySum += val.second;
+    for (auto& val : subPlanIdToLatencyCnt) {
+        latencySum += val.second;
     }
 
-    //sum up the values for coordinator
-    for (auto& val : coordinatorSubPlanIdToTaskCnt) {
-        coordinatorTasksProcessed += val.second;
-    }
-
-    for (auto& val : coordinatorSubPlanIdToBufferCnt) {
-        coordinatorBufferProcessed += val.second;
-    }
-
-    for (auto& val : coordinatorSubPlanIdToTupleCnt) {
-        coordinatorTuplesProcessed += val.second;
-    }
-
-    for (auto& val : coordinatorSubPlanIdToLatencyCnt) {
-        coordinatorLatencySum += val.second;
-    }
-
-    std::cout << "latency sum=" << workerLatencySum << " in ms=" << std::chrono::milliseconds(workerLatencySum).count()
-              << std::endl;
+    std::cout << "latency sum=" << latencySum << " in ms=" << std::chrono::milliseconds(latencySum).count() << std::endl;
     uint64_t runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 
-    uint64_t wrkThroughputInTupsPerSec = workerTuplesProcessed / runtimeInSec;
-    uint64_t wrkThroughputInMBPerSec =
-        (workerTuplesProcessed * schema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
-    uint64_t wrkAvgLatencyInMs = workerLatencySum / workerBufferProcessed;
+    uint64_t throughputInTupsPerSec = tuplesProcessed / runtimeInSec;
+    uint64_t throughputInMBPerSec = (tuplesProcessed * schema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
+    uint64_t avgLatencyInMs = latencySum / bufferProcessed;
 
-    uint64_t crdThroughputInTupsPerSec = coordinatorTuplesProcessed / runtimeInSec;
-    uint64_t crdThroughputInMBPerSec =
-        (coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
-    uint64_t crdAvgLatencyInMs = coordinatorLatencySum / coordinatorBufferProcessed;
+    out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
+        << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec << ","
+        << avgLatencyInMs;
 
-    out << workerBufferProcessed << "," << workerTasksProcessed << "," << workerTuplesProcessed << ","
-        << workerTuplesProcessed * schema->getSchemaSizeInBytes() << "," << wrkThroughputInTupsPerSec << ","
-        << wrkThroughputInMBPerSec << "," << wrkAvgLatencyInMs << ",";
-
-    out << coordinatorBufferProcessed << "," << coordinatorTasksProcessed << "," << coordinatorTuplesProcessed << ","
-        << coordinatorTuplesProcessed * schema->getSchemaSizeInBytes() << "," << crdThroughputInTupsPerSec << ","
-        << crdThroughputInMBPerSec << "," << crdAvgLatencyInMs;
-
-    //    std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
-    std::cout << "worker tuples=" << workerTuplesProcessed << std::endl;
-    std::cout << "worker tuples per sec=" << wrkThroughputInTupsPerSec << std::endl;
-    std::cout << "worker runtime in sec=" << runtimeInSec << std::endl;
-    std::cout << "worker throughput MB/se=" << wrkThroughputInMBPerSec << std::endl;
-    std::cout << "worker avgLatencyInMs=" << wrkAvgLatencyInMs << std::endl;
-    std::cout << "coordinator tuples=" << coordinatorTuplesProcessed << std::endl;
-    std::cout << "coordinator tuples per sec=" << crdThroughputInTupsPerSec << std::endl;
-    std::cout << "coordinator runtime in sec=" << runtimeInSec << std::endl;
-    std::cout << "coordinator throughput MB/se=" << crdThroughputInMBPerSec << std::endl;
-    std::cout << "coordinator avgLatencyInMs=" << crdAvgLatencyInMs << std::endl;
+    std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
+    std::cout << "tuples=" << tuplesProcessed << std::endl;
+    std::cout << "tuples per sec=" << throughputInTupsPerSec << std::endl;
+    std::cout << "runtime in sec=" << runtimeInSec << std::endl;
+    std::cout << "throughput MB/se=" << throughputInMBPerSec << std::endl;
+    std::cout << "avgLatencyInMs=" << avgLatencyInMs << std::endl;
 
     return out.str();
 }
@@ -603,33 +541,37 @@ void E2EBase::tearDown() {
             NES_ERROR("query was not stopped within 30 sec");
         }
 
-        std::cout << "E2EBase: Stop worker 1" << std::endl;
-
-        std::shared_ptr<std::promise<bool>> stopPromiseWrk1 = std::make_shared<std::promise<bool>>();
-        std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
-
-        std::thread t1([this, stopPromiseWrk1, stopPromiseCord]() {
-            std::future<bool> stopFutureWrk1 = stopPromiseWrk1->get_future();
-            bool satisfied = false;
-            while (!satisfied) {
-                switch (stopFutureWrk1.wait_for(std::chrono::seconds(1))) {
-                    case future_status::ready: {
-                        satisfied = true;
-                    }
-                    case future_status::timeout:
-                    case future_status::deferred: {
-                        if (wrk1->isWorkerRunning()) {
-                            NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
-                                        << wrk1->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
-                        } else {
-                            NES_WARNING("worker stopped");
+        std::unique_ptr<std::thread> waitThreadWorker;
+        std::shared_ptr<std::promise<bool>> stopPromiseWrk = std::make_shared<std::promise<bool>>();
+        if (config->getScalability()->getValue() == "scale-out") {
+            std::cout << "E2EBase: Stop worker 1" << std::endl;
+            waitThreadWorker = make_unique<thread>([this, stopPromiseWrk]() {
+                std::future<bool> stopFutureWrk = stopPromiseWrk->get_future();
+                bool satisfied = false;
+                while (!satisfied) {
+                    switch (stopFutureWrk.wait_for(std::chrono::seconds(1))) {
+                        case future_status::ready: {
+                            satisfied = true;
                         }
-                        break;
+                        case future_status::timeout:
+                        case future_status::deferred: {
+                            if (wrk->isWorkerRunning()) {
+                                NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
+                                            << wrk->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+                            } else {
+                                NES_WARNING("worker stopped");
+                            }
+                            break;
+                        }
                     }
                 }
-            }
+            });
+        }
+
+        std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
+        std::thread waitThreadCoordinator([this, stopPromiseCord]() {
             std::future<bool> stopFutureCord = stopPromiseCord->get_future();
-            satisfied = false;
+            bool satisfied = false;
             while (!satisfied) {
                 switch (stopFutureCord.wait_for(std::chrono::seconds(1))) {
                     case future_status::ready: {
@@ -648,14 +590,20 @@ void E2EBase::tearDown() {
                 }
             }
         });
-        bool retStopWrk1 = wrk1->stop(true);
-        stopPromiseWrk1->set_value(retStopWrk1);
-        NES_ASSERT(retStopWrk1, "retStopWrk1");
+
+        if (config->getScalability()->getValue() == "scale-out") {
+            bool retStopWrk = wrk->stop(true);
+            stopPromiseWrk->set_value(retStopWrk);
+            NES_ASSERT(retStopWrk, retStopWrk);
+            waitThreadWorker->join();
+        }
+
         std::cout << "E2EBase: Stop Coordinator" << std::endl;
         bool retStopCord = crd->stopCoordinator(true);
         stopPromiseCord->set_value(retStopCord);
-        NES_ASSERT(retStopCord, "retStopCord");
-        t1.join();
+        NES_ASSERT(retStopCord, retStopCord);
+
+        waitThreadCoordinator.join();
         std::cout << "E2EBase: Test finished" << std::endl;
     } catch (...) {
         NES_ERROR("Error was thrown while query shutdown");

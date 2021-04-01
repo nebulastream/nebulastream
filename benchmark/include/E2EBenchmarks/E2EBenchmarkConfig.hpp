@@ -145,6 +145,16 @@ class E2EBenchmarkConfig {
     StringConfigOption getInputOutputMode();
 
     /**
+    * @brief set the value for scalability
+    */
+    void setScalability(std::string scalability);
+
+    /**
+     * @brief gets a ConfigOption object with scalability
+     */
+    StringConfigOption getScalability();
+
+    /**
      * @brief set the value for query
      */
     void setQuery(std::string query);
@@ -235,6 +245,7 @@ class E2EBenchmarkConfig {
     StringConfigOption bufferSizeInBytes;
     StringConfigOption query;
     StringConfigOption inputOutputMode;
+    StringConfigOption scalability;
 
     //general benchmark setup parameter
     StringConfigOption outputFile;

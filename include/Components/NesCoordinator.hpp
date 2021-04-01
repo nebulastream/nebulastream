@@ -145,6 +145,12 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     bool isCoordinatorRunning();
 
+    /**
+     * getter for the coordinator engine
+     * @return
+     */
+    const CoordinatorEnginePtr getCoordinatorEngine() const;
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
@@ -167,6 +173,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
     CoordinatorEnginePtr coordinatorEngine;
+
+  private:
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
