@@ -18,6 +18,7 @@
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <E2EBenchmarks/E2EBase.hpp>
+#include <Components/NesWorker.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -97,7 +98,7 @@ E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64
               << " sourceCnt=" << sourceCnt << " numberOfBuffersInGlobalBufferManager=" << numberOfBuffersInGlobalBufferManager
               << " numberOfBuffersPerPipeline=" << numberOfBuffersPerPipeline
               << " numberOfBuffersInSourceLocalBufferPool=" << numberOfBuffersInSourceLocalBufferPool
-              << " bufferSizeInBytes=" << bufferSizeInBytes << " scalability=" << config->getScalability() << std::endl;
+              << " bufferSizeInBytes=" << bufferSizeInBytes << " scalability=" << config->getScalability()->getValue() << std::endl;
     setup();
 }
 
@@ -312,7 +313,7 @@ void E2EBase::setupSources() {
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
-                crd->getCoordinatorEngine()->registerPhysicalStream(1, "LambdaSource", "test_stream", "input");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource", "test_stream", "input");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }

@@ -19,7 +19,7 @@ query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkD
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 1000000
-scalability: scale-out
+scalability: scale-up
 logLevel: LOG_WARNING
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
