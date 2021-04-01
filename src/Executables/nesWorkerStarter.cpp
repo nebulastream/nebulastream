@@ -55,7 +55,7 @@ const string logo = "/********************************************************\n
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
 
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel("LOG_DEBUG"));
+    NES::setupLogging("nesWorkerStarter.log", NES::getStringAsDebugLevel("LOG_DEBUG"));
 
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();

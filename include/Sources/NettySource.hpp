@@ -61,6 +61,7 @@ class NettySource : public DataSource {
 
     void fillBuffer(NodeEngine::TupleBuffer&);
     void fillSocket(NodeEngine::TupleBuffer&);
+    void open() override;
 /*
 *
      * @brief override the toString method for the csv source
@@ -112,6 +113,9 @@ class NettySource : public DataSource {
     std::ifstream input;
     bool loopOnFile;
     std::string address;
+    std::string remainingStr;
+    std::deque<std::string> parsed;
+    int size = 0;
 
     uint64_t fileSize;
     bool fileEnded;

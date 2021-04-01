@@ -31,7 +31,9 @@ class WindowSliceStore {
         : defaultValue(value), sliceMetaData(std::vector<SliceMetaData>()),
           partialAggregates(std::vector<PartialAggregateType>()) {}
 
-    ~WindowSliceStore() { NES_DEBUG("~WindowSliceStore()"); }
+    ~WindowSliceStore() {
+       // NES_DEBUG("~WindowSliceStore()");
+    }
 
     /**
     * @brief Get the corresponding slide index for a particular timestamp ts.
@@ -42,7 +44,7 @@ class WindowSliceStore {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
             if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
-                NES_DEBUG("getSliceIndexByTs for ts=" << ts << " return index=" << i);
+//                NES_DEBUG("getSliceIndexByTs for ts=" << ts << " return index=" << i);
                 return i;
             }
         }
@@ -92,8 +94,8 @@ class WindowSliceStore {
 
         sliceMetaData.erase(sliceMetaData.begin(), itSlice);
         partialAggregates.erase(partialAggregates.begin(), itAggs);
-        NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
-                                                                                  << " aggs=" << partialAggregates.size());
+      /*  NES_DEBUG("WindowSliceStore: removeSlicesUntil size after cleanup slice=" << sliceMetaData.size()
+                                                                                  << " aggs=" << partialAggregates.size());*/
     }
 
     /**

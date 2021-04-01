@@ -142,8 +142,8 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
             for (auto& entry : originIdToMaxTsMap) {
                 ss << " id=" << entry.first << " max=" << entry.second;
             }
-            NES_DEBUG("map=" << ss.str());
-            NES_DEBUG("getMinWatermark() return min=" << min->second);
+//            NES_DEBUG("map=" << ss.str());
+  //          NES_DEBUG("getMinWatermark() return min=" << min->second);
             return min->second;
         } else {
             NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings="

@@ -65,6 +65,8 @@ size_t FixedSizeBufferPool::getAvailableExclusiveBuffers() const {
 TupleBuffer FixedSizeBufferPool::getBufferBlocking() {
     // try to get an exclusive buffer
     std::unique_lock lock(mutex);
+    NES_DEBUG("FixedSizeBufferPool:: exclusiveBuffers.size() : " << exclusiveBuffers.size() );
+
     while (exclusiveBuffers.size() == 0) {
         NES_DEBUG("FixedSizeBufferPool:: Waiting for buffer");
         cvar.wait(lock);

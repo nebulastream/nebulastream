@@ -67,10 +67,14 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
     {
         // try to get an exclusive buffer
         std::unique_lock lock(mutex);
+        NES_DEBUG("LocalBufferPool:: exclusiveBuffers.size() : " << exclusiveBuffers.size() );
+
         if (exclusiveBuffers.size() > 0) {
             auto memSegment = exclusiveBuffers.front();
             NES_VERIFY(memSegment, "null memory segment");
             exclusiveBuffers.pop_front();
+            NES_DEBUG("LocalBufferPool::   memSegment->controlBlock->getNumberOfTuples() : " <<  memSegment->controlBlock->getNumberOfTuples() );
+
             if (memSegment->controlBlock->prepare()) {
                 return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
             } else {

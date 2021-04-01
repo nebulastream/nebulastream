@@ -136,7 +136,8 @@ bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
-void DataSource::open() { bufferManager = globalBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
+void DataSource::open() { NES_DEBUG("DataSource:: open function" );
+    bufferManager = globalBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
 
 void DataSource::runningRoutine() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
