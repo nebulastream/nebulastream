@@ -31,6 +31,7 @@ void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name
 }
 
 void SystemCompilerCompiledCode::cleanUp() {
+    return;
     if (boost::filesystem::exists(baseFileName + ".c")) {
         boost::filesystem::remove(baseFileName + ".c");
     }

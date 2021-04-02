@@ -102,6 +102,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
 #endif
 
     flags->addFlag("-fno-diagnostics-color");
+    flags->addFlag("-g");
     flags->addFlag(filename);
 
     // call compiler to generate shared lib from source code

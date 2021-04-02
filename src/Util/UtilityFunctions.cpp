@@ -155,6 +155,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
         code << "}" << std::endl;
         code << "}" << std::endl;
         Compiler compiler;
+        NES_DEBUG("generated code=" << code.str());
         CompiledCodePtr compiled_code = compiler.compile(code.str(), false);
         if (!code) {
             NES_ERROR("Compilation of schema code failed! Code: " << code.str());
