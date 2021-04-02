@@ -1,9 +1,9 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
 
 # Parameter that are changed per run with comma separated list
-numberOfWorkerThreads: 1,2
-numberOfCoordinatorThreads: 1
-numberOfSources: 1
+numberOfWorkerThreads: 2
+numberOfCoordinatorThreads: 2
+numberOfSources: 2
 
 # engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 100000
