@@ -207,7 +207,6 @@ void E2EBase::setupSources() {
                  ->addField(createField("value", NES::UINT64))
                  ->addField(createField("timestamp", NES::UINT64));
 
-    //register logical stream qnv
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
     std::string testSchemaFileName = "input.hpp";
@@ -215,7 +214,8 @@ void E2EBase::setupSources() {
     out << input;
     out.close();
 
-    crd->getCoordinatorEngine()->registerLogicalStream("input", input);
+    NES_ASSERT(crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName), "failed to create logical stream");
+//    crd->getCoordinatorEngine()->registerLogicalStream("input", input);
 
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
     auto query = config->getQuery()->getValue();
@@ -313,7 +313,7 @@ void E2EBase::setupSources() {
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource", "test_stream", "input");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource", "test_stream" + std::to_string(i), "input");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
