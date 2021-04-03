@@ -40,7 +40,7 @@ class PhysicalWatermarkAssignmentOperator: public PhysicalUnaryOperator {
     Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
 
   private:
-    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescripto;
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 }
 }
