@@ -28,7 +28,8 @@ namespace PhysicalOperators {
  */
 class PhysicalWindowOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr operatorHandler);
+    PhysicalWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                           Windowing::WindowOperatorHandlerPtr operatorHandler);
 
     /**
     * @brief Gets the window handler of the window operator.
@@ -38,7 +39,6 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator {
 
   protected:
     Windowing::WindowOperatorHandlerPtr operatorHandler;
-
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

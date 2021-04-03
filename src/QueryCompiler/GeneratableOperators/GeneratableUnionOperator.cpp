@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableUnionOperator.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratableOperators/GeneratableUnionOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES {
@@ -45,7 +45,8 @@ GeneratableMergeOperatorPtr GeneratableUnionOperator::create(UnionLogicalOperato
     return std::make_shared<GeneratableUnionOperator>(GeneratableUnionOperator(logicalUnionOperator->getOutputSchema(), id));
 }
 
-GeneratableUnionOperator::GeneratableUnionOperator(SchemaPtr schema, OperatorId id) :  OperatorNode(id), UnionLogicalOperatorNode(id) {
+GeneratableUnionOperator::GeneratableUnionOperator(SchemaPtr schema, OperatorId id)
+    : OperatorNode(id), UnionLogicalOperatorNode(id) {
     if (!schema) {
         NES_ERROR("GeneratableMergeOperator invalid schema");
     }

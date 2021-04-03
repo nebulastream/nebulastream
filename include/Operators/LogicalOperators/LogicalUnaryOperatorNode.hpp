@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -35,8 +35,7 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
     * @return true if schema was correctly inferred
     */
     virtual bool inferSchema() override;
-
 };
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATORNODE_HPP_

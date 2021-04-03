@@ -39,7 +39,7 @@ bool LogicalUnaryOperatorNode::inferSchema() {
         if (!child->as<OperatorNode>()->getOutputSchema()->equals(childSchema)) {
             NES_ERROR("UnaryOperatorNode: infer schema failed. The schema has to be the same across all child operators."
                       " this op schema="
-                          << child->as<OperatorNode>()->getOutputSchema()->toString() << " child schema=" << childSchema->toString());
+                      << child->as<OperatorNode>()->getOutputSchema()->toString() << " child schema=" << childSchema->toString());
             return false;
         }
     }

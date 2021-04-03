@@ -22,7 +22,8 @@
 
 namespace NES {
 
-BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id) : OperatorNode(id), ExchangeOperatorNode(id), LogicalOperatorNode(id) {}
+BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id)
+    : OperatorNode(id), ExchangeOperatorNode(id), LogicalOperatorNode(id) {}
 
 bool BroadcastLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return rhs->as<BroadcastLogicalOperatorNode>()->getId() == id;

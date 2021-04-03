@@ -35,7 +35,6 @@ class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
    */
     ExpressionNodePtr getPredicate();
 
-
     /**
      * @brief check if two operators have the same filter predicate.
      * @param rhs the operator to compare

@@ -22,7 +22,7 @@ namespace QueryCompilation {
 /**
  * @brief Provides a set of default lowerings for logical operators to corresponding physical operators.
  */
-class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider{
+class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
   public:
     static PhysicalOperatorProviderPtr create();
     void lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) override;
@@ -106,10 +106,11 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider{
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    OperatorNodePtr getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, SchemaPtr schema, std::vector<OperatorNodePtr> children);
+    OperatorNodePtr getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, SchemaPtr schema,
+                                              std::vector<OperatorNodePtr> children);
 };
 
-}
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHYSICALOPERATORPROVIDER_HPP_

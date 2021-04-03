@@ -16,24 +16,24 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_
 
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
 /**
  * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperatorNode interfaces.
  * A physical unary operator has exactly one child operators.
  */
-class PhysicalUnaryOperator: public PhysicalOperator, public UnaryOperatorNode {
+class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperatorNode {
   protected:
     PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
 };
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATOR_HPP_

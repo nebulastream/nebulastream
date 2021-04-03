@@ -42,8 +42,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/DefaultPhysicalOperatorProvider.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -138,9 +138,10 @@ void DefaultPhysicalOperatorProvider::lowerUnionOperator(QueryPlanPtr, LogicalOp
     auto unionOperator = operatorNode->as<UnionLogicalOperatorNode>();
     // this assumes that we applies the ProjectBeforeUnionRule and the input across all children is the same.
     NES_ASSERT(unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema()),
-               "The children of a union operator should have the same schema. Left:" << unionOperator->getLeftInputSchema()->toString() << " but right " << unionOperator->getRightInputSchema()->toString());
-    auto physicalMultiplexOperator =
-        PhysicalOperators::PhysicalMultiplexOperator::create(unionOperator->getLeftInputSchema());
+               "The children of a union operator should have the same schema. Left:"
+                   << unionOperator->getLeftInputSchema()->toString() << " but right "
+                   << unionOperator->getRightInputSchema()->toString());
+    auto physicalMultiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(unionOperator->getLeftInputSchema());
     operatorNode->replace(physicalMultiplexOperator);
 }
 
@@ -178,7 +179,8 @@ OperatorNodePtr DefaultPhysicalOperatorProvider::getJoinBuildInputOperator(JoinL
 void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOperatorNodePtr operatorNode) {
     auto joinOperator = operatorNode->as<JoinLogicalOperatorNode>();
     // create join operator handler, to establish a common runtime object for build and prob.
-    auto joinOperatorHandler = Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
+    auto joinOperatorHandler =
+        Join::JoinOperatorHandler::create(joinOperator->getJoinDefinition(), joinOperator->getOutputSchema());
 
     auto leftInputOperator =
         getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
@@ -192,9 +194,9 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOpe
         joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler);
     rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
 
-    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(
-        joinOperator->getLeftInputSchema(), joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(),
-        joinOperatorHandler);
+    auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),
+                                                                        joinOperator->getRightInputSchema(),
+                                                                        joinOperator->getOutputSchema(), joinOperatorHandler);
     operatorNode->replace(joinSink);
 }
 
@@ -213,47 +215,38 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(QueryPlanPtr, LogicalO
     auto windowOutputSchema = windowOperator->getOutputSchema();
     auto windowDefinition = windowOperator->getWindowDefinition();
     // create window operator handler, to establish a common runtime object for aggregation and trigger phase.
-    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition,
-                                                                          windowOutputSchema);
+    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
     if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
-        auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema,
-                                                                                                     windowOutputSchema,
-                                                                                                     windowOperatorHandler);
+        auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(
+            windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
-        auto windowSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema,
-                                                                                windowOutputSchema,
-                                                                                windowOperatorHandler);
+        auto windowSink =
+            PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->replace(windowSink);
     } else if (operatorNode->instanceOf<SliceCreationOperator>()) {
         // Translate a slice creation operator in -> SlicePreAggregationOperator -> SliceSinkOperator
-        auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(windowInputSchema,
-                                                                                                     windowOutputSchema,
-                                                                                                     windowOperatorHandler);
+        auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(
+            windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
-        auto sliceSink = PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema,
-                                                                              windowOutputSchema,
-                                                                              windowOperatorHandler);
+        auto sliceSink =
+            PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<SliceMergingOperator>()) {
         // Translate a slice merging operator in -> SliceMergingOperator -> SliceSinkOperator
-        auto physicalSliceMergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema,
-                                                                                                    windowOutputSchema,
-                                                                                                    windowOperatorHandler);
+        auto physicalSliceMergingOperator =
+            PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
-        auto sliceSink = PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema,
-                                                                              windowOutputSchema,
-                                                                              windowOperatorHandler);
+        auto sliceSink =
+            PhysicalOperators::PhysicalSliceSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->replace(sliceSink);
     } else if (operatorNode->instanceOf<WindowComputationOperator>()) {
         // Translate a window computation operator in -> PhysicalSliceMergingOperator -> PhysicalWindowSinkOperator
-        auto physicalSliceMergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema,
-                                                                                                    windowOutputSchema,
-                                                                                                    windowOperatorHandler);
+        auto physicalSliceMergingOperator =
+            PhysicalOperators::PhysicalSliceMergingOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->insertBetweenThisAndChildNodes(physicalSliceMergingOperator);
-        auto sliceSink = PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema,
-                                                                               windowOutputSchema,
-                                                                               windowOperatorHandler);
+        auto sliceSink =
+            PhysicalOperators::PhysicalWindowSinkOperator::create(windowInputSchema, windowOutputSchema, windowOperatorHandler);
         operatorNode->replace(sliceSink);
     } else {
         NES_ERROR("No conversion for operator " + operatorNode->toString() + " was provided.");

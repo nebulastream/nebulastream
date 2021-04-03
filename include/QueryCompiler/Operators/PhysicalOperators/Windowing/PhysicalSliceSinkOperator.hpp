@@ -29,12 +29,13 @@ namespace PhysicalOperators {
  */
 class PhysicalSliceSinkOperator : public PhysicalWindowOperator {
   public:
-    PhysicalSliceSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
+    PhysicalSliceSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                              Windowing::WindowOperatorHandlerPtr handler);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      Windowing::WindowOperatorHandlerPtr handler);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

@@ -36,7 +36,8 @@
 
 namespace NES {
 
-LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor, OperatorId id) {
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createSourceOperator(const SourceDescriptorPtr sourceDescriptor,
+                                                                         OperatorId id) {
     return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor, id);
 }
 
@@ -52,12 +53,13 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createRenameStreamOperator(c
     return std::make_shared<RenameStreamOperatorNode>(newStreamName, id);
 }
 
-LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id) {
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(std::vector<ExpressionNodePtr> expressions,
+                                                                             OperatorId id) {
     return std::make_shared<ProjectionLogicalOperatorNode>(expressions, id);
 }
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
-                                                               OperatorId id) {
+                                                                      OperatorId id) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
 }
 
@@ -65,7 +67,8 @@ LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createUnionOperator(Operato
     return std::make_shared<UnionLogicalOperatorNode>(id);
 }
 
-LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id) {
+LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition,
+                                                                        OperatorId id) {
     return std::make_shared<JoinLogicalOperatorNode>(joinDefinition, id);
 }
 
@@ -73,8 +76,8 @@ BroadcastLogicalOperatorNodePtr LogicalOperatorFactory::createBroadcastOperator(
     return std::make_shared<BroadcastLogicalOperatorNode>(id);
 }
 
-LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                                  OperatorId id) {
+LogicalUnaryOperatorNodePtr
+LogicalOperatorFactory::createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinition, id);
 }
 

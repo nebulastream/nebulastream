@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBINARYOPERATORNODE_HPP_
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBINARYOPERATORNODE_HPP_
 
-#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES {
 /**
@@ -48,8 +48,7 @@ class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOpera
 
   private:
     std::vector<OperatorNodePtr> getOperatorsBySchema(SchemaPtr schema);
-
 };
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBINARYOPERATORNODE_HPP_

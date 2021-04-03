@@ -17,9 +17,9 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_
 #include <Operators/AbstractOperators/Arity/ExchangeOperatorNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 /**
  * @brief The physical multiplex operator
  * This operator has multiple upstream operators and forwards it to exactly one down-stream operator.
@@ -40,11 +40,10 @@ class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperat
     static PhysicalOperatorPtr create(SchemaPtr schema);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
 };
 
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMULTIPLEXOPERATOR_HPP_

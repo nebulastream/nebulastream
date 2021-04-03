@@ -74,7 +74,6 @@ class UnaryOperatorNode : public virtual OperatorNode {
 
     void setOutputSchema(SchemaPtr outputSchema) override;
 
-
   protected:
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
