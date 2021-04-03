@@ -20,7 +20,7 @@ namespace PhysicalOperators {
 
 PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                                  std::vector<ExpressionNodePtr> expressions)
-    : OperatorNode(id), expressions(expressions), PhysicalUnaryOperator(id, inputSchema, outputSchema) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), expressions(expressions) {}
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                                     std::vector<ExpressionNodePtr> expressions) {
