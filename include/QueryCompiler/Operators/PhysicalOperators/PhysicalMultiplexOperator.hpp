@@ -26,11 +26,11 @@ namespace PhysicalOperators{
  * Thus it has multiple child nodes and one parent nodes.
  * Example query plan:
  *
- * Sink --- OperatorX ---
- *                       \
- *                        --- Multiplex --- OperatorZ --- DataSource
- *                       /
- * Sink --- OperatorY ---
+ * DataSource --- OperatorX ---
+ *                             \
+ *                              --- Multiplex --- OperatorZ --- DataSink
+ *                              /
+ * DataSource --- OperatorY ---
  *
  */
 class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperatorNode {

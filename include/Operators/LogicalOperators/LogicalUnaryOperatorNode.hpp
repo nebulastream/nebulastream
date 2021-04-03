@@ -20,10 +20,13 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 
 namespace NES {
+
+/**
+ * @brief Logical unary operator. It hat at most one input data stream.
+ */
 class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperatorNode {
 
   public:
-
     LogicalUnaryOperatorNode(OperatorId id);
 
     /**

@@ -15,7 +15,9 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWOPERATOR_HPP_
+
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {

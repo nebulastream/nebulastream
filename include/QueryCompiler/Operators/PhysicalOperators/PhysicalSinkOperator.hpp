@@ -32,10 +32,8 @@ class PhysicalSinkOperator: public PhysicalUnaryOperator {
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
   private:
     SinkDescriptorPtr sinkDescriptor;
-
 };
 }
 }

@@ -16,13 +16,14 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+
 namespace NES{
 namespace QueryCompilation{
 namespace PhysicalOperators{
 
 /**
  * @brief The physical demultiplex operator
- * This operator has one upstream operator and forwards it to multiple down-stream operators.
+ * This operator receives one data stream form its upstream operator and forwards it to multiple down-stream operators.
  * Thus it has one child node and multiple parent nodes.
  * Example query plan:
  *                                             --- OperatorY --- Sink
@@ -38,9 +39,7 @@ class PhysicalDemultiplexOperator : public PhysicalUnaryOperator {
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
 };
-
 }
 }
 }

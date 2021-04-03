@@ -33,9 +33,9 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     ~JoinLogicalOperatorNode() = default;
 
     /**
- * @brief get join definition.
- * @return LogicalJoinDefinition
- */
+    * @brief get join definition.
+    * @return LogicalJoinDefinition
+    */
     Join::LogicalJoinDefinitionPtr getJoinDefinition();
 
     bool isIdentical(NodePtr rhs) const override;

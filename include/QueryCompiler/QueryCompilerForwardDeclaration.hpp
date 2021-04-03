@@ -62,7 +62,6 @@ typedef std::shared_ptr<TranslateToPhysicalOperators> TranslateToPhysicalOperato
 class PhysicalOperatorProvider;
 typedef std::shared_ptr<PhysicalOperatorProvider> PhysicalOperatorProviderPtr;
 
-
 class PhysicalQueryPlan;
 typedef std::shared_ptr<PhysicalQueryPlan> PhysicalQueryPlanPtr;
 

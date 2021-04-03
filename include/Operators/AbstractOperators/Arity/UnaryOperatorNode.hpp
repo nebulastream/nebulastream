@@ -24,6 +24,8 @@ namespace NES {
 
 /**
  * @brief A unary operator with one input operator, it has exactly one input operator.
+ * This virtually inheritances for OperatorNode
+ * https://en.wikipedia.org/wiki/Virtual_inheritance
  */
 class UnaryOperatorNode : public virtual OperatorNode {
   public:

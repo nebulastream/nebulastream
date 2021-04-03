@@ -23,14 +23,17 @@
 
 namespace NES {
 
+/**
+ * @brief Watermark assignment operator, creates a watermark timestamp per input buffer.
+ */
 class WatermarkAssignerLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     WatermarkAssignerLogicalOperatorNode(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
                                          OperatorId id);
     /**
- * @brief Returns the watermark strategy.
- * @return  Windowing::WatermarkStrategyDescriptorPtr
- */
+    * @brief Returns the watermark strategy.
+    * @return  Windowing::WatermarkStrategyDescriptorPtr
+    */
     Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
 
     bool equal(const NodePtr rhs) const override;
@@ -45,8 +48,6 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
   private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
-
-
 };
 
 typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;

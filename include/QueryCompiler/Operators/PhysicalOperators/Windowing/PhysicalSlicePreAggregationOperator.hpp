@@ -17,6 +17,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWAGGREGATION_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {

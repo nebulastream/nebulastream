@@ -36,6 +36,9 @@ typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
 
 namespace NES {
 
+/**
+ * @brief Logical operator, enables schema inference and signature computation.
+ */
 class LogicalOperatorNode : public virtual OperatorNode {
 
   public:

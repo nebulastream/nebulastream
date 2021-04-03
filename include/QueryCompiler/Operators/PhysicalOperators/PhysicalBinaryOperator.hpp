@@ -17,6 +17,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {

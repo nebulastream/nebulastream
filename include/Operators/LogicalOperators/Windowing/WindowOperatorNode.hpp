@@ -25,6 +25,9 @@ namespace NES {
 class WindowOperatorNode;
 typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
+/**
+ * @brief Window operator, which defines the window definition.
+ */
 class WindowOperatorNode : public LogicalUnaryOperatorNode {
   public:
     WindowOperatorNode(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id);

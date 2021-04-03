@@ -199,6 +199,7 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
 
 bool QueryPlan::replaceRootOperator(OperatorNodePtr oldRoot, OperatorNodePtr newRoot) {
     for (uint64_t i = 0; i < rootOperators.size(); i++) {
+        // compares the pointers and checks if we found the correct operator.
         if(rootOperators[i]==oldRoot){
             rootOperators[i] = newRoot;
             return true;
