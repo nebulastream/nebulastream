@@ -54,5 +54,4 @@ SchemaPtr BinaryOperatorNode::getRightInputSchema() const { return rightInputSch
 
 SchemaPtr BinaryOperatorNode::getOutputSchema() const { return outputSchema; }
 
-
 }// namespace NES

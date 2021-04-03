@@ -20,6 +20,9 @@
 #include <Operators/AbstractOperators/Arity/BinaryOperatorNode.hpp>
 
 namespace NES {
+/**
+ * @brief Logical Binary operator, defines two output schemas
+ */
 class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOperatorNode {
   public:
     LogicalBinaryOperatorNode(OperatorId id);

@@ -15,8 +15,10 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATETOPHYSICALOPERATORS_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATETOPHYSICALOPERATORS_HPP_
+
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <vector>
+
 namespace NES{
 namespace QueryCompilation {
 
@@ -25,7 +27,6 @@ namespace QueryCompilation {
  * The translation of individual operators is defined by the physical operator provider to improve extendability.
  */
 class TranslateToPhysicalOperators{
-
   public:
     TranslateToPhysicalOperators(PhysicalOperatorProviderPtr provider);
     static TranslateToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
@@ -33,10 +34,7 @@ class TranslateToPhysicalOperators{
 
   private:
     PhysicalOperatorProviderPtr provider;
-
 };
-
 }
 }
-
 #endif//NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATETOPHYSICALOPERATORS_HPP_

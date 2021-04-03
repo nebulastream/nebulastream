@@ -30,9 +30,6 @@ typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 class WindowOperatorHandler;
 typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
 
-//class WatermarkStrategyDescriptor;
-//typedef std::shared_ptr<WatermarkStrategy> WatermarkStrategyDescriptorPtr;
-
 }// namespace NES::Windowing
 
 namespace NES::Join {
@@ -58,7 +55,6 @@ typedef std::shared_ptr<BinaryOperatorNode> BinaryOperatorNodePtr;
 
 class LogicalBinaryOperatorNode;
 typedef std::shared_ptr<LogicalBinaryOperatorNode> LogicalBinaryOperatorNodePtr;
-
 
 class ExchangeOperatorNode;
 typedef std::shared_ptr<ExchangeOperatorNode> ExchangeOperatorNodePtr;

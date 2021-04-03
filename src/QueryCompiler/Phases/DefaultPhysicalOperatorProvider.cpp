@@ -52,11 +52,11 @@ PhysicalOperatorProviderPtr DefaultPhysicalOperatorProvider::create() {
     return std::make_shared<DefaultPhysicalOperatorProvider>();
 }
 
-bool DefaultPhysicalOperatorProvider::isDemulticast(LogicalOperatorNodePtr operatorNode) {
+bool DefaultPhysicalOperatorProvider::isDemultiplex(LogicalOperatorNodePtr operatorNode) {
     return operatorNode->getParents().size() > 1;
 }
 
-void DefaultPhysicalOperatorProvider::insertDemulticastOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(LogicalOperatorNodePtr operatorNode) {
     auto operatorOutputSchema = operatorNode->getOutputSchema();
     // A demultiplex operator has the same output schema as its child operator.
     auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorOutputSchema);
@@ -64,15 +64,15 @@ void DefaultPhysicalOperatorProvider::insertDemulticastOperatorsBefore(LogicalOp
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
 }
 
-void DefaultPhysicalOperatorProvider::insertMulticastOperatorsAfter(LogicalOperatorNodePtr operatorNode) {
+void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(LogicalOperatorNodePtr operatorNode) {
     // the multiplex operator has the same schema as the output schema of the operator node.
     auto multiplexOperator = PhysicalOperators::PhysicalMultiplexOperator::create(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndChildNodes(multiplexOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) {
-    if (isDemulticast(operatorNode)) {
-        insertDemulticastOperatorsBefore(operatorNode);
+    if (isDemultiplex(operatorNode)) {
+        insertDemultiplexOperatorsBefore(operatorNode);
     }
 
     if (operatorNode->isUnaryOperator()) {
@@ -86,7 +86,7 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(QueryPlanPtr queryPlan,
 
     // If a unary operator has more then one parent, we introduce a implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1) {
-        insertMulticastOperatorsAfter(operatorNode);
+        insertMultiplexOperatorsAfter(operatorNode);
     }
 
     NES_ASSERT(operatorNode->getParents().size() <= 1, "A unary operator should only have at most one parent.");

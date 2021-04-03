@@ -17,6 +17,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {

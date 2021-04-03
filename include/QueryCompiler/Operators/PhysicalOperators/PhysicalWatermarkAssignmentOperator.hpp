@@ -34,15 +34,13 @@ class PhysicalWatermarkAssignmentOperator: public PhysicalUnaryOperator {
     OperatorNodePtr copy() override;
 
     /**
-* @brief Returns the watermark strategy.
-* @return  Windowing::WatermarkStrategyDescriptorPtr
-*/
+    * @brief Returns the watermark strategy.
+    * @return  Windowing::WatermarkStrategyDescriptorPtr
+    */
     Windowing::WatermarkStrategyDescriptorPtr getWatermarkStrategyDescriptor() const;
 
   private:
-    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
-
-
+    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescripto;
 };
 }
 }
