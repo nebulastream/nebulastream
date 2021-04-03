@@ -17,9 +17,9 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
 /**
  * @brief The physical demultiplex operator
@@ -40,8 +40,8 @@ class PhysicalDemultiplexOperator : public PhysicalUnaryOperator {
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_

@@ -17,14 +17,14 @@
 #ifndef NES_INCLUDE_NODES_OPERATORS_BINARY_OPERATOR_NODE_HPP_
 #define NES_INCLUDE_NODES_OPERATORS_BINARY_OPERATOR_NODE_HPP_
 
-#include <Operators/OperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/OperatorNode.hpp>
 namespace NES {
 
 /**
  * @brief A binary operator with more the none input operator, thus it has a left and a right input schema.
  */
-class BinaryOperatorNode : public virtual OperatorNode{
+class BinaryOperatorNode : public virtual OperatorNode {
   public:
     explicit BinaryOperatorNode(OperatorId id);
 

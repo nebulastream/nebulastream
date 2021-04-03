@@ -18,18 +18,21 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
 /**
  * @brief Physical watermark assignment operator.
  */
-class PhysicalWatermarkAssignmentOperator: public PhysicalUnaryOperator {
+class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalWatermarkAssignmentOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    PhysicalWatermarkAssignmentOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                        const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                      Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
@@ -42,8 +45,8 @@ class PhysicalWatermarkAssignmentOperator: public PhysicalUnaryOperator {
   private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALWATERMARKASSIGNMENTOPERATOR_HPP_

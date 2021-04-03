@@ -35,8 +35,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
@@ -44,7 +45,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Phases/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/TranslateToPhysicalOperators.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
@@ -118,7 +118,7 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
         sliceCreationOperator = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition);
         windowComputation = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition);
         sliceMerging = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition);
-        mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id")=10);
+        mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
     }
 
     void TearDown() { NES_DEBUG("Tear down TranslateToPhysicalOperatorPhase Test."); }
@@ -602,7 +602,6 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateMapQuery) {
     ++iterator;
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
-
 
 /**
  * @brief Input Query Plan:

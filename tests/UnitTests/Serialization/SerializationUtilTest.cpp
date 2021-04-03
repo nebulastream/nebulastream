@@ -35,6 +35,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -50,7 +51,6 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <SerializableOperator.pb.h>
 #include <Util/Logger.hpp>

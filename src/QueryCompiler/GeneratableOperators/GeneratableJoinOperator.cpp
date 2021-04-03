@@ -14,13 +14,13 @@
     limitations under the License.
 */
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableJoinOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
-#include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 
 namespace NES {
 
@@ -109,7 +109,7 @@ GeneratableJoinOperatorPtr GeneratableJoinOperator::create(JoinLogicalOperatorNo
 
 GeneratableJoinOperator::GeneratableJoinOperator(SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outSchema,
                                                  Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
-    :  OperatorNode(id), JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
+    : OperatorNode(id), JoinLogicalOperatorNode(joinDefinition, id), joinDefinition(joinDefinition) {
 
     NES_ASSERT(leftSchema, "invalid left schema");
     NES_ASSERT(rightSchema, "invalid right schema");

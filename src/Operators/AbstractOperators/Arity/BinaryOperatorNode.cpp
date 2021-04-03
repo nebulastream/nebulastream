@@ -21,8 +21,7 @@
 namespace NES {
 
 BinaryOperatorNode::BinaryOperatorNode(OperatorId id)
-    : OperatorNode(id), leftInputSchema(Schema::create()), rightInputSchema(Schema::create()),
-      outputSchema(Schema::create()) {
+    : OperatorNode(id), leftInputSchema(Schema::create()), rightInputSchema(Schema::create()), outputSchema(Schema::create()) {
     //nop
 }
 

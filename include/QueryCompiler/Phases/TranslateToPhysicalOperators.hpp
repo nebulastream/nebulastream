@@ -19,14 +19,14 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <vector>
 
-namespace NES{
+namespace NES {
 namespace QueryCompilation {
 
 /**
  * @brief This phase translates a query plan of logical operators into a query plan of physical operators.
  * The translation of individual operators is defined by the physical operator provider to improve extendability.
  */
-class TranslateToPhysicalOperators{
+class TranslateToPhysicalOperators {
   public:
     TranslateToPhysicalOperators(PhysicalOperatorProviderPtr provider);
     static TranslateToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
@@ -35,6 +35,6 @@ class TranslateToPhysicalOperators{
   private:
     PhysicalOperatorProviderPtr provider;
 };
-}
-}
+}// namespace QueryCompilation
+}// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATETOPHYSICALOPERATORS_HPP_

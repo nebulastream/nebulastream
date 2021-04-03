@@ -42,7 +42,7 @@ bool LogicalBinaryOperatorNode::inferSchema() {
     for (auto& child : children) {
         auto childOutputSchema = child->as<OperatorNode>()->getOutputSchema();
         auto found = std::find_if(distinctSchemas.begin(), distinctSchemas.end(), [&](SchemaPtr distinctSchema) {
-          return childOutputSchema->equals(distinctSchema, false);
+            return childOutputSchema->equals(distinctSchema, false);
         });
         if (found == distinctSchemas.end()) {
             distinctSchemas.push_back(childOutputSchema);
@@ -52,7 +52,7 @@ bool LogicalBinaryOperatorNode::inferSchema() {
     //validate that only two different type of schema were present
     if (distinctSchemas.size() > 2) {
         throw TypeInferenceException("BinaryOperatorNode: Found " + std::to_string(distinctSchemas.size())
-                                         + " distinct schemas but expected 2 or less distinct schemas.");
+                                     + " distinct schemas but expected 2 or less distinct schemas.");
     }
 
     return true;
@@ -62,16 +62,14 @@ std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getOperatorsBySchema(Sch
     std::vector<OperatorNodePtr> operators;
     for (auto child : getChildren()) {
         auto childOperator = child->as<OperatorNode>();
-        if (childOperator->getOutputSchema()->equals(schema, false)){
+        if (childOperator->getOutputSchema()->equals(schema, false)) {
             operators.emplace_back(childOperator);
         }
     }
     return operators;
 }
 
-std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getLeftOperators() {
-   return getOperatorsBySchema(getLeftInputSchema());
-}
+std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getLeftOperators() { return getOperatorsBySchema(getLeftInputSchema()); }
 
 std::vector<OperatorNodePtr> LogicalBinaryOperatorNode::getRightOperators() {
     return getOperatorsBySchema(getRightInputSchema());

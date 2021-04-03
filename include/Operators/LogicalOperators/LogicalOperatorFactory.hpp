@@ -38,7 +38,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createFilterOperator(const ExpressionNodePtr predicate,
-                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                            OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new stream rename operator.
@@ -46,7 +46,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createRenameStreamOperator(const std::string newStreamName,
-                                                           OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                                  OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Create a new logical projection operator.
@@ -55,7 +55,7 @@ class LogicalOperatorFactory {
     * @return LogicalOperatorNodePtr
     */
     static LogicalUnaryOperatorNodePtr createProjectionOperator(std::vector<ExpressionNodePtr> expressions,
-                                                         OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                                OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
@@ -64,7 +64,7 @@ class LogicalOperatorFactory {
      * @return LogicalOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createSinkOperator(const SinkDescriptorPtr sinkDescriptor,
-                                                   OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                          OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new map operator with a field assignment expression as a map expression.
@@ -73,7 +73,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createMapOperator(const FieldAssignmentExpressionNodePtr mapExpression,
-                                                  OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                         OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.
@@ -82,7 +82,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createSourceOperator(const SourceDescriptorPtr sourceDescriptor,
-                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                            OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Create a specialized watermark assigner operator.
@@ -100,7 +100,7 @@ class LogicalOperatorFactory {
      * @return UnaryOperatorNodePtr
      */
     static LogicalUnaryOperatorNodePtr createWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                     OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                            OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a specialized central window operator with window definition.
@@ -155,7 +155,7 @@ class LogicalOperatorFactory {
     * @return BinaryOperatorNode
     */
     static LogicalBinaryOperatorNodePtr createJoinOperator(Join::LogicalJoinDefinitionPtr joinDefinition,
-                                                    OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                           OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief Create a broadcast operator.

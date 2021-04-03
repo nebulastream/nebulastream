@@ -18,16 +18,16 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES{
-namespace QueryCompilation{
-namespace PhysicalOperators{
+namespace NES {
+namespace QueryCompilation {
+namespace PhysicalOperators {
 
 /**
  * @brief Physical Filter operator.
  */
-class PhysicalFilterOperator: public PhysicalUnaryOperator{
+class PhysicalFilterOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,ExpressionNodePtr predicate);
+    PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
     const std::string toString() const override;
@@ -38,11 +38,12 @@ class PhysicalFilterOperator: public PhysicalUnaryOperator{
    * @return PredicatePtr
    */
     ExpressionNodePtr getPredicate();
+
   private:
     ExpressionNodePtr predicate;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
