@@ -128,7 +128,7 @@ int main(int argc, const char* argv[]) {
 
     std::stringstream ss;
     std::string resultPrefix = "Time,BM_Name,NES_Version";
-    std::string changeableParameterString = "WorkerThreads,CoordinatorThreadCnt,SourceCnt";
+    std::string changeableParameterString = "WorkerThreads,SourceCnt";
     std::string benchmarkResultString = "ProcessedBuffersTotal,ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,"
                                         "ThroughputInTupsPerSec,ThroughputInMBPerSec,AvgLatencyInMs";
 
@@ -140,8 +140,6 @@ int main(int argc, const char* argv[]) {
 
     std::map<std::string, std::vector<uint64_t>> parameterNameToValueVectorMap;
     parameterNameToValueVectorMap["workerThreads"] =
-        getParameterFromString(benchmarkConfig->getNumberOfWorkerThreads()->getValue());
-    parameterNameToValueVectorMap["coordinatorThreads"] =
         getParameterFromString(benchmarkConfig->getNumberOfWorkerThreads()->getValue());
     parameterNameToValueVectorMap["sources"] = getParameterFromString(benchmarkConfig->getNumberOfSources()->getValue());
     parameterNameToValueVectorMap["numberOfBuffersInGlobalBufferManagers"] =
@@ -167,7 +165,7 @@ int main(int argc, const char* argv[]) {
     for (size_t i = 0; i < maxParamCnt; i++) {
         //print resultPrefix
         std::shared_ptr<E2EBase> testRun = std::make_shared<E2EBase>(
-            parameterNameToValueVectorMap["workerThreads"].at(i), parameterNameToValueVectorMap["coordinatorThreads"].at(i),
+            parameterNameToValueVectorMap["workerThreads"].at(i),
             parameterNameToValueVectorMap["sources"].at(i),
             parameterNameToValueVectorMap["numberOfBuffersInGlobalBufferManagers"].at(i),
             parameterNameToValueVectorMap["numberOfBuffersPerPipelines"].at(i),
@@ -176,7 +174,7 @@ int main(int argc, const char* argv[]) {
 
         ss << testRun->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion;
         ss << "," << parameterNameToValueVectorMap["workerThreads"].at(i) << ","
-           << parameterNameToValueVectorMap["coordinatorThreads"].at(i) << "," << parameterNameToValueVectorMap["sources"].at(i)
+           <<  parameterNameToValueVectorMap["sources"].at(i)
            << ",";
 
         ss << testRun->runExperiment() << ",";

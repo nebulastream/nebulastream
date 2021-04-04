@@ -16,9 +16,9 @@
 #include "E2EBenchmarks/E2EBenchmarkConfig.hpp"
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
+#include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <E2EBenchmarks/E2EBase.hpp>
-#include <Components/NesWorker.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -85,20 +85,21 @@ std::string E2EBase::runExperiment() {
     return getResult();
 }
 
-E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t threadCntCoordinator, uint64_t sourceCnt,
-                 uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersPerPipeline,
-                 uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t bufferSizeInBytes, E2EBenchmarkConfigPtr config)
-    : numberOfWorkerThreads(threadCntWorker), numberOfCoordinatorThreads(threadCntCoordinator), sourceCnt(sourceCnt),
+E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t sourceCnt, uint64_t numberOfBuffersInGlobalBufferManager,
+                 uint64_t numberOfBuffersPerPipeline, uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t bufferSizeInBytes,
+                 E2EBenchmarkConfigPtr config)
+    : numberOfWorkerThreads(threadCntWorker), sourceCnt(sourceCnt),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersPerPipeline(numberOfBuffersPerPipeline),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool), bufferSizeInBytes(bufferSizeInBytes),
       config(config) {
     std::cout << "run with configuration:"
-              << " threadCntWorker=" << numberOfWorkerThreads << " threadCntCoordinator=" << numberOfCoordinatorThreads
-              << " sourceCnt=" << sourceCnt << " numberOfBuffersInGlobalBufferManager=" << numberOfBuffersInGlobalBufferManager
+              << " threadCntWorker=" << numberOfWorkerThreads << " sourceCnt=" << sourceCnt
+              << " numberOfBuffersInGlobalBufferManager=" << numberOfBuffersInGlobalBufferManager
               << " numberOfBuffersPerPipeline=" << numberOfBuffersPerPipeline
               << " numberOfBuffersInSourceLocalBufferPool=" << numberOfBuffersInSourceLocalBufferPool
-              << " bufferSizeInBytes=" << bufferSizeInBytes << " scalability=" << config->getScalability()->getValue() << std::endl;
+              << " bufferSizeInBytes=" << bufferSizeInBytes << " scalability=" << config->getScalability()->getValue()
+              << std::endl;
     setup();
 }
 
@@ -215,7 +216,7 @@ void E2EBase::setupSources() {
     out.close();
 
     NES_ASSERT(crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName), "failed to create logical stream");
-//    crd->getCoordinatorEngine()->registerLogicalStream("input", input);
+    //    crd->getCoordinatorEngine()->registerLogicalStream("input", input);
 
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
     auto query = config->getQuery()->getValue();
@@ -313,7 +314,8 @@ void E2EBase::setupSources() {
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource", "test_stream" + std::to_string(i), "input");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
+                                                                    "test_stream" + std::to_string(i), "input");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
@@ -432,7 +434,7 @@ void E2EBase::setup() {
     portOffset += 13;
 
     NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
-    crdConf->setNumWorkerThreads(numberOfCoordinatorThreads);
+    crdConf->setNumWorkerThreads(numberOfWorkerThreads);
     crdConf->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
     crdConf->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
     crdConf->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);

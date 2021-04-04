@@ -128,7 +128,7 @@ bool DataSource::stop(bool graceful) {
             NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what());
         }
     }
-    NES_WARNING("Stopped Source = " << wasGracefullyStopped);
+    NES_WARNING("Stopped Source " << operatorId << " = " << wasGracefullyStopped);
     return ret;
 }
 
