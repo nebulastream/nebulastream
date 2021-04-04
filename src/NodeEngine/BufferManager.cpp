@@ -119,6 +119,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
     //TODO: remove this
 
     while (availableBuffers.empty()) {
+        NES_ERROR("All global Buffers are exhausted");
         availableBuffersCvar.wait(lock);
     }
     auto memSegment = availableBuffers.front();

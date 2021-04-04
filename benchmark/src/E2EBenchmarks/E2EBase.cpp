@@ -544,32 +544,32 @@ void E2EBase::tearDown() {
             NES_ERROR("query was not stopped within 30 sec");
         }
 
-        std::unique_ptr<std::thread> waitThreadWorker;
-        std::shared_ptr<std::promise<bool>> stopPromiseWrk = std::make_shared<std::promise<bool>>();
-        if (config->getScalability()->getValue() == "scale-out") {
-            std::cout << "E2EBase: Stop worker 1" << std::endl;
-            waitThreadWorker = make_unique<thread>([this, stopPromiseWrk]() {
-                std::future<bool> stopFutureWrk = stopPromiseWrk->get_future();
-                bool satisfied = false;
-                while (!satisfied) {
-                    switch (stopFutureWrk.wait_for(std::chrono::seconds(1))) {
-                        case future_status::ready: {
-                            satisfied = true;
-                        }
-                        case future_status::timeout:
-                        case future_status::deferred: {
-                            if (wrk->isWorkerRunning()) {
-                                NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
-                                            << wrk->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
-                            } else {
-                                NES_WARNING("worker stopped");
-                            }
-                            break;
-                        }
-                    }
-                }
-            });
-        }
+//        std::unique_ptr<std::thread> waitThreadWorker;
+//        std::shared_ptr<std::promise<bool>> stopPromiseWrk = std::make_shared<std::promise<bool>>();
+//        if (config->getScalability()->getValue() == "scale-out") {
+//            std::cout << "E2EBase: Stop worker 1" << std::endl;
+//            waitThreadWorker = make_unique<thread>([this, stopPromiseWrk]() {
+//                std::future<bool> stopFutureWrk = stopPromiseWrk->get_future();
+//                bool satisfied = false;
+//                while (!satisfied) {
+//                    switch (stopFutureWrk.wait_for(std::chrono::seconds(1))) {
+//                        case future_status::ready: {
+//                            satisfied = true;
+//                        }
+//                        case future_status::timeout:
+//                        case future_status::deferred: {
+//                            if (wrk->isWorkerRunning()) {
+//                                NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
+//                                            << wrk->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+//                            } else {
+//                                NES_WARNING("worker stopped");
+//                            }
+//                            break;
+//                        }
+//                    }
+//                }
+//            });
+//        }
 
         std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
         std::thread waitThreadCoordinator([this, stopPromiseCord]() {
@@ -594,12 +594,12 @@ void E2EBase::tearDown() {
             }
         });
 
-        if (config->getScalability()->getValue() == "scale-out") {
-            bool retStopWrk = wrk->stop(true);
-            stopPromiseWrk->set_value(retStopWrk);
-            NES_ASSERT(retStopWrk, retStopWrk);
-            waitThreadWorker->join();
-        }
+//        if (config->getScalability()->getValue() == "scale-out") {
+//            bool retStopWrk = wrk->stop(true);
+//            stopPromiseWrk->set_value(retStopWrk);
+//            NES_ASSERT(retStopWrk, retStopWrk);
+//            waitThreadWorker->join();
+//        }
 
         std::cout << "E2EBase: Stop Coordinator" << std::endl;
         bool retStopCord = crd->stopCoordinator(true);
