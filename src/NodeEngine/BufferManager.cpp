@@ -24,6 +24,7 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
+#include <cstring>
 
 namespace NES::NodeEngine {
 
@@ -102,6 +103,8 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
         if (ptr == nullptr) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
         }
+        //We touch each buffer to make sure that is really allocated
+        std::memset(ptr, 0, sizeof(uint64_t));
         allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
             recycler->recyclePooledBuffer(segment);
         });
