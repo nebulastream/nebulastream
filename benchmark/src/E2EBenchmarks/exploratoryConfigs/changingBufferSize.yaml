@@ -9,7 +9,7 @@ numberOfBuffersInGlobalBufferManager: 65536
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 4096,8192,16384,32768,65536,131072,262144,524288,1048576,2097152,4194304,8388608,16777216
-git
+
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
 outputFile: changingBufferSize.csv

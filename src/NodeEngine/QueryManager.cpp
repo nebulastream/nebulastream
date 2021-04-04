@@ -508,6 +508,9 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
+    //@Ventrua we have to do this because otherwise we can run into the situation to get threads from two barriers waiting
+    std::unique_lock lock(workMutex);
+
     NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
     NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
@@ -544,7 +547,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             /** default pipeline Id*/ -1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
             /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
         {
-            std::unique_lock lock(workMutex);
+//            std::unique_lock lock(workMutex);
             for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
                 if (graceful) {
                     taskQueue.emplace_back(pipeline, buffer);
