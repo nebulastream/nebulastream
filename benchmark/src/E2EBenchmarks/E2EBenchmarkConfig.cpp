@@ -28,8 +28,6 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
 
     numberOfWorkerThreads = ConfigOption<std::string>::create(
         "numberOfWorkerThreads", "1", "Comma separated list of number of worker threads in the NES Worker.");
-    numberOfCoordinatorThreads = ConfigOption<std::string>::create(
-        "numberOfCoordinatorThreads", "1", "Comma separated list of number of worker threads in the NES Coordinator.");
     numberOfSources = ConfigOption<std::string>::create("numberOfSources", "1", "Comma separated list of number of sources.");
 
     numberOfBuffersToProduce =
@@ -67,7 +65,6 @@ void E2EBenchmarkConfig::overwriteConfigWithYAMLFileInput(const std::string& fil
         Yaml::Parse(config, filePath.c_str());
         try {
             setNumberOfWorkerThreads(config["numberOfWorkerThreads"].As<std::string>());
-            setNumberOfCoordinatorThreads(config["numberOfCoordinatorThreads"].As<std::string>());
             setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint32_t>());
             setNumberOfBuffersInGlobalBufferManager(config["numberOfBuffersInGlobalBufferManager"].As<std::string>());
             setNumberOfBuffersPerPipeline(config["numberOfBuffersPerPipeline"].As<std::string>());
@@ -100,8 +97,6 @@ void E2EBenchmarkConfig::overwriteConfigWithCommandLineInput(const std::map<std:
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--numberOfWorkerThreads") {
                 setNumberOfWorkerThreads(it->second);
-            } else if (it->first == "--numberOfCoordinatorThreads") {
-                setNumberOfCoordinatorThreads(it->second);
             } else if (it->first == "--numberOfBuffersToProduce") {
                 setNumberOfBuffersToProduce(stoi(it->second));
             } else if (it->first == "--numberOfBuffersInGlobalBufferManager") {
@@ -146,7 +141,6 @@ void E2EBenchmarkConfig::overwriteConfigWithCommandLineInput(const std::map<std:
 
 void E2EBenchmarkConfig::resetOptions() {
     setNumberOfWorkerThreads(numberOfWorkerThreads->getDefaultValue());
-    setNumberOfCoordinatorThreads(numberOfCoordinatorThreads->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager->getDefaultValue());
     setNumberOfBuffersPerPipeline(numberOfBuffersPerPipeline->getDefaultValue());
@@ -166,9 +160,6 @@ void E2EBenchmarkConfig::resetOptions() {
 
 void E2EBenchmarkConfig::setNumberOfWorkerThreads(std::string numberOfWorkerThreads) {
     E2EBenchmarkConfig::numberOfWorkerThreads->setValue(numberOfWorkerThreads);
-}
-void E2EBenchmarkConfig::setNumberOfCoordinatorThreads(std::string numberOfCoordinatorThreads) {
-    E2EBenchmarkConfig::numberOfCoordinatorThreads->setValue(numberOfCoordinatorThreads);
 }
 void E2EBenchmarkConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce) {
     E2EBenchmarkConfig::numberOfBuffersToProduce->setValue(numberOfBuffersToProduce);
@@ -200,8 +191,6 @@ void E2EBenchmarkConfig::setQuery(std::string query) { E2EBenchmarkConfig::query
 void E2EBenchmarkConfig::setLogLevel(std::string logLevel) { E2EBenchmarkConfig::logLevel->setValue(logLevel); }
 
 const StringConfigOption E2EBenchmarkConfig::getNumberOfWorkerThreads() const { return numberOfWorkerThreads; }
-
-const StringConfigOption E2EBenchmarkConfig::getNumberOfCoordinatorThreads() const { return numberOfCoordinatorThreads; }
 
 const StringConfigOption E2EBenchmarkConfig::getNumberOfSources() const { return numberOfSources; }
 
@@ -254,7 +243,6 @@ void E2EBenchmarkConfig::setNumberOfMeasurementsToCollect(uint32_t numberOfMeasu
 std::string E2EBenchmarkConfig::toString() {
     std::stringstream ss;
     ss << " numberOfWorkerThreads=" << getNumberOfWorkerThreads()->getValue()
-       << " numberOfCoordinatorThreads=" << getNumberOfCoordinatorThreads()->getValue()
        << " numberOfBuffersToProduce=" << getNumberOfBuffersToProduce()->getValue()
        << " numberOfSources=" << getNumberOfSources()->getValue()
        << " numberOfBuffersInGlobalBufferManager=" << getNumberOfBuffersInGlobalBufferManager()->getValue()

@@ -65,7 +65,6 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
 QueryRequestProcessorService::~QueryRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
 
 void QueryRequestProcessorService::start() {
-
     try {
         while (isQueryProcessorRunning()) {
             NES_INFO("QueryRequestProcessorService: Waiting for new query request trigger");
@@ -182,7 +181,6 @@ bool QueryRequestProcessorService::isQueryProcessorRunning() {
 
 void QueryRequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
-    NES_ERROR("Shutting Down");
     if (queryProcessorRunning) {
         this->queryProcessorRunning = false;
         queryRequestQueue->insertPoisonPill();

@@ -65,16 +65,6 @@ class E2EBenchmarkConfig {
     const StringConfigOption getNumberOfWorkerThreads() const;
 
     /**
-    * @brief set the value for numberOfCoordinatorThreads
-    */
-    void setNumberOfCoordinatorThreads(std::string numberOfCoordinatorThreads);
-
-    /**
-     * @brief gets a ConfigOption object with numberOfCoordinatorThreads
-     */
-    const StringConfigOption getNumberOfCoordinatorThreads() const;
-
-    /**
        * @brief set the value for numberOfSources
     */
     void setNumberOfSources(std::string numberOfSources);
@@ -234,7 +224,6 @@ class E2EBenchmarkConfig {
 
     //parameter that can be changed per run
     StringConfigOption numberOfWorkerThreads;
-    StringConfigOption numberOfCoordinatorThreads;
     StringConfigOption numberOfSources;
 
     //parameter that are valid for the entire run for the config of the worker and coordinator
