@@ -43,19 +43,25 @@ LambdaSource::LambdaSource(
 
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
+    using namespace std::chrono_literals;
 
-    auto buffer = this->bufferManager->getBufferBlocking();
-    auto numberOfTuplesToProduce = buffer.getBufferSize() / schema->getSchemaSizeInBytes();
+    auto buffer = this->bufferManager->getBufferTimeout(1s);
+    if(!buffer->isValid())
+    {
+        NES_ERROR("Buffer invalid after waiting on timeout");
+        return std::nullopt;
+    }
+    auto numberOfTuplesToProduce = buffer->getBufferSize() / schema->getSchemaSizeInBytes();
 
-    generationFunction(buffer, numberOfTuplesToProduce);
+    generationFunction(buffer.value(), numberOfTuplesToProduce);
 
-    buffer.setNumberOfTuples(numberOfTuplesToProduce);
-    generatedTuples += buffer.getNumberOfTuples();
+    buffer->setNumberOfTuples(numberOfTuplesToProduce);
+    generatedTuples += buffer->getNumberOfTuples();
     generatedBuffers++;
 
-    NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples()
-                                                                     << " outOrgID=" << buffer.getOriginId());
-    if (buffer.getNumberOfTuples() == 0) {
+    NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer->getNumberOfTuples()
+                                                                     << " outOrgID=" << buffer->getOriginId());
+    if (buffer->getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
         return buffer;
