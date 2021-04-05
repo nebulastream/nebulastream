@@ -759,9 +759,9 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
     crdConf->setRpcPort(4000);
     crdConf->setRestPort(8081);
     crdConf->setNumWorkerThreads(8);
-    crdConf->setNumberOfBuffersInGlobalBufferManager(65536);
-    crdConf->setNumberOfBuffersInSourceLocalBufferPool(1024);
-    crdConf->setnumberOfBuffersPerPipeline(1024);
+    crdConf->setNumberOfBuffersInGlobalBufferManager(1000);
+    crdConf->setNumberOfBuffersInSourceLocalBufferPool(124);
+    crdConf->setnumberOfBuffersPerPipeline(124);
     crdConf->setBufferSizeInBytes(524288);
 
     std::cout << "E2EBase: Start coordinator" << std::endl;
@@ -797,11 +797,11 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
         };
 
         NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
-            "LambdaSource", "test_stream" + std::to_string(i), "input", std::move(func1), 3000, 1);
+            "LambdaSource", "test_stream" + std::to_string(i), "input", std::move(func1), 3000000, 0);
         crd->getNesWorker()->registerPhysicalStream(conf1);
     }
 
-    string query = R"(Query::from("input").sink(NullOutputSinkDescriptor::create());)";
+    string query = R"(Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
@@ -810,7 +810,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
 
     sleep(2);
     std::cout << "E2EBase: Remove query" << std::endl;
-    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
+    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no valid stop quest");
     std::cout << "E2EBase: wait for stop" << std::endl;
     bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
     if (!ret) {
