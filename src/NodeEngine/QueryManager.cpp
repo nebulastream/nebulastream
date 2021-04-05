@@ -539,6 +539,10 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer())
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
+            NES_WARNING("EOS opId=" << sourceId << " reconfType=" << reconfigType << " queryExecutionPlanId=" << queryExecutionPlanId
+                        <<  " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId()
+                        );
+
         }
 
         auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,
