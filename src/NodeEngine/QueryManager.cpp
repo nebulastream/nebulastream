@@ -556,7 +556,9 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
                 if (graceful) {
                     taskQueue.emplace_back(pipeline, buffer);
                 } else {
-                    taskQueue.emplace_front(pipeline, buffer);
+//                    taskQueue.emplace_front(pipeline, buffer);
+                    //todo redo this
+                    taskQueue.emplace_back(pipeline, buffer);
                 }
             }
             cv.notify_all();
