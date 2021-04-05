@@ -38,6 +38,7 @@
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MonitoringSource.hpp>
@@ -725,9 +726,9 @@ TEST_F(SourceTest, testTwoLambdaSources) {
         NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", std::move(func2), 3, 0);
     wrk1->registerPhysicalStream(conf2);
 
-    std::string query =
-        "Query::from(\"input1\").joinWith(Query::from(\"input2\"), Attribute(\"id\"), Attribute(\"id\"), "
-        "TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Milliseconds(1000))).sink(NullOutputSinkDescriptor::create());";
+    string query =
+        R"(Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
+        Milliseconds(1000))).sink(NullOutputSinkDescriptor::create());)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();
@@ -752,4 +753,74 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     NES_ASSERT(retStopCord, "retStopCord");
     std::cout << "E2EBase: Test finished" << std::endl;
 }
+
+TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
+    NES::CoordinatorConfigPtr crdConf = NES::CoordinatorConfig::create();
+    crdConf->setRpcPort(4000);
+    crdConf->setRestPort(8081);
+    crdConf->setNumWorkerThreads(8);
+    crdConf->setNumberOfBuffersInGlobalBufferManager(65536);
+    crdConf->setNumberOfBuffersInSourceLocalBufferPool(1024);
+    crdConf->setnumberOfBuffersPerPipeline(1024);
+    crdConf->setBufferSizeInBytes(524288);
+
+    std::cout << "E2EBase: Start coordinator" << std::endl;
+
+    auto crd = std::make_shared<NES::NesCoordinator>(crdConf);
+    crd->startCoordinator(/**blocking**/ false);
+
+    std::string input =
+        R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
+    std::string testSchemaFileName = "input.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << input;
+    out.close();
+    crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName);
+
+    for (int64_t i = 0; i < 4; i++) {
+        auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+            struct Record {
+                uint64_t id;
+                uint64_t value;
+                uint64_t timestamp;
+            };
+
+            auto records = buffer.getBufferAs<Record>();
+            auto ts = time(0);
+            for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                records[u].id = u;
+                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                records[u].value = u % 10;
+                records[u].timestamp = ts;
+            }
+            return;
+        };
+
+        NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
+            "LambdaSource", "test_stream" + std::to_string(i), "input", std::move(func1), 3000, 1);
+        crd->getNesWorker()->registerPhysicalStream(conf1);
+    }
+
+    string query = R"(Query::from("input").sink(NullOutputSinkDescriptor::create());)";
+
+    NES::QueryServicePtr queryService = crd->getQueryService();
+    auto queryCatalog = crd->getQueryCatalog();
+    auto queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+
+    sleep(2);
+    std::cout << "E2EBase: Remove query" << std::endl;
+    NES_ASSERT(queryService->validateAndQueueStopRequest(queryId), "no vaild stop quest");
+    std::cout << "E2EBase: wait for stop" << std::endl;
+    bool ret = NES::TestUtils::checkStoppedOrTimeout(queryId, queryCatalog);
+    if (!ret) {
+        NES_ERROR("query was not stopped within 30 sec");
+    }
+
+    std::cout << "E2EBase: Stop Coordinator" << std::endl;
+    bool retStopCord = crd->stopCoordinator(true);
+    NES_ASSERT(retStopCord, "retStopCord");
+    std::cout << "E2EBase: Test finished" << std::endl;
+}
+
 }// namespace NES
