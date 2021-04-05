@@ -40,7 +40,7 @@ jobs:
       - name: docker cleanup
         if: ${{ always() }}
         run: |
-          docker rm -f ${{ github.run_id }}_benchmark_schedule
+          docker rm -f ${{ github.run_id }}_benchmark_scheduled
   benchmark-triggered-job:
     if: "contains(github.event.inputs.trigger-value, 'trigger benchmark')"
     runs-on: [self-hosted, linux, X64, Benchmark]
