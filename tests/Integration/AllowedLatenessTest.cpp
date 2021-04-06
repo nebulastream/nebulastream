@@ -17,7 +17,7 @@
 #include <gtest/gtest.h>
 
 #include <Util/Logger.hpp>
-#include <Util/TestHarness.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <iostream>
 
 using namespace std;
