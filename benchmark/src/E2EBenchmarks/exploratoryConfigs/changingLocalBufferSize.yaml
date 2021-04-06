@@ -6,8 +6,8 @@ numberOfSources: 4
 
 # engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 65536
-numberOfBuffersPerPipeline: 256,512,1024,2048,4096,8192
-numberOfBuffersInSourceLocalBufferPool: 256,512,1024,2048,4096
+numberOfBuffersPerPipeline: 256,512,1024,2048,4096,8192,16384
+numberOfBuffersInSourceLocalBufferPool: 256,512,1024,2048,40966,8192,16384
 bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
