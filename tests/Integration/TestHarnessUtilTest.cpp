@@ -14,7 +14,7 @@
     limitations under the License.
 */
 #include <Util/Logger.hpp>
-#include <Util/TestHarness.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

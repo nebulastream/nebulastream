@@ -16,33 +16,16 @@
 
 #ifndef NES_TESTHARNESS_HPP
 #define NES_TESTHARNESS_HPP
-#include <API/Schema.hpp>
-#include <Catalogs/MemorySourceStreamConfig.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/TestUtils.hpp>
+#include <Util/TestHarness/TestHarnessWorker.hpp>
 
 /**
  * @brief This test harness wrap query deployment test in our test framework.
  */
 namespace NES {
-
-enum TestHarnessWorkerType { CSVSource, MemorySource, NonSource};
-
-// A struct to keep each worker and its source configuration together
-struct TestHarnessWorker {
-    NesWorkerPtr wrk;
-    TestHarnessWorkerType type;
-    std::string logicalStreamName;
-    std::string physicalStreamName;
-    SchemaPtr schema;
-    std::vector<uint8_t*> record;
-    PhysicalStreamConfigPtr csvSourceConfig;
-};
 
 class TestHarness {
   public:
@@ -138,7 +121,7 @@ class TestHarness {
 
         TestHarnessWorker currentMemorySource = TestHarnessWorker();
         currentMemorySource.wrk = wrk;
-        currentMemorySource.type = MemorySource;
+        currentMemorySource.type = TestHarnessWorker::MemorySource;
         currentMemorySource.record = currentSourceRecords;
         currentMemorySource.schema = schema;
         currentMemorySource.logicalStreamName = logicalStreamName;
@@ -182,7 +165,7 @@ class TestHarness {
 
         TestHarnessWorker currentCsvSource = TestHarnessWorker();
         currentCsvSource.wrk = wrk;
-        currentCsvSource.type = CSVSource;
+        currentCsvSource.type = TestHarnessWorker::CSVSource;
         currentCsvSource.csvSourceConfig = csvSourceConf;
 
         testHarnessWorkers.push_back(currentCsvSource);
@@ -216,7 +199,7 @@ class TestHarness {
 
         TestHarnessWorker currentNonSource = TestHarnessWorker();
         currentNonSource.wrk = wrk;
-        currentNonSource.type = NonSource;
+        currentNonSource.type = TestHarnessWorker::NonSource;
         testHarnessWorkers.push_back(currentNonSource);
     }
 
@@ -241,7 +224,7 @@ class TestHarness {
     std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
         uint64_t sourceCount = 0;
         for (TestHarnessWorker worker : testHarnessWorkers){
-            if (worker.type == CSVSource || worker.type == MemorySource) {
+            if (worker.type == TestHarnessWorker::CSVSource || worker.type == TestHarnessWorker::MemorySource) {
                 sourceCount++;
             }
         }
@@ -255,9 +238,9 @@ class TestHarness {
         QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
         for (TestHarnessWorker worker : testHarnessWorkers) {
-            if (worker.type == CSVSource) {
+            if (worker.type == TestHarnessWorker::CSVSource) {
                 worker.wrk->registerPhysicalStream(worker.csvSourceConfig);
-            } else if (worker.type == MemorySource) {
+            } else if (worker.type == TestHarnessWorker::MemorySource) {
                 // create and populate memory source
                 auto currentSourceNumOfRecords = worker.record.size();
                 auto tupleSize = worker.schema->getSchemaSizeInBytes();

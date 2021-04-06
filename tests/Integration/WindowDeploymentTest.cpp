@@ -25,7 +25,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
-#include <Util/TestHarness.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gmock/gmock.h>
