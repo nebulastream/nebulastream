@@ -41,6 +41,6 @@ class TestHarnessWorker {
     PhysicalStreamConfigPtr csvSourceConfig;
 };
 
-} // namespace NES
+}// namespace NES
 
 #endif//DYNAMICROWLAYOUTBUFFER_CPP_TESTHARNESSWORKER_HPP
