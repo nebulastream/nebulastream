@@ -19,8 +19,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Services/QueryService.hpp>
-#include <Util/TestUtils.hpp>
 #include <Util/TestHarness/TestHarnessWorker.hpp>
+#include <Util/TestUtils.hpp>
 
 /**
  * @brief This test harness wrap query deployment test in our test framework.
@@ -36,8 +36,10 @@ class TestHarness {
          * @param restPort port for the rest service
          * @param rpcPort for for the grpc
          */
-    TestHarness(std::string queryWithoutSink, uint16_t restPort = 8081, uint16_t rpcPort = 4000, uint64_t memSrcFrequency=0, uint64_t memSrcNumBuffToProcess=1)
-        : ipAddress("127.0.0.1"), queryWithoutSink(queryWithoutSink), bufferSize(4096), memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
+    TestHarness(std::string queryWithoutSink, uint16_t restPort = 8081, uint16_t rpcPort = 4000, uint64_t memSrcFrequency = 0,
+                uint64_t memSrcNumBuffToProcess = 1)
+        : ipAddress("127.0.0.1"), queryWithoutSink(queryWithoutSink), bufferSize(4096), memSrcFrequency(memSrcFrequency),
+          memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
         NES_INFO("TestHarness: Start coordinator");
         crdConf = CoordinatorConfig::create();
         crdConf->resetCoordinatorOptions();
@@ -223,7 +225,7 @@ class TestHarness {
     template<typename T>
     std::vector<T> getOutput(uint64_t numberOfContentToExpect, std::string placementStrategyName, uint64_t testTimeout = 60) {
         uint64_t sourceCount = 0;
-        for (TestHarnessWorker worker : testHarnessWorkers){
+        for (TestHarnessWorker worker : testHarnessWorkers) {
             if (worker.type == TestHarnessWorker::CSVSource || worker.type == TestHarnessWorker::MemorySource) {
                 sourceCount++;
             }
