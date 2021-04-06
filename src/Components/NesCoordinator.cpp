@@ -117,7 +117,7 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 
     udfCatalog = Catalogs::UdfCatalog::create();
-    maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
+    maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan,workerRpcClient);
 }
 
 NesCoordinator::~NesCoordinator() {
