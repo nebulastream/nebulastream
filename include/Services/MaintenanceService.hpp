@@ -22,6 +22,7 @@
 #define NES_MAINTENANCESERVICE_HPP
 #include <memory>
 #include <vector>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 
 namespace NES {
 
@@ -33,14 +34,19 @@ class QueryRequestQueue;
 typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> queryPlanPtr;
+class WorkerRPCClient;
+typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
 /**
  * @brief this class is responsible for handling maintenance requests. Three different strategies are implemented to handle query redeployment due to nodes being taken offline
  */
 class MaintenanceService {
   public:
-    explicit MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, GlobalExecutionPlanPtr globalExecutionPlan);
 
+    MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue,
+                       GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRPCClient);
     ~MaintenanceService();
     /**
      * submit a request to take a node offline for maintenance
@@ -48,7 +54,30 @@ class MaintenanceService {
      * @param nodeId
      * @param strategy
      */
-    std::vector<uint64_t> submitMaintenanceRequest(uint64_t nodeId, uint8_t strategy);
+    void submitMaintenanceRequest(uint64_t nodeId, uint8_t strategy);
+
+    /**
+    * places subqueries onto a different executionNode
+    * @param topNodeId
+    * @param querySubPlan
+    */
+    void migrateSubqueries(uint64_t topNodeId, QueryId queryId, std::vector<queryPlanPtr> querySubPlans, uint32_t resourceUsage);
+
+    std::optional<TopologyNodePtr> findValidTopologyNode(uint32_t resourceUsage, std::vector<TopologyNodePtr> candidateNodes);
+
+    /**
+     * retunrs either an exisiting execution node or a new execution node
+     */
+    ExecutionNodePtr getExecutionNode(uint64_t candidateTopologyNode);
+
+    /**
+    * @brief method send query to nodes
+    * @param queryId
+    * @return bool indicating success
+    */
+    bool deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+
+
 
   private:
     /**
@@ -63,7 +92,7 @@ class MaintenanceService {
      * @param nodeId
      * @return
      */
-    std::vector<uint64_t> secondStrat(uint64_t nodeId);
+    std::optional<TopologyNodePtr> secondStrat(uint64_t nodeId);
 
     /**
      * This method represents the third strategy. Here, subqueries of nodes are redeployed before marking the node for maintenance. This ensures uninterrupted data proccessing.
@@ -79,11 +108,36 @@ class MaintenanceService {
      */
     bool markNodeForMaintenance(uint64_t nodeId);
 
+    /**
+     * find the parent of an execution node for a specific query
+     * @param childNode
+     * @param queryId
+     * @return
+     */
+    std::optional<ExecutionNodePtr> findParentExecutionNode(ExecutionNodePtr childNode, QueryId queryId );
+
+    /**
+    *find the child of an execution node for a specific query
+    * @param childNode
+    * @param queryId
+    * @return
+    */
+    std::optional<ExecutionNodePtr> findChildExecutionNode(ExecutionNodePtr childNode, QueryId queryId );
+
+    /**
+     *
+     * @param resourceUsage
+     * @param candidateNodes
+     * @return the first top node that has enough resources for subqueries
+     */
+
+
+
     TopologyPtr topology;
     QueryCatalogPtr queryCatalog;
     QueryRequestQueuePtr queryRequestQueue;
     GlobalExecutionPlanPtr globalExecutionPlan;
-
+    WorkerRPCClientPtr workerRPCClient;
 };
 
 typedef std::shared_ptr<MaintenanceService> MaintenanceServicePtr;
