@@ -55,12 +55,10 @@ class ThreadBarrier {
         std::unique_lock<std::mutex> lock(mutex);
         NES_ASSERT2_FMT(size <= NES::NodeEngine::NesThread::MaxNumThreads, "Invalid thread count " << size);
         if (++count >= size) {
-            std::cout << "wait term " << this << " cnt=" << count << " size=" << size << std::endl;
             cvar.notify_all();
         } else {
             // while loop to avoid spurious wakeup
             while (count < size) {
-                std::cout <<"wait wait " << this << " cnt=" << count << " size=" << size << std::endl;
                 cvar.wait(lock);
             }
         }
