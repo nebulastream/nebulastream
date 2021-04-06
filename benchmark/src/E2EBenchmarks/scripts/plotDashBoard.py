@@ -21,10 +21,10 @@ fig = make_subplots(
     shared_xaxes=False,
     subplot_titles=[
         'Changing Buffer Size',
-        'Changing Buffer Count in Global Buffer Pool',
-        'Changing Buffer Count in Local Buffer Pool',
-        'Changing Sources',
-        'Changing Worker Threads',
+        'Changing Size Global Buffer Pool',
+        'Changing Size Local Buffer Pool',
+        'Changing Source Cnt',
+        'Changing Worker Cnt',
         'Changing Workers & Sources',
         'Changing Workers & Sources No Proc.',
     ]
@@ -106,7 +106,6 @@ fig.add_trace(
     row=2, col=2
 )
 fig.update_xaxes(title_text="NumberOfBuffersInGlobalBufferManager", row=2, col=2)
-fig.update_yaxes(title_text="ThroughputInMBPerSec", row=2, col=2)
 
 fig.add_trace(
     go.Scatter(x=df_changingGlobalBufferCnt['NumberOfBuffersInGlobalBufferManager'], y=df_changingBufferSize['AvgLatencyInMs'],
@@ -121,7 +120,6 @@ fig.add_trace(
     row=3, col=2
 )
 fig.update_xaxes(title_text="NumberOfBuffersInGlobalBufferManager", row=3, col=2)
-fig.update_yaxes(title_text="AvgLatencyInMs", row=3, col=2)
 
 ####################################################################################################
 
@@ -139,7 +137,6 @@ fig.add_trace(
     row=1, col=3
 )
 fig.update_xaxes(title_text="NumberOfBufferInLocalBufferPool", row=1, col=3)
-fig.update_yaxes(title_text="Throughput in Tuples/sec", row=1, col=3)
 
 fig.add_trace(
     go.Scatter(x=df_changingLocalBufferSize['NumberOfBuffersInSourceLocalBufferPool'], y=df_changingBufferSize['ThroughputInMBPerSec'],
@@ -154,7 +151,6 @@ fig.add_trace(
     row=2, col=3
 )
 fig.update_xaxes(title_text="NumberOfBufferInLocalBufferPool", row=2, col=3)
-fig.update_yaxes(title_text="ThroughputInMBPerSec", row=2, col=3)
 
 fig.add_trace(
     go.Scatter(x=df_changingLocalBufferSize['NumberOfBuffersInSourceLocalBufferPool'], y=df_changingBufferSize['AvgLatencyInMs'],
@@ -169,7 +165,6 @@ fig.add_trace(
     row=3, col=3
 )
 fig.update_xaxes(title_text="NumberOfBufferInLocalBufferPool", row=3, col=3)
-fig.update_yaxes(title_text="AvgLatencyInMs", row=3, col=3)
 
 ####################################################################################################
 
@@ -187,7 +182,6 @@ fig.add_trace(
     row=1, col=4
 )
 fig.update_xaxes(title_text="SourceCnt", row=1, col=4)
-fig.update_yaxes(title_text="Throughput in Tuples/sec", row=1, col=4)
 
 fig.add_trace(
     go.Scatter(x=df_changingSourceCnt['SourceCnt'], y=df_changingBufferSize['ThroughputInMBPerSec'],
@@ -202,7 +196,6 @@ fig.add_trace(
     row=2, col=4
 )
 fig.update_xaxes(title_text="SourceCnt", row=2, col=4)
-fig.update_yaxes(title_text="ThroughputInMBPerSec", row=2, col=4)
 
 fig.add_trace(
     go.Scatter(x=df_changingSourceCnt['SourceCnt'], y=df_changingBufferSize['AvgLatencyInMs'],
@@ -217,7 +210,6 @@ fig.add_trace(
     row=3, col=4
 )
 fig.update_xaxes(title_text="SourceCnt", row=3, col=4)
-fig.update_yaxes(title_text="AvgLatencyInMs", row=3, col=4)
 
 ####################################################################################################
 
@@ -234,8 +226,7 @@ fig.add_trace(
                ),
     row=1, col=5
 )
-fig.update_xaxes(title_text="WorkerThreads", row=1, col=6)
-fig.update_yaxes(title_text="Throughput in Tuples/sec", row=1, col=6)
+fig.update_xaxes(title_text="WorkerThreads", row=1, col=5)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsCnt['WorkerThreads'], y=df_changingThreadsCnt['ThroughputInMBPerSec'],
@@ -250,7 +241,6 @@ fig.add_trace(
     row=2, col=5
 )
 fig.update_xaxes(title_text="WorkerThreads", row=2, col=5)
-fig.update_yaxes(title_text="ThroughputInMBPerSec", row=2, col=5)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsCnt['WorkerThreads'], y=df_changingThreadsCnt['AvgLatencyInMs'],
@@ -265,7 +255,6 @@ fig.add_trace(
     row=3, col=5
 )
 fig.update_xaxes(title_text="WorkerThreads", row=3, col=5)
-fig.update_yaxes(title_text="AvgLatencyInMs", row=3, col=5)
 
 
 ############################################# df_changingThreadsAndSource #######################################################
@@ -284,7 +273,6 @@ fig.add_trace(
     row=1, col=6
 )
 fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=1, col=6)
-fig.update_yaxes(title_text="ThroughputInMBPerSec", row=1, col=6)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSource['src'], y=df_changingThreadsAndSource['ThroughputInMBPerSec'],
@@ -299,7 +287,6 @@ fig.add_trace(
     row=2, col=6
 )
 fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=2, col=6)
-fig.update_yaxes(title_text="Throughput in Tuples/sec", row=2, col=6)
 
 df_changingThreadsAndSource["src"] = "W" + df_changingThreadsAndSource["WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSource["SourceCnt"].astype(str)
 fig.add_trace(
@@ -315,7 +302,6 @@ fig.add_trace(
     row=3, col=6
 )
 fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=3, col=6)
-fig.update_yaxes(title_text="AvgLatencyInMs", row=3, col=6)
 
 
 ############################################# df_changingThreadsAndSourceOnlyFwdData #######################################################
@@ -334,7 +320,6 @@ fig.add_trace(
     row=1, col=7
 )
 fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=1, col=7)
-fig.update_yaxes(title_text="ThroughputInMBPerSec", row=1, col=7)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceOnlyFwdData['src'], y=df_changingThreadsAndSourceOnlyFwdData['ThroughputInMBPerSec'],
@@ -349,7 +334,6 @@ fig.add_trace(
     row=2, col=7
 )
 fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=2, col=7)
-fig.update_yaxes(title_text="Throughput in Tuples/sec", row=2, col=7)
 
 df_changingThreadsAndSourceOnlyFwdData["src"] = "W" + df_changingThreadsAndSourceOnlyFwdData["WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceOnlyFwdData["SourceCnt"].astype(str)
 fig.add_trace(
@@ -365,14 +349,15 @@ fig.add_trace(
     row=3, col=7
 )
 fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=3, col=7)
-fig.update_yaxes(title_text="AvgLatencyInMs", row=3, col=7)
 
 ####################################################################################################
 fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
-        'text': "NebulaStream Performance Numbers",
-        'y': 1,
+        'text': "<b>NebulaStream Performance Numbers </b><br>"
+                "<span style=\"font-size:0.6em\">Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=bufferSizeInBytes, Threads=8, Sources=4)"
+                "<br>",
+        'y': 0.98,
         'x': 0.5,
         'xanchor': 'center',
         'yanchor': 'top'},
@@ -380,7 +365,7 @@ fig.update_layout(
 fig.update_layout(
     title_font_family="Times New Roman",
     title_font_color="RebeccaPurple",
-    title_font_size=38
+    title_font_size=30
 )
 
 fig.update_layout(
@@ -393,4 +378,4 @@ fig.update_layout(
 # ###############################################################
 
 
-plotly.offline.plot(fig, filename='test.html')
+plotly.offline.plot(fig, filename='results.html')

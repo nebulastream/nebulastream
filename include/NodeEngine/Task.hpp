@@ -78,6 +78,10 @@ class Task {
 
     uint64_t getId();
 
+    /**
+     * This method returns the reference to the buffer of this task
+     * @return
+     */
     TupleBuffer& getBufferRef();
 
   private:
