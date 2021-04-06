@@ -66,8 +66,8 @@ class ThreadBarrier {
 
   private:
     const uint32_t size;
-    std::mutex mutex;
     uint32_t count;
+    std::mutex mutex;
     std::condition_variable cvar;
 };
 }// namespace NES

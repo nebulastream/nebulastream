@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_QUERY_MANAGER__H_
-#define INCLUDE_QUERY_MANAGER__H_
+#ifndef INCLUDE_QUERY_MANAGER_HPP_
+#define INCLUDE_QUERY_MANAGER_HPP_
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
@@ -43,6 +43,13 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+//#include <NodeEngine/internal/blockingconcurrentqueue.h>
+#include <folly/MPMCQueue.h>
+//#include <NodeEngine/internal/atomic_queue.h>
+#endif
+
+
 namespace NES::NodeEngine {
 
 /**
@@ -60,8 +67,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     typedef Reconfigurable inherited1;
 
   public:
-    enum ExecutionResult : uint8_t { Ok = 0, Error, Finished };
-
     QueryManager() = delete;
     QueryManager(const QueryManager&) = delete;
     QueryManager& operator=(const QueryManager&) = delete;
@@ -96,7 +101,11 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return an execution result
      *
      */
+#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     ExecutionResult processNextTask(std::atomic<bool>& running, WorkerContext& workerContext);
+#else
+    ExecutionResult processNextTask(bool running, WorkerContext& workerContext);
+#endif
 
     /**
      * @brief add work to the query manager, this methods is source-driven and is called
@@ -155,7 +164,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     /**
      * @brief notify all waiting threads in getWork() to wake up and try again
      */
-    void unblockThreads() { cv.notify_all(); }
+    void unblockThreads();
 
     /**
      * @brief reset query manager to intial state
@@ -221,9 +230,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     void completedWork(Task& task, WorkerContext& workerContext);
 
-    QueryManager::ExecutionResult terminateLoop(WorkerContext&);
+    ExecutionResult terminateLoop(WorkerContext&);
 
-    std::deque<Task> taskQueue;
     ThreadPoolPtr threadPool;
 
     std::map<OperatorId, std::unordered_set<Execution::ExecutableQueryPlanPtr>> operatorIdToQueryMap;
@@ -238,10 +246,18 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
     std::shared_mutex queryMutex;
+#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+        folly::MPMCQueue<Task> taskQueue;
+//    moodycamel::BlockingConcurrentQueue<Task> taskQueue;
+
+//    using OptimistAtomicQueue2 = std::common_type<atomic_queue::AtomicQueue2<Task, 1024, true, true, false, false>>;
+//    using TaskQueueType = OptimistAtomicQueue2::type;
+//    TaskQueueType taskQueue;
+#else
+    std::deque<Task> taskQueue;
     mutable std::mutex workMutex;
-
     std::condition_variable cv;
-
+#endif
     BufferManagerPtr bufferManager;
     Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 

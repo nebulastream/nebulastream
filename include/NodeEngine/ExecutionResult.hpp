@@ -14,9 +14,13 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Execution/DiscardingExecutablePipelineStage.hpp>
+#ifndef NES_INCLUDE_NODEENGINE_EXECUTIONRESULT_HPP_
+#define NES_INCLUDE_NODEENGINE_EXECUTIONRESULT_HPP_
 
-NES::ExecutionResult NES::NodeEngine::Execution::DiscardingExecutablePipelineStage::execute(
-    NES::NodeEngine::TupleBuffer&, NES::NodeEngine::Execution::PipelineExecutionContext&, NES::NodeEngine::WorkerContext&) {
-    return Ok;
+namespace NES {
+
+enum ExecutionResult : unsigned char { Ok = 0, Error, Finished };
+
 }
+
+#endif//NES_INCLUDE_NODEENGINE_EXECUTIONRESULT_HPP_

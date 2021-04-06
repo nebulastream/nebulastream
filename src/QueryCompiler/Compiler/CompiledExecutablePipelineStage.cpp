@@ -82,7 +82,7 @@ uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineEx
     return executablePipelineStage->open(pipelineExecutionContext, workerContext);
 }
 
-uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
+ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                   NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
                                                   NodeEngine::WorkerContext& workerContext) {
     // we dont get the lock here as we dont was to serialize the execution.
@@ -93,7 +93,7 @@ uint32_t CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                   "call setup and start.");
         // TODO we have to assure that execute is never called after stop.
         // This is somehow not working currently.
-        return -1;
+        return Error;
     }
     return executablePipelineStage->execute(inputTupleBuffer, pipelineExecutionContext, workerContext);
 }

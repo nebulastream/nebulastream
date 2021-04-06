@@ -29,8 +29,13 @@ void WorkerContext::storeChannel(Network::OperatorId id, Network::OutputChannelP
 
 void WorkerContext::releaseChannel(Network::OperatorId id) {
     NES_TRACE("WorkerContext: releasing channel for operator " << id << " for context " << workerId);
-    channels[id]->close();
-    channels.erase(id);
+    auto it = channels.find(id);
+    if (it != channels.end()) {
+        if (it->second) {
+            it->second->close();
+        }
+        channels.erase(it);
+    }
 }
 
 Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {

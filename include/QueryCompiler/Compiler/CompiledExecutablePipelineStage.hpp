@@ -18,6 +18,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
+#include <NodeEngine/ExecutionResult.hpp>
 #include <atomic>
 #include <mutex>
 namespace NES {
@@ -46,7 +47,7 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
-    uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
+    ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
                      NodeEngine::WorkerContext& workerContext) override;
 
     std::string getCodeAsString() override;
