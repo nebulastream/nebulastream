@@ -539,10 +539,9 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer())
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
-            NES_WARNING("EOS opId=" << sourceId << " reconfType=" << reconfigType << " queryExecutionPlanId=" << queryExecutionPlanId
-                        <<  " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId()
-                        );
-
+            NES_WARNING("EOS opId=" << sourceId << " reconfType=" << reconfigType
+                                    << " queryExecutionPlanId=" << queryExecutionPlanId << " threadPool->getNumberOfThreads()="
+                                    << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId());
         }
 
         auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,
@@ -551,12 +550,12 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             /** default pipeline Id*/ -1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
             /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
         {
-//            std::unique_lock lock(workMutex);
+            //            std::unique_lock lock(workMutex);
             for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
                 if (graceful) {
                     taskQueue.emplace_back(pipeline, buffer);
                 } else {
-//                    taskQueue.emplace_front(pipeline, buffer);
+                    //                    taskQueue.emplace_front(pipeline, buffer);
                     //todo redo this
                     taskQueue.emplace_back(pipeline, buffer);
                 }
@@ -652,14 +651,14 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         } else if (!task.getPipeline()->isReconfiguration()) {
             statistics->incProcessedBuffers();
             auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
-            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::
-                                                                             now().time_since_epoch()).count();
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                           .count();
             auto diff = now - latency[2];
-//            NES_ERROR("read lat2=" << latency[2] << " now=" << now << " diff=" << diff);
+            //            NES_ERROR("read lat2=" << latency[2] << " now=" << now << " diff=" << diff);
             statistics->incLatencySum(diff);
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
-
 
     } else {
         NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");

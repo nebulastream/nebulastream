@@ -21,10 +21,10 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
+#include <cstring>
 #include <iostream>
 #include <thread>
 #include <unistd.h>
-#include <cstring>
 
 namespace NES::NodeEngine {
 
@@ -89,10 +89,9 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
     this->bufferSize = bufferSize;
     this->numOfBuffers = numOfBuffers;
     uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
-    NES_WARNING("NES malloc " << requiredMemorySpace<< " out of " << memorySizeInBytes
-                              << " available bytes");
+    NES_WARNING("NES malloc " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
 
-    if (requiredMemorySpace> memorySizeInBytes) {
+    if (requiredMemorySpace > memorySizeInBytes) {
         NES_THROW_RUNTIME_ERROR("NES tries to malloc more memory than physically available");
     }
 

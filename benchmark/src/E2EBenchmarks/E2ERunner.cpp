@@ -109,8 +109,7 @@ int main(int argc, const char* argv[]) {
     if (configPath != commandLineParams.end()) {
         ifstream input_stream;
         input_stream.open(configPath->second.c_str(), ios::in);
-        if(!input_stream)
-        {
+        if (!input_stream) {
             std::cout << "FILE NOT FOUND in " << configPath->second << std::endl;
             return -1;
         }
@@ -165,16 +164,14 @@ int main(int argc, const char* argv[]) {
     for (size_t i = 0; i < maxParamCnt; i++) {
         //print resultPrefix
         std::shared_ptr<E2EBase> testRun = std::make_shared<E2EBase>(
-            parameterNameToValueVectorMap["workerThreads"].at(i),
-            parameterNameToValueVectorMap["sources"].at(i),
+            parameterNameToValueVectorMap["workerThreads"].at(i), parameterNameToValueVectorMap["sources"].at(i),
             parameterNameToValueVectorMap["numberOfBuffersInGlobalBufferManagers"].at(i),
             parameterNameToValueVectorMap["numberOfBuffersPerPipelines"].at(i),
             parameterNameToValueVectorMap["numberOfBuffersInSourceLocalBufferPools"].at(i),
             parameterNameToValueVectorMap["bufferSizeInBytes"].at(i), benchmarkConfig);
 
         ss << testRun->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion;
-        ss << "," << parameterNameToValueVectorMap["workerThreads"].at(i) << ","
-           <<  parameterNameToValueVectorMap["sources"].at(i)
+        ss << "," << parameterNameToValueVectorMap["workerThreads"].at(i) << "," << parameterNameToValueVectorMap["sources"].at(i)
            << ",";
 
         ss << testRun->runExperiment() << ",";
