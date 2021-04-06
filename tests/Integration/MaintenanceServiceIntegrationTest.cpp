@@ -57,7 +57,6 @@ class MaintenanceServiceIntegrationTest : public testing::Test {
  */
 TEST_F(MaintenanceServiceIntegrationTest, findPathIgnoresNodesMarkedForMaintenanceTest) {
 
-
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -113,17 +112,16 @@ TEST_F(MaintenanceServiceIntegrationTest, findPathIgnoresNodesMarkedForMaintenan
      * |  |--PhysicalNode[id=9, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
      * |  |  |--PhysicalNode[id=13, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
     */
-    for(int i = 2; i<16; i++ ){
-        NES_DEBUG("MaintenanceServiceTest: Start worker " <<std::to_string(i));
+    for (int i = 2; i < 16; i++) {
+        NES_DEBUG("MaintenanceServiceTest: Start worker " << std::to_string(i));
         wrkConf->resetWorkerOptions();
         wrkConf->setCoordinatorPort(port);
-        wrkConf->setRpcPort(port + 10*i);
-        wrkConf->setDataPort(port + 10*i+1);
+        wrkConf->setRpcPort(port + 10 * i);
+        wrkConf->setDataPort(port + 10 * i + 1);
         NodeType type;
-        if(i == 13 || i == 14 || i == 15){
+        if (i == 13 || i == 14 || i == 15) {
             type = NodeType::Sensor;
-        }
-        else{
+        } else {
             type = NodeType::Worker;
         }
         NesWorkerPtr wrk = std::make_shared<NesWorker>(wrkConf, type);
@@ -131,12 +129,10 @@ TEST_F(MaintenanceServiceIntegrationTest, findPathIgnoresNodesMarkedForMaintenan
         EXPECT_TRUE(retStart);
         NES_DEBUG("MaintenanceServiceTest: Worker " << std::to_string(i) << " started successfully");
         TopologyNodeId wrkTopologyNodeId = wrk->getTopologyNodeId();
-        NES_DEBUG("MaintenanceServiceTest: Worker " << std::to_string(i) <<" has id: " << std::to_string(wrkTopologyNodeId));
+        NES_DEBUG("MaintenanceServiceTest: Worker " << std::to_string(i) << " has id: " << std::to_string(wrkTopologyNodeId));
         ASSERT_NE(wrkTopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
-        switch (i){
-            case 6:
-                wrk->replaceParent(crdTopologyNodeId, 3);
-                break;
+        switch (i) {
+            case 6: wrk->replaceParent(crdTopologyNodeId, 3); break;
 
             case 7:
                 wrk->replaceParent(crdTopologyNodeId, 3);
@@ -153,18 +149,14 @@ TEST_F(MaintenanceServiceIntegrationTest, findPathIgnoresNodesMarkedForMaintenan
                 wrk->addParent(6);
                 break;
 
-            case 10:
-                wrk->replaceParent(crdTopologyNodeId, 6);
-                break;
+            case 10: wrk->replaceParent(crdTopologyNodeId, 6); break;
 
             case 11:
                 wrk->replaceParent(crdTopologyNodeId, 7);
                 wrk->addParent(8);
                 break;
 
-            case 12:
-                wrk->replaceParent(crdTopologyNodeId, 8);
-                break;
+            case 12: wrk->replaceParent(crdTopologyNodeId, 8); break;
 
             case 13:
                 wrk->replaceParent(crdTopologyNodeId, 9);
@@ -180,7 +172,6 @@ TEST_F(MaintenanceServiceIntegrationTest, findPathIgnoresNodesMarkedForMaintenan
                 wrk->replaceParent(crdTopologyNodeId, 11);
                 wrk->addParent(12);
                 break;
-
         }
     }
     // Check if the topology matches the expected hierarchy
@@ -208,7 +199,8 @@ TEST_F(MaintenanceServiceIntegrationTest, findPathIgnoresNodesMarkedForMaintenan
     ASSERT_EQ(crd->getTopology()->getRoot()->getChildren()[2]->getChildren()[1]->getChildren()[1]->getChildren().size(), 1);
 
     TopologyPtr topology = crd->getTopology();
-    std::vector<TopologyNodePtr> sourceNodes{topology->findNodeWithId(13),topology->findNodeWithId(14),topology->findNodeWithId(15)};
+    std::vector<TopologyNodePtr> sourceNodes{topology->findNodeWithId(13), topology->findNodeWithId(14),
+                                             topology->findNodeWithId(15)};
     std::vector<TopologyNodePtr> destinationNodes{topology->findNodeWithId(1)};
     const std::vector<TopologyNodePtr> startNodes = topology->findPathBetween(sourceNodes, destinationNodes);
 
@@ -305,14 +297,14 @@ TEST_F(MaintenanceServiceIntegrationTest, DISABLED_defTest) {
     StreamCatalogEntryPtr sce2 = std::make_shared<StreamCatalogEntry>(conf, crd->getTopology()->findNodeWithId(14));
     StreamCatalogEntryPtr sce3 = std::make_shared<StreamCatalogEntry>(conf, crd->getTopology()->findNodeWithId(15));
 
-
     crd->getStreamCatalog()->addPhysicalStream("default_logical", sce1);
     auto streams = crd->getStreamCatalog()->getPhysicalStreams("default_logical");
-    ASSERT_EQ(crd->getStreamCatalog()->getPhysicalStreams("default_logical").size(),4);//why is this 6?
+    ASSERT_EQ(crd->getStreamCatalog()->getPhysicalStreams("default_logical").size(), 4);//why is this 6?
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
-    std::string query = "Query::from(\"default_logical\").filter(Attribute(\"field_1\") <= 10).sink(PrintSinkDescriptor::create());";
+    std::string query =
+        "Query::from(\"default_logical\").filter(Attribute(\"field_1\") <= 10).sink(PrintSinkDescriptor::create());";
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -324,11 +316,8 @@ TEST_F(MaintenanceServiceIntegrationTest, DISABLED_defTest) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    auto parentQueryIds = maintenanceService->submitMaintenanceRequest(5,1);
-    ASSERT_EQ(parentQueryIds.front(), queryId);
-
-    }
-TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithOneQueryTest){
+}
+TEST_F(MaintenanceServiceIntegrationTest, DiamondTopologyWithOneQueryTest) {
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -358,14 +347,14 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithOneQueryTest){
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1,2);
+    wrk3->replaceParent(1, 2);
     wrk3->addParent(3);
 
     TopologyPtr topo = crd->getTopology();
-    ASSERT_EQ(topo->getRoot()->getId(),1);
-    ASSERT_EQ(topo->getRoot()->getChildren().size(),2);
-    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(),1);
-    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(),1);
+    ASSERT_EQ(topo->getRoot()->getId(), 1);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1);
     NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
 
     srcConf->setSourceType("CSVSource");
@@ -396,16 +385,15 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithOneQueryTest){
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-    auto parentQueryIds =maintenanceService->submitMaintenanceRequest(2,1);
+    maintenanceService->submitMaintenanceRequest(2, 1);
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     auto exNodes = globalExecutionPlan->getAllExecutionNodes();
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
-
 }
-TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
+TEST_F(MaintenanceServiceIntegrationTest, DISABLED_DiamondTopologyWithTwoQueriesTest) {
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -433,7 +421,7 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
     NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1,2);
+    wrk3->replaceParent(1, 2);
     wrk3->addParent(3);
 
     wrkConf->setRpcPort(port + 40);
@@ -441,7 +429,7 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
     NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart4);
-    wrk4->replaceParent(1,2);
+    wrk4->replaceParent(1, 2);
     wrk3->addParent(4);
 
     wrkConf->setRpcPort(port + 50);
@@ -449,7 +437,7 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
     NesWorkerPtr wrk5 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart5);
-    wrk4->replaceParent(1,3);
+    wrk4->replaceParent(1, 3);
     wrk3->addParent(4);
 
     srcConf->setSourceType("CSVSource");
@@ -465,10 +453,10 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
     std::string filePath = "contTestOut.csv";
     remove(filePath.c_str());
 
-    std::string query1 =
-        R"(Query::from("exdra").filter(Attribute("id") < 42).sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
-    std::string query2 =
-        R"(Query::from("exdra").filter(Attribute("id") < 10).sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string query1 = R"(Query::from("exdra").filter(Attribute("id") < 42).sink(FileSinkDescriptor::create(")" + filePath
+        + R"(" , "CSV_FORMAT", "APPEND"));)";
+    std::string query2 = R"(Query::from("exdra").filter(Attribute("id") < 10).sink(FileSinkDescriptor::create(")" + filePath
+        + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
     MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
@@ -484,8 +472,7 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
     auto globalExecutionPlan = crd->getGlobalExecutionPlan();
     auto executionNodes = globalExecutionPlan->getAllExecutionNodes();
     ASSERT_TRUE(executionNodes.size() == 4);
-    auto parentQueryIds = maintenanceService->submitMaintenanceRequest(2,1);
-    ASSERT_TRUE(parentQueryIds.size() == 2);
+
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
@@ -493,7 +480,82 @@ TEST_F(MaintenanceServiceIntegrationTest,DiamondTopologyWithTwoQueriesTest){
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+}
+TEST_F(MaintenanceServiceIntegrationTest, simpleTestSecondStrat) {
 
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    wrk3->replaceParent(1, 2);
+    wrk3->addParent(3);
+
+    TopologyPtr topo = crd->getTopology();
+    ASSERT_EQ(topo->getRoot()->getId(), 1);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/exdra.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("exdra");
+    srcConf->setNumberOfBuffersToProduce(1000);
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    wrk3->registerPhysicalStream(conf);
+    std::string filePath = "contTestOut.csv";
+    remove(filePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+    //register query
+    std::string queryString =
+        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
+    auto querySubPlans = globalExecutionPlan->getExecutionNodeByNodeId(2)->getQuerySubPlans(1);
+    auto resourceUsage = globalExecutionPlan->getExecutionNodeByNodeId(2)->getOccupiedResources(1);
+    maintenanceService->migrateSubqueries(3, 1, querySubPlans, resourceUsage);
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+    auto querySubPlansOnNode3 = globalExecutionPlan->getExecutionNodeByNodeId(3)->getQuerySubPlans(1);
+    NES_DEBUG("test");
 }
 
 }//namespace NES
