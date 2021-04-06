@@ -386,9 +386,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* uint64_t id = 0; */
     auto varDeclId = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createUInt64()), "id",
                                                  DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0"));
-    /* int32_t ret = 0; */
-    auto varDeclReturn = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "ret",
-                                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
+    /* ExecutionResult ret = Ok; */
+    auto varDeclReturn = VariableDeclaration::create(tf.createAnonymusDataType("ExecutionResult"), "ret",
+                                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "Ok"));
     /* int32_t sum = 0;*/
     auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum",
                                                   DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
@@ -429,7 +429,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
     emitTupleBuffer.addParameter(VarRef(varDeclWorkerContext));
     auto mainFunction = FunctionDefinition::create("execute")
-                            ->returns(tf.createDataType(DataTypeFactory::createUInt32()))
+//                            ->returns(tf.createDataType(DataTypeFactory::createUInt32()))
+                            ->returns(tf.createAnonymusDataType("ExecutionResult"))
                             ->addParameter(varDeclTupleBuffers)
                             ->addParameter(varDeclPipelineExecutionContext)
                             ->addParameter(varDeclWorkerContext)

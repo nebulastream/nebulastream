@@ -67,6 +67,7 @@ class JoinHandler : public AbstractJoinHandler {
         NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
         if (isRunning.compare_exchange_strong(expected, true)) {
+            ///
             return executablePolicyTrigger->start(this->shared_from_base<AbstractJoinHandler>());
         }
         return false;

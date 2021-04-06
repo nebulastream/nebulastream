@@ -164,10 +164,11 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
         VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "recordIndex",
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
             .copy());
-    /* int32_t ret = 0; */
+    /* ExecutionResult ret = Ok; */
+    // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
     code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
-        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt32()), "ret",
-                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
+        VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"), "ret",
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "Ok"))
             .copy());
 
     code->varDeclarationInputTuples = VariableDeclaration::create(
@@ -1510,7 +1511,8 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
             .createCopy()));
 
     auto functionBuilder = FunctionDefinition::create("execute")
-                               ->returns(tf->createDataType(DataTypeFactory::createUInt32()))
+                               ->returns(tf->createAnonymusDataType("ExecutionResult"))
+//                               ->returns(tf->createDataType(DataTypeFactory::createUInt32()))
                                ->addParameter(code->varDeclarationInputBuffer)
                                ->addParameter(code->varDeclarationExecutionContext)
                                ->addParameter(code->varDeclarationWorkerContext);

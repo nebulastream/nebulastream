@@ -136,7 +136,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
     std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
 
-    uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
+    ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
                      WorkerContext& wctx) override {
         auto tuples = inputTupleBuffer.getBufferAs<uint64_t>();
 
@@ -170,7 +170,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         }
 
         NES_DEBUG("TEST: return");
-        return 0;
+        return Ok;
     }
 };
 
@@ -647,7 +647,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     };
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
       public:
-        uint32_t execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
+        ExecutionResult execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
             NES_DEBUG("Going to throw exception");
             throw std::runtime_error("Catch me if you can!");// :P
         }
@@ -702,7 +702,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
     };
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
       public:
-        uint32_t execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
+        ExecutionResult execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
             NES_DEBUG("Going to throw exception");
             throw 1;
         }

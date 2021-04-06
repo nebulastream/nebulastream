@@ -17,6 +17,7 @@
 #ifndef INCLUDE_NODEENGINE_TASK_H_
 #define INCLUDE_NODEENGINE_TASK_H_
 
+#include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <memory>
@@ -42,7 +43,7 @@ class Task {
     /**
      * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
      */
-    bool operator()(WorkerContext& workerContext);
+    ExecutionResult operator()(WorkerContext& workerContext);
 
     /**
      * @brief return the number of tuples in the input buffer (for statistics)

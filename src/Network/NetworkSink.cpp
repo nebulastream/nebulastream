@@ -39,8 +39,11 @@ NetworkSink::~NetworkSink() { NES_INFO("NetworkSink: Destructor called " << nesP
 
 bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) {
     auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
-    NES_ASSERT2_FMT(channel, "invalid channel on " << nesPartition);
-    return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+    if (channel) {
+        return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
+    }
+//    NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
+    return false;
 }
 
 void NetworkSink::setup() {

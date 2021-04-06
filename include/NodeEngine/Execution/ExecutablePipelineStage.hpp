@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
+#include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES::NodeEngine::Execution {
@@ -69,7 +70,7 @@ class ExecutablePipelineStage {
     * @param workerContext
     * @return 0 if an error occurred.
     */
-    virtual uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
+    virtual ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
                              WorkerContext& workerContext) = 0;
 
     /**
