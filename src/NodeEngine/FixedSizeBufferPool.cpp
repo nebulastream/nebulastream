@@ -62,11 +62,10 @@ size_t FixedSizeBufferPool::getAvailableExclusiveBuffers() const {
     return exclusiveBuffers.size();
 }
 
-
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::milliseconds timeout_ms) {
     std::unique_lock lock(mutex);
     auto pred = [=]() {
-      return !exclusiveBuffers.empty();
+        return !exclusiveBuffers.empty();
     };
     if (!cvar.wait_for(lock, timeout_ms, std::move(pred))) {
         return std::nullopt;

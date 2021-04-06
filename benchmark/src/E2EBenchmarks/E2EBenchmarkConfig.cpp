@@ -183,9 +183,7 @@ void E2EBenchmarkConfig::setInputOutputMode(std::string inputOutputMode) {
     E2EBenchmarkConfig::inputOutputMode->setValue(inputOutputMode);
 }
 
-void E2EBenchmarkConfig::setScalability(std::string scalability){
-    E2EBenchmarkConfig::scalability->setValue(scalability);
-}
+void E2EBenchmarkConfig::setScalability(std::string scalability) { E2EBenchmarkConfig::scalability->setValue(scalability); }
 
 void E2EBenchmarkConfig::setQuery(std::string query) { E2EBenchmarkConfig::query->setValue(query); }
 void E2EBenchmarkConfig::setLogLevel(std::string logLevel) { E2EBenchmarkConfig::logLevel->setValue(logLevel); }
