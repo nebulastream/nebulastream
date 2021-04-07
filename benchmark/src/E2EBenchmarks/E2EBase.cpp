@@ -284,7 +284,6 @@ void E2EBase::setupSources() {
         std::cout << "memory source mode" << std::endl;
 
         for (uint64_t i = 0; i < sourceCnt; i++) {
-
             auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 struct Record {
                     uint64_t id;
@@ -296,7 +295,7 @@ void E2EBase::setupSources() {
                 for (auto u = 1u; u < numberOfTuplesToProduce - 1; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-                    records[u].value = u % 10;
+                    records[u].value = u % 100;
                     records[u].timestamp = u;
                 }
                 records[0].id = 123;
@@ -544,32 +543,32 @@ void E2EBase::tearDown() {
             NES_ERROR("query was not stopped within 30 sec");
         }
 
-        //        std::unique_ptr<std::thread> waitThreadWorker;
-        //        std::shared_ptr<std::promise<bool>> stopPromiseWrk = std::make_shared<std::promise<bool>>();
-        //        if (config->getScalability()->getValue() == "scale-out") {
-        //            std::cout << "E2EBase: Stop worker 1" << std::endl;
-        //            waitThreadWorker = make_unique<thread>([this, stopPromiseWrk]() {
-        //                std::future<bool> stopFutureWrk = stopPromiseWrk->get_future();
-        //                bool satisfied = false;
-        //                while (!satisfied) {
-        //                    switch (stopFutureWrk.wait_for(std::chrono::seconds(1))) {
-        //                        case future_status::ready: {
-        //                            satisfied = true;
-        //                        }
-        //                        case future_status::timeout:
-        //                        case future_status::deferred: {
-        //                            if (wrk->isWorkerRunning()) {
-        //                                NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
-        //                                            << wrk->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
-        //                            } else {
-        //                                NES_WARNING("worker stopped");
-        //                            }
-        //                            break;
-        //                        }
-        //                    }
-        //                }
-        //            });
-        //        }
+        std::unique_ptr<std::thread> waitThreadWorker;
+        std::shared_ptr<std::promise<bool>> stopPromiseWrk = std::make_shared<std::promise<bool>>();
+        if (config->getScalability()->getValue() == "scale-out") {
+            std::cout << "E2EBase: Stop worker 1" << std::endl;
+            waitThreadWorker = make_unique<thread>([this, stopPromiseWrk]() {
+                std::future<bool> stopFutureWrk = stopPromiseWrk->get_future();
+                bool satisfied = false;
+                while (!satisfied) {
+                    switch (stopFutureWrk.wait_for(std::chrono::seconds(1))) {
+                        case future_status::ready: {
+                            satisfied = true;
+                        }
+                        case future_status::timeout:
+                        case future_status::deferred: {
+                            if (wrk->isWorkerRunning()) {
+                                NES_WARNING("Waiting for stop wrk cause #tasks in the queue: "
+                                            << wrk->getNodeEngine()->getQueryManager()->getNumberOfTasksInWorkerQueue());
+                            } else {
+                                NES_WARNING("worker stopped");
+                            }
+                            break;
+                        }
+                    }
+                }
+            });
+        }
 
         std::shared_ptr<std::promise<bool>> stopPromiseCord = std::make_shared<std::promise<bool>>();
         std::thread waitThreadCoordinator([this, stopPromiseCord]() {

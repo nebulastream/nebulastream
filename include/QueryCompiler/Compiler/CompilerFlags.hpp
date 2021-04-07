@@ -43,6 +43,8 @@ class CompilerFlags {
     //    inline static const std::string LOGGING_FATAL_FLAG = "-DNES_LOGGING_TRACE_LEVEL=1";
 
     inline static const std::string ALL_OPTIMIZATIONS = "-O3";
+    inline static const std::string TUNE = "-mtune=native";
+    inline static const std::string ARCH = "-march=native";
     inline static const std::string DEBUGGING = "-g";
 
     // Vector extensions

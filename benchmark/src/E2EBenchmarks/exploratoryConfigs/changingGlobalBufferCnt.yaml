@@ -5,16 +5,16 @@ numberOfWorkerThreads: 8
 numberOfSources: 4
 
 # engine configuration parameter
-numberOfBuffersInGlobalBufferManager: 8192,16384,32768,65536
+numberOfBuffersInGlobalBufferManager: 8192,16384,32768,65536,131072,262144
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
-bufferSizeInBytes: 4194304
+bufferSizeInBytes: 2097152
 
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
 outputFile: changingGlobalBufferCnt.csv
 benchmarkName: changingGlobalBufferCnt
-query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").filter(Attribute("value") > 50).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
