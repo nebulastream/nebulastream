@@ -1,12 +1,12 @@
 import pandas as pd
 
-df_changingBufferSize = pd.read_csv('currentStats/changingBufferSize.csv')
-df_changingGlobalBufferCnt = pd.read_csv('currentStats/changingGlobalBufferCnt.csv')
-df_changingLocalBufferSize = pd.read_csv('currentStats/changingLocalBufferSize.csv')
-df_changingSourceCnt = pd.read_csv('currentStats/changingSourceCnt.csv')
-df_changingThreadsAndSource = pd.read_csv('currentStats/changingThreadsAndSource.csv')
-df_changingThreadsCnt = pd.read_csv('currentStats/changingThreadsWithFixSource.csv')
-df_changingThreadsAndSourceOnlyFwdData = pd.read_csv('currentStats/changingThreadsAndSourceOnlyFwdData.csv')
+df_changingBufferSize = pd.read_csv('./changingBufferSize.csv')
+df_changingGlobalBufferCnt = pd.read_csv('./changingGlobalBufferCnt.csv')
+df_changingLocalBufferSize = pd.read_csv('./changingLocalBufferSize.csv')
+df_changingSourceCnt = pd.read_csv('./changingSourceCnt.csv')
+df_changingThreadsAndSource = pd.read_csv('./changingThreadsAndSource.csv')
+df_changingThreadsCnt = pd.read_csv('./changingThreadsWithFixSource.csv')
+df_changingThreadsAndSourceOnlyFwdData = pd.read_csv('./changingThreadsAndSourceOnlyFwdData.csv')
 
 
 import plotly.graph_objects as go
