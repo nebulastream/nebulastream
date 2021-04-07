@@ -31,7 +31,7 @@ void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name
 }
 
 void SystemCompilerCompiledCode::cleanUp() {
-    return;
+    NES_WARNING("delete all in folder=" << baseFileName);
     if (boost::filesystem::exists(baseFileName + ".c")) {
         boost::filesystem::remove(baseFileName + ".c");
     }
@@ -42,6 +42,14 @@ void SystemCompilerCompiledCode::cleanUp() {
 
     if (boost::filesystem::exists(baseFileName + ".so")) {
         boost::filesystem::remove(baseFileName + ".so");
+    }
+
+    if (boost::filesystem::exists(baseFileName + ".cpp")) {
+        boost::filesystem::remove(baseFileName + ".cpp");
+    }
+
+    if (boost::filesystem::exists(baseFileName + ".hpp")) {
+        boost::filesystem::remove(baseFileName + ".hpp");
     }
 
     if (boost::filesystem::exists(baseFileName + ".c.orig")) {
