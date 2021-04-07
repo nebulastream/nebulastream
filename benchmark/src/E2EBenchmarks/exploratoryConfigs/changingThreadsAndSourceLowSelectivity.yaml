@@ -2,19 +2,19 @@
 
 # Parameter that are changed per run with comma separated list
 numberOfWorkerThreads: 1,2,3,4,5,6,7,8,9,10,11,12
-numberOfSources: 4
+numberOfSources: 1,2,3,4,5,6,7,8,9,10,11,12
 
 # engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 65536
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
-bufferSizeInBytes: 4194304
+bufferSizeInBytes: 2097152
 
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
-outputFile: changingThreadsWithFixSource.csv
-benchmarkName: changingThreadsWithFixSource
-query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
+outputFile: changingThreadsAndSourceLowSelectivity.csv
+benchmarkName: changingThreadsAndSourceLowSelectivity
+query: 'Query::from("input").filter(Attribute("value") < 10).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
@@ -23,3 +23,4 @@ logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 5
+

@@ -73,7 +73,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     }
 
     // init compilation flag dependent on compilation mode
-    auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createDefaultCompilerFlags();
+    auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createOptimizingCompilerFlags();
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);

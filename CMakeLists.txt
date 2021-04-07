@@ -53,7 +53,7 @@ endif (NES_LOGGING_LEVEL)
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
-set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -mtune=native -march=native -mavx2")
 
 # Set Flamegraph Flags
 if (NES_BUILD_BENCHMARKS)
