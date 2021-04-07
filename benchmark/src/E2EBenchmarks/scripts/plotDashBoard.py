@@ -355,7 +355,7 @@ fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
         'text': "<b>NebulaStream Performance Numbers </b><br>"
-                "<span style=\"font-size:0.6em\">Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB, Threads=8, Sources=4, TupleSize=24Byte, Query: Filter with 50% Selectivity)"
+                "<span style=\"font-size:0.6em\"> Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB, Threads=8, Sources=4, TupleSize=24Byte, Query: Filter with 50% Selectivity)"
                 "<br>",
         'y': 0.98,
         'x': 0.5,
