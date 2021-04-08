@@ -1212,9 +1212,9 @@ endif()
 # code.  Also provide convenience targets to disable autolinking and
 # enable dynamic linking.
 if(NOT TARGET Boost::diagnostic_definitions)
-  add_library(Boost::diagnostic_definitions INTERFACE IMPORTED)
-  add_library(Boost::disable_autolinking INTERFACE IMPORTED)
-  add_library(Boost::dynamic_linking INTERFACE IMPORTED)
+  add_library(Boost::diagnostic_definitions INTERFACE IMPORTED ../src/API/WindowedQuery.cpp)
+  add_library(Boost::disable_autolinking INTERFACE IMPORTED ../src/API/WindowedQuery.cpp)
+  add_library(Boost::dynamic_linking INTERFACE IMPORTED ../src/API/WindowedQuery.cpp)
   set_target_properties(Boost::dynamic_linking PROPERTIES
     INTERFACE_COMPILE_DEFINITIONS "BOOST_ALL_DYN_LINK")
 endif()
@@ -2056,7 +2056,7 @@ endif()
 if(Boost_FOUND)
   # For header-only libraries
   if(NOT TARGET Boost::boost)
-    add_library(Boost::boost INTERFACE IMPORTED)
+    add_library(Boost::boost INTERFACE IMPORTED ../src/API/WindowedQuery.cpp)
     if(Boost_INCLUDE_DIRS)
       set_target_properties(Boost::boost PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${Boost_INCLUDE_DIRS}")
@@ -2068,11 +2068,11 @@ if(Boost_FOUND)
       string(TOUPPER ${COMPONENT} UPPERCOMPONENT)
       if(Boost_${UPPERCOMPONENT}_FOUND)
         if(Boost_USE_STATIC_LIBS)
-          add_library(Boost::${COMPONENT} STATIC IMPORTED)
+          add_library(Boost::${COMPONENT} STATIC IMPORTED ../src/API/WindowedQuery.cpp)
         else()
           # Even if Boost_USE_STATIC_LIBS is OFF, we might have static
           # libraries as a result.
-          add_library(Boost::${COMPONENT} UNKNOWN IMPORTED)
+          add_library(Boost::${COMPONENT} UNKNOWN IMPORTED ../src/API/WindowedQuery.cpp)
         endif()
         if(Boost_INCLUDE_DIRS)
           set_target_properties(Boost::${COMPONENT} PROPERTIES
