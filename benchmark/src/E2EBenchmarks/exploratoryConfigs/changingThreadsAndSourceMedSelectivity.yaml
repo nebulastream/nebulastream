@@ -1,4 +1,4 @@
-# ~~~ Configurations for the NES E2E Benchmark  ~~~
+# ~~~ Configurations for the NES E2E Benchmark ~~~
 
 # Parameter that are changed per run with comma separated list
 numberOfWorkerThreads: 1,2,3,4,5,6,7,8,9,10,11,12
@@ -12,9 +12,9 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: Auto
-outputFile: changingThreadsAndSourceOnlyFwdData.csv
-benchmarkName: changingThreadsAndSourceOnlyFwdData
-query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
+outputFile: changingThreadsAndSourceMedSelectivity.csv
+benchmarkName: changingThreadsAndSourceMedSelectivity
+query: 'Query::from("input").filter(Attribute("value") > 50).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000

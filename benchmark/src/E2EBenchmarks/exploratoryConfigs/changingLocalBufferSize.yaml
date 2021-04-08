@@ -14,7 +14,7 @@ bufferSizeInBytes: 4194304
 inputOutputMode: Auto
 outputFile: changingLocalBufferSize.csv
 benchmarkName: changingLocalBufferSize
-query: 'Query::from("input").filter(Attribute("value") > 50).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
