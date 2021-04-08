@@ -18,14 +18,15 @@ df_changingThreadsAndSourceMedSelectivity = pd.read_csv('./changingThreadsAndSou
 df_changingThreadsAndSourceHighSelectivity = pd.read_csv('./changingThreadsAndSourceHighSelectivity.csv')
 df_changingThreadsAndSourceLowSelectivity = pd.read_csv('./changingThreadsAndSourceLowSelectivity.csv')
 df_changingThreadsAndSourceNoProc = pd.read_csv('./changingThreadsAndSourceNoProc.csv')
+df_scalingLarge = pd.read_csv('./scalingLarge.csv')
 
 import plotly.graph_objects as go
 import plotly
 
 # ###############################################################
 fig = make_subplots(
-    rows=3, cols=10,
-    column_widths=[0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
+    rows=3, cols=11,
+    column_widths=[0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
     row_heights=[1., 1., 1.],
     shared_xaxes=False,
     subplot_titles=[
@@ -38,7 +39,8 @@ fig = make_subplots(
         'Worker/Source NoProc',
         'Worker/Source Low Sel',
         'Worker/Source Med Sel',
-        'Worker/Source High Sel'
+        'Worker/Source High Sel',
+        'Worker/Source Large Scale'
     ]
 )
 
@@ -567,6 +569,64 @@ fig.add_trace(
     row=3, col=10
 )
 fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=3, col=10)
+
+############################################# df_scalingLarge #######################################################
+
+df_scalingLarge["src"] = "W" + df_scalingLarge[
+    "WorkerThreads"].astype(str) + '/S' + df_scalingLarge["SourceCnt"].astype(str)
+fig.add_trace(
+    go.Scatter(x=df_scalingLarge['src'],
+               y=df_scalingLarge['ThroughputInTupsPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='red',
+                         width=1),
+               name="Throughput in Tuples/sec",
+               legendgroup='group1',
+               showlegend=False
+               ),
+    row=1, col=11
+)
+fig.update_xaxes(title_text="Worker/Threads Large Scale", row=1, col=11)
+
+fig.add_trace(
+    go.Scatter(x=df_scalingLarge['src'],
+               y=df_scalingLarge['ThroughputInMBPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='green',
+                         width=1),
+               name="ThroughputInMBPerSec",
+               legendgroup='group2',
+               showlegend=False
+               ),
+    row=2, col=11
+)
+fig.update_xaxes(title_text="Worker/Threads Large Scale", row=2, col=11)
+
+fig.add_trace(
+    go.Scatter(x=df_scalingLarge['src'],
+               y=df_scalingLarge['AvgLatencyInMs'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='blue',
+                         width=1),
+               name="AvgLatencyInMs",
+               legendgroup='group3',
+               showlegend=False
+               ),
+    row=3, col=11
+)
+fig.update_xaxes(title_text="Worker/Threads Large Scale", row=3, col=11)
+
+
+
+
+
+
+
+
+
 
 ####################################################################################################
 fig.update_layout(barmode='overlay')
