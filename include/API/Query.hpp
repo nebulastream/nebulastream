@@ -29,6 +29,7 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Sources/DataSource.hpp>
+#include <API/WindowedQuery.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -138,62 +139,6 @@ class JoinCondition {
 };
 
 }//namespace JoinOperatorBuilder
-
-namespace WindowOperatorBuilder{
-
-class WindowedQuery;
-class KeyedWindowedQuery;
-
-class WindowedQuery{
-  public:
-    /**
-    * @brief: Constructor. Initialises always originalQuery, windowType
-    * @param originalQuery
-    * @param windowType
-    */
-    WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType);
-
-    /**
-    * @brief: sets the Attribute for the keyBy Operation. Creates a KeyedWindowedQuery object.
-    * @param onKey
-    */
-    KeyedWindowedQuery byKey(ExpressionItem onKey) const;
-
-    /**
-   * @brief: Calls internally the original window() function and returns the Query&
-   * @param aggregation
-   */
-    Query& apply(const Windowing::WindowAggregationPtr aggregation);
-
-  private:
-    Query& originalQuery;
-    Windowing::WindowTypePtr windowType;
-};
-
-class KeyedWindowedQuery{
-  public:
-    /**
-    * @brief: Constructor. Initialises always originalQuery, windowType, onKey
-    * @param originalQuery
-    * @param windowType
-    */
-    KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionItem onKey);
-
-    /**
-    * @brief: Calls internally the original windowByKey() function and returns the Query&
-    * @param aggregation
-    */
-    Query& apply(const Windowing::WindowAggregationPtr aggregation);
-
-  private:
-    Query& originalQuery;
-    Windowing::WindowTypePtr windowType;
-    ExpressionItem onKey;
-};
-
-
-}// namespace WindowOperatorBuilder
-
 
 
 

@@ -40,7 +40,7 @@ ExternalProject_Add(
 ExternalProject_Get_Property(gtest source_dir binary_dir)
 
 # Create a libgtest target to be used as a dependency by test programs
-add_library(libgtest IMPORTED STATIC GLOBAL)
+add_library(libgtest IMPORTED STATIC GLOBAL ../src/API/WindowedQuery.cpp)
 add_dependencies(libgtest gtest gtest_main)
 
 # Set libgtest properties
@@ -49,7 +49,7 @@ set_target_properties(libgtest PROPERTIES
         "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
         )
 
-add_library(libgtest_main IMPORTED STATIC GLOBAL)
+add_library(libgtest_main IMPORTED STATIC GLOBAL ../src/API/WindowedQuery.cpp)
 add_dependencies(libgtest_main gtest_main)
 
 set_target_properties(libgtest_main PROPERTIES
@@ -58,7 +58,7 @@ set_target_properties(libgtest_main PROPERTIES
         )
 
 # Create a libgmock target to be used as a dependency by test programs
-add_library(libgmock IMPORTED STATIC GLOBAL)
+add_library(libgmock IMPORTED STATIC GLOBAL ../src/API/WindowedQuery.cpp)
 add_dependencies(libgmock gtest)
 
 # Set libgmock properties
