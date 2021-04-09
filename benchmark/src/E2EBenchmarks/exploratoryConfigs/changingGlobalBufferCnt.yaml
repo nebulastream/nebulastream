@@ -5,7 +5,7 @@ numberOfWorkerThreads: 1,1,1,1,1,1,2,2,2,2,2,2,4,4,4,4,4,4
 numberOfSources: 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
 
 # engine configuration parameter
-numberOfBuffersInGlobalBufferManager: 8192,16384,32768,65536,131072,262144
+numberOfBuffersInGlobalBufferManager: 8192,16384,32768,65536,131072,262144,8192,16384,32768,65536,131072,262144,8192,16384,32768,65536,131072,262144
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 4194304
