@@ -33,12 +33,18 @@ CompilerFlagsPtr CompilerFlags::createDefaultCompilerFlags() {
     return flags;
 }
 
-CompilerFlagsPtr CompilerFlags::createOptimizingCompilerFlags() {
+CompilerFlagsPtr CompilerFlags::createBenchmarkingCompilerFlags() {
     auto flags = createDefaultCompilerFlags();
     flags->addFlag(CompilerFlags::ALL_OPTIMIZATIONS);
     flags->addFlag(CompilerFlags::AVX2);
     flags->addFlag(CompilerFlags::TUNE);
     flags->addFlag(CompilerFlags::ARCH);
+    return flags;
+}
+
+CompilerFlagsPtr CompilerFlags::createOptimizingCompilerFlags() {
+    auto flags = createDefaultCompilerFlags();
+    flags->addFlag(CompilerFlags::ALL_OPTIMIZATIONS);
 #ifdef SSE41_FOUND
     flags->addFlag(CompilerFlags::SSE_4_1);
 #endif

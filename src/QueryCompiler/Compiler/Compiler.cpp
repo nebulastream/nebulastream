@@ -59,7 +59,7 @@ std::string Compiler::getFileName() {
     return ss.str();
 }
 
-CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
+CompiledCodePtr Compiler::compile(const std::string& source) {
 
     // write source to cpp file
     std::string basename = getFileName();
@@ -68,12 +68,24 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     writeSourceToFile(filename, source);
     NES_DEBUG("compiler filename =" << filename);
     // if we are in compile in debugging mode we create print the source file.
-    if (debugging) {
-        formatAndPrintSource(filename);
-    }
 
-    // init compilation flag dependent on compilation mode
-    auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createOptimizingCompilerFlags();
+    CompilerFlagsPtr flags;
+#ifdef NES_DEBUG_MODE
+    std::cout << "use debug flags" << std::endl;
+    flags = CompilerFlags::createDebuggingCompilerFlags();
+#endif
+
+#ifdef NES_RELEASE_MODE
+    std::cout << "use release flags" << std::endl;
+    flags = CompilerFlags::createOptimizingCompilerFlags();
+#endif
+
+#ifdef NES_BENCHMARK_MODE
+    std::cout << "use benchmark flags" << std::endl;
+    flags = CompilerFlags::createBenchmarkingCompilerFlags();
+#endif
+
+
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);

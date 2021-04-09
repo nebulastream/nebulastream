@@ -119,7 +119,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "}" << std::endl;
         NES_DEBUG("UtilityFunctions: query code \n" << code.str());
         Compiler compiler;
-        CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
+        CompiledCodePtr compiled_code = compiler.compile(code.str());
         if (!code) {
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
@@ -156,7 +156,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
         code << "}" << std::endl;
         Compiler compiler;
         NES_DEBUG("generated code=" << code.str());
-        CompiledCodePtr compiled_code = compiler.compile(code.str(), false);
+        CompiledCodePtr compiled_code = compiler.compile(code.str());
         if (!code) {
             NES_ERROR("Compilation of schema code failed! Code: " << code.str());
         }
