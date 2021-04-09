@@ -56,6 +56,7 @@ class CompilerFlags {
     static CompilerFlagsPtr create();
     static CompilerFlagsPtr createDefaultCompilerFlags();
     static CompilerFlagsPtr createOptimizingCompilerFlags();
+    static CompilerFlagsPtr createBenchmarkingCompilerFlags();
     static CompilerFlagsPtr createDebuggingCompilerFlags();
 
     std::vector<std::string> getFlags();
