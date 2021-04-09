@@ -54,13 +54,13 @@ endif (NES_LOGGING_LEVEL)
 set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 ")
+set(CMAKE_CXX_FLAGS_BENCHMARKS "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2")
 
-# Set Flamegraph Flags
-if (NES_BUILD_BENCHMARKS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer")
-    set(CMAKE_CXX_FLAGS_BENCHMARKS "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2 -fno-omit-frame-pointer")
-    message("---Flags needed for retrieving function names in flamegraphs have been added!")
-endif()
+## Set Flamegraph Flags
+#if (NES_BUILD_BENCHMARKS)
+#    set(CMAKE_CXX_FLAGS_BENCHMARKS "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2 -fno-omit-frame-pointer")
+#    message("---Flags needed for retrieving function names in flamegraphs have been added!")
+#endif()
 
 # Compiler should produce specific code for system architecture    set(CMAKE_CXX_FLAGS_BENCHMARKS "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2 -fno-omit-frame-pointer")
 include(CheckCXXCompilerFlag)
@@ -72,6 +72,7 @@ endif ()
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
+message(STATUS "CMAKE_CXX_FLAGS_BENCHMARKS ${CMAKE_CXX_FLAGS_BENCHMARKS}")
 
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
