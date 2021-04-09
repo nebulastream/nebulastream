@@ -5,6 +5,11 @@ from plotly.subplots import make_subplots
 import plotly
 import pandas as pd
 import numpy as np
+from matplotlib.pyplot import *
+import matplotlib.pyplot as plt
+from itertools import permutations
+from random import sample
+import numpy as np
 
 df_changingBufferSize = pd.read_csv('./changingBufferSize.csv')
 df_changingGlobalBufferCnt = pd.read_csv('./changingGlobalBufferCnt.csv')
@@ -34,26 +39,37 @@ fig = make_subplots(
         'Global Buffer Cnt',
         'Local Buffer Cnt',
         'Source Cnt',
-        'Worker-Source Ratio',
-        'Source-Worker Ratio',
-        'Worker/Source NoProc',
-        'Worker/Source Low Sel',
-        'Worker/Source Med Sel',
-        'Worker/Source High Sel',
-        'Worker/Source Large Scale'
+        'Wrk-Src Ratio',
+        'Src-Wrk Ratio',
+        'Wrk/Src NoProc',
+        'Wrk/Src Low Sel',
+        'Wrk/Src Med Sel',
+        'Wrk/Src High Sel',
+        'Wrk/Src Large Scale'
     ]
 )
+
+# Get the color-wheel
+dictOfNames = {
+    1: 'red',  # 0
+    2: 'green',  # 1
+    3: 'blue',  # 2
+    4: 'blue',  # 3
+}
 
 # ########################################## df_changingBufferSize ##########################################################
 df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='ThroughputInTupsPerSec',
                                              index=['BufferSizeInBytes'], columns='WorkerThreads',
                                              aggfunc=np.sum)
-for col in df_changingBufferSize_pivot.columns:
+
+for i in range(len(df_changingBufferSize_pivot.columns)):
+    col = df_changingBufferSize_pivot.columns[i]
     fig.add_trace(go.Scatter(x=df_changingBufferSize_pivot.index, y=df_changingBufferSize_pivot[col].values,
-                             name=col,
+                             name=str(col),
                              hoverinfo='x+y',
                              mode='markers+lines',
-                             line=dict(shape='linear', color='red',
+                             line=dict(shape='linear',
+                                       color=dictOfNames[col],
                                        width=1),
                              connectgaps=True,
                              showlegend=True,
@@ -67,30 +83,32 @@ fig.update_yaxes(title_text="ThroughputInTupsPerSec", row=1, col=1)
 df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='ThroughputInMBPerSec',
                                              index=['BufferSizeInBytes'], columns='WorkerThreads',
                                              aggfunc=np.sum)
-for col in df_changingBufferSize_pivot.columns:
+for i in range(len(df_changingBufferSize_pivot.columns)):
+    col = df_changingBufferSize_pivot.columns[i]
     fig.add_trace(go.Scatter(x=df_changingBufferSize_pivot.index, y=df_changingBufferSize_pivot[col].values,
-                             name=col,
-                             hoverinfo='x+y',
-                             mode='markers+lines',
-                             line=dict(shape='linear', color='blue',
-                                       width=1),
-                             connectgaps=True,
-                             showlegend=True
-                             ),
-                  row=2, col=1
-                  )
+                         name=str(col),
+                         hoverinfo='x+y',
+                         mode='markers+lines',
+                         line=dict(shape='linear',color=dictOfNames[col],
+                                   width=1),
+                         connectgaps=True,
+                         showlegend=True
+                         ),
+              row=2, col=1
+              )
 fig.update_xaxes(title_text="BufferSizeInBytes", row=2, col=1)
 fig.update_yaxes(title_text="ThroughputInMBPerSec", row=2, col=1)
 
 df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='AvgLatencyInMs',
                                              index=['BufferSizeInBytes'], columns='WorkerThreads',
                                              aggfunc=np.sum)
-for col in df_changingBufferSize_pivot.columns:
+for i in range(len(df_changingBufferSize_pivot.columns)):
+    col = df_changingBufferSize_pivot.columns[i]
     fig.add_trace(go.Scatter(x=df_changingBufferSize_pivot.index, y=df_changingBufferSize_pivot[col].values,
-                             name=col,
+                             name=str(col),
                              hoverinfo='x+y',
                              mode='markers+lines',
-                             line=dict(shape='linear', color='green',
+                             line=dict(shape='linear', color=dictOfNames[col],
                                        width=1),
                              connectgaps=True,
                              showlegend=True
@@ -236,7 +254,7 @@ for col in df_changingSourceCnt_pivot.columns:
                    ),
         row=1, col=4
     )
-fig.update_xaxes(title_text="SourceCnt", row=1, col=4)
+fig.update_xaxes(title_text="SourceCnt (12Wrk)", row=1, col=4)
 
 df_changingSourceCnt_pivot = pd.pivot_table(df_changingSourceCnt, values='ThroughputInMBPerSec',
                                             index=['SourceCnt'],
@@ -255,7 +273,7 @@ for col in df_changingSourceCnt_pivot.columns:
                    ),
         row=2, col=4
     )
-fig.update_xaxes(title_text="SourceCnt", row=2, col=4)
+fig.update_xaxes(title_text="SourceCnt (12Wrk)", row=2, col=4)
 
 df_changingSourceCnt_pivot = pd.pivot_table(df_changingSourceCnt, values='AvgLatencyInMs',
                                             index=['SourceCnt'],
@@ -274,7 +292,7 @@ for col in df_changingSourceCnt_pivot.columns:
                    ),
         row=3, col=4
     )
-fig.update_xaxes(title_text="SourceCnt", row=3, col=4)
+fig.update_xaxes(title_text="SourceCnt (12Wrk)", row=3, col=4)
 
 ########################################## df_workerToSourceRatio ##########################################################
 fig.add_trace(
@@ -289,7 +307,7 @@ fig.add_trace(
                ),
     row=1, col=5
 )
-fig.update_xaxes(title_text="Worker - Source Ratio", row=1, col=5)
+fig.update_xaxes(title_text="SourceCnt (1Wrk)", row=1, col=5)
 
 fig.add_trace(
     go.Scatter(x=df_workerToSourceRatio['SourceCnt'], y=df_workerToSourceRatio['ThroughputInMBPerSec'],
@@ -303,7 +321,7 @@ fig.add_trace(
                ),
     row=2, col=5
 )
-fig.update_xaxes(title_text="Worker - Source Ratio", row=2, col=5)
+fig.update_xaxes(title_text="SourceCnt (1Wrk)", row=2, col=5)
 
 fig.add_trace(
     go.Scatter(x=df_workerToSourceRatio['SourceCnt'], y=df_workerToSourceRatio['AvgLatencyInMs'],
@@ -317,7 +335,7 @@ fig.add_trace(
                ),
     row=3, col=5
 )
-fig.update_xaxes(title_text="Worker - Source Ratio", row=3, col=5)
+fig.update_xaxes(title_text="SourceCnt (1Wrk)", row=3, col=5)
 
 ########################################## df_sourceToWorkerRatio ##########################################################
 fig.add_trace(
@@ -332,7 +350,7 @@ fig.add_trace(
                ),
     row=1, col=6
 )
-fig.update_xaxes(title_text="Source - Worker Ratio", row=1, col=6)
+fig.update_xaxes(title_text="WorkerCnt (1Src)", row=1, col=6)
 
 fig.add_trace(
     go.Scatter(x=df_sourceToWorkerRatio['WorkerThreads'], y=df_sourceToWorkerRatio['ThroughputInMBPerSec'],
@@ -346,7 +364,7 @@ fig.add_trace(
                ),
     row=2, col=6
 )
-fig.update_xaxes(title_text="Source - Worker Ratio", row=2, col=6)
+fig.update_xaxes(title_text="WorkerCnt (1Src)", row=2, col=6)
 
 fig.add_trace(
     go.Scatter(x=df_sourceToWorkerRatio['WorkerThreads'], y=df_sourceToWorkerRatio['AvgLatencyInMs'],
@@ -360,7 +378,7 @@ fig.add_trace(
                ),
     row=3, col=6
 )
-fig.update_xaxes(title_text="Source - Worker Ratio", row=3, col=6)
+fig.update_xaxes(title_text="WorkerCnt (1Src)", row=3, col=6)
 
 ############################################# df_changingThreadsAndSourceNoProc #######################################################
 
@@ -379,7 +397,7 @@ fig.add_trace(
                ),
     row=1, col=7
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=1, col=7)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt NoProc", row=1, col=7)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceNoProc['src'], y=df_changingThreadsAndSourceNoProc['ThroughputInMBPerSec'],
@@ -393,7 +411,7 @@ fig.add_trace(
                ),
     row=2, col=7
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=2, col=7)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt NoProc", row=2, col=7)
 
 df_changingThreadsAndSourceNoProc["src"] = "W" + df_changingThreadsAndSourceNoProc["WorkerThreads"].astype(str) + '/S' + \
                                            df_changingThreadsAndSourceNoProc["SourceCnt"].astype(str)
@@ -409,7 +427,7 @@ fig.add_trace(
                ),
     row=3, col=7
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=3, col=7)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt NoProc", row=3, col=7)
 
 ############################################# df_changingThreadsAndSourceLowSelectivity #######################################################
 
@@ -428,7 +446,7 @@ fig.add_trace(
                ),
     row=1, col=8
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=1, col=8)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (10%)", row=1, col=8)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceLowSelectivity['src'],
@@ -443,7 +461,7 @@ fig.add_trace(
                ),
     row=2, col=8
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=2, col=8)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (10%)", row=2, col=8)
 
 df_changingThreadsAndSourceLowSelectivity["src"] = "W" + df_changingThreadsAndSourceLowSelectivity[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceLowSelectivity["SourceCnt"].astype(str)
@@ -460,7 +478,7 @@ fig.add_trace(
                ),
     row=3, col=8
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=3, col=8)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (10%)", row=3, col=8)
 
 ####################################################################################################
 
@@ -482,7 +500,7 @@ fig.add_trace(
                ),
     row=1, col=9
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=1, col=9)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (50%)", row=1, col=9)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceMedSelectivity['src'],
@@ -497,7 +515,7 @@ fig.add_trace(
                ),
     row=2, col=9
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=2, col=9)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (50%)", row=2, col=9)
 
 df_changingThreadsAndSourceMedSelectivity["src"] = "W" + df_changingThreadsAndSourceMedSelectivity[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceMedSelectivity["SourceCnt"].astype(str)
@@ -514,7 +532,7 @@ fig.add_trace(
                ),
     row=3, col=9
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=3, col=9)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (50%)", row=3, col=9)
 
 ####################################################################################################
 
@@ -536,7 +554,7 @@ fig.add_trace(
                ),
     row=1, col=10
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=1, col=10)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (90%)", row=1, col=10)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceHighSelectivity['src'],
@@ -551,7 +569,7 @@ fig.add_trace(
                ),
     row=2, col=10
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=2, col=10)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (90%)", row=2, col=10)
 
 df_changingThreadsAndSourceHighSelectivity["src"] = "W" + df_changingThreadsAndSourceHighSelectivity[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceHighSelectivity["SourceCnt"].astype(str)
@@ -568,7 +586,7 @@ fig.add_trace(
                ),
     row=3, col=10
 )
-fig.update_xaxes(title_text="Worker Threads & SourceCnt", row=3, col=10)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt (90%)", row=3, col=10)
 
 ############################################# df_scalingLarge #######################################################
 
@@ -587,7 +605,7 @@ fig.add_trace(
                ),
     row=1, col=11
 )
-fig.update_xaxes(title_text="Worker/Threads Large Scale", row=1, col=11)
+fig.update_xaxes(title_text="Wrk/Src LC NoProc", row=1, col=11)
 
 fig.add_trace(
     go.Scatter(x=df_scalingLarge['src'],
@@ -602,7 +620,7 @@ fig.add_trace(
                ),
     row=2, col=11
 )
-fig.update_xaxes(title_text="Worker/Threads Large Scale", row=2, col=11)
+fig.update_xaxes(title_text="Wrk/Src LC NoProc", row=2, col=11)
 
 fig.add_trace(
     go.Scatter(x=df_scalingLarge['src'],
@@ -617,16 +635,7 @@ fig.add_trace(
                ),
     row=3, col=11
 )
-fig.update_xaxes(title_text="Worker/Threads Large Scale", row=3, col=11)
-
-
-
-
-
-
-
-
-
+fig.update_xaxes(title_text="Wrk/Src LC NoProc", row=3, col=11)
 
 ####################################################################################################
 fig.update_layout(barmode='overlay')
