@@ -80,11 +80,10 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
     flags = CompilerFlags::createOptimizingCompilerFlags();
 #endif
 
-#ifdef NES_BENCHMARK_MODE
+#ifdef NES_BENCHMARKS_MODE
     std::cout << "use benchmark flags" << std::endl;
     flags = CompilerFlags::createBenchmarkingCompilerFlags();
 #endif
-
 
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
