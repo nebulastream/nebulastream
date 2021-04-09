@@ -125,7 +125,6 @@ df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, va
                                                   index=['NumberOfBuffersInGlobalBufferManager'],
                                                   columns='WorkerThreads',
                                                   aggfunc=np.sum)
-print(df_changingGlobalBufferCnt_pivot)
 for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
     col = df_changingGlobalBufferCnt_pivot.columns[i]
     fig.add_trace(
@@ -140,7 +139,8 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    ),
         row=1, col=2
     )
-fig.update_xaxes(title_text="GlobalBufferCnt", row=1, col=2)
+fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=1, col=2)
+fig.update_yaxes(type="log", row=1, col=2)
 
 df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, values='ThroughputInMBPerSec',
                                                   index=['NumberOfBuffersInGlobalBufferManager'],
@@ -161,7 +161,8 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    ),
         row=2, col=2
     )
-fig.update_xaxes(title_text="GlobalBufferCnt", row=2, col=2)
+fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=2, col=2)
+fig.update_yaxes(type="log", row=2, col=2)
 
 df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, values='AvgLatencyInMs',
                                                   index=['NumberOfBuffersInGlobalBufferManager'],
@@ -181,7 +182,8 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    ),
         row=3, col=2
     )
-fig.update_xaxes(title_text="GlobalBufferCnt", row=3, col=2)
+fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=3, col=2)
+fig.update_yaxes(type="log", row=3, col=2)
 
 # ########################################## df_changingLocalBufferSize ##########################################################
 df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='ThroughputInTupsPerSec',
@@ -202,7 +204,8 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
                    ),
         row=1, col=3
     )
-fig.update_xaxes(title_text="LocalBufferCnt", row=1, col=3)
+fig.update_xaxes(title_text="LocalBufferCnt", type="log", row=1, col=3)
+fig.update_yaxes( type="log", row=1, col=3)
 
 df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='ThroughputInMBPerSec',
                                                   index=['NumberOfBuffersInSourceLocalBufferPool'],
@@ -222,7 +225,8 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
                    ),
         row=2, col=3
     )
-fig.update_xaxes(title_text="LocalBufferCnt", row=2, col=3)
+fig.update_xaxes(title_text="LocalBufferCnt", type="log", row=2, col=3)
+fig.update_yaxes(type="log", row=2, col=3)
 
 df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='AvgLatencyInMs',
                                                   index=['NumberOfBuffersInSourceLocalBufferPool'],
@@ -244,6 +248,7 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
         row=3, col=3
     )
 fig.update_xaxes(title_text="LocalBufferCnt", row=3, col=3)
+fig.update_yaxes(row=3, col=3)
 
 # ########################################## df_changingSourceCnt ##########################################################
 df_changingSourceCnt_pivot = pd.pivot_table(df_changingSourceCnt, values='ThroughputInTupsPerSec',
@@ -321,7 +326,7 @@ fig.add_trace(
     go.Scatter(x=df_workerToSourceRatio['SourceCnt'], y=df_workerToSourceRatio['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='green',
+               line=dict(color='blue',
                          width=1),
                name="Throughput in MB/s",
                showlegend=False
@@ -334,7 +339,7 @@ fig.add_trace(
     go.Scatter(x=df_workerToSourceRatio['SourceCnt'], y=df_workerToSourceRatio['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='blue',
+               line=dict(color='green',
                          width=1),
                name="Average Latency",
                showlegend=False
@@ -361,7 +366,7 @@ fig.add_trace(
     go.Scatter(x=df_sourceToWorkerRatio['WorkerThreads'], y=df_sourceToWorkerRatio['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='green',
+               line=dict(color='blue',
                          width=1),
                name="Throughput in MB/s",
                showlegend=False
@@ -374,7 +379,7 @@ fig.add_trace(
     go.Scatter(x=df_sourceToWorkerRatio['WorkerThreads'], y=df_sourceToWorkerRatio['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='blue',
+               line=dict(color='green',
                          width=1),
                name="Average Latency",
                showlegend=False
@@ -405,7 +410,7 @@ fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceNoProc['src'], y=df_changingThreadsAndSourceNoProc['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='green',
+               line=dict(color='blue',
                          width=1),
                name="ThroughputInMBPerSec",
                showlegend=False
@@ -420,7 +425,7 @@ fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceNoProc['src'], y=df_changingThreadsAndSourceNoProc['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='blue',
+               line=dict(color='green',
                          width=1),
                name="AvgLatencyInMs",
                showlegend=False
@@ -452,7 +457,7 @@ fig.add_trace(
                y=df_changingThreadsAndSourceLowSelectivity['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='green',
+               line=dict(color='blue',
                          width=1),
                name="ThroughputInMBPerSec",
                showlegend=False
@@ -468,7 +473,7 @@ fig.add_trace(
                y=df_changingThreadsAndSourceLowSelectivity['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='blue',
+               line=dict(color='green',
                          width=1),
                name="AvgLatencyInMs",
                showlegend=False
@@ -503,7 +508,7 @@ fig.add_trace(
                y=df_changingThreadsAndSourceMedSelectivity['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='green',
+               line=dict(color='blue',
                          width=1),
                name="ThroughputInMBPerSec",
                showlegend=False
@@ -519,7 +524,7 @@ fig.add_trace(
                y=df_changingThreadsAndSourceMedSelectivity['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='blue',
+               line=dict(color='green',
                          width=1),
                name="AvgLatencyInMs",
                showlegend=False
@@ -554,7 +559,7 @@ fig.add_trace(
                y=df_changingThreadsAndSourceHighSelectivity['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='green',
+               line=dict(color='blue',
                          width=1),
                name="ThroughputInMBPerSec",
                showlegend=False
@@ -570,7 +575,7 @@ fig.add_trace(
                y=df_changingThreadsAndSourceHighSelectivity['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='blue',
+               line=dict(color='green',
                          width=1),
                name="AvgLatencyInMs",
                showlegend=False
@@ -602,7 +607,7 @@ fig.add_trace(
                y=df_scalingLarge['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='green',
+               line=dict(color='blue',
                          width=1),
                name="ThroughputInMBPerSec",
                showlegend=False
@@ -616,7 +621,7 @@ fig.add_trace(
                y=df_scalingLarge['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
-               line=dict(color='blue',
+               line=dict(color='green',
                          width=1),
                name="AvgLatencyInMs",
                showlegend=False
