@@ -33,7 +33,7 @@ if (NES_BUILD_BENCHMARKS)
     message("gbenchmark ${source_dir} ${binary_dir}")
 
     #Create a libgbenchmark target as a dependency by benchmark programs
-    add_library(libgbenchmark IMPORTED STATIC GLOBAL ../src/API/WindowedQuery.cpp)
+    add_library(libgbenchmark IMPORTED STATIC GLOBAL)
     add_dependencies(libgbenchmark gbenchmark gbenchmark_main)
 
     set_target_properties(libgbenchmark PROPERTIES
@@ -42,7 +42,7 @@ if (NES_BUILD_BENCHMARKS)
             )
 
     #Create a libgbenchmark_main target as a dependency by benchmark programs
-    add_library(libgbenchmark_main IMPORTED STATIC GLOBAL ../src/API/WindowedQuery.cpp)
+    add_library(libgbenchmark_main IMPORTED STATIC GLOBAL)
     add_dependencies(libgbenchmark_main gbenchmark_main)
 
     set_target_properties(libgbenchmark_main PROPERTIES
