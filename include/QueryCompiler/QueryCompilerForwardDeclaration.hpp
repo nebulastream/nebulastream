@@ -56,14 +56,23 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 namespace QueryCompilation {
 
+class PhysicalOperatorPipeline;
+typedef std::shared_ptr<PhysicalOperatorPipeline> PhysicalOperatorPipelinePtr;
+
 class TranslateToPhysicalOperators;
 typedef std::shared_ptr<TranslateToPhysicalOperators> TranslateToPhysicalOperatorsPtr;
 
 class PhysicalOperatorProvider;
 typedef std::shared_ptr<PhysicalOperatorProvider> PhysicalOperatorProviderPtr;
 
-class PhysicalQueryPlan;
-typedef std::shared_ptr<PhysicalQueryPlan> PhysicalQueryPlanPtr;
+class PipelineQueryPlan;
+typedef std::shared_ptr<PipelineQueryPlan> PipelineQueryPlanPtr;
+
+class PipeliningPhase;
+typedef std::shared_ptr<PipeliningPhase> PipeliningPhasePtr;
+
+class PipelineBreakerPolicy;
+typedef std::shared_ptr<PipelineBreakerPolicy> PipelineBreakerPolicyPtr;
 
 namespace PhysicalOperators {
 class PhysicalOperator;

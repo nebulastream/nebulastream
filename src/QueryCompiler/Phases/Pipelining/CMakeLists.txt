@@ -13,10 +13,9 @@
 # limitations under the License.
 
 add_source_nes(
-        TranslateToPhysicalOperators.cpp
-        PhysicalOperatorProvider.cpp
-        DefaultPhysicalOperatorProvider.cpp
+        AlwaysBreakPolicy.cpp
+        PipelineBreakerPolicy.cpp
+        FuseIfPossiblePolicy.cpp
+        DefaultPipeliningPhase
 )
-
-add_subdirectory(Pipelining)
 
