@@ -45,7 +45,7 @@ endif ()
 # Set NES_LOGGING_LEVEL Flag
 if (NES_LOGGING_LEVEL)
     get_nes_log_level_value(NES_LOGGING_VALUE)
-else(NES_LOGGING_LEVEL)
+else (NES_LOGGING_LEVEL)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -Werror=unused-variable -Werror=unused-parameter -DNES_LOGGING_TRACE_LEVEL=1")
     message("---Everything will be logged")
 endif (NES_LOGGING_LEVEL)
@@ -57,17 +57,21 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES
 
 # Set Flamegraph Flags
 if (NES_BUILD_BENCHMARKS)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2 -fno-omit-frame-pointer -DNES_BENCHMARKS_MODE=1")
-    message("---Flags needed for retrieving function names in flamegraphs have been added!")
-endif()
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2  -DNES_BENCHMARKS_MODE=1")
+    message("Build with all flags on, only use for benchmarking")
+#    message("---Flags needed for retrieving function names in flamegraphs have been added!")
+    #-fno-omit-frame-pointer
+endif ()
 
 # Compiler should produce specific code for system architecture
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-march=x86-64" COMPILER_SUPPORTS_MARCH_NATIVE)
 if (COMPILER_SUPPORTS_MARCH_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
+    if (NES_BUILD_BENCHMARKS)
+    else ()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
+    endif ()
 endif ()
-
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
@@ -75,13 +79,13 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
 message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
-if(CMAKE_ENABLE_JEMALLOC)
+if (CMAKE_ENABLE_JEMALLOC)
     find_package(PkgConfig REQUIRED)
-    pkg_check_modules (JEMALLOC jemalloc)
+    pkg_check_modules(JEMALLOC jemalloc)
     pkg_search_module(JEMALLOC REQUIRED jemalloc)
     include_directories(${JEMALLOC_INCLUDE_DIRS})
     set(LIBRARIES ${LIBRARIES} ${JEMALLOC_LIBRARIES})
-endif()
+endif ()
 # lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
@@ -157,9 +161,9 @@ add_custom_command(
 message(STATUS "Libzmq")
 set(ZMQ_RELEASE "4.3.2")
 find_package(ZeroMQ ${ZMQ_RELEASE} REQUIRED)
-if(NOT ${ZeroMQ_FOUND})
+if (NOT ${ZeroMQ_FOUND})
     message(FATAL_ERROR "Unable to find libzmq")
-endif()
+endif ()
 set(LIBRARIES ${LIBRARIES} ${ZeroMQ_LIBRARIES})
 message(STATUS "Using Libzmq: " ${ZeroMQ_LIBRARIES})
 
@@ -168,18 +172,18 @@ message(STATUS "Using Libzmq: " ${ZeroMQ_LIBRARIES})
 message(STATUS "cppzmq")
 set(CPPZMQ_RELEASE "4.7.0")
 find_package(CPPZMQ ${CPPZMQ_RELEASE} REQUIRED)
-if(NOT ${CPPZMQ_FOUND})
+if (NOT ${CPPZMQ_FOUND})
     message(FATAL_ERROR "Unable to find cppzmq")
-endif()
+endif ()
 #set(LIBRARIES ${LIBRARIES} ${CPPZMQ_LIBRARIES}) CPPZMQ is header only so we dont need to link anything
 message(STATUS "Using cppzmq: " ${CPPZMQ_LIBRARIES})
 
 # Z3 Solver
 message(STATUS "Z3")
 find_package(Z3 REQUIRED)
-if(NOT ${Z3_FOUND})
+if (NOT ${Z3_FOUND})
     message(FATAL_ERROR "Unable to find Z3")
-endif()
+endif ()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
 
 # Log4cc
