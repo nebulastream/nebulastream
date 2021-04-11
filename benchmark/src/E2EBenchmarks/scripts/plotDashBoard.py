@@ -142,6 +142,7 @@ for i in range(len(df_changingBufferSize_pivot.columns)):
 fig.update_xaxes(title_text="BufferSizeInBytes", type="log", row=3, col=1)
 fig.update_yaxes(title_text="AvgLatencyInMs", type="log", row=3, col=1)
 
+
 # ########################################## df_changingGlobalBufferCnt ##########################################################
 df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, values='ThroughputInTupsPerSec',
                                                   index=['NumberOfBuffersInGlobalBufferManager'],
