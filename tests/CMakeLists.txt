@@ -96,6 +96,11 @@ add_executable(translate-physical-operator-tests "UnitTests/QueryCompiler/Transl
 target_link_libraries(translate-physical-operator-tests nes ${GTEST_LIBRARIES})
 add_test(NAME translate-physical-operator-tests COMMAND translate-physical-operator-tests)
 
+### Pipelining Tests ###
+add_executable(pipelining-phase-tests "UnitTests/QueryCompiler/PipeliningPhaseTest.cpp")
+target_link_libraries(pipelining-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME pipelining-phase-tests COMMAND pipelining-phase-tests)
+
 ### Operator Code Generation Tests ###
 add_executable(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorCodeGenerationTest.cpp")
 target_link_libraries(operator-code-generation-tests nes ${GTEST_LIBRARIES})
