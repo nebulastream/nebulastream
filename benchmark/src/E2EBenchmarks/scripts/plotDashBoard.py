@@ -11,8 +11,8 @@ from itertools import permutations
 from random import sample
 import numpy as np
 
-# folder = "./"#in this filder
-folder = "/home/zeuchste/Dropbox/nes/o3/"
+folder = "./"#in this filder
+# folder = "/home/zeuchste/Dropbox/nes/o3/"
 df_changingBufferSize = pd.read_csv(folder + 'changingBufferSize.csv')
 df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCnt.csv')
 df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
