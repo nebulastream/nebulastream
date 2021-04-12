@@ -51,7 +51,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
-        windowTupleLayout = NodeEngine::createRowLayout(windowSchema);
+        windowTupleLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
     }
 
     virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction " << id << ":()"); }
@@ -269,19 +269,24 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                            InputTypeRight& rightValue) {
         NES_TRACE("write sizes left=" << sizeof(leftValue) << " right=" << sizeof(rightValue)
                                       << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
-        windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
-        windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
-        windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-        constexpr auto headerSize = sizeof(uint64_t) + sizeof(uint64_t) + sizeof(KeyType);
-        // copy the left record at position at the index-th row with offset=headerSize
-        memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize,
-               &leftValue,
-               sizeof(InputTypeLeft));
-        // copy the right record at position at the index-th row with offset=headerSize+sizeof(InputTypeLeft)
-        memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize
-                   + sizeof(InputTypeLeft),
-               &rightValue,
-               sizeof(InputTypeRight));
+
+        {
+            using namespace NodeEngine::DynamicMemoryLayout;
+            auto bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+
+            auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+            auto endTsFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
+            auto keyFields = DynamicRowLayoutField<KeyType, true>::create(2, bindedRowLayout);
+            auto leftValueFields = DynamicRowLayoutField<InputTypeLeft, true>::create(3, bindedRowLayout);
+            auto rightValueFields = DynamicRowLayoutField<InputTypeRight, true>::create(4, bindedRowLayout);
+
+            startTsFields[index] = startTs;
+            endTsFields[index] = endTs;
+            keyFields[index] = key;
+            leftValueFields[index] = leftValue;
+            rightValue[index] = rightValue;
+        }
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }
@@ -289,7 +294,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
   private:
     LogicalJoinDefinitionPtr joinDefinition;
     SchemaPtr windowSchema;
-    NodeEngine::MemoryLayoutPtr windowTupleLayout;
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
 }// namespace NES::Join

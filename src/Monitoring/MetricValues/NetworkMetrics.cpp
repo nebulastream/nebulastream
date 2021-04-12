@@ -16,8 +16,9 @@
 
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/NetworkMetrics.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -65,14 +66,20 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
 
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
-        auto layout = NodeEngine::createRowLayout(schema);
-        auto numInt = layout->getValueField<uint64_t>(0, i)->read(buf);
 
-        for (int n = 0; n < numInt; n++) {
-            NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
+        {
+            using namespace NodeEngine::DynamicMemoryLayout;
+            auto layout = DynamicRowLayout::create(schema, true);
+            DynamicRowLayoutBufferPtr bindedRowLayout =
+                std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+            auto numInt = DynamicRowLayoutField<uint64_t, false>::create(i, bindedRowLayout)[0];
 
-            auto networkValue = NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_");
-            output.addNetworkValues(std::move(networkValue));
+            for (int n = 0; n < numInt; n++) {
+                NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
+
+                auto networkValue = NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_");
+                output.addNetworkValues(std::move(networkValue));
+            }
         }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetrics: Metrics could not be parsed from schema " + schema->toString());
