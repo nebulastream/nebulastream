@@ -57,7 +57,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES
 
 # Set Flamegraph Flags
 if (NES_BUILD_BENCHMARKS)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2  -DNES_BENCHMARKS_MODE=1")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2  -DNES_BENCHMARKS_FLAG_MODE=1")
     message("Build with all flags on, only use for benchmarking")
 #    message("---Flags needed for retrieving function names in flamegraphs have been added!")
     #-fno-omit-frame-pointer
