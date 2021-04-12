@@ -159,7 +159,7 @@ std::chrono::nanoseconds E2EBase::recordStatistics() {
                 subPlanIdToLatencyCnt[iter->getSubQueryId()] =
                     iter->getLatencySum() - subPlanIdToLatencyCnt[iter->getSubQueryId()];
             }
-        }//end of for
+       }//end of for
 
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -251,7 +251,6 @@ void E2EBase::setupSources() {
             wrk->registerPhysicalStream(inputStream);
         }
     } else if (mode == InputOutputMode::CacheMode) {
-        NES_NOT_IMPLEMENTED();
         std::cout << "cache mode" << std::endl;
         struct Record {
             uint64_t id;
@@ -278,7 +277,13 @@ void E2EBase::setupSources() {
                 NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, memAreaSize,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0);
 
-            wrk->registerPhysicalStream(conf);
+            if (config->getScalability()->getValue() == "scale-out") {
+                wrk->registerPhysicalStream(conf);
+            } else {
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "MemorySource",
+                                                                    "test_stream" + std::to_string(i), "input");
+                crd->getNodeEngine()->setConfig(conf);
+            }
         }
     } else if (mode == InputOutputMode::MemMode) {
         std::cout << "memory source mode" << std::endl;
