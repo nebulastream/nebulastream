@@ -682,7 +682,7 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
     }
 }
 
-TEST_F(NetworkStackTest, DISABLED_testNetworkSourceSink) {
+TEST_F(NetworkStackTest, testNetworkSourceSink) {
     std::promise<bool> completed;
     atomic<int> bufferCnt = 0;
     uint64_t totalNumBuffer = 100;

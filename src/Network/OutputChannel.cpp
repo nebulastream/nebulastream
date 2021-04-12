@@ -35,6 +35,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                                                      NesPartition nesPartition, ExchangeProtocol& protocol,
                                                      std::chrono::seconds waitTime, uint8_t retryTimes) {
     int linger = -1;
+    std::chrono::seconds backOffTime = waitTime;
     try {
         ChannelId channelId(nesPartition, NodeEngine::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
@@ -95,7 +96,8 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
                     return nullptr;
                 }
             }
-            std::this_thread::sleep_for(waitTime);
+            std::this_thread::sleep_for(backOffTime);
+            backOffTime *= 2;
             NES_INFO("OutputChannel: Connection with server failed! Reconnecting attempt " << i);
             i++;
         }
