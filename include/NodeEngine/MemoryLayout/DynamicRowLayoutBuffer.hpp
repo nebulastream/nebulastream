@@ -131,7 +131,7 @@ DynamicRowLayoutBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_
 
 template<bool boundaryChecks, typename... Types>
 bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
-    if (numberOfRecords >= capacity) {
+    if (boundaryChecks && numberOfRecords >= capacity) {
         NES_WARNING("TupleBuffer is full and thus no tuple can be added!");
         return false;
     }
@@ -150,7 +150,7 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
 
 template<bool boundaryChecks, typename... Types>
 std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
-    if (recordIndex >= capacity) {
+    if (boundaryChecks && recordIndex >= capacity) {
         NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutBuffer: Trying to access a record above capacity");
     }
 
