@@ -52,7 +52,7 @@ std::string Compiler::getFileName() {
 
     std::random_device dev;
     std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000);
+    std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000000);
 
     std::stringstream ss;
     ss << "gen_query_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);

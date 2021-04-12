@@ -96,12 +96,11 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
 
         if (merge) {//if contains merge
             auto pos1 = queryCodeSnippet.find("unionWith(");
-            std::string tmp = queryCodeSnippet.substr(pos1);
-            auto pos2 = tmp.find(")).");//find the end bracket of merge query
-            std::string subquery = tmp.substr(10, pos2 - 9);
+            uint64_t closingLoc = findSubQueryTermination(pos1, queryCodeSnippet);
+            std::string subquery = queryCodeSnippet.substr(pos1 + 10, closingLoc - pos1 - 10);
             NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
-            newQuery.replace(pos1, pos2 + 1, "unionWith(&subQuery");
+            newQuery.replace(pos1, closingLoc - pos1, "unionWith(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
         }
 
@@ -140,6 +139,24 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         NES_ERROR("UtilityFunctions: Failed to create the query from input code string: " << queryCodeSnippet);
         throw "Failed to create the query from input code string";
     }
+}
+
+uint64_t UtilityFunctions::findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet) {
+    uint64_t closingLoc = 0;
+    uint64_t parenthesisCount = 0;
+    for (uint64_t i = startOfUnionWith + 9; i < queryCodeSnippet.size(); i++) {
+        if (queryCodeSnippet[i] == '(') {
+            parenthesisCount++;
+        } else if (queryCodeSnippet[i] == ')') {
+            parenthesisCount--;
+        }
+
+        if (parenthesisCount == 0) {
+            closingLoc = i;
+            break;
+        }
+    }
+    return closingLoc;
 }
 
 SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSnippet) {

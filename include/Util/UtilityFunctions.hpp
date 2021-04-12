@@ -187,6 +187,16 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextTaskId();
+
+  private:
+
+    /**
+     * @brief This method is responsible for returning the location where the sub query terminates
+     * @param startOfUnionWith : the location where unionWith starts
+     * @param queryCodeSnippet: the whole string code snippet
+     * @return location where sub query terminates
+     */
+    static uint64_t findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet);
 };
 }// namespace NES
 

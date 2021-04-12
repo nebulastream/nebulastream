@@ -50,6 +50,9 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class QueryRewritePhase;
 typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 
+class TopologySpecificQueryRewritePhase;
+typedef std::shared_ptr<TopologySpecificQueryRewritePhase> TopologySpecificQueryRewritePhasePtr;
+
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
@@ -91,6 +94,7 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
+    TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     z3::ContextPtr z3Context;

@@ -20,26 +20,28 @@
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
-#include <Phases/QueryRewritePhase.hpp>
+#include <Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {
 
-QueryRewritePhasePtr QueryRewritePhase::create() { return std::make_shared<QueryRewritePhase>(QueryRewritePhase()); }
-
-QueryRewritePhase::QueryRewritePhase() {
-    filterPushDownRule = FilterPushDownRule::create();
-    renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
-    projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
+TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(StreamCatalogPtr streamCatalog) {
+    return std::make_shared<TopologySpecificQueryRewritePhase>(TopologySpecificQueryRewritePhase(streamCatalog));
 }
 
-QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
+TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog) {
 
-QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
-    auto duplicateQueryPlan = queryPlan->copy();
-    duplicateQueryPlan = renameStreamToProjectOperatorRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
-    return filterPushDownRule->apply(duplicateQueryPlan);
+    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
+    distributeWindowRule = DistributeWindowRule::create();
+    distributeJoinRule = DistributeJoinRule::create();
+}
+
+TopologySpecificQueryRewritePhase::~TopologySpecificQueryRewritePhase() { NES_DEBUG("~TopologySpecificQueryRewritePhase()"); }
+
+QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) {
+    queryPlan = logicalSourceExpansionRule->apply(queryPlan);
+    queryPlan = distributeJoinRule->apply(queryPlan);
+    return distributeWindowRule->apply(queryPlan);
 }
 
 }// namespace NES

@@ -345,16 +345,8 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
     auto leftSchema = unionOperator->getLeftInputSchema();
 
     //Identify the left and right schema
-    QuerySignaturePtr leftSignature;
-    QuerySignaturePtr rightSignature;
-    for (auto& child : children) {
-        auto childOperator = child->as<LogicalOperatorNode>();
-        if (childOperator->getOutputSchema()->equals(leftSchema)) {
-            leftSignature = childOperator->getSignature();
-        } else {
-            rightSignature = childOperator->getSignature();
-        }
-    }
+    QuerySignaturePtr leftSignature = children[0]->as<LogicalOperatorNode>()->getSignature();
+    QuerySignaturePtr rightSignature = children[1]->as<LogicalOperatorNode>()->getSignature();
 
     //Compute a vector of different tuple schemas expected at this operator
     std::vector<std::map<std::string, z3::ExprPtr>> schemas;

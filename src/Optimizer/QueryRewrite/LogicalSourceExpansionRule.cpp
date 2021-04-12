@@ -55,7 +55,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             std::tie(operatorNode, originalRootOperators) = getLogicalGraphToDuplicate(sourceOperator);
             NES_TRACE("LogicalSourceExpansionRule: Create " << sourceLocations.size() - 1
                                                             << " duplicated logical sub-graph and add to original graph");
-
+            NES_INFO(queryPlan->toString());
             for (uint32_t i = 0; i < sourceLocations.size() - 1; i++) {
                 NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
                 OperatorNodePtr copyOfGraph = operatorNode->duplicate();
@@ -94,7 +94,7 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan) {
             }
         }
     }
-    NES_INFO("LogicalSourceExpansionRule: Finished applying LogicalSourceExpansionRule plan=" << queryPlan->toString());
+    NES_DEBUG("LogicalSourceExpansionRule: Finished applying LogicalSourceExpansionRule plan=" << queryPlan->toString());
     return queryPlan;
 }
 

@@ -98,7 +98,6 @@ class NESRequestProcessorService {
     bool queryProcessorRunning;
     QueryCatalogPtr queryCatalog;
     TypeInferencePhasePtr typeInferencePhase;
-    QueryRewritePhasePtr queryRewritePhase;
     QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
