@@ -11,7 +11,7 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
-inputOutputMode: Auto
+inputOutputMode: MemoryMode
 outputFile: changingSourceCnt.csv
 benchmarkName: changingSourceCnt
 query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
@@ -21,6 +21,6 @@ numberOfBuffersToProduce: 5000000
 scalability: scale-up
 logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 3
+startupSleepIntervalInSeconds: 5
 numberOfMeasurementsToCollect: 5
 
