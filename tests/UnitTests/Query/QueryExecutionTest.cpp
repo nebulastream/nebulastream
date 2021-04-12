@@ -387,31 +387,32 @@ TEST_F(QueryExecutionTest, projectionQuery) {
  * @brief This test verify that the watermark assigned correctly.
  * WindowSource -> WatermarkAssignerOperator -> TestSink
  */
-TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
-    uint64_t millisecondOfallowedLateness = 8; /*second of allowedLateness*/
+TEST_F(QueryExecutionTest, watermarkAssignerTest) {
+    uint64_t millisecondOfallowedLateness = 3; /*milliseconds of allowedLateness*/
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 1,
+    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
                                              /*frequency*/ 1000, /*varyWatermark*/ true);
 
     auto query = TestQuery::from(windowSource->getSchema());
-    // 2. dd window operator:
+    // 2. add window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(12));
+    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
+
+    // add a watermark assigner operator with the specified allowedLateness
     query = query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
         Attribute("ts"), Milliseconds(millisecondOfallowedLateness), Milliseconds()));
 
     query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
-    // add a watermark assigner operator with allowedLateness of 1 millisecond
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField(createField("key", INT64))
-                                  ->addField("value", INT64);
+        ->addField(createField("_$start", UINT64))
+        ->addField(createField("_$end", UINT64))
+        ->addField(createField("test$key", INT64))
+        ->addField("test$value", INT64);
 
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
@@ -450,7 +451,11 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
 
     auto& resultBuffer = testSink->get(0);
 
-    EXPECT_EQ(resultBuffer.getWatermark(), 15);
+    // 10 records, starting at ts=5 with 1ms difference each record, hence ts of the last record=14
+    EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
+
+    nodeEngine->stopQuery(1);
+    testSink->cleanupBuffers();
 }
 
 /**
