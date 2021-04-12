@@ -23,6 +23,7 @@
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryMergerPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
+#include <Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
@@ -40,7 +41,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
       globalQueryPlan(globalQueryPlan), z3Context(z3Context), queryMergerRule(queryMergerRule) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    queryRewritePhase = QueryRewritePhase::create(streamCatalog);
+    queryRewritePhase = QueryRewritePhase::create();
+    topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
     signatureInferencePhase = Optimizer::Z3SignatureInferencePhase::create(this->z3Context);
 }
 
@@ -69,12 +71,8 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                //                    NES_ERROR("First Inference : " << queryRequest.getQueryString());
                 queryPlan = typeInferencePhase->execute(queryPlan);
-
-                if (queryMergerRule.find("Z3") != std::string::npos) {
-                    NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
-                    signatureInferencePhase->execute(queryPlan);
-                }
 
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);
                 queryPlan = queryRewritePhase->execute(queryPlan);
@@ -83,7 +81,16 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                                     + std::to_string(queryId));
                 }
 
-                NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
+                if (queryMergerRule.find("Z3") != std::string::npos) {
+                    NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
+                    signatureInferencePhase->execute(queryPlan);
+                }
+                NES_INFO("Before " << queryPlan->toString());
+                queryPlan = topologySpecificQueryRewritePhase->execute(queryPlan);
+                if (!queryPlan) {
+                    throw Exception("QueryProcessingService: Failed during query topology specific rewrite phase for query: "
+                                    + std::to_string(queryId));
+                }
                 queryPlan = typeInferencePhase->execute(queryPlan);
                 if (!queryPlan) {
                     throw Exception("QueryProcessingService: Failed during Type inference phase for query: "
@@ -98,7 +105,6 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 continue;
             }
         }
-
         if (enableQueryMerging) {
             NES_DEBUG("QueryProcessingService: Applying Query Merger Rules as Query Merging is enabled.");
             queryMergerPhase->execute(globalQueryPlan);

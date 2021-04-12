@@ -14,14 +14,14 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYREWRITEPHASE_HPP
-#define NES_QUERYREWRITEPHASE_HPP
+#ifndef NES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP
+#define NES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP
 
 #include <memory>
 
 namespace NES {
-class QueryRewritePhase;
-typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
+class TopologySpecificQueryRewritePhase;
+typedef std::shared_ptr<TopologySpecificQueryRewritePhase> TopologySpecificQueryRewritePhasePtr;
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
@@ -32,27 +32,18 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 class LogicalSourceExpansionRule;
 typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
 
-class FilterPushDownRule;
-typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
-
 class DistributeWindowRule;
 typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
 
 class DistributeJoinRule;
 typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
 
-class RenameStreamToProjectOperatorRule;
-typedef std::shared_ptr<RenameStreamToProjectOperatorRule> RenameStreamToProjectOperatorRulePtr;
-
-class ProjectBeforeUnionOperatorRule;
-typedef std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRulePtr;
-
 /**
- * @brief This phase is responsible for re-writing the query plan
+ * @brief This phase is responsible for re-writing the query plan based on the topology information
  */
-class QueryRewritePhase {
+class TopologySpecificQueryRewritePhase {
   public:
-    static QueryRewritePhasePtr create();
+    static TopologySpecificQueryRewritePhasePtr create(StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -61,13 +52,13 @@ class QueryRewritePhase {
      */
     QueryPlanPtr execute(QueryPlanPtr queryPlan);
 
-    ~QueryRewritePhase();
+    ~TopologySpecificQueryRewritePhase();
 
   private:
-    explicit QueryRewritePhase();
-    FilterPushDownRulePtr filterPushDownRule;
-    RenameStreamToProjectOperatorRulePtr renameStreamToProjectOperatorRule;
-    ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
+    explicit TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog);
+    LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
+    DistributeWindowRulePtr distributeWindowRule;
+    DistributeJoinRulePtr distributeJoinRule;
 };
 }// namespace NES
-#endif//NES_QUERYREWRITEPHASE_HPP
+#endif//NES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP

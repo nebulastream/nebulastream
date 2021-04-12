@@ -19,6 +19,7 @@
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
@@ -261,4 +262,73 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan) {
     const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
     EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
 }
+
+/**
+ * @brief In this test we execute query merger phase on a single query plan.
+ */
+TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
+
+    //Prepare
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create a new query and assign it an id.");
+    auto queryString = R"(Query::from("default_logical").sink(PrintSinkDescriptor::create()))";
+
+    auto queryCatalog = std::make_shared<QueryCatalog>();
+    for (int i = 1; i <= 1; i++) {
+        NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
+        /*        auto q1 = Query::from("example")
+                      .map(Attribute("X7") = Attribute("id") / Attribute("Y"))
+                      .map(Attribute("val") = Attribute("val") - 8)
+                      .map(Attribute("X") = Attribute("X") + 1)
+                      .filter(Attribute("X") > 14)
+                      .filter(Attribute("X7") >= 20)
+                      .map(Attribute("X7") = 8)
+                      .map(Attribute("val") = Attribute("val") + 8)
+                      .sink(NullOutputSinkDescriptor::create());*/
+
+        auto q1 = Query::from("example")
+                      .filter(Attribute("X") <= Attribute("Y"))
+                      .map(Attribute("id") = Attribute("id") / 1)
+                      .map(Attribute("Y") = Attribute("Y") - 2)
+                      .map(Attribute("NEW_id2") = Attribute("Y") / Attribute("Y"))
+                      .filter(Attribute("val") < 36)
+                      .filter(Attribute("Y") >= 49)
+                      .unionWith(&Query::from("example")
+                                      .filter(Attribute("X") <= Attribute("Y"))
+                                      .map(Attribute("id") = Attribute("id") / 1)
+                                      .map(Attribute("Y") = Attribute("Y") - 2)
+                                      .map(Attribute("NEW_id2") = Attribute("Y") / Attribute("Y"))
+                                      .filter(Attribute("val") < 36)
+                                      .filter(Attribute("Y") >= 49))
+                      .sink(NullOutputSinkDescriptor::create());
+
+        q1.getQueryPlan()->setQueryId(i);
+        queryCatalog->addNewQueryRequest(queryString, q1.getQueryPlan(), "TopDown");
+    }
+
+    std::vector<QueryCatalogEntry> batchOfQueryRequests;
+    auto allQueries = queryCatalog->getAllQueryCatalogEntries();
+    for (auto& [key, value] : allQueries) {
+        batchOfQueryRequests.emplace_back(value->copy());
+    }
+
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::UINT64)
+                                ->addField("val", NES::UINT64)
+                                ->addField("X", NES::UINT64)
+                                ->addField("Y", NES::UINT64);
+    //    for (int j = 0; j < NO_OF_DISTINCT_SOURCES; j++) {
+    streamCatalog->addLogicalStream("example", schema);
+
+    const auto globalQueryPlan = GlobalQueryPlan::create();
+    auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
+                                                    "Z3SignatureBasedCompleteQueryMergerRule");
+    auto resultPlan = phase->execute(batchOfQueryRequests);
+    //Assert
+    NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
+    globalQueryPlan->removeEmptySharedQueryMetaData();
+    const auto& sharedQueryMetadataToDeploy = resultPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQueryMetadataToDeploy.size() == 1);
+}
+
 }// namespace NES

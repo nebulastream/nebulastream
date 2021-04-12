@@ -93,15 +93,13 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
                     duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
 
-                    if (!(duplicatedFilterOperator->removeAndJoinParentAndChildren()
-                          && node->insertBetweenThisAndParentNodes(duplicatedFilterOperator))) {
+                    if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
 
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
 
                     isFilterAboveUnionOperator = false;
-                    continue;
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
                              && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
@@ -114,10 +112,23 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
             std::string mapFieldName = getFieldNameUsedByMapOperator(node);
             bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
-
             if (predicateFieldManipulated) {
-                OperatorNodePtr copyOptr = filterOperator->duplicate();
-                if (!(copyOptr->removeAndJoinParentAndChildren() && node->insertBetweenThisAndParentNodes(copyOptr))) {
+                NES_TRACE("FilterPushDownRule: Adding Filter operator between current operator and its parents");
+                if (isFilterAboveUnionOperator) {
+
+                    NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
+                    OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
+                    duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
+
+                    if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
+
+                        NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
+                        throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
+                    }
+
+                    isFilterAboveUnionOperator = false;
+                } else if (!(filterOperator->removeAndJoinParentAndChildren()
+                             && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
@@ -140,10 +151,6 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                       nodesToProcess.end());//To ensure consistency in nodes traversed below a merge operator
         }
     }
-
-    NES_TRACE("FilterPushDownRule: Remove all parents can children of the filter operator");
-    filterOperator->removeAllParent();
-    filterOperator->removeChildren();
 }
 
 bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator,
