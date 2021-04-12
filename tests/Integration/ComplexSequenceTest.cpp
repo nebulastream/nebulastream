@@ -70,7 +70,7 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestSingleNodeSingleWindowSingleJoin
     std::string queryWithJoinOperator =
         R"(Query::from("window1")
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
-            .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(2))).byKey(Attribute("window1window2$key").apply(Sum(Attribute("window1$id1")))
+            .window(TumblingWindow::of(EventTime(Attribute("window1$timestamp")), Seconds(2))).byKey(Attribute("window1window2$key")).apply(Sum(Attribute("window1$id1")))
         )";
     TestHarness testHarness = TestHarness(queryWithJoinOperator, restPort, rpcPort);
 
@@ -269,8 +269,8 @@ TEST_F(ComplexSequenceTest, DISABLED_ComplexTestSingleNodeMultipleWindowsMultipl
             .filter(Attribute("window1$id1")<16)
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
             .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)))
-            .window(SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5))).byKey(Attribute("window1window2window3$key").apply(Sum(Attribute("window1window2$key")))
-            .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key").apply(Sum(Attribute("window1window2$key")))
+            .window(SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
+            .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
@@ -387,8 +387,8 @@ TEST_F(ComplexSequenceTest, DISABLED_complexTestDistributedNodeMultipleWindowsMu
             .filter(Attribute("window1$id1")<16)
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
             .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)))
-            .window(SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5))).byKey(Attribute("window1window2window3$key").apply(Sum(Attribute("window1window2$key")))
-            .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key").apply(Sum(Attribute("window1window2$key")))
+            .window(SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
+            .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
@@ -546,8 +546,8 @@ TEST_F(ComplexSequenceTest, complexTestDistributedNodeMultipleWindowsMultipleJoi
             .filter(Attribute("window1$id1")<16)
             .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
             .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2)))
-            .window(SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5))).byKey(Attribute("window1window2window3$key").apply(Sum(Attribute("window1window2$key")))
-            .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key").apply(Sum(Attribute("window1window2$key")))
+            .window(SlidingWindow::of(EventTime(Attribute("window2$timestamp")),Milliseconds(10),Milliseconds(5))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
+            .window(TumblingWindow::of(EventTime(Attribute("window1window2window3$start")),Milliseconds(10))).byKey(Attribute("window1window2window3$key")).apply(Sum(Attribute("window1window2$key")))
             .map(Attribute("window1window2$key") = Attribute("window1window2$key") * 2)
         )";
     TestHarness testHarness = TestHarness(queryWithJoinAndWindowOperator, restPort, rpcPort);
