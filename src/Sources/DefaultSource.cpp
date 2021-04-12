@@ -14,12 +14,13 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
@@ -55,7 +56,11 @@ std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
     auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("Source:" << this << " got buffer");
     uint64_t tupleCnt = 10;
-    auto layout = NodeEngine::createRowLayout(std::make_shared<Schema>(schema));
+
+    using namespace NodeEngine::DynamicMemoryLayout;
+    auto layout = DynamicRowLayout::create(std::make_shared<Schema>(schema), true);
+    DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+
 
     auto value = 1;
     auto fields = schema->fields;
@@ -65,28 +70,28 @@ std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
-                    layout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
-                    layout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
-                    layout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
-                    layout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
-                    layout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
-                    layout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
-                    layout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
-                    layout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
-                    layout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
-                    layout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
-                    layout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+                if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                    DynamicRowLayoutField<char, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                    DynamicRowLayoutField<uint8_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                    DynamicRowLayoutField<uint16_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                    DynamicRowLayoutField<uint32_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                    DynamicRowLayoutField<uint64_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                    DynamicRowLayoutField<int8_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                    DynamicRowLayoutField<int16_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                    DynamicRowLayoutField<int32_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                    DynamicRowLayoutField<int64_t, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                    DynamicRowLayoutField<float, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
+                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                    DynamicRowLayoutField<double, true>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                 } else {
                     NES_DEBUG("This data source only generates data for numeric fields");
                 }

@@ -17,7 +17,9 @@
 #include <API/Schema.hpp>
 #include <Monitoring/MetricValues/CpuMetrics.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -54,16 +56,23 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf
     if (idx < schema->getSize() && buf.getNumberOfTuples() == 1
         && UtilityFunctions::endsWith(schema->fields[idx]->getName(), "CORE_NO")) {
         //if schema contains cpuMetrics parse the wrapper object
-        auto layout = NodeEngine::createRowLayout(schema);
-        auto numCores = layout->getValueField<uint16_t>(0, idx)->read(buf);
-        auto cpu = std::vector<CpuValues>(numCores);
-        auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");
+        {
+            using namespace NodeEngine::DynamicMemoryLayout;
+            auto layout = DynamicRowLayout::create(schema, false);
+            DynamicRowLayoutBufferPtr bindedRowLayout =
+                std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+            auto numCores = DynamicRowLayoutField<uint16_t, true>::create(idx, bindedRowLayout)[0];
 
-        for (int n = 0; n < numCores; n++) {
-            //for each core parse the according CpuValues
-            cpu[n] = CpuValues::fromBuffer(schema, buf, prefix + "CPU[" + std::to_string(n + 1) + "]_");
+            auto cpu = std::vector<CpuValues>(numCores);
+            auto totalCpu = CpuValues::fromBuffer(schema, buf, prefix + "CPU[TOTAL]_");
+
+            for (int n = 0; n < numCores; n++) {
+                //for each core parse the according CpuValues
+                cpu[n] = CpuValues::fromBuffer(schema, buf, prefix + "CPU[" + std::to_string(n + 1) + "]_");
+            }
+            return CpuMetrics{totalCpu, numCores, std::move(cpu)};
         }
-        return CpuMetrics{totalCpu, numCores, std::move(cpu)};
+
     } else {
         NES_THROW_RUNTIME_ERROR("CpuMetrics: Prefix " + prefix + " could not be parsed from schema " + schema->toString());
         throw 0;// just to make the compiler happy

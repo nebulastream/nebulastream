@@ -19,7 +19,9 @@
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -64,7 +66,7 @@ class ExecutableCompleteAggregationTriggerAction
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
                                                                                        << " id=" << id);
         this->windowSchema = outputSchema;
-        windowTupleLayout = NodeEngine::createRowLayout(this->windowSchema);
+        windowTupleLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
     }
 
     bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
@@ -305,21 +307,30 @@ class ExecutableCompleteAggregationTriggerAction
     * @param value value
     */
     template<typename ValueType>
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
-                           uint64_t index,
-                           uint64_t startTs,
-                           uint64_t endTs,
-                           KeyType key,
-                           ValueType value,
-                           uint64_t cnt) {
-        windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
-        windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
-        windowTupleLayout->getValueField<uint64_t>(index, 2)->write(tupleBuffer, cnt);
-        if (windowDefinition->isKeyed()) {
-            windowTupleLayout->getValueField<KeyType>(index, 3)->write(tupleBuffer, key);
-            windowTupleLayout->getValueField<ValueType>(index, 4)->write(tupleBuffer, value);
-        } else {
-            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
+
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
+                           ValueType value, uint64_t cnt) {
+        {
+            using namespace NodeEngine::DynamicMemoryLayout;
+            auto bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+
+            auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+            auto endTsFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
+            auto cntFields = DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+            startTsFields[index] = startTs;
+            endTsFields[index] = endTs;
+            cntFields[index] = cnt;
+
+            if (windowDefinition->isKeyed()) {
+                auto keyFields = DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+                auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
+                keyFields[index] = key;
+                valueFields[index] = value;
+            } else {
+                auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+                valueFields[index] = value;
+            }
         }
     }
 
@@ -330,20 +341,32 @@ class ExecutableCompleteAggregationTriggerAction
                            uint64_t endTs,
                            KeyType key,
                            ValueType value) {
-        windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
-        windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
-        if (windowDefinition->isKeyed()) {
-            windowTupleLayout->getValueField<KeyType>(index, 2)->write(tupleBuffer, key);
-            windowTupleLayout->getValueField<ValueType>(index, 3)->write(tupleBuffer, value);
-        } else {
-            windowTupleLayout->getValueField<ValueType>(index, 2)->write(tupleBuffer, value);
+        {
+            using namespace NodeEngine::DynamicMemoryLayout;
+            auto bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+                static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+
+            auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+            auto endTsFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
+            startTsFields[index] = startTs;
+            endTsFields[index] = endTs;
+
+            if (windowDefinition->isKeyed()) {
+                auto keyFields = DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+                auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+                keyFields[index] = key;
+                valueFields[index] = value;
+            } else {
+                auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+                valueFields[index] = value;
+            }
         }
     }
 
   private:
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     LogicalWindowDefinitionPtr windowDefinition;
-    NodeEngine::MemoryLayoutPtr windowTupleLayout;
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr windowTupleLayout;
     uint64_t id;
 };
 }// namespace NES::Windowing
