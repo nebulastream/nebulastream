@@ -409,10 +409,10 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     // 3. add sink. We expect that this sink will receive one buffer
     auto windowResultSchema = Schema::create()
-        ->addField(createField("_$start", UINT64))
-        ->addField(createField("_$end", UINT64))
-        ->addField(createField("test$key", INT64))
-        ->addField("test$value", INT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField(createField("test$key", INT64))
+                                  ->addField("test$value", INT64);
 
     // each source buffer produce 1 result buffer, totalling 2 buffers
     auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
