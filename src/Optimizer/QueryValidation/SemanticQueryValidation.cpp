@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
@@ -45,7 +45,7 @@ void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
 
     auto queryPlan = inputQuery->getQueryPlan();
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto signatureInferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context);
 
     // Checking if the stream source can be found in the stream catalog
     sourceValidityCheck(queryPlan, streamCatalog);
@@ -68,7 +68,7 @@ void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
 
     // Looping through all filter operators of the Query, checking for contradicting conditions.
     for (auto filterOp : filterOperators) {
-        Optimizer::QuerySignaturePtr qsp = filterOp->getSignature();
+        Optimizer::QuerySignaturePtr qsp = filterOp->getZ3Signature();
 
         // Adding the conditions to the z3 SMT solver
         z3::ExprPtr conditions = qsp->getConditions();

@@ -20,7 +20,7 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -67,7 +67,7 @@ TEST_F(Z3SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQue
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase = Z3SignatureInferencePhase::create(context);
+    auto signatureInferencePhase = SignatureInferencePhase::create(context);
 
     auto query1 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan1 = query1.getQueryPlan();
@@ -89,7 +89,7 @@ TEST_F(Z3SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQue
 
     auto signatureEqualityChecker = SignatureEqualityUtil::create(context);
 
-    EXPECT_TRUE(signatureEqualityChecker->checkEquality(mapOperators1[0]->getSignature(), mapOperators2[0]->getSignature()));
+    EXPECT_TRUE(signatureEqualityChecker->checkEquality(mapOperators1[0]->getZ3Signature(), mapOperators2[0]->getZ3Signature()));
 
     auto srcOperators1 = plan1->getOperatorByType<SourceLogicalOperatorNode>();
     auto srcOperators2 = plan2->getOperatorByType<SourceLogicalOperatorNode>();
@@ -97,6 +97,6 @@ TEST_F(Z3SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQue
     ASSERT_EQ(srcOperators1.size(), 1);
     ASSERT_EQ(srcOperators2.size(), 1);
 
-    EXPECT_TRUE(signatureEqualityChecker->checkEquality(srcOperators1[0]->getSignature(), srcOperators2[0]->getSignature()));
+    EXPECT_TRUE(signatureEqualityChecker->checkEquality(srcOperators1[0]->getZ3Signature(), srcOperators2[0]->getZ3Signature()));
 }
 }// namespace NES::Optimizer

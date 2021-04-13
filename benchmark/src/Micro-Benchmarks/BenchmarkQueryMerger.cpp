@@ -26,12 +26,12 @@ using namespace NES;
 using namespace NES::Benchmarking;
 
 const NES::DebugLevel LOG_LEVEL = NES::LOG_DEBUG;
-const uint64_t NO_OF_PHYSICAL_SOURCES = 50;
+const uint64_t NO_OF_PHYSICAL_SOURCES = 10;
 //const uint64_t NO_OF_DISTINCT_SOURCES = 2;
 //const uint64_t NO_OF_QUERIES_TO_SEND = 1000;
-const std::string QUERY_MERGER_RULE = "SyntaxBasedCompleteQueryMergerRule";
+//const std::string QUERY_MERGER_RULE = "SyntaxBasedCompleteQueryMergerRule";
 //const std::string QUERY_MERGER_RULE = "StringSignatureBasedCompleteQueryMergerRule";
-//const std::string QUERY_MERGER_RULE = "AdvanceStringSignatureBasedCompleteQueryMergerRule";
+const std::string QUERY_MERGER_RULE = "ImprovedStringSignatureBasedCompleteQueryMergerRule";
 //const std::string QUERY_MERGER_RULE = "Z3SignatureBasedCompleteQueryMergerRule";
 const uint64_t NO_OF_EXP_RUN = 3;
 uint64_t sourceCnt;

@@ -44,6 +44,7 @@ class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool equal(const NodePtr rhs) const override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
+    void inferStringSignature() override;
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
@@ -51,8 +52,6 @@ class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
     */
     bool inferSchema() override;
     OperatorNodePtr copy() override;
-
-    std::string getStringBasedSignature() override;
 
   private:
     std::vector<ExpressionNodePtr> expressions;

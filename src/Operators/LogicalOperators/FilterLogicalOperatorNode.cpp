@@ -45,10 +45,6 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string FilterLogicalOperatorNode::getStringBasedSignature() {
-    return "FILTER(" + predicate->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-}
-
 bool FilterLogicalOperatorNode::inferSchema() {
     if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
@@ -64,7 +60,23 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createFilterOperator(predicate, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setSignature(signature);
+    copy->setZ3Signature(z3Signature);
+    copy->setStringSignature(stringSignature);
     return copy;
+}
+
+void FilterLogicalOperatorNode::inferStringSignature() {
+
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "FILTER(" + predicate->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES

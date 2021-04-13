@@ -47,32 +47,43 @@ class LogicalOperatorNode : public virtual OperatorNode {
     /**
      * @brief Get the First Order Logic formula representation by the Z3 expression
      * @param context: the shared pointer to the z3::context
-     * @return object of type Z3:expr
      */
-    void inferSignature(z3::ContextPtr context);
+    void inferZ3Signature(z3::ContextPtr context);
 
     /**
-     * @brief Set the signature for the logical operator
+     * @brief Set the Z3 signature for the logical operator
      * @param signature : the signature
      */
-    void setSignature(Optimizer::QuerySignaturePtr signature);
+    void setZ3Signature(Optimizer::QuerySignaturePtr signature);
+
+    /**
+     * @brief Get the String based signature for the operator
+     */
+    virtual void inferStringSignature() = 0;
+
+    /**
+     * @brief Set the string signature for the logical operator
+     * @param signature : the signature
+     */
+    void setStringSignature(std::string signature);
 
     /**
      * @brief Get the Z3 expression for the logical operator
      * @return reference to the Z3 expression
      */
-    Optimizer::QuerySignaturePtr getSignature();
+    Optimizer::QuerySignaturePtr getZ3Signature();
 
     /**
      * @brief Get the string signature computed based on upstream operator chain
      * @return string representing the query signature
      */
-    virtual std::string getStringBasedSignature();
+    std::string getStringSignature();
 
     virtual bool inferSchema() = 0;
 
   protected:
-    Optimizer::QuerySignaturePtr signature;
+    Optimizer::QuerySignaturePtr z3Signature;
+    std::string stringSignature;
 };
 
 }// namespace NES

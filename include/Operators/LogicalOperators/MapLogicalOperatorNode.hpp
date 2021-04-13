@@ -43,11 +43,11 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
      * @return true if inference was possible
      */
     bool inferSchema() override;
+    void inferStringSignature() override;
     bool equal(const NodePtr rhs) const override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-    std::string getStringBasedSignature() override;
 
   private:
     const FieldAssignmentExpressionNodePtr mapExpression;

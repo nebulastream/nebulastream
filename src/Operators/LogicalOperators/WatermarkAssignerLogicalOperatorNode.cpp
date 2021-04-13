@@ -35,13 +35,6 @@ const std::string WatermarkAssignerLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string WatermarkAssignerLogicalOperatorNode::getStringBasedSignature() {
-    std::stringstream ss;
-    ss << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ").";
-    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-    return ss.str();
-}
-
 bool WatermarkAssignerLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<WatermarkAssignerLogicalOperatorNode>()->getId() == id;
 }
@@ -58,6 +51,8 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setStringSignature(stringSignature);
+    copy->setZ3Signature(z3Signature);
     return copy;
 }
 
@@ -67,6 +62,21 @@ bool WatermarkAssignerLogicalOperatorNode::inferSchema() {
     }
     watermarkStrategyDescriptor->inferStamp(inputSchema);
     return true;
+}
+
+void WatermarkAssignerLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ")."
+                    << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 
 }// namespace NES

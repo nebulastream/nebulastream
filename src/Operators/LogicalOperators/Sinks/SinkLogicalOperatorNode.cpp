@@ -55,20 +55,26 @@ const std::string SinkLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string SinkLogicalOperatorNode::getStringBasedSignature() {
-    std::stringstream stringSignature;
-    stringSignature << "SINK().";
-    for (auto child : children) {
-        stringSignature << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-    }
-    return stringSignature.str();
-}
-
 OperatorNodePtr SinkLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setSignature(signature);
+    copy->setZ3Signature(z3Signature);
+    copy->setStringSignature(stringSignature);
     return copy;
+}
+
+void SinkLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "SINK()." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES

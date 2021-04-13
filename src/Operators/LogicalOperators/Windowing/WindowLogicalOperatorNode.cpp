@@ -36,21 +36,6 @@ const std::string WindowLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string WindowLogicalOperatorNode::getStringBasedSignature() {
-    std::stringstream ss;
-    auto windowType = windowDefinition->getWindowType();
-    auto windowAggregation = windowDefinition->getWindowAggregation();
-    if (windowDefinition->isKeyed()) {
-        ss << "WINDOW-BY-KEY(" << windowDefinition->getOnKey()->toString() << ",";
-    } else {
-        ss << "WINDOW(";
-    }
-    ss << "WINDOW-TYPE: " << windowType->toString() << ",";
-    ss << "AGGREGATION: " << windowAggregation->toString() << ")";
-    ss << "." << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-    return ss.str();
-}
-
 bool WindowLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     bool eq = equal(rhs);
     bool idCmp = rhs->as<WindowLogicalOperatorNode>()->getId() == id;
@@ -98,5 +83,29 @@ bool WindowLogicalOperatorNode::inferSchema() {
     outputSchema->addField(AttributeField::create(windowAggregation->as()->as<FieldAccessExpressionNode>()->getFieldName(),
                                                   windowAggregation->on()->getStamp()));
     return true;
+}
+
+void WindowLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+
+    std::stringstream signatureStream;
+    auto windowType = windowDefinition->getWindowType();
+    auto windowAggregation = windowDefinition->getWindowAggregation();
+    if (windowDefinition->isKeyed()) {
+        signatureStream << "WINDOW-BY-KEY(" << windowDefinition->getOnKey()->toString() << ",";
+    } else {
+        signatureStream << "WINDOW(";
+    }
+    signatureStream << "WINDOW-TYPE: " << windowType->toString() << ",";
+    signatureStream << "AGGREGATION: " << windowAggregation->toString() << ")";
+    signatureStream << "." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES
