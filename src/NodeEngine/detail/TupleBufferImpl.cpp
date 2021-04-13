@@ -98,20 +98,20 @@ BufferControlBlock::BufferControlBlock(MemorySegment* owner, BufferRecycler* rec
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples.store(that.numberOfTuples.load());
+    numberOfTuples = that.numberOfTuples;
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark.store(that.watermark.load());
-    originId.store(that.originId.load());
+    watermark = that.watermark;
+    originId = that.originId;
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples.store(that.numberOfTuples.load());
+    numberOfTuples = that.numberOfTuples;
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark.store(that.watermark.load());
-    originId.store(that.originId.load());
+    watermark = that.watermark;
+    originId = that.originId;
     return *this;
 }
 
@@ -193,7 +193,7 @@ int32_t BufferControlBlock::getReferenceCount() { return referenceCounter.load()
 bool BufferControlBlock::release() {
     uint32_t prevRefCnt;
     if ((prevRefCnt = referenceCounter.fetch_sub(1)) == 1) {
-        numberOfTuples.store(0);
+        numberOfTuples = 0;
         //        numberOfTuples = 0;
         recycleCallback(owner, owningBufferRecycler.load());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -221,7 +221,7 @@ bool BufferControlBlock::release() {
 uint64_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; }
 
 void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) {
-    this->numberOfTuples.store(numberOfTuples, std::memory_order_release);
+    this->numberOfTuples = numberOfTuples;
 }
 
 uint64_t BufferControlBlock::getWatermark() const { return watermark; }
