@@ -525,11 +525,16 @@ std::string E2EBase::getResult() {
     std::map<uint64_t, std::vector<uint64_t>>::iterator innerMapIter;
     std::vector<uint64_t>::iterator vectorIter;
 
+    //this code loop over all subplans and summarizes latency values
+    // outer loop => subplans
+    // inner loop => ts as key and latency values in the vector of the maps
+    // vector loop as the latency values per timestamp as a vector
     //
     for (outerMapIter = subPlanToTsToLatencyMap.begin(); outerMapIter != subPlanToTsToLatencyMap.end(); outerMapIter++) {
         for (innerMapIter = outerMapIter->second.begin(); innerMapIter != outerMapIter->second.end(); innerMapIter++) {
             uint64_t latencySum = 0;
             uint64_t latencyCnt = 0;
+            //sum up the latency values
             for (vectorIter = innerMapIter->second.begin(); vectorIter != innerMapIter->second.end(); vectorIter++) {
                 latencySum += *vectorIter;
                 latencyCnt++;
@@ -544,7 +549,9 @@ std::string E2EBase::getResult() {
         return l.first < r.first;
     });
 
+    //group ts in 100ms intervals
     for (auto& val : secondsToLatencyMap) {
+        //set the ts value to start at 0
         auto& tup = hundredMsToLatencyMap[(val.first - minTs->first) / 100];
         std::get<0>(tup) = std::get<0>(tup) + val.second;
         std::get<1>(tup) = std::get<1>(tup) + 1;

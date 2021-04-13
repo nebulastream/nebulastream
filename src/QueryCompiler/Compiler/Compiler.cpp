@@ -71,16 +71,16 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
 
     CompilerFlagsPtr flags;
 #ifdef NES_DEBUG_MODE
-    std::cout << "use debug flags" << std::endl;
+    NES_DEBUG("use debug flags");
     flags = CompilerFlags::createDebuggingCompilerFlags();
 #endif
 
 #ifdef NES_RELEASE_MODE
 #ifdef NES_BENCHMARKS_FLAG_MODE
-    std::cout << "use benchmark flags" << std::endl;
+    NES_DEBUG("use benchmark flags");
     flags = CompilerFlags::createBenchmarkingCompilerFlags();
 #else
-    std::cout << "use release flags" << std::endl;
+    NES_DEBUG("use release flags");
     flags = CompilerFlags::createOptimizingCompilerFlags();
 #endif
 #endif

@@ -120,8 +120,17 @@ class QueryStatistics {
      */
     uint64_t getSubQueryId() const;
 
+    /**
+     * Add for the current time stamp (now) a new latency value
+     * @param now
+     * @param latency
+     */
     void addTimestampToLatencyValue(uint64_t now, uint64_t latency);
 
+    /**
+     * get the ts to latency map which stores ts as key and latencies in vectors
+     * @return
+     */
     std::map<uint64_t, std::vector<uint64_t>> getTsToLatencyMap();
 
   private:
