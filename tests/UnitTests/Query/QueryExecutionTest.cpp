@@ -388,7 +388,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
  * WindowSource -> WatermarkAssignerOperator -> TestSink
  */
 TEST_F(QueryExecutionTest, watermarkAssignerTest) {
-    uint64_t millisecondOfallowedLateness = 3; /*milliseconds of allowedLateness*/
+    uint64_t millisecondOfallowedLateness = 2; /*milliseconds of allowedLateness*/
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
@@ -398,7 +398,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. add window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
+    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(5));
 
     // add a watermark assigner operator with the specified allowedLateness
     query = query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
@@ -414,7 +414,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
         ->addField(createField("test$key", INT64))
         ->addField("test$value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
