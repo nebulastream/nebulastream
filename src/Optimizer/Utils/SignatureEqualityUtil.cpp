@@ -126,8 +126,8 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     //Create a negation of CNF of all conditions collected till now
     solver->push();
     solver->add(!z3::mk_and(allConditions).simplify());
-    NES_INFO(*solver);
     bool equal = solver->check() == z3::unsat;
+    //    solver->reset();
     solver->pop();
     return equal;
 }
