@@ -48,7 +48,12 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     }
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
-    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context);
+
+    bool computeStringSignature =
+        (queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
+         || queryMergerRule == Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);
+
+    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, computeStringSignature);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,

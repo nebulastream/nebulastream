@@ -31,8 +31,8 @@ const uint64_t NO_OF_PHYSICAL_SOURCES = 10;
 //const uint64_t NO_OF_QUERIES_TO_SEND = 1000;
 //const std::string QUERY_MERGER_RULE = "SyntaxBasedCompleteQueryMergerRule";
 //const std::string QUERY_MERGER_RULE = "StringSignatureBasedCompleteQueryMergerRule";
-const std::string QUERY_MERGER_RULE = "ImprovedStringSignatureBasedCompleteQueryMergerRule";
-//const std::string QUERY_MERGER_RULE = "Z3SignatureBasedCompleteQueryMergerRule";
+//const std::string QUERY_MERGER_RULE = "ImprovedStringSignatureBasedCompleteQueryMergerRule";
+const std::string QUERY_MERGER_RULE = "Z3SignatureBasedCompleteQueryMergerRule";
 const uint64_t NO_OF_EXP_RUN = 3;
 uint64_t sourceCnt;
 
