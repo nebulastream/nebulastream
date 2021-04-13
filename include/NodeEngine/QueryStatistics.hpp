@@ -19,6 +19,8 @@
 #include <atomic>
 #include <memory>
 #include <string>
+#include <map>
+#include <vector>
 namespace NES::NodeEngine {
 
 class QueryStatistics {
@@ -118,6 +120,10 @@ class QueryStatistics {
      */
     uint64_t getSubQueryId() const;
 
+    void addTimestampToLatencyValue(uint64_t now, uint64_t latency);
+
+    std::map<uint64_t, std::vector<uint64_t>> getTsToLatencyMap();
+
   private:
     std::atomic<uint64_t> processedTasks;
     std::atomic<uint64_t> processedTuple;
@@ -126,6 +132,7 @@ class QueryStatistics {
     std::atomic<uint64_t> latencySum;
     std::atomic<uint64_t> queryId;
     std::atomic<uint64_t> subQueryId;
+    std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
 };
 
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;

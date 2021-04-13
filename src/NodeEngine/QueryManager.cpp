@@ -640,7 +640,12 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
     }
 }
 
+#define latencyMeasurement
 void QueryManager::completedWork(Task& task, WorkerContext&) {
+#ifdef latencyMeasurement
+    std::unique_lock lock(workMutex);
+#endif
+
     NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString());
     if (queryToStatisticsMap.contains(task.getPipeline()->getQepParentId())) {
         auto statistics = queryToStatisticsMap.find(task.getPipeline()->getQepParentId());
@@ -655,7 +660,10 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
                            std::chrono::high_resolution_clock::now().time_since_epoch())
                            .count();
             auto diff = now - latency[2];
-            //            NES_ERROR("read lat2=" << latency[2] << " now=" << now << " diff=" << diff);
+#ifdef latencyMeasurement
+            statistics->addTimestampToLatencyValue(now, diff);
+//            NES_ERROR("read lat2=" << latency[2] << " now=" << now << " diff=" << diff);
+#endif
             statistics->incLatencySum(diff);
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());

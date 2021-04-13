@@ -158,8 +158,9 @@ std::chrono::nanoseconds E2EBase::recordStatistics() {
                     iter->getProcessedTuple() - subPlanIdToTupleCnt[iter->getSubQueryId()];
                 subPlanIdToLatencyCnt[iter->getSubQueryId()] =
                     iter->getLatencySum() - subPlanIdToLatencyCnt[iter->getSubQueryId()];
+                subPlanToTsToLatencyMap[iter->getSubQueryId()] = iter->getTsToLatencyMap();
             }
-       }//end of for
+        }//end of for
 
         auto curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -517,6 +518,49 @@ std::string E2EBase::getResult() {
         latencySum += val.second;
     }
 
+    NES_ASSERT(subPlanIdToLatencyCnt.size() == 1, "We are currently do not support multiple subplans");
+
+    std::map<uint64_t, std::map<uint64_t, std::vector<uint64_t>>>::iterator outerMapIter;
+    std::map<uint64_t, std::vector<uint64_t>>::iterator innerMapIter;
+    std::vector<uint64_t>::iterator vectorIter;
+
+    for (outerMapIter = subPlanToTsToLatencyMap.begin(); outerMapIter != subPlanToTsToLatencyMap.end(); outerMapIter++) {
+        for (innerMapIter = outerMapIter->second.begin(); innerMapIter != outerMapIter->second.end(); innerMapIter++) {
+            uint64_t latencySum = 0;
+            uint64_t latencyCnt = 0;
+            for (vectorIter = innerMapIter->second.begin(); vectorIter != innerMapIter->second.end(); vectorIter++) {
+                latencySum += *vectorIter;
+                latencyCnt++;
+            }
+            secondsToLatencyMap[innerMapIter->first] = latencySum / latencyCnt;
+//            cout << "Subplan:" << outerMapIter->first << " ts: " << innerMapIter->first / 100 << " latencySum=" << latencySum
+//                 << " latencyCnt=" << latencyCnt << " avg latency=" << latencySum / latencyCnt << endl;
+        }
+    }
+
+    auto minTs = min_element(secondsToLatencyMap.begin(), secondsToLatencyMap.end(), [](const auto& l, const auto& r) {
+        return l.first < r.first;
+    });
+
+    for (auto& val : secondsToLatencyMap) {
+        auto& tup = hundredMsToLatencyMap[(val.first - minTs->first) / 100];
+        std::get<0>(tup) = std::get<0>(tup) + val.second;
+        std::get<1>(tup) = std::get<1>(tup) + 1;
+    }
+    stringstream sOut;
+
+    for (auto& val : hundredMsToLatencyMap) {
+//        cout << "ts=" << val.first << " lat=" << std::get<0>(val.second) << " cnt=" << std::get<1>(val.second)
+//            << " avg=" << std::get<0>(val.second)/ std::get<1>(val.second) << endl;
+
+        sOut << val.first << "," << std::get<0>(val.second)/ std::get<1>(val.second) << endl;
+    }
+
+    std::string fileName = "Latency_W" + std::to_string(numberOfWorkerThreads) + "_Src" + std::to_string(sourceCnt) + ".csv";
+    std::ofstream outFile(fileName, std::ofstream::trunc);
+    outFile << sOut.str();
+    outFile.close();
+
     std::cout << "latency sum=" << latencySum << " in ms=" << std::chrono::milliseconds(latencySum).count() << std::endl;
     uint64_t runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 
@@ -597,13 +641,6 @@ void E2EBase::tearDown() {
                 }
             }
         });
-
-        //        if (config->getScalability()->getValue() == "scale-out") {
-        //            bool retStopWrk = wrk->stop(true);
-        //            stopPromiseWrk->set_value(retStopWrk);
-        //            NES_ASSERT(retStopWrk, retStopWrk);
-        //            waitThreadWorker->join();
-        //        }
 
         std::cout << "E2EBase: Stop Coordinator" << std::endl;
         bool retStopCord = crd->stopCoordinator(true);

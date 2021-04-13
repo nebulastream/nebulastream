@@ -48,6 +48,17 @@ void QueryStatistics::setProcessedBuffers(const std::atomic<uint64_t>& processed
     this->processedBuffers = processedBuffers.load();
 }
 
+
+void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency)
+{
+    tsToLatencyMap[now].push_back(latency);
+}
+
+std::map<uint64_t, std::vector<uint64_t>> QueryStatistics::getTsToLatencyMap()
+{
+    return tsToLatencyMap;
+}
+
 std::string QueryStatistics::getQueryStatisticsAsString() {
     std::stringstream ss;
     ss << "queryId=" << queryId;
