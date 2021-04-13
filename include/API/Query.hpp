@@ -24,12 +24,12 @@
 #include <API/Windowing.hpp>
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/WindowedQuery.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Sources/DataSource.hpp>
-#include <API/WindowedQuery.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
@@ -140,8 +140,6 @@ class JoinCondition {
 
 }//namespace JoinOperatorBuilder
 
-
-
 /**
  * User interface to create stream processing queries.
  * The current api exposes method to create queries using all currently supported operators.
@@ -157,7 +155,6 @@ class Query {
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
     WindowOperatorBuilder::WindowedQuery window(const Windowing::WindowTypePtr windowType);
-
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
@@ -219,7 +216,6 @@ class Query {
      * @return the query
      */
     Query& filter(const ExpressionNodePtr filterExpression);
-
 
     /**
      * @brief: Create watermark assginer operator.
@@ -288,8 +284,6 @@ class Query {
       */
     Query& windowByKey(const ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
                        const Windowing::WindowAggregationPtr aggregation);
-
-
 };
 
 typedef std::shared_ptr<Query> QueryPtr;

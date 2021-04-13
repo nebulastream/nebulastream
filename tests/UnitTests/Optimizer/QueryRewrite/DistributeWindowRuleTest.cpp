@@ -131,7 +131,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query query = Query::from("default_logical")
-                      .window( TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                       .byKey(Attribute("id"))
                       .apply(Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
@@ -187,7 +187,8 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
     Query query = Query::from("default_logical")
                       .filter(Attribute("id") < 45)
                       .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
-                      .byKey(Attribute("id")).apply(Sum(Attribute("value")))
+                      .byKey(Attribute("id"))
+                      .apply(Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan = query.getQueryPlan();

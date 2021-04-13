@@ -148,7 +148,8 @@ TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_10ms) {
  */
 TEST_F(AllowedLatenessTest, testAllowedLateness_SPS_FT_IO_250ms) {
     string query = "Query::from(\"inOrderStream\")"
-                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(250), Milliseconds()))"
+                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(250), "
+                   "Milliseconds()))"
                    ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)))"
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))";

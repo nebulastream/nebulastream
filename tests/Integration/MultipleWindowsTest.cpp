@@ -392,7 +392,8 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
 
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = "Query::from(\"window\")"
-                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5))).byKey(Attribute(\"id\")"
+                   ").apply(Sum(Attribute(\"value\")))"
                    ".window(SlidingWindow::of(EventTime(Attribute(\"end\")),Seconds(10),Seconds(5))).byKey(Attribute(\"id\")). "
                    "apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""

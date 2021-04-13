@@ -45,7 +45,9 @@
 
 namespace NES {
 
-WindowOperatorBuilder::WindowedQuery Query::window(const Windowing::WindowTypePtr windowType){return WindowOperatorBuilder::WindowedQuery(*this, windowType);}
+WindowOperatorBuilder::WindowedQuery Query::window(const Windowing::WindowTypePtr windowType) {
+    return WindowOperatorBuilder::WindowedQuery(*this, windowType);
+}
 
 namespace WindowOperatorBuilder {
 WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType)
@@ -63,9 +65,11 @@ Query& WindowedQuery::apply(const Windowing::WindowAggregationPtr aggregation) {
 KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionItem onKey)
     : originalQuery(originalQuery), windowType(windowType), onKey(onKey) {}
 
-Query& KeyedWindowedQuery::apply(Windowing::WindowAggregationPtr aggregation) { return originalQuery.windowByKey(onKey, windowType, aggregation); }
+Query& KeyedWindowedQuery::apply(Windowing::WindowAggregationPtr aggregation) {
+    return originalQuery.windowByKey(onKey, windowType, aggregation);
+}
 
-} //namespace WindowOperatorBuilder
+}//namespace WindowOperatorBuilder
 
 Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add window operator");

@@ -109,10 +109,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 
     auto query = Query::from("default_logical")
-        .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
-        .byKey(Attribute("id"))
-        .apply(Sum(Attribute("value")))
-        .sink(FileSinkDescriptor::create(""));
+                     .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
+                     .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create(streamCatalog);
@@ -844,12 +844,13 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
  */
 TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
     auto query = Query::from("default_logical")
-        .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10))).byKey(Attribute("id"))
-        .apply(Sum(Attribute("value")))
-        .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
-        .byKey(Attribute("value"))
-        .apply(Sum(Attribute("id")))
-        .sink(FileSinkDescriptor::create(""));
+                     .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                     .byKey(Attribute("id"))
+                     .apply(Sum(Attribute("value")))
+                     .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                     .byKey(Attribute("value"))
+                     .apply(Sum(Attribute("id")))
+                     .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     auto phase = TypeInferencePhase::create(streamCatalog);

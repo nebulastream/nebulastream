@@ -332,14 +332,13 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("AssignWatermarkTest: Submit query");
-    string query =
-        "Query::from(\"window\")"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
-        "Milliseconds()))"
-        ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500))) "
-        ".byKey(Attribute(\"id\"))"
-        ".apply(Sum(Attribute(\"value\")))"
-        ".sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\")"
+                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
+                   "Milliseconds()))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500))) "
+                   ".byKey(Attribute(\"id\"))"
+                   ".apply(Sum(Attribute(\"value\")))"
+                   ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
