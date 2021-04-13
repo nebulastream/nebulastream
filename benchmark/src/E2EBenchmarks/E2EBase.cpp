@@ -525,6 +525,7 @@ std::string E2EBase::getResult() {
     std::map<uint64_t, std::vector<uint64_t>>::iterator innerMapIter;
     std::vector<uint64_t>::iterator vectorIter;
 
+    //
     for (outerMapIter = subPlanToTsToLatencyMap.begin(); outerMapIter != subPlanToTsToLatencyMap.end(); outerMapIter++) {
         for (innerMapIter = outerMapIter->second.begin(); innerMapIter != outerMapIter->second.end(); innerMapIter++) {
             uint64_t latencySum = 0;
