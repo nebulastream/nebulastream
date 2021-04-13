@@ -558,4 +558,86 @@ TEST_F(MaintenanceServiceIntegrationTest, simpleTestSecondStrat) {
     NES_DEBUG("test");
 }
 
+TEST_F(MaintenanceServiceIntegrationTest, testDeploymentAndStartOfSubqueries) {
+
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart2);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart3);
+    wrk3->replaceParent(1, 2);
+    wrk3->addParent(3);
+
+    TopologyPtr topo = crd->getTopology();
+    ASSERT_EQ(topo->getRoot()->getId(), 1);
+    ASSERT_EQ(topo->getRoot()->getChildren().size(), 2);
+    ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1);
+    ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1);
+    NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
+
+    srcConf->setSourceType("CSVSource");
+    srcConf->setSourceConfig("../tests/test_data/exdra.csv");
+    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setPhysicalStreamName("test_stream");
+    srcConf->setLogicalStreamName("exdra");
+    srcConf->setNumberOfBuffersToProduce(1000);
+    //register physical stream
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
+    wrk3->registerPhysicalStream(conf);
+    std::string filePath = "contTestOut.csv";
+    remove(filePath.c_str());
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
+
+    NES_DEBUG("MaintenanceServiceTest: Submit query");
+    //register query
+    std::string queryString =
+        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
+    QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
+    auto querySubPlans = globalExecutionPlan->getExecutionNodeByNodeId(2)->getQuerySubPlans(1);
+    auto resourceUsage = globalExecutionPlan->getExecutionNodeByNodeId(2)->getOccupiedResources(1);
+    //PLACES subqueries on Node 3
+    maintenanceService->migrateSubqueries(3, 1, querySubPlans, resourceUsage);
+    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+    auto executionNode = globalExecutionPlan->getExecutionNodeByNodeId(3);
+    auto success = maintenanceService->deployQuery(1,{executionNode});
+    auto successStart = maintenanceService->startQuery(1,{executionNode});
+    ASSERT_TRUE(success);
+    ASSERT_TRUE(successStart);
+
+}
+
 }//namespace NES

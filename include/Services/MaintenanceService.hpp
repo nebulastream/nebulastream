@@ -78,6 +78,13 @@ class MaintenanceService {
     bool deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
 
+    /**
+     * @brief method to start a already deployed query
+     * @param queryId
+     * @return bool indicating success
+     */
+    bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+
 
   private:
     /**

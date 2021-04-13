@@ -57,7 +57,6 @@ void MaintenanceService::submitMaintenanceRequest(uint64_t nodeId, uint8_t strat
 }
 
 
-
 std::vector<uint64_t> MaintenanceService::firstStrat(uint64_t nodeId) {
     NES_DEBUG("Applying first strategy for maintenance on node" << std::to_string(nodeId));
     std::vector<uint64_t> parentQueryIds;
@@ -87,10 +86,9 @@ std::vector<uint64_t> MaintenanceService::firstStrat(uint64_t nodeId) {
     }
     auto  ID = parentQueryIds.front();
     NES_DEBUG("ID of first query :" << std::to_string(ID));
-
-
     return parentQueryIds;
 }
+
 std::optional<TopologyNodePtr> MaintenanceService::secondStrat(uint64_t nodeId) {
 
     NES_DEBUG("Applying second strategy for maintenance on node" << std::to_string(nodeId));
@@ -144,6 +142,7 @@ std::vector<uint64_t> MaintenanceService::thirdStrat(uint64_t nodeId) {
     }
     return placeholder;
 }
+//TODO: assumes there is only ever one parent
 std::optional<ExecutionNodePtr> MaintenanceService::findParentExecutionNode(ExecutionNodePtr markedNode, QueryId queryId) {
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     std::vector<NodePtr> parentsOfMarkedExecutionNode = markedNode->getParents();
@@ -163,7 +162,7 @@ std::optional<ExecutionNodePtr> MaintenanceService::findParentExecutionNode(Exec
     }
     return parentOfMarkedExecutionNode;
 }
-
+//TODO: assumes there is only ever one child
 std::optional<ExecutionNodePtr> MaintenanceService::findChildExecutionNode(ExecutionNodePtr markedNode, QueryId queryId) {
     auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     std::vector<NodePtr> childrenOfMarkedExecutionNode = markedNode->getChildren();
@@ -269,6 +268,37 @@ bool MaintenanceService::deployQuery(QueryId queryId, std::vector<ExecutionNodeP
     }
     bool result = workerRPCClient->checkAsyncResult(completionQueues, Register);
     NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id " << queryId << " success=" << result);
+    return result;
+}
+bool MaintenanceService::startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+    NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
+    //TODO: check if one queue can be used among multiple connections
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
+
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+
+        const auto& nesNode = executionNode->getTopologyNode();
+        auto ipAddress = nesNode->getIpAddress();
+        auto grpcPort = nesNode->getGrpcPort();
+        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id=" << executionNode->getId()
+
+                                                                                << " and IP=" << ipAddress);
+        //enable this for sync calls
+        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
+        bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
+        if (success) {
+            NES_DEBUG("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << " successful");
+        } else {
+            NES_ERROR("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << "  failed");
+            return false;
+        }
+        completionQueues[queueForExecutionNode] = 1;
+    }
+
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, Start);
+    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id " << queryId << " success=" << result);
     return result;
 }
 

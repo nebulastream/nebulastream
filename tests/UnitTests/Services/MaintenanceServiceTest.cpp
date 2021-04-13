@@ -18,7 +18,12 @@
 //
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+
 #include <Util/Logger.hpp>
+#include <Services/MaintenanceService.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <WorkQueues/QueryRequestQueue.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 
 #include <gtest/gtest.h>
 namespace NES{
@@ -156,15 +161,16 @@ TEST_F(MaintenanceServiceTest, findPathBetweenIgnoresNodesMakredForMaintenanceTe
 TEST_F(MaintenanceServiceTest, sampleTest){
 
 }
-
+//
 //TEST_F(MaintenanceServiceTest, PassingInvalidNodeIdTest){
+//    auto workerRPCClient = std::make_shared<WorkerRPCClient>();
 //    auto topology = Topology::create();
 //    auto globalExecutionPlan = GlobalExecutionPlan::create();
 //    auto queryCatalog = std::make_shared<QueryCatalog>();
 //    auto queryRequestQueue = std::make_shared<QueryRequestQueue>(1);
-//    auto maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
+//    auto maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan,workerRPCClient);
 //
-//    EXPECT_THROW(maintenanceService->submitMaintenanceRequest(1,1), std::runtime_error);
+//    ASSERT_TRUE(true);
 //}
 
 }//namespace NES
