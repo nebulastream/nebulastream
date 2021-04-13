@@ -14,8 +14,7 @@ import numpy as np
 #set this if you run with DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
 withLatencyHistogram = True
 
-folder = "./"#in this filder
-#folder = "/home/zeuchste/Dropbox/nes/o3/O3retest/"
+folder = "./"#in this folder
 df_changingBufferSize = pd.read_csv(folder + 'changingBufferSize.csv')
 df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCnt.csv')
 df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
