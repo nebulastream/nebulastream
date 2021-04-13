@@ -32,31 +32,31 @@
 
 namespace NES::Optimizer {
 
-class Z3SignatureInferencePhaseTest : public testing::Test {
+class SignatureInferencePhaseTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        NES::setupLogging("Z3SignatureInferencePhaseTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup Z3SignatureInferencePhaseTest test case.");
+        NES::setupLogging("SignatureInferencePhaseTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup SignatureInferencePhaseTest test case.");
     }
 
     /* Will be called before a  test is executed. */
     void SetUp() {}
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Tear down Z3SignatureInferencePhaseTest test case."); }
+    void TearDown() { NES_INFO("Tear down SignatureInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { NES_INFO("Tear down Z3SignatureInferencePhaseTest test class."); }
+    static void TearDownTestCase() { NES_INFO("Tear down SignatureInferencePhaseTest test class."); }
 };
 
 /**
  * @brief In this test we execute query merger phase on a single invalid query plan.
  */
-TEST_F(Z3SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
+TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
 
     //Prepare
-    NES_INFO("Z3SignatureInferencePhaseTest: Create a new query without assigning it a query id.");
+    NES_INFO("SignatureInferencePhaseTest: Create a new query without assigning it a query id.");
 
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 

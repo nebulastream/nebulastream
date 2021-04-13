@@ -68,6 +68,7 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
                     solver->add(!to_expr(*context, Z3_mk_eq(*context, *fieldExpr, *otherFieldExpr)));
                     if (solver->check() == z3::unsat) {
                         fieldMatch = true;
+                        solver->pop();
                         break;
                     }
                     solver->pop();
@@ -125,6 +126,7 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     //Create a negation of CNF of all conditions collected till now
     solver->push();
     solver->add(!z3::mk_and(allConditions).simplify());
+    NES_INFO(*solver);
     bool equal = solver->check() == z3::unsat;
     solver->pop();
     return equal;

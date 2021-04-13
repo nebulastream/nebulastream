@@ -17,6 +17,7 @@
 #ifndef NES_GLOBALQUERYPLANUPDATEPHASE_HPP
 #define NES_GLOBALQUERYPLANUPDATEPHASE_HPP
 
+#include <Phases/QueryMergerPhase.hpp>
 #include <memory>
 #include <vector>
 
@@ -74,7 +75,7 @@ class GlobalQueryPlanUpdatePhase {
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
-                                                bool enableQueryMerging, std::string queryMergerRule);
+                                                bool enableQueryMerging, Optimizer::QueryMergerRule queryMergerRule);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -86,7 +87,7 @@ class GlobalQueryPlanUpdatePhase {
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context, bool enableQueryMerging,
-                                        std::string queryMergerRule);
+                                        Optimizer::QueryMergerRule queryMergerRule);
 
     bool enableQueryMerging;
     QueryCatalogPtr queryCatalog;
@@ -97,7 +98,7 @@ class GlobalQueryPlanUpdatePhase {
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     z3::ContextPtr z3Context;
-    std::string queryMergerRule;
+    Optimizer::QueryMergerRule queryMergerRule;
 };
 }// namespace NES
 

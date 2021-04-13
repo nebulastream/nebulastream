@@ -49,7 +49,7 @@ NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr gl
                                                        QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                                        StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                                        NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
-                                                       std::string queryMergerRule)
+                                                       Optimizer::QueryMergerRule queryMergerRule)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       globalQueryPlan(globalQueryPlan) {
 
