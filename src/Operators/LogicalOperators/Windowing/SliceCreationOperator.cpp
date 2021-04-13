@@ -85,4 +85,6 @@ bool SliceCreationOperator::inferSchema() {
                                                   windowAggregation->on()->getStamp()));
     return true;
 }
+
+void SliceCreationOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

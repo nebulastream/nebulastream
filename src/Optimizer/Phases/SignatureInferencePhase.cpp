@@ -33,10 +33,19 @@ Z3SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr cont
 }
 
 void SignatureInferencePhase::execute(QueryPlanPtr queryPlan) {
-    NES_INFO("SignatureInferencePhase: computing Z3 expressions for the query " << queryPlan->getQueryId());
-    auto sinkOperators = queryPlan->getRootOperators();
-    for (auto& sinkOperator : sinkOperators) {
-        sinkOperator->as<LogicalOperatorNode>()->inferSignature(context);
+
+    if (!context) {
+        NES_INFO("SignatureInferencePhase: computing String based signature for the query " << queryPlan->getQueryId());
+        auto sinkOperators = queryPlan->getRootOperators();
+        for (auto& sinkOperator : sinkOperators) {
+            sinkOperator->as<LogicalOperatorNode>()->inferStringSignature();
+        }
+    } else {
+        NES_INFO("SignatureInferencePhase: computing Z3 based signature for the query " << queryPlan->getQueryId());
+        auto sinkOperators = queryPlan->getRootOperators();
+        for (auto& sinkOperator : sinkOperators) {
+            sinkOperator->as<LogicalOperatorNode>()->inferZ3Signature(context);
+        }
     }
 }
 

@@ -81,4 +81,6 @@ bool SliceMergingOperator::inferSchema() {
     return true;
 }
 
+void SliceMergingOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
+
 }// namespace NES

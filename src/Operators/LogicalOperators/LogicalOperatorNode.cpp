@@ -40,4 +40,6 @@ void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature)
 
 std::string LogicalOperatorNode::getStringSignature() { return stringSignature; }
 
+void LogicalOperatorNode::setStringSignature(std::string signature) { this->stringSignature = signature; }
+
 }// namespace NES
