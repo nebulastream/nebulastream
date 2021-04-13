@@ -17,7 +17,9 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <State/StateManager.hpp>
@@ -51,7 +53,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         : joinDefinition(joinDefinition), id(id) {
         windowSchema = joinDefinition->getOutputSchema();
         NES_DEBUG("ExecutableNestedLoopJoinTriggerAction " << id << " join output schema=" << windowSchema->toString());
-        windowTupleLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
+        windowTupleLayout = NES::NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(this->windowSchema, true);
     }
 
     virtual ~ExecutableNestedLoopJoinTriggerAction() { NES_DEBUG("~ExecutableNestedLoopJoinTriggerAction " << id << ":()"); }
@@ -272,7 +274,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
         {
             using namespace NodeEngine::DynamicMemoryLayout;
-            auto bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
+            DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
                 static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
 
             auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);

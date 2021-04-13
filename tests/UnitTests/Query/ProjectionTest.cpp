@@ -21,8 +21,10 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
@@ -127,14 +129,20 @@ class WindowSource : public NES::DefaultSource {
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
-        auto rowLayout = NodeEngine::createRowLayout(schema);
+        auto rowLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
+            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(rowLayout->map(buffer).release()));
+
+
 
         for (int i = 0; i < 10; i++) {
-            rowLayout->getValueField<int64_t>(i, 0)->write(buffer, 1);
-            rowLayout->getValueField<int64_t>(i, 1)->write(buffer, 1);
+            using namespace NodeEngine::DynamicMemoryLayout;
+            DynamicRowLayoutField<int16_t, true>::create(0, bindedRowLayout)[i] = 1;
+            DynamicRowLayoutField<int16_t, true>::create(1, bindedRowLayout)[i] = 1;
+
             if (varyWatermark) {
                 if (!decreaseTime) {
-                    rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
+                    DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
                 } else {
                     if (runCnt == 0) {
                         /**
@@ -155,9 +163,9 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp++);
+                            DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
                         } else {
-                            rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp + 20);
+                            DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp + 20;
                         }
                     } else {
                         /**
@@ -177,11 +185,11 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
-                        rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
+                        DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
                     }
                 }
             } else {
-                rowLayout->getValueField<uint64_t>(i, 2)->write(buffer, timestamp);
+                DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
             }
         }
         buffer.setNumberOfTuples(10);
@@ -293,11 +301,20 @@ class TestSink : public SinkMedium {
     std::vector<TupleBuffer> resultBuffers;
 };
 
-void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
+void fillBuffer(TupleBuffer& buf, NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr memoryLayout) {
+    using namespace NodeEngine::DynamicMemoryLayout;
+    DynamicRowLayoutBufferPtr bindedRowLayout =
+        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(memoryLayout->map(buf).release()));
+
+    auto recordIndexFields = DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto fields01 = DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
+    auto fields02 = DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->write(buf, recordIndex);
-        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 1)->write(buf, 3);
-        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->write(buf, 8);
+        recordIndexFields[recordIndex] = recordIndex;
+        fields01[recordIndex] = 3;
+        fields02[recordIndex] = 8;
+
     }
     buf.setNumberOfTuples(10);
 }
@@ -340,7 +357,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -356,10 +373,12 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultLayout = NodeEngine::createRowLayout(outputSchema);
+    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
-        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), recordIndex);
+        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
     buffer.release();
     testSink->shutdown();
@@ -404,7 +423,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -420,10 +439,12 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultLayout = NodeEngine::createRowLayout(outputSchema);
+    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
-        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), 8);
+        EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
     }
     testSink->shutdown();
     plan->stop();
@@ -467,7 +488,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -483,11 +504,15 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resultLayout = NodeEngine::createRowLayout(outputSchema);
+    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultFields01 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
+
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
-        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), recordIndex);
-        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 1)->read(resultBuffer), 8);
+        EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
+        EXPECT_EQ(resultFields01[recordIndex], 8);
     }
     testSink->shutdown();
     plan->stop();
@@ -608,16 +633,23 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     NES_DEBUG("ProjectionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
-    auto resultLayout = NodeEngine::createRowLayout(windowResultSchema);
+
+    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto startFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
+    auto endFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
+    auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
+    auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayoutResult);
+
     for (int recordIndex = 0; recordIndex < 1; recordIndex++) {
         // start
-        EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), 0);
+        EXPECT_EQ(startFields[recordIndex], 0);
         // end
-        EXPECT_EQ(resultLayout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 1)->read(resultBuffer), 10);
+        EXPECT_EQ(endFields[recordIndex], 10);
         // key
-        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 2)->read(resultBuffer), 1);
+        EXPECT_EQ(keyFields[recordIndex], 1);
         // value
-        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 3)->read(resultBuffer), 10);
+        EXPECT_EQ(valueFields[recordIndex], 10);
     }
 }
 
@@ -749,7 +781,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
-    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
@@ -780,10 +812,12 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
 
-    auto resultLayout = NodeEngine::createRowLayout(outputSchema);
+    auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
-        EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(resultBuffer), recordIndex);
+        EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);
     }
 
     testSink->shutdown();

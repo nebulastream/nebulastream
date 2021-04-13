@@ -210,7 +210,7 @@ class ExecutableSliceAggregationTriggerAction
                            ValueType value, uint64_t cnt) {
         {
             using namespace NodeEngine::DynamicMemoryLayout;
-            auto bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+            DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
 
             auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
             auto endTsFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);

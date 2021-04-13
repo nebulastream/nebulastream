@@ -18,7 +18,6 @@
 #define NES_DYNAMICROWLAYOUT_HPP
 
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
