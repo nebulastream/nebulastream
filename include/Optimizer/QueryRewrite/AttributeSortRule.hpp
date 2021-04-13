@@ -28,6 +28,8 @@ namespace NES {
 class AttributeSortRule;
 typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
 
+class FieldAccessExpressionNode;
+
 /**
  * @brief This rule is only used for evaluating efficiency of query merging using string based signature computation. This rule
  * will alphabetically sort the attributes provided in the Filter, Map, and Project operators. It will however, won't change the

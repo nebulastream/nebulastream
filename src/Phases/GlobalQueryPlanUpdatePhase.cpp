@@ -37,11 +37,16 @@ namespace NES {
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
                                                        bool enableQueryMerging, std::string queryMergerRule)
-    : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), streamCatalog(streamCatalog),
-      globalQueryPlan(globalQueryPlan), z3Context(z3Context), queryMergerRule(queryMergerRule) {
+    : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), globalQueryPlan(globalQueryPlan), z3Context(z3Context),
+      queryMergerRule(queryMergerRule) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    queryRewritePhase = QueryRewritePhase::create();
+    bool applyRulesImprovingSharingIdentification = false;
+    if (queryMergerRule.find("SyntaxBasedCompleteQueryMergerRule") != std::string::npos
+        || queryMergerRule.find("ImprovedStringSignatureBasedCompleteQueryMergerRule") != std::string::npos) {
+        applyRulesImprovingSharingIdentification = true;
+    }
+    queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
     signatureInferencePhase = Optimizer::Z3SignatureInferencePhase::create(this->z3Context);
 }

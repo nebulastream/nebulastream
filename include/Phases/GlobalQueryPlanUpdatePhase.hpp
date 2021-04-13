@@ -90,7 +90,6 @@ class GlobalQueryPlanUpdatePhase {
 
     bool enableQueryMerging;
     QueryCatalogPtr queryCatalog;
-    StreamCatalogPtr streamCatalog;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
