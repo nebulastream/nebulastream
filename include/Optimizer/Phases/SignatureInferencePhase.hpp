@@ -44,7 +44,7 @@ class SignatureInferencePhase {
      * @brief Create instance of Z3SignatureInferencePhase class
      * @return shared instance of the Z3SignatureInferencePhase
      */
-    static Z3SignatureInferencePhasePtr create(z3::ContextPtr context);
+    static Z3SignatureInferencePhasePtr create(z3::ContextPtr context, bool computeStringSignature = false);
 
     /**
      * @brief this method will compute the Z3 expression for all operators of the input query plan
@@ -61,8 +61,9 @@ class SignatureInferencePhase {
     ~SignatureInferencePhase();
 
   private:
-    explicit SignatureInferencePhase(z3::ContextPtr context);
+    explicit SignatureInferencePhase(z3::ContextPtr context, bool computeStringSignature = false);
     z3::ContextPtr context;
+    bool computeStringSignature;
 };
 }// namespace NES::Optimizer
 

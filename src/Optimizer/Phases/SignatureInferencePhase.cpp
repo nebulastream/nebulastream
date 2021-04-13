@@ -22,19 +22,20 @@
 
 namespace NES::Optimizer {
 
-SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context) : context(context) {
+SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context, bool computeStringSignature)
+    : context(context), computeStringSignature(computeStringSignature) {
     NES_DEBUG("SignatureInferencePhase()");
 }
 
 SignatureInferencePhase::~SignatureInferencePhase() { NES_DEBUG("~SignatureInferencePhase()"); }
 
-Z3SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context) {
-    return std::make_shared<SignatureInferencePhase>(SignatureInferencePhase(context));
+Z3SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context, bool computeStringSignature) {
+    return std::make_shared<SignatureInferencePhase>(SignatureInferencePhase(context, computeStringSignature));
 }
 
 void SignatureInferencePhase::execute(QueryPlanPtr queryPlan) {
 
-    if (!context) {
+    if (computeStringSignature) {
         NES_INFO("SignatureInferencePhase: computing String based signature for the query " << queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();
         for (auto& sinkOperator : sinkOperators) {

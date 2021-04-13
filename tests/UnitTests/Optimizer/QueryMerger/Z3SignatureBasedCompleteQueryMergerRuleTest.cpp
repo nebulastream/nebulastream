@@ -540,9 +540,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
+    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    signatureInferencePhase->execute(queryPlan1);
+    signatureInferencePhase->execute(queryPlan2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);

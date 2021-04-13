@@ -340,7 +340,7 @@ target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
 ### Z3 Signature Inference Phase Test ###
-add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/Z3SignatureInferencePhaseTest.cpp")
+add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp")
 target_link_libraries(z3-signature-inference-phase-test nes ${GTEST_LIBRARIES})
 add_test(NAME z3-signature-inference-phase-test COMMAND z3-signature-inference-phase-test)
 

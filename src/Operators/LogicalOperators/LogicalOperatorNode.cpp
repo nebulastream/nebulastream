@@ -20,7 +20,7 @@
 
 namespace NES {
 
-LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : z3Signature(nullptr), stringSignature(nullptr), OperatorNode(id) {}
+LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : OperatorNode(id), z3Signature(nullptr), stringSignature("INVALID") {}
 
 Optimizer::QuerySignaturePtr LogicalOperatorNode::getZ3Signature() { return z3Signature; }
 

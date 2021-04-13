@@ -108,7 +108,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context, true);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 

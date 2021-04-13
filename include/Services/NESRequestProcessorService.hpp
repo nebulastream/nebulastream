@@ -17,6 +17,7 @@
 #ifndef NES_NESREQUESTPROCESSORSERVICE_HPP
 #define NES_NESREQUESTPROCESSORSERVICE_HPP
 
+#include <Phases/QueryMergerPhase.hpp>
 #include <memory>
 
 namespace z3 {
@@ -71,10 +72,10 @@ typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 class NESRequestProcessorService {
   public:
     explicit NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                        QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
-                                        StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                        NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
-                                        std::string queryMergerRule);
+                                          QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
+                                          StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
+                                          NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                          Optimizer::QueryMergerRule queryMergerRule);
 
     ~NESRequestProcessorService();
     /**
