@@ -31,8 +31,10 @@ template<class T, bool boundaryChecks>
 class DynamicColumnLayoutField {
 
   public:
-    static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer);
-    static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName, DynamicColumnLayoutBufferPtr& layoutBuffer);
+    static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
+                                                                     DynamicColumnLayoutBufferPtr& layoutBuffer);
+    static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName,
+                                                                     DynamicColumnLayoutBufferPtr& layoutBuffer);
     inline T& operator[](size_t recordIndex);
     DynamicColumnLayoutField(T* basePointer, DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer)
         : basePointer(basePointer), dynamicColumnLayoutBuffer(dynamicColumnLayoutBuffer){};

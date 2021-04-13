@@ -31,12 +31,12 @@ DynamicMemoryLayout::DynamicMemoryLayout()
  * @param fieldName
  * @return either field index for fieldName or empty optinal
  */
-    std::optional<uint64_t> DynamicMemoryLayout::getFieldIndexFromName(std::string fieldName) const {
-        auto nameFieldIt = nameFieldIndexMap.find(fieldName);
-        if (nameFieldIt == nameFieldIndexMap.end()) {
-            return std::nullopt;
-        } else {
-            return std::optional<uint64_t>(nameFieldIt->second);
-        }
+std::optional<uint64_t> DynamicMemoryLayout::getFieldIndexFromName(std::string fieldName) const {
+    auto nameFieldIt = nameFieldIndexMap.find(fieldName);
+    if (nameFieldIt == nameFieldIndexMap.end()) {
+        return std::nullopt;
+    } else {
+        return std::optional<uint64_t>(nameFieldIt->second);
     }
+}
 }// namespace NES::NodeEngine::DynamicMemoryLayout
