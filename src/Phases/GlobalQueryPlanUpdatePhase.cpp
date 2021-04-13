@@ -19,7 +19,7 @@
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/RequestTypeNotHandledException.hpp>
-#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryMergerPhase.hpp>
 #include <Phases/QueryRewritePhase.hpp>
@@ -48,7 +48,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     }
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
-    signatureInferencePhase = Optimizer::Z3SignatureInferencePhase::create(this->z3Context);
+    signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context);
 }
 
 GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,

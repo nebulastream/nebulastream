@@ -43,8 +43,8 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalUnaryOperatorNode {
     const std::string toString() const override;
 
     OperatorNodePtr copy() override;
-    std::string getStringBasedSignature() override;
     bool inferSchema() override;
+    void inferStringSignature() override;
 
   private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;

@@ -41,7 +41,7 @@ class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorNodePtr copy() override;
     bool inferSchema() override;
-    std::string getStringBasedSignature() override;
+    void inferStringSignature() override;
 
   private:
     SinkDescriptorPtr sinkDescriptor;

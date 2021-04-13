@@ -48,13 +48,11 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool inferSchema() override;
 
     bool equal(const NodePtr rhs) const override;
-
+    void inferStringSignature() override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
     void setProjectSchema(SchemaPtr schema);
-    std::string getStringBasedSignature() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

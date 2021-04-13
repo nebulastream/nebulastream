@@ -28,8 +28,8 @@ typedef std::shared_ptr<context> ContextPtr;
 namespace NES {
 
 namespace Optimizer {
-class Z3SignatureInferencePhase;
-typedef std::shared_ptr<Z3SignatureInferencePhase> SignatureInferencePhasePtr;
+class SignatureInferencePhase;
+typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
 
 class QueryMergerPhase;
 typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;

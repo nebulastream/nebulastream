@@ -71,15 +71,26 @@ const std::string MapLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string MapLogicalOperatorNode::getStringBasedSignature() {
-    return "MAP(" + mapExpression->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-}
-
 OperatorNodePtr MapLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setSignature(signature);
+    copy->setStringSignature(stringSignature);
+    copy->setZ3Signature(z3Signature);
     return copy;
+}
+
+void MapLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "MAP(" + mapExpression->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES

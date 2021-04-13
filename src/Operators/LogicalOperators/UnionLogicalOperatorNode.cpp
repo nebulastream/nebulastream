@@ -34,14 +34,6 @@ const std::string UnionLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string UnionLogicalOperatorNode::getStringBasedSignature() {
-    std::stringstream ss;
-    ss << "UNION(";
-    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
-    ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
-    return ss.str();
-}
-
 bool UnionLogicalOperatorNode::inferSchema() {
     if (!LogicalBinaryOperatorNode::inferSchema()) {
         return false;
@@ -74,6 +66,8 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createUnionOperator(id);
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
+    copy->setZ3Signature(z3Signature);
+    copy->setStringSignature(stringSignature);
     return copy;
 }
 
@@ -82,6 +76,21 @@ bool UnionLogicalOperatorNode::equal(const NodePtr rhs) const {
         return true;
     }
     return false;
+}
+void UnionLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "UNION(";
+    signatureStream << children[0]->as<LogicalOperatorNode>()->getStringSignature() + ").";
+    signatureStream << children[1]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 
 }// namespace NES

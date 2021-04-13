@@ -39,16 +39,6 @@ const std::string JoinLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string JoinLogicalOperatorNode::getStringBasedSignature() {
-    std::stringstream ss;
-    ss << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
-    ss << "RIGHT-KEY=" << joinDefinition->getRightJoinKey()->toString() << ",";
-    ss << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
-    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature() + ").";
-    ss << children[1]->as<LogicalOperatorNode>()->getStringBasedSignature();
-    return ss.str();
-}
-
 Join::LogicalJoinDefinitionPtr JoinLogicalOperatorNode::getJoinDefinition() { return joinDefinition; }
 
 bool JoinLogicalOperatorNode::inferSchema() {
@@ -146,6 +136,8 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     copy->setLeftInputSchema(leftInputSchema);
     copy->setRightInputSchema(rightInputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setZ3Signature(z3Signature);
+    copy->setStringSignature(stringSignature);
     return copy;
 }
 
@@ -156,4 +148,21 @@ bool JoinLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 }
 
+void JoinLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "JOIN(LEFT-KEY=" << joinDefinition->getLeftJoinKey()->toString() << ",";
+    signatureStream << "RIGHT-KEY=" << joinDefinition->getRightJoinKey()->toString() << ",";
+    signatureStream << "WINDOW-DEFINITION=" << joinDefinition->getWindowType()->toString() << ",";
+    signatureStream << children[0]->as<LogicalOperatorNode>()->getStringSignature() + ").";
+    signatureStream << children[1]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
+}
 }// namespace NES

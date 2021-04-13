@@ -43,10 +43,6 @@ const std::string RenameStreamOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string RenameStreamOperatorNode::getStringBasedSignature() {
-    return children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-}
-
 bool RenameStreamOperatorNode::inferSchema() {
     if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
@@ -68,6 +64,23 @@ OperatorNodePtr RenameStreamOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createRenameStreamOperator(newStreamName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setZ3Signature(z3Signature);
+    copy->setStringSignature(stringSignature);
     return copy;
+}
+
+void RenameStreamOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "RENAME_STREAM(newStreamName=" << newStreamName << ")."
+                    << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES
