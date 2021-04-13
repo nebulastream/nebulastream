@@ -386,6 +386,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 /**
  * @brief This test verify that the watermark assigned correctly.
  * WindowSource -> WatermarkAssignerOperator -> TestSink
+ *
  */
 TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     uint64_t millisecondOfallowedLateness = 2; /*milliseconds of allowedLateness*/
@@ -397,7 +398,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     auto query = TestQuery::from(windowSource->getSchema());
     // 2. add window operator:
-    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
+    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value. Use window of 5ms to ensure that it is closed.
     auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(5));
 
     // add a watermark assigner operator with the specified allowedLateness
@@ -407,13 +408,13 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
-    //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
         ->addField(createField("_$start", UINT64))
         ->addField(createField("_$end", UINT64))
         ->addField(createField("test$key", INT64))
         ->addField("test$value", INT64);
 
+    // each source buffer produce 1 result buffer, totalling 2 buffers
     auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
