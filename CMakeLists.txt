@@ -55,10 +55,13 @@ set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES_RELEASE_MODE=1")
 
-# Set Flamegraph Flags
 if (NES_BUILD_BENCHMARKS)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -mavx2  -DNES_BENCHMARKS_FLAG_MODE=1")
     message("Build with all flags on, only use for benchmarking")
+    if(NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT)
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  -NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT=1")
+        message("use latency measurement")
+    endif ()
     #-fno-omit-frame-pointer
 endif ()
 
