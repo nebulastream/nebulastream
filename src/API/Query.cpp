@@ -164,7 +164,6 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
     return *this;
 }
 
-
 Query& Query::filter(const ExpressionNodePtr filterExpression) {
     NES_DEBUG("Query: add filter operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createFilterOperator(filterExpression);

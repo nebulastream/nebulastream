@@ -923,7 +923,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .window(windowType1).byKey(Attribute("type")).apply(aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -935,7 +937,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .window(windowType2).byKey(Attribute("type")).apply(aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1015,7 +1019,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .window(windowType1).byKey(Attribute("type")).apply(aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1027,7 +1033,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .window(windowType2).byKey(Attribute("type")).apply(aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1107,7 +1115,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .window(windowType1).byKey(Attribute("type")).apply(aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1119,7 +1129,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .window(windowType2).byKey(Attribute("type")).apply(aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1200,7 +1212,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
-                       .window(windowType1).byKey(Attribute("type")).apply(aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1211,7 +1225,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
-                        .window(windowType2).byKey(Attribute("type")).apply(aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .filter(Attribute("type") < 40)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();

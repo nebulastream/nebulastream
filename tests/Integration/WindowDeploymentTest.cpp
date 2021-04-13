@@ -100,10 +100,9 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"exdra\").window(TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
-        "Seconds(10))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"features_properties_capacity\")))"
-        ".sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"exdra\").window(TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
+                   "Seconds(10))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"features_properties_capacity\")))"
+                   ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -192,9 +191,8 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
-        "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
+                   "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -584,9 +582,8 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     wrk2->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
-    string query =
-        "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\"), Seconds()), "
-        "Minutes(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\"), Seconds()), "
+                   "Minutes(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");

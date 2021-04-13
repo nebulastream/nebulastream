@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-
 #ifndef NES_SRC_API_WINDOWEDQUERY_H_
 #define NES_SRC_API_WINDOWEDQUERY_H_
 
@@ -25,18 +24,17 @@
 #include <API/Windowing.hpp>
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/WindowedQuery.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Sources/DataSource.hpp>
-#include <API/WindowedQuery.hpp>
 
 #ifdef ENABLE_KAFKA_BUILD
 #include <cppkafka/configuration.h>
 #endif// KAFKASINK_HPP
 #include <string>
-
 
 namespace NES {
 namespace WindowOperatorBuilder {
@@ -92,7 +90,6 @@ class KeyedWindowedQuery {
 };
 
 }// namespace WindowOperatorBuilder
-} // namespace NES
-
+}// namespace NES
 
 #endif//NES_SRC_API_WINDOWEDQUERY_H_
