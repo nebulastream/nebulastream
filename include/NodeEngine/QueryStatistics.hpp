@@ -17,9 +17,9 @@
 #ifndef NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_
 #define NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_
 #include <atomic>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
 #include <vector>
 namespace NES::NodeEngine {
 
