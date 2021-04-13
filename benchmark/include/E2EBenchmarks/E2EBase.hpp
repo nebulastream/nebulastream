@@ -117,7 +117,7 @@ class E2EBase {
     std::map<uint64_t, uint64_t> subPlanIdToLatencyCnt;
     std::map<uint64_t, std::map<uint64_t, std::vector<uint64_t>>> subPlanToTsToLatencyMap;
     std::map<uint64_t, uint64_t> secondsToLatencyMap;
-    std::map<uint64_t, std::tuple<uint64_t,uint64_t>> hundredMsToLatencyMap;
+    std::map<uint64_t, std::tuple<uint64_t, uint64_t>> hundredMsToLatencyMap;
 
     NES::QueryServicePtr queryService;
     QueryId queryId;

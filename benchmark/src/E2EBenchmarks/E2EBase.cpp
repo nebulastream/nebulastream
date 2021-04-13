@@ -540,8 +540,8 @@ std::string E2EBase::getResult() {
                 latencyCnt++;
             }
             secondsToLatencyMap[innerMapIter->first] = latencySum / latencyCnt;
-//            cout << "Subplan:" << outerMapIter->first << " ts: " << innerMapIter->first / 100 << " latencySum=" << latencySum
-//                 << " latencyCnt=" << latencyCnt << " avg latency=" << latencySum / latencyCnt << endl;
+            //            cout << "Subplan:" << outerMapIter->first << " ts: " << innerMapIter->first / 100 << " latencySum=" << latencySum
+            //                 << " latencyCnt=" << latencyCnt << " avg latency=" << latencySum / latencyCnt << endl;
         }
     }
 
@@ -559,10 +559,10 @@ std::string E2EBase::getResult() {
     stringstream sOut;
 
     for (auto& val : hundredMsToLatencyMap) {
-//        cout << "ts=" << val.first << " lat=" << std::get<0>(val.second) << " cnt=" << std::get<1>(val.second)
-//            << " avg=" << std::get<0>(val.second)/ std::get<1>(val.second) << endl;
+        //        cout << "ts=" << val.first << " lat=" << std::get<0>(val.second) << " cnt=" << std::get<1>(val.second)
+        //            << " avg=" << std::get<0>(val.second)/ std::get<1>(val.second) << endl;
 
-        sOut << val.first << "," << std::get<0>(val.second)/ std::get<1>(val.second) << endl;
+        sOut << val.first << "," << std::get<0>(val.second) / std::get<1>(val.second) << endl;
     }
 
     std::string fileName = "Latency_W" + std::to_string(numberOfWorkerThreads) + "_Src" + std::to_string(sourceCnt) + ".csv";
