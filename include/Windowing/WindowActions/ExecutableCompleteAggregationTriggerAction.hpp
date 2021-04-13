@@ -312,8 +312,7 @@ class ExecutableCompleteAggregationTriggerAction
                            ValueType value, uint64_t cnt) {
         {
             using namespace NodeEngine::DynamicMemoryLayout;
-            auto bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
-                static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+            auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
 
             auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
             auto endTsFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
@@ -343,8 +342,7 @@ class ExecutableCompleteAggregationTriggerAction
                            ValueType value) {
         {
             using namespace NodeEngine::DynamicMemoryLayout;
-            auto bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(
-                static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+            auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
 
             auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
             auto endTsFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
