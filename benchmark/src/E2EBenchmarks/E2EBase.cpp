@@ -518,6 +518,7 @@ std::string E2EBase::getResult() {
         latencySum += val.second;
     }
 
+#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     NES_ASSERT(subPlanIdToLatencyCnt.size() == 1, "We are currently do not support multiple subplans");
 
     std::map<uint64_t, std::map<uint64_t, std::vector<uint64_t>>>::iterator outerMapIter;
@@ -560,7 +561,7 @@ std::string E2EBase::getResult() {
     std::ofstream outFile(fileName, std::ofstream::trunc);
     outFile << sOut.str();
     outFile.close();
-
+#endif
     std::cout << "latency sum=" << latencySum << " in ms=" << std::chrono::milliseconds(latencySum).count() << std::endl;
     uint64_t runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 

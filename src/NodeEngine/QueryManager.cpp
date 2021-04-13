@@ -640,9 +640,8 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
     }
 }
 
-#define latencyMeasurement
 void QueryManager::completedWork(Task& task, WorkerContext&) {
-#ifdef latencyMeasurement
+#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     std::unique_lock lock(workMutex);
 #endif
 
@@ -660,9 +659,8 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
                            std::chrono::high_resolution_clock::now().time_since_epoch())
                            .count();
             auto diff = now - latency[2];
-#ifdef latencyMeasurement
+#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
             statistics->addTimestampToLatencyValue(now, diff);
-//            NES_ERROR("read lat2=" << latency[2] << " now=" << now << " diff=" << diff);
 #endif
             statistics->incLatencySum(diff);
         }
