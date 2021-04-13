@@ -58,7 +58,7 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf
         //if schema contains cpuMetrics parse the wrapper object
         {
             using namespace NodeEngine::DynamicMemoryLayout;
-            auto layout = DynamicRowLayout::create(schema, false);
+            auto layout = DynamicRowLayout::create(schema, true);
             DynamicRowLayoutBufferPtr bindedRowLayout =
                 std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
             auto numCores = DynamicRowLayoutField<uint16_t, true>::create(idx, bindedRowLayout)[0];

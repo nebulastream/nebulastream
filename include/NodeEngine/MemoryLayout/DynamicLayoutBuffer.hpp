@@ -66,6 +66,7 @@ class DynamicLayoutBuffer {
      */
     TupleBuffer getTupleBuffer() { return tupleBuffer; }
 
+
   protected:
     TupleBuffer tupleBuffer;
     uint64_t capacity;
