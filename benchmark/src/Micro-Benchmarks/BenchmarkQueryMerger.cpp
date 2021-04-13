@@ -26,7 +26,7 @@ using namespace NES;
 using namespace NES::Benchmarking;
 
 const NES::DebugLevel LOG_LEVEL = NES::LOG_DEBUG;
-const uint64_t NO_OF_PHYSICAL_SOURCES = 2;
+const uint64_t NO_OF_PHYSICAL_SOURCES = 50;
 //const uint64_t NO_OF_DISTINCT_SOURCES = 2;
 //const uint64_t NO_OF_QUERIES_TO_SEND = 1000;
 const std::string QUERY_MERGER_RULE = "SyntaxBasedCompleteQueryMergerRule";

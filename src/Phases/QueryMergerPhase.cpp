@@ -41,8 +41,12 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, std::string queryMerg
             queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
             break;
         case QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule:
+        case QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule:
             queryMergerRule = StringSignatureBasedCompleteQueryMergerRule::create();
             break;
+        case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
+        case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
+        case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule: NES_NOT_IMPLEMENTED(); break;
     }
 }
 
