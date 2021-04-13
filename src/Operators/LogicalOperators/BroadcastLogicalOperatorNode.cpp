@@ -74,4 +74,6 @@ bool BroadcastLogicalOperatorNode::inferSchema() {
     return true;
 }
 
+void BroadcastLogicalOperatorNode::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
+
 }// namespace NES

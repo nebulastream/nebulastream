@@ -87,4 +87,6 @@ bool CentralWindowOperator::inferSchema() {
                                                   windowAggregation->on()->getStamp()));
     return true;
 }
+
+void CentralWindowOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

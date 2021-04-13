@@ -81,4 +81,6 @@ bool WindowComputationOperator::inferSchema() {
                                                   windowAggregation->on()->getStamp()));
     return true;
 }
+
+void WindowComputationOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
 }// namespace NES

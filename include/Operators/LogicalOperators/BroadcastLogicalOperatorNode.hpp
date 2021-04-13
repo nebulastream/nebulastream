@@ -35,6 +35,7 @@ class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public Logical
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+    void inferStringSignature() override;
 };
 }// namespace NES
 
