@@ -92,7 +92,7 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                                     + std::to_string(queryId));
                 }
 
-                if (queryMergerRule.find("Z3") != std::string::npos) {
+                if (enableQueryMerging) {
                     NES_DEBUG("QueryProcessingService: Compute Signature inference phase for query: " << queryId);
                     signatureInferencePhase->execute(queryPlan);
                 }
