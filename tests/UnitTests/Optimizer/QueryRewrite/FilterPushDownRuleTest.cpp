@@ -649,27 +649,17 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
 
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    //    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
-    //    auto itr = queryPlanNodeIterator.begin();
-    //    const NodePtr sinkOperator = (*itr);
-    //    ++itr;
-    //    const NodePtr filterOperatorPQ1 = (*itr);
-    //    ++itr;
-    //    const NodePtr mapOperatorPQ1 = (*itr);
-    //    ++itr;
-    //    const NodePtr filterOperatorPQ2 = (*itr);
-    //    ++itr;
-    //    const NodePtr mapOperatorPQ2 = (*itr);
-    //    ++itr;
-    //    const NodePtr mergeOperator = (*itr);
-    //    ++itr;
-    //    const NodePtr filterOperatorPQ3 = (*itr);
-    //    ++itr;
-    //    const NodePtr srcOperatorPQ = (*itr);
-    //    ++itr;
-    //    const NodePtr filterOperatorSQ = (*itr);
-    //    ++itr;
-    //    const NodePtr srcOperatorSQ = (*itr);
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperatorPQ1 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ1 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ2 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorPQ = (*itr);
 
     // Execute
     FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
@@ -677,30 +667,16 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
 
-    //    // Validate
-    //    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
-    //    itr = updatedQueryPlanNodeIterator.begin();
-    //    EXPECT_TRUE(sinkOperator->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(mapOperatorPQ1->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(mergeOperator->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(filterOperatorSQ->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
-    //    ++itr;
-    //    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
 }
