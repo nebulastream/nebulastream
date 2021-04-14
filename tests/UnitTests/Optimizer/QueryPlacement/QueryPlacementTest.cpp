@@ -112,7 +112,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -166,7 +166,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -234,7 +234,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -305,7 +305,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -379,7 +379,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -449,7 +449,7 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(streamCatalog);
+    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
