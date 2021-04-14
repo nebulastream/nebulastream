@@ -16,10 +16,10 @@ bufferSizeInBytes: 4096
 inputOutputMode: Auto
 outputFile: E2EWindowBenchmark.csv
 benchmarkName: E2EWindowBenchmark
-query: 'Query::from("input").windowByKey(Attribute("id"), TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100)), Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
-logLevel: LOG_NONE
+logLevel: LOG_WARNING
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 5

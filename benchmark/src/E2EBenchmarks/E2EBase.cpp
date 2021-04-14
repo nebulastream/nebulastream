@@ -225,9 +225,9 @@ void E2EBase::setupSources() {
         //stateless queries use memMode
         if (query.find("join") == std::string::npos && query.find("window") == std::string::npos) {
             mode = InputOutputMode::MemMode;
-        } else if (query.find("join") != std::string::npos && query.find("windowByKey") == std::string::npos) {
+        } else if (query.find("join") != std::string::npos && query.find("window") == std::string::npos) {
             mode = InputOutputMode::JoinMode;
-        } else if (query.find("join") == std::string::npos && query.find("windowByKey") != std::string::npos) {
+        } else if (query.find("join") == std::string::npos && query.find("window") != std::string::npos) {
             mode = InputOutputMode::WindowMode;
         } else {
             NES_FATAL_ERROR("Modus not supported, only either stateless, or window or join queries are allowed currently");
@@ -325,7 +325,6 @@ void E2EBase::setupSources() {
             }
         }
     } else if (mode == InputOutputMode::WindowMode) {
-        NES_NOT_IMPLEMENTED();
         std::cout << "windowmode source mode" << std::endl;
 
         for (uint64_t i = 0; i < sourceCnt; i++) {
@@ -359,11 +358,16 @@ void E2EBase::setupSources() {
                 NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0);
 
-            wrk->registerPhysicalStream(conf);
+            if (config->getScalability()->getValue() == "scale-out") {
+                wrk->registerPhysicalStream(conf);
+            } else {
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
+                                                                    "test_stream" + std::to_string(i), "input");
+                crd->getNodeEngine()->setConfig(conf);
+            }
         }
     } else if (mode == InputOutputMode::JoinMode) {
         std::cout << "joinmode source mode" << std::endl;
-        NES_NOT_IMPLEMENTED();
         for (uint64_t i = 0; i < sourceCnt; i++) {
             auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 struct Record {
@@ -422,11 +426,24 @@ void E2EBase::setupSources() {
 
             NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
                 "LambdaSource", "test_stream1", "input1", func1, config->getNumberOfBuffersToProduce()->getValue(), 0);
-            wrk->registerPhysicalStream(conf1);
+            if (config->getScalability()->getValue() == "scale-out") {
+                wrk->registerPhysicalStream(conf1);
+            } else {
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
+                                                                    "test_stream1" + std::to_string(i), "input1");
+                crd->getNodeEngine()->setConfig(conf1);
+            }
 
             NES::AbstractPhysicalStreamConfigPtr conf2 = NES::LambdaSourceStreamConfig::create(
                 "LambdaSource", "test_stream2", "input2", func2, config->getNumberOfBuffersToProduce()->getValue(), 0);
             wrk->registerPhysicalStream(conf2);
+            if (config->getScalability()->getValue() == "scale-out") {
+                wrk->registerPhysicalStream(conf2);
+            } else {
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
+                                                                    "test_stream2" + std::to_string(i), "input2");
+                crd->getNodeEngine()->setConfig(conf2);
+            }
         }
     } else {
         NES_ASSERT2_FMT(false, "input output mode not supported " << getInputOutputModeAsString(mode));
