@@ -14,7 +14,8 @@ import numpy as np
 #set this if you run with DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
 withLatencyHistogram = True
 
-folder = "./"#in this folder
+# folder = "./"#in this folder
+folder = "/home/zeuchste/Dropbox/nes/latency/60sec/test/"
 df_changingBufferSize = pd.read_csv(folder + 'changingBufferSize.csv')
 df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCnt.csv')
 df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
@@ -30,32 +31,58 @@ df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSour
 df_scalingLarge = pd.read_csv(folder + 'scalingLarge.csv')
 
 if(withLatencyHistogram == True):
-    df_latencyWrk1 = pd.read_csv(folder + 'latencyWrk1.out')
-    df_latencyWrk2 = pd.read_csv(folder + 'latencyWrk2.out')
-    df_latencyWrk4 = pd.read_csv(folder + 'latencyWrk4.out')
-    df_latencyWrk8 = pd.read_csv(folder + 'latencyWrk8.out')
+    df_latencyWrk1 = pd.read_csv(folder + 'latencyW1.log')
+    df_latencyWrk2 = pd.read_csv(folder + 'latencyW2.log')
+    df_latencyWrk4 = pd.read_csv(folder + 'latencyW4.log')
+    df_latencyWrk8 = pd.read_csv(folder + 'latencyW8.log')
 
 import plotly.graph_objects as go
 import plotly
 
 # ###############################################################
 fig = make_subplots(
-    rows=4, cols=11,
-    column_widths=[0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5],
-    row_heights=[1., 1., 1., 2],
+    rows=4, cols=10,
+    column_widths=[3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+    row_heights=[1., 1., 1., 4],
     shared_xaxes=False,
+    # shared_yaxes=True,
+    # print_grid=True,
     subplot_titles=[
-        'Buffer Size',
-        'Global Buffer Cnt',
-        'Local Buffer Cnt',
-        'Source Cnt',
-        'Worker Cnt',
-        'Wrk/Src NoProc',
-        'Wrk/Src Low Sel',
-        'Wrk/Src Med Sel',
-        'Wrk/Src High Sel',
-        'Wrk/Src Large Scale'
-    ]
+        'Sc. Buffer Size',
+        'Sc. Global Buffer Cnt',
+        'Sc. Local Buffer Cnt',
+        'Sc. Source Cnt',
+        'Sc. Worker Cnt',
+        'Sc. Wrk/Src -- NoProc',
+        'Sc. Wrk/Src -- Low Sel',
+        'Sc. Wrk/Src -- Med Sel',
+        'Sc. Wrk/Src -- High Sel',
+        'Wrk/Src Large Scale Exp',
+        'Sc. Buffer Size',
+        'Sc. Global Buffer Cnt',
+        'Sc. Local Buffer Cnt',
+        'Sc. Source Cnt',
+        'Sc. Worker Cnt',
+        'Sc. Wrk/Src -- NoProc',
+        'Sc. Wrk/Src -- Low Sel',
+        'Sc. Wrk/Src -- Med Sel',
+        'Sc. Wrk/Src -- High Sel',
+        'Wrk/Src Large Scale Exp',
+        'Sc. Buffer Size',
+        'Sc. Global Buffer Cnt',
+        'Sc. Local Buffer Cnt',
+        'Sc. Source Cnt',
+        'Sc. Worker Cnt',
+        'Sc. Wrk/Src -- NoProc',
+        'Sc. Wrk/Src -- Low Sel',
+        'Sc. Wrk/Src -- Med Sel',
+        'Sc. Wrk/Src -- High Sel',
+        'Wrk/Src Large Scale Exp',
+        'Latency Histogram <br> 1Wrk,NSrc',
+        'Latency Histogram <br> 2Wrk,NSrc',
+        'Latency Histogram <br> 4Wrk,NSrc',
+        'Latency Histogram <br> 8Wrk,NSrc',
+    ],
 )
 
 # Get the color-wheel
@@ -71,7 +98,7 @@ dictOfNames = {
     9: '',
     10: '',
     11: 'plum',
-    12: 'purple'
+    12: 'darkgrey',
 }
 
 # Get the color-wheel
@@ -104,11 +131,11 @@ for i in range(len(df_changingBufferSize_pivot.columns)):
                              mode='markers+lines',
                              line=dict(shape='linear',
                                        color=dictOfNames[col],
-                                       width=1),
+                                       width=2),
                              connectgaps=True,
                              showlegend=False,
                              ),
-                  row=1, col=1
+                  row=1, col=1,
                   )
 fig.update_xaxes(title_text="BufferSizeInBytes", type="log", row=1, col=1)
 fig.update_yaxes(title_text="ThroughputInTupsPerSec", type="log", row=1, col=1)
@@ -123,7 +150,7 @@ for i in range(len(df_changingBufferSize_pivot.columns)):
                              hoverinfo='x+y',
                              mode='markers+lines',
                              line=dict(shape='linear', color=dictOfNames[col],
-                                       width=1),
+                                       width=2),
                              connectgaps=True,
                              showlegend=False,
                              ),
@@ -142,7 +169,7 @@ for i in range(len(df_changingBufferSize_pivot.columns)):
                              hoverinfo='x+y',
                              mode='markers+lines',
                              line=dict(shape='linear', color=dictOfNames[col],
-                                       width=1),
+                                       width=2),
                              connectgaps=True,
                              showlegend=False,
                              ),
@@ -165,7 +192,7 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False,
                    ),
@@ -187,7 +214,7 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False,
                    ),
@@ -208,7 +235,7 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False,
                    ),
@@ -230,7 +257,7 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False,
                    ),
@@ -251,7 +278,7 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False,
                    ),
@@ -273,7 +300,7 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False,
                    ),
@@ -296,7 +323,7 @@ for i in range(len(df_changingSourceCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False
                    ),
@@ -316,7 +343,7 @@ for i in range(len(df_changingSourceCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear',color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False
                    ),
@@ -336,7 +363,7 @@ for i in range(len(df_changingSourceCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNames[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=True
                    ),
@@ -358,7 +385,7 @@ for i in range(len(df_chaningWorkerCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNamesSrc[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=True
                    ),
@@ -378,7 +405,7 @@ for i in range(len(df_chaningWorkerCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear',color=dictOfNamesSrc[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False
                    ),
@@ -398,7 +425,7 @@ for i in range(len(df_chaningWorkerCnt_pivot.columns)):
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNamesSrc[col],
-                             width=1),
+                             width=2),
                    connectgaps=True,
                    showlegend=False
                    ),
@@ -417,7 +444,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='red',
-                         width=1),
+                         width=2),
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
@@ -430,7 +457,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='blue',
-                         width=1),
+                         width=2),
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
@@ -445,7 +472,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='green',
-                         width=1),
+                         width=2),
                name="AvgLatencyInMs",
                showlegend=False
                ),
@@ -463,7 +490,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='red',
-                         width=1),
+                         width=2),
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
@@ -477,7 +504,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='blue',
-                         width=1),
+                         width=2),
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
@@ -493,7 +520,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='green',
-                         width=1),
+                         width=2),
                name="AvgLatencyInMs",
                showlegend=False
                ),
@@ -514,7 +541,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='red',
-                         width=1),
+                         width=2),
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
@@ -528,7 +555,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='blue',
-                         width=1),
+                         width=2),
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
@@ -544,7 +571,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='green',
-                         width=1),
+                         width=2),
                name="AvgLatencyInMs",
                showlegend=False
                ),
@@ -565,7 +592,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='red',
-                         width=1),
+                         width=2),
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
@@ -579,7 +606,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='blue',
-                         width=1),
+                         width=2),
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
@@ -595,7 +622,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='green',
-                         width=1),
+                         width=2),
                name="AvgLatencyInMs",
                showlegend=False
                ),
@@ -613,7 +640,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='red',
-                         width=1),
+                         width=2),
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
@@ -627,7 +654,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='blue',
-                         width=1),
+                         width=2),
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
@@ -641,7 +668,7 @@ fig.add_trace(
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='green',
-                         width=1),
+                         width=2),
                name="AvgLatencyInMs",
                showlegend=False
                ),
@@ -663,7 +690,7 @@ if(withLatencyHistogram == True):
                        hoverinfo='x+y',
                        mode='markers+lines',
                        line=dict(shape='linear', color=dictOfNamesSrc[col],
-                                 width=1),
+                                 width=2),
                        connectgaps=True,
                        showlegend=False
                        ),
@@ -685,7 +712,7 @@ if(withLatencyHistogram == True):
                        hoverinfo='x+y',
                        mode='markers+lines',
                        line=dict(shape='linear', color=dictOfNamesSrc[col],
-                                 width=1),
+                                 width=2),
                        connectgaps=True,
                        showlegend=False
                        ),
@@ -706,7 +733,7 @@ if(withLatencyHistogram == True):
                        hoverinfo='x+y',
                        mode='markers+lines',
                        line=dict(shape='linear', color=dictOfNamesSrc[col],
-                                 width=1),
+                                 width=2),
                        connectgaps=True,
                        showlegend=False
                        ),
@@ -714,26 +741,6 @@ if(withLatencyHistogram == True):
         )
     fig.update_xaxes(title_text="ts (Wrk 4)", row=4, col=3)
 
-
-    df_latencyWrk4_pivot = pd.pivot_table(df_latencyWrk4, values='latency',
-                                          index=['ts'],
-                                          columns='SourceCnt',
-                                          aggfunc=np.sum)
-    for i in range(len(df_latencyWrk4_pivot.columns)):
-        col = df_latencyWrk4_pivot.columns[i]
-        fig.add_trace(
-            go.Scatter(x=df_latencyWrk4_pivot.index, y=df_latencyWrk4_pivot[col].values,
-                       name=str('Src' + str(col)),
-                       hoverinfo='x+y',
-                       mode='markers+lines',
-                       line=dict(shape='linear', color=dictOfNamesSrc[col],
-                                 width=1),
-                       connectgaps=True,
-                       showlegend=False
-                       ),
-            row=4, col=4
-        )
-    fig.update_xaxes(title_text="ts (Wrk 4)", row=4, col=4)
 
 
     df_latencyWrk8_pivot = pd.pivot_table(df_latencyWrk8, values='latency',
@@ -748,19 +755,20 @@ if(withLatencyHistogram == True):
                        hoverinfo='x+y',
                        mode='markers+lines',
                        line=dict(shape='linear', color=dictOfNamesSrc[col],
-                                 width=1),
+                                 width=2),
                        connectgaps=True,
                        showlegend=False
                        ),
-            row=4, col=5
+            row=4, col=4
         )
-    fig.update_xaxes(title_text="ts (Wrk 8)", row=4, col=5)
+    fig.update_xaxes(title_text="ts (Wrk 8)", row=4, col=4)
+    fig.update_yaxes(type="log", row=4, col=4)
 
 fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
         'text': "<b>NebulaStream Performance Numbers </b><br>"
-                "<span style=\"font-size:0.6em\">Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query: Only Forward)"
+                "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query: Only Forward)"
                 "<br>",
         'y': 0.98,
         'x': 0.5,
@@ -768,9 +776,12 @@ fig.update_layout(
         'yanchor': 'top'},
 )
 fig.update_layout(
+    width=2500, height=1500,
     title_font_family="Times New Roman",
     title_font_color="RebeccaPurple",
-    title_font_size=30
+    title_font_size=30,
+
+    margin={'b': 80},
 )
 
 fig.update_layout(
@@ -782,11 +793,11 @@ fig.update_layout(
 # fig.update_layout(legend_title_text='Worker <br> Sources')
 
 fig.update_layout(legend=dict(
-    # orientation="h",
+    orientation="h",
     yanchor="top",
-    y=0.8,
+    y=0.63,
     xanchor="right",
-    x=1,
+    x=0.6,
     font=dict(
         family="Courier New, monospace",
         size=20,
@@ -795,5 +806,4 @@ fig.update_layout(legend=dict(
 ))
 
 ###############################################################
-
 plotly.offline.plot(fig, filename='results.html')
