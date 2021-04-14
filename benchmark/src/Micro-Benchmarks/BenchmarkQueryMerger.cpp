@@ -82,7 +82,7 @@ int main() {
                        "Time,End_Time,Total_Run_Time"
                     << std::endl;
 
-    std::ifstream infile("../../benchmark/src/Micro-Benchmarks/configs/generated_queries.txt");
+    std::ifstream infile("");
     std::vector<std::string> queries;
     std::string line;
 
@@ -104,14 +104,9 @@ int main() {
         NES::QueryCatalogPtr queryCatalog = coordinator->getQueryCatalog();
         auto globalQueryPlan = coordinator->getGlobalQueryPlan();
 
-        string query = "Query::from(\"benchmark\").sink(NullOutputSinkDescriptor::create());";
         auto startTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         for (int i = 1; i <= queries.size(); i++) {
-            //            auto subQuery = Query::from("benchmark1");
-            //            auto queryObj = std::make_shared<Query>(
-            //                Query::from("benchmark0").filter(Attribute("value") > 10).sink(NullOutputSinkDescriptor::create()));
-            //                auto queryObj = std::make_shared<Query>();
             const QueryPlanPtr queryPlan = queryObjects[i - 1]->getQueryPlan();
             queryPlan->setQueryId(i);
             queryService->addQueryRequest(queries[i - 1], queryObjects[i - 1], "TopDown");

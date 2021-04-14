@@ -64,14 +64,10 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
             for (auto& [fieldName, fieldExpr] : schemaMap) {
                 bool fieldMatch = false;
                 for (auto& [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
-                    solver->push();
-                    solver->add(!to_expr(*context, Z3_mk_eq(*context, *fieldExpr, *otherFieldExpr)));
-                    if (solver->check() == z3::unsat) {
+                    if (z3::eq(*fieldExpr, *otherFieldExpr)) {
                         fieldMatch = true;
-                        solver->pop();
                         break;
                     }
-                    solver->pop();
                 }
                 //If field is not matched with any of the other's field then schema is mis-matched
                 if (!fieldMatch) {
@@ -127,7 +123,6 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     solver->push();
     solver->add(!z3::mk_and(allConditions).simplify());
     bool equal = solver->check() == z3::unsat;
-    //    solver->reset();
     solver->pop();
     return equal;
 }

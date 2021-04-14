@@ -87,44 +87,40 @@ void NESRequestProcessorService::start() {
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
 
-                    /*if (false) {
-                        SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
-                        NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
+                    SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
+                    NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
-                        if (!sharedQueryMetaData->isNew()) {
-                            NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
-                            bool successful = queryUndeploymentPhase->execute(sharedQueryId);
-                            if (!successful) {
-                                throw QueryUndeploymentException("Unable to stop Global QueryId "
-                                                                 + std::to_string(sharedQueryId));
-                            }
+                    if (!sharedQueryMetaData->isNew()) {
+                        NES_DEBUG("QueryProcessingService: Undeploying Query Plan with global query id : " << sharedQueryId);
+                        bool successful = queryUndeploymentPhase->execute(sharedQueryId);
+                        if (!successful) {
+                            throw QueryUndeploymentException("Unable to stop Global QueryId " + std::to_string(sharedQueryId));
+                        }
+                    }
+
+                    if (!sharedQueryMetaData->isEmpty()) {
+
+                        auto queryPlan = sharedQueryMetaData->getQueryPlan();
+
+                        NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with shared query id : "
+                                  << sharedQueryId);
+
+                        bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
+                        if (!placementSuccessful) {
+                            throw QueryPlacementException(sharedQueryId,
+                                                          "QueryProcessingService: Failed to perform query placement for "
+                                                          "query plan with shared query id: "
+                                                              + std::to_string(sharedQueryId));
                         }
 
-                        if (!sharedQueryMetaData->isEmpty()) {
-
-                            auto queryPlan = sharedQueryMetaData->getQueryPlan();
-
-                            NES_DEBUG(
-                                "QueryProcessingService: Performing Query Operator placement for query with shared query id : "
-                                << sharedQueryId);
-
-                            bool placementSuccessful = queryPlacementPhase->execute(placementStrategy, queryPlan);
-                            if (!placementSuccessful) {
-                                throw QueryPlacementException(sharedQueryId,
-                                                              "QueryProcessingService: Failed to perform query placement for "
-                                                              "query plan with shared query id: "
-                                                                  + std::to_string(sharedQueryId));
-                            }
-
-                            bool successful = queryDeploymentPhase->execute(sharedQueryId);
-                            if (!successful) {
-                                throw QueryDeploymentException(
-                                    sharedQueryId,
-                                    "QueryRequestProcessingService: Failed to deploy query with global query Id "
-                                        + std::to_string(sharedQueryId));
-                            }
+                        bool successful = queryDeploymentPhase->execute(sharedQueryId);
+                        if (!successful) {
+                            throw QueryDeploymentException(
+                                sharedQueryId,
+                                "QueryRequestProcessingService: Failed to deploy query with global query Id "
+                                    + std::to_string(sharedQueryId));
                         }
-                    }*/
+                    }
 
                     //Mark the meta data as deployed
                     sharedQueryMetaData->markAsDeployed();
