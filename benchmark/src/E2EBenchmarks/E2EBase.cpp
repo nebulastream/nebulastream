@@ -225,9 +225,9 @@ void E2EBase::setupSources() {
         //stateless queries use memMode
         if (query.find("join") == std::string::npos && query.find("window") == std::string::npos) {
             mode = InputOutputMode::MemMode;
-        } else if (query.find("join") != std::string::npos && query.find("window") == std::string::npos) {
+        } else if (query.find("joinWith") != std::string::npos) {
             mode = InputOutputMode::JoinMode;
-        } else if (query.find("join") == std::string::npos && query.find("window") != std::string::npos) {
+        } else if (query.find("window") != std::string::npos) {
             mode = InputOutputMode::WindowMode;
         } else {
             NES_FATAL_ERROR("Modus not supported, only either stateless, or window or join queries are allowed currently");
