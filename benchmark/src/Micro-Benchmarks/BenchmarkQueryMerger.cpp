@@ -19,7 +19,6 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <filesystem>
 #include <omp.h>
-#include <util/BenchmarkQueries.hpp>
 #include <util/BenchmarkUtils.hpp>
 
 using namespace NES;
