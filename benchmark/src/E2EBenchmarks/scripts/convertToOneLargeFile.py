@@ -15,6 +15,10 @@ with open('latency.out', 'wb') as fout:
         header = os.path.splitext(filename)
         header = str(header[0]).split("Latency_",1)[1]
         with open(filename) as fin:
+            header = next(fin)
+            if not header_saved:
+                fout.write(header)
+                header_saved = True
             for line in fin:
                 line = header + "," + line
                 fout.write(line)
