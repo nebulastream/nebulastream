@@ -42,6 +42,10 @@ void LocalBufferPool::destroy() {
     NES_DEBUG("Destroying LocalBufferPool");
     std::unique_lock lock(mutex);
     auto ownedBufferManager = bufferManager.lock();
+    if(numberOfReservedBuffers != exclusiveBuffers.size())
+    {
+        NES_ERROR("Destroying LocalBufferPool Failed" << "current size=" << exclusiveBuffers.size());
+    }
     NES_ASSERT2_FMT(numberOfReservedBuffers == exclusiveBuffers.size(),
                     "one or more buffers were not returned to the pool " << exclusiveBuffers.size() << " but expected "
                                                                          << numberOfReservedBuffers);
@@ -71,6 +75,10 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
             auto memSegment = exclusiveBuffers.front();
             NES_VERIFY(memSegment, "null memory segment");
             exclusiveBuffers.pop_front();
+            if(!memSegment->controlBlock)
+            {
+                NES_ERROR("asdasd");
+            }
             if (memSegment->controlBlock->prepare()) {
                 return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
             } else {

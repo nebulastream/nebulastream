@@ -2,7 +2,6 @@
 
 # Parameter that are changed per run with comma separated list
 numberOfWorkerThreads: 1
-numberOfCoordinatorThreads: 1
 numberOfSources: 1
 
 #paramter for all runs
@@ -20,7 +19,9 @@ query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("time
 
 #benchmark internal parameter
 logLevel: LOG_WARNING
+scalability: scale-up
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 5
+
 
