@@ -20,7 +20,9 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
@@ -61,6 +63,7 @@
 
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
@@ -401,9 +404,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-    auto layout = NodeEngine::createRowLayout(schema);
-    for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
-        EXPECT_EQ(1, layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/ 0)->read(buffer));
+    {
+        using namespace NodeEngine::DynamicMemoryLayout;
+
+        auto layout = DynamicRowLayout::create(schema, true);
+        DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buffer).release()));
+        auto firstFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+        for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
+            EXPECT_EQ(firstFields[recordIndex], 1);
+        }
     }
 }
 /**
@@ -679,43 +688,57 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
                                                                           windowOutputSchema);//is here schema = input_schema?
     windowHandler->setup(executionContext);
 
-    auto layout = NodeEngine::createRowLayout(schema);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    layout->getValueField<uint64_t>(0, 0)->write(buffer, 100);//start 100
-    layout->getValueField<uint64_t>(0, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
-    layout->getValueField<uint64_t>(0, 3)->write(buffer, 1);  //key 1
-    layout->getValueField<uint64_t>(0, 4)->write(buffer, 10); //value 10
-    buffer.setNumberOfTuples(1);
+    {
+        using namespace NodeEngine::DynamicMemoryLayout;
 
-    layout->getValueField<uint64_t>(1, 0)->write(buffer, 100);//start 100
-    layout->getValueField<uint64_t>(1, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
-    layout->getValueField<uint64_t>(1, 3)->write(buffer, 1);  //key 1
-    layout->getValueField<uint64_t>(1, 4)->write(buffer, 8);  //value 10
-    buffer.setNumberOfTuples(2);
 
-    layout->getValueField<uint64_t>(2, 0)->write(buffer, 100);//start 100
-    layout->getValueField<uint64_t>(2, 1)->write(buffer, 110);//stop 200
-    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
-    layout->getValueField<uint64_t>(2, 3)->write(buffer, 1);  //key 1
-    layout->getValueField<uint64_t>(2, 4)->write(buffer, 2);  //value 10
-    buffer.setNumberOfTuples(3);
+        DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, true);
+        DynamicRowLayoutBufferPtr bindedRowLayout =
+            std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(buffer).release()));
 
-    layout->getValueField<uint64_t>(3, 0)->write(buffer, 200);//start 100
-    layout->getValueField<uint64_t>(3, 1)->write(buffer, 210);//stop 200
-    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
-    layout->getValueField<uint64_t>(3, 3)->write(buffer, 3);  //key 1
-    layout->getValueField<uint64_t>(3, 4)->write(buffer, 2);  //value 10
-    buffer.setNumberOfTuples(4);
+        auto startFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+        auto stopFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
+        auto cntFields = DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+        auto keyFields = DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+        auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
 
-    layout->getValueField<uint64_t>(4, 0)->write(buffer, 200);//start 100
-    layout->getValueField<uint64_t>(4, 1)->write(buffer, 210);//stop 200
-    layout->getValueField<uint64_t>(0, 2)->write(buffer, 1);  //cnt
-    layout->getValueField<uint64_t>(4, 3)->write(buffer, 5);  //key 1
-    layout->getValueField<uint64_t>(4, 4)->write(buffer, 12); //value 10
-    buffer.setNumberOfTuples(5);
+        startFields[0] = 100;   //start 100
+        stopFields[0] = 200;    //stop 200
+        cntFields[0] = 1;       //cnt
+        keyFields[0] = 1;       //key 1
+        valueFields[0] = 10;     //value 8
+        buffer.setNumberOfTuples(1);
 
+
+        startFields[1] = 100;   //start 100
+        stopFields[1] = 200;    //stop 200
+        cntFields[0] = 1;       //cnt
+        keyFields[1] = 1;       //key 1
+        valueFields[1] = 8;     //value 8
+        buffer.setNumberOfTuples(2);
+
+        startFields[2] = 100;   //start 100
+        stopFields[2] = 200;    //stop 200
+        cntFields[0] = 1;       //cnt
+        keyFields[2] = 1;       //key 1
+        valueFields[2] = 8;     //value 10
+        buffer.setNumberOfTuples(3);
+
+        startFields[3] = 100;   //start 100
+        stopFields[3] = 200;    //stop 200
+        cntFields[0] = 1;       //cnt
+        keyFields[3] = 3;       //key 3
+        valueFields[3] = 2;     //value 10
+        buffer.setNumberOfTuples(4);
+
+        startFields[4] = 100;   //start 100
+        stopFields[4] = 200;    //stop 200
+        cntFields[0] = 1;       //cnt
+        keyFields[4] = 5;       //key 1
+        valueFields[4] = 12;     //value 12
+        buffer.setNumberOfTuples(5);
+    }
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
     /* execute Stage */
     stage1->setup(*executionContext.get());
@@ -901,15 +924,25 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     stage->execute(inputBuffer, *queryContext.get(), wctx);
 
     auto resultBuffer = queryContext->buffers[0];
+    {
+        using namespace NodeEngine::DynamicMemoryLayout;
 
-    auto inputLayout = NodeEngine::createRowLayout(inputSchema);
-    auto outputLayout = NodeEngine::createRowLayout(outputSchema);
-    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
-        auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/ 2)->read(inputBuffer);
-        auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 3)->read(inputBuffer);
-        auto reference = (floatValue * doubleValue) + 2;
-        auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 4)->read(resultBuffer);
-        EXPECT_EQ(reference, mapedValue);
+        auto inputLayout = DynamicRowLayout::create(inputSchema, true);
+        auto outputLayout = DynamicRowLayout::create(outputSchema, true);
+        DynamicRowLayoutBufferPtr bindedInputRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(inputLayout->map(inputBuffer).release()));
+        DynamicRowLayoutBufferPtr bindedOutputRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(outputLayout->map(resultBuffer).release()));
+        auto secondFieldsInput = DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
+        auto thirdFieldsInput = DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
+
+        auto fourthFieldsOutput = DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+
+        for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+            auto floatValue = secondFieldsInput[recordIndex];
+            auto doubleValue = thirdFieldsInput[recordIndex];
+            auto reference = (floatValue * doubleValue) + 2;
+            auto mappedValue = fourthFieldsOutput[recordIndex];
+            EXPECT_EQ(reference, mappedValue);
+        }
     }
 }
 
