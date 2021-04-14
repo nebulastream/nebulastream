@@ -21,7 +21,9 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
@@ -30,6 +32,7 @@
 #include <memory>
 
 #if __linux
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <sys/syscall.h>
 #endif
 
@@ -55,7 +58,7 @@ class SimpleBenchmarkSource : public DataSource {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
         this->ingestionRate = ingestionRate;
         this->numberOfTuplesPerBuffer = numberOfTuplesPerBuffer;
-        this->rowLayout = NodeEngine::createRowLayout(schema);
+        this->rowLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, false);
         this->curNumberOfTuplesPerBuffer = this->numberOfTuplesPerBuffer;
         this->maxNumberOfPeriods =
             std::ceil((double) BenchmarkUtils::runSingleExperimentSeconds / (double) BenchmarkUtils::periodLengthInSeconds);
@@ -158,6 +161,9 @@ class SimpleBenchmarkSource : public DataSource {
         auto listIt = keyList.begin();
         std::advance(listIt, keyPos);
 
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(rowLayout->map(buf).release()));
+
+
         auto fields = schema->fields;
         for (uint64_t recordIndex = 0; recordIndex < curNumberOfTuplesPerBuffer; recordIndex++) {
             for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
@@ -167,27 +173,27 @@ class SimpleBenchmarkSource : public DataSource {
                 if (physicalType->isBasicType()) {
                     auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
                     if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
-                        rowLayout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
-                        rowLayout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
-                        rowLayout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
-                        rowLayout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
-                        rowLayout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
-                        rowLayout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
-                        rowLayout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
-                        rowLayout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
-                        rowLayout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
-                        rowLayout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
-                        rowLayout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(fieldIndex, bindedRowLayout)[recordIndex] = value;
                     } else {
                         NES_DEBUG("This data source only generates data for numeric fields");
                     }
@@ -244,7 +250,7 @@ class SimpleBenchmarkSource : public DataSource {
     uint64_t keyPos = 0;
     uint64_t curNumberOfTuplesPerBuffer;
     uint64_t maxNumberOfPeriods;
-    std::shared_ptr<NodeEngine::MemoryLayout> rowLayout;
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout;
 };
 }// namespace NES::Benchmarking
 
