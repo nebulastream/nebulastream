@@ -287,7 +287,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             endTsFields[index] = endTs;
             keyFields[index] = key;
             leftValueFields[index] = leftValue;
-            rightValue[index] = rightValue;
+            rightValueFields[index] = rightValue;
         }
     }
 
