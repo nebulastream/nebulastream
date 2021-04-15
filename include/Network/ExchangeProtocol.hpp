@@ -73,6 +73,12 @@ class ExchangeProtocol {
     void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage);
 
     /**
+    * @brief Reaction of the zmqServer after an QueryReconfiguration message is received.
+    * @param the queryReconfigurationMessage
+    */
+    void onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+
+    /**
      * @brief getter for the PartitionManager
      * @return the PartitionManager
      */

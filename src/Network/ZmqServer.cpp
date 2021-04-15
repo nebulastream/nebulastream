@@ -254,6 +254,16 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
+                case Messages::kQueryReconfiguration: {
+                    // if server receives a message that a query reconfiguration is in progress
+                    zmq::message_t queryReconfigurationEnvelope;
+                    auto optRetSize = dispatcherSocket.recv(queryReconfigurationEnvelope, kZmqRecvDefault);
+                    NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
+                    auto queryReconfigurationMsg = *queryReconfigurationEnvelope.data<Messages::QueryReconfigurationMessage>();
+                    NES_DEBUG("ZmqServer: EndOfStream received for channel " << queryReconfigurationMsg.getChannelId());
+                    exchangeProtocol.onQueryReconfiguration(queryReconfigurationMsg);
+                    break;
+                }
                 default: {
                     NES_ERROR("ZmqServer: received unknown message type");
                 }
