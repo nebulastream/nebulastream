@@ -37,25 +37,19 @@
 #include <zconf.h>
 namespace NES {
 
-DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mode)
-{
-    if(mode == "frequency")
-    {
+DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mode) {
+    if (mode == "frequency") {
         return GatheringMode::FREQUENCY_MODE;
-    }
-    else if(mode == "ingestionrate")
-    {
+    } else if (mode == "ingestionrate") {
         return GatheringMode::INGESTION_RATE_MODE;
-    }
-    else
-    {
-        NES_THROW_RUNTIME_ERROR("mode not supported " <<  mode);
+    } else {
+        NES_THROW_RUNTIME_ERROR("mode not supported " << mode);
     }
 }
 
-
 DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
-                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode)
+                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers,
+                       GatheringMode gatheringMode)
     : running(false), thread(nullptr), schema(pSchema), globalBufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId),
       numSourceLocalBuffers(numSourceLocalBuffers), wasGracefullyStopped(true), gatheringMode(gatheringMode) {
@@ -157,18 +151,83 @@ void DataSource::open() { bufferManager = globalBufferManager->createFixedSizeBu
 
 void DataSource::runningRoutine() {
 
-    if(gatheringMode == GatheringMode::FREQUENCY_MODE)
-    {
+    if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
         runningRoutineWithFrequency();
-    }
-    else if(gatheringMode == GatheringMode::INGESTION_RATE_MODE)
-    {
+    } else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         runningRoutineWithIngestionRate();
     }
 }
 
 void DataSource::runningRoutineWithIngestionRate() {
+    NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
+    std::string thName = "DataSrc-" + std::to_string(operatorId);
+    setThreadName(thName.c_str());
 
+    NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
+                            << " ingestion rate=" << gatheringIngestionRate);
+    if (numBuffersToProcess == 0) {
+        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+                  "the source is empty");
+    } else {
+        NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
+    }
+    open();
+    uint64_t buffersPerSecond = gatheringIngestionRate / (globalBufferManager->getBufferSize() / schema->getSchemaSizeInBytes());
+    NES_DEBUG("DataSource is producing " << buffersPerSecond << " per second for rate=" << gatheringIngestionRate
+                                         << " bufferSize=" << globalBufferManager->getBufferSize()
+                                         << " and tuple size=" << schema->getSchemaSizeInBytes());
+    uint64_t nextPeriodStartTime = 0;
+    uint64_t curPeriod = 0;
+    uint64_t processedOverallBufferCnt = 0;
+    while (running) {
+        auto startPeriod =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        uint64_t buffersProcessedCnt = 0;
+        while (buffersProcessedCnt < buffersPerSecond && running && processedOverallBufferCnt < numBuffersToProcess) {
+            auto optBuf = receiveData();
+
+            if (optBuf.has_value()) {
+                // here we got a valid buffer
+                auto& buf = optBuf.value();
+                queryManager->addWork(this->operatorId, buf);
+
+                buffersProcessedCnt++;
+                processedOverallBufferCnt++;
+            }
+            NES_DEBUG("DataSource: buffersProcessedCnt=" << buffersProcessedCnt << " buffersPerSecond=" << buffersPerSecond);
+        }
+
+        uint64_t endPeriod =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+        nextPeriodStartTime = uint64_t(nextPeriodStartTime + (1000));
+        NES_DEBUG("DataSource: startTimeSendBuffers=" << startPeriod << "endTimeSendBuffers=" << endPeriod
+                                                      << "nextPeriodStartTime=" << nextPeriodStartTime);
+
+        if (nextPeriodStartTime < endPeriod) {
+            NES_ERROR("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
+                      << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod);
+        }
+
+        uint64_t curTime =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        while (curTime < nextPeriodStartTime) {
+            curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
+                          .count();
+            if (nextPeriodStartTime > curTime)
+
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(nextPeriodStartTime - curTime));
+            }
+        }
+        NES_WARNING("DataSource: Done with period " << curPeriod << " and buffers=" << processedOverallBufferCnt);
+    }
+
+    // inject reconfiguration task containing end of stream
+    queryManager->addEndOfStream(operatorId, wasGracefullyStopped);//
+    bufferManager->destroy();
+    queryManager.reset();
+    NES_DEBUG("DataSource " << operatorId << " end running");
 }
 
 void DataSource::runningRoutineWithFrequency() {
@@ -179,7 +238,8 @@ void DataSource::runningRoutineWithFrequency() {
     auto ts = std::chrono::system_clock::now();
     std::chrono::milliseconds lastTimeStampMillis = std::chrono::duration_cast<std::chrono::milliseconds>(ts.time_since_epoch());
 
-    NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType());
+    NES_DEBUG("DataSource " << operatorId << ": Running Data Source of type=" << getType()
+                            << " frequency=" << gatheringInterval.count());
     if (numBuffersToProcess == 0) {
         NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
                   "the source is empty");
