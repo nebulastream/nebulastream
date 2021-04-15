@@ -654,12 +654,12 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
             statistics->incProcessedWatermarks();
         } else if (!task.getPipeline()->isReconfiguration()) {
             statistics->incProcessedBuffers();
-//            auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
-//            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-//                           std::chrono::high_resolution_clock::now().time_since_epoch())
-//                           .count();
-//            auto diff = now - latency[2];
-//            statistics->incLatencySum(diff);
+            auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                           .count();
+            auto diff = now - latency[2];
+            statistics->incLatencySum(diff);
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
             statistics->addTimestampToLatencyValue(now, diff);
 #endif
