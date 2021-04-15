@@ -34,7 +34,7 @@ class AdaptiveSource : public DataSource {
      * @param queryManager
      */
     AdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                   uint64_t initialGatheringInterval, OperatorId operatorId, size_t numSourceLocalBuffers);
+                   uint64_t initialGatheringInterval, OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode);
 
     /**
      * @brief Get type of source

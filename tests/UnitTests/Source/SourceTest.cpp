@@ -607,7 +607,7 @@ TEST_F(SourceTest, testLambdaSource) {
     };
 
     DataSourcePtr lambdaSource = createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                    numBuffers, std::chrono::milliseconds(0), func, 1, 12);
+                                                    numBuffers, 0, func, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE);
 
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
@@ -718,11 +718,11 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     wrk1->registerLogicalStream("input2", testSchemaFileName);
 
     NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 3, 0);
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", std::move(func1), 3, 0, "frequency");
     wrk1->registerPhysicalStream(conf1);
 
     NES::AbstractPhysicalStreamConfigPtr conf2 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", std::move(func2), 3, 0);
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", std::move(func2), 3, 0, "frequency");
     wrk1->registerPhysicalStream(conf2);
 
     string query =
@@ -796,7 +796,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
         };
 
         NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
-            "LambdaSource", "test_stream" + std::to_string(i), "input", std::move(func1), 3000000, 0);
+            "LambdaSource", "test_stream" + std::to_string(i), "input", std::move(func1), 3000000, 0, "frequency");
         crd->getNesWorker()->registerPhysicalStream(conf1);
     }
 

@@ -20,6 +20,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <functional>
+#include <Sources/DataSource.hpp>
 
 namespace NES {
 /**
@@ -35,7 +36,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     explicit LambdaSourceDescriptor(
         SchemaPtr schema,
         std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-        uint64_t numBuffersToProcess, std::chrono::milliseconds frequency);
+        uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Factory method to create a LambdaSourceDescriptor object
@@ -48,7 +49,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     static std::shared_ptr<LambdaSourceDescriptor>
     create(SchemaPtr schema,
            std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-           uint64_t numBuffersToProcess, std::chrono::milliseconds frequency);
+           uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -69,13 +70,30 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      */
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& getGeneratorFunction();
 
+    /**
+     * @brief returns number of buffer to process
+     * @return
+     */
     uint64_t getNumBuffersToProcess() const;
-    std::chrono::milliseconds getFrequency() const;
+
+    /**
+     * @brief return the gathering mode
+     * @return
+     */
+    DataSource::GatheringMode  getGatheringMode() const;
+
+    /**
+     * @brief return the gathering value
+     * @return
+     */
+    uint64_t getGatheringValue() const;
 
   private:
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
-    std::chrono::milliseconds frequency;
+    uint64_t gatheringValue;
+    DataSource::GatheringMode  gatheringMode;
+
 };
 }// namespace NES
 

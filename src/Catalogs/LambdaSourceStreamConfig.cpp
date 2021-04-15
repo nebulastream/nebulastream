@@ -24,13 +24,14 @@ namespace detail {}// namespace detail
 LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    uint64_t numBuffersToProcess, uint64_t frequency)
+    uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode)
     : PhysicalStreamConfig(SourceConfig::create()), sourceType(sourceType), generationFunction(std::move(generationFunction)) {
     // nop
     this->physicalStreamName = physicalStreamName;
     this->logicalStreamName = logicalStreamName;
     this->numberOfBuffersToProduce = numBuffersToProcess;
-    this->sourceFrequency = std::chrono::milliseconds(frequency);
+    this->gatheringMode = DataSource::getGatheringModeFromString(gatheringMode);
+    this->gatheringValue = gatheringValue;
 }
 
 const std::string LambdaSourceStreamConfig::getSourceType() { return sourceType; }
@@ -43,15 +44,15 @@ const std::string LambdaSourceStreamConfig::getLogicalStreamName() { return logi
 
 SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
     return std::make_shared<LambdaSourceDescriptor>(schema, std::move(generationFunction), this->numberOfBuffersToProduce,
-                                                    this->sourceFrequency);
+                                                    this->gatheringValue, this->gatheringMode);
 }
 
 AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
     std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    uint64_t numBuffersToProcess, uint64_t frequency) {
+    uint64_t numBuffersToProcess,  uint64_t gatheringValue, std::string gatheringMode) {
     return std::make_shared<LambdaSourceStreamConfig>(sourceType, physicalStreamName, logicalStreamName,
-                                                      std::move(generationFunction), numBuffersToProcess, frequency);
+                                                      std::move(generationFunction), numBuffersToProcess, gatheringValue, gatheringMode);
 }
 
 }// namespace NES

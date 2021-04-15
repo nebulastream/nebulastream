@@ -39,7 +39,7 @@ class CSVSource : public DataSource {
     explicit CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                        const std::string filePath, const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
                        uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId,
-                       size_t numSourceLocalBuffers);
+                       size_t numSourceLocalBuffers, GatheringMode gatheringMode);
 
     /**
      * @brief override the receiveData method for the csv source
