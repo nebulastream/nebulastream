@@ -85,7 +85,6 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
 #endif
 #endif
 
-
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);

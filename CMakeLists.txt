@@ -66,7 +66,10 @@ if (NES_BUILD_BENCHMARKS)
 endif ()
 
 if (NES_BUILD_NATIVE)
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=native -mavx2 -DNES_BENCHMARKS_NATIVE_MODE=1")
+    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
+    if(${AVX2_FOUND})
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mavx2")
+    endif()
 endif ()
 
 # Compiler should produce specific code for system architecture
@@ -98,9 +101,11 @@ set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 # LLVM
 find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
-
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 
+find_package(AVX)
+message("AVX found=" ${AVX_FOUND})
+message("AVX2 found=" ${AVX2_FOUND})
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")
 # This assumes that gRPC and all its dependencies are already installed
