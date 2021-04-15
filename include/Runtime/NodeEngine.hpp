@@ -257,6 +257,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void onChannelError(Network::Messages::ErrorMessage) override;
 
+    /**
+    * @brief this callback is called once an reconfiguration is triggered
+    */
+    void onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) override;
+
     // TODO we should get rid of the following method
     /**
      * @brief Set the physical stream config
@@ -278,6 +283,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
     std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
+    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> reconfigurationQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;

@@ -431,6 +431,28 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
     queryManager->addEndOfStream(msg.getChannelId().getNesPartition().getOperatorId(), msg.isGraceful());
 }
 
+void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
+        auto foundQEPNeedingReplacement = deployedQEPs.find(element.first);
+        if (foundQEPNeedingReplacement != deployedQEPs.end()) {
+            auto foundReplacementQEP = reconfigurationQEPs.find(element.second);
+            // replace QEP
+        }
+    }
+    for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStart()) {
+        auto foundQueryReconfigurationQEP = reconfigurationQEPs.find(querySubPlanId);
+        if (foundQueryReconfigurationQEP != reconfigurationQEPs.end()) {
+            // start qep
+        }
+    }
+    for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {
+        auto foundQEPToStop = deployedQEPs.find(querySubPlanId);
+        if (foundQEPToStop != reconfigurationQEPs.end()) {
+            // stop qep
+        }
+    }
+}
+
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
     if (err.getErrorType() == Network::Messages::ErrorType::kPartitionNotRegisteredError) {
         NES_WARNING("Runtime: Unable to find the NES Partition " << err.getChannelId());
