@@ -81,6 +81,9 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
   private:
     std::weak_ptr<BufferManager> bufferManager;
     std::deque<detail::MemorySegment*> exclusiveBuffers;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    std::vector<detail::MemorySegment*> allSegments;
+#endif
     size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
 };

@@ -590,6 +590,12 @@ std::string E2EBase::getResult() {
     std::cout << "latency sum=" << latencySum << " in ms=" << std::chrono::milliseconds(latencySum).count() << std::endl;
     uint64_t runtimeInSec = std::chrono::duration_cast<std::chrono::seconds>(runtime).count();
 
+    std::cout << "runtimeInSec=" << runtimeInSec << std::endl;
+
+    if (bufferProcessed == 0) {
+        return out.str();
+    }
+
     uint64_t throughputInTupsPerSec = tuplesProcessed / runtimeInSec;
     uint64_t throughputInMBPerSec = (tuplesProcessed * schema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
     uint64_t avgLatencyInMs = latencySum / bufferProcessed;

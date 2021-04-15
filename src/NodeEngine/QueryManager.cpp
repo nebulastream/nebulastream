@@ -28,6 +28,7 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <stack>
 
 //#define QUERY_PROCESSING_WITH_SLOWDOWN
 
@@ -85,7 +86,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
     : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
-      nodeEngineId(nodeEngineId), numThreads(numThreads), waitCounter(0) {
+      nodeEngineId(nodeEngineId), numThreads(numThreads), isDestroyed(false) {
     NES_DEBUG("Init QueryManager::QueryManager");
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
 }
@@ -104,18 +105,19 @@ bool QueryManager::startThreadPool() {
 }
 
 void QueryManager::destroy() {
-    if (waitCounter != 0) {
-        NES_ERROR("QueryManager waitCounter="
-                  << waitCounter
-                  << " which means the source was blocked and could produce in full-speed this is maybe a problem");
+    auto expected = false;
+    if (!isDestroyed.compare_exchange_strong(expected, true)) {
+        return;
     }
-
+    std::unique_lock lock(workMutex);
+    NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
+    lock.unlock();
     if (threadPool) {
         threadPool->stop();
         threadPool.reset();
     }
     std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-    NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
+    NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
     NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << operatorIdToQueryMap.size());
 
@@ -551,13 +553,28 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
         {
             //            std::unique_lock lock(workMutex);
-            for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
-                if (graceful) {
+
+            if (graceful) {
+                for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
                     taskQueue.emplace_back(pipeline, buffer);
-                } else {
-                    //                    taskQueue.emplace_front(pipeline, buffer);
-                    //todo redo this
-                    taskQueue.emplace_back(pipeline, buffer);
+                }
+            } else {
+                std::stack<Task> temp;
+                while (!taskQueue.empty()) {
+                    Task task = taskQueue.front();
+                    if (task.getPipeline()->isReconfiguration()) {
+                        temp.push(task);
+                        taskQueue.pop_front();
+                    } else {
+                        break; // reached a data task
+                    }
+                }
+                for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+                    taskQueue.emplace_front(pipeline, buffer);
+                }
+                while (!temp.empty()) {
+                    taskQueue.emplace_front(temp.top());
+                    temp.pop();
                 }
             }
             cv.notify_all();

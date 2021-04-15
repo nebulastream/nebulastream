@@ -52,12 +52,12 @@ PipelineExecutionContext::~PipelineExecutionContext() { NES_DEBUG("~PipelineExec
 
 TupleBuffer PipelineExecutionContext::allocateTupleBuffer() { return localBufferPool->getBufferBlocking(); }
 
-void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext) {
+void PipelineExecutionContext::emitBuffer(TupleBuffer buffer, WorkerContextRef workerContext) {
     // call the function handler
     emitFunctionHandler(buffer, workerContext);
 }
 
-void PipelineExecutionContext::dispatchBuffer(TupleBuffer& buffer) {
+void PipelineExecutionContext::dispatchBuffer(TupleBuffer buffer) {
     // call the function handler
     emitToQueryManagerFunctionHandler(buffer);
 }
