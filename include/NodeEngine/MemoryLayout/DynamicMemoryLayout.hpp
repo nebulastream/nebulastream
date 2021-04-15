@@ -35,12 +35,6 @@ class DynamicMemoryLayout {
     std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const;
 
     virtual DynamicMemoryLayoutPtr copy() const = 0;
-    /**
-     * Maps a memoryLayout (column or row) to a tupleBuffer
-     * @param tupleBuffer
-     * @return
-     */
-    virtual std::unique_ptr<DynamicLayoutBuffer> bind(TupleBuffer& tupleBuffer) = 0;
 
     bool isCheckBoundaryFieldChecks() const;
     uint64_t getRecordSize() const;
