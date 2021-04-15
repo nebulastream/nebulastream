@@ -58,7 +58,10 @@ enum SourceType {
 */
 
 class DataSource : public NodeEngine::Reconfigurable {
+
   public:
+    enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE };
+
     /**
      * @brief public constructor for data source
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
@@ -66,7 +69,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * @param schema of the data that this source produces
      */
     explicit DataSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                        OperatorId operatorId, size_t numSourceLocalBuffers);
+                        OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode);
 
     DataSource() = delete;
 
@@ -175,12 +178,15 @@ class DataSource : public NodeEngine::Reconfigurable {
     OperatorId getOperatorId();
     void setOperatorId(OperatorId operatorId);
 
+    static GatheringMode getGatheringModeFromString(std::string mode);
+
   protected:
     SchemaPtr schema;
     uint64_t generatedTuples;
     uint64_t generatedBuffers;
     uint64_t numBuffersToProcess;
     uint64_t numSourceLocalBuffers;
+    uint64_t gatheringIngestionRate;
     std::chrono::milliseconds gatheringInterval;
     OperatorId operatorId;
     SourceType type;
@@ -194,8 +200,19 @@ class DataSource : public NodeEngine::Reconfigurable {
     std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
 
+    /**
+    * @brief running routine with a fix frequency
+    */
+    void runningRoutineWithFrequency();
+
+    /**
+    * @brief running routine with a fix ingestion rate
+    */
+    void runningRoutineWithIngestionRate();
+
   protected:
     std::atomic<bool> wasGracefullyStopped;
+    GatheringMode gatheringMode;
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;

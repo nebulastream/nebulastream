@@ -22,16 +22,17 @@ namespace NES {
 LambdaSourceDescriptor::LambdaSourceDescriptor(
     SchemaPtr schema,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    uint64_t numBuffersToProcess, std::chrono::milliseconds frequency)
+    uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode)
     : SourceDescriptor(std::move(schema)), generationFunction(std::move(generationFunction)),
-      numBuffersToProcess(numBuffersToProcess), frequency(frequency) {}
+      numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {}
 
 std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
     SchemaPtr schema,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    uint64_t numBuffersToProcess, std::chrono::milliseconds frequency) {
+    uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode) {
     NES_ASSERT(schema, "invalid schema");
-    return std::make_shared<LambdaSourceDescriptor>(schema, std::move(generationFunction), numBuffersToProcess, frequency);
+    return std::make_shared<LambdaSourceDescriptor>(schema, std::move(generationFunction), numBuffersToProcess, gatheringValue,
+                                                    gatheringMode);
 }
 std::string LambdaSourceDescriptor::toString() { return "LambdaSourceDescriptor"; }
 
@@ -49,5 +50,9 @@ LambdaSourceDescriptor::getGeneratorFunction() {
 }
 
 uint64_t LambdaSourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
-std::chrono::milliseconds LambdaSourceDescriptor::getFrequency() const { return frequency; }
+
+DataSource::GatheringMode LambdaSourceDescriptor::getGatheringMode() const { return gatheringMode; }
+
+uint64_t LambdaSourceDescriptor::getGatheringValue() const { return gatheringValue; }
+
 }// namespace NES

@@ -38,8 +38,8 @@ class GeneratorSource : public DataSource {
    * @param via template, the functor that determines what to do
    */
     GeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                    const uint64_t numbersOfBufferToProduce, OperatorId operatorId, size_t numSourceLocalBuffers)
-        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers) {
+                    const uint64_t numbersOfBufferToProduce, OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode)
+        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode) {
         this->numBuffersToProcess = numbersOfBufferToProduce;
     }
     /**

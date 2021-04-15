@@ -25,13 +25,21 @@ namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                           uint64_t numBuffersToProcess, std::chrono::milliseconds frequency, OperatorId operatorId,
-                           size_t numSourceLocalBuffers)
-    : DataSource(std::move(schema), bufferManager, std::move(queryManager), operatorId, numSourceLocalBuffers),
+                           uint64_t numBuffersToProcess, uint64_t gatheringValue, OperatorId operatorId,
+                           size_t numSourceLocalBuffers, GatheringMode gatheringMode)
+    : DataSource(std::move(schema), bufferManager, std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), globalBufferManager(bufferManager),
       refCnt(0) {
     this->numBuffersToProcess = numBuffersToProcess;
-    this->gatheringInterval = std::chrono::milliseconds(frequency);
+    if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
+        this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
+    }
+    if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
+        this->gatheringIngestionRate = gatheringValue;
+    } else {
+        NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
+    }
+
     NES_DEBUG("MemorySource() numBuffersToProcess=" << numBuffersToProcess << " memoryAreaSize=" << memoryAreaSize);
     NES_ASSERT(memoryArea && memoryAreaSize > 0, "invalid memory area");
 }

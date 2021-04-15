@@ -83,9 +83,9 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::Buf
  * @return a const data source pointer */
 const DataSourcePtr createLambdaSource(
     SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-    uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+    uint64_t numbersOfBufferToProduce, uint64_t gatheringValue,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    OperatorId operatorId, size_t numSourceLocalBuffers);
+    OperatorId operatorId, size_t numSourceLocalBuffers, DataSource::GatheringMode gatheringMode);
 
 /**
  * @brief function to create an empty zmq source
@@ -161,8 +161,8 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
  */
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
-                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
-                                       OperatorId operatorId, size_t numSourceLocalBuffers);
+                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                       OperatorId operatorId, size_t numSourceLocalBuffers, DataSource::GatheringMode gatheringMode);
 
 /**
  * @brief function to create a network source

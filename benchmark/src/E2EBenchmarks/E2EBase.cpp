@@ -276,7 +276,7 @@ void E2EBase::setupSources() {
 
             NES::AbstractPhysicalStreamConfigPtr conf =
                 NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, memAreaSize,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0);
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
@@ -314,7 +314,7 @@ void E2EBase::setupSources() {
 
             NES::AbstractPhysicalStreamConfigPtr conf =
                 NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0);
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);

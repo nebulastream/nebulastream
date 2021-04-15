@@ -36,7 +36,7 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      */
     explicit MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
                                       uint8_t* memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                      uint64_t frequency);
+                                      uint64_t gatheringValue, std::string gatheringMode);
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -80,12 +80,14 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      */
     static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName,
                                                   std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize,
-                                                  uint64_t numBuffersToProcess, uint64_t frequency);
+                                                  uint64_t numBuffersToProcess,  uint64_t gatheringValue, std::string gatheringMode);
 
   private:
     std::string sourceType;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
+    uint64_t gatheringValue;
+    DataSource::GatheringMode gatheringMode;
 };
 
 }// namespace NES

@@ -37,11 +37,28 @@
 #include <zconf.h>
 namespace NES {
 
+DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mode)
+{
+    if(mode == "frequency")
+    {
+        return GatheringMode::FREQUENCY_MODE;
+    }
+    else if(mode == "ingestionrate")
+    {
+        return GatheringMode::INGESTION_RATE_MODE;
+    }
+    else
+    {
+        NES_THROW_RUNTIME_ERROR("mode not supported " <<  mode);
+    }
+}
+
+
 DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
-                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers)
+                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode)
     : running(false), thread(nullptr), schema(pSchema), globalBufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId),
-      numSourceLocalBuffers(numSourceLocalBuffers), wasGracefullyStopped(true) {
+      numSourceLocalBuffers(numSourceLocalBuffers), wasGracefullyStopped(true), gatheringMode(gatheringMode) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -139,6 +156,22 @@ void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this
 void DataSource::open() { bufferManager = globalBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
 
 void DataSource::runningRoutine() {
+
+    if(gatheringMode == GatheringMode::FREQUENCY_MODE)
+    {
+        runningRoutineWithFrequency();
+    }
+    else if(gatheringMode == GatheringMode::INGESTION_RATE_MODE)
+    {
+        runningRoutineWithIngestionRate();
+    }
+}
+
+void DataSource::runningRoutineWithIngestionRate() {
+
+}
+
+void DataSource::runningRoutineWithFrequency() {
     NES_ASSERT(this->operatorId != 0, "The id of the source is not set properly");
     std::string thName = "DataSrc-" + std::to_string(operatorId);
     setThreadName(thName.c_str());

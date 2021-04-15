@@ -24,7 +24,7 @@ namespace Network {
 NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                              NodeEngine::QueryManagerPtr queryManager, NetworkManagerPtr networkManager,
                              NesPartition nesPartition, size_t numSourceLocalBuffers)
-    : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId(), numSourceLocalBuffers),
+    : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId(), numSourceLocalBuffers, DataSource::FREQUENCY_MODE),
       networkManager(networkManager), nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
     NES_ASSERT(this->networkManager, "Invalid network manager");

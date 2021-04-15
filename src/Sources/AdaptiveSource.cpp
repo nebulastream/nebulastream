@@ -30,8 +30,8 @@ namespace NES {
 
 AdaptiveSource::AdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                NodeEngine::QueryManagerPtr queryManager, uint64_t initialGatheringInterval, OperatorId operatorId,
-                               size_t numSourceLocalBuffers)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers) {
+                               size_t numSourceLocalBuffers, GatheringMode gatheringMode)
+    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode) {
     NES_DEBUG("AdaptiveSource:" << this << " creating with interval:" << initialGatheringInterval << "ms");
     this->gatheringInterval = std::chrono::milliseconds(initialGatheringInterval);
 }

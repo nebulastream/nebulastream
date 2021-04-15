@@ -30,14 +30,28 @@ namespace NES {
 
 LambdaSource::LambdaSource(
     SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-    uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+    uint64_t numbersOfBufferToProduce, uint64_t gatheringValue,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    OperatorId operatorId, size_t numSourceLocalBuffers)
+    OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId,
-                      numSourceLocalBuffers),
+                      numSourceLocalBuffers, gatheringMode),
       generationFunction(std::move(generationFunction)) {
+
     NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));
-    this->gatheringInterval = std::chrono::milliseconds(frequency);
+
+    if(gatheringMode == GatheringMode::FREQUENCY_MODE)
+    {
+        this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
+    }
+    if(gatheringMode == GatheringMode::INGESTION_RATE_MODE)
+    {
+        this->gatheringIngestionRate = gatheringValue;
+    }
+    else
+    {
+        NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
+    }
+
     wasGracefullyStopped = false;
 }
 

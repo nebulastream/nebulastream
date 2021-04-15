@@ -258,7 +258,7 @@ class TestHarness {
 
                 AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
                     "MemorySource", worker.physicalStreamName, worker.logicalStreamName, memArea, memAreaSize,
-                    /** numberOfBuffers*/ memSrcNumBuffToProcess, /** frequency*/ memSrcFrequency);
+                    /** numberOfBuffers*/ memSrcNumBuffToProcess, /** frequency*/ memSrcFrequency, "frequency");
                 worker.wrk->registerPhysicalStream(conf);
             }
         }
