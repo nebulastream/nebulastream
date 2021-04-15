@@ -18,6 +18,7 @@
 #define NES_NETWORKMESSAGE_HPP
 
 #include <Network/ChannelId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
@@ -47,6 +48,8 @@ enum MessageType {
     kEndOfStream,
     /// message type of an event buffer
     kEventBuffer,
+    /// message type of communicating reconfiguration events
+    kQueryReconfiguration,
 };
 
 /// this enum defines the errors that can occur in the network stack logic
@@ -124,6 +127,26 @@ class EndOfStreamMessage : public ExchangeMessage {
 
   private:
     bool graceful;
+};
+
+class QueryReconfigurationMessage : public ExchangeMessage {
+  public:
+    static constexpr MessageType MESSAGE_TYPE = kQueryReconfiguration;
+
+    explicit QueryReconfigurationMessage(ChannelId channelId, std::vector<QuerySubPlanId> querySubPlansToStart,
+                                         std::map<QuerySubPlanId, QuerySubPlanId> querySubPlansIdToReplace,
+                                         std::vector<QuerySubPlanId> querySubPlansToStop)
+        : ExchangeMessage(channelId), querySubPlansToStart(querySubPlansToStart),
+          querySubPlansIdToReplace(querySubPlansIdToReplace), querySubPlansToStop(querySubPlansToStop) {}
+
+    std::vector<QuerySubPlanId> getQuerySubPlansToStart() const { return querySubPlansToStart; }
+    std::map<QuerySubPlanId, QuerySubPlanId> getQuerySubPlansIdToReplace() const { return querySubPlansIdToReplace; }
+    std::vector<QuerySubPlanId> getQuerySubPlansToStop() const { return querySubPlansToStop; }
+
+  private:
+    std::vector<QuerySubPlanId> querySubPlansToStart;
+    std::map<QuerySubPlanId, QuerySubPlanId> querySubPlansIdToReplace;
+    std::vector<QuerySubPlanId> querySubPlansToStop;
 };
 
 class ErrorMessage : public ExchangeMessage {

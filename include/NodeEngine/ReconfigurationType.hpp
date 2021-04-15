@@ -29,6 +29,8 @@ enum ReconfigurationType : uint8_t {
     SoftEndOfStream,
     // use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
     HardEndOfStream,
+    // use QueryReconfiguration for reconfiguration tasks that reconfigure query execution plans of query
+    QueryReconfiguration
 };
 }
 
