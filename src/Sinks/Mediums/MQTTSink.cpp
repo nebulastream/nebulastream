@@ -144,7 +144,6 @@ bool MQTTSink::connect() {
 }
 
 bool MQTTSink::disconnect() {
-    std::unique_lock lock(writeMutex);
     if (connected) {
         client->disconnect();
         connected = false;
