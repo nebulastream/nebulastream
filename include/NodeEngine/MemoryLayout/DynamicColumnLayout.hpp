@@ -34,7 +34,13 @@ class DynamicColumnLayout : public DynamicMemoryLayout {
     DynamicMemoryLayoutPtr copy() const override;
     DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
     static DynamicColumnLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
-    std::unique_ptr<DynamicLayoutBuffer> bind(TupleBuffer& tupleBuffer) override;
+
+    /**
+     * Maps a memoryLayout to a tupleBuffer
+     * @param tupleBuffer
+     * @return
+     */
+    DynamicColumnLayoutBuffer bind(TupleBuffer& tupleBuffer);
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

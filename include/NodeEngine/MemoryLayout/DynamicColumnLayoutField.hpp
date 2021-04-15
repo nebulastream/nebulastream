@@ -32,27 +32,27 @@ class DynamicColumnLayoutField {
 
   public:
     static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
-                                                                     DynamicColumnLayoutBufferPtr& layoutBuffer);
+                                                                     DynamicColumnLayoutBuffer& layoutBuffer);
     static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName,
-                                                                     DynamicColumnLayoutBufferPtr& layoutBuffer);
+                                                                     DynamicColumnLayoutBuffer& layoutBuffer);
     inline T& operator[](size_t recordIndex);
-    DynamicColumnLayoutField(T* basePointer, DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer)
+    DynamicColumnLayoutField(T* basePointer, DynamicColumnLayoutBuffer& dynamicColumnLayoutBuffer)
         : basePointer(basePointer), dynamicColumnLayoutBuffer(dynamicColumnLayoutBuffer){};
 
   private:
     T* basePointer;
-    DynamicColumnLayoutBufferPtr& dynamicColumnLayoutBuffer;
+    DynamicColumnLayoutBuffer& dynamicColumnLayoutBuffer;
 };
 
 template<class T, bool boundaryChecks>
 inline DynamicColumnLayoutField<T, boundaryChecks>
-DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr& layoutBuffer) {
-    if (boundaryChecks && fieldIndex >= layoutBuffer->getFieldSizes().size()) {
-        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
+DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, DynamicColumnLayoutBuffer& layoutBuffer) {
+    if (boundaryChecks && fieldIndex >= layoutBuffer.getFieldSizes().size()) {
+        NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layoutBuffer.getFieldSizes().size() << " >= " << fieldIndex);
     }
 
-    auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]);
-    auto fieldOffset = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
+    auto bufferBasePointer = &(layoutBuffer.getTupleBuffer().getBufferAs<uint8_t>()[0]);
+    auto fieldOffset = layoutBuffer.calcOffset(0, fieldIndex, boundaryChecks);
 
     T* basePointer = reinterpret_cast<T*>(bufferBasePointer + fieldOffset);
     return DynamicColumnLayoutField<T, boundaryChecks>(basePointer, layoutBuffer);
@@ -60,8 +60,8 @@ DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, Dynamic
 
 template<class T, bool boundaryChecks>
 DynamicColumnLayoutField<T, boundaryChecks>
-DynamicColumnLayoutField<T, boundaryChecks>::create(std::string fieldName, DynamicColumnLayoutBufferPtr& layoutBuffer) {
-    auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
+DynamicColumnLayoutField<T, boundaryChecks>::create(std::string fieldName, DynamicColumnLayoutBuffer& layoutBuffer) {
+    auto fieldIndex = layoutBuffer.getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value()) {
         return DynamicColumnLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);
     } else {
@@ -71,8 +71,8 @@ DynamicColumnLayoutField<T, boundaryChecks>::create(std::string fieldName, Dynam
 
 template<class T, bool boundaryChecks>
 inline T& DynamicColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
-    if (boundaryChecks && recordIndex >= dynamicColumnLayoutBuffer->getCapacity()) {
-        NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << dynamicColumnLayoutBuffer->getCapacity()
+    if (boundaryChecks && recordIndex >= dynamicColumnLayoutBuffer.getCapacity()) {
+        NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << dynamicColumnLayoutBuffer.getCapacity()
                                                              << " >= " << recordIndex);
     }
 
