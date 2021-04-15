@@ -704,36 +704,36 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
         auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
 
         startFields[0] = 100;   //start 100
-        stopFields[0] = 200;    //stop 200
+        stopFields[0] = 110;    //stop 200
         cntFields[0] = 1;       //cnt
         keyFields[0] = 1;       //key 1
-        valueFields[0] = 10;     //value 8
+        valueFields[0] = 10;     //value 10
         buffer.setNumberOfTuples(1);
 
 
         startFields[1] = 100;   //start 100
-        stopFields[1] = 200;    //stop 200
+        stopFields[1] = 110;    //stop 200
         cntFields[0] = 1;       //cnt
         keyFields[1] = 1;       //key 1
         valueFields[1] = 8;     //value 8
         buffer.setNumberOfTuples(2);
 
         startFields[2] = 100;   //start 100
-        stopFields[2] = 200;    //stop 200
+        stopFields[2] = 110;    //stop 200
         cntFields[0] = 1;       //cnt
         keyFields[2] = 1;       //key 1
-        valueFields[2] = 8;     //value 10
+        valueFields[2] = 2;     //value 10
         buffer.setNumberOfTuples(3);
 
-        startFields[3] = 100;   //start 100
-        stopFields[3] = 200;    //stop 200
+        startFields[3] = 200;   //start 200
+        stopFields[3] = 210;    //stop 210
         cntFields[0] = 1;       //cnt
         keyFields[3] = 3;       //key 3
         valueFields[3] = 2;     //value 10
         buffer.setNumberOfTuples(4);
 
-        startFields[4] = 100;   //start 100
-        stopFields[4] = 200;    //stop 200
+        startFields[4] = 200;   //start 200
+        stopFields[4] = 210;    //stop 210
         cntFields[0] = 1;       //cnt
         keyFields[4] = 5;       //key 1
         valueFields[4] = 12;     //value 12
