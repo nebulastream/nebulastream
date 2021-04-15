@@ -60,22 +60,18 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& b
         NES_THROW_RUNTIME_ERROR("DiskMetrics: Missing fields in schema.");
     }
 
-    {
-        using namespace NodeEngine::DynamicMemoryLayout;
-        auto layout = DynamicRowLayout::create(schema, true);
-        DynamicRowLayoutBufferPtr bindedRowLayout =
-            std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
+        std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
 
-        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>
-            outputTuple;
-        outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(0);
+    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t> outputTuple;
+    outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(0);
 
-        output.fBsize = std::get<0>(outputTuple);
-        output.fFrsize = std::get<1>(outputTuple);
-        output.fBlocks = std::get<2>(outputTuple);
-        output.fBfree = std::get<3>(outputTuple);
-        output.fBavail = std::get<4>(outputTuple);
-    }
+    output.fBsize = std::get<0>(outputTuple);
+    output.fFrsize = std::get<1>(outputTuple);
+    output.fBlocks = std::get<2>(outputTuple);
+    output.fBfree = std::get<3>(outputTuple);
+    output.fBavail = std::get<4>(outputTuple);
 
     return output;
 }

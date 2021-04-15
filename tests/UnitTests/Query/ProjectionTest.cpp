@@ -136,13 +136,12 @@ class WindowSource : public NES::DefaultSource {
 
 
         for (int i = 0; i < 10; i++) {
-            using namespace NodeEngine::DynamicMemoryLayout;
-            DynamicRowLayoutField<int16_t, true>::create(0, bindedRowLayout)[i] = 1;
-            DynamicRowLayoutField<int16_t, true>::create(1, bindedRowLayout)[i] = 1;
+            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(0, bindedRowLayout)[i] = 1;
+            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(1, bindedRowLayout)[i] = 1;
 
             if (varyWatermark) {
                 if (!decreaseTime) {
-                    DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
+                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
                 } else {
                     if (runCnt == 0) {
                         /**
@@ -163,9 +162,9 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
+                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
                         } else {
-                            DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp + 20;
+                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp + 20;
                         }
                     } else {
                         /**
@@ -185,11 +184,11 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
-                        DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
                     }
                 }
             } else {
-                DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
+                NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
             }
         }
         buffer.setNumberOfTuples(10);
@@ -302,13 +301,12 @@ class TestSink : public SinkMedium {
 };
 
 void fillBuffer(TupleBuffer& buf, NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr memoryLayout) {
-    using namespace NodeEngine::DynamicMemoryLayout;
-    DynamicRowLayoutBufferPtr bindedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(memoryLayout->map(buf).release()));
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
+        std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(memoryLayout->map(buf).release()));
 
-    auto recordIndexFields = DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
-    auto fields01 = DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
-    auto fields02 = DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
+    auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto fields01 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
+    auto fields02 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         recordIndexFields[recordIndex] = recordIndex;

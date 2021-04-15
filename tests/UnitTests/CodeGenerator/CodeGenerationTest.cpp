@@ -513,41 +513,40 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
+    
+    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
+    auto bindedRowLayout = layout->bind(inputBuffer);
 
-    {
-        using namespace NodeEngine::DynamicMemoryLayout;
-        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
-        auto bindedRowLayout = layout->bind(inputBuffer);
 
-        auto recordIndexFieldsInput = DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto recordIndexFieldsInput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
 
-        for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
-            recordIndexFieldsInput[recordIndex] = recordIndex;
-        }
+    for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
+        recordIndexFieldsInput[recordIndex] = recordIndex;
+    }
 
-        inputBuffer.setNumberOfTuples(100);
+    inputBuffer.setNumberOfTuples(100);
 
-        /* execute code */
-        auto wctx = NodeEngine::WorkerContext{0};
-        auto context =
-            std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(),
-                                                           std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
-        stage->setup(*context.get());
-        stage->start(*context.get());
-        ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), 0u);
-        auto outputBuffer = context->buffers[0];
-        NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
+    /* execute code */
+    auto wctx = NodeEngine::WorkerContext{0};
+    auto context =
+        std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(),
+                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+    stage->setup(*context.get());
+    stage->start(*context.get());
+    ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), 0u);
+    auto outputBuffer = context->buffers[0];
+    NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
 
-        /* check result for correctness */
-        auto bindedOutputRowLayout = layout->bind(outputBuffer);
-        auto sumGeneratedCode = DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
-        auto sum = 0;
-        for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
-            sum += recordIndexFieldsInput[recordIndex];
-        }
+    /* check result for correctness */
+    auto bindedOutputRowLayout = layout->bind(outputBuffer);
+    auto sumGeneratedCode = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
 
-        EXPECT_EQ(sum, sumGeneratedCode);
-    } // end of namespace NodeEngine::DynamicMemoryLayout
+    auto sum = 0;
+    for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
+        sum += recordIndexFieldsInput[recordIndex];
+    }
+
+    EXPECT_EQ(sum, sumGeneratedCode);
 }
 
 }// namespace NES

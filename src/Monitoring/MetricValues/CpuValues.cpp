@@ -52,28 +52,25 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, 
         && UtilityFunctions::endsWith(schema->fields[i + 9]->getName(), "guestnice")) {
         NES_DEBUG("CpuValues: Index found for " + prefix + "user" + " at " + std::to_string(i));
 
-        {
-            using namespace NodeEngine::DynamicMemoryLayout;
-            auto layout = DynamicRowLayout::create(schema, true);
-            DynamicRowLayoutBufferPtr bindedRowLayout =
-                std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
+            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
 
-            std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>
-                outputTuple;
-            outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                                                      uint64_t, uint64_t, uint64_t>(i);
+        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>
+            outputTuple;
+        outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                                                  uint64_t, uint64_t, uint64_t>(i);
 
-            output.user = std::get<0>(outputTuple);
-            output.nice = std::get<1>(outputTuple);
-            output.system = std::get<2>(outputTuple);
-            output.idle = std::get<3>(outputTuple);
-            output.iowait = std::get<4>(outputTuple);
-            output.irq = std::get<5>(outputTuple);
-            output.softirq = std::get<6>(outputTuple);
-            output.steal = std::get<7>(outputTuple);
-            output.guest = std::get<8>(outputTuple);
-            output.guestnice = std::get<9>(outputTuple);
-        }
+        output.user = std::get<0>(outputTuple);
+        output.nice = std::get<1>(outputTuple);
+        output.system = std::get<2>(outputTuple);
+        output.idle = std::get<3>(outputTuple);
+        output.iowait = std::get<4>(outputTuple);
+        output.irq = std::get<5>(outputTuple);
+        output.softirq = std::get<6>(outputTuple);
+        output.steal = std::get<7>(outputTuple);
+        output.guest = std::get<8>(outputTuple);
+        output.guestnice = std::get<9>(outputTuple);
     } else {
         NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n"
                                 + schema->toString());

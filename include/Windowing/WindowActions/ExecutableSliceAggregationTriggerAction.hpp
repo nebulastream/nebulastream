@@ -208,26 +208,23 @@ class ExecutableSliceAggregationTriggerAction
 
     void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
                            ValueType value, uint64_t cnt) {
-        {
-            using namespace NodeEngine::DynamicMemoryLayout;
-            DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
 
-            auto startTsFields = DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
-            auto endTsFields = DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
-            auto cntFields = DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
-            startTsFields[index] = startTs;
-            endTsFields[index] = endTs;
-            cntFields[index] = cnt;
+        auto startTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+        auto endTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
+        auto cntFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+        startTsFields[index] = startTs;
+        endTsFields[index] = endTs;
+        cntFields[index] = cnt;
 
-            if (windowDefinition->isKeyed()) {
-                auto keyFields = DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
-                auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
-                keyFields[index] = key;
-                valueFields[index] = value;
-            } else {
-                auto valueFields = DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
-                valueFields[index] = value;
-            }
+        if (windowDefinition->isKeyed()) {
+            auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
+            keyFields[index] = key;
+            valueFields[index] = value;
+        } else {
+            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+            valueFields[index] = value;
         }
     }
 

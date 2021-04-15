@@ -72,39 +72,35 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
         NES_THROW_RUNTIME_ERROR("NetworkValues: Missing fields in schema.");
     }
 
-    {
-        using namespace NodeEngine::DynamicMemoryLayout;
-        auto layout = DynamicRowLayout::create(schema, true);
-        DynamicRowLayoutBufferPtr bindedRowLayout =
-            std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
+        std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
 
-        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                   uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,uint64_t>
-            outputTuple;
-        outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                                                  uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                                                  uint64_t,uint64_t>(i);
+    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+               uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t> outputTuple;
 
-        output.interfaceName = std::get<0>(outputTuple);
-        output.rBytes = std::get<1>(outputTuple);
-        output.rPackets = std::get<2>(outputTuple);
-        output.rErrs = std::get<3>(outputTuple);
-        output.rDrop = std::get<4>(outputTuple);
-        output.rFifo = std::get<5>(outputTuple);
-        output.rFrame = std::get<6>(outputTuple);
-        output.rCompressed = std::get<7>(outputTuple);
-        output.rMulticast = std::get<8>(outputTuple);
+    outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                                    uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(i);
 
-        output.tBytes = std::get<9>(outputTuple);
-        output.tPackets = std::get<10>(outputTuple);
-        output.tErrs = std::get<11>(outputTuple);
-        output.tDrop = std::get<12>(outputTuple);
-        output.tFifo = std::get<13>(outputTuple);
-        output.tColls = std::get<14>(outputTuple);
-        output.tCarrier = std::get<15>(outputTuple);
-        output.tCompressed = std::get<16>(outputTuple);
+    output.interfaceName = std::get<0>(outputTuple);
+    output.rBytes = std::get<1>(outputTuple);
+    output.rPackets = std::get<2>(outputTuple);
+    output.rErrs = std::get<3>(outputTuple);
+    output.rDrop = std::get<4>(outputTuple);
+    output.rFifo = std::get<5>(outputTuple);
+    output.rFrame = std::get<6>(outputTuple);
+    output.rCompressed = std::get<7>(outputTuple);
+    output.rMulticast = std::get<8>(outputTuple);
 
-    }
+    output.tBytes = std::get<9>(outputTuple);
+    output.tPackets = std::get<10>(outputTuple);
+    output.tErrs = std::get<11>(outputTuple);
+    output.tDrop = std::get<12>(outputTuple);
+    output.tFifo = std::get<13>(outputTuple);
+    output.tColls = std::get<14>(outputTuple);
+    output.tCarrier = std::get<15>(outputTuple);
+    output.tCompressed = std::get<16>(outputTuple);
+
     return output;
 }
 
