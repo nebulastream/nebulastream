@@ -26,6 +26,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Phases/QueryRewritePhase.hpp>
+#include <Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -112,8 +113,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
     placementStrategy->updateGlobalExecutionPlan(queryPlan);
@@ -166,8 +171,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
     placementStrategy->updateGlobalExecutionPlan(queryPlan);
@@ -234,8 +243,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
     placementStrategy->updateGlobalExecutionPlan(queryPlan);
@@ -305,8 +318,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
     placementStrategy->updateGlobalExecutionPlan(queryPlan);
@@ -379,8 +396,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
     placementStrategy->updateGlobalExecutionPlan(queryPlan);
@@ -449,8 +470,12 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    QueryRewritePhasePtr queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
     placementStrategy->updateGlobalExecutionPlan(queryPlan);

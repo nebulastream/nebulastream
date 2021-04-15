@@ -18,18 +18,13 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
@@ -67,6 +62,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator1) {
 
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -86,6 +85,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator2) {
     auto attributeSortRule = AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -109,6 +112,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator3) {
 
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -131,6 +138,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator4) {
 
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(b[Undefined]"
@@ -152,6 +163,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator5) {
 
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])+FieldAccessNode(d[Undefined]"
@@ -172,6 +187,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator6) {
     auto attributeSortRule = AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -195,6 +214,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator7) {
 
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature = "SINK().MAP(FieldAccessNode(b[Undefined])=FieldAccessNode(a[Undefined])*FieldAccessNode(c[Undefined]"
@@ -216,6 +239,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator8) {
 
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -239,6 +266,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator9) {
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -260,6 +291,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator10) {
 
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -283,6 +318,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator11) {
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -304,6 +343,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator12) {
 
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -327,6 +370,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator13) {
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -349,6 +396,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator14) {
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -366,8 +417,11 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator15) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto attributeSortRule = AttributeSortRule::create();
-
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -387,8 +441,11 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator16) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto attributeSortRule = AttributeSortRule::create();
-
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -408,8 +465,11 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator17) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto attributeSortRule = AttributeSortRule::create();
-
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -432,6 +492,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleFilterOperator1) {
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -452,6 +516,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator2) {
 
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -474,6 +542,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator3) {
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -494,6 +566,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator4) {
 
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
@@ -516,6 +592,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator5) {
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
+
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
     auto expectedSignature =
@@ -536,6 +616,10 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator6) {
 
     auto attributeSortRule = AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
+
+    auto signatureInferencePhase =
+        Optimizer::SignatureInferencePhase::create(/*Z3context*/ nullptr, /*compute string signature*/ true);
+    signatureInferencePhase->execute(queryPlan);
 
     auto rootOperators = queryPlan->getRootOperators();
     EXPECT_TRUE(rootOperators.size() == 1);
