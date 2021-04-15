@@ -61,32 +61,29 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
         && UtilityFunctions::endsWith(schema->fields[i]->getName(), "TOTAL_RAM")
         && UtilityFunctions::endsWith(schema->fields[i + 12]->getName(), "LOADS_15MIN")) {
         //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
-        {
-            using namespace NodeEngine::DynamicMemoryLayout;
-            auto layout = DynamicRowLayout::create(schema, true);
-            DynamicRowLayoutBufferPtr bindedRowLayout =
-                std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
+            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
 
-            std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                       uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>
-                outputTuple;
-            outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                                                      uint64_t,uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(i);
+        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                   uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>
+            outputTuple;
+        outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
+                                                  uint64_t,uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(i);
 
-            output.TOTAL_RAM = std::get<0>(outputTuple);
-            output.TOTAL_SWAP = std::get<1>(outputTuple);
-            output.FREE_RAM = std::get<2>(outputTuple);
-            output.SHARED_RAM = std::get<3>(outputTuple);
-            output.BUFFER_RAM = std::get<4>(outputTuple);
-            output.FREE_SWAP = std::get<5>(outputTuple);
-            output.TOTAL_HIGH = std::get<6>(outputTuple);
-            output.FREE_HIGH = std::get<7>(outputTuple);
-            output.PROCS = std::get<8>(outputTuple);
-            output.MEM_UNIT = std::get<9>(outputTuple);
-            output.LOADS_1MIN = std::get<10>(outputTuple);
-            output.LOADS_5MIN = std::get<11>(outputTuple);
-            output.LOADS_15MIN = std::get<12>(outputTuple);
-        }
+        output.TOTAL_RAM = std::get<0>(outputTuple);
+        output.TOTAL_SWAP = std::get<1>(outputTuple);
+        output.FREE_RAM = std::get<2>(outputTuple);
+        output.SHARED_RAM = std::get<3>(outputTuple);
+        output.BUFFER_RAM = std::get<4>(outputTuple);
+        output.FREE_SWAP = std::get<5>(outputTuple);
+        output.TOTAL_HIGH = std::get<6>(outputTuple);
+        output.FREE_HIGH = std::get<7>(outputTuple);
+        output.PROCS = std::get<8>(outputTuple);
+        output.MEM_UNIT = std::get<9>(outputTuple);
+        output.LOADS_1MIN = std::get<10>(outputTuple);
+        output.LOADS_5MIN = std::get<11>(outputTuple);
+        output.LOADS_15MIN = std::get<12>(outputTuple);
     } else {
         NES_THROW_RUNTIME_ERROR("MemoryMetrics: Metrics could not be parsed from schema " + schema->toString());
     }

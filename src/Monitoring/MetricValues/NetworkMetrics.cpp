@@ -67,19 +67,16 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
     if (i < schema->getSize() && buf.getNumberOfTuples() == 1 && hasField) {
         NES_DEBUG("NetworkMetrics: Prefix found in schema " + prefix + "INTERFACE_NO with index " + std::to_string(i));
 
-        {
-            using namespace NodeEngine::DynamicMemoryLayout;
-            auto layout = DynamicRowLayout::create(schema, true);
-            DynamicRowLayoutBufferPtr bindedRowLayout =
-                std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(layout->map(buf).release()));
-            auto numInt = DynamicRowLayoutField<uint64_t, false>::create(i, bindedRowLayout)[0];
+        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
+            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+        auto numInt = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(i, bindedRowLayout)[0];
 
-            for (int n = 0; n < numInt; n++) {
-                NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
+        for (int n = 0; n < numInt; n++) {
+            NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
 
-                auto networkValue = NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_");
-                output.addNetworkValues(std::move(networkValue));
-            }
+            auto networkValue = NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_");
+            output.addNetworkValues(std::move(networkValue));
         }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetrics: Metrics could not be parsed from schema " + schema->toString());
