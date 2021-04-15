@@ -85,9 +85,6 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
 #endif
 #endif
 
-#ifdef NES_BENCHMARKS_MODE
-
-#endif
 
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
