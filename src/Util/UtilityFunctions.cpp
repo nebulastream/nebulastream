@@ -43,7 +43,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
-#include <boost/algorithm/string/replace.hpp>
+#include <iostream>
 #include <iomanip>
 #include <random>
 #include <sstream>
@@ -120,9 +120,17 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         // add return statement in front of input query/pattern
         //if pattern
         if (pattern) {
-            boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
+            size_t position = 0;
+            while((position = newQuery.find("Pattern::from", position)) != 18446744073709551615){
+
+                newQuery.replace(position, sizeof("Pattern::from") - 1, "return Pattern::from");
+                position += sizeof("return Pattern::from");
+
+            }
+            //boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
         } else {// if Query
-            boost::replace_first(newQuery, "Query::from", "return Query::from");
+            newQuery.replace(newQuery.find("Query::from"), sizeof("Query::from") - 1, "return Query::from");
+            //boost::replace_first(newQuery, "Query::from", "return Query::from");
         }
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
