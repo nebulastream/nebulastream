@@ -35,7 +35,7 @@ void SystemCompilerCompiledCode::cleanUp() {
     if (std::filesystem::exists(baseFileName + ".c")) {
         std::filesystem::remove(baseFileName + ".c");
     }
-å
+
     if (std::filesystem::exists(baseFileName + ".o")) {
         std::filesystem::remove(baseFileName + ".o");
     }
