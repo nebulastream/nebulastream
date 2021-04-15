@@ -98,6 +98,8 @@ class ExecutableCompleteAggregationTriggerAction
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
             executionContext->dispatchBuffer(tupleBuffer);
+        } else {
+            tupleBuffer.release();
         }
         return true;
     }

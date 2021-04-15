@@ -390,29 +390,13 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
             ++it;
         }
     }
-
-    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-    NES_DEBUG("refcnt nm " << networkManager.use_count());
-    NES_DEBUG("refcnt qm " << queryManager.use_count());
-
     // release components
     // TODO do not touch the sequence here as it will lead to errors in the shutdown sequence
     deployedQEPs.clear();
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     networkManager->destroy();
-    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-    NES_DEBUG("refcnt nm " << networkManager.use_count());
-    NES_DEBUG("refcnt qm " << queryManager.use_count());
-    queryCompiler.reset();
-    queryManager.reset();
-    networkManager.reset();
-    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-    NES_DEBUG("refcnt nm " << networkManager.use_count());
-    NES_DEBUG("refcnt qm " << queryManager.use_count());
-
     bufferManager->destroy();
-    bufferManager.reset();
     return !withError;
 }
 

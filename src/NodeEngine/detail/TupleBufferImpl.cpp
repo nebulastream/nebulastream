@@ -53,7 +53,8 @@ MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr) {}
 MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
     : ptr(ptr), size(size) {
-    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
+//    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
+    controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -147,7 +148,7 @@ void fillThreadOwnershipInfo(std::string& threadName, std::string& callstack) {
 }
 #endif
 bool BufferControlBlock::prepare() {
-    uint32_t expected = 0;
+    int32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     // store the current thread that owns the buffer and track which function obtained the buffer
     std::unique_lock lock(owningThreadsMutex);
@@ -155,7 +156,11 @@ bool BufferControlBlock::prepare() {
     fillThreadOwnershipInfo(info.threadName, info.callstack);
     owningThreads[std::this_thread::get_id()].emplace_back(info);
 #endif
-    return referenceCounter.compare_exchange_strong(expected, 1);
+    if (referenceCounter.compare_exchange_strong(expected, 1)) {
+        return true;
+    }
+    NES_ERROR("Invalid reference counter: " << expected);
+    return false;
 }
 
 BufferControlBlock* BufferControlBlock::retain() {
@@ -182,7 +187,7 @@ void BufferControlBlock::dumpOwningThreadInfo() {
 }
 #endif
 
-uint32_t BufferControlBlock::getReferenceCount() { return referenceCounter.load(); }
+int32_t BufferControlBlock::getReferenceCount() { return referenceCounter.load(); }
 
 bool BufferControlBlock::release() {
     uint32_t prevRefCnt;
@@ -196,7 +201,7 @@ bool BufferControlBlock::release() {
         }
 #endif
         return true;
-    } else if (prevRefCnt == 0) {
+    } else if (prevRefCnt <= 0) {
         NES_THROW_RUNTIME_ERROR("BufferControlBlock: releasing an already released buffer");
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
