@@ -17,7 +17,7 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
-#include <Exceptions/InvalidQueryStatusException.hpp>
+#include <Exceptions/RequestTypeNotHandledException.hpp>
 #include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Phases/QueryMergerPhase.hpp>
@@ -60,9 +60,8 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
             } else if (nesRequest->instanceOf<RunQueryRequest>()) {
-                auto queryPlan = nesRequest->getQueryPlan();
-                NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
-                         << queryId << " status=" << queryRequest.getQueryStatusAsString());
+                auto queryPlan = nesRequest->as<RunQueryRequest>()->getQueryPlan();
+                NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
@@ -90,9 +89,9 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
                 globalQueryPlan->addQueryPlan(queryPlan);
             } else {
-                NES_ERROR("QueryProcessingService: Request received for query with status " << queryRequest.getQueryStatus());
-                throw InvalidQueryStatusException({QueryStatus::MarkedForStop, QueryStatus::Scheduling},
-                                                  queryRequest.getQueryStatus());
+                NES_ERROR("QueryProcessingService: Received unhandled request type " << nesRequest->toString());
+                NES_WARNING("QueryProcessingService: Skipping to process next request.");
+                continue;
             }
         }
 

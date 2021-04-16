@@ -48,6 +48,21 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
         return false;
     };
 
+    /**
+     * @brief Dynamically casts the RequestType
+     * @tparam RequestType
+     * @return returns a shared pointer of the RequestType
+     */
+    template<class RequestType>
+    std::shared_ptr<RequestType> as() {
+        if (instanceOf<RequestType>()) {
+            return std::dynamic_pointer_cast<RequestType>(this->shared_from_this());
+        } else {
+            throw std::logic_error("NESRequest:: we performed an invalid cast of operator " + this->toString() + " to type "
+                                   + typeid(RequestType).name());
+        }
+    }
+
     virtual std::string toString() = 0;
 
   private:

@@ -39,6 +39,7 @@
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <exception>
 #include <z3++.h>
 
@@ -76,7 +77,10 @@ void NESRequestProcessorService::start() {
             }
 
             //FIXME: What to do if a different requests contain different placement strategies within a batch?
-            std::string placementStrategy = nesRequests[0].getQueryPlacementStrategy();
+            std::string placementStrategy = "BottomUp";
+            if (nesRequests[0]->instanceOf<RunQueryRequest>()) {
+                placementStrategy = nesRequests[0]->as<RunQueryRequest>()->getQueryPlacementStrategy();
+            }
             try {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(nesRequests);
