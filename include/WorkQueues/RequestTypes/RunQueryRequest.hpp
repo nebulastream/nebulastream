@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_ADDQUERYREQUEST_HPP
-#define NES_ADDQUERYREQUEST_HPP
+#ifndef NES_RUNQUERYREQUEST_HPP
+#define NES_RUNQUERYREQUEST_HPP
 
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 
@@ -24,20 +24,31 @@ namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class AddQueryRequest;
-typedef std::shared_ptr<AddQueryRequest> AddQueryRequestPtr;
+class RunQueryRequest;
+typedef std::shared_ptr<RunQueryRequest> RunQueryRequestPtr;
 
 /**
  * @brief This request is used for running a new query in NES cluster
  */
-class AddQueryRequest : public NESRequest {
+class RunQueryRequest : public NESRequest {
 
-    static AddQueryRequestPtr create(QueryPlanPtr queryPlan);
+    /**
+     * @brief Create instance of RunQueryRequest
+     * @param queryPlan : the query plan to be run
+     * @return shared pointer to the instance of Run query request
+     */
+    static RunQueryRequestPtr create(QueryPlanPtr queryPlan);
+
+    /**
+     * @brief Get the query plan to run
+     * @return pointer to the query plan to run
+     */
+    QueryPlanPtr getQueryPlan();
 
   private:
-    explicit AddQueryRequest(QueryPlanPtr queryPlan);
+    explicit RunQueryRequest(QueryPlanPtr queryPlan);
     QueryPlanPtr queryPlan;
 };
 }// namespace NES
 
-#endif//NES_ADDQUERYREQUEST_HPP
+#endif//NES_RUNQUERYREQUEST_HPP

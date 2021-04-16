@@ -14,8 +14,15 @@
     limitations under the License.
 */
 
-//
-// Created by ankit on 16.04.21.
-//
+#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 
-#include "WorkQueues/RequestTypes/AddQueryRequest.hpp"
+namespace NES {
+
+StopQueryRequest::StopQueryRequest(QueryId queryId) : queryId(queryId) {}
+
+StopQueryRequestPtr StopQueryRequest::create(QueryId queryId) {
+    return std::make_shared<StopQueryRequest>(StopQueryRequest(queryId));
+}
+
+QueryId StopQueryRequest::getQueryId() { return queryId; }
+}// namespace NES
