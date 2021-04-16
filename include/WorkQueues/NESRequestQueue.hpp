@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYREQUESTQUEUE_HPP
-#define NES_QUERYREQUESTQUEUE_HPP
+#ifndef NES_NESREQUESTQUEUE_HPP
+#define NES_NESREQUESTQUEUE_HPP
 
 #include <Plans/Query/QueryId.hpp>
 #include <condition_variable>
@@ -30,17 +30,20 @@ namespace NES {
 class QueryCatalogEntry;
 typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
 
-class QueryRequestQueue {
+/**
+ * @brief This is a wrapper around a Deque for submitting arbitrary requests for the RequestProcessorService
+ */
+class NESRequestQueue {
 
   public:
     /**
      * @brief Constructor of Query request queue
      * @param batchSize : the batch of user requests to be processed together
      */
-    QueryRequestQueue(uint32_t batchSize);
+    NESRequestQueue(uint32_t batchSize);
 
     //d-tor
-    ~QueryRequestQueue();
+    ~NESRequestQueue();
 
     /**
      * @brief Add query request into processing queue
@@ -81,6 +84,6 @@ class QueryRequestQueue {
     std::condition_variable availabilityTrigger;
     std::deque<QueryCatalogEntry> schedulingQueue;
 };
-typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 }// namespace NES
-#endif//NES_QUERYREQUESTQUEUE_HPP
+#endif//NES_NESREQUESTQUEUE_HPP

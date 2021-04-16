@@ -62,8 +62,8 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
-class QueryRequestQueue;
-typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+class NESRequestQueue;
+typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queries requests.
@@ -73,7 +73,7 @@ class QueryRequestProcessorService {
     explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                           QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                          QueryRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                          NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
                                           std::string queryMergerRule);
 
     ~QueryRequestProcessorService();
@@ -102,7 +102,7 @@ class QueryRequestProcessorService {
     QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
-    QueryRequestQueuePtr queryRequestQueue;
+    NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
