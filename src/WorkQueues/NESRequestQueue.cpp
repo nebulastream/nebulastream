@@ -16,18 +16,18 @@
 
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Util/Logger.hpp>
-#include <WorkQueues/QueryRequestQueue.hpp>
+#include <WorkQueues/NESRequestQueue.hpp>
 #include <algorithm>
 
 namespace NES {
 
-QueryRequestQueue::QueryRequestQueue(uint32_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {
+NESRequestQueue::NESRequestQueue(uint32_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {
     NES_DEBUG("QueryRequestQueue()");
 }
 
-QueryRequestQueue::~QueryRequestQueue() { NES_DEBUG("~QueryRequestQueue()"); }
+NESRequestQueue::~NESRequestQueue() { NES_DEBUG("~QueryRequestQueue()"); }
 
-bool QueryRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
+bool NESRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
     std::unique_lock<std::mutex> lock(queryRequest);
     QueryId queryId = queryCatalogEntry->getQueryId();
     NES_INFO("QueryRequestQueue: Adding a new query request for query: " << queryId);
@@ -51,7 +51,7 @@ bool QueryRequestQueue::add(QueryCatalogEntryPtr queryCatalogEntry) {
     return true;
 }
 
-std::vector<QueryCatalogEntry> QueryRequestQueue::getNextBatch() {
+std::vector<QueryCatalogEntry> NESRequestQueue::getNextBatch() {
     std::unique_lock<std::mutex> lock(queryRequest);
     //We are using conditional variable to prevent Lost Wakeup and Spurious Wakeup
     //ref: https://www.modernescpp.com/index.php/c-core-guidelines-be-aware-of-the-traps-of-condition-variables
@@ -79,15 +79,15 @@ std::vector<QueryCatalogEntry> QueryRequestQueue::getNextBatch() {
     return queriesToSchedule;
 }
 
-void QueryRequestQueue::insertPoisonPill() {
+void NESRequestQueue::insertPoisonPill() {
     std::unique_lock<std::mutex> lock(queryRequest);
     NES_INFO("QueryRequestQueue: Shutdown is called. Inserting Poison pill in the query request queue.");
     setNewRequestAvailable(true);
     availabilityTrigger.notify_one();
 }
 
-bool QueryRequestQueue::isNewRequestAvailable() const { return newRequestAvailable; }
+bool NESRequestQueue::isNewRequestAvailable() const { return newRequestAvailable; }
 
-void QueryRequestQueue::setNewRequestAvailable(bool newRequestAvailable) { this->newRequestAvailable = newRequestAvailable; }
+void NESRequestQueue::setNewRequestAvailable(bool newRequestAvailable) { this->newRequestAvailable = newRequestAvailable; }
 
 }// namespace NES

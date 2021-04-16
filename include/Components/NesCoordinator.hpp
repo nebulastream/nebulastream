@@ -29,8 +29,8 @@
 #include <thread>
 
 namespace NES {
-class QueryRequestQueue;
-typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+class NESRequestQueue;
+typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
@@ -188,7 +188,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
     WorkerRPCClientPtr workerRpcClient;
-    QueryRequestQueuePtr queryRequestQueue;
+    NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

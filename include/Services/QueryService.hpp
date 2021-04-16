@@ -29,8 +29,8 @@ typedef std::shared_ptr<QueryService> QueryServicePtr;
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
 
-class QueryRequestQueue;
-typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+class NESRequestQueue;
+typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queries.
@@ -38,7 +38,7 @@ typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
 class QueryService {
 
   public:
-    explicit QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
+    explicit QueryService(QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
                           bool enableSemanticQueryValidation);
 
     ~QueryService();
@@ -74,7 +74,7 @@ class QueryService {
 
   private:
     QueryCatalogPtr queryCatalog;
-    QueryRequestQueuePtr queryRequestQueue;
+    NESRequestQueuePtr queryRequestQueue;
     StreamCatalogPtr streamCatalog;
     bool enableSemanticQueryValidation;
 };
