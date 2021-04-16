@@ -46,6 +46,7 @@
 #include <iostream>
 #include <iomanip>
 #include <random>
+#include <unistd.h>
 #include <sstream>
 
 namespace NES {
@@ -120,17 +121,9 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         // add return statement in front of input query/pattern
         //if pattern
         if (pattern) {
-            size_t position = 0;
-            while((position = newQuery.find("Pattern::from", position)) != 18446744073709551615){
-
-                newQuery.replace(position, sizeof("Pattern::from") - 1, "return Pattern::from");
-                position += sizeof("return Pattern::from");
-
-            }
-            //boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
+            findAndReplaceAll(newQuery, "Pattern::from", "return Pattern::from");
         } else {// if Query
-            newQuery.replace(newQuery.find("Query::from"), sizeof("Query::from") - 1, "return Query::from");
-            //boost::replace_first(newQuery, "Query::from", "return Query::from");
+           newQuery  = replaceFirst(newQuery, "Query::from", "return Query::from");
         }
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
@@ -362,6 +355,11 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
         // Get the next occurrence from the current position
         pos = data.find(toSearch, pos + replaceStr.size());
     }
+}
+
+const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace){
+        return origin.replace(origin.find(search), search.size(), replace);
+
 }
 
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
