@@ -208,6 +208,17 @@ class UtilityFunctions {
 
     /**
      *
+     * @brief This function replaces the first occurrence of search term in a string with the replace term.
+     * @param origin - The original string that is to be manipulated
+     * @param search - The substring/term which we want to have replaced
+     * @param replace - The string that is replacing the search term.
+     * @return
+     */
+    static const std::string replaceFirst(std::string origin, std::string search, std::string replace);
+
+
+    /**
+     *
      * @param queryPlan queries to which the properties are assigned
      * @param properties properties to assign
      * @return true if the assignment success, and false otherwise
