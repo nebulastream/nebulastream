@@ -32,12 +32,14 @@ typedef std::shared_ptr<RunQueryRequest> RunQueryRequestPtr;
  */
 class RunQueryRequest : public NESRequest {
 
+  public:
     /**
      * @brief Create instance of RunQueryRequest
      * @param queryPlan : the query plan to be run
+     * @param queryPlacementStrategy: the placement strategy name
      * @return shared pointer to the instance of Run query request
      */
-    static RunQueryRequestPtr create(QueryPlanPtr queryPlan);
+    static RunQueryRequestPtr create(QueryPlanPtr queryPlan, std::string queryPlacementStrategy);
 
     /**
      * @brief Get the query plan to run
@@ -45,10 +47,18 @@ class RunQueryRequest : public NESRequest {
      */
     QueryPlanPtr getQueryPlan();
 
-  private:
-    explicit RunQueryRequest(QueryPlanPtr queryPlan);
-    QueryPlanPtr queryPlan;
+    /**
+     * @brief Get query placement strategy
+     * @return query placement strategy
+     */
+    std::string getQueryPlacementStrategy();
 
+    std::string toString() override;
+
+  private:
+    explicit RunQueryRequest(QueryPlanPtr queryPlan, std::string queryPlacementStrategy);
+    QueryPlanPtr queryPlan;
+    std::string queryPlacementStrategy;
 };
 }// namespace NES
 

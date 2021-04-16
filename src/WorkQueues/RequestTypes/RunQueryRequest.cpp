@@ -14,15 +14,24 @@
     limitations under the License.
 */
 
+#include <Plans/Query/QueryPlan.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 
 namespace NES {
 
-RunQueryRequest::RunQueryRequest(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
+RunQueryRequest::RunQueryRequest(QueryPlanPtr queryPlan, std::string queryPlacementStrategy)
+    : NESRequest(queryPlan->getQueryId()), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {}
 
-RunQueryRequestPtr RunQueryRequest::create(QueryPlanPtr queryPlan) {
-    return std::make_shared<RunQueryRequest>(RunQueryRequest(queryPlan));
+RunQueryRequestPtr RunQueryRequest::create(QueryPlanPtr queryPlan, std::string queryPlacementStrategy) {
+    return std::make_shared<RunQueryRequest>(RunQueryRequest(queryPlan, queryPlacementStrategy));
 }
 
 QueryPlanPtr RunQueryRequest::getQueryPlan() { return queryPlan; }
+
+std::string RunQueryRequest::getQueryPlacementStrategy() { return queryPlacementStrategy; }
+
+std::string RunQueryRequest::toString() {
+    return "RunQueryRequest { QueryId: " + std::to_string(getQueryId()) + ", QueryPlan: " + queryPlan->toString()
+        + ", QueryPlacementStrategy: " + queryPlacementStrategy + "}";
+}
 }// namespace NES
