@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEMITOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEMITOPERATOR_HPP_
 
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES {
@@ -10,7 +11,7 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Emit operator.
  */
-class PhysicalEmitOperator : public PhysicalUnaryOperator {
+class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOperator{
   public:
     PhysicalEmitOperator(OperatorId id, SchemaPtr inputSchema);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema);

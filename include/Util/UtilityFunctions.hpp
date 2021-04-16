@@ -174,6 +174,12 @@ class UtilityFunctions {
     static OperatorId getNextOperatorId();
 
     /**
+   * @brief Returns the next free pipeline id
+   * @return node id
+   */
+    static uint64_t getNextPipelineId();
+
+    /**
      * @brief Returns the next free node id
      * @return node id
      */

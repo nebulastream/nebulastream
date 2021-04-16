@@ -189,6 +189,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexFilterQuery) {
     queryPlan->addRootOperator(sinkOp2);
 
     NES_DEBUG(queryPlan->toString());
+
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
     auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
 

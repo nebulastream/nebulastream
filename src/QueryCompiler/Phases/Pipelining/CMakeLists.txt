@@ -16,6 +16,6 @@ add_source_nes(
         AlwaysBreakPolicy.cpp
         PipelineBreakerPolicy.cpp
         FuseIfPossiblePolicy.cpp
-        DefaultPipeliningPhase
+        DefaultPipeliningPhase.cpp
 )
 

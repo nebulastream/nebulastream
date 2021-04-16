@@ -17,6 +17,9 @@
 #ifndef NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
 #define NES_INCLUDE_NODES_UTIL_DUMPHANDLER_HPP_
 
+#include <NodeEngine/NodeEngine.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 namespace NES {
 
@@ -38,6 +41,8 @@ class DumpHandler {
     */
     virtual void dump(const NodePtr node, std::ostream& out) = 0;
     virtual void multilineDump(const NodePtr node, std::ostream& out) = 0;
+    virtual void dump(QueryPlanPtr){};
+    virtual void dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr){};
 };
 
 typedef std::shared_ptr<DumpHandler> DebugDumpHandlerPtr;

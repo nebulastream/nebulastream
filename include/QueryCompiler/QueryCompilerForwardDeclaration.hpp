@@ -68,6 +68,9 @@ typedef std::shared_ptr<PhysicalOperatorProvider> PhysicalOperatorProviderPtr;
 class PipelineQueryPlan;
 typedef std::shared_ptr<PipelineQueryPlan> PipelineQueryPlanPtr;
 
+class AddScanAndEmitPhase;
+typedef std::shared_ptr<AddScanAndEmitPhase> AddScanAndEmitPhasePtr;
+
 class PipeliningPhase;
 typedef std::shared_ptr<PipeliningPhase> PipeliningPhasePtr;
 

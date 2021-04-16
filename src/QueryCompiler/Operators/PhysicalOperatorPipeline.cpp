@@ -1,12 +1,13 @@
 #include <QueryCompiler/Operators/PhysicalOperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 namespace NES {
 namespace QueryCompilation {
 
-PhysicalOperatorPipeline::PhysicalOperatorPipeline() {}
+PhysicalOperatorPipeline::PhysicalOperatorPipeline(uint64_t pipelineId): id(pipelineId), rootOperator(QueryPlan::create()) {}
 
 PhysicalOperatorPipelinePtr PhysicalOperatorPipeline::create() {
-    return std::make_shared<PhysicalOperatorPipeline>(PhysicalOperatorPipeline());
+    return std::make_shared<PhysicalOperatorPipeline>(PhysicalOperatorPipeline(UtilityFunctions::getNextPipelineId()));
 }
 
 void PhysicalOperatorPipeline::addPredecessor(PhysicalOperatorPipelinePtr pipeline) {
@@ -67,12 +68,16 @@ void PhysicalOperatorPipeline::clearSuccessors() {
 
 std::vector<PhysicalOperatorPipelinePtr> PhysicalOperatorPipeline::getSuccessors() { return successorPipelines; }
 void PhysicalOperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
-    if (this->rootOperator) {
-        this->rootOperator->addParent(newRootOperator);
-    }
-    this->rootOperator = newRootOperator;
+    this->rootOperator->appendOperatorAsNewRoot(newRootOperator);
 }
-OperatorNodePtr PhysicalOperatorPipeline::getRootOperator() { return rootOperator; }
+
+uint64_t PhysicalOperatorPipeline::getPipelineId() {
+    return id;
+}
+QueryPlanPtr PhysicalOperatorPipeline::getRootOperator() {
+    return rootOperator;
+}
+
 
 }// namespace QueryCompilation
 }// namespace NES
