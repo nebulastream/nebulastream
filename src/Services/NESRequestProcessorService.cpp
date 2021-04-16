@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include "Exceptions/InvalidQueryException.hpp"
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryDeploymentException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
@@ -34,20 +34,21 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
-#include <Services/QueryRequestProcessorService.hpp>
+#include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
+#include <WorkQueues/RequestTypes/NESRequest.hpp>
 #include <exception>
 #include <z3++.h>
 
 namespace NES {
 
-QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                                           QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
-                                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                                           NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
-                                                           std::string queryMergerRule)
+NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                                       QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
+                                                       StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
+                                                       NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+                                                       std::string queryMergerRule)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       globalQueryPlan(globalQueryPlan) {
 
@@ -62,23 +63,23 @@ QueryRequestProcessorService::QueryRequestProcessorService(GlobalExecutionPlanPt
                                                                     enableQueryMerging, queryMergerRule);
 }
 
-QueryRequestProcessorService::~QueryRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
+NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
 
-void QueryRequestProcessorService::start() {
+void NESRequestProcessorService::start() {
     try {
         while (isQueryProcessorRunning()) {
-            NES_INFO("QueryRequestProcessorService: Waiting for new query request trigger");
-            const std::vector<QueryCatalogEntry> queryRequests = queryRequestQueue->getNextBatch();
-            NES_INFO("QueryProcessingService: Found " << queryRequests.size() << " query requests to process");
-            if (queryRequests.empty()) {
+            NES_DEBUG("QueryRequestProcessorService: Waiting for new query request trigger");
+            auto nesRequests = queryRequestQueue->getNextBatch();
+            NES_TRACE("QueryProcessingService: Found " << nesRequests.size() << " query requests to process");
+            if (nesRequests.empty()) {
                 continue;
             }
 
-            //FIXME: What to do if a query contains different placement strategy?
-            std::string placementStrategy = queryRequests[0].getQueryPlacementStrategy();
+            //FIXME: What to do if a different requests contain different placement strategies within a batch?
+            std::string placementStrategy = nesRequests[0].getQueryPlacementStrategy();
             try {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
-                globalQueryPlanUpdatePhase->execute(queryRequests);
+                globalQueryPlanUpdatePhase->execute(nesRequests);
 
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
@@ -123,9 +124,10 @@ void QueryRequestProcessorService::start() {
                     sharedQueryMetaData->setAsOld();
                 }
 
-                for (auto queryRequest : queryRequests) {
-                    auto queryId = queryRequest.getQueryId();
-                    if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
+                for (auto queryRequest : nesRequests) {
+                    auto queryId = queryRequest->getQueryId();
+                    auto catalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                    if (catalogEntry->getQueryStatus() == QueryStatus::Registered) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
@@ -174,12 +176,12 @@ void QueryRequestProcessorService::start() {
     }
 }
 
-bool QueryRequestProcessorService::isQueryProcessorRunning() {
+bool NESRequestProcessorService::isQueryProcessorRunning() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     return queryProcessorRunning;
 }
 
-void QueryRequestProcessorService::shutDown() {
+void NESRequestProcessorService::shutDown() {
     std::unique_lock<std::mutex> lock(queryProcessorStatusLock);
     if (queryProcessorRunning) {
         this->queryProcessorRunning = false;

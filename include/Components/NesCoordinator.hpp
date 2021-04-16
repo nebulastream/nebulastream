@@ -56,8 +56,8 @@ typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
 class NesWorker;
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 
-class QueryRequestProcessorService;
-typedef std::shared_ptr<QueryRequestProcessorService> QueryRequestProcessorServicePtr;
+class NESRequestProcessorService;
+typedef std::shared_ptr<NESRequestProcessorService> QueryRequestProcessorServicePtr;
 
 class QueryService;
 typedef std::shared_ptr<QueryService> QueryServicePtr;

@@ -15,3 +15,10 @@
 */
 
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
+
+namespace NES {
+
+NESRequest::NESRequest(QueryId queryId) : queryId(queryId) {}
+
+QueryId NESRequest::getQueryId() { return queryId; }
+}// namespace NES

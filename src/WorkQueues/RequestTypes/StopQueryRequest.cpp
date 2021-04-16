@@ -18,11 +18,12 @@
 
 namespace NES {
 
-StopQueryRequest::StopQueryRequest(QueryId queryId) : queryId(queryId) {}
+StopQueryRequest::StopQueryRequest(QueryId queryId) : NESRequest(queryId) {}
 
 StopQueryRequestPtr StopQueryRequest::create(QueryId queryId) {
     return std::make_shared<StopQueryRequest>(StopQueryRequest(queryId));
 }
 
-QueryId StopQueryRequest::getQueryId() { return queryId; }
+std::string StopQueryRequest::toString() { return "StopQueryRequest { QueryId: " + std::to_string(getQueryId()) + "}"; }
+
 }// namespace NES

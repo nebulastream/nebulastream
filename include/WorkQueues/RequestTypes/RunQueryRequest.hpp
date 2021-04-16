@@ -48,6 +48,7 @@ class RunQueryRequest : public NESRequest {
   private:
     explicit RunQueryRequest(QueryPlanPtr queryPlan);
     QueryPlanPtr queryPlan;
+
 };
 }// namespace NES
 

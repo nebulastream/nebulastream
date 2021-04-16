@@ -17,7 +17,6 @@
 #ifndef NES_RESTARTQUERYREQUEST_HPP
 #define NES_RESTARTQUERYREQUEST_HPP
 
-#include <Plans/Query/QueryId.hpp>
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 
 namespace NES {
@@ -30,6 +29,7 @@ typedef std::shared_ptr<RestartQueryRequest> RestartQueryRequestPtr;
  */
 class RestartQueryRequest : public NESRequest {
 
+  public:
     /**
      * @brief Create instance of  RestartQueryRequest
      * @param queryId : the id of query to be restarted
@@ -37,15 +37,10 @@ class RestartQueryRequest : public NESRequest {
      */
     static RestartQueryRequestPtr create(QueryId queryId);
 
-    /**
-     * @brief Get the query id to stop
-     * @return query id to stop
-     */
-    QueryId getQueryId();
+    std::string toString() override;
 
   private:
     explicit RestartQueryRequest(QueryId queryId);
-    QueryId queryId;
 };
 }// namespace NES
 #endif//NES_RESTARTQUERYREQUEST_HPP

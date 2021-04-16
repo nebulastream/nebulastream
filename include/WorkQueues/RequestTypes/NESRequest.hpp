@@ -17,6 +17,7 @@
 #ifndef NES_NESREQUEST_HPP
 #define NES_NESREQUEST_HPP
 
+#include <Plans/Query/QueryId.hpp>
 #include <memory>
 
 namespace NES {
@@ -26,6 +27,14 @@ namespace NES {
 class NESRequest : public std::enable_shared_from_this<NESRequest> {
 
   public:
+    explicit NESRequest(QueryId queryId);
+
+    /**
+     * @brief Get the query id to stop
+     * @return query id to stop
+     */
+    QueryId getQueryId();
+
     /**
      * @brief Checks if the current node is of type NodeType
      * @tparam NodeType
@@ -40,6 +49,9 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
     };
 
     virtual std::string toString() = 0;
+
+  private:
+    QueryId queryId;
 };
 }// namespace NES
 
