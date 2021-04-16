@@ -16,4 +16,5 @@ add_source_nes(
         NESRequest.cpp
         RunQueryRequest.cpp
         StopQueryRequest.cpp
+        RestartQueryRequest.cpp
 )

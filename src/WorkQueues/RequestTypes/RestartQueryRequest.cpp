@@ -14,31 +14,15 @@
     limitations under the License.
 */
 
-#ifndef NES_NESREQUEST_HPP
-#define NES_NESREQUEST_HPP
-
-#include <memory>
+#include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 
 namespace NES {
-/**
- * @brief This is the parent class for different type of requests handled by NES.
- */
-class NESRequest : public std::enable_shared_from_this<NESRequest> {
 
-  public:
-    /**
-     * @brief Checks if the current node is of type NodeType
-     * @tparam NodeType
-     * @return bool true if node is of NodeType
-     */
-    template<class RequestType>
-    bool instanceOf() {
-        if (dynamic_cast<RequestType*>(this)) {
-            return true;
-        };
-        return false;
-    };
-};
+RestartQueryRequest::RestartQueryRequest(QueryId queryId) : queryId(queryId) {}
+
+RestartQueryRequestPtr RestartQueryRequest::create(QueryId queryId) {
+    return std::make_shared<RestartQueryRequest>(RestartQueryRequest(queryId));
+}
+
+QueryId RestartQueryRequest::getQueryId() { return queryId; }
 }// namespace NES
-
-#endif//NES_NESREQUEST_HPP
