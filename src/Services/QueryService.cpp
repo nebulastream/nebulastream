@@ -87,7 +87,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
 
     NES_INFO("QueryService: Queuing the query for the execution");
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
         queryRequestQueue->add(request);
@@ -102,7 +102,7 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
                                      + " in query catalog.");
     }
-    QueryCatalogEntryPtr entry = queryCatalog->addQueryStopRequest(queryId);
+    QueryCatalogEntryPtr entry = queryCatalog->stopQuery(queryId);
     if (entry) {
         auto request = StopQueryRequest::create(queryId);
         return queryRequestQueue->add(request);
@@ -113,7 +113,7 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
 uint64_t QueryService::addQueryRequest(std::string queryString, QueryPtr query, std::string placementStrategyName) {
     NES_INFO("QueryService: Queuing the query for the execution");
     auto queryPlan = query->getQueryPlan();
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
         queryRequestQueue->add(request);

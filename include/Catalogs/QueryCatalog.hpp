@@ -47,11 +47,11 @@ class QueryCatalog {
      * @param optimizationStrategyName: the optimization strategy (bottomUp or topDown)
      * @return query catalog entry or nullptr
      */
-    QueryCatalogEntryPtr addNewQueryRequest(const std::string& queryString, const QueryPlanPtr queryPlan,
+    QueryCatalogEntryPtr addNewQuery(const std::string& queryString, const QueryPlanPtr queryPlan,
                                             const std::string& optimizationStrategyName);
 
     QueryCatalogEntryPtr recordInvalidQuery(const std::string& queryString, const QueryId queryId, const QueryPlanPtr queryPlan,
-                                            const std::string& optimizationStrategyName);
+                                            const std::string& placementStrategyName);
 
     void setQueryFailureReason(QueryId queryId, const std::string& failureReason);
 
@@ -60,7 +60,7 @@ class QueryCatalog {
      * @param queryId: id of the user query.
      * @return query catalog entry or nullptr
      */
-    QueryCatalogEntryPtr addQueryStopRequest(QueryId queryId);
+    QueryCatalogEntryPtr stopQuery(QueryId queryId);
 
     /**
      * @brief method to change status of a query
