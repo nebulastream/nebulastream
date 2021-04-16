@@ -152,7 +152,6 @@ void NESRequestProcessorService::start() {
                 queryUndeploymentPhase->execute(sharedQueryId);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
                 for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                     queryCatalog->setQueryFailureReason(queryId, ex.what());
                 }
             } catch (TypeInferenceException& ex) {

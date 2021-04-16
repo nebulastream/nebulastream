@@ -17,6 +17,7 @@
 #include <Catalogs/QueryCatalog.hpp>
 #include <Catalogs/QueryCatalogEntry.hpp>
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
+#include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/RequestTypeNotHandledException.hpp>
 #include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
 #include <Phases/GlobalQueryPlanUpdatePhase.hpp>
@@ -57,10 +58,13 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
         for (auto nesRequest : nesRequests) {
             QueryId queryId = nesRequest->getQueryId();
             if (nesRequest->instanceOf<StopQueryRequest>()) {
+
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
             } else if (nesRequest->instanceOf<RunQueryRequest>()) {
-                auto queryPlan = nesRequest->as<RunQueryRequest>()->getQueryPlan();
+
+                auto runRequest = nesRequest->as<RunQueryRequest>();
+                auto queryPlan = runRequest->getQueryPlan();
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query " << queryId);
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
