@@ -38,6 +38,8 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
         };
         return false;
     };
+
+    virtual std::string toString() = 0;
 };
 }// namespace NES
 

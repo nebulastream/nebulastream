@@ -27,8 +27,8 @@
 
 namespace NES {
 
-class QueryCatalogEntry;
-typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
+class NESRequest;
+typedef std::shared_ptr<NESRequest> NESRequestPtr;
 
 /**
  * @brief This is a wrapper around a Deque for submitting arbitrary requests for the RequestProcessorService
@@ -47,17 +47,17 @@ class NESRequestQueue {
 
     /**
      * @brief Add query request into processing queue
-     * @param queryCatalogEntry: the query request in form of query catalog entry
+     * @param request: the query request
      * @return true if successfully added to the queue
      */
-    bool add(QueryCatalogEntryPtr queryCatalogEntry);
+    bool add(NESRequestPtr request);
 
     /**
      * @brief Get a batch of query catalog entries to be processed.
      * Note: This method returns only a copy of the
      * @return a vector of query catalog entry to schedule
      */
-    std::vector<QueryCatalogEntry> getNextBatch();
+    std::vector<NESRequestPtr> getNextBatch();
 
     /**
      * @brief Check if there are new request available
@@ -80,9 +80,9 @@ class NESRequestQueue {
   private:
     bool newRequestAvailable;
     uint32_t batchSize;
-    std::mutex queryRequest;
+    std::mutex requestMtx;
     std::condition_variable availabilityTrigger;
-    std::deque<QueryCatalogEntry> schedulingQueue;
+    std::deque<NESRequestPtr> requestQueue;
 };
 typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 }// namespace NES
