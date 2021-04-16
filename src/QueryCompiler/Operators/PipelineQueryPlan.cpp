@@ -31,5 +31,9 @@ std::vector<PhysicalOperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines()
     return sinks;
 }
 
+std::vector<PhysicalOperatorPipelinePtr> PipelineQueryPlan::getPipelines() {
+    return pipelines;
+}
+
 }// namespace QueryCompilation
 }// namespace NES

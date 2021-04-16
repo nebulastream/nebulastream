@@ -96,7 +96,7 @@ void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline,
         newPipeline->addSuccessor(currentPipeline);
         currentPipeline = newPipeline;
     }
-    currentPipeline->prependOperator(currentOperators);
+    currentPipeline->prependOperator(currentOperators->copy());
 }
 
 void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
@@ -123,7 +123,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(QueryPlanPtr queryPlan) {
     auto pipelinePlan = PipelineQueryPlan::create();
     for (auto sourceOperators : queryPlan->getRootOperators()) {
         auto pipeline = PhysicalOperatorPipeline::create();
-        pipeline->prependOperator(sourceOperators);
+        pipeline->prependOperator(sourceOperators->copy());
         pipelinePlan->addPipeline(pipeline);
         processSink(pipelinePlan, pipelineOperatorMap, pipeline, sourceOperators->as<PhysicalOperators::PhysicalOperator>());
     }

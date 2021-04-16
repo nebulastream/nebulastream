@@ -15,6 +15,7 @@ class PipelineQueryPlan {
     void addPipeline(PhysicalOperatorPipelinePtr pipeline);
     std::vector<PhysicalOperatorPipelinePtr> getSourcePipelines();
     std::vector<PhysicalOperatorPipelinePtr> getSinkPipelines();
+    std::vector<PhysicalOperatorPipelinePtr> getPipelines();
     void removePipeline(PhysicalOperatorPipelinePtr pipeline);
 
   private:

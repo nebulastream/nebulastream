@@ -45,7 +45,7 @@ typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregati
 class TranslateToGeneratableOperatorPhase {
   public:
     /**
-     * @brief Factory method to create a translation phase.
+     * @brief Factory method to crbeate a translation phase.
      */
     static TranslateToGeneratableOperatorPhasePtr create();
     /**

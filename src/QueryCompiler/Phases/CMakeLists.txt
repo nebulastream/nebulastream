@@ -16,6 +16,7 @@ add_source_nes(
         TranslateToPhysicalOperators.cpp
         PhysicalOperatorProvider.cpp
         DefaultPhysicalOperatorProvider.cpp
+        AddScanAndEmitPhase.cpp
 )
 
 add_subdirectory(Pipelining)

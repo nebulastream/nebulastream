@@ -20,7 +20,7 @@ add_source_nes(
         GeneratableSinkOperator.cpp
         GeneratableScanOperator.cpp
         GeneratableWatermarkAssignerOperator.cpp
-        TranslateToGeneratableOperatorPhase
+        TranslateToGeneratableOperatorPhase.cpp
         GeneratableJoinOperator.cpp
         GeneratableProjectionOperator.cpp
 )

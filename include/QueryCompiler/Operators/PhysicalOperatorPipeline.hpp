@@ -22,14 +22,15 @@ class PhysicalOperatorPipeline : public std::enable_shared_from_this<PhysicalOpe
     bool hasOperators();
     void clearPredecessors();
     void clearSuccessors();
-    OperatorNodePtr getRootOperator();
+    QueryPlanPtr getRootOperator();
+    uint64_t getPipelineId();
   protected:
-    PhysicalOperatorPipeline();
+    PhysicalOperatorPipeline(uint64_t pipelineId);
   private:
-
+    uint64_t id;
     std::vector<std::shared_ptr<PhysicalOperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<PhysicalOperatorPipeline>> predecessorPipelines;
-    OperatorNodePtr rootOperator;
+    QueryPlanPtr rootOperator;
 
 };
 }// namespace QueryCompilation

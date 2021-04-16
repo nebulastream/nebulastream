@@ -372,6 +372,11 @@ OperatorId UtilityFunctions::getNextOperatorId() {
     return ++id;
 }
 
+uint64_t UtilityFunctions::getNextPipelineId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
 uint64_t UtilityFunctions::getNextTopologyNodeId() {
     static std::atomic_uint64_t id = 0;
     return ++id;

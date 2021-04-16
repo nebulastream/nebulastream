@@ -23,7 +23,7 @@ add_source_nes(
         PhysicalMapOperator.cpp
         PhysicalMultiplexOperator.cpp
         PhysicalDemultiplexOperator.cpp
-        PhysicalWatermarkAssignmentOperator
+        PhysicalWatermarkAssignmentOperator.cpp
         PhysicalScanOperator.cpp
         PhysicalEmitOperator.cpp
 )
