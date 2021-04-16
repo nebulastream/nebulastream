@@ -17,7 +17,6 @@
 #ifndef NES_STOPQUERYREQUEST_HPP
 #define NES_STOPQUERYREQUEST_HPP
 
-#include <Plans/Query/QueryId.hpp>
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 
 namespace NES {
@@ -30,6 +29,8 @@ typedef std::shared_ptr<StopQueryRequest> StopQueryRequestPtr;
  */
 class StopQueryRequest : public NESRequest {
 
+  public:
+
     /**
      * @brief Create instance of  StopQueryRequest
      * @param queryId : the id of query to be stopped
@@ -37,15 +38,10 @@ class StopQueryRequest : public NESRequest {
      */
     static StopQueryRequestPtr create(QueryId queryId);
 
-    /**
-     * @brief Get the query id to stop
-     * @return query id to stop
-     */
-    QueryId getQueryId();
+    std::string toString() override;
 
   private:
     explicit StopQueryRequest(QueryId queryId);
-    QueryId queryId;
 };
 }// namespace NES
 

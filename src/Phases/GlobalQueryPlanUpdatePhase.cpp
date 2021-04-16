@@ -27,6 +27,8 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
+#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 
 namespace NES {
 
@@ -48,17 +50,17 @@ GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr
         GlobalQueryPlanUpdatePhase(queryCatalog, streamCatalog, globalQueryPlan, z3Context, enableQueryMerging, queryMergerRule));
 }
 
-GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<QueryCatalogEntry>& queryRequests) {
+GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequestPtr>& nesRequests) {
     //FIXME: Proper error handling #1585
     try {
         //TODO: Parallelize this loop #1738
-        for (auto queryRequest : queryRequests) {
-            QueryId queryId = queryRequest.getQueryId();
-            if (queryRequest.getQueryStatus() == QueryStatus::MarkedForStop) {
+        for (auto nesRequest : nesRequests) {
+            QueryId queryId = nesRequest->getQueryId();
+            if (nesRequest->instanceOf<StopQueryRequest>()) {
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
-            } else if (queryRequest.getQueryStatus() == QueryStatus::Registered) {
-                auto queryPlan = queryRequest.getQueryPlan();
+            } else if (nesRequest->instanceOf<RunQueryRequest>()) {
+                auto queryPlan = nesRequest->getQueryPlan();
                 NES_INFO("QueryProcessingService: Request received for optimizing and deploying of the query "
                          << queryId << " status=" << queryRequest.getQueryStatusAsString());
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);

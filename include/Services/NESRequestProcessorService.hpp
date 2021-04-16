@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_QUERYREQUESTPROCESSORSERVICE_HPP
-#define NES_QUERYREQUESTPROCESSORSERVICE_HPP
+#ifndef NES_NESREQUESTPROCESSORSERVICE_HPP
+#define NES_NESREQUESTPROCESSORSERVICE_HPP
 
 #include <memory>
 
@@ -68,15 +68,15 @@ typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queries requests.
  */
-class QueryRequestProcessorService {
+class NESRequestProcessorService {
   public:
-    explicit QueryRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+    explicit NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                           QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
                                           StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
                                           NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
                                           std::string queryMergerRule);
 
-    ~QueryRequestProcessorService();
+    ~NESRequestProcessorService();
     /**
      * @brief Start the loop for processing new requests in the scheduling queue of the query catalog
      */
@@ -108,4 +108,4 @@ class QueryRequestProcessorService {
     z3::ContextPtr z3Context;
 };
 }// namespace NES
-#endif//NES_QUERYREQUESTPROCESSORSERVICE_HPP
+#endif//NES_NESREQUESTPROCESSORSERVICE_HPP
