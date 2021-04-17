@@ -46,7 +46,7 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperatorPipeline.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -100,7 +100,7 @@ class AddScanAndEmitPhaseTest : public testing::Test {
  *
  */
 TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
-    auto operatorPlan = QueryCompilation::PhysicalOperatorPipeline::create();
+    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
     auto source =
         QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     operatorPlan->prependOperator(source);
@@ -108,7 +108,7 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
     operatorPlan = phase->process(operatorPlan);
 
-    auto pipelineRootOperator = operatorPlan->getRootOperator()->getRootOperators()[0];
+    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSourceOperator);
     ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0);
@@ -123,7 +123,7 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
  *
  */
 TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
-    auto operatorPlan = QueryCompilation::PhysicalOperatorPipeline::create();
+    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
     auto sink =
         QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
     operatorPlan->prependOperator(sink);
@@ -131,7 +131,7 @@ TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
     operatorPlan = phase->process(operatorPlan);
 
-    auto pipelineRootOperator = operatorPlan->getRootOperator()->getRootOperators()[0];
+    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSinkOperator);
     ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0);
@@ -147,13 +147,13 @@ TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
  */
 TEST_F(AddScanAndEmitPhaseTest, pipelineFilterQuery) {
 
-    auto operatorPlan = QueryCompilation::PhysicalOperatorPipeline::create();
+    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
     operatorPlan->prependOperator(PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr()));
 
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
     operatorPlan = phase->process(operatorPlan);
 
-    auto pipelineRootOperator = operatorPlan->getRootOperator()->getRootOperators()[0];
+    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalScanOperator);
     auto filter = pipelineRootOperator->getChildren()[0];

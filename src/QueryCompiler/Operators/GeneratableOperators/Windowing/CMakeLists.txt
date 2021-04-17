@@ -13,10 +13,8 @@
 # limitations under the License.
 
 add_source_nes(
-        GeneratableWindowOperator.cpp
         GeneratableSliceMergingOperator.cpp
-        GeneratableDistributedWindowCombinerOperator.cpp
-        GeneratableDistributedWindowSliceCreationOperator.cpp
+        GeneratableSlicePreAggregationOperator.cpp
+        GeneratableWindowOperator.cpp
 )
 
-add_subdirectory(WindowAggregations)

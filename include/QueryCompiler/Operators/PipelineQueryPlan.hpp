@@ -9,17 +9,16 @@ namespace NES {
 namespace QueryCompilation {
 
 class PipelineQueryPlan {
-
   public:
     static PipelineQueryPlanPtr create();
-    void addPipeline(PhysicalOperatorPipelinePtr pipeline);
-    std::vector<PhysicalOperatorPipelinePtr> getSourcePipelines();
-    std::vector<PhysicalOperatorPipelinePtr> getSinkPipelines();
-    std::vector<PhysicalOperatorPipelinePtr> getPipelines();
-    void removePipeline(PhysicalOperatorPipelinePtr pipeline);
+    void addPipeline(OperatorPipelinePtr pipeline);
+    std::vector<OperatorPipelinePtr> getSourcePipelines();
+    std::vector<OperatorPipelinePtr> getSinkPipelines();
+    std::vector<OperatorPipelinePtr> getPipelines();
+    void removePipeline(OperatorPipelinePtr pipeline);
 
   private:
-    std::vector<PhysicalOperatorPipelinePtr> pipelines;
+    std::vector<OperatorPipelinePtr> pipelines;
 };
 }// namespace QueryCompilation
 

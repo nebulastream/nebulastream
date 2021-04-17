@@ -24,6 +24,14 @@ QueryPlanIterator::iterator QueryPlanIterator::begin() { return iterator(queryPl
 
 QueryPlanIterator::iterator QueryPlanIterator::end() { return iterator(); }
 
+std::vector<NodePtr> QueryPlanIterator::snapshot() {
+    std::vector<NodePtr> nodes;
+    for (auto node : *this) {
+        nodes.emplace_back(node);
+    }
+    return nodes;
+}
+
 QueryPlanIterator::iterator::iterator(QueryPlanPtr current) {
     auto rootOperators = current->getRootOperators();
     for (int64_t i = rootOperators.size() - 1; i >= 0; i--) {

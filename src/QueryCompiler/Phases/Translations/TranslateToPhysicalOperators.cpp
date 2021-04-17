@@ -16,8 +16,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/Phases/PhysicalOperatorProvider.hpp>
-#include <QueryCompiler/Phases/TranslateToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/TranslateToPhysicalOperators.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
@@ -31,11 +31,7 @@ TranslateToPhysicalOperators::TranslateToPhysicalOperators::create(PhysicalOpera
 TranslateToPhysicalOperators::TranslateToPhysicalOperators(PhysicalOperatorProviderPtr provider) : provider(provider) {}
 
 QueryPlanPtr TranslateToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
-    auto iterator = QueryPlanIterator(queryPlan);
-    std::vector<NodePtr> nodes;
-    for (auto node : iterator) {
-        nodes.emplace_back(node);
-    }
+    std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();
     for (auto node : nodes) {
         provider->lower(queryPlan, node->as<LogicalOperatorNode>());
     }
