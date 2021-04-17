@@ -14,7 +14,7 @@
     limitations under the License.
 */
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/Operators/PhysicalOperatorPipeline.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
@@ -36,8 +36,8 @@ PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr queryPlan) 
     return queryPlan;
 }
 
-PhysicalOperatorPipelinePtr AddScanAndEmitPhase::process(PhysicalOperatorPipelinePtr pipeline) {
-    auto queryPlan = pipeline->getRootOperator();
+OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
+    auto queryPlan = pipeline->getQueryPlan();
     auto pipelineRootOperators = queryPlan->getRootOperators();
     NES_ASSERT(pipelineRootOperators.size() == 1, "A pipeline should only have one root operator");
     auto rootOperator = pipelineRootOperators[0];

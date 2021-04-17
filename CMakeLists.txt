@@ -58,7 +58,7 @@ endif ()
 if (NES_LOGGING_LEVEL)
     get_nes_log_level_value(NES_LOGGING_VALUE)
 else (NES_LOGGING_LEVEL)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -Werror=unused-variable -Werror=unused-parameter -DNES_LOGGING_TRACE_LEVEL=1")
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS}  -DNES_LOGGING_TRACE_LEVEL=1")
     message("---Everything will be logged")
 endif (NES_LOGGING_LEVEL)
 

@@ -13,8 +13,9 @@
 # limitations under the License.
 
 add_source_nes(
-        PhysicalOperatorPipeline.cpp
+        OperatorPipeline.cpp
         PipelineQueryPlan.cpp
 )
 
+add_subdirectory(GeneratableOperators)
 add_subdirectory(PhysicalOperators)

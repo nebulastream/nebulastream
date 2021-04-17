@@ -13,19 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 
 namespace NES {
-namespace QueryCompilation {
-class AddScanAndEmitPhase {
-  public:
-    static AddScanAndEmitPhasePtr create();
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr queryPlan);
-    OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
-};
-}
-};
-
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
+namespace QueryCompilation {}
+}// namespace NES

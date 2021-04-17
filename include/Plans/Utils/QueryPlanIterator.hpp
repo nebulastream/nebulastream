@@ -86,6 +86,12 @@ class QueryPlanIterator {
     */
     iterator end();
 
+    /**
+     * @brief Return a snapshot of the iterator.
+     * @return vector<NodePtr> nodes
+     */
+    std::vector<NodePtr> snapshot();
+
   private:
     QueryPlanPtr queryPlan;
 };

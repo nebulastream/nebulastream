@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Phases/PhysicalOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 
 namespace NES {
 namespace QueryCompilation {}

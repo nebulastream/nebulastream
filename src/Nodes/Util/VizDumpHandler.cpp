@@ -18,7 +18,7 @@
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperatorPipeline.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <filesystem>
 #include <iostream>
@@ -135,7 +135,7 @@ void VizDumpHandler::dump(std::string scope,
         auto currentId = "p_" + std::to_string(pipeline->getPipelineId());
         auto vizNode = VizNode(currentId, "Pipeline");
         graph.nodes.emplace_back(vizNode);
-        dump(pipeline->getRootOperator(), currentId, graph);
+        dump(pipeline->getQueryPlan(), currentId, graph);
         for (auto successor : pipeline->getSuccessors()) {
             auto successorId = "p_" + std::to_string(successor->getPipelineId());
             auto edgeId = currentId + "_" + successorId;

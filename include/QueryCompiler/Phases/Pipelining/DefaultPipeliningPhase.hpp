@@ -10,15 +10,21 @@ class DefaultPipeliningPhase: public PipeliningPhase {
     PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) override;
   protected:
     void process(PipelineQueryPlanPtr pipeline,
-                 std::map<OperatorNodePtr, PhysicalOperatorPipelinePtr>& pipelineOperatorMap,
-                 PhysicalOperatorPipelinePtr currentPipeline,
+                 std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                 OperatorPipelinePtr currentPipeline,
                  PhysicalOperators::PhysicalOperatorPtr currentOperators);
-    void processSink(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, PhysicalOperatorPipelinePtr>& pipelineOperatorMap, PhysicalOperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processSource(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, PhysicalOperatorPipelinePtr>& pipelineOperatorMap, PhysicalOperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processMultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, PhysicalOperatorPipelinePtr>& pipelineOperatorMap, PhysicalOperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processDemultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, PhysicalOperatorPipelinePtr>& pipelineOperatorMap, PhysicalOperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processFusibleOperator(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, PhysicalOperatorPipelinePtr>& pipelineOperatorMap, PhysicalOperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processPipelineBreakerOperator(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, PhysicalOperatorPipelinePtr>& pipelineOperatorMap, PhysicalOperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+    void processSink(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                     OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+    void processSource(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                       OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+    void processMultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                          OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+    void processDemultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                            OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+    void processFusibleOperator(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+    void processPipelineBreakerOperator(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                        OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
 
   private:
     PipelineBreakerPolicyPtr pipelineBreakerPolicy;
