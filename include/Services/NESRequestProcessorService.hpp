@@ -53,6 +53,13 @@ using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 class QueryUndeploymentPhase;
 using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
 
+class GlobalQueryPlanUpdatePhase;
+typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
+
+class QueryMigrationPhase;
+typedef std::shared_ptr<QueryMigrationPhase> QueryMigrationPhasePtr;
+
+
 class StreamCatalog;
 using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
@@ -110,6 +117,7 @@ class NESRequestProcessorService {
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
     Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
+    QueryMigrationPhasePtr queryMigrationPhase;
     z3::ContextPtr z3Context;
 };
 }// namespace NES

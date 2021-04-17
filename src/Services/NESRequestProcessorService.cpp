@@ -31,6 +31,7 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
+#include <Phases/QueryMigrationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
@@ -70,6 +71,7 @@ NESRequestProcessorService::NESRequestProcessorService(const GlobalExecutionPlan
     z3Context = std::make_shared<z3::context>(cfg);
     globalQueryPlanUpdatePhase =
         Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context, queryMergerRule);
+    queryMigrationPhase = QueryMigrationPhase::create(globalExecutionPlan,workerRpcClient);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }

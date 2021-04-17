@@ -23,6 +23,7 @@
 #include <memory>
 #include <vector>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Services/StrategyType.hpp>
 
 namespace NES {
 
@@ -54,7 +55,7 @@ class MaintenanceService {
      * @param nodeId
      * @param strategy
      */
-    void submitMaintenanceRequest(uint64_t nodeId, uint8_t strategy);
+    void submitMaintenanceRequest(uint64_t nodeId, StrategyType strategy);
 
     /**
     * places subqueries onto a different executionNode
