@@ -90,7 +90,6 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
     copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint64_t recordIndex,
                               const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
 
-  private:
     const std::vector<COL_OFFSET_SIZE> columnOffsets;
     const DynamicColumnLayout& dynamicColLayout;
     const uint8_t* basePointer;
