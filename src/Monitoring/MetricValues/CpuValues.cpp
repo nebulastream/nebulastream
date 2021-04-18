@@ -23,6 +23,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -56,21 +57,28 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, 
         NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
             std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
 
-        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>
-            outputTuple;
-        outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                                                  uint64_t, uint64_t, uint64_t>(i);
+        auto userFields         = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout);
+        auto niceFields         = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout);
+        auto systemFields       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 2, bindedRowLayout);
+        auto idleFields         = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 3, bindedRowLayout);
+        auto iowaitFields       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 4, bindedRowLayout);
+        auto irqFields          = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 5, bindedRowLayout);
+        auto softirqFields      = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 6, bindedRowLayout);
+        auto stealFields        = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 7, bindedRowLayout);
+        auto guestFields        = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout);
+        auto guestniceFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout);
 
-        output.user = std::get<0>(outputTuple);
-        output.nice = std::get<1>(outputTuple);
-        output.system = std::get<2>(outputTuple);
-        output.idle = std::get<3>(outputTuple);
-        output.iowait = std::get<4>(outputTuple);
-        output.irq = std::get<5>(outputTuple);
-        output.softirq = std::get<6>(outputTuple);
-        output.steal = std::get<7>(outputTuple);
-        output.guest = std::get<8>(outputTuple);
-        output.guestnice = std::get<9>(outputTuple);
+        output.user         = userFields[0];
+        output.nice         = niceFields[0];
+        output.system       = systemFields[0];
+        output.idle         = idleFields[0];
+        output.iowait       = iowaitFields[0];
+        output.irq          = irqFields[0];
+        output.softirq      = softirqFields[0];
+        output.steal        = stealFields[0];
+        output.guest        = guestFields[0];
+        output.guestnice    = guestniceFields[0];
+
     } else {
         NES_THROW_RUNTIME_ERROR("CpuValues: Metrics could not be parsed from schema with prefix " + prefix + ":\n"
                                 + schema->toString());
