@@ -121,6 +121,14 @@ class QueryPlan {
     void removeAsRootOperator(OperatorNodePtr root);
 
     /**
+    * replaces a particular operator with a new one.
+    * @param root
+    * @return true if operator was replaced.
+    */
+    bool replaceOperator(OperatorNodePtr oldOperator, OperatorNodePtr newOperator);
+
+
+    /**
      * replaces a particular root operator with a new one.
      * @param root
      * @return true if operator was replaced.

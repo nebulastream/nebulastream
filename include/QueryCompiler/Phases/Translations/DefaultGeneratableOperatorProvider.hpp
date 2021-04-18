@@ -27,6 +27,15 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
     static GeneratableOperatorProviderPtr create();
     void lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) override;
 
+  protected:
+    void lowerSource(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerScan(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerEmit(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerProjection(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerFilter(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerMap(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerWatermarkAssignment(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 };
 
 }// namespace QueryCompilation

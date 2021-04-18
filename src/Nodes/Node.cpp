@@ -17,11 +17,17 @@
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <queue>
-#include <unordered_set>
+#include <Util/StacktraceLoader.hpp>
 
 namespace NES {
 
-Node::Node() : visited(false), recStack(false) {}
+Node::Node() : visited(false), recStack(false) {
+    #ifdef NES_DEBUG_MODE
+        stackTrace = NodeEngine::collectAndPrintStacktrace();
+    #else
+        stackTrace = "No source location set. Build in debug mode.";
+    #endif
+}
 
 Node::~Node() {}
 
@@ -580,6 +586,10 @@ std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
         result.insert(result.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
     return result;
+}
+
+std::string Node::getNodeSourceLocation() {
+    return stackTrace;
 }
 
 bool Node::isCyclic() {
