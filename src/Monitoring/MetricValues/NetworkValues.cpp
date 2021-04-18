@@ -19,6 +19,7 @@
 #include <Monitoring/MetricValues/NetworkValues.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -76,30 +77,44 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
         std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
 
-    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-               uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t> outputTuple;
 
-    outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                                    uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(i);
+    auto interfaceNameFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout);
+    auto rBytesFields           = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto rPacketsFields         = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto rErrsFields            = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto rDropFields            = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto rFifoFields            = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto rFrameFields           = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto rCompressedFields      = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto rMulticastFields       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
 
-    output.interfaceName = std::get<0>(outputTuple);
-    output.rBytes = std::get<1>(outputTuple);
-    output.rPackets = std::get<2>(outputTuple);
-    output.rErrs = std::get<3>(outputTuple);
-    output.rDrop = std::get<4>(outputTuple);
-    output.rFifo = std::get<5>(outputTuple);
-    output.rFrame = std::get<6>(outputTuple);
-    output.rCompressed = std::get<7>(outputTuple);
-    output.rMulticast = std::get<8>(outputTuple);
+    auto tBytesFields       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto tPacketsFields     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto tErrsFields        = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto tDropFields        = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto tFifoFields        = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto tCollsFields       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto tCarrierFields     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto tCompressedFields  = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
 
-    output.tBytes = std::get<9>(outputTuple);
-    output.tPackets = std::get<10>(outputTuple);
-    output.tErrs = std::get<11>(outputTuple);
-    output.tDrop = std::get<12>(outputTuple);
-    output.tFifo = std::get<13>(outputTuple);
-    output.tColls = std::get<14>(outputTuple);
-    output.tCarrier = std::get<15>(outputTuple);
-    output.tCompressed = std::get<16>(outputTuple);
+    output.interfaceName = interfaceNameFields[0];
+    output.rBytes = rBytesFields[0];
+    output.rPackets = rPacketsFields[0];
+    output.rErrs = rErrsFields[0];
+    output.rDrop = rDropFields[0];
+    output.rFifo = rFifoFields[0];
+    output.rFrame = rFrameFields[0];
+    output.rCompressed = rCompressedFields[0];
+    output.rMulticast = rMulticastFields[0];
+
+    output.tBytes = tBytesFields[0];
+    output.tPackets = tPacketsFields[0];
+    output.tErrs = tErrsFields[0];
+    output.tDrop = tDropFields[0];
+    output.tFifo = tFifoFields[0];
+    output.tColls = tCollsFields[0];
+    output.tCarrier = tCarrierFields[0];
+    output.tCompressed = tCompressedFields[0];
 
     return output;
 }

@@ -70,7 +70,7 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
         auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
             std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
-        auto numInt = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(i, bindedRowLayout)[0];
+        auto numInt = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout)[0];
 
         for (int n = 0; n < numInt; n++) {
             NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
