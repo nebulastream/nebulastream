@@ -304,6 +304,12 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::vector<NodePtr> getAndFlattenAllAncestors();
 
+    /**
+     * @brief Returns stacktrace of node source location.
+     * @return string
+     */
+    std::string getNodeSourceLocation();
+
   protected:
     /**
      * @brief the parents of this node. There is no equal nodes
@@ -377,6 +383,7 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     bool visited;
     bool recStack;
+    std::string stackTrace;
 };
 }// namespace NES
 
