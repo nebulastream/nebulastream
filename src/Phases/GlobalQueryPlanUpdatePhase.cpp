@@ -41,6 +41,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     bool applyRulesImprovingSharingIdentification = false;
+    //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
+    // then apply special rewrite rules for improving the match identification
     if (queryMergerRule == Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
         || queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule) {
         applyRulesImprovingSharingIdentification = true;
@@ -48,6 +50,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     queryRewritePhase = QueryRewritePhase::create(applyRulesImprovingSharingIdentification);
     topologySpecificQueryRewritePhase = TopologySpecificQueryRewritePhase::create(streamCatalog);
 
+    //IF String based signatures are used for query merging then signature need to be computed
     bool computeStringSignature =
         (queryMergerRule == Optimizer::QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule
          || queryMergerRule == Optimizer::QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule);

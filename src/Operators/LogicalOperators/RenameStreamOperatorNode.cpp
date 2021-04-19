@@ -71,8 +71,8 @@ OperatorNodePtr RenameStreamOperatorNode::copy() {
 
 void RenameStreamOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("Inferring String signature for " << operatorNode->toString());
-
+    NES_TRACE("RenameStreamOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_ASSERT(!children.empty(), "RenameStreamOperatorNode: Rename Stream should have children.");
     //Infer query signatures for child operators
     for (auto& child : children) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
