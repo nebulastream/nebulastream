@@ -105,10 +105,10 @@ void VizDumpHandler::multilineDump(const NodePtr, std::ostream&) {}
 
 void VizDumpHandler::dump(const NodePtr, std::ostream&) {}
 
-void VizDumpHandler::dump(QueryPlanPtr queryPlan) {
+void VizDumpHandler::dump(std::string context, std::string scope, QueryPlanPtr queryPlan) {
     auto graph = VizGraph("graph");
     dump(queryPlan, "", graph);
-    std::cout << graph.serialize() << std::endl;
+    writeToFile(context, scope, graph.serialize());
 }
 
 void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& graph) {

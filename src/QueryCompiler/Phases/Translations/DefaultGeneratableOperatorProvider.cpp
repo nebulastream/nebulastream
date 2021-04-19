@@ -55,7 +55,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerMap(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()) {
         lowerWatermarkAssignment(queryPlan, operatorNode);
-    }else{
+    } else {
         NES_ERROR("No lowering defined for physical operator: " << operatorNode->toString());
     }
 }
@@ -107,11 +107,11 @@ void DefaultGeneratableOperatorProvider::lowerMap(QueryPlanPtr queryPlan, Physic
     queryPlan->replaceOperator(physicalMapOperator, generatableMapOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr queryPlan,
+                                                                  PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalWatermarkAssignmentOperator = operatorNode->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
     auto generatableWatermarkAssignmentOperator = GeneratableOperators::GeneratableWatermarkAssignmentOperator::create(
-        physicalWatermarkAssignmentOperator->getInputSchema(),
-        physicalWatermarkAssignmentOperator->getOutputSchema(),
+        physicalWatermarkAssignmentOperator->getInputSchema(), physicalWatermarkAssignmentOperator->getOutputSchema(),
         physicalWatermarkAssignmentOperator->getWatermarkStrategyDescriptor());
     queryPlan->replaceOperator(physicalWatermarkAssignmentOperator, generatableWatermarkAssignmentOperator);
 }

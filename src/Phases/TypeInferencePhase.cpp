@@ -53,6 +53,7 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
             if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
                 auto streamName = sourceDescriptor->getStreamName();
                 SchemaPtr schema = Schema::create();
+                if(streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamName))
                 auto originalSchema = streamCatalog->getSchemaForLogicalStream(streamName);
                 schema = schema->copyFields(originalSchema);
                 std::string qualifierName = streamName + Schema::ATTRIBUTE_NAME_SEPARATOR;

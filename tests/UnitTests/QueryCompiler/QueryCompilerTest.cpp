@@ -37,6 +37,11 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Phases/TypeInferencePhase.hpp>
@@ -46,6 +51,11 @@
 #include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
@@ -54,6 +64,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
@@ -73,92 +84,54 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 using namespace std;
+using namespace std;
 
 namespace NES {
 
 using namespace NES::API;
+using namespace NES::QueryCompilation;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class AddScanAndEmitPhaseTest : public testing::Test {
+
+class QueryCompilerTest : public testing::Test {
   public:
     static void SetUpTestCase() {
-        NES::setupLogging("AddScanAndEmitPhase.log", NES::LOG_DEBUG);
-        NES_INFO("Setup AddScanAndEmitPhase test class.");
+        NES::setupLogging("QueryCompilerTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup QueryCompilerTest test class.");
     }
 
     void SetUp() {}
 
-    void TearDown() { NES_DEBUG("Tear down AddScanAndEmitPhase Test."); }
+    void TearDown() { NES_DEBUG("Tear down QueryCompilerTest Test."); }
 };
 
 /**
  * @brief Input Query Plan:
  *
- * | Physical Source |
- *
- * | Physical Source |
+ * |Source| -- |Filter| -- |Sink|
  *
  */
-TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
-    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    auto source =
-        QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    operatorPlan->prependOperator(source);
+TEST_F(QueryCompilerTest, filterQuery) {
+    SchemaPtr schema = Schema::create();
+    schema->addField("F1", INT32);
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream("streamName", schema);
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto phaseFactory = Phases::DefaultPhaseFactory::create();
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
 
-    auto phase = QueryCompilation::AddScanAndEmitPhase::create();
-    operatorPlan = phase->apply(operatorPlan);
+    auto query = Query::from("streamName").filter(Attribute("F1") == 32).sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
 
-    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    queryPlan = typeInferencePhase->execute(queryPlan);
 
-    ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSourceOperator);
-    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0);
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
+                       .dump()
+                       .build();
+    auto result = queryCompiler->compileQuery(request);
 }
 
-/**
- * @brief Input Query Plan:
- *
- * | Physical Sink |
- *
- * | Physical Sink |
- *
- */
-TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
-    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    auto sink =
-        QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
-    operatorPlan->prependOperator(sink);
-
-    auto phase = QueryCompilation::AddScanAndEmitPhase::create();
-    operatorPlan = phase->apply(operatorPlan);
-
-    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
-
-    ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSinkOperator);
-    ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0);
-}
-
-/**
- * @brief Input Query Plan:
- *
- * | Physical Filter |
- *
- * | Physical Scan --- Physical Filter --- Physical Emit|
- *
- */
-TEST_F(AddScanAndEmitPhaseTest, pipelineFilterQuery) {
-
-    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    operatorPlan->prependOperator(PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr()));
-
-    auto phase = QueryCompilation::AddScanAndEmitPhase::create();
-    operatorPlan = phase->apply(operatorPlan);
-
-    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
-
-    ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalScanOperator);
-    auto filter = pipelineRootOperator->getChildren()[0];
-    ASSERT_INSTANCE_OF(filter, PhysicalFilterOperator);
-    auto emit = filter->getChildren()[0];
-    ASSERT_INSTANCE_OF(emit, PhysicalEmitOperator);
-}
 }// namespace NES

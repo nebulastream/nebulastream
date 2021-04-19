@@ -4,10 +4,36 @@
 namespace NES {
 namespace QueryCompilation {
 
-OperatorPipeline::OperatorPipeline(uint64_t pipelineId): id(pipelineId), rootOperator(QueryPlan::create()) {}
+OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
+    : id(pipelineId), rootOperator(QueryPlan::create()), pipelineType(pipelineType)
+{}
 
 OperatorPipelinePtr OperatorPipeline::create() {
-    return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId()));
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), OperatorPipelineType));
+}
+
+OperatorPipelinePtr OperatorPipeline::createSinkPipeline() {
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), SinkPipelineType));
+}
+
+OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
+    return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), SourcePipelineType));
+}
+
+bool OperatorPipeline::setType(Type pipelineType) {
+   this->pipelineType = pipelineType;
+}
+
+bool OperatorPipeline::isOperatorPipeline() {
+    return pipelineType == OperatorPipelineType;
+}
+
+bool OperatorPipeline::isSinkPipeline(){
+    return pipelineType == SinkPipelineType;
+}
+
+bool OperatorPipeline::isSourcePipeline() {
+    return pipelineType == SourcePipelineType;
 }
 
 void OperatorPipeline::addPredecessor(OperatorPipelinePtr pipeline) {
@@ -30,13 +56,11 @@ std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() {
     return predecessors;
 }
 
-bool OperatorPipeline::hasOperators() {
-    return this->rootOperator != nullptr;
-}
+bool OperatorPipeline::hasOperators() { return this->rootOperator != nullptr; }
 
 void OperatorPipeline::clearPredecessors() {
-    for(auto pre: predecessorPipelines){
-        if(auto prePipeline = pre.lock()){
+    for (auto pre : predecessorPipelines) {
+        if (auto prePipeline = pre.lock()) {
             prePipeline->removeSuccessor(shared_from_this());
         }
     }
@@ -45,7 +69,7 @@ void OperatorPipeline::clearPredecessors() {
 
 void OperatorPipeline::removePredecessor(OperatorPipelinePtr pipeline) {
     for (auto iter = predecessorPipelines.begin(); iter != predecessorPipelines.end(); ++iter) {
-        if(iter->lock().get() == pipeline.get()){
+        if (iter->lock().get() == pipeline.get()) {
             predecessorPipelines.erase(iter);
             return;
         }
@@ -53,14 +77,14 @@ void OperatorPipeline::removePredecessor(OperatorPipelinePtr pipeline) {
 }
 void OperatorPipeline::removeSuccessor(OperatorPipelinePtr pipeline) {
     for (auto iter = successorPipelines.begin(); iter != successorPipelines.end(); ++iter) {
-        if(iter->get() == pipeline.get()){
+        if (iter->get() == pipeline.get()) {
             successorPipelines.erase(iter);
             return;
         }
     }
 }
 void OperatorPipeline::clearSuccessors() {
-    for(auto succ: successorPipelines){
+    for (auto succ : successorPipelines) {
         succ->removePredecessor(shared_from_this());
     }
     successorPipelines.clear();
@@ -71,13 +95,8 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     this->rootOperator->appendOperatorAsNewRoot(newRootOperator);
 }
 
-uint64_t OperatorPipeline::getPipelineId() {
-    return id;
-}
-QueryPlanPtr OperatorPipeline::getQueryPlan() {
-    return rootOperator;
-}
-
+uint64_t OperatorPipeline::getPipelineId() { return id; }
+QueryPlanPtr OperatorPipeline::getQueryPlan() { return rootOperator; }
 
 }// namespace QueryCompilation
 }// namespace NES

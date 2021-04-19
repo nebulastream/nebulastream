@@ -16,12 +16,17 @@ add_source_nes(
         CodeExpression.cpp
         CodeGenerator.cpp
         GeneratedCode.cpp
+        QueryCompilerOptions.cpp
         GeneratedQueryExecutionPlanBuilder.cpp
         QueryCompiler.cpp
         PipelineContext.cpp
         CompilerTypeFactory.cpp
         RecordHandler.cpp
         LegacyExpression.cpp
+        NewQueryCompiler.cpp
+        DefaultQueryCompiler.cpp
+        QueryCompilationRequest.cpp
+        QueryCompilationResult.cpp
 )
 add_subdirectory(CCodeGenerator)
 add_subdirectory(Operators)

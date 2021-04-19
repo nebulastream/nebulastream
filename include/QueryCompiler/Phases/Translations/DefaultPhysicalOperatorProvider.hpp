@@ -16,6 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHYSICALOPERATORPROVIDER_HPP_
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
+#include <vector>
 namespace NES {
 namespace QueryCompilation {
 

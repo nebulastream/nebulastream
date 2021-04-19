@@ -112,6 +112,11 @@ add_executable(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorC
 target_link_libraries(operator-code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME operator-code-generation-tests COMMAND operator-code-generation-tests)
 
+### Query Compiler Tests ###
+add_executable(query-compiler-tests "UnitTests/QueryCompiler/QueryCompilerTest.cpp")
+target_link_libraries(query-compiler-tests  nes ${GTEST_LIBRARIES})
+add_test(NAME query-compiler-tests  COMMAND query-compiler-tests )
+
 ### NES Topology Tests ###
 add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})

@@ -66,7 +66,7 @@ class VizDumpHandler : public DumpHandler {
     */
     void dump(const NodePtr node, std::ostream& out) override;
     virtual void multilineDump(const NodePtr node, std::ostream& out);
-    void dump(QueryPlanPtr queryPlan) override;
+    void dump(std::string context, std::string scope, QueryPlanPtr queryPlan) override;
     void dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& graph);
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr ptr) override;
     void writeToFile(std::string scope, std::string name, std::string content);

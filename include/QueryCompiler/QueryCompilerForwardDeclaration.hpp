@@ -18,6 +18,17 @@
 #include <memory>
 namespace NES {
 
+namespace NodeEngine {
+class NodeEngine;
+typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+
+namespace Execution{
+class ExecutablePipelineStage;
+typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+}
+
+}// namespace NodeEngine
+
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
@@ -26,6 +37,12 @@ typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
 class CodeGenerator;
 typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
+class JoinLogicalOperatorNode;
+typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
 
 namespace Join {
 class LogicalJoinDefinition;
@@ -65,6 +82,21 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 namespace QueryCompilation {
 
+class QueryCompilationRequest;
+typedef std::shared_ptr<QueryCompilationRequest> QueryCompilationRequestPtr;
+
+class QueryCompilationResult;
+typedef std::shared_ptr<QueryCompilationResult> QueryCompilationResultPtr;
+
+class QueryCompiler;
+typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
+
+class QueryCompilerOptions;
+typedef std::shared_ptr<QueryCompilerOptions> QueryCompilerOptionsPtr;
+
+class Pipeline;
+typedef std::shared_ptr<Pipeline> PipelinePtr;
+
 class OperatorPipeline;
 typedef std::shared_ptr<OperatorPipeline> OperatorPipelinePtr;
 
@@ -80,12 +112,14 @@ typedef std::shared_ptr<GeneratableOperatorProvider> GeneratableOperatorProvider
 class TranslateToGeneratableOperators;
 typedef std::shared_ptr<TranslateToGeneratableOperators> TranslateToGeneratableOperatorsPtr;
 
-
 class PipelineQueryPlan;
 typedef std::shared_ptr<PipelineQueryPlan> PipelineQueryPlanPtr;
 
 class AddScanAndEmitPhase;
 typedef std::shared_ptr<AddScanAndEmitPhase> AddScanAndEmitPhasePtr;
+
+class CodeGenerationPhase;
+typedef std::shared_ptr<CodeGenerationPhase> CodeGenerationPhasePtr;
 
 class PipeliningPhase;
 typedef std::shared_ptr<PipeliningPhase> PipeliningPhasePtr;
@@ -93,16 +127,21 @@ typedef std::shared_ptr<PipeliningPhase> PipeliningPhasePtr;
 class PipelineBreakerPolicy;
 typedef std::shared_ptr<PipelineBreakerPolicy> PipelineBreakerPolicyPtr;
 
-namespace GeneratableOperators{
+namespace Phases {
+
+class PhaseFactory;
+typedef std::shared_ptr<PhaseFactory> PhaseFactoryPtr;
+
+}// namespace Phases
+
+namespace GeneratableOperators {
 class GeneratableOperator;
 typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
-}
-
+}// namespace GeneratableOperators
 
 namespace PhysicalOperators {
 class PhysicalOperator;
 typedef std::shared_ptr<PhysicalOperator> PhysicalOperatorPtr;
-
 
 }// namespace PhysicalOperators
 

@@ -89,14 +89,15 @@ void DefaultPipeliningPhase::processSink(PipelineQueryPlanPtr pipelinePlan,
 void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline,
                                            std::map<OperatorNodePtr, OperatorPipelinePtr>&,
                                            OperatorPipelinePtr currentPipeline,
-                                           PhysicalOperators::PhysicalOperatorPtr currentOperators) {
+                                           PhysicalOperators::PhysicalOperatorPtr sourceOperator) {
     if (currentPipeline->hasOperators()) {
         auto newPipeline = OperatorPipeline::create();
         pipeline->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
         currentPipeline = newPipeline;
     }
-    currentPipeline->prependOperator(currentOperators->copy());
+    currentPipeline->setType(OperatorPipeline::SourcePipelineType);
+    currentPipeline->prependOperator(sourceOperator->copy());
 }
 
 void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
@@ -122,7 +123,7 @@ PipelineQueryPlanPtr DefaultPipeliningPhase::apply(QueryPlanPtr queryPlan) {
     std::map<OperatorNodePtr, OperatorPipelinePtr> pipelineOperatorMap;
     auto pipelinePlan = PipelineQueryPlan::create();
     for (auto sourceOperators : queryPlan->getRootOperators()) {
-        auto pipeline = OperatorPipeline::create();
+        auto pipeline = OperatorPipeline::createSinkPipeline();
         pipeline->prependOperator(sourceOperators->copy());
         pipelinePlan->addPipeline(pipeline);
         processSink(pipelinePlan, pipelineOperatorMap, pipeline, sourceOperators->as<PhysicalOperators::PhysicalOperator>());
