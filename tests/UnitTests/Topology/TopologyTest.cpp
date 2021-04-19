@@ -15,6 +15,8 @@
 */
 
 #include "gtest/gtest.h"
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
@@ -655,4 +657,165 @@ TEST_F(TopologyTest, testPathFindingWithMaintenance) {
     EXPECT_TRUE(mThirdStartNodeParent3->getId() == topologyNodes[4]->getId());
     TopologyNodePtr mThirdStartNodeParent4 = mThirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(mThirdStartNodeParent4->getId() == topologyNodes[0]->getId());
+}
+/**
+ * @brief Tests if findCommonAncestor properly ignores nodes marked for maintenance
+ */
+TEST_F(TopologyTest, testFincCommonAncestorWithMaintenance) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // create workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 6; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(3));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(4));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(4));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(5));
+
+    topology->print();
+
+    auto topNodes = {topologyNodes.at(4),topologyNodes.at(5)};
+    auto commonAncestor = topology->findCommonAncestor(topNodes);
+    EXPECT_TRUE(commonAncestor->getId() == 1);
+    topology->findNodeWithId(1)->setMaintenanceFlag(true);
+    commonAncestor = topology->findCommonAncestor(topNodes);
+    EXPECT_TRUE(commonAncestor->getId() == 2);
+    topology->findNodeWithId(2)->setMaintenanceFlag(true);
+    commonAncestor = topology->findCommonAncestor(topNodes);
+    EXPECT_TRUE(commonAncestor->getId() == 3);
+    topology->findNodeWithId(3)->setMaintenanceFlag(true);
+    commonAncestor = topology->findCommonAncestor(topNodes);
+    EXPECT_TRUE(commonAncestor == nullptr);
+    topology->findNodeWithId(1)->setMaintenanceFlag(false);
+    commonAncestor = topology->findCommonAncestor(topNodes);
+    EXPECT_TRUE(commonAncestor->getId() == 1);
+}
+
+/**
+ * @brief Tests if findCommonChild properly ignores nodes marked for maintenance
+ */
+TEST_F(TopologyTest, testFindCommonChildWithMaintenance) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // create workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 6; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(4));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(4));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
+
+    topology->print();
+
+    auto topNodes = {topologyNodes.at(1),topologyNodes.at(2)};
+    auto commonChild = topology->findCommonChild(topNodes);
+    EXPECT_TRUE(commonChild->getId() == 4);
+    topology->findNodeWithId(4)->setMaintenanceFlag(true);
+    commonChild = topology->findCommonChild(topNodes);
+    EXPECT_TRUE(commonChild->getId() == 5);
+    topology->findNodeWithId(5)->setMaintenanceFlag(true);
+    commonChild = topology->findCommonChild(topNodes);
+    EXPECT_TRUE(commonChild->getId() == 3);
+    topology->findNodeWithId(3)->setMaintenanceFlag(true);
+    commonChild = topology->findCommonChild(topNodes);
+    EXPECT_TRUE(commonChild == nullptr);
+    topology->findNodeWithId(4)->setMaintenanceFlag(false);
+    commonChild = topology->findCommonChild(topNodes);
+    EXPECT_TRUE(commonChild->getId() == 4);
+}
+
+/**
+ * @brief test for expected behavior of findPathBetween in conjunction with findCommonAncestor/Child
+ * as well as ignoring nodes marked for maintenance.
+ */
+TEST_F(TopologyTest, testPathFindingBetweenAllChildAndParentNodesOfANodeMarkedForMaintenance) {
+    TopologyPtr topology = Topology::create();
+
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // create workers
+    std::vector<TopologyNodePtr> topologyNodes;
+    int resource = 4;
+    for (uint32_t i = 0; i < 9; ++i) {
+        topologyNodes.push_back(TopologyNode::create(i, "localhost", grpcPort, dataPort, resource));
+        grpcPort = grpcPort + 2;
+        dataPort = dataPort + 2;
+    }
+
+    topology->setAsRoot(topologyNodes.at(0));
+
+    // link each worker with its neighbor
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(1));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(0), topologyNodes.at(2));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(3));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(1), topologyNodes.at(5));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(3));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(2), topologyNodes.at(5));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(4));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(3), topologyNodes.at(6));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(4), topologyNodes.at(7));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(7));
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(5), topologyNodes.at(8));
+
+    topology->addNewPhysicalNodeAsChild(topologyNodes.at(6), topologyNodes.at(8));
+
+    //Idea: Subquery deployed on 5 with Child Operators on nodes 7 and 8. Parent Operators on nodes 1 and 2
+    //try to find a new node onto which we could potentially migrate the subqueries on node 5.
+    //this node must be reachable from node 7 and 8 as well as 1 and 2.
+    //In this topology the only such node is node 3
+    topology->findNodeWithId(5)->setMaintenanceFlag(true);
+
+    auto childNodes = {topologyNodes.at(7), topologyNodes.at(8)};
+    auto parentNodes = {topologyNodes.at(1),topologyNodes.at(2)};
+    auto commonAncestor = topology->findCommonAncestor(childNodes);
+    auto commonChild = topology->findCommonChild(parentNodes);
+    EXPECT_TRUE(commonAncestor->getId() == 3);
+    EXPECT_TRUE(commonAncestor->getId() == commonChild->getId());
+
+    auto path  = topology->findPathBetween(childNodes,parentNodes);
+    EXPECT_TRUE(path.size() != 0);
 }
