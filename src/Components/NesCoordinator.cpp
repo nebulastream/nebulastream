@@ -352,6 +352,8 @@ GlobalExecutionPlanPtr NesCoordinator::getGlobalExecutionPlan() { return globalE
 
 MaintenanceServicePtr NesCoordinator::getMaintenanceService() { return maintenanceService; }
 
+WorkerRPCClientPtr NesCoordinator::getWorkerRPCClient() { return workerRpcClient; }
+
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}

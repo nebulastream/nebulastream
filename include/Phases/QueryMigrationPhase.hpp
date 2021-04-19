@@ -19,12 +19,12 @@
 
 #ifndef NES_QUERYMIGRATIONPHASE_HPP
 #define NES_QUERYMIGRATIONPHASE_HPP
+
 #include <Plans/Query/QueryId.hpp>
 #include <Services/StrategyType.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <memory>
-
-
+#include <vector>
 
 namespace NES{
 
@@ -37,6 +37,12 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class QueryMigrationPhase;
 typedef std::shared_ptr<QueryMigrationPhase> QueryMigrationPhasePtr;
 
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+
 class QueryMigrationPhase{
 
   public:
@@ -46,7 +52,7 @@ class QueryMigrationPhase{
      * @param workerRpcClient : rpc client to communicate with workers
      * @return shared pointer to the instance of QueryMigrationPhase
      */
-    static QueryMigrationPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRPCClient);
+    static QueryMigrationPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRPCClient);
 
     /**
      * @brief method for executing a query migration.
@@ -58,19 +64,35 @@ class QueryMigrationPhase{
      *
      * @return true if successful else false
      */
-    bool execute(QueryId queryId, TopologyNodeId topologyNodeId, StrategyType strategyType);
+    bool execute(QueryId queryId, TopologyNodeId topologyNodeId);
     ~QueryMigrationPhase();
 
-  private:
-    explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient);
     /**
-     * @brief method send query to nodes
-     * @param queryId
-     * @return bool indicating success
-     */
+ * finds all child execution nodes of the execution node corresponding to the topology node and query
+ * @param queryId
+ * @param topologyNodeId
+ * @return vector of top nodes or empty if none
+ */
+    std::vector<TopologyNodePtr> findChildExecutionNodesAsTopologyNodes (QueryId queryId, TopologyNodeId topologyNodeId);
+
+    /**
+    * finds all parent execution nodes of the execution node corresponding to the topology node and query
+    * @param queryId
+    * @param topologyNodeId
+    * @return vector of top nodes or empty if none
+    */
+    std::vector<TopologyNodePtr> findParentExecutionNodesAsTopologyNodes(QueryId queryId, TopologyNodeId topologyNodeId);
+
+  private:
+    explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient);
+
+
 
     WorkerRPCClientPtr  workerRPCClient;
+    TopologyPtr topology;
     GlobalExecutionPlanPtr globalExecutionPlan;
+
+
 };
 
 }//namespace NES

@@ -310,6 +310,12 @@ add_executable(convert-logical-to-physical-source-tests "UnitTests/Phases/Conver
 target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
+#QueryMigrationPhaseTest
+add_executable(query-migration-phase-tests "UnitTests/Phases/QueryMigrationPhaseTest.cpp")
+target_link_libraries(query-migration-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME query-migration-phase-tests COMMAND query-migration-phase-tests)
+
+
 # Type inference test
 add_executable(type-inference-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp")
 target_link_libraries(type-inference-tests nes ${GTEST_LIBRARIES})
@@ -529,6 +535,11 @@ add_test(NAME multi-worker-test COMMAND multi-worker-test)
 add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
 target_link_libraries(query-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
+
+###QueryMigrationPhaseIntegrationTest###
+add_executable(query-migration-phase-integration-test "Integration/QueryMigrationPhaseIntegrationTest.cpp")
+target_link_libraries(query-migration-phase-integration-test nes ${GTEST_LIBRARIES})
+add_test(NAME query-migration-phase-integration-test COMMAND query-migration-phase-integration-test)
 
 ### MQTTSinkDepleymentTest ###
 add_executable(mqtt-sink-deployment-test "Integration/MQTTSinkDeploymentTest.cpp")

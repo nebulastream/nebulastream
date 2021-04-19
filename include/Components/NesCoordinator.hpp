@@ -172,6 +172,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     Runtime::NodeEnginePtr getNodeEngine();
 
+    WorkerRPCClientPtr getWorkerRPCClient();
+
     void onFatalError(int signalNumber, std::string string) override;
     void onFatalException(std::shared_ptr<std::exception> ptr, std::string string) override;
 
