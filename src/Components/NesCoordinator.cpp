@@ -67,9 +67,18 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     workerRpcClient = std::make_shared<WorkerRPCClient>();
     queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
-    queryRequestProcessorService = std::make_shared<NESRequestProcessorService>(
-        globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
-        coordinatorConfig->getEnableQueryMerging()->getValue(), coordinatorConfig->getQueryMergerRule()->getValue());
+
+    std::string queryMergerRuleName = coordinatorConfig->getQueryMergerRule()->getValue();
+    auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
+
+    if (found != Optimizer::stringToMergerRuleEnum.end()) {
+        queryRequestProcessorService = std::make_shared<NESRequestProcessorService>(
+            globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
+            coordinatorConfig->getEnableQueryMerging()->getValue(), found->second);
+    } else {
+        NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
+    }
+
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue, streamCatalog,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 }

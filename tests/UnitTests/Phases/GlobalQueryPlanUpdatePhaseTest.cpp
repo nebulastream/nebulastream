@@ -275,16 +275,6 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
     auto queryCatalog = std::make_shared<QueryCatalog>();
     for (int i = 1; i <= 1; i++) {
         NES_INFO("GlobalQueryPlanUpdatePhaseTest: Create the query merger phase.");
-        /*        auto q1 = Query::from("example")
-                      .map(Attribute("X7") = Attribute("id") / Attribute("Y"))
-                      .map(Attribute("val") = Attribute("val") - 8)
-                      .map(Attribute("X") = Attribute("X") + 1)
-                      .filter(Attribute("X") > 14)
-                      .filter(Attribute("X7") >= 20)
-                      .map(Attribute("X7") = 8)
-                      .map(Attribute("val") = Attribute("val") + 8)
-                      .sink(NullOutputSinkDescriptor::create());*/
-
         auto q1 = Query::from("example")
                       .filter(Attribute("X") <= Attribute("Y"))
                       .map(Attribute("id") = Attribute("id") / 1)
@@ -302,13 +292,14 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                       .sink(NullOutputSinkDescriptor::create());
 
         q1.getQueryPlan()->setQueryId(i);
-        queryCatalog->addNewQueryRequest(queryString, q1.getQueryPlan(), "TopDown");
+        queryCatalog->addNewQuery(queryString, q1.getQueryPlan(), "TopDown");
     }
 
-    std::vector<QueryCatalogEntry> batchOfQueryRequests;
+    std::vector<NESRequestPtr> batchOfNesRequests;
     auto allQueries = queryCatalog->getAllQueryCatalogEntries();
     for (auto& [key, value] : allQueries) {
-        batchOfQueryRequests.emplace_back(value->copy());
+        auto nesRequest = RunQueryRequest::create(value->getQueryPlan(), value->getQueryPlacementStrategy());
+        batchOfNesRequests.emplace_back(nesRequest);
     }
 
     auto streamCatalog = std::make_shared<StreamCatalog>();
@@ -317,13 +308,14 @@ TEST_F(GlobalQueryPlanUpdatePhaseTest, queryMergerPhaseForSingleQueryPlan1) {
                                 ->addField("val", NES::UINT64)
                                 ->addField("X", NES::UINT64)
                                 ->addField("Y", NES::UINT64);
-    //    for (int j = 0; j < NO_OF_DISTINCT_SOURCES; j++) {
+
     streamCatalog->addLogicalStream("example", schema);
 
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto phase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, context, true,
-                                                    "Z3SignatureBasedCompleteQueryMergerRule");
-    auto resultPlan = phase->execute(batchOfQueryRequests);
+                                                    Optimizer::QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+
+    auto resultPlan = phase->execute(batchOfNesRequests);
     //Assert
     NES_INFO("GlobalQueryPlanUpdatePhaseTest: Should return 1 global query node with sink operator.");
     globalQueryPlan->removeEmptySharedQueryMetaData();
