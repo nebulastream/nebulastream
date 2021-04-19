@@ -140,6 +140,12 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     return false;
 }
 
+void OutputChannel::sendReconfigurationMessage(Messages::QueryReconfigurationMessage& reconfigurationMessage) {
+    sendMessage<Messages::QueryReconfigurationMessage>(zmqSocket, channelId, reconfigurationMessage.getQuerySubPlansToStart(),
+                                                       reconfigurationMessage.getQuerySubPlansIdToReplace(),
+                                                       reconfigurationMessage.getQuerySubPlansToStop());
+}
+
 void OutputChannel::onError(Messages::ErrorMessage& errorMsg) { NES_ERROR(errorMsg.getErrorTypeAsString()); }
 
 void OutputChannel::close() {

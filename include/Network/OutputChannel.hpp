@@ -74,6 +74,12 @@ class OutputChannel {
     bool sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tupleSizeInBytes);
 
     /**
+     * @brief Send reconfiguration message to the destination defined in the constructor.
+     * @param the reconfiguration message to send
+     */
+    void sendReconfigurationMessage(Messages::QueryReconfigurationMessage& reconfigurationMessage);
+
+    /**
      * @brief Method to handle the error
      * @param the error message
      */

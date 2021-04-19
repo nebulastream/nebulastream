@@ -259,7 +259,7 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto optRetSize = dispatcherSocket.recv(queryReconfigurationEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     auto queryReconfigurationMsg = *queryReconfigurationEnvelope.data<Messages::QueryReconfigurationMessage>();
-                    NES_DEBUG("ZmqServer: EndOfStream received for channel " << queryReconfigurationMsg.getChannelId());
+                    NES_DEBUG("ZmqServer: QueryReconfiguration received for channel " << queryReconfigurationMsg.getChannelId());
                     exchangeProtocol.onQueryReconfiguration(queryReconfigurationMsg);
                     break;
                 }

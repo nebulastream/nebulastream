@@ -73,6 +73,12 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
                                                                         << NodeEngine::NesThread::getId());
             break;
         }
+        case NodeEngine::QueryReconfiguration: {
+            auto queryReconfigurationMessage = task.getUserData<Messages::QueryReconfigurationMessage>();
+            auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
+            channel->sendReconfigurationMessage(queryReconfigurationMessage);
+            break;
+        }
         default: {
             break;
         }

@@ -81,7 +81,7 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     }
 }
 
-void ExchangeProtocol::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+void ExchangeProtocol::onQueryReconfiguration(Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
     protocolListener->onQueryReconfiguration(queryReconfigurationMessage);
 }
 

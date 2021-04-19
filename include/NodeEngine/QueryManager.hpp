@@ -43,6 +43,12 @@
 #include <unordered_map>
 #include <unordered_set>
 
+namespace NES::Network::Messages {
+
+class QueryReconfigurationMessage;
+
+}// namespace NES::Network::Messages
+
 namespace NES::NodeEngine {
 
 /**
@@ -202,6 +208,17 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
+    /**
+     * @brief handle reconfiguration request
+     * @return operatorId to associate QEP with
+     * @return qep to associate with operator
+     * @return oldQep to un-associate with operator
+     * @return queryReconfigurationMessage to pass onto further sinks
+     */
+    bool addQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep,
+                                 Execution::ExecutableQueryPlanPtr oldQep,
+                                 Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -220,6 +237,13 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @oaram reference to worker context
      */
     void completedWork(Task& task, WorkerContext& workerContext);
+
+    /**
+     * @brief register QEP against all sources
+     * @param QEP to register
+     * @param Sources to register QEP against
+    */
+    bool registerQueryForSources(Execution::ExecutableQueryPlanPtr qep, std::vector<DataSourcePtr> sources);
 
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 

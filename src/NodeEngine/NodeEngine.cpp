@@ -448,23 +448,26 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 }
 
 void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    auto operatorId = queryReconfigurationMessage.getChannelId().getNesPartition().getOperatorId();
     for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
         auto foundQEPNeedingReplacement = deployedQEPs.find(element.first);
         if (foundQEPNeedingReplacement != deployedQEPs.end()) {
             auto foundReplacementQEP = reconfigurationQEPs.find(element.second);
-            // replace QEP
+            queryManager->addQueryReconfiguration(operatorId, foundReplacementQEP->second, foundQEPNeedingReplacement->second,
+                                                  queryReconfigurationMessage);
         }
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStart()) {
         auto foundQueryReconfigurationQEP = reconfigurationQEPs.find(querySubPlanId);
         if (foundQueryReconfigurationQEP != reconfigurationQEPs.end()) {
-            // start qep
+            queryManager->addQueryReconfiguration(operatorId, foundQueryReconfigurationQEP->second, nullptr,
+                                                  queryReconfigurationMessage);
         }
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {
         auto foundQEPToStop = deployedQEPs.find(querySubPlanId);
         if (foundQEPToStop != reconfigurationQEPs.end()) {
-            // stop qep
+            // propagate, deRegister and stop
         }
     }
 }

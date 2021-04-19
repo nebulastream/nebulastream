@@ -128,6 +128,10 @@ void QueryManager::destroy() {
 }
 
 bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
+    return registerQueryForSources(qep, qep->getSources());
+}
+
+bool QueryManager::registerQueryForSources(Execution::ExecutableQueryPlanPtr qep, std::vector<DataSourcePtr> sources) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
     std::scoped_lock lock(queryMutex, statisticsMutex);
 
@@ -153,7 +157,7 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
 
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
-    for (const auto& source : qep->getSources()) {
+    for (const auto& source : sources) {
         // source already exists, add qep to source set if not there
         OperatorId sourceOperatorId = source->getOperatorId();
         if (operatorIdToQueryMap.find(sourceOperatorId) != operatorIdToQueryMap.end()) {
@@ -478,6 +482,51 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
                                                          << " orgID=" << buf.getOriginId() << " stageID=" << stageId);
         cv.notify_all();
     }
+}
+
+bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep,
+                                           Execution::ExecutableQueryPlanPtr oldQep,
+                                           Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    std::unique_lock queryLock(queryMutex);
+    auto allSources = qep->getSources();
+    auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [operatorId](DataSourcePtr src) {
+        return src->getOperatorId() == operatorId;
+    });
+    std::vector<DataSourcePtr> matchingSources;
+    while (matchingSourcesItr != allSources.end()) {
+        matchingSources.push_back(*matchingSourcesItr);
+        matchingSourcesItr++;
+    }
+    if (matchingSources.empty()) {
+        NES_ERROR("QueryManager: addQueryReconfiguration: Could not find source for operatorId"
+                  << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
+        return false;
+    }
+    bool isRegistrationSuccessful = registerQueryForSources(qep, matchingSources);
+    if (not isRegistrationSuccessful) {
+        NES_ERROR("QueryManager: addQueryReconfiguration: QEP registration failed for operatorId"
+                  << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
+        return false;
+    }
+    if (runningQEPs.find(qep->getQuerySubPlanId()) == runningQEPs.end()) {
+        NES_DEBUG("QueryManager: addQueryReconfiguration: QEP for querySubPlanId" << qep->getQuerySubPlanId()
+                                                                                  << " is already in Running State");
+        return true;
+    }
+    bool isStartSuccessful = startQuery(qep);
+    if (not isStartSuccessful) {
+        NES_ERROR("QueryManager: addQueryReconfiguration: QEP start failed for operatorId"
+                  << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
+        return false;
+    }
+    for (auto sink : qep->getSinks()) {
+        auto reconfigurationMessage = ReconfigurationMessage(qep->getQuerySubPlanId(), ReconfigurationType::QueryReconfiguration,
+                                                             sink, queryReconfigurationMessage);
+        addReconfigurationMessage(qep->getQuerySubPlanId(), reconfigurationMessage, true);
+    }
+    NES_DEBUG("QueryManager: addQueryReconfiguration: OldQEP for querySubPlanId" << oldQep->getQuerySubPlanId()
+                                                                                 << " is already in Running State");
+    return true;
 }
 
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
