@@ -30,7 +30,6 @@ TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(S
 }
 
 TopologySpecificQueryRewritePhase::TopologySpecificQueryRewritePhase(StreamCatalogPtr streamCatalog) {
-
     logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
     distributeWindowRule = DistributeWindowRule::create();
     distributeJoinRule = DistributeJoinRule::create();

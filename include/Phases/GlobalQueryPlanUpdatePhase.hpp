@@ -71,6 +71,7 @@ class GlobalQueryPlanUpdatePhase {
      * @param streamCatalog: the catalog of streams
      * @param globalQueryPlan: the input global query plan
      * @param enableQueryMerging: enable or disable query merging
+     * @param queryMergerRule: Rule to be used fro performing query merging if merging enabled
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
@@ -98,7 +99,6 @@ class GlobalQueryPlanUpdatePhase {
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     z3::ContextPtr z3Context;
-    Optimizer::QueryMergerRule queryMergerRule;
 };
 }// namespace NES
 

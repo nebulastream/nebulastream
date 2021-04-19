@@ -18,13 +18,12 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <filesystem>
-#include <omp.h>
 #include <util/BenchmarkUtils.hpp>
 
 using namespace NES;
 using namespace NES::Benchmarking;
 
-const NES::DebugLevel LOG_LEVEL = NES::LOG_DEBUG;
+const NES::DebugLevel LOG_LEVEL = NES::LOG_NONE;
 const uint64_t NO_OF_PHYSICAL_SOURCES = 10;
 //const uint64_t NO_OF_DISTINCT_SOURCES = 2;
 //const uint64_t NO_OF_QUERIES_TO_SEND = 1000;
@@ -46,6 +45,7 @@ void setupSources(NesCoordinatorPtr nesCoordinator) {
                                 ->addField("val", NES::UINT64)
                                 ->addField("X", NES::UINT64)
                                 ->addField("Y", NES::UINT64);
+    //FIXME: We need to revisit it when running different benchmarks
     //    for (int j = 0; j < NO_OF_DISTINCT_SOURCES; j++) {
     streamCatalog->addLogicalStream("example", schema);
     //    }
@@ -91,7 +91,6 @@ int main() {
     }
     QueryPtr queryObjects[queries.size()];
 
-#pragma omp parallel for
     for (auto i = 0; i < queries.size(); i++) {
         auto queryObj = UtilityFunctions::createQueryFromCodeString(queries[i]);
         queryObjects[i] = queryObj;
@@ -113,7 +112,7 @@ int main() {
 
         auto lastQuery = queryCatalog->getQueryCatalogEntry(queries.size());
         while (lastQuery->getQueryStatus() != QueryStatus::Running) {
-            sleep(2);
+            sleep(.1);
         }
 
         auto endTime =

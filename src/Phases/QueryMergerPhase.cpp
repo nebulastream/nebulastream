@@ -41,7 +41,7 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMerge
             break;
         case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
         case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
-        case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule: NES_NOT_IMPLEMENTED(); break;
+        case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule: NES_NOT_IMPLEMENTED();
     }
 }
 

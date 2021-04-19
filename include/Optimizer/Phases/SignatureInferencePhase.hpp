@@ -32,7 +32,7 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 namespace NES::Optimizer {
 
 class SignatureInferencePhase;
-typedef std::shared_ptr<SignatureInferencePhase> Z3SignatureInferencePhasePtr;
+typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
 
 /**
  * @brief This class is responsible for computing the Z3 expression for all operators within a query
@@ -40,11 +40,14 @@ typedef std::shared_ptr<SignatureInferencePhase> Z3SignatureInferencePhasePtr;
 class SignatureInferencePhase {
 
   public:
+
     /**
-     * @brief Create instance of Z3SignatureInferencePhase class
-     * @return shared instance of the Z3SignatureInferencePhase
+     * @brief Create instance of SignatureInferencePhase class
+     * @param context : the z3 context
+     * @param computeStringSignature : bool flag indicating that string based signature need to be computed
+     * @return pointer to the signature inference phase
      */
-    static Z3SignatureInferencePhasePtr create(z3::ContextPtr context, bool computeStringSignature = false);
+    static SignatureInferencePhasePtr create(z3::ContextPtr context, bool computeStringSignature = false);
 
     /**
      * @brief this method will compute the Z3 expression for all operators of the input query plan
