@@ -189,7 +189,6 @@ class UtilityFunctions {
     static uint64_t getNextTaskId();
 
   private:
-
     /**
      * @brief This method is responsible for returning the location where the sub query terminates
      * @param startOfUnionWith : the location where unionWith starts
