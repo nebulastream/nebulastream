@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <map>
 namespace NES {
 namespace QueryCompilation {
 class DefaultPipeliningPhase: public PipeliningPhase {
@@ -16,7 +17,7 @@ class DefaultPipeliningPhase: public PipeliningPhase {
     void processSink(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                      OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
     void processSource(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                       OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+                       OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr sourceOperator);
     void processMultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                           OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
     void processDemultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,

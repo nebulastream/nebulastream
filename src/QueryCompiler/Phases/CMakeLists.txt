@@ -14,6 +14,9 @@
 
 add_source_nes(
         AddScanAndEmitPhase.cpp
+        PhaseFactory.cpp
+        DefaultPhaseFactory.cpp
+        CodeGenerationPhase.cpp
 )
 
 add_subdirectory(Pipelining)

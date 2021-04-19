@@ -33,6 +33,8 @@ class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOp
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                       SinkDescriptorPtr sinkDescriptor);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    SinkDescriptorPtr getSinkDescriptor();
+
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

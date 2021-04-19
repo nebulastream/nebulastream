@@ -41,8 +41,8 @@ class DumpHandler {
     */
     virtual void dump(const NodePtr node, std::ostream& out) = 0;
     virtual void multilineDump(const NodePtr node, std::ostream& out) = 0;
-    virtual void dump(QueryPlanPtr){};
-    virtual void dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr){};
+    virtual void dump(std::string context, std::string scope, QueryPlanPtr){};
+    virtual void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr){};
 };
 
 typedef std::shared_ptr<DumpHandler> DebugDumpHandlerPtr;

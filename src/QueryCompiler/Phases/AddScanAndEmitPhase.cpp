@@ -29,14 +29,7 @@ namespace QueryCompilation {
 
 AddScanAndEmitPhasePtr AddScanAndEmitPhase::create() { return std::make_shared<AddScanAndEmitPhase>(); }
 
-PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr queryPlan) {
-    for (auto pipeline : queryPlan->getPipelines()) {
-        process(pipeline);
-    }
-    return queryPlan;
-}
-
-OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
+OperatorPipelinePtr AddScanAndEmitPhase::apply(OperatorPipelinePtr pipeline) {
     auto queryPlan = pipeline->getQueryPlan();
     auto pipelineRootOperators = queryPlan->getRootOperators();
     NES_ASSERT(pipelineRootOperators.size() == 1, "A pipeline should only have one root operator");

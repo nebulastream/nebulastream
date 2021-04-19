@@ -11,7 +11,14 @@ namespace QueryCompilation {
 class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
 
   public:
+    enum Type{
+        SourcePipelineType,
+        SinkPipelineType,
+        OperatorPipelineType
+    };
     static OperatorPipelinePtr create();
+    static OperatorPipelinePtr createSourcePipeline();
+    static OperatorPipelinePtr createSinkPipeline();
     void addSuccessor(OperatorPipelinePtr pipeline);
     void addPredecessor(OperatorPipelinePtr pipeline);
     void removePredecessor(OperatorPipelinePtr pipeline);
@@ -24,13 +31,18 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     void clearSuccessors();
     QueryPlanPtr getQueryPlan();
     uint64_t getPipelineId();
+    bool isSourcePipeline();
+    bool isSinkPipeline();
+    bool isOperatorPipeline();
+    bool setType(Type pipelineType);
   protected:
-    OperatorPipeline(uint64_t pipelineId);
+    OperatorPipeline(uint64_t pipelineId, Type pipelineType);
   private:
     uint64_t id;
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
     QueryPlanPtr rootOperator;
+    Type pipelineType;
 
 };
 }// namespace QueryCompilation

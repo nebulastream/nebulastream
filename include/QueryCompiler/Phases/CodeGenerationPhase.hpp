@@ -13,18 +13,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_CODEGENERATIONPHASE_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_PHASES_CODEGENERATIONPHASE_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <functional>
 
 namespace NES {
 namespace QueryCompilation {
-class AddScanAndEmitPhase {
+class CodeGenerationPhase {
   public:
-    static AddScanAndEmitPhasePtr create();
-    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
-};
-}
-};
+    static CodeGenerationPhasePtr create();
+    NodeEngine::Execution::ExecutablePipelineStagePtr apply(OperatorPipelinePtr pipeline);
 
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_
+  private:
+    void generate(OperatorNodePtr rootOperator, std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)> applyFunction);
+};
+}// namespace QueryCompilation
+};// namespace NES
+
+#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_CODEGENERATIONPHASE_HPP_

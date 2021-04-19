@@ -32,15 +32,13 @@ TranslateToGeneratableOperators::TranslateToGeneratableOperators::create(Generat
 
 TranslateToGeneratableOperators::TranslateToGeneratableOperators(GeneratableOperatorProviderPtr provider) : provider(provider) {}
 
-PipelineQueryPlanPtr TranslateToGeneratableOperators::apply(PipelineQueryPlanPtr pipelinePlan) {
-    for(auto pipeline: pipelinePlan->getPipelines()){
-        auto queryPlan = pipeline->getQueryPlan();
-        auto nodes = QueryPlanIterator(queryPlan).snapshot();
-        for (auto node : nodes) {
-            provider->lower(queryPlan, node->as<PhysicalOperators::PhysicalOperator>());
-        }
+OperatorPipelinePtr TranslateToGeneratableOperators::apply(OperatorPipelinePtr operatorPipeline) {
+    auto queryPlan = operatorPipeline->getQueryPlan();
+    auto nodes = QueryPlanIterator(queryPlan).snapshot();
+    for (auto node : nodes) {
+        provider->lower(queryPlan, node->as<PhysicalOperators::PhysicalOperator>());
     }
-    return pipelinePlan;
+    return operatorPipeline;
 }
 
 }// namespace QueryCompilation
