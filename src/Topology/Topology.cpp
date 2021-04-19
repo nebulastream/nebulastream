@@ -449,7 +449,9 @@ TopologyNodePtr Topology::findCommonAncestor(std::vector<TopologyNodePtr> topolo
 
         NES_TRACE("Topology: Add parent of the the node under consideration to the deque for further processing.");
         for (const auto& parent : candidateNode->getParents()) {
-            nodesToProcess.push_back(parent);
+            //if node isnt marked for maintennance, add to processing queue
+            if(!parent->as<TopologyNode>()->getMaintenanceFlag())
+                nodesToProcess.push_back(parent);
         }
     }
 
@@ -497,7 +499,10 @@ TopologyNodePtr Topology::findCommonChild(std::vector<TopologyNodePtr> topologyN
 
         NES_TRACE("Topology: Add children of the the node under consideration to the deque for further processing.");
         for (const auto& child : candidateNode->getChildren()) {
-            nodesToProcess.push_back(child);
+            //if node isnt marked for maintenance, add to processing queue
+            if(!child->as<TopologyNode>()->getMaintenanceFlag()) {
+                nodesToProcess.push_back(child);
+            }
         }
     }
     NES_WARNING("Topology: Unable to find a common child topology node for the input topology nodes.");
