@@ -48,7 +48,7 @@ class QueryCatalog {
      * @return query catalog entry or nullptr
      */
     QueryCatalogEntryPtr addNewQuery(const std::string& queryString, const QueryPlanPtr queryPlan,
-                                            const std::string& optimizationStrategyName);
+                                     const std::string& optimizationStrategyName);
 
     QueryCatalogEntryPtr recordInvalidQuery(const std::string& queryString, const QueryId queryId, const QueryPlanPtr queryPlan,
                                             const std::string& placementStrategyName);

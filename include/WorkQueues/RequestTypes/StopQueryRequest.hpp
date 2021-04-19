@@ -30,7 +30,6 @@ typedef std::shared_ptr<StopQueryRequest> StopQueryRequestPtr;
 class StopQueryRequest : public NESRequest {
 
   public:
-
     /**
      * @brief Create instance of  StopQueryRequest
      * @param queryId : the id of query to be stopped
