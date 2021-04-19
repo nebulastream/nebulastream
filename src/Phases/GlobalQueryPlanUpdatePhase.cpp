@@ -37,8 +37,7 @@ namespace NES {
 GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
                                                        GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
                                                        bool enableQueryMerging, Optimizer::QueryMergerRule queryMergerRule)
-    : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), globalQueryPlan(globalQueryPlan), z3Context(z3Context),
-      queryMergerRule(queryMergerRule) {
+    : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     bool applyRulesImprovingSharingIdentification = false;
@@ -82,7 +81,6 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
                 queryCatalog->markQueryAs(queryId, QueryStatus::Scheduling);
 
                 NES_DEBUG("QueryProcessingService: Performing Query type inference phase for query: " << queryId);
-                //                    NES_ERROR("First Inference : " << queryRequest.getQueryString());
                 queryPlan = typeInferencePhase->execute(queryPlan);
 
                 NES_DEBUG("QueryProcessingService: Performing Query rewrite phase for query: " << queryId);

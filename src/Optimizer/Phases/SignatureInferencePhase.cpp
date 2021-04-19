@@ -29,12 +29,11 @@ SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context, bool co
 
 SignatureInferencePhase::~SignatureInferencePhase() { NES_DEBUG("~SignatureInferencePhase()"); }
 
-Z3SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context, bool computeStringSignature) {
+SignatureInferencePhasePtr SignatureInferencePhase::create(z3::ContextPtr context, bool computeStringSignature) {
     return std::make_shared<SignatureInferencePhase>(SignatureInferencePhase(context, computeStringSignature));
 }
 
 void SignatureInferencePhase::execute(QueryPlanPtr queryPlan) {
-
     if (computeStringSignature) {
         NES_INFO("SignatureInferencePhase: computing String based signature for the query " << queryPlan->getQueryId());
         auto sinkOperators = queryPlan->getRootOperators();

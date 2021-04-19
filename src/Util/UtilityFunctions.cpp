@@ -144,18 +144,20 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
 uint64_t UtilityFunctions::findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet) {
     uint64_t closingLoc = 0;
     uint64_t parenthesisCount = 0;
+    //Iterate over the code string and identify the last location where the parenthesis are getting balanced
     for (uint64_t i = startOfUnionWith + 9; i < queryCodeSnippet.size(); i++) {
-        if (queryCodeSnippet[i] == '(') {
+        if (queryCodeSnippet[i] == '(') { //When found open parenthesis, increment the parenthesis count
             parenthesisCount++;
-        } else if (queryCodeSnippet[i] == ')') {
+        } else if (queryCodeSnippet[i] == ')') { //When found open parenthesis, decrement the parenthesis count
             parenthesisCount--;
         }
 
-        if (parenthesisCount == 0) {
+        if (parenthesisCount == 0) {//When found parenthesis count as zero then return the position
             closingLoc = i;
             break;
         }
     }
+    //return the location where the parenthesis are getting balanced
     return closingLoc;
 }
 
