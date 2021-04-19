@@ -40,7 +40,7 @@ class NESRequestQueue {
      * @brief Constructor of Query request queue
      * @param batchSize : the batch of user requests to be processed together
      */
-    NESRequestQueue(uint32_t batchSize);
+    NESRequestQueue(uint64_t batchSize);
 
     //d-tor
     ~NESRequestQueue();
@@ -79,8 +79,8 @@ class NESRequestQueue {
 
   private:
     bool newRequestAvailable;
-    uint32_t batchSize;
-    std::mutex requestMtx;
+    uint64_t batchSize;
+    std::mutex requestMutex;
     std::condition_variable availabilityTrigger;
     std::deque<NESRequestPtr> requestQueue;
 };

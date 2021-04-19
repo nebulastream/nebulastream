@@ -20,14 +20,14 @@
 
 namespace NES {
 
-NESRequestQueue::NESRequestQueue(uint32_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {
+NESRequestQueue::NESRequestQueue(uint64_t batchSize) : newRequestAvailable(false), batchSize(batchSize) {
     NES_DEBUG("QueryRequestQueue()");
 }
 
 NESRequestQueue::~NESRequestQueue() { NES_DEBUG("~QueryRequestQueue()"); }
 
 bool NESRequestQueue::add(NESRequestPtr request) {
-    std::unique_lock<std::mutex> lock(requestMtx);
+    std::unique_lock<std::mutex> lock(requestMutex);
     NES_INFO("QueryRequestQueue: Adding a new query request : " << request->toString());
     //TODO: identify and handle if more than one request for same query exists in the queue
     requestQueue.emplace_back(request);
@@ -38,7 +38,7 @@ bool NESRequestQueue::add(NESRequestPtr request) {
 }
 
 std::vector<NESRequestPtr> NESRequestQueue::getNextBatch() {
-    std::unique_lock<std::mutex> lock(requestMtx);
+    std::unique_lock<std::mutex> lock(requestMutex);
     //We are using conditional variable to prevent Lost Wakeup and Spurious Wakeup
     //ref: https://www.modernescpp.com/index.php/c-core-guidelines-be-aware-of-the-traps-of-condition-variables
     availabilityTrigger.wait(lock, [&] {
@@ -66,7 +66,7 @@ std::vector<NESRequestPtr> NESRequestQueue::getNextBatch() {
 }
 
 void NESRequestQueue::insertPoisonPill() {
-    std::unique_lock<std::mutex> lock(requestMtx);
+    std::unique_lock<std::mutex> lock(requestMutex);
     NES_INFO("QueryRequestQueue: Shutdown is called. Inserting Poison pill in the query request queue.");
     setNewRequestAvailable(true);
     availabilityTrigger.notify_one();
