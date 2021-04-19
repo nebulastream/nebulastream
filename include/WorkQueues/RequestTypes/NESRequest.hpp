@@ -51,7 +51,7 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
     /**
      * @brief Dynamically casts the RequestType
      * @tparam RequestType
-     * @return returns a shared pointer of the RequestType
+     * @return a shared pointer of the RequestType
      */
     template<class RequestType>
     std::shared_ptr<RequestType> as() {
