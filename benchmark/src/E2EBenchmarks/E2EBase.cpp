@@ -421,14 +421,15 @@ void E2EBase::setupSources() {
                 return;
             };
 
-            wrk->registerLogicalStream("input1", testSchemaFileName);
-            wrk->registerLogicalStream("input2", testSchemaFileName);
-
             NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
                 "LambdaSource", "test_stream1", "input1", func1, config->getNumberOfBuffersToProduce()->getValue(), 0);
             if (config->getScalability()->getValue() == "scale-out") {
+                wrk->registerLogicalStream("input1", testSchemaFileName);
+                wrk->registerLogicalStream("input2", testSchemaFileName);
                 wrk->registerPhysicalStream(conf1);
             } else {
+                crd->getNesWorker()->registerLogicalStream("input1", testSchemaFileName);
+                crd->getNesWorker()->registerLogicalStream("input2", testSchemaFileName);
                 crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
                                                                     "test_stream1" + std::to_string(i), "input1");
                 crd->getNodeEngine()->setConfig(conf1);
@@ -436,7 +437,6 @@ void E2EBase::setupSources() {
 
             NES::AbstractPhysicalStreamConfigPtr conf2 = NES::LambdaSourceStreamConfig::create(
                 "LambdaSource", "test_stream2", "input2", func2, config->getNumberOfBuffersToProduce()->getValue(), 0);
-            wrk->registerPhysicalStream(conf2);
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf2);
             } else {
