@@ -64,6 +64,11 @@ class SignatureInferencePhase {
     ~SignatureInferencePhase();
 
   private:
+    /**
+     * @brief Create instance of SignatureInferencePhase class
+     * @param context : the z3 context
+     * @param computeStringSignature : bool flag indicating that string based signature need to be computed
+     */
     explicit SignatureInferencePhase(z3::ContextPtr context, bool computeStringSignature = false);
     z3::ContextPtr context;
     bool computeStringSignature;

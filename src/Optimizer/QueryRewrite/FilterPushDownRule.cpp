@@ -78,10 +78,12 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             NES_TRACE("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
             if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {
                 NES_TRACE("FilterPushDownRule: Adding Filter operator between current operator and its parents");
-                if (isFilterAboveUnionOperator) {
+                if (isFilterAboveUnionOperator) {//If  filter was above a union operator
                     NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
+                    //Create duplicate of the filter
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
                     duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
+                    //Inset it between currently traversed node and its parent
                     if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
@@ -101,10 +103,12 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
             if (predicateFieldManipulated) {
                 NES_TRACE("FilterPushDownRule: Adding Filter operator between current operator and its parents");
-                if (isFilterAboveUnionOperator) {
+                if (isFilterAboveUnionOperator) {//If  filter was above a union operator
                     NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
+                    //Create duplicate of the filter
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
                     duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
+                    //Inset it between currently traversed node and its parent
                     if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");

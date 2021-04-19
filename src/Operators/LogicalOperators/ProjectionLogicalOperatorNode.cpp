@@ -87,8 +87,8 @@ OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
 
 void ProjectionLogicalOperatorNode::inferStringSignature() {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("Inferring String signature for " << operatorNode->toString());
-
+    NES_TRACE("ProjectionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_ASSERT(!children.empty(), "ProjectionLogicalOperatorNode: Project should have children.");
     //Infer query signatures for child operators
     for (auto& child : children) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();

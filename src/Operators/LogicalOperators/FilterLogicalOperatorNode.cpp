@@ -31,7 +31,6 @@ bool FilterLogicalOperatorNode::isIdentical(NodePtr rhs) const {
 }
 
 bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
-
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterOperator = rhs->as<FilterLogicalOperatorNode>();
         return predicate->equal(filterOperator->predicate);
@@ -66,9 +65,9 @@ OperatorNodePtr FilterLogicalOperatorNode::copy() {
 }
 
 void FilterLogicalOperatorNode::inferStringSignature() {
-
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
-    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+    NES_TRACE("FilterLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_ASSERT(!children.empty(), "FilterLogicalOperatorNode: Filter should have children");
 
     //Infer query signatures for child operators
     for (auto& child : children) {
