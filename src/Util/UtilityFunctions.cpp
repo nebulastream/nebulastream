@@ -146,9 +146,9 @@ uint64_t UtilityFunctions::findSubQueryTermination(uint64_t startOfUnionWith, co
     uint64_t parenthesisCount = 0;
     //Iterate over the code string and identify the last location where the parenthesis are getting balanced
     for (uint64_t i = startOfUnionWith + 9; i < queryCodeSnippet.size(); i++) {
-        if (queryCodeSnippet[i] == '(') { //When found open parenthesis, increment the parenthesis count
+        if (queryCodeSnippet[i] == '(') {//When found open parenthesis, increment the parenthesis count
             parenthesisCount++;
-        } else if (queryCodeSnippet[i] == ')') { //When found open parenthesis, decrement the parenthesis count
+        } else if (queryCodeSnippet[i] == ')') {//When found open parenthesis, decrement the parenthesis count
             parenthesisCount--;
         }
 

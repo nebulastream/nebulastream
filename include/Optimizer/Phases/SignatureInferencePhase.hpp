@@ -40,7 +40,6 @@ typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
 class SignatureInferencePhase {
 
   public:
-
     /**
      * @brief Create instance of SignatureInferencePhase class
      * @param context : the z3 context
