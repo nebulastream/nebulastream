@@ -60,6 +60,13 @@ class NESRequestQueue {
     std::vector<NESRequestPtr> getNextBatch();
 
     /**
+     * @brief This method will force trigger the availabilityTrigger conditional variable in order to
+     * interrupt the wait.
+     */
+    void insertPoisonPill();
+
+  private:
+    /**
      * @brief Check if there are new request available
      * @return true if there are new requests
      */
@@ -71,13 +78,6 @@ class NESRequestQueue {
      */
     void setNewRequestAvailable(bool newRequestAvailable);
 
-    /**
-     * @brief This method will force trigger the availabilityTrigger conditional variable in order to
-     * interrupt the wait.
-     */
-    void insertPoisonPill();
-
-  private:
     bool newRequestAvailable;
     uint64_t batchSize;
     std::mutex requestMutex;
