@@ -483,19 +483,35 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 
 void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
     auto operatorId = queryReconfigurationMessage.getChannelId().getNesPartition().getOperatorId();
+    bool successfulReconfiguration = false;
     for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
         auto foundQEPNeedingReplacement = deployedQEPs.find(element.first);
         if (foundQEPNeedingReplacement != deployedQEPs.end()) {
             auto foundReplacementQEP = reconfigurationQEPs.find(element.second);
-            queryManager->addQueryReconfiguration(operatorId, foundReplacementQEP->second, foundQEPNeedingReplacement->second,
-                                                  queryReconfigurationMessage);
+            auto oldQep = foundQEPNeedingReplacement->second;
+            auto newQep = foundReplacementQEP->second;
+            successfulReconfiguration =
+                queryManager->addQueryReconfiguration(operatorId, newQep, oldQep, queryReconfigurationMessage);
+            if (!successfulReconfiguration) {
+                NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to replace query with subplanId: "
+                          << oldQep->getQuerySubPlanId() << " with query with subplanId: " << newQep->getQuerySubPlanId());
+            } else {
+                deployedQEPs[newQep->getQuerySubPlanId()] = newQep;
+            }
         }
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStart()) {
         auto foundQueryReconfigurationQEP = reconfigurationQEPs.find(querySubPlanId);
         if (foundQueryReconfigurationQEP != reconfigurationQEPs.end()) {
-            queryManager->addQueryReconfiguration(operatorId, foundQueryReconfigurationQEP->second, nullptr,
-                                                  queryReconfigurationMessage);
+            auto qep = foundQueryReconfigurationQEP->second;
+            successfulReconfiguration =
+                queryManager->addQueryReconfiguration(operatorId, qep, nullptr, queryReconfigurationMessage);
+            if (!successfulReconfiguration) {
+                NES_ERROR(
+                    "NodeEngine::onQueryReconfiguration: Failed to start query with subplanId: " << qep->getQuerySubPlanId());
+            } else {
+                deployedQEPs[qep->getQuerySubPlanId()] = qep;
+            }
         }
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {

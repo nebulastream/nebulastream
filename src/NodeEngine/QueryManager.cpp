@@ -487,7 +487,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep,
                                            Execution::ExecutableQueryPlanPtr oldQep,
                                            Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
-//    std::unique_lock queryLock(queryMutex);
+    //    std::unique_lock queryLock(queryMutex);
     auto allSources = qep->getSources();
     auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [operatorId](DataSourcePtr src) {
         return src->getOperatorId() == operatorId;
@@ -524,8 +524,23 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
                                                              sink, queryReconfigurationMessage);
         addReconfigurationMessage(qep->getQuerySubPlanId(), reconfigurationMessage, true);
     }
-    NES_DEBUG("QueryManager: addQueryReconfiguration: OldQEP for querySubPlanId" << oldQep->getQuerySubPlanId()
-                                                                                 << " is already in Running State");
+    if (oldQep) {
+        NES_DEBUG("QueryManager: addQueryReconfiguration: OldQEP for querySubPlanId: " << oldQep->getQuerySubPlanId()
+                                                                                       << " is already in Running State");
+        // needs a fine grained stop strategy
+        oldQep->stop();
+        runningQEPs.erase(oldQep->getQuerySubPlanId());
+        if (operatorIdToQueryMap.find(operatorId) != operatorIdToQueryMap.end()) {
+            // source exists, remove qep from source if there
+            if (operatorIdToQueryMap[operatorId].find(qep) != operatorIdToQueryMap[operatorId].end()) {
+                // qep found, remove it
+                NES_DEBUG("QueryManager: Removing QEP " << qep << " from source" << operatorId);
+                if (operatorIdToQueryMap[operatorId].erase(oldQep) == 0) {
+                    NES_FATAL_ERROR("QueryManager: Removing QEP " << oldQep << " for source " << operatorId << " failed!");
+                }
+            }
+        }
+    }
     return true;
 }
 

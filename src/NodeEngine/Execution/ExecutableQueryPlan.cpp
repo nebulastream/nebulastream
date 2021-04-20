@@ -44,7 +44,7 @@ QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubP
 ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
     NES_ASSERT(qepStatus.load() == Stopped || qepStatus.load() == ErrorState,
-               "QueryPlan is created but not executing " << queryId);
+               "QueryPlan is created but not executing " << querySubPlanId);
     sources.clear();
     pipelines.clear();
     sinks.clear();

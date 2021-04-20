@@ -22,9 +22,9 @@
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
-#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Phases/TypeInferencePhase.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
@@ -519,7 +519,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     testOutput("qep12.txt", joinedExpectedOutput);
 }
 //
-TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQep) {
+TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepOneProducer) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     auto manager = engine->getQueryManager();
@@ -532,13 +532,19 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQep) {
 
     auto phase = TypeInferencePhase::create(streamCatalog);
 
-    auto source = LogicalStreamSourceDescriptor::create("default_logical");
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(source);
+    Network::NesPartition nesPartition{1, 1, 1, 2};
+    Network::ChannelId channelId{nesPartition, 1};
+
+    auto networkSource =
+        LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(inputSchema, nesPartition), 1);
+    networkSource->setOutputSchema(inputSchema);
     const SinkDescriptorPtr& descriptor = NES::PrintSinkDescriptor::create();
-    auto printSinkOperator = LogicalOperatorFactory::createSinkOperator(descriptor);
+    auto printSinkOperator = LogicalOperatorFactory::createSinkOperator(descriptor, 2);
+    printSinkOperator->setInputSchema(inputSchema);
+    //    printSinkOperator->setOutputSchema(inputSchema);
 
     // already running querySubPlan
-    printSinkOperator->addChild(sourceOperator);
+    printSinkOperator->addChild(networkSource);
     auto firstQueryPlan = QueryPlan::create(1, 1, {printSinkOperator});
     firstQueryPlan = phase->execute(firstQueryPlan);
 
@@ -548,23 +554,27 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQep) {
     EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
 
     // replacement query plan
-    OperatorNodePtr filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
+    OperatorNodePtr filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45, 3);
+    filterOperator->setOutputSchema(inputSchema);
     printSinkOperator->addChild(filterOperator);
-    filterOperator->addChild(sourceOperator);
+    filterOperator->addChild(networkSource);
     auto secondQueryPlan = QueryPlan::create(1, 2, {printSinkOperator});
-    secondQueryPlan = phase->execute(secondQueryPlan);
+    //    secondQueryPlan = phase->execute(secondQueryPlan);
 
     engine->registerQueryForReconfigurationInNodeEngine(secondQueryPlan);
 
     EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
 
-    Network::NesPartition partition{1, sourceOperator->getId(), 1, 2};
-    Network::ChannelId channelId{partition, 1};
     Network::Messages::QueryReconfigurationMessage reconfigurationMessage{channelId, {}, {{1, 2}}, {}};
 
     engine->onQueryReconfiguration(reconfigurationMessage);
 
-    EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+    EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+
+    // Trigger stop of QEP having network source via "onEndOfStream"
+    Network::Messages::EndOfStreamMessage endOfStreamMsg{channelId, true};
+    engine->onEndOfStream(endOfStreamMsg);
 }
 
 //
