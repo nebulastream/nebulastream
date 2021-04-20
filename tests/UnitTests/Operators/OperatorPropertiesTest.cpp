@@ -19,6 +19,7 @@
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
 #include <gtest/gtest.h>
 
 namespace NES {
@@ -39,7 +40,7 @@ class OperatorPropertiesTest : public testing::Test {
 };
 
 TEST_F(OperatorPropertiesTest, testAssignProperties) {
-    auto q1 = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
+    auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::string>> properties;
 
@@ -61,13 +62,13 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
 
     // Assert if the assignment success
     ASSERT_TRUE(res);
 
     // Assert if the property are added correctly
-    auto queryPlanIterator = QueryPlanIterator(q1.getQueryPlan()).begin();
+    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
 
     ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "1");
     ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "1");
@@ -83,7 +84,7 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
 }
 
 TEST_F(OperatorPropertiesTest, testAssignWithMoreProperties) {
-    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+    auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::string>> properties;
 
@@ -105,12 +106,12 @@ TEST_F(OperatorPropertiesTest, testAssignWithMoreProperties) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
     ASSERT_FALSE(res);
 }
 
 TEST_F(OperatorPropertiesTest, testAssignWithMoreOperators) {
-    auto q1 = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
+    auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::string>> properties;
 
@@ -126,8 +127,87 @@ TEST_F(OperatorPropertiesTest, testAssignWithMoreOperators) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
     ASSERT_FALSE(res);
+}
+
+// test with binary operator
+TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
+
+    auto subQuery = Query::from("default_logical").filter(Attribute("field_1") <= 10);
+
+    auto query = Query::from("default_logical")
+        .joinWith(subQuery)
+        .where(Attribute("id"))
+        .equalsTo(Attribute("id"))
+        .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+        .sink(PrintSinkDescriptor::create());
+
+    std::vector<std::map<std::string, std::string>> properties;
+
+    // Adding properties of each operator. The order should be the same as used in the QueryPlanIterator
+    // adding property of the source
+    std::map<std::string, std::string> srcProp;
+    srcProp.insert(std::make_pair("load","1"));
+    properties.push_back(srcProp);
+
+    // adding property of the source watermark (watermarks are added automatically)
+    std::map<std::string, std::string> srcWatermarkProp;
+    srcWatermarkProp.insert(std::make_pair("load","2"));
+    properties.push_back(srcWatermarkProp);
+
+    // adding property of the source in the sub query
+    std::map<std::string, std::string> srcSubProp;
+    srcSubProp.insert(std::make_pair("load","3"));
+    properties.push_back(srcSubProp);
+
+    // adding property of the watermark in the sub query (watermarks are added automatically)
+    std::map<std::string, std::string> srcSubWatermarkProp;
+    srcSubWatermarkProp.insert(std::make_pair("load","4"));
+    properties.push_back(srcSubWatermarkProp);
+
+    // adding property of the filter in the sub query
+    std::map<std::string, std::string> filterSubProp;
+    filterSubProp.insert(std::make_pair("load","5"));
+    properties.push_back(filterSubProp);
+
+    // adding property of the join
+    std::map<std::string, std::string> joinProp;
+    joinProp.insert(std::make_pair("load","6"));
+    properties.push_back(joinProp);
+
+    // adding property of the sink
+    std::map<std::string, std::string> sinkProp;
+    sinkProp.insert(std::make_pair("load","7"));
+    properties.push_back(sinkProp);
+
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
+    ASSERT_TRUE(res);
+
+    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+
+    // Assert the property values
+    // source (main)
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "1");
+    ++queryPlanIterator;
+    // source (main) watermark
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "2");
+    ++queryPlanIterator;
+    // source of subquery
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "3");
+    ++queryPlanIterator;
+    // watermark of subquery
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "4");
+    ++queryPlanIterator;
+    // filter in the subquery
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "5");
+    ++queryPlanIterator;
+    // join
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "6");
+    ++queryPlanIterator;
+    // sink
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "7");
+    ++queryPlanIterator;
 }
 
 } // namespace NES
