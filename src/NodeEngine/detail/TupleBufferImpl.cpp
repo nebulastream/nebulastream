@@ -53,8 +53,7 @@ MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr) {}
 MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction)
     : ptr(ptr), size(size) {
-//    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
-    controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
+    controlBlock = new (ptr + size) BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
     }
@@ -66,6 +65,7 @@ MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycl
 MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
     : ptr(ptr), size(size) {
+    // TODO ensure this doesnt break zmq recycle callback (Ventura)
     controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
