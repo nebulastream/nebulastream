@@ -18,6 +18,8 @@
 #define NES_NESREQUEST_HPP
 
 #include <Plans/Query/QueryId.hpp>
+#include <exception>
+#include <stdexcept>
 #include <memory>
 
 namespace NES {
@@ -58,8 +60,7 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
         if (instanceOf<RequestType>()) {
             return std::dynamic_pointer_cast<RequestType>(this->shared_from_this());
         } else {
-            throw std::logic_error("NESRequest:: we performed an invalid cast of operator " + this->toString() + " to type "
-                                   + typeid(RequestType).name());
+            throw std::logic_error("NESRequest:: we performed an invalid cast of operator ");
         }
     }
 
