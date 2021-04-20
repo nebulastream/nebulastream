@@ -444,7 +444,7 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(Query query, std::vector
     }
 
     if (numOperators != properties.size()) {
-        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of operators");
+        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of operators. The query plan is:\n" << query.getQueryPlan()->toString());
         return false;
     }
 
