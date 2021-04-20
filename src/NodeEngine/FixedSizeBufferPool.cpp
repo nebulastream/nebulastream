@@ -65,7 +65,7 @@ size_t FixedSizeBufferPool::getAvailableExclusiveBuffers() const {
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::milliseconds timeout_ms) {
     std::unique_lock lock(mutex);
     auto pred = [this]() {
-        return exclusiveBuffers.size() > 0; // false if waiting must be continued
+        return exclusiveBuffers.size() > 0;// false if waiting must be continued
     };
     if (!cvar.wait_for(lock, timeout_ms, std::move(pred))) {
         return std::nullopt;
@@ -76,7 +76,8 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
     if (memSegment->controlBlock->prepare()) {
         return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
     } else {
-        NES_THROW_RUNTIME_ERROR("[FixedSizeBufferPool] got buffer with invalid reference counter: " << memSegment->controlBlock->getReferenceCount());
+        NES_THROW_RUNTIME_ERROR(
+            "[FixedSizeBufferPool] got buffer with invalid reference counter: " << memSegment->controlBlock->getReferenceCount());
     }
 }
 

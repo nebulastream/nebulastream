@@ -19,8 +19,8 @@
 
 #include <Plans/Query/QueryId.hpp>
 #include <exception>
-#include <stdexcept>
 #include <memory>
+#include <stdexcept>
 
 namespace NES {
 /**
