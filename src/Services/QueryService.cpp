@@ -61,6 +61,9 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         throw InvalidQueryException(exc.what());
     }
 
+    // set the user specified properties to the operators
+    query->getQueryPlan()->getRootOperators()[0]->as<LogicalOperatorNode>()->addProperty("load","1");
+
     NES_INFO("QueryService: Validating placement strategy");
     if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
         NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);

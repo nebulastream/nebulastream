@@ -209,6 +209,11 @@ add_executable(expression-node-test "UnitTests/Operators/ExpressionNodeTest.cpp"
 target_link_libraries(expression-node-test nes ${GTEST_LIBRARIES})
 add_test(NAME expression-node-test COMMAND expression-node-test)
 
+# OperatorPropertiesTest
+add_executable(operator-properties-tests "UnitTests/Operators/OperatorPropertiesTest.cpp")
+target_link_libraries(operator-properties-tests nes ${GTEST_LIBRARIES})
+add_test(NAME operator-properties-tests COMMAND operator-properties-tests)
+
 # QueryTest
 add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
