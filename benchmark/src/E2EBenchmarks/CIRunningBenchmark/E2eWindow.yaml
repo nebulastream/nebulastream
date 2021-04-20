@@ -2,6 +2,7 @@
 
 # Parameter that are changed per run with comma separated list
 numberOfWorkerThreads: 1
+numberOfCoordinatorThreads: 1
 numberOfSources: 1
 
 #paramter for all runs
@@ -18,8 +19,7 @@ benchmarkName: E2EWindowBenchmark
 query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
-logLevel: LOG_WARNING
-scalability: scale-up
+logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 5
