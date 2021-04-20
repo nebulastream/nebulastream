@@ -98,14 +98,16 @@ endif ()
 # lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
+find_package(AVX)
+message("AVX found=" ${AVX_FOUND})
+message("AVX2 found=" ${AVX2_FOUND})
+
 # LLVM
 find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 
-find_package(AVX)
-message("AVX found=" ${AVX_FOUND})
-message("AVX2 found=" ${AVX2_FOUND})
+
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")
 # This assumes that gRPC and all its dependencies are already installed

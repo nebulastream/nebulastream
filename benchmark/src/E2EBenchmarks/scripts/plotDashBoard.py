@@ -15,7 +15,7 @@ import numpy as np
 withLatencyHistogram = True
 
 # folder = "./"#in this folder
-folder = "/home/zeuchste/Dropbox/nes/latency/60sec/test/"
+folder = "./"
 df_changingBufferSize = pd.read_csv(folder + 'changingBufferSize.csv')
 df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCnt.csv')
 df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
@@ -45,8 +45,6 @@ fig = make_subplots(
     column_widths=[3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
     row_heights=[1., 1., 1., 4],
     shared_xaxes=False,
-    # shared_yaxes=True,
-    # print_grid=True,
     subplot_titles=[
         'Sc. Buffer Size',
         'Sc. Global Buffer Cnt',
@@ -710,17 +708,6 @@ if (withLatencyHistogram == True):
         line=dict(color="blue", width=2),
     )
         , row=4, col=1)
-
-    # fig.add_annotation(go.layout.Annotation(
-    #     x=50,
-    #     y=df_latencyWrk1['latency'].max() * 1.2,
-    #     yref='paper',
-    #     showarrow=True,
-    #     text='Start',
-    #     align='right',
-    #     xanchor='right'
-    # )
-    #     , row=4, col=1)
 
 df_latencyWrk2_pivot = pd.pivot_table(df_latencyWrk2, values='latency',
                                       index=['ts'],

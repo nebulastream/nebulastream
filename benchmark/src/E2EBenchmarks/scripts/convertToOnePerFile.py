@@ -19,17 +19,3 @@ for filename in filenames:
             for line in fin:
                 line = src + "," + line
                 fout.write(line)
-
-        #
-        #
-        #
-        # header_saved = False
-        # with open(filename) as fin:
-        #     header = next(fin).rstrip() + ",change" + '\n'
-        #     if not header_saved:
-        #         fout.write(header)
-        #         header_saved = True
-        #     for line in fin:
-        #         line = line.replace("E2ERunner.csv", testName)
-        #         line = line.rstrip() + ',' + str(sys.argv[1])+ '\n'
-        #         fout.write(line)
