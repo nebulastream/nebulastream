@@ -46,7 +46,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
                                                                   size_t numSourceLocalBuffers);
 
 /**
- * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
+ * @brief function to create a test source which produces   tuples with value one in N buffers of based on a schema
  * @param schema of the data source
  * @param bufferManager
  * @param queryManager

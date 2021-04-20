@@ -20,6 +20,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Sinks/Formats/FormatType.hpp>
+#include <random>
 
 namespace NES {
 
@@ -93,6 +94,9 @@ class FormatIterator {
             // Iterate over all fields in a tuple. Get field offsets from fieldOffsets array. Use fieldNames as keys and TupleBuffer
             // values as the corresponding values
             // Adding the first tuple before the loop avoids checking if last tuple is processed in order to omit "," after json value
+        // TODO REMOVE -> only for MQTT testing
+            srand(time(0));
+
             std::stringstream jsonMessage;
             jsonMessage << "{";
             for (uint32_t currentField = 0; currentField < fieldNames.size(); currentField++) {
@@ -100,7 +104,12 @@ class FormatIterator {
                 auto currentFieldType = fieldTypes[currentField];
                 auto fieldName = fieldNames[currentField];
                 auto fieldValue = currentFieldType->convertRawToString(&tuplePointer[currentFieldOffset]);
-                jsonMessage << fieldName + ":" + fieldValue;
+        if(currentField % 2 == 1) {
+            int fieldValueAsInt = std::stoi(fieldValue);
+            fieldValueAsInt += rand() % 100 + 9;
+            fieldValue = std::to_string(fieldValueAsInt);
+        }
+                jsonMessage << "\"" + fieldName + "\"" + ":" + fieldValue;
                 if (currentField != fieldNames.size() - 1) {
                     jsonMessage << ",";
                 }

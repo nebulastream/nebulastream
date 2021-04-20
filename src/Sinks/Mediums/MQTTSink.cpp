@@ -82,6 +82,7 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
 
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
             NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
+            NES_DEBUG("MQTTSink::writeData Sending Payload: " << formattedTuple);
             client->sendPayload(formattedTuple);
             std::this_thread::sleep_for(minDelayBetweenSends);
         }
@@ -147,11 +148,8 @@ bool MQTTSink::disconnect() {
     if (connected) {
         client->disconnect();
         connected = false;
-    }
-    if (!connected) {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": disconnected");
     } else {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT disconnected");
+        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected");
     }
     NES_TRACE("MQTTSink::disconnect: connected value is" << connected);
     return !connected;
