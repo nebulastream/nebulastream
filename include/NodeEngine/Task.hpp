@@ -39,8 +39,6 @@ class Task {
 
     explicit Task();
 
-//    ~Task();
-
     /**
      * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
      */
