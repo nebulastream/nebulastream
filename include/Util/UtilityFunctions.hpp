@@ -21,6 +21,8 @@
 #include <Operators/OperatorId.hpp>
 #include <cpprest/json.h>
 #include <string>
+#include <map>
+
 /*
 - * The above undef ensures that NES will compile.
 - * There is a 3rd-party library that defines U as a macro for some internal stuff.
@@ -187,6 +189,13 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextTaskId();
+
+    /**
+     *
+     * @param query queries to which the properties are assigned
+     * @param properties properties to assign
+     */
+    static void assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties);
 
   private:
     /**

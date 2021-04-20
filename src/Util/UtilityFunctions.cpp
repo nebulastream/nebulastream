@@ -35,6 +35,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Topology/Topology.hpp>
@@ -433,4 +434,23 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
+void UtilityFunctions::assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties) {
+    //traverse to the operators in the query plan
+    std::vector<LogicalOperatorNode> visited;
+
+    auto qplanIter = QueryPlanIterator(query.getQueryPlan()).begin();
+    auto propertyIter = properties.begin();
+
+    NES_DEBUG("Queryplan:" << query.getQueryPlan()->toString());
+
+    while(*qplanIter) {
+        NES_DEBUG("ID=" << (*qplanIter)->as<LogicalOperatorNode>()->getId());
+        NES_DEBUG("load=" << propertyIter->at("load"));
+        NES_DEBUG("dmf=" << propertyIter->at("dmf"));
+        ++qplanIter;
+        ++propertyIter;
+    }
+
+//    NES_DEBUG(properties.at("load"));
+}
 }// namespace NES
