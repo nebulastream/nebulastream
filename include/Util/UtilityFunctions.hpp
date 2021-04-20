@@ -195,7 +195,7 @@ class UtilityFunctions {
      * @param query queries to which the properties are assigned
      * @param properties properties to assign
      */
-    static void assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties);
+    static bool assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties);
 
   private:
     /**
