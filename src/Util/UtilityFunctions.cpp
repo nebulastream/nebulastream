@@ -438,19 +438,19 @@ void UtilityFunctions::assignPropertiesToQueryOperators(Query query, std::vector
     //traverse to the operators in the query plan
     std::vector<LogicalOperatorNode> visited;
 
-    auto qplanIter = QueryPlanIterator(query.getQueryPlan()).begin();
-    auto propertyIter = properties.begin();
+    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+    auto propertyIterator = properties.begin();
 
-    NES_DEBUG("Queryplan:" << query.getQueryPlan()->toString());
+    // iterate over all operators in the query
+    while(*queryPlanIterator) {
+        // iterate over key:val pairs in the property of current operator
+        for (auto const& [key, val] : *propertyIterator) {
+            // add the current property to the current operator
+            (*queryPlanIterator)->as<LogicalOperatorNode>()->addProperty(key,val);
+        }
 
-    while(*qplanIter) {
-        NES_DEBUG("ID=" << (*qplanIter)->as<LogicalOperatorNode>()->getId());
-        NES_DEBUG("load=" << propertyIter->at("load"));
-        NES_DEBUG("dmf=" << propertyIter->at("dmf"));
-        ++qplanIter;
-        ++propertyIter;
+        ++queryPlanIterator;
+        ++propertyIterator;
     }
-
-//    NES_DEBUG(properties.at("load"));
 }
 }// namespace NES

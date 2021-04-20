@@ -16,6 +16,7 @@
 
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
@@ -50,17 +51,32 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
 
     // adding property of the filter
     std::map<std::string, std::string> filterProp;
-    filterProp.insert(std::make_pair("load","1"));
+    filterProp.insert(std::make_pair("load","2"));
     filterProp.insert(std::make_pair("dmf","0.25"));
     properties.push_back(filterProp);
 
     // adding property of the sink
     std::map<std::string, std::string> sinkProp;
-    sinkProp.insert(std::make_pair("load","1"));
+    sinkProp.insert(std::make_pair("load","3"));
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
     UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+
+    // Assert if the property are added correctly
+    auto queryPlanIterator = QueryPlanIterator(q1.getQueryPlan()).begin();
+
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "1");
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "1");
+    ++queryPlanIterator;
+
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "2");
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "0.25");
+    ++queryPlanIterator;
+
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "3");
+    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "1");
+    ++queryPlanIterator;
 }
 
 } // namespace NES
