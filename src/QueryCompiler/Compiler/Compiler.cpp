@@ -77,10 +77,10 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
 
 #ifdef NES_RELEASE_MODE
 #ifdef NES_BENCHMARKS_FLAG_MODE
-    NES_DEBUG("use benchmark flags");
+    std::cout << "use benchmark flags" << std::endl;
     flags = CompilerFlags::createBenchmarkingCompilerFlags();
 #else
-    NES_DEBUG("use release flags");
+    std::cout << "use release flags" << std::endl;
     flags = CompilerFlags::createOptimizingCompilerFlags();
 #endif
 #endif
