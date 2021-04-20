@@ -61,7 +61,10 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
-    UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+
+    // Assert if the assignment success
+    ASSERT_TRUE(res);
 
     // Assert if the property are added correctly
     auto queryPlanIterator = QueryPlanIterator(q1.getQueryPlan()).begin();
@@ -77,6 +80,54 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "3");
     ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "1");
     ++queryPlanIterator;
+}
+
+TEST_F(OperatorPropertiesTest, testAssignWithMoreProperties) {
+    auto q1 = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+
+    std::vector<std::map<std::string, std::string>> properties;
+
+    // adding property of the source
+    std::map<std::string, std::string> srcProp;
+    srcProp.insert(std::make_pair("load","1"));
+    srcProp.insert(std::make_pair("dmf","1"));
+    properties.push_back(srcProp);
+
+    // adding property of the filter
+    std::map<std::string, std::string> filterProp;
+    filterProp.insert(std::make_pair("load","2"));
+    filterProp.insert(std::make_pair("dmf","0.25"));
+    properties.push_back(filterProp);
+
+    // adding property of the sink
+    std::map<std::string, std::string> sinkProp;
+    sinkProp.insert(std::make_pair("load","3"));
+    sinkProp.insert(std::make_pair("dmf","1"));
+    properties.push_back(sinkProp);
+
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+    ASSERT_FALSE(res);
+}
+
+TEST_F(OperatorPropertiesTest, testAssignWithMoreOperators) {
+    auto q1 = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
+
+    std::vector<std::map<std::string, std::string>> properties;
+
+    // adding property of the source
+    std::map<std::string, std::string> srcProp;
+    srcProp.insert(std::make_pair("load","1"));
+    srcProp.insert(std::make_pair("dmf","1"));
+    properties.push_back(srcProp);
+
+    // adding property of the sink
+    std::map<std::string, std::string> sinkProp;
+    sinkProp.insert(std::make_pair("load","3"));
+    sinkProp.insert(std::make_pair("dmf","1"));
+    properties.push_back(sinkProp);
+
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(q1, properties);
+    ASSERT_FALSE(res);
 }
 
 } // namespace NES

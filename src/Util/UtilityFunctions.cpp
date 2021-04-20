@@ -434,11 +434,21 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
-void UtilityFunctions::assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties) {
-    //traverse to the operators in the query plan
-    std::vector<LogicalOperatorNode> visited;
-
+bool UtilityFunctions::assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties) {
+    size_t numOperators = 0;
+    // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+    while(*queryPlanIterator) {
+        numOperators++;
+        ++queryPlanIterator;
+    }
+
+    if (numOperators != properties.size()) {
+        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of operators");
+        return false;
+    }
+
+    queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
     auto propertyIterator = properties.begin();
 
     // iterate over all operators in the query
@@ -452,5 +462,7 @@ void UtilityFunctions::assignPropertiesToQueryOperators(Query query, std::vector
         ++queryPlanIterator;
         ++propertyIterator;
     }
+
+    return true;
 }
 }// namespace NES
