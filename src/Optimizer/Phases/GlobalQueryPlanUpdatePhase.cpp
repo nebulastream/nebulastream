@@ -27,9 +27,12 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
+#include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 #include <utility>
+#include <Plans/Global/Query/SharedQueryMetaData.hpp>
+
 
 namespace NES::Optimizer {
 
@@ -77,7 +80,13 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
 
                 NES_INFO("QueryProcessingService: Request received for stopping the query " << queryId);
                 globalQueryPlan->removeQuery(queryId);
-            } else if (nesRequest->instanceOf<RunQueryRequest>()) {
+            }
+            else if(nesRequest->instanceOf<RestartQueryRequest>()){
+                    auto sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
+                    auto sharedQueryMetadata = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
+                    sharedQueryMetadata->markAsNotDeployed();
+            }
+            else if (nesRequest->instanceOf<RunQueryRequest>()) {
 
                 auto runRequest = nesRequest->as<RunQueryRequest>();
                 auto queryPlan = runRequest->getQueryPlan();

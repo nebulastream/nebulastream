@@ -137,7 +137,7 @@ void NESRequestProcessorService::start() {
                 for (const auto& queryRequest : nesRequests) {
                     auto queryId = queryRequest->getQueryId();
                     auto catalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
-                    if (catalogEntry->getQueryStatus() == QueryStatus::Scheduling) {
+                    if (catalogEntry->getQueryStatus() == QueryStatus::Scheduling || catalogEntry->getQueryStatus() == QueryStatus::Restart) {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Running);
                     } else {
                         queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);

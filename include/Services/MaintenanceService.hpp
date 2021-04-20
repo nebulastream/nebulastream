@@ -20,10 +20,11 @@
 
 #ifndef NES_MAINTENANCESERVICE_HPP
 #define NES_MAINTENANCESERVICE_HPP
-#include <memory>
-#include <vector>
-#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Services/StrategyType.hpp>
+#include <memory>
+#include <optional>
+#include <vector>
 
 namespace NES {
 
@@ -31,14 +32,19 @@ class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
-class QueryRequestQueue;
-typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+class NESRequestQueue;
+typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> queryPlanPtr;
 class WorkerRPCClient;
 typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+class ExecutionNode;
+typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+class TopologyNode;
+typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+
 
 /**
  * @brief this class is responsible for handling maintenance requests. Three different strategies are implemented to handle query redeployment due to nodes being taken offline
@@ -46,7 +52,7 @@ typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 class MaintenanceService {
   public:
 
-    MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue,
+    MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
                        GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRPCClient);
     ~MaintenanceService();
     /**
@@ -143,7 +149,7 @@ class MaintenanceService {
 
     TopologyPtr topology;
     QueryCatalogPtr queryCatalog;
-    QueryRequestQueuePtr queryRequestQueue;
+    NESRequestQueuePtr queryRequestQueue;
     GlobalExecutionPlanPtr globalExecutionPlan;
     WorkerRPCClientPtr workerRPCClient;
 };

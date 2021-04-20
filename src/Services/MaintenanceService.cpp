@@ -20,16 +20,19 @@
 #include "Services/MaintenanceService.hpp"
 #include <Catalogs/QueryCatalog.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Services/NESRequestProcessorService.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <WorkQueues/QueryRequestQueue.hpp>
-#include <optional>
+#include <WorkQueues//NESRequestQueue.hpp>
+#include <WorkQueues/RequestTypes/NESRequest.hpp>
+#include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 
 namespace NES {
-MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue,
+MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
                                        GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRPCClient):
                                        topology{topology}, queryCatalog{queryCatalog},
                                        queryRequestQueue{queryRequestQueue}, globalExecutionPlan{globalExecutionPlan}, workerRPCClient{workerRPCClient}
@@ -82,7 +85,7 @@ std::vector<uint64_t> MaintenanceService::firstStrat(uint64_t nodeId) {
     }
     for(auto id : parentQueryIds){
         queryCatalog->markQueryAs(id,QueryStatus::Restart);
-        queryRequestQueue->add(queryCatalog->getQueryCatalogEntry(id));
+        queryRequestQueue->add(RestartQueryRequest::create(id));
     }
     auto  ID = parentQueryIds.front();
     NES_DEBUG("ID of first query :" << std::to_string(ID));

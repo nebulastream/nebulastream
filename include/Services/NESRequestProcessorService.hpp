@@ -19,6 +19,7 @@
 
 #include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>
+#include <mutex>
 
 namespace z3 {
 class context;
