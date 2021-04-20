@@ -19,9 +19,10 @@
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <cpprest/json.h>
-#include <string>
 #include <map>
+#include <string>
 
 /*
 - * The above undef ensures that NES will compile.
@@ -192,10 +193,10 @@ class UtilityFunctions {
 
     /**
      *
-     * @param query queries to which the properties are assigned
+     * @param queryPlan queries to which the properties are assigned
      * @param properties properties to assign
      */
-    static bool assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties);
+    static bool assignPropertiesToQueryOperators(QueryPlanPtr queryPlan, std::vector<std::map<std::string, std::string>> properties);
 
   private:
     /**

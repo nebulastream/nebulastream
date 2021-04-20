@@ -142,7 +142,35 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
+                    QueryId queryId;
+                    if (req.has_field("operatorProperties")) {
+                        std::vector<std::map<std::string, std::string>> parsedProperties = {};
+
+                        // parse the properties and store it to parsedProperties
+                        json::array allOperatorProperties = req.at("operatorProperties").as_array();
+                        NES_DEBUG("allOperatorProperties size=" << allOperatorProperties.size());
+                        for (int i=0; i< allOperatorProperties.size(); i++) {
+                            json::array currentOperatorProperties = allOperatorProperties[i].as_array();
+                            std::map<std::string, std::string> parsedCurrentOperatorProperties;
+                            NES_DEBUG("currentOperatorProperties size=" << currentOperatorProperties.size());
+                            for (int j=0; j<currentOperatorProperties.size(); j++) {
+                                json::array currentPropertiesKeyVal = currentOperatorProperties[j].as_array();
+                                NES_DEBUG("currentPropertiesKeyVal size=" << currentPropertiesKeyVal.size());
+
+                                for (int k=0; k<currentPropertiesKeyVal.size(); k++) {
+                                    NES_DEBUG("currentPropertiesKeyVal key" << currentPropertiesKeyVal[k].at("key"));
+                                    NES_DEBUG("currentPropertiesKeyVal value" << currentPropertiesKeyVal[k].at("value"));
+                                    parsedCurrentOperatorProperties.insert(std::make_pair(currentPropertiesKeyVal[k].at("key").as_string(),
+                                                                                          currentPropertiesKeyVal[k].at("value").as_string()));
+                                }
+                            }
+                            parsedProperties.push_back(parsedCurrentOperatorProperties);
+                        }
+
+                        queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName, parsedProperties);
+                    } else {
+                        queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
+                    }
 
                     //Prepare the response
                     json::value restResponse{};

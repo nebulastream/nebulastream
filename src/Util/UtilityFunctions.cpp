@@ -434,21 +434,21 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
-bool UtilityFunctions::assignPropertiesToQueryOperators(Query query, std::vector<std::map<std::string, std::string>> properties) {
+bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan, std::vector<std::map<std::string, std::string>> properties) {
     size_t numOperators = 0;
     // count the number of operators in the query
-    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+    auto queryPlanIterator = QueryPlanIterator(queryPlan).begin();
     while(*queryPlanIterator) {
         numOperators++;
         ++queryPlanIterator;
     }
 
     if (numOperators != properties.size()) {
-        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of operators. The query plan is:\n" << query.getQueryPlan()->toString());
+        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of operators. The query plan is:\n" << queryPlan->toString());
         return false;
     }
 
-    queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+    queryPlanIterator = QueryPlanIterator(queryPlan).begin();
     auto propertyIterator = properties.begin();
 
     // iterate over all operators in the query

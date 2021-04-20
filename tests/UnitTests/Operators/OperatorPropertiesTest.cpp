@@ -62,7 +62,7 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
 
     // Assert if the assignment success
     ASSERT_TRUE(res);
@@ -106,7 +106,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithMoreProperties) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_FALSE(res);
 }
 
@@ -127,7 +127,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithMoreOperators) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_FALSE(res);
 }
 
@@ -181,7 +181,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
     sinkProp.insert(std::make_pair("load","7"));
     properties.push_back(sinkProp);
 
-    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query, properties);
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_TRUE(res);
 
     auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
