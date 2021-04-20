@@ -17,8 +17,8 @@
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/SharedLibrary.hpp>
-#include <iostream>
 #include <filesystem>
+#include <iostream>
 namespace NES {
 
 SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, const std::string& baseName)

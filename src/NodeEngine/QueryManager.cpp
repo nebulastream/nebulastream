@@ -27,8 +27,8 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
-#include <utility>
 #include <stack>
+#include <utility>
 
 //#define QUERY_PROCESSING_WITH_SLOWDOWN
 
@@ -566,7 +566,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
                         temp.push(task);
                         taskQueue.pop_front();
                     } else {
-                        break; // reached a data task
+                        break;// reached a data task
                     }
                 }
                 for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
@@ -680,7 +680,6 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
             statistics->addTimestampToLatencyValue(now, diff);
 #endif
-
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
 
