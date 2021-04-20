@@ -145,6 +145,35 @@ bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr query
 
 bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     std::unique_lock lock(engineMutex);
+    auto maybeQep = buildQep(queryPlan);
+    if (!maybeQep) {
+        return false;
+    }
+    return registerQueryInNodeEngine(*maybeQep);
+}
+
+bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryPlan) {
+    std::unique_lock lock(engineMutex);
+    if (reconfigurationQEPs.find(queryPlan->getQuerySubPlanId()) != reconfigurationQEPs.end()) {
+        NES_DEBUG("NodeEngine::registerQueryForReconfigurationInNodeEngine: query with subPlanId"
+                  << queryPlan->getQuerySubPlanId() << " already registered for reconfiguration.");
+        return false;
+    }
+    auto maybeQep = buildQep(queryPlan);
+    if (!maybeQep) {
+        return false;
+    }
+    auto qep = *maybeQep;
+    if (!registerQueryInNodeEngine(*maybeQep, true)) {
+        return false;
+    }
+    NES_DEBUG("NodeEngine::registerQueryForReconfigurationInNodeEngine: adding qep with querySubPlanId: "
+              << qep->getQuerySubPlanId() << " into QEP pending reconfiguration.");
+    reconfigurationQEPs[qep->getQuerySubPlanId()] = qep;
+    return true;
+}
+
+std::optional<Execution::ExecutableQueryPlanPtr> NodeEngine::buildQep(QueryPlanPtr queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QueryId querySubPlanId = queryPlan->getQuerySubPlanId();
     NES_INFO("Creating ExecutableQueryPlan for " << queryId << " " << querySubPlanId);
@@ -197,16 +226,16 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
-
-        return registerQueryInNodeEngine(qepBuilder.build());
+        return qepBuilder.build();
     } catch (std::exception& error) {
         NES_ERROR("Error while building query execution plan " << error.what());
         NES_ASSERT(false, "Error while building query execution plan " << error.what());
-        return false;
+        return std::nullopt;
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
+bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan,
+                                           bool lazyQueryManagerRegistration) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
@@ -221,6 +250,11 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
         } else {
             (*found).second.push_back(querySubPlanId);
             NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " added");
+        }
+        if (lazyQueryManagerRegistration) {
+            NES_DEBUG("NodeEngine: registerQueryInNodeEngine: registration of  "
+                      << querySubPlanId << " in QueryManager not done as lazyQueryManagerRegistration flag is set.");
+            return true;
         }
         if (queryManager->registerQuery(queryExecutionPlan)) {
             deployedQEPs[querySubPlanId] = queryExecutionPlan;

@@ -125,9 +125,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief registers a query
      * @param query plan to register
+     * @param lazyQueryManagerRegistration : if true registration of ExecutableQueryPlan in QueryManager is handled later by caller
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
+    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan,
+                                   bool lazyQueryManagerRegistration = false);
 
     /**
      * @brief registers a query
@@ -137,6 +139,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return true if succeeded, else false
      */
     bool registerQueryInNodeEngine(QueryPlanPtr queryPlan);
+
+    /**
+     * @brief registers a query for reconfiguration
+     * @param queryPlan: query plan to register anf hold for reconfiguration
+     * @return true if succeeded, else false
+     */
+    bool registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryPlan);
 
     /**
      * @brief ungregisters a query
@@ -248,6 +257,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
 
   private:
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
+    /**
+     * @brief Generate Executable QueryPlan from queryPlan when possible otherwise return nullopt
+     * @param queryPlan : queryPlan to create Executable QueryPlan from
+     */
+    std::optional<Execution::ExecutableQueryPlanPtr> buildQep(QueryPlanPtr queryPlan);
 
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
