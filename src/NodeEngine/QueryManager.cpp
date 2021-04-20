@@ -487,7 +487,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep,
                                            Execution::ExecutableQueryPlanPtr oldQep,
                                            Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
-    std::unique_lock queryLock(queryMutex);
+//    std::unique_lock queryLock(queryMutex);
     auto allSources = qep->getSources();
     auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [operatorId](DataSourcePtr src) {
         return src->getOperatorId() == operatorId;
@@ -508,7 +508,7 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
                   << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
         return false;
     }
-    if (runningQEPs.find(qep->getQuerySubPlanId()) == runningQEPs.end()) {
+    if (runningQEPs.find(qep->getQuerySubPlanId()) != runningQEPs.end()) {
         NES_DEBUG("QueryManager: addQueryReconfiguration: QEP for querySubPlanId" << qep->getQuerySubPlanId()
                                                                                   << " is already in Running State");
         return true;

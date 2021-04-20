@@ -16,11 +16,16 @@
 
 #include <gtest/gtest.h>
 
+#include <API/Query.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
@@ -513,6 +518,55 @@ TEST_F(EngineTest, testParallelSameSink) {
     EXPECT_TRUE(engine->stop());
     testOutput("qep12.txt", joinedExpectedOutput);
 }
+//
+TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQep) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto manager = engine->getQueryManager();
+
+    auto inputSchema = Schema::create()->addField("id", DataTypeFactory::createUInt64());
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    auto phase = TypeInferencePhase::create(streamCatalog);
+
+    auto source = LogicalStreamSourceDescriptor::create("default_logical");
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(source);
+    const SinkDescriptorPtr& descriptor = NES::PrintSinkDescriptor::create();
+    auto printSinkOperator = LogicalOperatorFactory::createSinkOperator(descriptor);
+
+    // already running querySubPlan
+    printSinkOperator->addChild(sourceOperator);
+    auto firstQueryPlan = QueryPlan::create(1, 1, {printSinkOperator});
+    firstQueryPlan = phase->execute(firstQueryPlan);
+
+    engine->registerQueryInNodeEngine(firstQueryPlan);
+    engine->startQuery(1);
+
+    EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
+
+    // replacement query plan
+    OperatorNodePtr filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45);
+    printSinkOperator->addChild(filterOperator);
+    filterOperator->addChild(sourceOperator);
+    auto secondQueryPlan = QueryPlan::create(1, 2, {printSinkOperator});
+    secondQueryPlan = phase->execute(secondQueryPlan);
+
+    engine->registerQueryForReconfigurationInNodeEngine(secondQueryPlan);
+
+    EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+
+    Network::NesPartition partition{1, sourceOperator->getId(), 1, 2};
+    Network::ChannelId channelId{partition, 1};
+    Network::Messages::QueryReconfigurationMessage reconfigurationMessage{channelId, {}, {{1, 2}}, {}};
+
+    engine->onQueryReconfiguration(reconfigurationMessage);
+
+    EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+}
+
 //
 TEST_F(EngineTest, testParallelSameSourceAndSinkRegstart) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
