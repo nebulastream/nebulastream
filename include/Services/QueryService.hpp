@@ -51,6 +51,8 @@ class QueryService {
      * @throws InvalidQueryException : when query string is not valid.
      * @throws InvalidArgumentException : when the placement strategy is not valid.
      */
+    uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName, std::vector<std::map<std::string, std::string>> properties);
+
     uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
 
     /**

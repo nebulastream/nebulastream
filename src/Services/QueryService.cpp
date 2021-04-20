@@ -43,7 +43,11 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog, NESRequestQueuePtr quer
 QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
 
 uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
+    std::vector<std::map<std::string, std::string>> properties = {};
+    return validateAndQueueAddRequest(queryString, placementStrategyName, properties);
+}
 
+uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName, std::vector<std::map<std::string, std::string>> properties) {
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
 
@@ -53,6 +57,11 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         // Checking the syntactic validity and compiling the query string to an object
         SyntacticQueryValidation syntacticQueryValidation;
         query = syntacticQueryValidation.checkValidityAndGetQuery(queryString);
+
+        // if the property is not empty, assign the properties to the operators
+        if (!properties.empty()) {
+            UtilityFunctions::assignPropertiesToQueryOperators(query->getQueryPlan(), properties);
+        }
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         // On compilation error we record the query to the catalog as failed
