@@ -178,10 +178,10 @@ BufferControlBlock* BufferControlBlock::retain() {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 void BufferControlBlock::dumpOwningThreadInfo() {
     std::unique_lock lock(owningThreadsMutex);
-    NES_ERROR("Buffer " << getOwner() << " has " << referenceCounter.load() << " live references");
+    NES_FATAL_ERROR("Buffer " << getOwner() << " has " << referenceCounter.load() << " live references");
     for (auto& item : owningThreads) {
         for (auto& v : item.second) {
-            NES_ERROR("Thread " << v.threadName << " has buffer " << getOwner() << " requested on callstack: " << v.callstack);
+            NES_FATAL_ERROR("Thread " << v.threadName << " has buffer " << getOwner() << " requested on callstack: " << v.callstack);
         }
     }
 }
