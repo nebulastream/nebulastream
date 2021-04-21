@@ -39,7 +39,7 @@ class CCodeGenerator : public CodeGenerator {
      * @return flag if the generation was successful.
      */
     bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) override;
-
+    bool generateCodeForScanSetup(PipelineContextPtr context) override;
     /**
      * @brief Code generation for a projection, which depends on a particular input schema.
      * @param projectExpressions The projection expression nodes.
@@ -88,7 +88,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return the operator id
     */
     uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                 PipelineContextPtr context, uint64_t id) override;
+                                 PipelineContextPtr context, uint64_t id, Windowing::WindowOperatorHandlerPtr windowOperatorHandler) override;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.

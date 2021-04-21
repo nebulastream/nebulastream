@@ -12,6 +12,7 @@ namespace GeneratableOperators {
  */
 class GeneratableBufferScan : public GeneratableOperator {
   public:
+    void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
     const std::string toString() const override;

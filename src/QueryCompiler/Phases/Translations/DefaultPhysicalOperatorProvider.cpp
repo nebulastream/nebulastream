@@ -23,6 +23,7 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -216,7 +217,7 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(QueryPlanPtr, LogicalO
     auto windowDefinition = windowOperator->getWindowDefinition();
     // create window operator handler, to establish a common runtime object for aggregation and trigger phase.
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, windowOutputSchema);
-    if (operatorNode->instanceOf<CentralWindowOperator>()) {
+    if (operatorNode->instanceOf<CentralWindowOperator>() || operatorNode->instanceOf<WindowLogicalOperatorNode>()) {
         // Translate a central window operator in -> SlicePreAggregationOperator -> WindowSinkOperator
         auto preAggregationOperator = PhysicalOperators::PhysicalSlicePreAggregationOperator::create(
             windowInputSchema, windowOutputSchema, windowOperatorHandler);

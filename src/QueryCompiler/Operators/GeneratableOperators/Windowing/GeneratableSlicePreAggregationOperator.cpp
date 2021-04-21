@@ -16,6 +16,7 @@
 
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
@@ -38,7 +39,9 @@ GeneratableSlicePreAggregationOperator::GeneratableSlicePreAggregationOperator(
     : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler) {}
 
 void GeneratableSlicePreAggregationOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    //auto operatorIndex = codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id);
+    auto windowDefinition = operatorHandler->getWindowDefinition();
+
+    auto operatorIndex = codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id, operatorHandler);
 }
 
 void GeneratableSlicePreAggregationOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

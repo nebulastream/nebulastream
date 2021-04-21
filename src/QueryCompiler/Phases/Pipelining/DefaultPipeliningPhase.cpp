@@ -24,6 +24,11 @@ void DefaultPipeliningPhase::processMultiplex(PipelineQueryPlanPtr pipelinePlan,
                                               std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                               OperatorPipelinePtr currentPipeline,
                                               PhysicalOperators::PhysicalOperatorPtr currentOperator) {
+    if (!currentPipeline->hasOperators()) {
+        auto successorPipeline = currentPipeline->getSuccessors()[0];
+        pipelinePlan->removePipeline(currentPipeline);
+        currentPipeline = successorPipeline;
+    }
     for (auto node : currentOperator->getChildren()) {
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);

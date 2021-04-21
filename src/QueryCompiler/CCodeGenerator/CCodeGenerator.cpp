@@ -111,6 +111,15 @@ const std::string toString(void*, DataTypePtr) {
 
 CodeGeneratorPtr CCodeGenerator::create() { return std::make_shared<CCodeGenerator>(); }
 
+bool CCodeGenerator::generateCodeForScanSetup(PipelineContextPtr context) {
+    auto tf = getTypeFactory();
+    auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
+    VariableDeclaration varDeclarationPipelineExecutionContext =
+        VariableDeclaration::create(tf->createReference(pipelineExecutionContextType), "pipelineExecutionContext");
+    context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+    return true;
+}
+
 bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) {
 
     context->inputSchema = outputSchema->copy();
@@ -1341,12 +1350,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 }
 
 uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                             PipelineContextPtr context, uint64_t id) {
+                                             PipelineContextPtr context, uint64_t id, Windowing::WindowOperatorHandlerPtr windowOperatorHandler) {
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
     auto executionContextRef = VarRefStatement(context->code->varDeclarationExecutionContext);
-    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(window, windowOutputSchema);
     auto windowOperatorIndex = context->registerOperatorHandler(windowOperatorHandler);
 
     // create a new setup scope for this operator
@@ -1737,4 +1745,5 @@ VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr co
 
     return windowOperatorHandlerDeclaration;
 }
+
 }// namespace NES

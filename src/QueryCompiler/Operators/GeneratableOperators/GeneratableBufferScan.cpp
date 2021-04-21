@@ -33,6 +33,10 @@ GeneratableOperatorPtr GeneratableBufferScan::create(OperatorId id, SchemaPtr in
     return std::make_shared<GeneratableBufferScan>(GeneratableBufferScan(id, inputSchema));
 }
 
+void GeneratableBufferScan::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    codegen->generateCodeForScanSetup(context);
+}
+
 void GeneratableBufferScan::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForScan(inputSchema, inputSchema, context);
 }
