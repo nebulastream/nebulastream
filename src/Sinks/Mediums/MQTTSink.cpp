@@ -79,12 +79,20 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
-
-        for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
-            NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
-            NES_DEBUG("MQTTSink::writeData Sending Payload: " << formattedTuple);
-            client->sendPayload(formattedTuple);
-            std::this_thread::sleep_for(minDelayBetweenSends);
+        auto baseStartIterator = sinkFormat->getTupleIterator(inputBuffer).begin();
+        auto baseEndIterator = sinkFormat->getTupleIterator(inputBuffer).end();
+        for (int i=0; i < 1000; ++i) {
+            auto startIterator = baseStartIterator;
+            while(startIterator != baseEndIterator) {
+                std::string formattedTuple = startIterator.operator*();
+//            for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
+                NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
+                NES_DEBUG("MQTTSink::writeData Sending Payload: " << formattedTuple);
+                client->sendPayload(formattedTuple);
+                std::this_thread::sleep_for(minDelayBetweenSends);
+                startIterator.operator++();
+//            }
+            }
         }
 
         // When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
