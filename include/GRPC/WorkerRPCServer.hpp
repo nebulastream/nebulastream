@@ -51,6 +51,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
+    Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
+
   private:
     Runtime::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;

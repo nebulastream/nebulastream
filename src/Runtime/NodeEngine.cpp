@@ -441,5 +441,6 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
     std::cerr << "Exception: " << exception->what() << std::endl;
     std::cerr << "Callstack:\n " << callstack << std::endl;
 }
+bool NodeEngine::bufferData(QueryId) { return true; }
 
 }// namespace NES::Runtime

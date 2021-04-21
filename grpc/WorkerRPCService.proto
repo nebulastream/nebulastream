@@ -31,6 +31,8 @@ service WorkerRPCService {
 
   rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
+
+  rpc BeginBuffer(BufferRequest) returns (BufferReply){}
 }
 
 message DeployQueryRequest {
@@ -94,4 +96,12 @@ message MonitoringDataRequest {
 
 message MonitoringDataReply {
   bytes buffer = 1;
+}
+
+message BufferRequest {
+  uint64 queryId = 1;
+}
+
+message BufferReply{
+  bool success = 1;
 }

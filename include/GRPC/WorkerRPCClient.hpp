@@ -149,6 +149,13 @@ class WorkerRPCClient {
     static bool requestMonitoringData(const std::string& address, Runtime::TupleBuffer& buf, uint64_t schemaSizeBytes);
 
     /**
+    * @brief Requests remote worker to Buffer data. Stops the sending of data to downstream nodes for specified query
+    * @param queryId
+    * @return true if succesful, esle fasle
+    */
+    bool bufferData(std::string address,QueryId queryId);
+
+    /**
      * @brief This functions loops over all queues and wait for the async calls return
      * @param queues
      * @param mode

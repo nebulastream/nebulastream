@@ -123,4 +123,17 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
         return Status::CANCELLED;
     }
 }
+Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
+    NES_DEBUG("WorkerRPCServer::BeginBuffer: got request for " << request->queryid());
+    bool success = nodeEngine->bufferData(request->queryid());
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::StopQuery: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
 }// namespace NES

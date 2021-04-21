@@ -550,15 +550,16 @@ TEST_F(MaintenanceServiceIntegrationTest, simpleTestSecondStrat) {
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-    auto querySubPlans = globalExecutionPlan->getExecutionNodeByNodeId(2)->getQuerySubPlans(1);
-    auto resourceUsage = globalExecutionPlan->getExecutionNodeByNodeId(2)->getOccupiedResources(1);
-    maintenanceService->migrateSubqueries(3, 1, querySubPlans, resourceUsage);
+    //auto querySubPlans = globalExecutionPlan->getExecutionNodeByNodeId(2)->getQuerySubPlans(1);
+    //auto resourceUsage = globalExecutionPlan->getExecutionNodeByNodeId(2)->getOccupiedResources(1);
+    //maintenanceService->migrateSubqueries(3, 1, querySubPlans, resourceUsage);
+    maintenanceService->submitMaintenanceRequest(2,2);
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
     auto querySubPlansOnNode3 = globalExecutionPlan->getExecutionNodeByNodeId(3)->getQuerySubPlans(1);
     NES_DEBUG("test");
 }
 
-TEST_F(MaintenanceServiceIntegrationTest, testDeploymentAndStartOfSubqueries) {
+TEST_F(MaintenanceServiceIntegrationTest, DISABLED_testDeploymentAndStartOfSubqueries) {
 
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -627,17 +628,36 @@ TEST_F(MaintenanceServiceIntegrationTest, testDeploymentAndStartOfSubqueries) {
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-    auto querySubPlans = globalExecutionPlan->getExecutionNodeByNodeId(2)->getQuerySubPlans(1);
-    auto resourceUsage = globalExecutionPlan->getExecutionNodeByNodeId(2)->getOccupiedResources(1);
     //PLACES subqueries on Node 3
-    maintenanceService->migrateSubqueries(3, 1, querySubPlans, resourceUsage);
+    maintenanceService->submitMaintenanceRequest(1,2);
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
     auto executionNode = globalExecutionPlan->getExecutionNodeByNodeId(3);
-    auto success = maintenanceService->deployQuery(1,{executionNode});
-    auto successStart = maintenanceService->startQuery(1,{executionNode});
-    ASSERT_TRUE(success);
-    ASSERT_TRUE(successStart);
-
 }
 
+TEST_F(MaintenanceServiceIntegrationTest, BufferDataTest) {
+    CoordinatorConfigPtr coConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+    coConf->setRpcPort(rpcPort);
+    coConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coConf);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("MaintenanceServiceIntegrationTest: Coordinator started successfully");
+    //uint64_t crdTopologyNodeId = crd->getTopology()->getRoot()->getId();
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 10);
+    wrkConf->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+
+    auto node = crd->getTopology()->findNodeWithId(2);
+    auto ipAddress = node->getIpAddress();
+    auto grpcPort = node->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    auto success = crd->getWorkerRPCClient()->bufferData(rpcAddress,1);
+    EXPECT_TRUE(success);
+}
 }//namespace NES

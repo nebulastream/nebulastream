@@ -153,6 +153,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     bool stopQuery(QueryId queryId, bool graceful = false);
 
+    bool bufferData(QueryId);
+
     /**
      * @brief release all resource of the node engine
      * @param withError true if the node engine stopped with an error

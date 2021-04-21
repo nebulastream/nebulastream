@@ -19,10 +19,6 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-#include <Services/MaintenanceService.hpp>
-#include <Catalogs/QueryCatalog.hpp>
-#include <WorkQueues/QueryRequestQueue.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 
 #include <gtest/gtest.h>
 namespace NES{
