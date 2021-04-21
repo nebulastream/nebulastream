@@ -56,7 +56,7 @@ jobs:
       - name: Run benchmarks
         run: |
           docker run --name ${{ github.run_id }}_benchmark_triggered -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro -e BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -m Run-with-docker -ba  e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eMap.yaml           e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eWindow.yaml          e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eJoin.yaml  e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eProjection.yaml e2e-benchmark-runner,--configPath=../../benchmark/src/E2EBenchmarks/CIRunningBenchmark/E2eSelection.yaml ' --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
-          cp -R $GITHUB_WORKSPACE/benchmark/scripts/benchmark_* /tmp/benchmarks/.
+          cp -R $GITHUB_WORKSPACE/benchmark/scripts/*.csv /tmp/benchmarks/.
       - name: docker cleanup
         if: ${{ always() }}
         run: |
