@@ -83,20 +83,22 @@ class LogicalExpressionTest : public testing::Test {
     }
 };
 
-TEST_F(LogicalExpressionTest, testEqualityExpression) { test_binary_operator("=="); }
+//TODO: re-enable tests when finishing #1170, #1781
 
-TEST_F(LogicalExpressionTest, testInequalityExpression) { test_binary_operator("!="); }
+TEST_F(LogicalExpressionTest, DISABLED_testEqualityExpression) { test_binary_operator("=="); }
 
-TEST_F(LogicalExpressionTest, testAndCompile) { test_binary_operator("&&"); }
+TEST_F(LogicalExpressionTest, DISABLED_testInequalityExpression) { test_binary_operator("!="); }
 
-TEST_F(LogicalExpressionTest, testOrExpression) { test_binary_operator("||"); }
+TEST_F(LogicalExpressionTest, DISABLED_testAndCompile) { test_binary_operator("&&"); }
 
-TEST_F(LogicalExpressionTest, testLeqExpression) { test_binary_operator("<="); }
+TEST_F(LogicalExpressionTest, DISABLED_testOrExpression) { test_binary_operator("||"); }
 
-TEST_F(LogicalExpressionTest, testGeqExpression) { test_binary_operator(">="); }
+TEST_F(LogicalExpressionTest, DISABLED_testLeqExpression) { test_binary_operator("<="); }
 
-TEST_F(LogicalExpressionTest, testLtExpression) { test_binary_operator("<"); }
+TEST_F(LogicalExpressionTest, DISABLED_testGeqExpression) { test_binary_operator(">="); }
 
-TEST_F(LogicalExpressionTest, testGtExpression) { test_binary_operator(">"); }
+TEST_F(LogicalExpressionTest, DISABLED_testLtExpression) { test_binary_operator("<"); }
+
+TEST_F(LogicalExpressionTest, DISABLED_testGtExpression) { test_binary_operator(">"); }
 
 }
