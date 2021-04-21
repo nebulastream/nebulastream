@@ -520,7 +520,7 @@ TEST_F(EngineTest, testParallelSameSink) {
 }
 
 //
-TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepOneProducer) {
+TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepSingleSource) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     auto manager = engine->getQueryManager();
@@ -528,9 +528,6 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepOneProducer) {
     auto inputSchema = Schema::create()->addField("id", DataTypeFactory::createUInt64());
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    streamCatalog->removeLogicalStream("default_logical");
-    streamCatalog->addLogicalStream("default_logical", inputSchema);
-
     auto phase = TypeInferencePhase::create(streamCatalog);
 
     Network::NesPartition nesPartition{1, 1, 1, 2};
@@ -542,7 +539,6 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepOneProducer) {
     const SinkDescriptorPtr& descriptor = NES::PrintSinkDescriptor::create();
     auto printSinkOperator = LogicalOperatorFactory::createSinkOperator(descriptor, 2);
     printSinkOperator->setInputSchema(inputSchema);
-    //    printSinkOperator->setOutputSchema(inputSchema);
 
     // already running querySubPlan
     printSinkOperator->addChild(networkSource);
@@ -560,7 +556,6 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepOneProducer) {
     printSinkOperator->addChild(filterOperator);
     filterOperator->addChild(networkSource);
     auto secondQueryPlan = QueryPlan::create(1, 2, {printSinkOperator});
-    //    secondQueryPlan = phase->execute(secondQueryPlan);
 
     engine->registerQueryForReconfigurationInNodeEngine(secondQueryPlan);
 
@@ -576,6 +571,77 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepOneProducer) {
     // Trigger stop of QEP having network source via "onEndOfStream"
     Network::Messages::EndOfStreamMessage endOfStreamMsg{channelId, true};
     engine->onEndOfStream(endOfStreamMsg);
+}
+
+//
+TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepMultiSource) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto manager = engine->getQueryManager();
+
+    auto inputSchema = Schema::create()->addField("id", DataTypeFactory::createUInt64());
+
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    auto phase = TypeInferencePhase::create(streamCatalog);
+
+    Network::NesPartition firstSourcePartition{1, 1, 1, 2};
+    Network::ChannelId firstChannelId{firstSourcePartition, 1};
+
+    Network::NesPartition secondSourcePartition{1, 2, 1, 2};
+    Network::ChannelId secondChannelId{secondSourcePartition, 1};
+
+    auto networkSourceOne = LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(inputSchema, firstSourcePartition), 1);
+    auto networkSourceTwo = LogicalOperatorFactory::createSourceOperator(
+        Network::NetworkSourceDescriptor::create(inputSchema, secondSourcePartition), 2);
+    networkSourceOne->setOutputSchema(inputSchema);
+    networkSourceTwo->setOutputSchema(inputSchema);
+    const SinkDescriptorPtr& descriptor = NES::PrintSinkDescriptor::create();
+    auto printSinkOperator = LogicalOperatorFactory::createSinkOperator(descriptor, 3);
+    printSinkOperator->setInputSchema(inputSchema);
+
+    // already running querySubPlan
+    printSinkOperator->addChild(networkSourceOne);
+    printSinkOperator->addChild(networkSourceTwo);
+    auto firstQueryPlan = QueryPlan::create(1, 1, {printSinkOperator});
+    firstQueryPlan = phase->execute(firstQueryPlan);
+
+    engine->registerQueryInNodeEngine(firstQueryPlan);
+    engine->startQuery(1);
+
+    EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
+
+    // replacement query plan
+    OperatorNodePtr filterOperator = LogicalOperatorFactory::createFilterOperator(Attribute("id") < 45, 4);
+    filterOperator->setOutputSchema(inputSchema);
+    printSinkOperator->addChild(filterOperator);
+    filterOperator->addChild(networkSourceOne);
+    filterOperator->addChild(networkSourceTwo);
+    auto secondQueryPlan = QueryPlan::create(1, 2, {printSinkOperator});
+
+    engine->registerQueryForReconfigurationInNodeEngine(secondQueryPlan);
+
+    EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+
+    Network::Messages::QueryReconfigurationMessage firstSourceReconfigurationMessage{firstChannelId, {}, {{1, 2}}, {}};
+
+    engine->onQueryReconfiguration(firstSourceReconfigurationMessage);
+
+    // Both subplans are running in parallel, as only one source has sent the reconfiguration message
+    EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
+
+    Network::Messages::QueryReconfigurationMessage secondSourceReconfigurationMessage{secondChannelId, {}, {{1, 2}}, {}};
+    engine->onQueryReconfiguration(secondSourceReconfigurationMessage);
+
+    EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
+    EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+
+    // Trigger stop of QEP having network source via "onEndOfStream"
+    Network::Messages::EndOfStreamMessage firstSourceEos{firstChannelId, true};
+    Network::Messages::EndOfStreamMessage secondSourceEos{secondChannelId, true};
+    engine->onEndOfStream(firstSourceEos);
+    engine->onEndOfStream(secondSourceEos);
 }
 
 //

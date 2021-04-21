@@ -498,16 +498,13 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
     auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [operatorId](DataSourcePtr src) {
         return src->getOperatorId() == operatorId;
     });
-    std::vector<DataSourcePtr> matchingSources;
-    while (matchingSourcesItr != allSources.end()) {
-        matchingSources.push_back(*matchingSourcesItr);
-        matchingSourcesItr++;
-    }
-    if (matchingSources.empty()) {
-        NES_ERROR("QueryManager::addQueryReconfiguration: Could not find source for operatorId"
-                  << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
+    if (matchingSourcesItr == allSources.end()) {
+        NES_ERROR("QueryManager::addQueryReconfiguration: QEP with subPlanId: "
+                  << qep->getQuerySubPlanId() << " does not have source with operatorId: " << operatorId);
         return false;
     }
+    std::vector<DataSourcePtr> matchingSources;
+    matchingSources.push_back(*matchingSourcesItr);
     bool isRegistrationSuccessful = registerQueryForSources(qep, matchingSources);
     if (not isRegistrationSuccessful) {
         NES_ERROR("QueryManager::addQueryReconfiguration: QEP registration failed for operatorId"
@@ -538,17 +535,34 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
         NES_DEBUG("QueryManager::addQueryReconfiguration: OldQEP for querySubPlanId: " << oldQep->getQuerySubPlanId()
                                                                                        << " is already in Running State");
         // needs a fine grained stop strategy
-        oldQep->stop();
-        runningQEPs.erase(oldQep->getQuerySubPlanId());
         if (operatorIdToQueryMap.find(operatorId) != operatorIdToQueryMap.end()) {
             // source exists, remove qep from source if there
             if (operatorIdToQueryMap[operatorId].find(qep) != operatorIdToQueryMap[operatorId].end()) {
                 // qep found, remove it
-                NES_DEBUG("QueryManager: Removing QEP " << qep << " from source" << operatorId);
+                NES_DEBUG("QueryManager::addQueryReconfiguration: Removing QEP " << qep << " from source" << operatorId);
                 if (operatorIdToQueryMap[operatorId].erase(oldQep) == 0) {
-                    NES_FATAL_ERROR("QueryManager: Removing QEP " << oldQep << " for source " << operatorId << " failed!");
+                    NES_FATAL_ERROR("QueryManager::addQueryReconfiguration: Removing QEP " << oldQep << " for source "
+                                                                                           << operatorId << " failed!");
                 }
             }
+        }
+        bool lastSourceMapping = true;
+        for (auto source : oldQep->getSources()) {
+            auto sourceOperatorId = source->getOperatorId();
+            if (operatorIdToQueryMap.find(sourceOperatorId) != operatorIdToQueryMap.end()) {
+                if (operatorIdToQueryMap[sourceOperatorId].find(oldQep) != operatorIdToQueryMap[operatorId].end()) {
+                    NES_DEBUG("QueryManager::addQueryReconfiguration: Not stopping QEP with subPlanId: "
+                              << qep->getQuerySubPlanId() << " as atleast one source relies on it.");
+                    lastSourceMapping = false;
+                    break;
+                }
+            }
+        }
+        if (lastSourceMapping) {
+            NES_DEBUG(
+                "QueryManager::addQueryReconfiguration: Stopping and removing QEP with subPlanId: " << qep->getQuerySubPlanId());
+            oldQep->stop();
+            runningQEPs.erase(oldQep->getQuerySubPlanId());
         }
     }
     return true;
