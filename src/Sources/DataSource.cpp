@@ -37,7 +37,9 @@
 #include <zconf.h>
 namespace NES {
 
+
 DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mode) {
+    UtilityFunctions::trim(mode);
     if (mode == "frequency") {
         return GatheringMode::FREQUENCY_MODE;
     } else if (mode == "ingestionrate") {
@@ -172,10 +174,7 @@ void DataSource::runningRoutineWithIngestionRate() {
         NES_DEBUG("DataSource: the user specify to produce " << numBuffersToProcess << " buffers");
     }
     open();
-    uint64_t buffersPerSecond = gatheringIngestionRate / (globalBufferManager->getBufferSize() / schema->getSchemaSizeInBytes());
-    NES_DEBUG("DataSource is producing " << buffersPerSecond << " per second for rate=" << gatheringIngestionRate
-                                         << " bufferSize=" << globalBufferManager->getBufferSize()
-                                         << " and tuple size=" << schema->getSchemaSizeInBytes());
+
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
@@ -183,44 +182,51 @@ void DataSource::runningRoutineWithIngestionRate() {
         auto startPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t buffersProcessedCnt = 0;
-        while (buffersProcessedCnt < buffersPerSecond && running && processedOverallBufferCnt < numBuffersToProcess) {
+        while (buffersProcessedCnt < gatheringIngestionRate && running && processedOverallBufferCnt < numBuffersToProcess) {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
-                // here we got a valid buffer
+                // here we got a valid bu fer
+                NES_DEBUG("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
                 queryManager->addWork(this->operatorId, buf);
 
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
+            } else {
+                NES_ERROR("DataSource: Buffer is invalid");
             }
-            NES_DEBUG("DataSource: buffersProcessedCnt=" << buffersProcessedCnt << " buffersPerSecond=" << buffersPerSecond);
+            NES_DEBUG("DataSource: buffersProcessedCnt=" << buffersProcessedCnt
+                                                         << " buffersPerSecond=" << gatheringIngestionRate);
         }
 
         uint64_t endPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        nextPeriodStartTime = uint64_t(nextPeriodStartTime + (1000));
-        NES_DEBUG("DataSource: startTimeSendBuffers=" << startPeriod << "endTimeSendBuffers=" << endPeriod
-                                                      << "nextPeriodStartTime=" << nextPeriodStartTime);
+        nextPeriodStartTime = uint64_t(startPeriod + (1000));
+        NES_DEBUG("DataSource: startTimeSendBuffers=" << startPeriod << " endTimeSendBuffers=" << endPeriod
+                                                      << " nextPeriodStartTime=" << nextPeriodStartTime);
 
         if (nextPeriodStartTime < endPeriod) {
             NES_ERROR("Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime="
                       << nextPeriodStartTime << " endTimeSendBuffers=" << endPeriod);
         }
 
+        uint64_t sleepCnt = 0;
         uint64_t curTime =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         while (curTime < nextPeriodStartTime) {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch())
                           .count();
-            if (nextPeriodStartTime > curTime)
-
-            {
+            if (nextPeriodStartTime > curTime) {
+                sleepCnt++;
                 std::this_thread::sleep_for(std::chrono::milliseconds(nextPeriodStartTime - curTime));
             }
         }
-        NES_WARNING("DataSource: Done with period " << curPeriod << " and buffers=" << processedOverallBufferCnt);
+        NES_WARNING("DataSource: Done with period " << curPeriod
+                                                    << " "
+                                                       "and buffers="
+                                                    << processedOverallBufferCnt << " sleepCnt=" << sleepCnt);
     }
 
     // inject reconfiguration task containing end of stream

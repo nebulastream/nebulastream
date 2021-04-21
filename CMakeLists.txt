@@ -107,7 +107,6 @@ find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 
-
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")
 # This assumes that gRPC and all its dependencies are already installed
