@@ -29,15 +29,16 @@ typedef uint64_t COL_OFFSET_SIZE;
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
  * Additionally, it adds a std::vector of columnOffsets which is useful for calcOffset(). As the name suggests, it is a columnar storage and as such it serializes all fields.
+ * This class is non-thread safe
  */
 class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
   public:
-    DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayout& dynamicColLayout,
+    DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity, std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                               std::vector<COL_OFFSET_SIZE> columnOffsets);
-    const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout.getFieldSizes(); }
+    const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout->getFieldSizes(); }
     std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
-        return dynamicColLayout.getFieldIndexFromName(fieldName);
+        return dynamicColLayout->getFieldIndexFromName(fieldName);
     };
 
     /**
@@ -91,7 +92,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
                               const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
 
     const std::vector<COL_OFFSET_SIZE> columnOffsets;
-    const DynamicColumnLayout& dynamicColLayout;
+    const std::shared_ptr<DynamicColumnLayout> dynamicColLayout;
     const uint8_t* basePointer;
 };
 

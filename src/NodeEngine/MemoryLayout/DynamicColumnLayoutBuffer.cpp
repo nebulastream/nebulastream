@@ -18,7 +18,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
-    auto fieldSizes = dynamicColLayout.getFieldSizes();
+    auto fieldSizes = dynamicColLayout->getFieldSizes();
 
     if (boundaryChecks && fieldIndex >= fieldSizes.size()) {
         NES_THROW_RUNTIME_ERROR("jthField" << fieldIndex << " is larger than fieldSize.size() " << fieldSizes.size());
@@ -31,8 +31,8 @@ uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fi
     NES_DEBUG("DynamicColumnLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }
-DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity,
-                                                     DynamicColumnLayout& dynamicColLayout,
+DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity,
+                                                     std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                                                      std::vector<COL_OFFSET_SIZE> columnOffsets)
     : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(dynamicColLayout) {
     this->basePointer = tupleBuffer.getBufferAs<uint8_t>();

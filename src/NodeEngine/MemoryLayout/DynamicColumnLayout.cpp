@@ -49,7 +49,7 @@ DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, bool checkB
 
 DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
 
-DynamicColumnLayoutBuffer DynamicColumnLayout::bind(TupleBuffer& tupleBuffer) {
+DynamicColumnLayoutBuffer DynamicColumnLayout::bind(TupleBuffer tupleBuffer) {
     std::vector<COL_OFFSET_SIZE> columnOffsets;
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
@@ -58,6 +58,6 @@ DynamicColumnLayoutBuffer DynamicColumnLayout::bind(TupleBuffer& tupleBuffer) {
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += (*it) * capacity;
     }
-    return DynamicColumnLayoutBuffer(tupleBuffer, capacity, *this, columnOffsets);
+    return DynamicColumnLayoutBuffer(tupleBuffer, capacity, std::make_shared<DynamicColumnLayout>(*this), columnOffsets);
 }
 }// namespace NES::NodeEngine::DynamicMemoryLayout
