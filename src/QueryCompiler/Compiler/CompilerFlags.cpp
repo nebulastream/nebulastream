@@ -46,12 +46,12 @@ CompilerFlagsPtr CompilerFlags::createBenchmarkingCompilerFlags() {
     flags->addFlag(CompilerFlags::AVX);
 #endif
 #ifdef AVX2_FOUND
-    std::cout << "add avx2 flag" std::endl;
+    std::cout << "add avx2 flag" << std::endl;
     flags->addFlag(CompilerFlags::AVX2);
 #endif
 
 #ifdef NES_BENCHMARKS_NATIVE_MODE
-    std::cout << "use native flags" std::endl;
+    std::cout << "use native flags" << std::endl;
     flags->addFlag(CompilerFlags::AVX2);
     flags->addFlag(CompilerFlags::TUNE);
     flags->addFlag(CompilerFlags::ARCH);
