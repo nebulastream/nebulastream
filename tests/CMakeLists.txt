@@ -199,6 +199,11 @@ add_executable(query-catalog-tests "UnitTests/CoordinatorEngine/QueryCatalogTest
 target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
+### LogicalExpressionTest ###
+add_executable(logical-expression-test "UnitTests/Query/LogicalExpressionTest.cpp")
+target_link_libraries(logical-expression-test nes ${GTEST_LIBRARIES})
+add_test(NAME logical-expression-test COMMAND query-execution-test)
+
 ### QueryExecutionTest ###
 add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
 target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
