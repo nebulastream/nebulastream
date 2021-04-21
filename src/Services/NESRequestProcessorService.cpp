@@ -23,6 +23,7 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
+#include <Exceptions/QueryMigrationException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Optimizer/Phases/QueryPlacementPhase.hpp>
@@ -39,6 +40,7 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
+#include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <exception>
@@ -86,15 +88,29 @@ void NESRequestProcessorService::start() {
                 continue;
             }
 
+            if (nesRequests[0]->instanceOf<MigrateQueryRequest>()) {
+                try {
+                    bool successful = queryMigrationPhase->execute(nesRequests[0]->as<MigrateQueryRequest>());
+                    if (!successful) {
+                        throw QueryMigrationException(nesRequests[0]->getQueryId(),
+                                                      "Unable to migrate Query with ID "
+                                                          + std::to_string(nesRequests[0]->getQueryId()));
+                    }
+                }
+                catch( QueryMigrationException& ex){
+                    NES_ERROR("QueryMigrationPhaseException: " << ex.what());
+
+                }
+            }
+            else {
             //FIXME: What to do if a different requests contain different placement strategies within a batch?
             std::string placementStrategy = "BottomUp";
             if (nesRequests[0]->instanceOf<RunQueryRequest>()) {
                 placementStrategy = nesRequests[0]->as<RunQueryRequest>()->getQueryPlacementStrategy();
             }
-
-            try {
-                NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
-                globalQueryPlanUpdatePhase->execute(nesRequests);
+                try {
+                    NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
+                    globalQueryPlanUpdatePhase->execute(nesRequests);
                 auto sharedQueryPlanToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
                 for (const auto& sharedQueryPlan : sharedQueryPlanToDeploy) {
                     SharedQueryId sharedQueryId = sharedQueryPlan->getSharedQueryId();
@@ -134,50 +150,53 @@ void NESRequestProcessorService::start() {
                     sharedQueryPlan->setAsOld();
                 }
 
-                for (const auto& queryRequest : nesRequests) {
-                    auto queryId = queryRequest->getQueryId();
-                    auto catalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
-                    if (catalogEntry->getQueryStatus() == QueryStatus::Scheduling || catalogEntry->getQueryStatus() == QueryStatus::Restart) {
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Running);
-                    } else {
-                        queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                    for (const auto& queryRequest : nesRequests) {
+                        auto queryId = queryRequest->getQueryId();
+                        auto catalogEntry = queryCatalog->getQueryCatalogEntry(queryId);
+                        if (catalogEntry->getQueryStatus() == QueryStatus::Scheduling
+                            || catalogEntry->getQueryStatus() == QueryStatus::Restart) {
+                            queryCatalog->markQueryAs(queryId, QueryStatus::Running);
+                        } else {
+                            queryCatalog->markQueryAs(queryId, QueryStatus::Stopped);
+                        }
                     }
-                }
-                //FIXME: Proper error handling #1585
-            } catch (QueryPlacementException& ex) {
-                NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
-                NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
-                auto sharedQueryId = ex.getSharedQueryId();
-                queryUndeploymentPhase->execute(sharedQueryId);
-                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-                for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+                    //FIXME: Proper error handling #1585
+                } catch (QueryPlacementException& ex) {
+                    NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());auto sharedQueryId = ex.getSharedQueryId();
+                    queryUndeploymentPhase->execute(sharedQueryId);
+                    auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+                    for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+                        queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                    }
+                } catch (QueryDeploymentException& ex) {NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
+                    NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
+                    auto sharedQueryId = ex.getSharedQueryId();
+                    queryUndeploymentPhase->execute(sharedQueryId);
+                    auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
+                    for (auto queryId : sharedQueryMetaData->getQueryIds()) {
+                        queryCatalog->setQueryFailureReason(queryId, ex.what());
+                    }
+                } catch (QueryMigrationException& ex) {
+                    NES_ERROR("NESRequestProcessorService QueryMigrationException: " << ex.what());
+
+                } catch (TypeInferenceException& ex) {
+                    NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
+                    auto queryId = ex.getQueryId();
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
+                } catch (InvalidQueryStatusException& ex) {
+                    NES_ERROR("QueryRequestProcessingService InvalidQueryStatusException: " << ex.what());
+                } catch (QueryNotFoundException& ex) {
+                    NES_ERROR("QueryRequestProcessingService QueryNotFoundException: " << ex.what());
+                } catch (QueryUndeploymentException& ex) {
+                    NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
+                } catch (InvalidQueryException& ex) {
+                    NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
+                } catch (Exception& ex) {
+                    NES_FATAL_ERROR(
+                        "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
+                    shutDown();
                 }
-            } catch (QueryDeploymentException& ex) {
-                NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
-                NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
-                auto sharedQueryId = ex.getSharedQueryId();
-                queryUndeploymentPhase->execute(sharedQueryId);
-                auto sharedQueryMetaData = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-                for (auto queryId : sharedQueryMetaData->getQueryIds()) {
-                    queryCatalog->setQueryFailureReason(queryId, ex.what());
-                }
-            } catch (TypeInferenceException& ex) {
-                NES_ERROR("QueryRequestProcessingService TypeInferenceException: " << ex.what());
-                auto queryId = ex.getQueryId();
-                queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
-            } catch (InvalidQueryStatusException& ex) {
-                NES_ERROR("QueryRequestProcessingService InvalidQueryStatusException: " << ex.what());
-            } catch (QueryNotFoundException& ex) {
-                NES_ERROR("QueryRequestProcessingService QueryNotFoundException: " << ex.what());
-            } catch (QueryUndeploymentException& ex) {
-                NES_ERROR("QueryRequestProcessingService QueryUndeploymentException: " << ex.what());
-            } catch (InvalidQueryException& ex) {
-                NES_ERROR("QueryRequestProcessingService InvalidQueryException: " << ex.what());
-            } catch (Exception& ex) {
-                NES_FATAL_ERROR(
-                    "QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
-                shutDown();
             }
         }
         NES_WARNING("QueryProcessingService: Terminated");

@@ -27,4 +27,5 @@ add_source_nes(
         TypeInferenceException.cpp
         NesRuntimeException.cpp
         UdfException.cpp
+        QueryMigrationException.cpp
 )
