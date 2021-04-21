@@ -273,7 +273,6 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager(), 1, 12);

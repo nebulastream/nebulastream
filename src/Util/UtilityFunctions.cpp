@@ -48,7 +48,6 @@
 namespace NES {
 
 // removes leading and trailing whitespaces
-
 std::string UtilityFunctions::trim(std::string s) {
     auto not_space = [](char c) {
         return isspace(c) == 0;
@@ -433,5 +432,6 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     topologyJson["edges"] = web::json::value::array(edges);
     return topologyJson;
 }
+
 
 }// namespace NES
