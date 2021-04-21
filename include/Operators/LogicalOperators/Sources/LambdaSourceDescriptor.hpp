@@ -19,8 +19,8 @@
 
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <functional>
 #include <Sources/DataSource.hpp>
+#include <functional>
 
 namespace NES {
 /**
@@ -80,7 +80,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @brief return the gathering mode
      * @return
      */
-    DataSource::GatheringMode  getGatheringMode() const;
+    DataSource::GatheringMode getGatheringMode() const;
 
     /**
      * @brief return the gathering value
@@ -92,8 +92,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
-    DataSource::GatheringMode  gatheringMode;
-
+    DataSource::GatheringMode gatheringMode;
 };
 }// namespace NES
 

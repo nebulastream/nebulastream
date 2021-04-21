@@ -21,7 +21,8 @@
 namespace NES {
 
 MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
-                                               uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode)
+                                               uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                               DataSource::GatheringMode gatheringMode)
     : SourceDescriptor(std::move(schema)), memoryArea(memoryArea), memoryAreaSize(memoryAreaSize),
       numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
@@ -29,7 +30,8 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr
 
 std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
                                                                        size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                                                       uint64_t gatheringValue, DataSource::GatheringMode gatheringMode) {
+                                                                       uint64_t gatheringValue,
+                                                                       DataSource::GatheringMode gatheringMode) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
     return std::make_shared<MemorySourceDescriptor>(schema, memoryArea, memoryAreaSize, numBuffersToProcess, gatheringValue,

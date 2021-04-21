@@ -39,16 +39,11 @@ LambdaSource::LambdaSource(
 
     NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));
 
-    if(this->gatheringMode == GatheringMode::FREQUENCY_MODE)
-    {
+    if (this->gatheringMode == GatheringMode::FREQUENCY_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
-    }
-    else if(this->gatheringMode == GatheringMode::INGESTION_RATE_MODE)
-    {
+    } else if (this->gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
-    }
-    else
-    {
+    } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
 

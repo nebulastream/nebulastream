@@ -205,7 +205,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                           << " window.getEndTs()=" << window.getEndTs() << " windowId=" << windowId
                                           << " sliceId=" << sliceId);
 
-                                if ((currentNumberOfTuples +1) * windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
+                                if ((currentNumberOfTuples + 1) * windowSchema->getSchemaSizeInBytes()
+                                    > tupleBuffer.getBufferSize()) {
                                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                                     executionContext->dispatchBuffer(tupleBuffer);
                                     tupleBuffer = executionContext->allocateTupleBuffer();

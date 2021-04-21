@@ -78,7 +78,8 @@ const DataSourcePtr createLambdaSource(
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
                                        size_t memoryAreaSize, uint64_t numBuffersToProcess, uint64_t gatheringValue,
-                                       OperatorId operatorId, size_t numSourceLocalBuffers, DataSource::GatheringMode gatheringMode) {
+                                       OperatorId operatorId, size_t numSourceLocalBuffers,
+                                       DataSource::GatheringMode gatheringMode) {
     return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess,
                                           gatheringValue, operatorId, numSourceLocalBuffers, gatheringMode);
 }
@@ -86,13 +87,15 @@ const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManag
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, const std::string& host, const uint16_t port,
                                     OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, operatorId, numSourceLocalBuffers, DataSource::FREQUENCY_MODE);
+    return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, operatorId, numSourceLocalBuffers,
+                                       DataSource::FREQUENCY_MODE);
 }
 
 const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                            NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
                                            OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<BinarySource>(schema, bufferManager, queryManager, pathToFile, operatorId, numSourceLocalBuffers, DataSource::FREQUENCY_MODE);
+    return std::make_shared<BinarySource>(schema, bufferManager, queryManager, pathToFile, operatorId, numSourceLocalBuffers,
+                                          DataSource::FREQUENCY_MODE);
 }
 
 const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,

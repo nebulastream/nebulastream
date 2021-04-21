@@ -421,8 +421,9 @@ void E2EBase::setupSources() {
                 return;
             };
 
-            NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream1", "input1", func1, config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+            NES::AbstractPhysicalStreamConfigPtr conf1 =
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", func1,
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerLogicalStream("input1", testSchemaFileName);
                 wrk->registerLogicalStream("input2", testSchemaFileName);
@@ -435,8 +436,9 @@ void E2EBase::setupSources() {
                 crd->getNodeEngine()->setConfig(conf1);
             }
 
-            NES::AbstractPhysicalStreamConfigPtr conf2 = NES::LambdaSourceStreamConfig::create(
-                "LambdaSource", "test_stream2", "input2", func2, config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+            NES::AbstractPhysicalStreamConfigPtr conf2 =
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", func2,
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf2);
             } else {

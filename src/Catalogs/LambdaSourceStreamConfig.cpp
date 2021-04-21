@@ -50,9 +50,10 @@ SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
 AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
     std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    uint64_t numBuffersToProcess,  uint64_t gatheringValue, std::string gatheringMode) {
+    uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode) {
     return std::make_shared<LambdaSourceStreamConfig>(sourceType, physicalStreamName, logicalStreamName,
-                                                      std::move(generationFunction), numBuffersToProcess, gatheringValue, gatheringMode);
+                                                      std::move(generationFunction), numBuffersToProcess, gatheringValue,
+                                                      gatheringMode);
 }
 
 }// namespace NES

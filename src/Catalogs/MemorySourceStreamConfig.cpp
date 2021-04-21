@@ -29,7 +29,8 @@ struct MemoryAreaDeleter {
 
 MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName,
                                                    std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize,
-                                                   uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode)
+                                                   uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                                   std::string gatheringMode)
     : PhysicalStreamConfig(SourceConfig::create()), sourceType(sourceType), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
       memoryAreaSize(memoryAreaSize) {
     // nop

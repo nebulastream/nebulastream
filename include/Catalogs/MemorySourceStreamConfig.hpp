@@ -80,7 +80,8 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      */
     static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName,
                                                   std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize,
-                                                  uint64_t numBuffersToProcess,  uint64_t gatheringValue, std::string gatheringMode);
+                                                  uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                                  std::string gatheringMode);
 
   private:
     std::string sourceType;
