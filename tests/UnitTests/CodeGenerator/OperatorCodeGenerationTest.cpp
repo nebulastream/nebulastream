@@ -943,7 +943,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     pipelineContext1->registerOperatorHandler(joinOperatorHandler);
     pipelineContext1->arity = PipelineContext::BinaryLeft;
     codeGenerator->generateCodeForScan(source->getSchema(), source->getSchema(), pipelineContext1);
-    auto index = codeGenerator->generateJoinSetup(joinDef, pipelineContext1, 1);
+    auto index = codeGenerator->generateJoincdSetup(joinDef, pipelineContext1, 1);
     codeGenerator->generateCodeForJoin(joinDef, pipelineContext1, index);
 
     /* compile code to pipeline stage */
