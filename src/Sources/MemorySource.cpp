@@ -34,7 +34,7 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
     if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
     }
-    if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
+    else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE) {
         this->gatheringIngestionRate = gatheringValue;
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);

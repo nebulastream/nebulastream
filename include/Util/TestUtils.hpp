@@ -404,12 +404,9 @@ class TestUtils {
    */
     static bool checkOutputOrTimeout(string expectedContent, string outputFilePath, uint64_t customTimeout = 0) {
         std::chrono::seconds timeoutInSec;
-        if(customTimeout == 0)
-        {
+        if (customTimeout == 0) {
             timeoutInSec = std::chrono::seconds(timeout);
-        }
-        else
-        {
+        } else {
             timeoutInSec = std::chrono::seconds(customTimeout);
         }
 
