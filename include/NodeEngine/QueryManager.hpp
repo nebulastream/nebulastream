@@ -245,6 +245,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     */
     bool registerQueryForSources(Execution::ExecutableQueryPlanPtr qep, std::vector<DataSourcePtr> sources);
 
+    /**
+     * @brief capture the start sequence of query
+     * @param QEP to start
+    */
+    bool beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep) const;
+
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 
     std::deque<Task> taskQueue;

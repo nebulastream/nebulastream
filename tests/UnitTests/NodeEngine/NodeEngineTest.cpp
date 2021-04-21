@@ -518,6 +518,7 @@ TEST_F(EngineTest, testParallelSameSink) {
     EXPECT_TRUE(engine->stop());
     testOutput("qep12.txt", joinedExpectedOutput);
 }
+
 //
 TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepOneProducer) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();

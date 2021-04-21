@@ -128,13 +128,12 @@ void QueryManager::destroy() {
 }
 
 bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
+    std::scoped_lock lock(queryMutex, statisticsMutex);
     return registerQueryForSources(qep, qep->getSources());
 }
 
 bool QueryManager::registerQueryForSources(Execution::ExecutableQueryPlanPtr qep, std::vector<DataSourcePtr> sources) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
-    std::scoped_lock lock(queryMutex, statisticsMutex);
-
     bool isBinaryOperator = false;
     auto executablePipelines = qep->getPipelines();
     for (auto& pipeline : executablePipelines) {
@@ -224,7 +223,19 @@ bool QueryManager::registerQueryForSources(Execution::ExecutableQueryPlanPtr qep
 }
 
 bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
-    NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
+    if (!beginStartQuerySequence(qep)) {
+        return false;
+    }
+
+    {
+        std::unique_lock lock(queryMutex);
+        runningQEPs.emplace(qep->getQuerySubPlanId(), qep);
+    }
+    return true;
+}
+
+bool QueryManager::beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep) const {
+    NES_DEBUG("QueryManager::beginStartQuerySequence: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
@@ -276,11 +287,6 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
         } else {
             NES_DEBUG("QueryManager: source " << source << " started successfully");
         }
-    }
-
-    {
-        std::unique_lock lock(queryMutex);
-        runningQEPs.emplace(qep->getQuerySubPlanId(), qep);
     }
     return true;
 }
@@ -487,7 +493,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep,
                                            Execution::ExecutableQueryPlanPtr oldQep,
                                            Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
-    //    std::unique_lock queryLock(queryMutex);
+    std::scoped_lock lock(queryMutex, statisticsMutex);
     auto allSources = qep->getSources();
     auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [operatorId](DataSourcePtr src) {
         return src->getOperatorId() == operatorId;
@@ -498,34 +504,38 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
         matchingSourcesItr++;
     }
     if (matchingSources.empty()) {
-        NES_ERROR("QueryManager: addQueryReconfiguration: Could not find source for operatorId"
+        NES_ERROR("QueryManager::addQueryReconfiguration: Could not find source for operatorId"
                   << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
         return false;
     }
     bool isRegistrationSuccessful = registerQueryForSources(qep, matchingSources);
     if (not isRegistrationSuccessful) {
-        NES_ERROR("QueryManager: addQueryReconfiguration: QEP registration failed for operatorId"
+        NES_ERROR("QueryManager::addQueryReconfiguration: QEP registration failed for operatorId"
                   << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
         return false;
     }
+    // start QEP if not already started by an earlier reconfiguration message
     if (runningQEPs.find(qep->getQuerySubPlanId()) != runningQEPs.end()) {
-        NES_DEBUG("QueryManager: addQueryReconfiguration: QEP for querySubPlanId" << qep->getQuerySubPlanId()
+        NES_DEBUG("QueryManager::addQueryReconfiguration: QEP for querySubPlanId" << qep->getQuerySubPlanId()
                                                                                   << " is already in Running State");
-        return true;
-    }
-    bool isStartSuccessful = startQuery(qep);
-    if (not isStartSuccessful) {
-        NES_ERROR("QueryManager: addQueryReconfiguration: QEP start failed for operatorId"
-                  << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
-        return false;
-    }
-    for (auto sink : qep->getSinks()) {
-        auto reconfigurationMessage = ReconfigurationMessage(qep->getQuerySubPlanId(), ReconfigurationType::QueryReconfiguration,
-                                                             sink, queryReconfigurationMessage);
-        addReconfigurationMessage(qep->getQuerySubPlanId(), reconfigurationMessage, true);
+    } else {
+        bool isStartSuccessful = beginStartQuerySequence(qep);
+        if (!isStartSuccessful) {
+            NES_ERROR("QueryManager::addQueryReconfiguration: QEP start failed for operatorId"
+                      << operatorId << " QEP for querySubPlanId " << qep->getQuerySubPlanId());
+            return false;
+        }
+        runningQEPs[qep->getQuerySubPlanId()] = qep;
+        for (auto sink : qep->getSinks()) {
+            NES_DEBUG("QueryManager::addQueryReconfiguration: Propagate QueryReconfigurationMessage: "
+                      << " to sink: " << sink << " in QuerySubPlanId: " << qep->getQuerySubPlanId());
+            auto reconfigurationMessage = ReconfigurationMessage(
+                qep->getQuerySubPlanId(), ReconfigurationType::QueryReconfiguration, sink, queryReconfigurationMessage);
+            addReconfigurationMessage(qep->getQuerySubPlanId(), reconfigurationMessage, true);
+        }
     }
     if (oldQep) {
-        NES_DEBUG("QueryManager: addQueryReconfiguration: OldQEP for querySubPlanId: " << oldQep->getQuerySubPlanId()
+        NES_DEBUG("QueryManager::addQueryReconfiguration: OldQEP for querySubPlanId: " << oldQep->getQuerySubPlanId()
                                                                                        << " is already in Running State");
         // needs a fine grained stop strategy
         oldQep->stop();
