@@ -7,6 +7,7 @@
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TranslateToGeneratbaleOperatorsPhase.hpp>
 #include <QueryCompiler/Phases/Translations/TranslateToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/TranslateToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
@@ -51,6 +52,11 @@ const TranslateToGeneratableOperatorsPtr DefaultPhaseFactory::createLowerPipelin
 const CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr options) {
     NES_DEBUG("Create default code generation phase");
     return CodeGenerationPhase::create();
+}
+const TranslateToExecutableQueryPlanPhasePtr
+DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) {
+    NES_DEBUG("Create lower to executable query plan phase");
+    return TranslateToExecutableQueryPlanPhase::create();
 }
 }// namespace Phases
 }// namespace QueryCompilation

@@ -25,6 +25,13 @@ typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 namespace Execution{
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+
+class NewExecutablePipeline;
+typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
+
+class NewExecutableQueryPlan;
+typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
+
 }
 
 }// namespace NodeEngine
@@ -94,8 +101,6 @@ typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
 class QueryCompilerOptions;
 typedef std::shared_ptr<QueryCompilerOptions> QueryCompilerOptionsPtr;
 
-class Pipeline;
-typedef std::shared_ptr<Pipeline> PipelinePtr;
 
 class OperatorPipeline;
 typedef std::shared_ptr<OperatorPipeline> OperatorPipelinePtr;
@@ -111,6 +116,9 @@ typedef std::shared_ptr<GeneratableOperatorProvider> GeneratableOperatorProvider
 
 class TranslateToGeneratableOperators;
 typedef std::shared_ptr<TranslateToGeneratableOperators> TranslateToGeneratableOperatorsPtr;
+
+class TranslateToExecutableQueryPlanPhase;
+typedef std::shared_ptr<TranslateToExecutableQueryPlanPhase> TranslateToExecutableQueryPlanPhasePtr;
 
 class PipelineQueryPlan;
 typedef std::shared_ptr<PipelineQueryPlan> PipelineQueryPlanPtr;

@@ -23,7 +23,7 @@ namespace QueryCompilation {
 class CodeGenerationPhase {
   public:
     static CodeGenerationPhasePtr create();
-    NodeEngine::Execution::ExecutablePipelineStagePtr apply(OperatorPipelinePtr pipeline);
+    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
     void generate(OperatorNodePtr rootOperator, std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)> applyFunction);

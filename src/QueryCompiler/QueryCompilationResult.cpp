@@ -3,8 +3,14 @@
 namespace NES {
 namespace QueryCompilation {
 
-QueryCompilationResultPtr QueryCompilationResult::create() {
-    return std::make_shared<QueryCompilationResult>();
+QueryCompilationResult::QueryCompilationResult(NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan): executableQueryPlan(executableQueryPlan) {}
+
+QueryCompilationResultPtr QueryCompilationResult::create(NodeEngine::Execution::NewExecutableQueryPlanPtr qep) {
+    return std::make_shared<QueryCompilationResult>(qep);
+}
+
+NodeEngine::Execution::NewExecutableQueryPlanPtr QueryCompilationResult::getExecutableQueryPlan() {
+    return executableQueryPlan;
 }
 
 }// namespace QueryCompilation

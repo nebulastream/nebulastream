@@ -1,3 +1,5 @@
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <algorithm>
@@ -34,6 +36,8 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() {
 std::vector<OperatorPipelinePtr> PipelineQueryPlan::getPipelines() {
     return pipelines;
 }
+QueryId PipelineQueryPlan::getQueryId() const { return queryId; }
+QuerySubPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
 }// namespace QueryCompilation
 }// namespace NES
