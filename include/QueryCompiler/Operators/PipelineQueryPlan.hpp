@@ -3,6 +3,9 @@
 
 #include <Nodes/Node.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Operators/OperatorId.hpp>
+#include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <memory>
 #include <vector>
 namespace NES {
@@ -17,8 +20,13 @@ class PipelineQueryPlan {
     std::vector<OperatorPipelinePtr> getPipelines();
     void removePipeline(OperatorPipelinePtr pipeline);
 
+    QueryId getQueryId() const;
+    QuerySubPlanId getQuerySubPlanId() const;
+
   private:
     std::vector<OperatorPipelinePtr> pipelines;
+    QueryId queryId;
+    QuerySubPlanId querySubPlanId;
 };
 }// namespace QueryCompilation
 

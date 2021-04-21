@@ -241,9 +241,14 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     void setConfig(AbstractPhysicalStreamConfigPtr config);
 
-  private:
+    /**
+     * @brief Creates a logical source descriptor according to a logical source descriptor
+     * TODO place in proper catalog
+     * @param sourceDescriptor
+     * @return
+     */
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
-
+  private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;

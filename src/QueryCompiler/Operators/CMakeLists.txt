@@ -15,6 +15,8 @@
 add_source_nes(
         OperatorPipeline.cpp
         PipelineQueryPlan.cpp
+        ExecutableOperator.cpp
+        PipelineQueryPlanIterator.cpp
 )
 
 add_subdirectory(GeneratableOperators)

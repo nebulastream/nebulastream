@@ -132,6 +132,8 @@ TEST_F(QueryCompilerTest, filterQuery) {
                        .dump()
                        .build();
     auto result = queryCompiler->compileQuery(request);
+
+    std::cout << result << std::endl;
 }
 
 }// namespace NES

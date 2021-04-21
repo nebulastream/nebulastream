@@ -14,6 +14,7 @@ class DefaultPhaseFactory : public PhaseFactory {
     const AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
     const TranslateToGeneratableOperatorsPtr createLowerPipelinePlanPhase(QueryCompilerOptionsPtr options) override;
     const CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) override;
+    const TranslateToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
 };
 
 }// namespace Phases

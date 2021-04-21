@@ -1,5 +1,8 @@
+#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
+#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
@@ -11,6 +14,7 @@
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
+#include <QueryCompiler/Phases/Translations/TranslateToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/Phases/Translations/TranslateToGeneratbaleOperatorsPhase.hpp>
 #include <QueryCompiler/Phases/Translations/TranslateToPhysicalOperators.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
@@ -26,7 +30,8 @@ DefaultQueryCompiler::DefaultQueryCompiler(const QueryCompilerOptionsPtr options
       translateToGeneratableOperatorsPhase(phaseFactory->createLowerPipelinePlanPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
-      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)) {}
+      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)),
+      translateToExecutableQueryPlanPhasePtr(phaseFactory->createLowerToExecutableQueryPlanPhase(options)) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory) {
     return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory));
@@ -64,26 +69,17 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
             translateToGeneratableOperatorsPhase->apply(pipeline);
         }
     }
-    dumpContext->dump("6. GeneratableOperators", pipelinedQueryPlan);
-
+    dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
 
     for (auto pipeline : pipelinedQueryPlan->getPipelines()) {
-        if (pipeline->isSourcePipeline()) {
-            auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
-            auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
-            auto source =
-                ConvertLogicalToPhysicalSource::createDataSource(sourceOperator->getId(), sourceOperator->getSourceDescriptor(),
-                                                                 request->getNodeEngine(), options->getNumSourceLocalBuffers());
-
-        } else if (pipeline->isSinkPipeline()) {
-            auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
-            auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
-            auto sink = ConvertLogicalToPhysicalSink::createDataSink(
-                sinkOperator->getOutputSchema(), sinkOperator->getSinkDescriptor(), request->getNodeEngine(), subPlanId);
-        } else {
+        if (pipeline->isOperatorPipeline()) {
             codeGenerationPhase->apply(pipeline);
         }
     }
+    dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
+
+    auto executableQueryPlan = translateToExecutableQueryPlanPhasePtr->apply(pipelinedQueryPlan, request->getNodeEngine());
+    return QueryCompilationResult::create(executableQueryPlan);
 }
 
 }// namespace QueryCompilation

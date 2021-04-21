@@ -8,7 +8,12 @@ namespace QueryCompilation {
 
 class QueryCompilationResult {
   public:
-    static QueryCompilationResultPtr create();
+    QueryCompilationResult(NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan);
+    static QueryCompilationResultPtr create(NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan);
+
+    NodeEngine::Execution::NewExecutableQueryPlanPtr getExecutableQueryPlan();
+  private:
+    NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan;
 };
 }// namespace QueryCompilation
 }// namespace NES

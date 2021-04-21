@@ -83,6 +83,12 @@ typedef std::shared_ptr<ExecutableQueryPlan> ExecutableQueryPlanPtr;
 class ExecutablePipeline;
 typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
+class NewExecutablePipeline;
+typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
+
+class NewExecutableQueryPlan;
+typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
+
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 

@@ -12,6 +12,7 @@ class PhaseFactory {
     virtual const AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) = 0;
     virtual const TranslateToGeneratableOperatorsPtr createLowerPipelinePlanPhase(QueryCompilerOptionsPtr options) = 0;
     virtual const CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) = 0;
+    virtual const TranslateToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
 }// namespace Phases
