@@ -443,11 +443,13 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan, 
         ++queryPlanIterator;
     }
 
+    // check if we supply operator properties for all operators
     if (numOperators != properties.size()) {
         NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of operators. The query plan is:\n" << queryPlan->toString());
         return false;
     }
 
+    // prepare the query plan iterator
     queryPlanIterator = QueryPlanIterator(queryPlan).begin();
     auto propertyIterator = properties.begin();
 

@@ -39,6 +39,7 @@ class OperatorPropertiesTest : public testing::Test {
     }
 };
 
+// test assigning operators properties
 TEST_F(OperatorPropertiesTest, testAssignProperties) {
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
@@ -83,7 +84,8 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     ++queryPlanIterator;
 }
 
-TEST_F(OperatorPropertiesTest, testAssignWithMoreProperties) {
+// test on providing more properties than the number of operators in the query
+TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators) {
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::string>> properties;
@@ -106,11 +108,13 @@ TEST_F(OperatorPropertiesTest, testAssignWithMoreProperties) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
+    // this should return false as properties of all operators has to be supplied if one of them is supplied
     bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_FALSE(res);
 }
 
-TEST_F(OperatorPropertiesTest, testAssignWithMoreOperators) {
+// test on providing less properties than the number of operators in the query
+TEST_F(OperatorPropertiesTest, testAssignWithLessPropertiesThanOperators) {
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::string>> properties;
@@ -127,6 +131,7 @@ TEST_F(OperatorPropertiesTest, testAssignWithMoreOperators) {
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
 
+    // this should return false as properties of all operators has to be supplied if one of them is supplied
     bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
     ASSERT_FALSE(res);
 }
