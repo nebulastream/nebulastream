@@ -16,6 +16,7 @@
 
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCompleteWindowOperator.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <utility>
 
@@ -29,7 +30,8 @@ void GeneratableCompleteWindowOperator::produce(CodeGeneratorPtr codegen, Pipeli
 }
 
 void GeneratableCompleteWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto operatorID = codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id);
+    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, outputSchema);
+    auto operatorID = codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id, windowOperatorHandler);
     codegen->generateCodeForCompleteWindow(windowDefinition, generatableWindowAggregation, context, operatorID);
 }
 GeneratableWindowOperatorPtr

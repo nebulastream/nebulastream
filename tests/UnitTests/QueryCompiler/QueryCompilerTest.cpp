@@ -32,6 +32,12 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
 
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -135,5 +141,75 @@ TEST_F(QueryCompilerTest, filterQuery) {
 
     std::cout << result << std::endl;
 }
+
+/**
+ * @brief Input Query Plan:
+ *
+ * |Source| -- |window| -- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, windowQuery) {
+    SchemaPtr schema = Schema::create();
+    schema->addField("key", INT32);
+    schema->addField("value", INT32);
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream("streamName", schema);
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto phaseFactory = Phases::DefaultPhaseFactory::create();
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+
+    auto query = Query::from("streamName").window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)))
+        .byKey(Attribute("key"))
+        .apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
+
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    queryPlan = typeInferencePhase->execute(queryPlan);
+
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
+        .dump()
+        .build();
+    auto result = queryCompiler->compileQuery(request);
+
+    std::cout << result << std::endl;
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * |Source| --          --
+ *                          \
+ * |Source| -- |Filter| -- |Union| --- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, unionQuery) {
+    SchemaPtr schema = Schema::create();
+    schema->addField("key", INT32);
+    schema->addField("value", INT32);
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream("streamName", schema);
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto phaseFactory = Phases::DefaultPhaseFactory::create();
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto query1 = Query::from("streamName");
+    auto query2 = Query::from("streamName").filter(Attribute("key") == 32).unionWith(&query1).sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query2.getQueryPlan();
+
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    queryPlan = typeInferencePhase->execute(queryPlan);
+
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
+        .dump()
+        .build();
+    auto result = queryCompiler->compileQuery(request);
+
+    std::cout << result << std::endl;
+}
+
+
 
 }// namespace NES

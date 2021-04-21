@@ -20,6 +20,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
@@ -28,6 +29,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
 
 namespace NES {
@@ -55,6 +58,10 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerMap(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()) {
         lowerWatermarkAssignment(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()) {
+        lowerSlicePreAggregation(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>()) {
+        lowerWindowSink(queryPlan, operatorNode);
     } else {
         NES_ERROR("No lowering defined for physical operator: " << operatorNode->toString());
     }
@@ -114,6 +121,19 @@ void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr q
         physicalWatermarkAssignmentOperator->getInputSchema(), physicalWatermarkAssignmentOperator->getOutputSchema(),
         physicalWatermarkAssignmentOperator->getWatermarkStrategyDescriptor());
     queryPlan->replaceOperator(physicalWatermarkAssignmentOperator, generatableWatermarkAssignmentOperator);
+}
+
+void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    auto slicePreAggregationOperator = operatorNode->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+    auto generatableOperator = GeneratableOperators::GeneratableSlicePreAggregationOperator::create(slicePreAggregationOperator->getInputSchema(),
+                                                                         slicePreAggregationOperator->getOutputSchema(),
+                                                                         slicePreAggregationOperator->getOperatorHandler());
+    queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
+}
+
+void DefaultGeneratableOperatorProvider::lowerWindowSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    // a window sink is lowered to a standard scan operator
+    lowerScan(queryPlan, operatorNode);
 }
 
 }// namespace QueryCompilation

@@ -85,6 +85,15 @@ class CodeGenerator {
     virtual bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) = 0;
 
     /**
+     * @brief Code generation for a scan, which depends on a particular input schema.
+     * @param schema The input schema, in which we receive the input buffer.
+     * @param schema The out schema, in which we forward to the next operator
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForScanSetup(PipelineContextPtr context) = 0;
+
+    /**
      * @brief Code generation for a projection, which depends on a particular input schema.
      * @param projectExpressions The projection expression nodes.
      * @param context The context of the current pipeline.
@@ -134,7 +143,7 @@ class CodeGenerator {
     * @return the operator id
     */
     virtual uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                         PipelineContextPtr context, uint64_t id) = 0;
+                                         PipelineContextPtr context, uint64_t id, Windowing::WindowOperatorHandlerPtr windowOperatorHandler) = 0;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.

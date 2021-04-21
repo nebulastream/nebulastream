@@ -41,7 +41,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     uint64_t id;
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
-    QueryPlanPtr rootOperator;
+    QueryPlanPtr queryPlan;
     Type pipelineType;
 
 };

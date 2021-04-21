@@ -5,7 +5,7 @@ namespace NES {
 namespace QueryCompilation {
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
-    : id(pipelineId), rootOperator(QueryPlan::create()), pipelineType(pipelineType)
+    : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType)
 {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
@@ -56,7 +56,7 @@ std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() {
     return predecessors;
 }
 
-bool OperatorPipeline::hasOperators() { return this->rootOperator != nullptr; }
+bool OperatorPipeline::hasOperators() { return !this->queryPlan->getRootOperators().empty(); }
 
 void OperatorPipeline::clearPredecessors() {
     for (auto pre : predecessorPipelines) {
@@ -92,11 +92,11 @@ void OperatorPipeline::clearSuccessors() {
 
 std::vector<OperatorPipelinePtr> OperatorPipeline::getSuccessors() { return successorPipelines; }
 void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
-    this->rootOperator->appendOperatorAsNewRoot(newRootOperator);
+    this->queryPlan->appendOperatorAsNewRoot(newRootOperator);
 }
 
 uint64_t OperatorPipeline::getPipelineId() { return id; }
-QueryPlanPtr OperatorPipeline::getQueryPlan() { return rootOperator; }
+QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
 
 }// namespace QueryCompilation
 }// namespace NES
