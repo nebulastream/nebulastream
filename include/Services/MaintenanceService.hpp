@@ -22,6 +22,7 @@
 #define NES_MAINTENANCESERVICE_HPP
 #include <Plans/Query/QueryId.hpp>
 #include <Services/StrategyType.hpp>
+#include <Topology/TopologyNodeId.hpp>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -52,6 +53,12 @@ typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 class MaintenanceService {
   public:
 
+    struct QueryMigrationMessage{
+        QueryId queryId;
+        bool success;
+        std::string info;
+    };
+
     MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
                        GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRPCClient);
     ~MaintenanceService();
@@ -61,7 +68,7 @@ class MaintenanceService {
      * @param nodeId
      * @param strategy
      */
-    void submitMaintenanceRequest(uint64_t nodeId, StrategyType strategy);
+   std::vector<MaintenanceService::QueryMigrationMessage> submitMaintenanceRequest(TopologyNodeId nodeId, StrategyType strategy);
 
     /**
     * places subqueries onto a different executionNode
@@ -99,21 +106,21 @@ class MaintenanceService {
      * @param nodeId
      * @return true if success or false if failure
      */
-    std::vector<uint64_t> firstStrat(uint64_t nodeId);
+    std::vector<MaintenanceService::QueryMigrationMessage> executeQueryMigrationWithRestart(std::vector<QueryId> QueryIds);
 
     /**
      * this method represents the second strategy. Here, data is buffered on the upstream nodes until the subquery on the node to be taken offline is redeployed
      * @param nodeId
      * @return
      */
-    std::optional<TopologyNodePtr> secondStrat(uint64_t nodeId);
+    std::vector<MaintenanceService::QueryMigrationMessage> executeQueryMigrationWithBuffer(std::vector<QueryId> queryIds,TopologyNodeId nodeId);
 
     /**
      * This method represents the third strategy. Here, subqueries of nodes are redeployed before marking the node for maintenance. This ensures uninterrupted data proccessing.
      * @param nodeId
      * @return
      */
-    std::vector<uint64_t> thirdStrat(uint64_t nodeId);
+    std::vector<MaintenanceService::QueryMigrationMessage> executeQueryMigrationWithoutBuffer(std::vector<QueryId> queryIds,TopologyNodeId nodeId);
 
     /**
      * sets maintenanceFlag of node to true
@@ -122,37 +129,13 @@ class MaintenanceService {
      */
     bool markNodeForMaintenance(uint64_t nodeId);
 
-    /**
-     * find the parent of an execution node for a specific query
-     * @param childNode
-     * @param queryId
-     * @return
-     */
-    std::optional<ExecutionNodePtr> findParentExecutionNode(ExecutionNodePtr childNode, QueryId queryId );
-
-    /**
-    *find the child of an execution node for a specific query
-    * @param childNode
-    * @param queryId
-    * @return
-    */
-    std::optional<ExecutionNodePtr> findChildExecutionNode(ExecutionNodePtr childNode, QueryId queryId );
-
-    /**
-     *
-     * @param resourceUsage
-     * @param candidateNodes
-     * @return the first top node that has enough resources for subqueries
-     */
-
-
-
     TopologyPtr topology;
     QueryCatalogPtr queryCatalog;
     NESRequestQueuePtr queryRequestQueue;
     GlobalExecutionPlanPtr globalExecutionPlan;
     WorkerRPCClientPtr workerRPCClient;
 };
+
 
 typedef std::shared_ptr<MaintenanceService> MaintenanceServicePtr;
 } //namepsace NES

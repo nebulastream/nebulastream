@@ -28,6 +28,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues//NESRequestQueue.hpp>
+#include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 #include <WorkQueues/RequestTypes/RestartQueryRequest.hpp>
 
@@ -42,163 +43,91 @@ MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr que
 MaintenanceService::~MaintenanceService() {
     NES_DEBUG("Destroying MaintenanceService");
 }
-void MaintenanceService::submitMaintenanceRequest(uint64_t nodeId, uint8_t strategy){
-    NES_DEBUG("In MaintenanceService and doing Stuff!");
-    if(strategy == 1){
-         firstStrat(nodeId);
-    }
-    else if(strategy == 2){
-         secondStrat(nodeId);
-    }
-    else if (strategy == 3){
-         thirdStrat(nodeId);
-    }
-    else{
+std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::submitMaintenanceRequest(TopologyNodeId nodeId, uint8_t strategy){
+    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
+    if(strategy >3 ){
         NES_DEBUG("Not a valid strategy");
-        throw std::runtime_error("MaintenanceService: Strategy doesnt exist");
+        MaintenanceService::QueryMigrationMessage  message {0,false,"Not a valid strategy"};
+        results.push_back(message);
+        return results;
     }
-}
-
-
-std::vector<uint64_t> MaintenanceService::firstStrat(uint64_t nodeId) {
     NES_DEBUG("Applying first strategy for maintenance on node" << std::to_string(nodeId));
-    std::vector<uint64_t> parentQueryIds;
+    std::vector<uint64_t> queryIds;
     TopologyNodePtr topologyNode = topology->findNodeWithId(nodeId);
     if(!topologyNode){
-        throw std::runtime_error("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");
+        NES_INFO("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");
+        MaintenanceService::QueryMigrationMessage  message {0,false,"Topology with supplied ID doesnt exist"};
+        results.push_back(message);
+        return results;
     }
     markNodeForMaintenance(nodeId);
     ExecutionNodePtr executionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
     if(!executionNode){
-        NES_DEBUG("No queries deployed on node with id " << std::to_string(nodeId));
-        return parentQueryIds;
+        NES_DEBUG("No queries deployed on node with id " << std::to_string(nodeId) << " can be immediatly taken down");
+        MaintenanceService::QueryMigrationMessage  message {0,true,"No queries deployed on Topology Node. Node can be taken down immediatly"};
+        results.push_back(message);
+        return results;
     }
+    //collect all Parent Querys on Exec. Node
     auto map = executionNode->getAllQuerySubPlans();
-
     for(auto it: map){
         for(auto it2: it.second){
-          uint64_t id = it2->getQueryId();
-           if(std::find(parentQueryIds.begin(), parentQueryIds.end(),id) == parentQueryIds.end()){
-               parentQueryIds.push_back(id);
-           }
+            uint64_t id = it2->getQueryId();
+            if(std::find(queryIds.begin(), queryIds.end(),id) == queryIds.end()){
+                queryIds.push_back(id);
+            }
         }
     }
-    for(auto id : parentQueryIds){
+    if(strategy == 1){
+        return executeQueryMigrationWithRestart(queryIds);
+    }
+    if(strategy == 2){
+        return executeQueryMigrationWithBuffer(queryIds,nodeId);
+    }
+    if(strategy == 3){
+        return executeQueryMigrationWithoutBuffer(queryIds,nodeId);
+
+    }
+    results.push_back(QueryMigrationMessage { 0, false, "Shouldnt reach here"});
+    return results;
+}
+
+
+std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::executeQueryMigrationWithRestart(std::vector<QueryId> queryIds) {
+    NES_DEBUG("Applying Migration with restart for all queries on given topology node");
+    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
+    for(auto id : queryIds){
         queryCatalog->markQueryAs(id,QueryStatus::Restart);
         queryRequestQueue->add(RestartQueryRequest::create(id));
+        results.push_back( MaintenanceService::QueryMigrationMessage{id,true,"Successful migration using strat 1"});
     }
-    auto  ID = parentQueryIds.front();
-    NES_DEBUG("ID of first query :" << std::to_string(ID));
-    return parentQueryIds;
+    return results;
 }
 
-std::optional<TopologyNodePtr> MaintenanceService::secondStrat(uint64_t nodeId) {
-
-    NES_DEBUG("Applying second strategy for maintenance on node" << std::to_string(nodeId));
-    std::optional<TopologyNodePtr> destinatonTopNode;
-    TopologyNodePtr topologyNode = topology->findNodeWithId(nodeId);
-    if(!topologyNode){
-        throw std::runtime_error("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");
+std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::executeQueryMigrationWithBuffer(std::vector<QueryId> queryIds, TopologyNodeId nodeId) {
+    NES_DEBUG("Applying Migration with buffer for all queries on given topology node");
+    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
+    for(auto id : queryIds){
+        queryCatalog->markQueryAs(id,QueryStatus::Migrating);
+        queryRequestQueue->add(MigrateQueryRequest::create(id,nodeId,true));
+        results.push_back( MaintenanceService::QueryMigrationMessage{id,true,"Successful migration using strat 2"});
     }
-
-    auto markedExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
-    auto mapOfQuerySubPlans = markedExecutionNode->getAllQuerySubPlans();
-    //for each query on node marked for maintenance, we need to find the parent execution node; the execution node to which
-    //the current execution Node as part of a specific query is sending data to
-    // we need this to find a valid new node location, which must be reachable from current exec node and parent exec node
-    //TODO: dont throw runtime error. Try to migrate every subquery and just return success/failure + reason status
-    for(auto entry: mapOfQuerySubPlans) {
-        auto parentQueryId = entry.first;
-        auto parentOfMarkedExecutionNode = findParentExecutionNode(markedExecutionNode, parentQueryId);
-        auto childOfMarkedExecutionNode =  findChildExecutionNode(markedExecutionNode, parentQueryId );
-        if (!parentOfMarkedExecutionNode) {
-            //TODO: proper error handling
-            throw std::runtime_error("Execution node marked for maintenance doesnt have a parent Execution Node. It is the sink of the query. Marking this node for maintenance leads to query failure");
-
-        }
-        if (!childOfMarkedExecutionNode) {
-            //TODO: proper error handling
-            throw std::runtime_error("Execution node marked for maintenance doesnt have a child Execution Node. It is the source of the query. Marking this node for maintenance leads to query failure");
-
-        }
-        uint32_t occupiedResources = markedExecutionNode->getOccupiedResources(parentQueryId);
-        //TODO: currently only find one path. need to find all paths between
-        auto candidateValidNodes = topology->findNodesBetween(childOfMarkedExecutionNode->get()->getTopologyNode(),parentOfMarkedExecutionNode->get()->getTopologyNode());
-        auto selectedTopNode = findValidTopologyNode(occupiedResources, candidateValidNodes);
-        if (!selectedTopNode) {
-            //TODO: proper error handling
-            throw std::runtime_error("No valid topology nodes to migrate queries on to");
-        }
-        migrateSubqueries(selectedTopNode->get()->getId(),parentQueryId,entry.second,occupiedResources);
-
-    }
-
-    return destinatonTopNode;
+    return results;
 }
 
-std::vector<uint64_t> MaintenanceService::thirdStrat(uint64_t nodeId) {
-    std::vector<uint64_t> placeholder;
+std::vector<MaintenanceService::QueryMigrationMessage> MaintenanceService::executeQueryMigrationWithoutBuffer(std::vector<QueryId> queryIds, TopologyNodeId nodeId) {
+    NES_DEBUG("Applying Migration without buffer for all queries on given topology node");
+    for(auto id : queryIds){
+        NES_DEBUG(id);
+    }
+    std::vector<MaintenanceService::QueryMigrationMessage> results = {};
     NES_DEBUG("Applying third strategy for maintenance on node" << std::to_string(nodeId));
     TopologyNodePtr topologyNode = topology->findNodeWithId(nodeId);
     if(!topologyNode){
         throw std::runtime_error("MaintenanceService: Node with ID " + std::to_string(nodeId) + " does not exit.");
     }
-    return placeholder;
+    return results;
 }
-//TODO: assumes there is only ever one parent
-std::optional<ExecutionNodePtr> MaintenanceService::findParentExecutionNode(ExecutionNodePtr markedNode, QueryId queryId) {
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    std::vector<NodePtr> parentsOfMarkedExecutionNode = markedNode->getParents();
-    bool found = false;
-    std::optional<ExecutionNodePtr> parentOfMarkedExecutionNode;
-    for (ExecutionNodePtr candidateExecutionNode : executionNodes) {
-        if (found) {
-            break;
-        }
-        for (NodePtr parentOfExecutionNode : parentsOfMarkedExecutionNode) {
-            if (candidateExecutionNode->equal(parentOfExecutionNode)) {
-                parentOfMarkedExecutionNode = candidateExecutionNode;
-                found = true;
-                break;
-            }
-        }
-    }
-    return parentOfMarkedExecutionNode;
-}
-//TODO: assumes there is only ever one child
-std::optional<ExecutionNodePtr> MaintenanceService::findChildExecutionNode(ExecutionNodePtr markedNode, QueryId queryId) {
-    auto executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    std::vector<NodePtr> childrenOfMarkedExecutionNode = markedNode->getChildren();
-    bool found = false;
-    std::optional<ExecutionNodePtr> childOfMarkedExecutionNode;
-    for (ExecutionNodePtr candidateExecutionNode : executionNodes) {
-        if (found) {
-            break;
-        }
-        for (NodePtr childOfExecutionNode : childrenOfMarkedExecutionNode) {
-            if (candidateExecutionNode->equal(childOfExecutionNode)) {
-                childOfMarkedExecutionNode = candidateExecutionNode;
-                found = true;
-                break;
-            }
-        }
-    }
-    return childOfMarkedExecutionNode;
-}
-
-
-std::optional<TopologyNodePtr> MaintenanceService::findValidTopologyNode(uint32_t resourceUsage, std::vector<TopologyNodePtr> candidateNodes){
-    //findNodesBetween is inclusive. First element is source and last is destination. These must be skipped
-    std::optional<TopologyNodePtr> topNode;
-    for (int i = 1; i < candidateNodes.size()-1 ; ++i) {
-        if(candidateNodes[i]->getAvailableResources()>= resourceUsage){
-            topNode = candidateNodes[i];
-            break;
-        }
-    }
-    return topNode;
-}
-
 
 bool MaintenanceService::markNodeForMaintenance(uint64_t nodeId) {
     TopologyNodePtr node = topology->findNodeWithId(nodeId);
@@ -211,98 +140,4 @@ bool MaintenanceService::markNodeForMaintenance(uint64_t nodeId) {
     node->setMaintenanceFlag(true);
     return true;
 }
-void MaintenanceService::migrateSubqueries(uint64_t topNodeId, QueryId queryId, std::vector<queryPlanPtr> querySubPlans, uint32_t resourceUsage) {
-            ExecutionNodePtr candidateExecutionNode = getExecutionNode(topNodeId);
-            //TODO: currently, candidateExecutionNode cant contain querySubPlans from QueryID. But if it can, changes must be made here
-            for(auto subPlan : querySubPlans){
-                candidateExecutionNode->addNewQuerySubPlan(queryId,subPlan);
-            }
-            globalExecutionPlan->addExecutionNode(candidateExecutionNode);
-            //TODO: update operatorToExecutionNodeMap in BasePlacementStrategy. This maps OP IDs to ExecutionNode IDs
-            //TODO: should be done in combination with removing query subplans from old ExecutionNode
-            //TODO: passing uint32_t to a function that works on uint16_t -> should fix. Write new function that takes in uint32_t
-            topology->findNodeWithId(topNodeId)->reduceResources(resourceUsage);
-            topology->reduceResources(topNodeId,resourceUsage);
-            NES_DEBUG("Id: " <<topNodeId);
-}
-
-ExecutionNodePtr MaintenanceService::getExecutionNode(uint64_t candidateTopologyNode){
-    ExecutionNodePtr candidateExecutionNode;
-    if (globalExecutionPlan->checkIfExecutionNodeExists(candidateTopologyNode)) {
-        NES_TRACE("BasePlacementStrategy: node " << candidateTopologyNode << " was already used by other deployment");
-        candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(candidateTopologyNode);
-    } else {
-        NES_TRACE("BasePlacementStrategy: create new execution node with id: " << candidateTopologyNode);
-        candidateExecutionNode = ExecutionNode::createExecutionNode(topology->findNodeWithId(candidateTopologyNode));
-    }
-    return candidateExecutionNode;
-}
-bool MaintenanceService::deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
-    NES_DEBUG("QueryDeploymentPhase::deployQuery queryId=" << queryId);
-    std::map<CompletionQueuePtr, uint64_t> completionQueues;
-    for (ExecutionNodePtr executionNode : executionNodes) {
-        NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
-        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
-        if (querySubPlans.empty()) {
-            NES_WARNING("QueryDeploymentPhase : unable to find query sub plan with id " << queryId);
-            return false;
-        }
-
-        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
-
-        const auto& nesNode = executionNode->getTopologyNode();
-        auto ipAddress = nesNode->getIpAddress();
-        auto grpcPort = nesNode->getGrpcPort();
-        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress);
-
-        for (auto& querySubPlan : querySubPlans) {
-            //enable this for sync calls
-            //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
-            bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
-            if (success) {
-                NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
-            } else {
-                NES_ERROR("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << "  failed");
-                return false;
-            }
-        }
-        completionQueues[queueForExecutionNode] = querySubPlans.size();
-    }
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Register);
-    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id " << queryId << " success=" << result);
-    return result;
-}
-bool MaintenanceService::startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
-    NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
-    //TODO: check if one queue can be used among multiple connections
-    std::map<CompletionQueuePtr, uint64_t> completionQueues;
-
-    for (ExecutionNodePtr executionNode : executionNodes) {
-        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
-
-        const auto& nesNode = executionNode->getTopologyNode();
-        auto ipAddress = nesNode->getIpAddress();
-        auto grpcPort = nesNode->getGrpcPort();
-        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id=" << executionNode->getId()
-
-                                                                                << " and IP=" << ipAddress);
-        //enable this for sync calls
-        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
-        bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
-        if (success) {
-            NES_DEBUG("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << " successful");
-        } else {
-            NES_ERROR("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << "  failed");
-            return false;
-        }
-        completionQueues[queueForExecutionNode] = 1;
-    }
-
-    bool result = workerRPCClient->checkAsyncResult(completionQueues, Start);
-    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id " << queryId << " success=" << result);
-    return result;
-}
-
 }//namespace NES

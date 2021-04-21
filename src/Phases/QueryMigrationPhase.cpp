@@ -22,6 +22,9 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <GRPC/WorkerRPCClient.hpp>
 namespace NES {
 
 QueryMigrationPhase::QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
@@ -37,25 +40,32 @@ QueryMigrationPhasePtr QueryMigrationPhase::create(GlobalExecutionPlanPtr global
     return std::make_shared<QueryMigrationPhase>(QueryMigrationPhase(globalExecutionPlan, topology, workerRpcClient));
 }
 
+bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
+    auto childNodes = findChildExecutionNodesAsTopologyNodes(req->getQueryId(),req->getTopologyNode());
+    auto parentNodes = findParentExecutionNodesAsTopologyNodes(req->getQueryId(),req->getTopologyNode());
+    auto path = topology->findPathBetween(childNodes,parentNodes);
+    auto subqueries = globalExecutionPlan->getExecutionNodeByNodeId(req->getTopologyNode())->getQuerySubPlans(req->getQueryId());
 
-bool QueryMigrationPhase::execute(QueryId queryId, TopologyNodeId topologyNodeId) {
-    auto childNodes = findChildExecutionNodesAsTopologyNodes(queryId,topologyNodeId);
-    auto parentNodes = findParentExecutionNodesAsTopologyNodes(queryId,topologyNodeId);
-    NES_DEBUG(queryId);
-    NES_DEBUG(topologyNodeId);
+    NES_DEBUG(req->toString());
+    if(path.size() == 0){
+        NES_INFO("QueryMigrationPhase: no path found between child and parent nodes. No path to migrate subqueries to");
         return false;
     }
+    bool successful = migrateSubqueries(path,subqueries);
+    return successful;
+}
+
 std::vector<TopologyNodePtr> QueryMigrationPhase::findChildExecutionNodesAsTopologyNodes(QueryId queryId,TopologyNodeId topologyNodeId) {
     std::vector<TopologyNodePtr>childNodes = {};
     auto allExecutionNodesInvolvedInAQuery = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     auto allChildNodesOfTopologyNode = topology->findNodeWithId(topologyNodeId)->as<Node>()->getChildren();
     for(auto executionNode : allExecutionNodesInvolvedInAQuery){
-       for(auto node: allChildNodesOfTopologyNode){
-           auto nodeAsTopologyNode =node->as<TopologyNode>();
+        for(auto node: allChildNodesOfTopologyNode){
+            auto nodeAsTopologyNode =node->as<TopologyNode>();
             if (executionNode->getId() == nodeAsTopologyNode->getId() ){
                 childNodes.push_back(nodeAsTopologyNode);
-       }
-       }
+            }
+        }
     }
     return childNodes;
 }
@@ -75,6 +85,105 @@ std::vector<TopologyNodePtr> QueryMigrationPhase::findParentExecutionNodesAsTopo
     return parentNodes;
 }
 
+bool QueryMigrationPhase::migrateSubqueries(std::vector<TopologyNodePtr> candidateTopologyNodes,
+                                            std::vector<QueryPlanPtr> queryPlans) {
+    //TODO: calculate resource usage of subqueries
+    auto candidateTopologyNode = candidateTopologyNodes.at(0)->getParents().at(0)->as<TopologyNode>();
+    auto exNode = getExecutionNode(candidateTopologyNode->getId());
+    for (auto queryPlan : queryPlans){
+        exNode->addNewQuerySubPlan(queryPlan->getQueryId(),queryPlan);
+    }
+
+    auto deploySuccess = deployQuery(queryPlans.at(0)->getQueryId(), {exNode});
+    auto startSuccess =  startQuery(queryPlans.at(0)->getQueryId(),{exNode});
+    if(deploySuccess&&startSuccess){
+        return true;
+    }
+    return false;
+
+}
+
+
+ExecutionNodePtr QueryMigrationPhase::getExecutionNode(TopologyNodeId nodeId) {
+    ExecutionNodePtr candidateExecutionNode;
+    if (globalExecutionPlan->checkIfExecutionNodeExists(nodeId)) {
+        NES_TRACE("QueryMigrationPhase: node " << nodeId << " was already used by other deployment");
+        candidateExecutionNode = globalExecutionPlan->getExecutionNodeByNodeId(nodeId);
+    } else {
+        NES_TRACE("QueryMigrationPhase: create new execution node with id: " << nodeId);
+        candidateExecutionNode = ExecutionNode::createExecutionNode(topology->findNodeWithId(nodeId));
+        globalExecutionPlan->addExecutionNode(candidateExecutionNode);
+    }
+    return candidateExecutionNode;
+}
+bool QueryMigrationPhase::deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+    NES_DEBUG("QueryDeploymentPhase::deployQuery queryId=" << queryId);
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        NES_DEBUG("QueryDeploymentPhase::registerQueryInNodeEngine serialize id=" << executionNode->getId());
+        std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+        if (querySubPlans.empty()) {
+            NES_WARNING("QueryDeploymentPhase : unable to find query sub plan with id " << queryId);
+            return false;
+        }
+
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+
+        const auto& nesNode = executionNode->getTopologyNode();
+        auto ipAddress = nesNode->getIpAddress();
+        auto grpcPort = nesNode->getGrpcPort();
+        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+        NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress);
+
+        for (auto& querySubPlan : querySubPlans) {
+            //enable this for sync calls
+            //bool success = workerRPCClient->registerQuery(rpcAddress, querySubPlan);
+            bool success = workerRPCClient->registerQueryAsync(rpcAddress, querySubPlan, queueForExecutionNode);
+            if (success) {
+                NES_DEBUG("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << " successful");
+            } else {
+                NES_ERROR("QueryDeploymentPhase:deployQuery: " << queryId << " to " << rpcAddress << "  failed");
+                return false;
+            }
+        }
+        completionQueues[queueForExecutionNode] = querySubPlans.size();
+    }
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, Register);
+    NES_DEBUG("QueryDeploymentPhase: Finished deploying execution plan for query with Id " << queryId << " success=" << result);
+    return result;
+   }
+
+bool QueryMigrationPhase::startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes) {
+    NES_DEBUG("QueryDeploymentPhase::startQuery queryId=" << queryId);
+    //TODO: check if one queue can be used among multiple connections
+    std::map<CompletionQueuePtr, uint64_t> completionQueues;
+
+    for (ExecutionNodePtr executionNode : executionNodes) {
+        CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
+
+        const auto& nesNode = executionNode->getTopologyNode();
+        auto ipAddress = nesNode->getIpAddress();
+        auto grpcPort = nesNode->getGrpcPort();
+        std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+        NES_DEBUG("QueryDeploymentPhase::startQuery at execution node with id=" << executionNode->getId()
+
+                                                                                << " and IP=" << ipAddress);
+        //enable this for sync calls
+        //bool success = workerRPCClient->startQuery(rpcAddress, queryId);
+        bool success = workerRPCClient->startQueryAsyn(rpcAddress, queryId, queueForExecutionNode);
+        if (success) {
+            NES_DEBUG("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << " successful");
+        } else {
+            NES_ERROR("QueryDeploymentPhase::startQuery " << queryId << " to " << rpcAddress << "  failed");
+            return false;
+        }
+        completionQueues[queueForExecutionNode] = 1;
+    }
+
+    bool result = workerRPCClient->checkAsyncResult(completionQueues, Start);
+    NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id " << queryId << " success=" << result);
+    return result;
+}
 
 
 }//namespace NES

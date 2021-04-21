@@ -41,7 +41,7 @@ using NESExecutionPlanPtr = std::shared_ptr<NESExecutionPlan>;
  * Stopped: Query was explicitly stopped either by system or by user.
  * Failed: Query failed because of some reason.
  */
-enum QueryStatus { Registered, Scheduling, Running, MarkedForStop, Stopped, Failed, Restart };
+enum QueryStatus { Registered, Scheduling, Running, MarkedForStop, Stopped, Failed, Restart, Migrating };
 
 static std::map<std::string, QueryStatus> stringToQueryStatusMap{
     {"REGISTERED", Registered},
@@ -50,7 +50,7 @@ static std::map<std::string, QueryStatus> stringToQueryStatusMap{
     {"MARKED_FOR_STOP", MarkedForStop},
     {"STOPPED", Stopped},
     {"FAILED", Failed},
-    {"RESTART", Restart},
+    {"RESTART", Restart},{ "MIGRATING", Migrating},
 };
 
 static std::map<QueryStatus, std::string> queryStatusToStringMap{
@@ -60,7 +60,7 @@ static std::map<QueryStatus, std::string> queryStatusToStringMap{
     {MarkedForStop, "MARKED_FOR_STOP"},
     {Stopped, "STOPPED"},
     {Failed, "FAILED"},
-    {Restart, "RESTART"},
+    {Restart, "RESTART"},{ Migrating, "MIGRATING"},
 };
 
 /**

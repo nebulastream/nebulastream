@@ -43,6 +43,15 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 class TopologyNode;
 typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
+class MigrateQueryRequest;
+typedef std::shared_ptr<MigrateQueryRequest> MigrateQueryRequestPtr;
+
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+
+class ExecutionNode;
+typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+
 class QueryMigrationPhase{
 
   public:
@@ -56,15 +65,10 @@ class QueryMigrationPhase{
 
     /**
      * @brief method for executing a query migration.
-     * @param queryId : the query Id of the query to be migrated
-     * @param topologyNodeId: node to be taken down for maintenance
-     * @details First tries to find suitable node to migrate queries to. Then all child nodes of node marked for maintenance that are part of query
-     * are made to buffer data. Subqueries for query on node marked for maintenance are migrated to new node. Then network sink for all children are
-     * reconfigured. Lastly we replay buffers to new node.
-     *
+     * @param migrateQueryRequest, contains QueryId, TopologyNode and withBuffer boolean
      * @return true if successful else false
      */
-    bool execute(QueryId queryId, TopologyNodeId topologyNodeId);
+    bool execute(MigrateQueryRequestPtr migrateQueryRequest);
     ~QueryMigrationPhase();
 
     /**
@@ -86,7 +90,24 @@ class QueryMigrationPhase{
   private:
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient);
 
+    bool migrateSubqueries(std::vector<TopologyNodePtr> candidateTopologyNodes, std::vector<QueryPlanPtr> queryPlans);
 
+/**
+    * @brief method send query to nodes
+    * @param queryId
+    * @return bool indicating success
+    */
+    bool deployQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+
+
+    /**
+     * @brief method to start a already deployed query
+     * @param queryId
+     * @return bool indicating success
+     */
+    bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+
+    ExecutionNodePtr getExecutionNode(TopologyNodeId nodeId);
 
     WorkerRPCClientPtr  workerRPCClient;
     TopologyPtr topology;
