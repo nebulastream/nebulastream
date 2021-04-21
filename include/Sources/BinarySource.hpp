@@ -33,7 +33,8 @@ class BinarySource : public DataSource {
      * @param file path
      */
     explicit BinarySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                          const std::string& file_path, OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode);
+                          const std::string& file_path, OperatorId operatorId, size_t numSourceLocalBuffers,
+                          GatheringMode gatheringMode);
 
     /**
      * @brief override the receiveData method for the binary source

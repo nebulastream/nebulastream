@@ -162,7 +162,8 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
 const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                        NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
                                        size_t memoryAreaSize, uint64_t numBuffersToProcess, uint64_t gatheringValue,
-                                       OperatorId operatorId, size_t numSourceLocalBuffers, DataSource::GatheringMode gatheringMode);
+                                       OperatorId operatorId, size_t numSourceLocalBuffers,
+                                       DataSource::GatheringMode gatheringMode);
 
 /**
  * @brief function to create a network source

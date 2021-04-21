@@ -144,7 +144,6 @@ class ExecutableSliceAggregationTriggerAction
                           << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " currentWatermark="
                           << currentWatermark << " sliceID=" << sliceId << " recCnt=" << slices[sliceId].getRecordsPerSlice());
 
-
                 //if we would write to a new buffer and we still have tuples to write
                 if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
                     && sliceId + 1 < slices.size()) {

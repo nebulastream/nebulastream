@@ -33,7 +33,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryAreaSize the size of the area of memory
      */
     explicit MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
-                                    uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode);
+                                    uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                    DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object

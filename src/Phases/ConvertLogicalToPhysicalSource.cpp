@@ -118,7 +118,8 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         auto lambdaSourceDescriptor = sourceDescriptor->as<LambdaSourceDescriptor>();
         return createLambdaSource(lambdaSourceDescriptor->getSchema(), bufferManager, queryManager,
                                   lambdaSourceDescriptor->getNumBuffersToProcess(), lambdaSourceDescriptor->getGatheringValue(),
-                                  std::move(lambdaSourceDescriptor->getGeneratorFunction()), operatorId, numSourceLocalBuffers, lambdaSourceDescriptor->getGatheringMode());
+                                  std::move(lambdaSourceDescriptor->getGeneratorFunction()), operatorId, numSourceLocalBuffers,
+                                  lambdaSourceDescriptor->getGatheringMode());
     } else {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type " << sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");

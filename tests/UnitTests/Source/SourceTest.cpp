@@ -794,7 +794,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
             records[u].value = 1;
             records[u].timestamp = calls;
-//            records[u].timestamp = time(0);
+            //            records[u].timestamp = time(0);
         }
         calls++;
         return;
