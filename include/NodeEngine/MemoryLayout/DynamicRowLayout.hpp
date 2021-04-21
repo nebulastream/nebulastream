@@ -26,9 +26,10 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 typedef uint64_t FIELD_OFFSET;
 
 /**
- * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function as well as adding fieldOffsets as a new member
+ * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
+ * This class is non-thread safe
  */
-class DynamicRowLayout : public DynamicMemoryLayout {
+class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicRowLayout> {
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
@@ -41,7 +42,7 @@ class DynamicRowLayout : public DynamicMemoryLayout {
      * @param tupleBuffer
      * @return
      */
-    DynamicRowLayoutBuffer bind(TupleBuffer& tupleBuffer);
+    DynamicRowLayoutBuffer bind(TupleBuffer tupleBuffer);
 
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;

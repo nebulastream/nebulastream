@@ -32,7 +32,7 @@ typedef uint64_t FIELD_SIZE;
 class DynamicLayoutBuffer {
 
   public:
-    DynamicLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity)
+    DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
         : tupleBuffer(tupleBuffer), capacity(capacity), numberOfRecords(0) {}
 
     /**
@@ -59,10 +59,10 @@ class DynamicLayoutBuffer {
      * @brief This methods returns a reference to the associated buffer
      * @return
      */
-    TupleBuffer& getTupleBuffer() { return tupleBuffer; }
+    TupleBuffer getTupleBuffer() { return tupleBuffer; }
 
   protected:
-    TupleBuffer& tupleBuffer;
+    TupleBuffer tupleBuffer;
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };

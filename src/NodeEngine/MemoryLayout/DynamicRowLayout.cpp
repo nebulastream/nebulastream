@@ -52,10 +52,10 @@ DynamicRowLayoutPtr DynamicRowLayout::create(SchemaPtr schema, bool checkBoundar
     return std::make_shared<DynamicRowLayout>(checkBoundaries, schema);
 }
 
-DynamicRowLayoutBuffer DynamicRowLayout::bind(TupleBuffer& tupleBuffer) {
+DynamicRowLayoutBuffer DynamicRowLayout::bind(TupleBuffer tupleBuffer) {
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
-    return DynamicRowLayoutBuffer(tupleBuffer, capacity, *this);
+    return DynamicRowLayoutBuffer(tupleBuffer, capacity, std::make_shared<DynamicRowLayout>(*this));
 }
 
 DynamicMemoryLayoutPtr DynamicRowLayout::copy() const { return std::make_shared<DynamicRowLayout>(*this); }

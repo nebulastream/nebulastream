@@ -26,14 +26,15 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
+ * This class is non-thread safe
  */
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
-    DynamicRowLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicRowLayout& dynamicRowLayout);
-    FIELD_SIZE getRecordSize() { return dynamicRowLayout.getRecordSize(); }
-    const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout.getFieldOffSets(); }
+    DynamicRowLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity, std::shared_ptr<DynamicRowLayout> dynamicRowLayout);
+    FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
+    const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout->getFieldOffSets(); }
     std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
-        return dynamicRowLayout.getFieldIndexFromName(fieldName);
+        return dynamicRowLayout->getFieldIndexFromName(fieldName);
     };
 
     /**
@@ -79,7 +80,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
 
   private:
-    const DynamicRowLayout& dynamicRowLayout;
+    const std::shared_ptr<DynamicRowLayout> dynamicRowLayout;
     const uint8_t* basePointer;
 };
 

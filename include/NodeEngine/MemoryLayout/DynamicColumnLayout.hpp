@@ -23,12 +23,13 @@
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
- * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function
+ * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
+ * This class is non-thread safe
  */
 class DynamicColumnLayout;
 typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
 
-class DynamicColumnLayout : public DynamicMemoryLayout {
+class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicColumnLayout> {
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
@@ -40,7 +41,7 @@ class DynamicColumnLayout : public DynamicMemoryLayout {
      * @param tupleBuffer
      * @return
      */
-    DynamicColumnLayoutBuffer bind(TupleBuffer& tupleBuffer);
+    DynamicColumnLayoutBuffer bind(TupleBuffer tupleBuffer);
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout
