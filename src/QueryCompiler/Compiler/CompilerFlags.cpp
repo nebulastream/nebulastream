@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/Compiler/CompilerFlags.hpp>
+#include <iostream>
 
 namespace NES {
 
