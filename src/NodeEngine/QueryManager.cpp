@@ -568,6 +568,8 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
     return true;
 }
 
+bool QueryManager::stopQueryUsingReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep) { return true; }
+
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());

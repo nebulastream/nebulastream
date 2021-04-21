@@ -209,6 +209,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
     /**
+     * @brief Initiate stop QEP via reconfiguration task
+     * @param operatorId : operatorId of the source to stop
+     * @param qep : qep to stop
+     * @return true if successful else false
+     */
+    bool stopQueryUsingReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep);
+
+    /**
      * @brief handle reconfiguration request
      * @return operatorId to associate QEP with
      * @return qep to associate with operator
