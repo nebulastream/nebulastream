@@ -42,10 +42,10 @@ string E2EBase::getTsInRfc3339() {
 std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
     if (mode == E2EBase::InputOutputMode::FileMode) {
         return "FileMode";
-    } else if (mode == E2EBase::InputOutputMode::CacheMode) {
-        return "CacheMode";
-    } else if (mode == E2EBase::InputOutputMode::MemMode) {
+    } else if (mode == E2EBase::InputOutputMode::MemoryMode) {
         return "MemoryMode";
+    } else if (mode == E2EBase::InputOutputMode::LambdaMode) {
+        return "LambdaMode";
     } else if (mode == E2EBase::InputOutputMode::WindowMode) {
         return "WindowMode";
     } else if (mode == E2EBase::InputOutputMode::JoinMode) {
@@ -62,10 +62,10 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
     if (mode == "FileMode") {
         return E2EBase::InputOutputMode::FileMode;
     } else if (mode == "CacheMode") {
-        return E2EBase::InputOutputMode::CacheMode;
+        return E2EBase::InputOutputMode::MemoryMode;
     } else if (mode == "MemoryMode") {
-        return E2EBase::InputOutputMode::MemMode;
-    } else if (mode == "WindowMode") {
+        return E2EBase::InputOutputMode::LambdaMode;
+    } else if (mode == "LambdaMode") {
         return E2EBase::InputOutputMode::WindowMode;
     } else if (mode == "JoinMode") {
         return E2EBase::InputOutputMode::JoinMode;
@@ -222,9 +222,9 @@ void E2EBase::setupSources() {
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
     auto query = config->getQuery()->getValue();
     if (mode == InputOutputMode::Auto) {
-        //stateless queries use memMode
+        //stateless queries use
         if (query.find("join") == std::string::npos && query.find("window") == std::string::npos) {
-            mode = InputOutputMode::MemMode;
+            mode = InputOutputMode::MemoryMode;
         } else if (query.find("joinWith") != std::string::npos) {
             mode = InputOutputMode::JoinMode;
         } else if (query.find("window") != std::string::npos) {
@@ -251,8 +251,8 @@ void E2EBase::setupSources() {
             NES::PhysicalStreamConfigPtr inputStream = NES::PhysicalStreamConfig::create(srcConf);
             wrk->registerPhysicalStream(inputStream);
         }
-    } else if (mode == InputOutputMode::CacheMode) {
-        std::cout << "cache mode" << std::endl;
+    } else if (mode == InputOutputMode::MemoryMode) {
+        std::cout << "MemoryMode mode" << std::endl;
         struct Record {
             uint64_t id;
             uint64_t value;
@@ -286,8 +286,8 @@ void E2EBase::setupSources() {
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
-    } else if (mode == InputOutputMode::MemMode) {
-        std::cout << "memory source mode" << std::endl;
+    } else if (mode == InputOutputMode::LambdaMode) {
+        std::cout << "LambdaMode source mode" << std::endl;
 
         for (uint64_t i = 0; i < sourceCnt; i++) {
             auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
