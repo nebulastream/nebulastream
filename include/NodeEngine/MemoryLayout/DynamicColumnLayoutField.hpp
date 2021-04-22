@@ -32,15 +32,39 @@ template<class T, bool boundaryChecks>
 class DynamicColumnLayoutField {
 
   public:
-    static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, std::shared_ptr<DynamicColumnLayoutBuffer> layoutBuffer);
-    static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName, std::shared_ptr<DynamicColumnLayoutBuffer> layoutBuffer);
+    /**
+     * @param fieldIndex
+     * @param layoutBuffer
+     * @return field handler via a fieldIndex and a layoutBuffer
+     */
+    static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr layoutBuffer);
+
+    /**
+     * @param fieldIndex
+     * @param layoutBuffer
+     * @return field handler via a fieldName and a layoutBuffer
+     */
+    static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName, DynamicColumnLayoutBufferPtr layoutBuffer);
+
+    /**
+     * @param recordIndex
+     * @return reference to a field attribute from the created field handler accessed by recordIndex
+     */
     inline T& operator[](size_t recordIndex);
-    DynamicColumnLayoutField(T* basePointer, std::shared_ptr<DynamicColumnLayoutBuffer> dynamicColumnLayoutBuffer)
-        : basePointer(basePointer), dynamicColumnLayoutBuffer(dynamicColumnLayoutBuffer){};
+
+
 
   private:
+    /**
+     * @brief Constructor for DynamicColumnLayoutField
+     * @param basePointer
+     * @param dynamicColumnLayoutBuffer
+     */
+    DynamicColumnLayoutField(T* basePointer, DynamicColumnLayoutBufferPtr dynamicColumnLayoutBuffer)
+        : basePointer(basePointer), dynamicColumnLayoutBuffer(dynamicColumnLayoutBuffer){};
+
     T* basePointer;
-    std::shared_ptr<DynamicColumnLayoutBuffer> dynamicColumnLayoutBuffer;
+    DynamicColumnLayoutBufferPtr dynamicColumnLayoutBuffer;
 };
 
 template<class T, bool boundaryChecks>

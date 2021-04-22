@@ -31,13 +31,35 @@ typedef uint64_t FIELD_SIZE;
 class DynamicMemoryLayout {
 
   public:
+    /**
+     * @brief Constructor for abstract class DynamicMemoryLayout
+     * @param checkBoundaryFieldChecks
+     * @param recordSize
+     * @param fieldSizes
+     */
     DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize, std::vector<FIELD_SIZE>& fieldSizes);
+
+    /**
+     * @param fieldName
+     * @return either field index for fieldName or empty optinal
+     */
     std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const;
 
     virtual DynamicMemoryLayoutPtr copy() const = 0;
 
+    /**
+     * @return true if boundaries are actively being checked
+     */
     bool isCheckBoundaryFieldChecks() const;
+
+    /**
+     * @return number of current records
+     */
     uint64_t getRecordSize() const;
+
+    /**
+     * @return reference of field sizes vector
+     */
     const std::vector<FIELD_SIZE>& getFieldSizes() const;
 
   protected:

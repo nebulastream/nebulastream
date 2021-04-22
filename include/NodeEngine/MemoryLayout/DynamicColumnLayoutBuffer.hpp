@@ -36,7 +36,16 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
   public:
     DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity, std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                               std::vector<COL_OFFSET_SIZE> columnOffsets);
+
+    /**
+     * @return retrieves the field sizes of the column layout
+     */
     const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout->getFieldSizes(); }
+
+    /**
+     * @param fieldName
+     * @return field index from the fieldName
+     */
     std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
         return dynamicColLayout->getFieldIndexFromName(fieldName);
     };

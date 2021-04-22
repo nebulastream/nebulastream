@@ -32,6 +32,11 @@ typedef uint64_t FIELD_SIZE;
 class DynamicLayoutBuffer {
 
   public:
+    /**
+     * @brief Constructor for DynamicLayoutBuffer
+     * @param tupleBuffer
+     * @param capacity
+     */
     DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
         : tupleBuffer(tupleBuffer), capacity(capacity), numberOfRecords(0) {}
 

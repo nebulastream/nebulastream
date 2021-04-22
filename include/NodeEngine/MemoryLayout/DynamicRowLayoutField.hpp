@@ -33,8 +33,24 @@ template<class T, bool boundaryChecks>
 class DynamicRowLayoutField {
 
   public:
+    /**
+     * @param fieldIndex
+     * @param layoutBuffer
+     * @return field handler via a fieldIndex and a layoutBuffer
+     */
     static inline DynamicRowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
+
+    /**
+     * @param fieldIndex
+     * @param layoutBuffer
+     * @return field handler via a fieldName and a layoutBuffer
+     */
     static inline DynamicRowLayoutField<T, boundaryChecks> create(std::string fieldName, std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
+
+    /**
+     * @param recordIndex
+     * @return reference to a field attribute from the created field handler accessed by recordIndex
+     */
     inline T& operator[](size_t recordIndex);
 
   private:
@@ -46,7 +62,7 @@ class DynamicRowLayoutField {
     const FIELD_SIZE fieldIndex;
     const FIELD_SIZE recordSize;
     uint8_t* basePointer;
-    std::shared_ptr<DynamicRowLayoutBuffer> dynamicRowLayoutBuffer;
+    DynamicRowLayoutBufferPtr dynamicRowLayoutBuffer;
 };
 
 template<class T, bool boundaryChecks>

@@ -32,15 +32,30 @@ typedef uint64_t FIELD_OFFSET;
 class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicRowLayout> {
 
   public:
-    DynamicMemoryLayoutPtr copy() const override;
+    /**
+     * @brief Constructor for DynamicRowLayout
+     * @param checkBoundaries
+     * @param schema
+     */
     DynamicRowLayout(bool checkBoundaries, SchemaPtr schema);
+
+    DynamicMemoryLayoutPtr copy() const override;
+    /**
+     * @brief Creates a DynamicColumnLayout as a shared_ptr
+     * @param schema
+     * @param checkBoundaries
+     * @return
+     */
     static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
-    const std::vector<FIELD_SIZE>& getFieldOffSets() const;
 
     /**
-     * Maps a memoryLayout to a tupleBuffer
+     * @return fieldOffSets vector
+     */
+    const std::vector<FIELD_SIZE>& getFieldOffSets() const;
+    /**
+     * Binds a memoryLayout to a tupleBuffer
      * @param tupleBuffer
-     * @return
+     * @return shared_ptr to DynamicRowLayoutBuffer
      */
     DynamicRowLayoutBufferPtr bind(TupleBuffer tupleBuffer);
 
