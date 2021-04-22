@@ -32,15 +32,29 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
-    DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
+
+    /**
+     * @brief Creates a DynamicColumnLayout as a shared_ptr
+     * @param schema
+     * @param checkBoundaries
+     * @return
+     */
     static DynamicColumnLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
 
     /**
-     * Maps a memoryLayout to a tupleBuffer
+     * Binds a memoryLayout to a tupleBuffer
      * @param tupleBuffer
-     * @return
+     * @return shared_ptr to DynamicRowLayoutBuffer
      */
     DynamicColumnLayoutBufferPtr bind(TupleBuffer tupleBuffer);
+
+    /**
+     * @brief Constructor for DynamicColumnLayout
+     * @param checkBoundaries
+     * @param schema
+     */
+    DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
+
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

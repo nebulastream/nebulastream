@@ -30,13 +30,24 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
  */
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
-    DynamicRowLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity, std::shared_ptr<DynamicRowLayout> dynamicRowLayout);
+
+    /**
+     * @return retrieves the record size
+     */
     FIELD_SIZE getRecordSize() { return dynamicRowLayout->getRecordSize(); }
+
+    /**
+     * @return retrieves the field offsets of the column layout
+     */
     const std::vector<FIELD_SIZE>& getFieldOffSets() { return dynamicRowLayout->getFieldOffSets(); }
+
+    /**
+     * @param fieldName
+     * @return field index from the fieldName
+     */
     std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
         return dynamicRowLayout->getFieldIndexFromName(fieldName);
     };
-
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
      * @param ithRecord
@@ -62,6 +73,14 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     template<bool boundaryChecks, typename... Types>
     bool pushRecord(std::tuple<Types...> record);
 
+    /**
+     * @brief Constructor for DynamicRowLayoutBuffer
+     * @param tupleBuffer
+     * @param capacity
+     * @param dynamicRowLayout
+     */
+    DynamicRowLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity, std::shared_ptr<DynamicRowLayout> dynamicRowLayout);
+
   private:
     /**
      * Copies fields of tuple sequentially to address
@@ -79,8 +98,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
 
-  private:
-    const std::shared_ptr<DynamicRowLayout> dynamicRowLayout;
+    const DynamicRowLayoutPtr dynamicRowLayout;
     const uint8_t* basePointer;
 };
 
