@@ -80,6 +80,9 @@ void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOpera
         lowerUnaryOperator(queryPlan, operatorNode);
     } else if (operatorNode->isBinaryOperator()) {
         lowerBinaryOperator(queryPlan, operatorNode);
+    } else if(operatorNode->isExchangeOperator()){
+        // exchange operators just vanish for now, as we already created an demultiplex operator for all incoming edges.
+        operatorNode->removeAndJoinParentAndChildren();
     }
 }
 
