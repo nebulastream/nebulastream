@@ -33,6 +33,7 @@
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TranslateToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <variant>
 
 namespace NES {
@@ -47,12 +48,11 @@ TranslateToExecutableQueryPlanPhase::apply(PipelineQueryPlanPtr pipelineQueryPla
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr> executablePipelines;
-    std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap;
 
     //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (auto pipeline : sourcePipelines) {
-        processSource(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineIdToPipelineMap);
+        processSource(pipeline, sources, sinks, executablePipelines, nodeEngine);
     }
 
     return std::make_shared<NodeEngine::Execution::NewExecutableQueryPlan>(
@@ -61,22 +61,19 @@ TranslateToExecutableQueryPlanPhase::apply(PipelineQueryPlanPtr pipelineQueryPla
 }
 NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::processSuccessor(
     OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
-    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine,
-    std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap) {
+    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine) {
 
     if (pipeline->isSinkPipeline()) {
-        return processSink(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineIdToPipelineMap);
+        return processSink(pipeline, sources, sinks, executablePipelines, nodeEngine);
     } else if (pipeline->isOperatorPipeline()) {
-        return processOperatorPipeline(pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineIdToPipelineMap);
-    } else {
-        NES_FATAL_ERROR("Should not reach here");
+        return processOperatorPipeline(pipeline, sources, sinks, executablePipelines, nodeEngine);
     }
+    throw QueryCompilationException("The pipeline was of wrong type. It should be a sink pipeline or a operator pipeline");
 }
 
 void TranslateToExecutableQueryPlanPhase::processSource(
     OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
-    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine,
-    std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap) {
+    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine) {
 
     if (!pipeline->isSourcePipeline()) {
         NES_ERROR("This is not a source pipeline");
@@ -90,12 +87,11 @@ void TranslateToExecutableQueryPlanPhase::processSource(
     }
 
     auto source = ConvertLogicalToPhysicalSource::createDataSource(sourceOperator->getId(), sourceDescriptor, nodeEngine, 64);
-    pipelineIdToPipelineMap[pipeline->getPipelineId()] = source;
     sources.emplace_back(source);
     std::vector<NodeEngine::Execution::SuccessorPipeline> executableSuccessorPipelines;
     for (auto successor : pipeline->getSuccessors()) {
         auto executableSuccessor =
-            processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine, pipelineIdToPipelineMap);
+            processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine);
         if (auto nextExecutablePipeline = std::get_if<NodeEngine::Execution::NewExecutablePipelinePtr>(&executableSuccessor)) {
             (*nextExecutablePipeline)->addPredecessor(source);
         }
@@ -103,9 +99,8 @@ void TranslateToExecutableQueryPlanPhase::processSource(
 }
 
 NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::processSink(
-    OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
-    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine,
-    std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap) {
+    OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>&, std::vector<DataSinkPtr>& sinks,
+    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>&, NodeEngine::NodeEnginePtr nodeEngine) {
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
     auto sink = ConvertLogicalToPhysicalSink::createDataSink(sinkOperator->getOutputSchema(), sinkOperator->getSinkDescriptor(),
@@ -116,8 +111,7 @@ NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::pr
 
 NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::processOperatorPipeline(
     OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
-    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine,
-    std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap) {
+    std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine) {
 
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto executableOperator = rootOperator->as<ExecutableOperator>();
@@ -125,7 +119,7 @@ NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::pr
     std::vector<NodeEngine::Execution::SuccessorPipeline> executableSuccessorPipelines;
     for (auto successor : pipeline->getSuccessors()) {
         auto executableSuccessor =
-            processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine, pipelineIdToPipelineMap);
+            processSuccessor(successor, sources, sinks, executablePipelines, nodeEngine);
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
@@ -141,7 +135,7 @@ NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::pr
         }
     };
 
-    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, nodeEngine](NodeEngine::TupleBuffer& buffer) {
+    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, nodeEngine](NodeEngine::TupleBuffer&) {
         for (auto& executableSuccessor : executableSuccessorPipelines) {
             if (std::get_if<DataSinkPtr>(&executableSuccessor)) {
                 NES_ERROR("QueryCompiler: we cant emit to a sink, if no worker context is provided");

@@ -161,9 +161,9 @@ std::vector<ExecutionNodePtr> GlobalExecutionPlan::getRootNodes() {
 std::string GlobalExecutionPlan::getAsString() {
     NES_DEBUG("GlobalExecutionPlan: Get Execution plan as string");
     std::stringstream ss;
-    auto dumpHandler = ConsoleDumpHandler::create();
+    auto dumpHandler = ConsoleDumpHandler::create(ss);
     for (auto rootNode : rootNodes) {
-        dumpHandler->multilineDump(rootNode, ss);
+        dumpHandler->multilineDump(rootNode);
     }
     return ss.str();
 }

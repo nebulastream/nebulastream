@@ -34,9 +34,9 @@ DumpContextPtr DumpContext::create(std::string contextIdentifier) {
 
 void DumpContext::registerDumpHandler(DebugDumpHandlerPtr debugDumpHandler) { dumpHandlers.push_back(debugDumpHandler); }
 
-void DumpContext::dump(const NodePtr node, std::ostream& out) {
+void DumpContext::dump(const NodePtr node) {
     for (auto& handler : dumpHandlers) {
-        handler->dump(node, out);
+        handler->dump(node);
     }
 }
 

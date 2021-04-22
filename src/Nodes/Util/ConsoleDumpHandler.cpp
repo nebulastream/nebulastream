@@ -16,12 +16,13 @@
 
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Util/Logger.hpp>
 #include <iostream>
 namespace NES {
 
-ConsoleDumpHandler::ConsoleDumpHandler() : DumpHandler() {}
+ConsoleDumpHandler::ConsoleDumpHandler(std::ostream& out) : DumpHandler(), out(out) {}
 
-DebugDumpHandlerPtr ConsoleDumpHandler::create() { return std::make_shared<ConsoleDumpHandler>(); }
+std::shared_ptr<ConsoleDumpHandler> ConsoleDumpHandler::create(std::ostream& out) { return std::make_shared<ConsoleDumpHandler>(out); }
 
 void ConsoleDumpHandler::dumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const {
     out << std::string(indent * depth, ' ') << op->toString() << std::endl;
@@ -59,9 +60,11 @@ void ConsoleDumpHandler::multilineDumpHelper(const NodePtr op, uint64_t depth, u
     }
 }
 
-void ConsoleDumpHandler::dump(const NodePtr node, std::ostream& out) { dumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
+void ConsoleDumpHandler::dump(const NodePtr node) { dumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
 
-void ConsoleDumpHandler::multilineDump(const NodePtr node, std::ostream& out) {
+void ConsoleDumpHandler::multilineDump(const NodePtr node) {
     multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
 }
+void ConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr) { NES_NOT_IMPLEMENTED(); }
+void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::PipelineQueryPlanPtr) { NES_NOT_IMPLEMENTED(); }
 }// namespace NES
