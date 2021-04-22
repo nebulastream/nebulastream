@@ -148,7 +148,7 @@ void fillThreadOwnershipInfo(std::string& threadName, std::string& callstack) {
 }
 #endif
 bool BufferControlBlock::prepare() {
-    int32_t expected = 0;
+    uint32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     // store the current thread that owns the buffer and track which function obtained the buffer
     std::unique_lock lock(owningThreadsMutex);
