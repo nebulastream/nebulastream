@@ -62,8 +62,7 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
         && UtilityFunctions::endsWith(schema->fields[i + 12]->getName(), "LOADS_15MIN")) {
         //if buffer contains memory metric information read the values from each buffer and assign them to the output wrapper object
         auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+        auto bindedRowLayout = layout->bind(buf);
 
         std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
                    uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>

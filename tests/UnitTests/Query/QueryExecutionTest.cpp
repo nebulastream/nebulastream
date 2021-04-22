@@ -301,7 +301,6 @@ class TestSink : public SinkMedium {
 void fillBuffer(TupleBuffer& buf, NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr memoryLayout) {
 
     auto bindedRowLayout = memoryLayout->bind(buf);
-
     auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
     auto fields01 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
     auto fields02 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(2, bindedRowLayout);
@@ -367,7 +366,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
 
     auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
-
     auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         // id

@@ -61,8 +61,7 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& b
     }
 
     auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-        std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+    auto bindedRowLayout = layout->bind(buf);
 
     std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t> outputTuple;
     outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(0);

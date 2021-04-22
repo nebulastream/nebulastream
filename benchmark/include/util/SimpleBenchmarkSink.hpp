@@ -65,9 +65,7 @@ class SimpleBenchmarkSink : public SinkMedium {
         if (promiseSet)
             return true;
 
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(rowLayout->map(input_buffer).release()));
-
-
+        auto bindedRowLayout = rowLayout->bind(input_buffer);
         auto fields = getSchemaPtr()->fields;
         uint64_t recordIndex = 1;
         auto dataType = fields[fieldIndex]->getDataType();

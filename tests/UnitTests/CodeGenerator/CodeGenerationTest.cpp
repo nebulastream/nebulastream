@@ -513,10 +513,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* setup input and output for test */
     auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto recordSchema = Schema::create()->addField("id", DataTypeFactory::createInt64());
-    
+
     auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
     auto bindedRowLayout = layout->bind(inputBuffer);
-
 
     auto recordIndexFieldsInput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
 
@@ -540,7 +539,6 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* check result for correctness */
     auto bindedOutputRowLayout = layout->bind(outputBuffer);
     auto sumGeneratedCode = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
-
     auto sum = 0;
     for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         sum += recordIndexFieldsInput[recordIndex];

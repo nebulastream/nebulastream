@@ -406,8 +406,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
     {
         auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buffer).release()));
+        auto bindedRowLayout = layout->bind(buffer);
         auto firstFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
         for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
             EXPECT_EQ(firstFields[recordIndex], 1);
@@ -690,8 +689,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     {
         NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(rowLayout->map(buffer).release()));
+        auto bindedRowLayout = rowLayout->bind(buffer);
 
         auto startFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
         auto stopFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
@@ -923,15 +921,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
     {
         auto inputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
         auto outputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedInputRowLayout =
-            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(
-                static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(inputLayout->map(inputBuffer).release())
-            );
 
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedOutputRowLayout =
-            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(
-                static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(outputLayout->map(resultBuffer).release())
-            );
+        auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
+        auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
 
         auto secondFieldsInput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
         auto thirdFieldsInput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
