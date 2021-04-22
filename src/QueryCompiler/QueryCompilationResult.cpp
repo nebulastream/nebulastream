@@ -10,7 +10,15 @@ QueryCompilationResultPtr QueryCompilationResult::create(NodeEngine::Execution::
 }
 
 NodeEngine::Execution::NewExecutableQueryPlanPtr QueryCompilationResult::getExecutableQueryPlan() {
-    return executableQueryPlan;
+    return executableQueryPlan.value();
+}
+
+bool QueryCompilationResult::hasError() {
+    return error.has_value();
+}
+
+QueryCompilationErrorPtr QueryCompilationResult::getError() {
+    return error.value();
 }
 
 }// namespace QueryCompilation

@@ -14,13 +14,22 @@
     limitations under the License.
 */
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
@@ -32,6 +41,12 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
+#include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -41,7 +56,6 @@ GeneratableOperatorProviderPtr DefaultGeneratableOperatorProvider::create() {
 }
 
 void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
-
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalSourceOperator>()) {
         lowerSource(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSinkOperator>()) {
@@ -62,8 +76,13 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerSlicePreAggregation(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>()) {
         lowerWindowSink(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()) {
+        lowerJoinBuild(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalJoinSinkOperator>()) {
+        lowerJoinSink(queryPlan, operatorNode);
     } else {
-        NES_ERROR("No lowering defined for physical operator: " << operatorNode->toString());
+        NES_ERROR("No lowering defined for physical operator: " + operatorNode->toString());
+        throw QueryCompilationException("No lowering defined for physical operator: " + operatorNode->toString());
     }
 }
 
@@ -123,17 +142,63 @@ void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr q
     queryPlan->replaceOperator(physicalWatermarkAssignmentOperator, generatableWatermarkAssignmentOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+GeneratableWindowAggregationPtr DefaultGeneratableOperatorProvider::lowerWindowAggregation(
+    Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
+    switch (windowAggregationDescriptor->getType()) {
+        case Windowing::WindowAggregationDescriptor::Count: {
+            return GeneratableCountAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Max: {
+            return GeneratableMaxAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Min: {
+            return GeneratableMinAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Sum: {
+            return GeneratableSumAggregation::create(windowAggregationDescriptor);
+        };
+        default:
+            throw QueryCompilationException(
+                "TranslateToGeneratableOperatorPhase: No transformation implemented for this window aggregation type: "
+                + windowAggregationDescriptor->getType());
+    }
+}
+
+void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr queryPlan,
+                                                                  PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto slicePreAggregationOperator = operatorNode->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
-    auto generatableOperator = GeneratableOperators::GeneratableSlicePreAggregationOperator::create(slicePreAggregationOperator->getInputSchema(),
-                                                                         slicePreAggregationOperator->getOutputSchema(),
-                                                                         slicePreAggregationOperator->getOperatorHandler());
+
+    auto windowAggregationDescriptor =
+        slicePreAggregationOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
+    auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
+
+    auto generatableOperator = GeneratableOperators::GeneratableSlicePreAggregationOperator::create(
+        slicePreAggregationOperator->getInputSchema(), slicePreAggregationOperator->getOutputSchema(),
+        slicePreAggregationOperator->getOperatorHandler(), generatableWindowAggregation);
     queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerWindowSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerWindowSink(QueryPlanPtr queryPlan,
+                                                         PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a window sink is lowered to a standard scan operator
     lowerScan(queryPlan, operatorNode);
+}
+
+void DefaultGeneratableOperatorProvider::lowerJoinBuild(QueryPlanPtr queryPlan,
+                                                        PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    auto physicalJoinBuild = operatorNode->as<PhysicalOperators::PhysicalJoinBuildOperator>();
+    auto generatableJoinOperator = GeneratableOperators::GeneratableJoinBuildOperator::create(
+        physicalJoinBuild->getInputSchema(), physicalJoinBuild->getOutputSchema(), physicalJoinBuild->getJoinHandler(),
+        physicalJoinBuild->getBuildSide());
+    queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
+}
+
+void DefaultGeneratableOperatorProvider::lowerJoinSink(QueryPlanPtr queryPlan,
+                                                       PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    auto physicalJoinSink = operatorNode->as<PhysicalOperators::PhysicalJoinSinkOperator>();
+    auto generatableJoinOperator = GeneratableOperators::GeneratableJoinSinkOperator::create(
+        physicalJoinSink->getLeftInputSchema(), physicalJoinSink->getOutputSchema(), physicalJoinSink->getJoinHandler());
+    queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
 }
 
 }// namespace QueryCompilation

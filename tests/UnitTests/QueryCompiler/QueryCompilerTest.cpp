@@ -139,7 +139,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
                        .build();
     auto result = queryCompiler->compileQuery(request);
 
-    std::cout << result << std::endl;
+    ASSERT_FALSE(result->hasError());
 }
 
 /**
@@ -172,8 +172,7 @@ TEST_F(QueryCompilerTest, windowQuery) {
         .dump()
         .build();
     auto result = queryCompiler->compileQuery(request);
-
-    std::cout << result << std::endl;
+    ASSERT_FALSE(result->hasError());
 }
 
 /**
@@ -206,8 +205,44 @@ TEST_F(QueryCompilerTest, unionQuery) {
         .dump()
         .build();
     auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
+}
 
-    std::cout << result << std::endl;
+/**
+ * @brief Input Query Plan:
+ *
+ * |Source| --
+ *             \
+ * |Source| -- |Join| --- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, joinQuery) {
+    SchemaPtr schema = Schema::create();
+    schema->addField("key", INT32);
+    schema->addField("value", INT32);
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream("leftStream", schema);
+    streamCatalog->addLogicalStream("rightStream", schema);
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto phaseFactory = Phases::DefaultPhaseFactory::create();
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+    auto query1 = Query::from("leftStream");
+    auto query2 = Query::from("rightStream")
+                      .joinWith(query1).where(Attribute("leftStream$key")).equalsTo(Attribute("rightStream$key"))
+                      .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
+                      .sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query2.getQueryPlan();
+
+    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    queryPlan = typeInferencePhase->execute(queryPlan);
+
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
+        .dump()
+        .build();
+    auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
 }
 
 

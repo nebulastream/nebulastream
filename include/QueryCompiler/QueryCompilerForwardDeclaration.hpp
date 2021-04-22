@@ -23,6 +23,9 @@ class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
 namespace Execution{
+class OperatorHandler;
+typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
+
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 
@@ -89,6 +92,12 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 namespace QueryCompilation {
 
+enum JoinBuildSide { Left, Right };
+
+
+class QueryCompilationError;
+typedef std::shared_ptr<QueryCompilationError> QueryCompilationErrorPtr;
+
 class QueryCompilationRequest;
 typedef std::shared_ptr<QueryCompilationRequest> QueryCompilationRequestPtr;
 
@@ -105,6 +114,7 @@ typedef std::shared_ptr<QueryCompilerOptions> QueryCompilerOptionsPtr;
 class OperatorPipeline;
 typedef std::shared_ptr<OperatorPipeline> OperatorPipelinePtr;
 
+class TranslateToPhysicalOperators;
 class TranslateToPhysicalOperators;
 typedef std::shared_ptr<TranslateToPhysicalOperators> TranslateToPhysicalOperatorsPtr;
 

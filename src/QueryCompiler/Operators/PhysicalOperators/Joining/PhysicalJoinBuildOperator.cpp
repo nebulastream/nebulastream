@@ -20,22 +20,26 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                      Join::JoinOperatorHandlerPtr operatorHandler) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
+                                                      Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                      Join::JoinOperatorHandlerPtr operatorHandler) {
-    return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler);
+                                                      Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide) {
+    return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
 PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                     Join::JoinOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), PhysicalJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema){};
+                                                     Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide)
+    : OperatorNode(id), PhysicalJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema), joinBuildSide(buildSide){};
 
 const std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }
 
-OperatorNodePtr PhysicalJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
+OperatorNodePtr PhysicalJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide); }
+
+JoinBuildSide PhysicalJoinBuildOperator::getBuildSide() {
+    return joinBuildSide;
+}
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

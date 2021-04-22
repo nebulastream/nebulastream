@@ -3,6 +3,7 @@
 
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
@@ -13,9 +14,9 @@ namespace GeneratableOperators {
 class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator {
   public:
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Windowing::WindowOperatorHandlerPtr operatorHandler);
+                                         Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Windowing::WindowOperatorHandlerPtr operatorHandler);
+                                         Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
 
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
@@ -24,7 +25,8 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
 
   private:
     GeneratableSlicePreAggregationOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                           Windowing::WindowOperatorHandlerPtr operatorHandler);
+                                           Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
+    GeneratableWindowAggregationPtr windowAggregation;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

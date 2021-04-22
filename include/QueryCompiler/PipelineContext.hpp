@@ -79,6 +79,8 @@ class PipelineContext {
 
     const std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
 
+    const uint64_t getHandlerIndex(NodeEngine::Execution::OperatorHandlerPtr operatorHandler);
+
     std::string pipelineName;
     PipelineContextArity arity;
     std::vector<BlockScopeStatementPtr> getSetupScopes();

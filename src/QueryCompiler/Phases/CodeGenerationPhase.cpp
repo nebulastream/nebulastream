@@ -51,7 +51,8 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     auto pipelineStage = codeGenerator->compile(context);;
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.
-    auto executableOperator = ExecutableOperator::create(pipelineStage);
+    auto operatorHandlers = context->getOperatorHandlers();
+    auto executableOperator = ExecutableOperator::create(pipelineStage, operatorHandlers);
     pipeline->getQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
     return pipeline;
 }

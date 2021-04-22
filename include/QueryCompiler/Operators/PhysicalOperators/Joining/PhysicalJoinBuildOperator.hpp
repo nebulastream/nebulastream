@@ -16,6 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINBUILDOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINBUILDOPERATOR_HPP_
 
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
@@ -26,16 +27,21 @@ namespace PhysicalOperators {
  * @brief Physical operator for the join build.
  * This operator receives input records and adds them to its operator state.
  */
-class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator {
+class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Join::JoinOperatorHandlerPtr operatorHandler);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Join::JoinOperatorHandlerPtr operatorHandler);
+                                      Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler,
+                                      JoinBuildSide buildSide);
     PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                              Join::JoinOperatorHandlerPtr operatorHandler);
+                              Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
+    JoinBuildSide getBuildSide();
+
+  private:
+    JoinBuildSide joinBuildSide;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

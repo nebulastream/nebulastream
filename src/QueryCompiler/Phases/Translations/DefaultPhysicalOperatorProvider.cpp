@@ -189,13 +189,13 @@ void DefaultPhysicalOperatorProvider::lowerJoinOperator(QueryPlanPtr, LogicalOpe
     auto leftInputOperator =
         getJoinBuildInputOperator(joinOperator, joinOperator->getLeftInputSchema(), joinOperator->getLeftOperators());
     auto leftJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(
-        joinOperator->getLeftInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler);
+        joinOperator->getLeftInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler, JoinBuildSide::Left);
     leftInputOperator->insertBetweenThisAndParentNodes(leftJoinBuildOperator);
 
     auto rightInputOperator =
         getJoinBuildInputOperator(joinOperator, joinOperator->getRightInputSchema(), joinOperator->getRightOperators());
     auto rightJoinBuildOperator = PhysicalOperators::PhysicalJoinBuildOperator::create(
-        joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler);
+        joinOperator->getRightInputSchema(), joinOperator->getOutputSchema(), joinOperatorHandler, JoinBuildSide::Right);
     rightInputOperator->insertBetweenThisAndParentNodes(rightJoinBuildOperator);
 
     auto joinSink = PhysicalOperators::PhysicalJoinSinkOperator::create(joinOperator->getLeftInputSchema(),

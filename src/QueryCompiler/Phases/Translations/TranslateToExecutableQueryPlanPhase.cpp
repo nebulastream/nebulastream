@@ -153,13 +153,9 @@ NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::pr
         }
     };
 
-    // todo get operator handlers.
-
-    auto operatorHandlers = std::vector<NodeEngine::Execution::OperatorHandlerPtr>();
-
     auto executionContext = std::make_shared<NodeEngine::Execution::PipelineExecutionContext>(
         /*todo add QuerySubPlanId*/ -1, nodeEngine->getQueryManager(), nodeEngine->getBufferManager(),
-        emitToSuccessorFunctionHandler, emitToQueryManagerFunctionHandler, operatorHandlers, executableSuccessorPipelines.size());
+        emitToSuccessorFunctionHandler, emitToQueryManagerFunctionHandler, executableOperator->getOperatorHandlers(), executableSuccessorPipelines.size());
 
     auto executablePipeline = NodeEngine::Execution::NewExecutablePipeline::create(
         pipeline->getPipelineId(), /*todo add QuerySubPlanId*/ -1, executionContext,
