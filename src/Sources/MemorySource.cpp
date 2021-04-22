@@ -89,6 +89,12 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
 
     generatedTuples += buffer.getNumberOfTuples();
     generatedBuffers++;
+
+    auto* latency = buffer.getBufferAs<uint64_t>();
+    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now().time_since_epoch())
+        .count();
+    latency[2] = now;
     NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
