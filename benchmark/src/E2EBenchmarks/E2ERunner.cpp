@@ -93,7 +93,6 @@ const std::string logo = "/*****************************************************
 int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
-    NES::setupLogging("benchmarkRunner.log", NES::getStringAsLogLevel("LOG_NONE"));
     E2EBenchmarkConfigPtr benchmarkConfig = E2EBenchmarkConfig::create();
 
     map<string, string> commandLineParams;
@@ -118,10 +117,11 @@ int main(int argc, const char* argv[]) {
     } else if (argc >= 1) {
         benchmarkConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
+    NES::setupLogging("benchmarkRunner.log", NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
 
     std::cout << "start benchmark with " << benchmarkConfig->toString() << std::endl;
 
-    NES::setLogLevel(NES::getStringAsLogLevel(benchmarkConfig->getLogLevel()->getValue()));
+    NES::setLogLevel(NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
     std::string benchmarkName = benchmarkConfig->getBenchmarkName()->getValue();
     std::string nesVersion = NES_VERSION;
 
