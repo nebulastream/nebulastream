@@ -54,7 +54,6 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
      * @param schema
      */
     DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
-
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

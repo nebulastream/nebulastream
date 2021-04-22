@@ -220,9 +220,7 @@ bool BufferControlBlock::release() {
 
 uint64_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; }
 
-void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) {
-    this->numberOfTuples = numberOfTuples;
-}
+void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
 
 uint64_t BufferControlBlock::getWatermark() const { return watermark; }
 

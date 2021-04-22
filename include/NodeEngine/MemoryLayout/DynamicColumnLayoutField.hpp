@@ -37,22 +37,22 @@ class DynamicColumnLayoutField {
      * @param layoutBuffer
      * @return field handler via a fieldIndex and a layoutBuffer
      */
-    static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, DynamicColumnLayoutBufferPtr layoutBuffer);
+    static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
+                                                                     DynamicColumnLayoutBufferPtr layoutBuffer);
 
     /**
      * @param fieldIndex
      * @param layoutBuffer
      * @return field handler via a fieldName and a layoutBuffer
      */
-    static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName, DynamicColumnLayoutBufferPtr layoutBuffer);
+    static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName,
+                                                                     DynamicColumnLayoutBufferPtr layoutBuffer);
 
     /**
      * @param recordIndex
      * @return reference to a field attribute from the created field handler accessed by recordIndex
      */
     inline T& operator[](size_t recordIndex);
-
-
 
   private:
     /**
@@ -69,7 +69,8 @@ class DynamicColumnLayoutField {
 
 template<class T, bool boundaryChecks>
 inline DynamicColumnLayoutField<T, boundaryChecks>
-DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<DynamicColumnLayoutBuffer> layoutBuffer) {
+DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex,
+                                                    std::shared_ptr<DynamicColumnLayoutBuffer> layoutBuffer) {
     if (boundaryChecks && fieldIndex >= layoutBuffer->getFieldSizes().size()) {
         NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
     }
@@ -83,7 +84,8 @@ DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::sh
 
 template<class T, bool boundaryChecks>
 DynamicColumnLayoutField<T, boundaryChecks>
-DynamicColumnLayoutField<T, boundaryChecks>::create(std::string fieldName, std::shared_ptr<DynamicColumnLayoutBuffer> layoutBuffer) {
+DynamicColumnLayoutField<T, boundaryChecks>::create(std::string fieldName,
+                                                    std::shared_ptr<DynamicColumnLayoutBuffer> layoutBuffer) {
     auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value()) {
         return DynamicColumnLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);

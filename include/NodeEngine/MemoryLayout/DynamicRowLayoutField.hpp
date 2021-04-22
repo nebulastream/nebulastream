@@ -38,14 +38,16 @@ class DynamicRowLayoutField {
      * @param layoutBuffer
      * @return field handler via a fieldIndex and a layoutBuffer
      */
-    static inline DynamicRowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
+    static inline DynamicRowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
+                                                                  std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
 
     /**
      * @param fieldIndex
      * @param layoutBuffer
      * @return field handler via a fieldName and a layoutBuffer
      */
-    static inline DynamicRowLayoutField<T, boundaryChecks> create(std::string fieldName, std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
+    static inline DynamicRowLayoutField<T, boundaryChecks> create(std::string fieldName,
+                                                                  std::shared_ptr<DynamicRowLayoutBuffer> layoutBuffer);
 
     /**
      * @param recordIndex
@@ -54,8 +56,8 @@ class DynamicRowLayoutField {
     inline T& operator[](size_t recordIndex);
 
   private:
-    DynamicRowLayoutField(std::shared_ptr<DynamicRowLayoutBuffer> dynamicRowLayoutBuffer, uint8_t* basePointer, FIELD_SIZE fieldIndex,
-                          FIELD_SIZE recordSize)
+    DynamicRowLayoutField(std::shared_ptr<DynamicRowLayoutBuffer> dynamicRowLayoutBuffer, uint8_t* basePointer,
+                          FIELD_SIZE fieldIndex, FIELD_SIZE recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer),
           dynamicRowLayoutBuffer(dynamicRowLayoutBuffer){};
 
