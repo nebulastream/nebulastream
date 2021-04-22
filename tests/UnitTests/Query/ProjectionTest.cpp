@@ -130,8 +130,7 @@ class WindowSource : public NES::DefaultSource {
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();
         auto rowLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(rowLayout->map(buffer).release()));
+        auto bindedRowLayout = rowLayout->bind(buffer);
 
 
 
@@ -301,8 +300,7 @@ class TestSink : public SinkMedium {
 };
 
 void fillBuffer(TupleBuffer& buf, NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr memoryLayout) {
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-        std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(memoryLayout->map(buf).release()));
+    auto bindedRowLayout = memoryLayout->bind(buf);
 
     auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
     auto fields01 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayout);
@@ -372,7 +370,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
@@ -438,7 +436,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
@@ -503,7 +501,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     auto resultFields01 = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(1, bindedRowLayoutResult);
 
@@ -633,7 +631,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(windowResultSchema, true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto startFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayoutResult);
     auto endFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayoutResult);
     auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayoutResult);
@@ -811,7 +809,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayoutResult = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(resultLayout->map(resultBuffer).release()));
+    auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
     auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {

@@ -310,7 +310,7 @@ class ExecutableCompleteAggregationTriggerAction
 
     void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
                            ValueType value, uint64_t cnt) {
-
+        
         auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
 
         auto startTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);

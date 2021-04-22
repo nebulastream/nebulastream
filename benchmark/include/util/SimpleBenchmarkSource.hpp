@@ -161,7 +161,7 @@ class SimpleBenchmarkSource : public DataSource {
         auto listIt = keyList.begin();
         std::advance(listIt, keyPos);
 
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(rowLayout->map(buf).release()));
+        auto bindedRowLayout = rowLayout->bind(buf);
 
 
         auto fields = schema->fields;

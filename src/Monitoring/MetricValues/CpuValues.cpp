@@ -54,8 +54,7 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, 
         NES_DEBUG("CpuValues: Index found for " + prefix + "user" + " at " + std::to_string(i));
 
         auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-            std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+        auto bindedRowLayout = layout->bind(buf);
 
         auto userFields         = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 0, bindedRowLayout);
         auto niceFields         = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 1, bindedRowLayout);

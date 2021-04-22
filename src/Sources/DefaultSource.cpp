@@ -58,7 +58,7 @@ std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
     uint64_t tupleCnt = 10;
 
     auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(std::make_shared<Schema>(schema), true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = layout->bind(buf);
 
 
     auto value = 1;

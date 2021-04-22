@@ -74,8 +74,7 @@ NetworkValues NetworkValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
     }
 
     auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout =
-        std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(layout->map(buf).release()));
+    auto bindedRowLayout = layout->bind(buf);
 
 
     auto interfaceNameFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i, bindedRowLayout);

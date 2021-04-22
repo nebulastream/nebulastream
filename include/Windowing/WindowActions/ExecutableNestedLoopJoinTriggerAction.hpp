@@ -273,8 +273,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                       << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
 
 
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBufferPtr bindedRowLayout = std::unique_ptr<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer>(
-            static_cast<NodeEngine::DynamicMemoryLayout::DynamicRowLayoutBuffer*>(windowTupleLayout->map(tupleBuffer).release()));
+        auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
 
         auto startTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
         auto endTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
