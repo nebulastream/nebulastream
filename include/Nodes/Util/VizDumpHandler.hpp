@@ -25,7 +25,10 @@ namespace NES {
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
 
-class VizEdge{
+/**
+ * @brief Data model to visualize edges in the nezviz format.
+ */
+class VizEdge {
   public:
     VizEdge(std::string id, std::string source, std::string target);
     std::string id;
@@ -34,19 +37,25 @@ class VizEdge{
     std::string serialize();
 };
 
-class VizNode{
+/**
+ * @brief Data model to visualize nodes in the nezviz format.
+ */
+class VizNode {
   public:
     VizNode(std::string id, std::string label, std::string parent);
     VizNode(std::string id, std::string label);
     std::string id;
     std::string label;
     std::string parent;
-    std::vector<std::tuple<std::string,std::string>> properties;
-    void addProperty(std::tuple<std::string,std::string>);
+    std::vector<std::tuple<std::string, std::string>> properties;
+    void addProperty(std::tuple<std::string, std::string>);
     std::string serialize();
 };
 
-class VizGraph{
+/**
+ * @brief Data model to visualize query graphs in the nezviz format.
+ */
+class VizGraph {
   public:
     VizGraph(std::string name);
     std::string name;
@@ -56,25 +65,34 @@ class VizGraph{
 };
 
 /**
- * @brief Convert a compiler node to a human readable string and print it to the console.
+ * @brief Dump handler to dump query plans to a viznez file.
  */
 class VizDumpHandler : public DumpHandler {
 
   public:
-    static DebugDumpHandlerPtr create();
-    VizDumpHandler(std::string rootDir);
     /**
-    * Dump the specific node and its children.
-    */
-    void dump(const NodePtr node, std::ostream& out) override;
-    virtual void multilineDump(const NodePtr node, std::ostream& out);
+     * @brief Creates a new VizDumpHandler.
+     * Uses the current working directory as a storage locations.
+     * @return DebugDumpHandlerPtr
+     */
+    static DebugDumpHandlerPtr create();
+
+    /**
+     * @brief Creates a new VizDumpHandler
+     * @param rootDir directory for the viz dump files.
+     */
+    VizDumpHandler(std::string rootDir);
+
+    void dump(const NodePtr node) override;
+
+    void multilineDump(const NodePtr node) override;
     void dump(std::string context, std::string scope, QueryPlanPtr queryPlan) override;
-    void dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& graph);
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr ptr) override;
-    void writeToFile(std::string scope, std::string name, std::string content);
 
   private:
     void extractNodeProperties(VizNode& node, OperatorNodePtr operatorNode);
+    void dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& graph);
+    void writeToFile(std::string scope, std::string name, std::string content);
     std::string rootDir;
 };
 
