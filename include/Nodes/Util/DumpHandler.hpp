@@ -39,10 +39,23 @@ class DumpHandler {
     /**
     * Dump the specific node and its children.
     */
-    virtual void dump(const NodePtr node, std::ostream& out) = 0;
-    virtual void multilineDump(const NodePtr node, std::ostream& out) = 0;
-    virtual void dump(std::string context, std::string scope, QueryPlanPtr){};
-    virtual void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr){};
+    virtual void dump(const NodePtr node) = 0;
+
+    /**
+     * @brief Dump a query plan.
+     * @param context the context of this plan
+     * @param scope the scope of this plan
+     * @param plan the query plan
+     */
+    virtual void dump(std::string context, std::string scope, QueryPlanPtr plan) = 0;
+
+    /**
+    * @brief Dump a pipelined query plan.
+    * @param context the context of this plan
+    * @param scope the scope of this plan
+    * @param plan the pipelined query plan
+    */
+    virtual void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) = 0;
 };
 
 typedef std::shared_ptr<DumpHandler> DebugDumpHandlerPtr;
