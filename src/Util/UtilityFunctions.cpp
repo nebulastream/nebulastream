@@ -45,10 +45,28 @@
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
 #include <random>
+#include <sstream>
+#include <iomanip>
 
 namespace NES {
 
 // removes leading and trailing whitespaces
+
+
+
+std::string UtilityFunctions::escapeJson(const std::string &s) {
+    std::ostringstream o;
+    for (auto c = s.cbegin(); c != s.cend(); c++) {
+        if (*c == '"' || *c == '\\' || ('\x00' <= *c && *c <= '\x1f')) {
+            o << "\\u"
+              << std::hex << std::setw(4) << std::setfill('0') << (int)*c;
+        } else {
+            o << *c;
+        }
+    }
+    return o.str();
+}
+
 std::string UtilityFunctions::trim(std::string s) {
     auto not_space = [](char c) {
         return isspace(c) == 0;

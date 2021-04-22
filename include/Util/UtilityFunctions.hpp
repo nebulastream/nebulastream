@@ -57,6 +57,9 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class UtilityFunctions {
   public:
+
+
+    static std::string escapeJson(const std::string &s);
     // removes leading and trailing whitespaces
     static std::string trim(std::string s);
 

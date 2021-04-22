@@ -41,6 +41,8 @@ class VizNode{
     std::string id;
     std::string label;
     std::string parent;
+    std::vector<std::tuple<std::string,std::string>> properties;
+    void addProperty(std::tuple<std::string,std::string>);
     std::string serialize();
 };
 
@@ -72,6 +74,7 @@ class VizDumpHandler : public DumpHandler {
     void writeToFile(std::string scope, std::string name, std::string content);
 
   private:
+    void extractNodeProperties(VizNode& node, OperatorNodePtr operatorNode);
     std::string rootDir;
 };
 
