@@ -42,7 +42,7 @@ class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_f
      * @param tupleBuffer
      * @return
      */
-    DynamicRowLayoutBuffer bind(TupleBuffer tupleBuffer);
+    DynamicRowLayoutBufferPtr bind(TupleBuffer tupleBuffer);
 
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;

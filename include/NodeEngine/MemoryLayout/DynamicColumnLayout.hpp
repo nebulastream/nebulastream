@@ -27,7 +27,6 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
  * This class is non-thread safe
  */
 class DynamicColumnLayout;
-typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
 
 class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicColumnLayout> {
 
@@ -41,7 +40,7 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
      * @param tupleBuffer
      * @return
      */
-    DynamicColumnLayoutBuffer bind(TupleBuffer tupleBuffer);
+    DynamicColumnLayoutBufferPtr bind(TupleBuffer tupleBuffer);
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout
