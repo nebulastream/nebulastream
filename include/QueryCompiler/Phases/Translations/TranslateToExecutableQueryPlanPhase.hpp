@@ -20,19 +20,19 @@ class TranslateToExecutableQueryPlanPhase {
 
     void processSource(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                        std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                       NodeEngine::NodeEnginePtr nodeEngine, std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap);
+                       NodeEngine::NodeEnginePtr nodeEngine);
 
     NodeEngine::Execution::SuccessorPipeline processSuccessor(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                                                               std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                                                              NodeEngine::NodeEnginePtr nodeEngine, std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap);
+                                                              NodeEngine::NodeEnginePtr nodeEngine);
 
     NodeEngine::Execution::SuccessorPipeline processSink(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                        std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                       NodeEngine::NodeEnginePtr nodeEngine, std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap);
+                       NodeEngine::NodeEnginePtr nodeEngine);
 
     NodeEngine::Execution::SuccessorPipeline processOperatorPipeline(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                                                      std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                                                     NodeEngine::NodeEnginePtr nodeEngine, std::map<uint64_t, NodeEngine::Execution::PredecessorPipeline> pipelineIdToPipelineMap);
+                                                     NodeEngine::NodeEnginePtr nodeEngine);
 
 
    };

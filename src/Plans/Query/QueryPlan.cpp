@@ -99,9 +99,9 @@ void QueryPlan::prependOperatorAsLeafNode(OperatorNodePtr operatorNode) {
 
 std::string QueryPlan::toString() {
     std::stringstream ss;
-    auto dumpHandler = ConsoleDumpHandler::create();
+    auto dumpHandler = ConsoleDumpHandler::create(ss);
     for (auto rootOperator : rootOperators) {
-        dumpHandler->dump(rootOperator, ss);
+        dumpHandler->dump(rootOperator);
     }
     return ss.str();
 }

@@ -35,13 +35,12 @@ GeneratableSliceMergingOperator::GeneratableSliceMergingOperator(OperatorId id, 
                                                                  Windowing::WindowOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler) {}
 
-void GeneratableSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableSliceMergingOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {
     // todo remove operator id from all runtime classes.
-    auto operatorID = -1;
-    // auto registerID = codegen->generateWindowSetup(windowDefinition, outputSchema, context, operatorID);
+        // auto registerID = codegen->generateWindowSetup(windowDefinition, outputSchema, context, operatorID);
 }
 
-void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr, PipelineContextPtr) {
     //codegen->generateCodeForCombiningWindow(windowDefinition, generatableWindowAggregation, context, windowOperatorIndex);
 }
 

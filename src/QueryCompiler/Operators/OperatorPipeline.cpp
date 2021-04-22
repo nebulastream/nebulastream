@@ -20,7 +20,7 @@ OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), SourcePipelineType));
 }
 
-bool OperatorPipeline::setType(Type pipelineType) {
+void OperatorPipeline::setType(Type pipelineType) {
    this->pipelineType = pipelineType;
 }
 

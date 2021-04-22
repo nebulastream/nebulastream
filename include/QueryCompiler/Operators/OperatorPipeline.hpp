@@ -34,7 +34,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     bool isSourcePipeline();
     bool isSinkPipeline();
     bool isOperatorPipeline();
-    bool setType(Type pipelineType);
+    void setType(Type pipelineType);
   protected:
     OperatorPipeline(uint64_t pipelineId, Type pipelineType);
   private:

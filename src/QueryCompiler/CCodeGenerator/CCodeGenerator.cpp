@@ -1690,7 +1690,7 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     return true;
 }
 
-uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
+uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr,
                                              PipelineContextPtr context, uint64_t id,
                                              Windowing::WindowOperatorHandlerPtr windowOperatorHandler) {
     auto tf = getTypeFactory();

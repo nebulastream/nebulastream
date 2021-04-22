@@ -86,13 +86,13 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     }
 }
 
-void DefaultGeneratableOperatorProvider::lowerSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSink(QueryPlanPtr, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a sink operator should be in a pipeline on its own.
     NES_ASSERT(operatorNode->getChildren().size(), "A sink node should have no children");
     NES_ASSERT(operatorNode->getParents().size(), "A sink node should have no parents");
 }
 
-void DefaultGeneratableOperatorProvider::lowerSource(QueryPlanPtr queryPlan,
+void DefaultGeneratableOperatorProvider::lowerSource(QueryPlanPtr,
                                                      PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a source operator should be in a pipeline on its own.
     NES_ASSERT(operatorNode->getChildren().size(), "A source operator should have no children");
