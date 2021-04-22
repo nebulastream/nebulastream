@@ -84,8 +84,6 @@ class VizDumpHandler : public DumpHandler {
     VizDumpHandler(std::string rootDir);
 
     void dump(const NodePtr node) override;
-
-    void multilineDump(const NodePtr node) override;
     void dump(std::string context, std::string scope, QueryPlanPtr queryPlan) override;
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr ptr) override;
 
