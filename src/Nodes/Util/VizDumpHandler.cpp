@@ -14,12 +14,15 @@
     limitations under the License.
 */
 
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <iostream>
 
@@ -52,27 +55,32 @@ std::string VizGraph::serialize() {
 
 VizNode::VizNode(std::string id, std::string label, std::string parent) : id(id), label(label), parent(parent) {}
 
+void VizNode::addProperty(std::tuple<std::string, std::string> item) { properties.emplace_back(item); }
+
 VizNode::VizNode(std::string id, std::string label) : VizNode(id, label, "") {}
 
 std::string VizNode::serialize() {
     std::stringstream ss;
-    if (parent.empty()) {
-        ss << "{ \"data\": "
-              "{\"id\": \""
-           << id
-           << "\","
-              "\"label\":\""
-           << label << "\"}}";
-
-    } else {
-        ss << "{ \"data\": "
-              "{\"id\": \""
-           << id
-           << "\","
-              "\"label\":\""
-           << label << "\","
-           << "\"parent\":\"" << parent << "\"}}";
+    ss << "{ \"data\": "
+          "{\"id\": \""
+       << id
+       << "\","
+          "\"label\":\""
+       << label << "\",";
+    if (!parent.empty()) {
+        ss << "\"parent\":\"" << parent << "\",";
     }
+    ss << "\"properties\":[";
+    for (auto &tuple : properties) {
+        auto quotedValue = UtilityFunctions::escapeJson(std::get<1>(tuple));
+        std::cout << quotedValue << std::endl;
+        ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\"}";
+        if (&properties.back() != &tuple) {
+            ss << ",";
+        }
+    }
+    ss << "]";
+    ss << "}}";
     return ss.str();
 }
 
@@ -90,7 +98,7 @@ std::string VizEdge::serialize() {
     return ss.str();
 }
 
-VizDumpHandler::VizDumpHandler(std::string rootDir) : DumpHandler(),  rootDir(rootDir) {}
+VizDumpHandler::VizDumpHandler(std::string rootDir) : DumpHandler(), rootDir(rootDir) {}
 
 DebugDumpHandlerPtr VizDumpHandler::create() {
     std::string path = std::filesystem::current_path();
@@ -117,6 +125,7 @@ void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& 
     for (auto op : queryPlanIter) {
         auto operatorNode = op->as<OperatorNode>();
         auto vizNode = VizNode(std::to_string(operatorNode->getId()), op->toString(), parent);
+        extractNodeProperties(vizNode, operatorNode);
         graph.nodes.emplace_back(vizNode);
         for (auto child : operatorNode->getChildren()) {
             auto childOperator = child->as<OperatorNode>();
@@ -127,9 +136,7 @@ void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& 
     }
 }
 
-void VizDumpHandler::dump(std::string scope,
-                          std::string name,
-                          QueryCompilation::PipelineQueryPlanPtr pipelinePlan) {
+void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) {
     auto graph = VizGraph("graph");
     for (auto pipeline : pipelinePlan->getPipelines()) {
         auto currentId = "p_" + std::to_string(pipeline->getPipelineId());
@@ -158,6 +165,14 @@ void VizDumpHandler::writeToFile(std::string scope, std::string name, std::strin
     outputFile.open(fileName);
     outputFile << content;
     outputFile.close();
+}
+void VizDumpHandler::extractNodeProperties(VizNode& node, OperatorNodePtr operatorNode) {
+    //node.addProperty({"NodeSourceLocation", operatorNode->getNodeSourceLocation()});
+    if (operatorNode->instanceOf<QueryCompilation::ExecutableOperator>()) {
+        auto executableOperator = operatorNode->as<QueryCompilation::ExecutableOperator>();
+        auto code = executableOperator->getExecutablePipelineStage()->getCodeAsString();
+        node.addProperty({"OperatorCode", code});
+    }
 }
 
 }// namespace NES
