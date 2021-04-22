@@ -22,7 +22,7 @@
 namespace NES {
 
 Node::Node() : visited(false), recStack(false) {
-    #ifdef NES_DEBUG_MODE
+    #ifdef CMAKE_NES_TRACE_NODE_CREATION
         stackTrace = NodeEngine::collectAndPrintStacktrace();
     #else
         stackTrace = "No source location set. Build in debug mode.";

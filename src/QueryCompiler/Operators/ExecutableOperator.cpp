@@ -19,19 +19,30 @@
 namespace NES {
 namespace QueryCompilation {
 
-ExecutableOperator::ExecutableOperator(OperatorId id, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage): OperatorNode(id), UnaryOperatorNode(id), executablePipelineStage(executablePipelineStage) {}
+ExecutableOperator::ExecutableOperator(OperatorId id,
+                                       NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers):
+                                                                                                                  OperatorNode(id),
+                                                                                                                  UnaryOperatorNode(id),
+                                                                                                                  executablePipelineStage(executablePipelineStage),
+                                                                                                                  operatorHandlers(operatorHandlers){}
 
-OperatorNodePtr ExecutableOperator::create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage) {
-    return std::make_shared<ExecutableOperator>(UtilityFunctions::getNextOperatorId(), executablePipelineStage);
+OperatorNodePtr ExecutableOperator::create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                                           std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers) {
+    return std::make_shared<ExecutableOperator>(UtilityFunctions::getNextOperatorId(), executablePipelineStage, operatorHandlers);
 }
 
 NodeEngine::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage() {
     return executablePipelineStage;
 }
 
+std::vector<NodeEngine::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers() {
+    return operatorHandlers;
+}
+
 const std::string ExecutableOperator::toString() const { return "ExecutableOperator";}
 
-OperatorNodePtr ExecutableOperator::copy() { return create(executablePipelineStage); }
+OperatorNodePtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
 
 }// namespace QueryCompilation
 }// namespace NES

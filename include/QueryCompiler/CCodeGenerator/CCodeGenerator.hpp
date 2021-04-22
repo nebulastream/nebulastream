@@ -19,6 +19,7 @@
 
 #include <QueryCompiler/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
 
@@ -135,6 +136,15 @@ class CCodeGenerator : public CodeGenerator {
     uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id) override;
 
     /**
+    * @brief Code generation the setup method for join operators, which depends on a particular join definition.
+    * @param join The join definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return the operator id
+    */
+    uint64_t generateJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id, Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
+
+
+    /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param The join definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
@@ -143,6 +153,17 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
                              uint64_t operatorHandlerIndex) override;
+
+    /**
+    * @brief Code generation for a join operator, which depends on a particular join definition
+    * @param window The join definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler.
+    * todo refactor parameter
+    * @return flag if the generation was successful.
+    */
+    virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+                                          Join::JoinOperatorHandlerPtr joinOperatorHandler, QueryCompilation::JoinBuildSide buildSide);
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
@@ -183,7 +204,8 @@ class CCodeGenerator : public CodeGenerator {
                                                         DataTypePtr inputType, DataTypePtr partialAggregateType,
                                                         DataTypePtr finalAggregateType);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType);
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType,  std::string leftType,
+                                                 std::string rightType);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 

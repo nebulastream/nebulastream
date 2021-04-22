@@ -21,6 +21,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 
@@ -42,6 +43,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::apply(OperatorPipelinePtr pipeline) {
             pipeline->prependOperator(newScan);
         } else {
             NES_ERROR("Pipeline root shot be a unary operator but was:" << rootOperator->toString());
+            throw QueryCompilationException("Pipeline root shot be a unary operator but was:" + rootOperator->toString());
         }
     }
 

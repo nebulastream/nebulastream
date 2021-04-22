@@ -16,6 +16,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
+#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 namespace NES {
 namespace QueryCompilation {
 
@@ -38,6 +39,9 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
     void lowerWatermarkAssignment(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
     void lowerWindowSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
     void lowerSlicePreAggregation(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerJoinBuild(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    void lowerJoinSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+    GeneratableWindowAggregationPtr lowerWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 };
 
 }// namespace QueryCompilation

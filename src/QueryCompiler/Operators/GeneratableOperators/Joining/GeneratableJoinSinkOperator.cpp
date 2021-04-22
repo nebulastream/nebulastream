@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -29,18 +30,21 @@ GeneratableOperatorPtr GeneratableJoinSinkOperator::create(OperatorId id, Schema
     return std::make_shared<GeneratableJoinSinkOperator>(GeneratableJoinSinkOperator(id, inputSchema, outputSchema, operatorHandler));
 }
 
-GeneratableOperatorPtr GeneratableJoinSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler) {
+GeneratableOperatorPtr GeneratableJoinSinkOperator::create(SchemaPtr inputSchema,
+                                                           SchemaPtr outputSchema,
+                                                           Join::JoinOperatorHandlerPtr operatorHandler) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
 }
 
 void GeneratableJoinSinkOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    //auto joinOperatorHandlerIndex = codegen->generateJoinSetup(joinDefinition, context, this->id);
+    auto joinDefinition = operatorHandler->getJoinDefinition();
+    codegen->generateJoinSinkSetup(joinDefinition, context, this->id, operatorHandler);
 }
 
 void GeneratableJoinSinkOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    //codegen->generateCodeForJoin()
+    codegen->generateCodeForScan(outputSchema, outputSchema, context);
 }
-const std::string GeneratableJoinSinkOperator::toString() const { return std::string(); }
+const std::string GeneratableJoinSinkOperator::toString() const { return "GeneratableJoinSinkOperator"; }
 
 OperatorNodePtr GeneratableJoinSinkOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler);

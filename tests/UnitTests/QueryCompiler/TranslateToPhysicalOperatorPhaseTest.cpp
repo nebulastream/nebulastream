@@ -170,7 +170,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterQuery) {
 /**
  * @brief Input Query Plan:
  *
- * --- Sink 1 --- Filter -- Source 1
+ * --- Sink 1 --- Braodcast -- Source 1
  *            /
  *           /
  * --- Sink 2
