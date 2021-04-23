@@ -209,12 +209,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint64_t getNumberOfTasksInWorkerQueue() const;
 
     /**
-     * @brief Initiate stop QEP via reconfiguration task
+     * @brief Initiate stop QEP via reconfiguration task, this is used to stop an entire query beginning from a branch.
      * @param operatorId : operatorId of the source to stop
-     * @param qep : qep to stop
+     * @param qepToStop : qepToStop to stop
      * @return true if successful else false
      */
-    bool stopQueryUsingReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep);
+    bool stopQueryUsingReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qepToStop);
 
     /**
      * @brief handle reconfiguration request
@@ -258,6 +258,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param QEP to start
     */
     bool beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep) const;
+
+    /**
+      * @brief Add end of stream message from source to certain QEPs
+      * @param sourceId : source that sent the EoS
+      * @param graceful : if true waits for tuples in workQueue to be processed before stopping QEP
+      * @param qeps : QEPs that will be affected by EoS
+     */
+    bool endOfStreamForQeps(OperatorId sourceId, bool graceful, std::unordered_set<Execution::ExecutableQueryPlanPtr>& qeps);
 
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 

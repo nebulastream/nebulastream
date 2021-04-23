@@ -568,7 +568,12 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
     return true;
 }
 
-bool QueryManager::stopQueryUsingReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep) { return true; }
+bool QueryManager::stopQueryUsingReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qepToStop) {
+    // Mimic an EoS message is received from source but only for this particular QEP
+    std::shared_lock lock(queryMutex);
+    std::unordered_set<Execution::ExecutableQueryPlanPtr> qeps = {qepToStop};
+    return endOfStreamForQeps(operatorId, true, qeps);
+}
 
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
@@ -600,14 +605,20 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
-    //@Ventrua we have to do this because otherwise we can run into the situation to get threads from two barriers waiting
-    std::unique_lock lock(workMutex);
 
     NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
-    NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
+    std::unordered_set<Execution::ExecutableQueryPlanPtr>& qeps = operatorIdToQueryMap[sourceId];
+    NES_VERIFY(qeps.size() > 0, "Operator id to query map for operator is empty");
+    return endOfStreamForQeps(sourceId, graceful, qeps);
+}
+
+bool QueryManager::endOfStreamForQeps(OperatorId sourceId, bool graceful,
+                                      std::unordered_set<Execution::ExecutableQueryPlanPtr>& qeps) {
+    //@Ventrua we have to do this because otherwise we can run into the situation to get threads from two barriers waiting
+    std::unique_lock lock(workMutex);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
     auto reconfigType = graceful ? SoftEndOfStream : HardEndOfStream;
-    for (const auto& qep : operatorIdToQueryMap[sourceId]) {
+    for (const auto& qep : qeps) {
         TupleBuffer buffer;
         auto queryExecutionPlanId = qep->getQuerySubPlanId();
         if (graceful) {

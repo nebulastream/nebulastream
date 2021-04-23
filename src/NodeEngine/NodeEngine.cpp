@@ -514,10 +514,11 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
             }
         }
     }
+    // For a QEP to be stopped, we should also receive stopRequest from Coordinator
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {
         auto foundQEPToStop = deployedQEPs.find(querySubPlanId);
-        if (foundQEPToStop != reconfigurationQEPs.end()) {
-            // propagate, deRegister and stop
+        if (foundQEPToStop != deployedQEPs.end()) {
+            queryManager->stopQueryUsingReconfiguration(operatorId, foundQEPToStop->second);
         }
     }
 }
