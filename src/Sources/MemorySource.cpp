@@ -45,13 +45,13 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
 
 std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
-    //    auto buffer = this->bufferManager->getBufferBlocking();
 
     uint64_t numberOfTuples = 0;
     //if the memory area is smaller than a buffer
     if (memoryAreaSize <= globalBufferManager->getBufferSize()) {
         numberOfTuples = std::floor(double(memoryAreaSize) / double(schema->getSchemaSizeInBytes()));
     } else {
+        NES_NOT_IMPLEMENTED();
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / schema->getSchemaSizeInBytes();
         auto numberOfTuplesPerBuffer =
@@ -73,11 +73,9 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
         }
     }
     uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
-
     NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= globalBufferManager->getBufferSize(),
                     "value to write is larger than the buffer");
 
-    //    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, offset);
     auto buffer = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, offset, this);
     refCnt++;
     if (memoryAreaSize > buffer.getBufferSize()) {
