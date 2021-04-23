@@ -14,8 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MemorySource.hpp>
@@ -72,31 +71,43 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
             }
         }
     }
-    uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
+//    uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
     NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= globalBufferManager->getBufferSize(),
                     "value to write is larger than the buffer");
 
-    auto buffer = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, offset, this);
+    using namespace std::chrono_literals;
+
+    auto buffer = this->bufferManager->getBufferTimeout(1s);
+    if (!buffer) {
+        NES_ERROR("Buffer invalid after waiting on timeout");
+        return std::nullopt;
+    }
+//    auto numberOfTuplesToProduce = buffer->getBufferSize() / schema->getSchemaSizeInBytes();
+    memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize());
+
+//        TODO: replace copy with inplace add like with the wraparound
+//    auto buffer = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
     refCnt++;
-    if (memoryAreaSize > buffer.getBufferSize()) {
-        NES_DEBUG("MemorySource::receiveData: add offset=" << offset << " to currentpos=" << currentPositionInBytes);
-        currentPositionInBytes += offset;
+    if (memoryAreaSize > buffer->getBufferSize()) {
+        NES_NOT_IMPLEMENTED();
+        NES_DEBUG("MemorySource::receiveData: add offset=" << globalBufferManager->getBufferSize() << " to currentpos=" << currentPositionInBytes);
+        currentPositionInBytes += globalBufferManager->getBufferSize();
     }
 
-    buffer.setNumberOfTuples(numberOfTuples);
+    buffer->setNumberOfTuples(numberOfTuples);
 
-    generatedTuples += buffer.getNumberOfTuples();
+    generatedTuples += buffer->getNumberOfTuples();
     generatedBuffers++;
 
-    auto* latency = buffer.getBufferAs<uint64_t>();
-    auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::high_resolution_clock::now().time_since_epoch())
-        .count();
-    latency[2] = now;
-    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
-    if (buffer.getNumberOfTuples() == 0) {
+    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer->getNumberOfTuples());
+    if (buffer->getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
+        uint64_t* latency = buffer->getBufferAs<uint64_t>();
+        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::high_resolution_clock::now().time_since_epoch())
+            .count();
+        latency[2] = now;
         return buffer;
     }
 }

@@ -121,7 +121,6 @@ int main(int argc, const char* argv[]) {
 
     std::cout << "start benchmark with " << benchmarkConfig->toString() << std::endl;
 
-    NES::setLogLevel(NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
     std::string benchmarkName = benchmarkConfig->getBenchmarkName()->getValue();
     std::string nesVersion = NES_VERSION;
 

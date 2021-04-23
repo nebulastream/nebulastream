@@ -61,10 +61,8 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
     std::cout << "modus=" << mode << std::endl;
     if (mode == "FileMode") {
         return E2EBase::InputOutputMode::FileMode;
-    } else if (mode == "CacheMode") {
-        return E2EBase::InputOutputMode::MemoryMode;
     } else if (mode == "MemoryMode") {
-        return E2EBase::InputOutputMode::LambdaMode;
+        return E2EBase::InputOutputMode::MemoryMode;
     } else if (mode == "LambdaMode") {
         return E2EBase::InputOutputMode::WindowMode;
     } else if (mode == "JoinMode") {
