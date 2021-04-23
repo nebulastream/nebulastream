@@ -80,13 +80,10 @@ std::string E2EBase::runExperiment() {
     std::cout << "run query" << std::endl;
     bool res = runQuery();
 
-    if(res)
-    {
+    if (res) {
         std::cout << "E2EBase: output result" << std::endl;
         return getResult();
-    }
-    else
-    {
+    } else {
         return "invalid run";
     }
 }
@@ -223,7 +220,6 @@ void E2EBase::setupSources() {
     out.close();
 
     NES_ASSERT(crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName), "failed to create logical stream");
-    //    crd->getCoordinatorEngine()->registerLogicalStream("input", input);
 
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
     auto query = config->getQuery()->getValue();
@@ -266,13 +262,12 @@ void E2EBase::setupSources() {
         };
 
         for (uint64_t i = 0; i < sourceCnt; i++) {
-            //we put 170 tuples of size 24 Byte into a 4KB buffer
-            auto memAreaSize = sizeof(Record) * 170;//nearly full buffer
-            auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
+            auto* memArea = reinterpret_cast<uint8_t*>(malloc(bufferSizeInBytes));
             memoryAreas.push_back(memArea);
             auto* records = reinterpret_cast<Record*>(memArea);
             size_t recordSize = schema->getSchemaSizeInBytes();
-            size_t numRecords = memAreaSize / recordSize;
+            size_t numRecords = std::floor(double(bufferSizeInBytes) / double(recordSize));
+            std::cout << "memsource produces tuples=" << numRecords << std::endl;
             for (auto u = 0u; u < numRecords; ++u) {
                 records[u].id = i;
                 //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
@@ -281,7 +276,7 @@ void E2EBase::setupSources() {
             }
 
             NES::AbstractPhysicalStreamConfigPtr conf =
-                NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, memAreaSize,
+                NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, bufferSizeInBytes,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
@@ -505,8 +500,7 @@ bool E2EBase::runQuery() {
     std::cout << "E2EBase: Submit query=" << config->getQuery()->getValue() << std::endl;
     queryId = queryService->validateAndQueueAddRequest(config->getQuery()->getValue(), "BottomUp");
     bool res = NES::TestUtils::waitForQueryToStart(queryId, queryCatalog, std::chrono::seconds(120));
-    if(!res)
-    {
+    if (!res) {
         std::cout << "run does not succeed" << std::endl;
         return false;
     }

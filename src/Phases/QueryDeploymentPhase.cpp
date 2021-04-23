@@ -37,7 +37,6 @@ QueryDeploymentPhasePtr QueryDeploymentPhase::create(GlobalExecutionPlanPtr glob
 }
 
 bool QueryDeploymentPhase::execute(QueryId queryId) {
-
     NES_DEBUG("QueryDeploymentPhase: deploy the query");
 
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
