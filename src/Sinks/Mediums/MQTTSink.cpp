@@ -64,13 +64,7 @@ MQTTSink::~MQTTSink() {
         throw Exception("MQTT Sink destruction failed");
     }
 }
-std::string createDemoMessageForUI(std::string defaultPayload, int currentXAxisValue) {
-    int randomValue = rand() % 100 + 1;
-    std::string firstPartOfTuple = defaultPayload.substr(0, 22);
-    std::string secondPartOfTuple = defaultPayload.substr(23, 25);
-    std::string thirdPartOfTuple = defaultPayload.substr(49, defaultPayload.size());
-    return firstPartOfTuple + std::to_string(currentXAxisValue) + secondPartOfTuple + std::to_string(randomValue) + thirdPartOfTuple;
-}
+
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     NES_ASSERT(connected, "MQTTSink::writeData: cannot write buffer because client is not connected");
