@@ -22,11 +22,11 @@
 #include <Sources/DataSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <boost/algorithm/string.hpp>
 #include <chrono>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <cstring>
 
 namespace NES {
 
@@ -152,9 +152,9 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
 
         std::getline(input, line);
         NES_TRACE("CSVSource line=" << tupCnt << " val=" << line);
-        std::vector<std::string>
-            tokens;// TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
-        boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
+        // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
+        std::vector<std::string> tokens;
+        tokens = UtilityFunctions::splitWithStringDelimiter(line, this->delimiter);
         uint64_t offset = 0;
         for (uint64_t j = 0; j < schema->getSize(); j++) {
             auto field = physicalTypes[j];
