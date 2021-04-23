@@ -499,6 +499,7 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
         return src->getOperatorId() == operatorId;
     });
     if (matchingSourcesItr == allSources.end()) {
+        // This is quite possible when as, QEP can receive messages from multiple sink
         NES_ERROR("QueryManager::addQueryReconfiguration: QEP with subPlanId: "
                   << qep->getQuerySubPlanId() << " does not have source with operatorId: " << operatorId);
         return false;
@@ -523,6 +524,7 @@ bool QueryManager::addQueryReconfiguration(OperatorId operatorId, Execution::Exe
             return false;
         }
         runningQEPs[qep->getQuerySubPlanId()] = qep;
+        // Maybe we need to send messages to both Old and New QEP sinks
         for (auto sink : qep->getSinks()) {
             NES_DEBUG("QueryManager::addQueryReconfiguration: Propagate QueryReconfigurationMessage: "
                       << " to sink: " << sink << " in QuerySubPlanId: " << qep->getQuerySubPlanId());

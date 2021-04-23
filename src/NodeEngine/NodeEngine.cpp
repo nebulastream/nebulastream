@@ -482,6 +482,7 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 }
 
 void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    // TODO: Ensure that a QEP is only considered if it got messages from sources it can accept messages from
     auto operatorId = queryReconfigurationMessage.getChannelId().getNesPartition().getOperatorId();
     bool successfulReconfiguration = false;
     for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
