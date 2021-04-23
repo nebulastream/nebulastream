@@ -64,7 +64,13 @@ MQTTSink::~MQTTSink() {
         throw Exception("MQTT Sink destruction failed");
     }
 }
-
+std::string createDemoMessageForUI(std::string defaultPayload, int currentXAxisValue) {
+    int randomValue = rand() % 100 + 1;
+    std::string firstPartOfTuple = defaultPayload.substr(0, 22);
+    std::string secondPartOfTuple = defaultPayload.substr(23, 25);
+    std::string thirdPartOfTuple = defaultPayload.substr(49, defaultPayload.size());
+    return firstPartOfTuple + std::to_string(currentXAxisValue) + secondPartOfTuple + std::to_string(randomValue) + thirdPartOfTuple;
+}
 bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContextRef) {
     std::unique_lock lock(writeMutex);
     NES_ASSERT(connected, "MQTTSink::writeData: cannot write buffer because client is not connected");
@@ -81,19 +87,20 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
         // and afterwards sent to an MQTT broker, via the MQTT client
         auto baseStartIterator = sinkFormat->getTupleIterator(inputBuffer).begin();
         auto baseEndIterator = sinkFormat->getTupleIterator(inputBuffer).end();
-        for (int i=0; i < 1000; ++i) {
-            auto startIterator = baseStartIterator;
-            while(startIterator != baseEndIterator) {
-                std::string formattedTuple = startIterator.operator*();
-//            for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
+        // TODO remove all parts that are only used for UI demo
+        int UIXAxisCounter = 0; //UI demo
+        for (int i=0; i < 1000; ++i) { //UI demo
+            auto startIterator = baseStartIterator; //UI demo
+            while(startIterator != baseEndIterator) { //UI demo -> for(auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)
+                std::string formattedTuple = startIterator.operator*(); //UI demo
+                formattedTuple = createDemoMessageForUI(formattedTuple, UIXAxisCounter); //UI demo
                 NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
-                NES_DEBUG("MQTTSink::writeData Sending Payload: " << formattedTuple);
                 client->sendPayload(formattedTuple);
                 std::this_thread::sleep_for(minDelayBetweenSends);
-                startIterator.operator++();
-//            }
+                startIterator.operator++(); //UI demo
+                ++UIXAxisCounter; //UI demo
             }
-        }
+        } //UI demo
 
         // When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
         // that were not successfully sent to an MQTT broker.
