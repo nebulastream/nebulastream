@@ -1227,11 +1227,11 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
         return MQTTSinkDescriptor::create(
-            serializedSinkDescriptor.address(), serializedSinkDescriptor.clientid(), serializedSinkDescriptor.topic(),
+            serializedSinkDescriptor.address(), serializedSinkDescriptor.topic(),
             serializedSinkDescriptor.user(), serializedSinkDescriptor.maxbufferedmsgs(),
             (MQTTSinkDescriptor::TimeUnits) serializedSinkDescriptor.timeunit(), serializedSinkDescriptor.msgdelay(),
             (MQTTSinkDescriptor::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
-            serializedSinkDescriptor.asynchronousclient());
+            serializedSinkDescriptor.asynchronousclient(), serializedSinkDescriptor.clientid());
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");

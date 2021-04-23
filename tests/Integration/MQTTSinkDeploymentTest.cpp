@@ -68,7 +68,7 @@ class MQTTSinkDeploymentTest : public testing::Test {
  * DISABLED for now, because it requires a manually set up MQTT broker -> fails otherwise
  */
 
-TEST_F(MQTTSinkDeploymentTest, testDeployOneWorker) {
+TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     coConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
     srcConf->resetSourceOptions();
@@ -99,7 +99,7 @@ TEST_F(MQTTSinkDeploymentTest, testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Submit query");
 
     // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
-    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("ws://127.0.0.1:9001", "nes-mqtt-test-client",
+    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("ws://127.0.0.1:9001",
             "/nesui", "rfRqLGZRChg8eS30PEeR", 5, MQTTSinkDescriptor::milliseconds, 500, MQTTSinkDescriptor::atLeastOnce, false));)";
 
 //    string query2 = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("ws://127.0.0.1:9001", "nes-mqtt-test-client2",
