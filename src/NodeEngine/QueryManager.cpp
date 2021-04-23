@@ -426,14 +426,14 @@ void QueryManager::unblockThreads() {
 bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful) {
     NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
-    std::unique_lock lock(queryMutex);
+//    std::unique_lock lock(queryMutex);
     // here im using COW to avoid keeping the lock for long
     // however, this is not a long-term fix
     // because it wont lead to correct behaviour
     // under heavy query deployment ops
     auto sources = qep->getSources();
     auto copiedSources = std::vector(sources.begin(), sources.end());
-    lock.unlock();
+//    lock.unlock();
 
     if (qep->getStatus() != Execution::Running) {
         return true;
@@ -645,8 +645,6 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         {
-            //            std::unique_lock lock(workMutex);
-
             if (graceful) {
                 for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
                     taskQueue.emplace_back(pipeline, buffer);
