@@ -259,6 +259,18 @@ std::vector<std::string> UtilityFunctions::split(const std::string& s, char deli
     return elems;
 }
 
+std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& s, std::string delim){
+        std::string copy = s;
+        size_t pos = 0;
+        std::vector<std::string> elems;
+        while ((pos = s.find(delim)) != std::string::npos) {
+            elems.push_back(s.substr(0, pos));
+            s.erase(0, pos + delim.length());
+        }
+        elems.push_back(s.substr(0, pos));
+        return elems;
+}
+
 std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {

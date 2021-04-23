@@ -139,6 +139,17 @@ class UtilityFunctions {
    * @param schema  the schema
    * @return
    */
+
+    /**
+    * @brief splits a string given a delimiter into multiple substrings stored in a std::string vector
+    * the delimiter is allowed to be a string rather than a char only.
+    * @param data - the string that is to be split
+    * @param delimiter - the string that is to be split upon e.g. / or -
+    * @return
+    */
+
+    static std::vector<std::string> splitWithStringDelimiter(std::string& s, std::string delim);
+
     static std::string prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, SchemaPtr schema);
 
     /**
