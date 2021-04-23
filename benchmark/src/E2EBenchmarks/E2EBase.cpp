@@ -77,12 +77,18 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
 }
 
 std::string E2EBase::runExperiment() {
-
     std::cout << "run query" << std::endl;
-    runQuery();
+    bool res = runQuery();
 
-    std::cout << "E2EBase: output result" << std::endl;
-    return getResult();
+    if(res)
+    {
+        std::cout << "E2EBase: output result" << std::endl;
+        return getResult();
+    }
+    else
+    {
+        return "invalid run";
+    }
 }
 
 E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t sourceCnt, uint64_t numberOfBuffersInGlobalBufferManager,
@@ -494,16 +500,23 @@ void E2EBase::setup() {
     queryCatalog = crd->getQueryCatalog();
 }
 
-void E2EBase::runQuery() {
-
+bool E2EBase::runQuery() {
+    sleep(2);
     std::cout << "E2EBase: Submit query=" << config->getQuery()->getValue() << std::endl;
     queryId = queryService->validateAndQueueAddRequest(config->getQuery()->getValue(), "BottomUp");
-    NES_ASSERT(NES::TestUtils::waitForQueryToStart(queryId, queryCatalog), "failed start wait");
+    bool res = NES::TestUtils::waitForQueryToStart(queryId, queryCatalog, std::chrono::seconds(120));
+    if(!res)
+    {
+        std::cout << "run does not succeed" << std::endl;
+        return false;
+    }
 
     //give the system some seconds to come to steady mode
     sleep(config->getStartupSleepIntervalInSeconds()->getValue());
 
     runtime = recordStatistics();
+
+    return true;
 }
 
 struct space_out : std::numpunct<char> {

@@ -196,8 +196,10 @@ void NESRequestProcessorService::start() {
                           << std::endl;
                 shutDown();
             }
+            std::cout << "Query Processed" << std::endl;
         }
         NES_WARNING("QueryProcessingService: Terminated");
+        std::cout << "QueryProcessingService: Terminated" << std::endl;
     } catch (std::exception& ex) {
         NES_FATAL_ERROR("QueryProcessingService: Received unexpected exception while scheduling the queries: " << ex.what());
         shutDown();

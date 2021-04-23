@@ -69,7 +69,7 @@ class E2EBase {
      * @brief run the query and start the measurement
      * @param query to be run
      */
-    void runQuery();
+    bool runQuery();
 
     /**
      * @brief setup one coordinator and one worker
