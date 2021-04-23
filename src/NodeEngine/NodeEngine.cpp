@@ -143,6 +143,7 @@ bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr query
     return true;
 }
 
+
 bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryPlan->getQueryId();
@@ -171,7 +172,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
         NodeEnginePtr self = this->inherited1::shared_from_this();
-
+        std::shared_ptr<SinkLogicalOperatorNode> test = sinkOperators[0];
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {
             auto operatorId = sources->getId();
@@ -190,10 +191,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
 
         for (const auto& sink : sinkOperators) {
             NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
-            auto sinkDescriptor = sink->getSinkDescriptor();
-            auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, self, querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink, self, querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }

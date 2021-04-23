@@ -40,9 +40,10 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return descriptor for MQTT sink
      */
-    static SinkDescriptorPtr create(const std::string address, const std::string clientId, const std::string topic,
-                                    const std::string user, uint64_t maxBufferedMSGs, const TimeUnits timeUnit,
-                                    uint64_t messageDelay, ServiceQualities qualityOfService, bool asynchronousClient);
+    static SinkDescriptorPtr create(const std::string address, const std::string topic, const std::string user,
+                                    uint64_t maxBufferedMSGs, const TimeUnits timeUnit, uint64_t messageDelay,
+                                    ServiceQualities qualityOfService, bool asynchronousClient,
+                                    const std::string clientId = "");
 
     /**
      * @brief get address information from a MQTT sink client
