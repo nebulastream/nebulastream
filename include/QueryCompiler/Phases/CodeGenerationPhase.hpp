@@ -23,7 +23,7 @@ namespace QueryCompilation {
 class CodeGenerationPhase {
   public:
     static CodeGenerationPhasePtr create();
-    PipelineQueryPlanPtrna   apply(PipelineQueryPlanPtr pipeline);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:

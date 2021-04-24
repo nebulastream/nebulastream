@@ -32,12 +32,13 @@ TranslateToGeneratableOperators::TranslateToGeneratableOperators::create(Generat
 
 TranslateToGeneratableOperators::TranslateToGeneratableOperators(GeneratableOperatorProviderPtr provider) : provider(provider) {}
 
-OperatorPipelinePtr TranslateToGeneratableOperators::apply(OperatorPipelinePtr pipelinedQueryPlan) {
+PipelineQueryPlanPtr TranslateToGeneratableOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     for (auto pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
         }
     }
+    return pipelinedQueryPlan;
 }
 
 OperatorPipelinePtr TranslateToGeneratableOperators::apply(OperatorPipelinePtr operatorPipeline) {

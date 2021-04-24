@@ -79,11 +79,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
     translateToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
     dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
 
-    for (auto pipeline : pipelinedQueryPlan->getPipelines()) {
-        if (pipeline->isOperatorPipeline()) {
-            codeGenerationPhase->apply(pipeline);
-        }
-    }
+    codeGenerationPhase->apply(pipelinedQueryPlan);
     dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
 
     auto executableQueryPlan = translateToExecutableQueryPlanPhasePtr->apply(pipelinedQueryPlan, request->getNodeEngine());
