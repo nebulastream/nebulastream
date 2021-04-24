@@ -32,6 +32,7 @@ class TranslateToGeneratableOperators {
   public:
     TranslateToGeneratableOperators(GeneratableOperatorProviderPtr provider);
     static TranslateToGeneratableOperatorsPtr create(GeneratableOperatorProviderPtr provider);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:

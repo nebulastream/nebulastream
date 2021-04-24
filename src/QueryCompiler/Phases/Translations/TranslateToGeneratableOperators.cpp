@@ -32,6 +32,14 @@ TranslateToGeneratableOperators::TranslateToGeneratableOperators::create(Generat
 
 TranslateToGeneratableOperators::TranslateToGeneratableOperators(GeneratableOperatorProviderPtr provider) : provider(provider) {}
 
+OperatorPipelinePtr TranslateToGeneratableOperators::apply(OperatorPipelinePtr pipelinedQueryPlan) {
+    for (auto pipeline : pipelinedQueryPlan->getPipelines()) {
+        if (pipeline->isOperatorPipeline()) {
+            apply(pipeline);
+        }
+    }
+}
+
 OperatorPipelinePtr TranslateToGeneratableOperators::apply(OperatorPipelinePtr operatorPipeline) {
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();

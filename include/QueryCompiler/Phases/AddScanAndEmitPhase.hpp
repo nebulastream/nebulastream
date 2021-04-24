@@ -22,7 +22,10 @@ namespace QueryCompilation {
 class AddScanAndEmitPhase {
   public:
     static AddScanAndEmitPhasePtr create();
-    OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
+
+  private:
+    OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
 }
 };

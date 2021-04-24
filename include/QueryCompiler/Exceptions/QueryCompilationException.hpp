@@ -5,6 +5,9 @@
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief Exception thrown by the query compiler.
+ */
 class QueryCompilationException : public NesRuntimeException{
   public:
     QueryCompilationException(std::string message);
