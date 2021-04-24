@@ -86,7 +86,8 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize());
 
 //        TODO: replace copy with inplace add like with the wraparound
-//    auto buffer = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
+    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
+
     refCnt++;
     if (memoryAreaSize > buffer->getBufferSize()) {
         NES_NOT_IMPLEMENTED();
