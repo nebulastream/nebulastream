@@ -31,6 +31,15 @@ CodeGenerationPhasePtr CodeGenerationPhase::create() {
     return std::make_shared<CodeGenerationPhase>();
 }
 
+PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) {
+    for (auto pipeline : queryPlan->getPipelines()) {
+        if (pipeline->isOperatorPipeline()) {
+            apply(pipeline);
+        }
+    }
+    return queryPlan;
+}
+
 OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
