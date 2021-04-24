@@ -5,8 +5,16 @@
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief Query compiler interface.
+ */
 class QueryCompiler {
   public:
+    /**
+     * @brief Submits a new query compilation request for compilation.
+     * @param request The compilation request.
+     * @return QueryCompilationResultPtr result for the query compilation.
+     */
     virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
   protected:
     QueryCompiler(const QueryCompilerOptionsPtr);

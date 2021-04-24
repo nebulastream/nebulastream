@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
@@ -21,7 +22,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 
@@ -30,7 +30,16 @@ namespace QueryCompilation {
 
 AddScanAndEmitPhasePtr AddScanAndEmitPhase::create() { return std::make_shared<AddScanAndEmitPhase>(); }
 
-OperatorPipelinePtr AddScanAndEmitPhase::apply(OperatorPipelinePtr pipeline) {
+PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan) {
+    for (auto pipeline : pipelineQueryPlan->getPipelines()) {
+        if (pipeline->isOperatorPipeline()) {
+            process(pipeline);
+        }
+    }
+    return pipelineQueryPlan;
+}
+
+OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     auto queryPlan = pipeline->getQueryPlan();
     auto pipelineRootOperators = queryPlan->getRootOperators();
     NES_ASSERT(pipelineRootOperators.size() == 1, "A pipeline should only have one root operator");
