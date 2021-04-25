@@ -263,6 +263,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     std::optional<Execution::ExecutableQueryPlanPtr> buildQep(QueryPlanPtr queryPlan);
 
+    bool triggerQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr oldQep,
+                                     Execution::ExecutableQueryPlanPtr newQep,
+                                     Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;

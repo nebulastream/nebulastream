@@ -143,6 +143,8 @@ class QueryReconfigurationMessage : public ExchangeMessage {
     std::map<QuerySubPlanId, QuerySubPlanId> getQuerySubPlansIdToReplace() const { return querySubPlansIdToReplace; }
     std::vector<QuerySubPlanId> getQuerySubPlansToStop() const { return querySubPlansToStop; }
 
+    bool empty() { return (querySubPlansToStart.size() + querySubPlansIdToReplace.size() + querySubPlansToStop.size()) > 0; }
+
   private:
     std::vector<QuerySubPlanId> querySubPlansToStart;
     std::map<QuerySubPlanId, QuerySubPlanId> querySubPlansIdToReplace;

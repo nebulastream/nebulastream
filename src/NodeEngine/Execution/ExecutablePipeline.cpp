@@ -173,6 +173,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
         }
     }
 }
+
 void ExecutablePipeline::forwardReconfiguration(ReconfigurationMessage& task, const std::weak_ptr<ExecutableQueryPlan>& targetQep,
                                                 std::any& userdata) {
     //we maintain a set of producers, and we will only trigger passing message to TargetQEP when all sources have sent a message, for this we decrement the counter

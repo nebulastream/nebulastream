@@ -224,8 +224,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return queryReconfigurationMessage to pass onto further sinks
      */
     bool processQueryReconfiguration(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr newQep,
-                                 Execution::ExecutableQueryPlanPtr oldQep,
-                                 Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+                                     Execution::ExecutableQueryPlanPtr oldQep,
+                                     Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+
+    uint16_t getNumberOfAssociatedSources(Execution::ExecutableQueryPlanPtr qep);
 
   private:
     friend class ThreadPool;
@@ -259,14 +261,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     */
     bool beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep) const;
 
-    /**
-      * @brief Add end of stream message from source to certain QEPs
-      * @param sourceId : source that sent the EoS
-      * @param graceful : if true waits for tuples in workQueue to be processed before stopping QEP
-      * @param qeps : QEPs that will be affected by EoS
-     */
-    bool endOfStreamForQeps(OperatorId sourceId, bool graceful, std::unordered_set<Execution::ExecutableQueryPlanPtr>& qeps);
-
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 
     std::deque<Task> taskQueue;
@@ -296,6 +290,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint16_t numThreads;
 
     std::atomic<bool> isDestroyed;
+    void triggerQepStop(OperatorId sourceOperatorId, const Execution::ExecutableQueryPlanPtr& oldQep,
+                        const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+    void triggerQepStart(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr& newQep,
+                         const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

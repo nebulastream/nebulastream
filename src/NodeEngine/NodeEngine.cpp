@@ -482,39 +482,66 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 }
 
 void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
-    // TODO: Ensure that a QEP is only considered if it got messages from sources it can accept messages from
     auto operatorId = queryReconfigurationMessage.getChannelId().getNesPartition().getOperatorId();
-    bool successfulReconfiguration = false;
     for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
-        auto foundQEPNeedingReplacement = deployedQEPs.find(element.first);
-        if (foundQEPNeedingReplacement != deployedQEPs.end()) {
-            auto foundReplacementQEP = reconfigurationQEPs.find(element.second);
-            auto oldQep = foundQEPNeedingReplacement->second;
-            auto newQep = foundReplacementQEP->second;
-            successfulReconfiguration =
-                queryManager->processQueryReconfiguration(operatorId, newQep, oldQep, queryReconfigurationMessage);
-            if (!successfulReconfiguration) {
-                NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to replace query with subplanId: "
-                          << oldQep->getQuerySubPlanId() << " with query with subplanId: " << newQep->getQuerySubPlanId());
+        QuerySubPlanId oldQepId = element.first;
+        QuerySubPlanId newQepId = element.second;
+        if (deployedQEPs.find(oldQepId) != deployedQEPs.end()) {
+            if (reconfigurationQEPs.find(newQepId) != reconfigurationQEPs.end()) {
+                auto oldQep = deployedQEPs[oldQepId];
+                auto newQep = reconfigurationQEPs[newQepId];
+                if (!triggerQueryReconfiguration(operatorId, oldQep, newQep, queryReconfigurationMessage)) {
+                    NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to replace query with subplanId: "
+                              << oldQep->getQuerySubPlanId() << " with query with subplanId: " << newQep->getQuerySubPlanId());
+                }
             } else {
-                deployedQEPs[newQep->getQuerySubPlanId()] = newQep;
+                NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to replace query with subplanId: "
+                          << oldQepId << " with query with subplanId: " << newQepId
+                          << " as replacement QueryPlan not present in reconfigurationQEPs");
             }
         }
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStart()) {
-        auto foundQueryReconfigurationQEP = reconfigurationQEPs.find(querySubPlanId);
-        if (foundQueryReconfigurationQEP != reconfigurationQEPs.end()) {
-            auto qep = foundQueryReconfigurationQEP->second;
-            successfulReconfiguration =
-                queryManager->processQueryReconfiguration(operatorId, qep, nullptr, queryReconfigurationMessage);
-            if (!successfulReconfiguration) {
-                NES_ERROR(
-                    "NodeEngine::onQueryReconfiguration: Failed to start query with subPlanId: " << qep->getQuerySubPlanId());
-            } else {
-                deployedQEPs[qep->getQuerySubPlanId()] = qep;
+        if (reconfigurationQEPs.find(querySubPlanId) != reconfigurationQEPs.end()) {
+            auto qepToStart = reconfigurationQEPs[querySubPlanId];
+            if (!triggerQueryReconfiguration(operatorId, nullptr, qepToStart, queryReconfigurationMessage)) {
+                NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to start query with subplanId: "
+                          << qepToStart->getQuerySubPlanId());
             }
         }
     }
+    for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {
+        if (deployedQEPs.find(querySubPlanId) != deployedQEPs.end()) {
+            auto qepToStop = deployedQEPs[querySubPlanId];
+            if (!triggerQueryReconfiguration(operatorId, qepToStop, nullptr, queryReconfigurationMessage)) {
+                NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to stop query with subplanId: "
+                          << qepToStop->getQuerySubPlanId());
+            }
+        }
+    }
+    // TODO: Propagate message to other QEP consuming tuples from this OperatorId
+}
+
+bool NodeEngine::triggerQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr oldQep,
+                                             Execution::ExecutableQueryPlanPtr newQep,
+                                             Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage) {
+    if (!queryManager->processQueryReconfiguration(operatorId, newQep, oldQep, queryReconfigurationMessage)) {
+        return false;
+    }
+    deployedQEPs[newQep->getQuerySubPlanId()] = newQep;
+    if (oldQep && queryManager->getNumberOfAssociatedSources(oldQep) == 0) {
+        if (deployedQEPs.erase(oldQep->getQuerySubPlanId()) == 0) {
+            NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to remove query with subplanId: "
+                      << oldQep->getQuerySubPlanId() << " from list of deployed QEPs");
+        }
+    }
+    if (newQep && queryManager->getNumberOfAssociatedSources(newQep) == newQep->getSources().size()) {
+        if (reconfigurationQEPs.erase(newQep->getQuerySubPlanId() == 0)) {
+            NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to remove query with subplanId: "
+                      << oldQep->getQuerySubPlanId() << " from list of reconfigurationQEPs");
+        }
+    }
+    return true;
 }
 
 void NodeEngine::onServerError(Network::Messages::ErrorMessage err) {
