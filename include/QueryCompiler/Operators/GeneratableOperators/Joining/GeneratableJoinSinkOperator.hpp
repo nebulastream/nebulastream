@@ -23,17 +23,32 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Defines the code generation for the sink of a join operator.
+ * It generates code for the scan over the join result and initializes the join state.
  */
 class GeneratableJoinSinkOperator : public GeneratableJoinOperator {
   public:
+    /**
+     * @brief Creates a new generatable join sink operator
+     * @param inputSchema input schema
+     * @param outputSchema output schema
+     * @param operatorHandler join operator handler
+     * @return generatable join sink.
+     */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
+    /**
+     * @brief Creates a new generatable join sink operator
+     * @param id operator id
+     * @param inputSchema input schema
+     * @param outputSchema output schema
+     * @param operatorHandler join operator handler
+     * @return generatable join sink
+     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
   protected:
     GeneratableJoinSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
 };

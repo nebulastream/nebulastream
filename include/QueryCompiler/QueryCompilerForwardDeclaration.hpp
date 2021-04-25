@@ -114,9 +114,8 @@ typedef std::shared_ptr<QueryCompilerOptions> QueryCompilerOptionsPtr;
 class OperatorPipeline;
 typedef std::shared_ptr<OperatorPipeline> OperatorPipelinePtr;
 
-class TranslateToPhysicalOperators;
-class TranslateToPhysicalOperators;
-typedef std::shared_ptr<TranslateToPhysicalOperators> TranslateToPhysicalOperatorsPtr;
+class LowerLogicalToPhysicalOperators;
+typedef std::shared_ptr<LowerLogicalToPhysicalOperators> LowerLogicalToPhysicalOperatorsPtr;
 
 class PhysicalOperatorProvider;
 typedef std::shared_ptr<PhysicalOperatorProvider> PhysicalOperatorProviderPtr;
@@ -124,11 +123,11 @@ typedef std::shared_ptr<PhysicalOperatorProvider> PhysicalOperatorProviderPtr;
 class GeneratableOperatorProvider;
 typedef std::shared_ptr<GeneratableOperatorProvider> GeneratableOperatorProviderPtr;
 
-class TranslateToGeneratableOperators;
-typedef std::shared_ptr<TranslateToGeneratableOperators> TranslateToGeneratableOperatorsPtr;
+class LowerPhysicalToGeneratableOperators;
+typedef std::shared_ptr<LowerPhysicalToGeneratableOperators> LowerPhysicalToGeneratableOperatorsPtr;
 
-class TranslateToExecutableQueryPlanPhase;
-typedef std::shared_ptr<TranslateToExecutableQueryPlanPhase> TranslateToExecutableQueryPlanPhasePtr;
+class LowerToExecutableQueryPlanPhase;
+typedef std::shared_ptr<LowerToExecutableQueryPlanPhase> LowerToExecutableQueryPlanPhasePtr;
 
 class PipelineQueryPlan;
 typedef std::shared_ptr<PipelineQueryPlan> PipelineQueryPlanPtr;
@@ -142,8 +141,8 @@ typedef std::shared_ptr<CodeGenerationPhase> CodeGenerationPhasePtr;
 class PipeliningPhase;
 typedef std::shared_ptr<PipeliningPhase> PipeliningPhasePtr;
 
-class PipelineBreakerPolicy;
-typedef std::shared_ptr<PipelineBreakerPolicy> PipelineBreakerPolicyPtr;
+class OperatorFusionPolicy;
+typedef std::shared_ptr<OperatorFusionPolicy> OperatorFusionPolicyPtr;
 
 namespace Phases {
 

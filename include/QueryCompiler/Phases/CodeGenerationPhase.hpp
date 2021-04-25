@@ -20,10 +20,30 @@
 
 namespace NES {
 namespace QueryCompilation {
+
+/**
+ * @brief Code generation phase, which generates executable machine code for pipelines, that consist of generatable operators.
+ */
 class CodeGenerationPhase {
   public:
+    /**
+     * @brief Creates the code generation phase.
+     * @return CodeGenerationPhasePtr
+     */
     static CodeGenerationPhasePtr create();
+
+    /**
+     * @brief Generates code for all pipelines in a pipelined query plan.
+     * @param pipeline PipelineQueryPlanPtr
+     * @return PipelineQueryPlanPtr
+     */
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
+
+    /**
+     * @brief Generates code for a particular pipeline.
+     * @param pipeline OperatorPipelinePtr
+     * @return OperatorPipelinePtr
+     */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:

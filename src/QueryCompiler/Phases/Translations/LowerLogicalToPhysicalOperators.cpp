@@ -16,21 +16,21 @@
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToPhysicalOperators.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 
-TranslateToPhysicalOperatorsPtr
-TranslateToPhysicalOperators::TranslateToPhysicalOperators::create(PhysicalOperatorProviderPtr provider) {
-    return std::make_shared<TranslateToPhysicalOperators>(provider);
+LowerLogicalToPhysicalOperatorsPtr
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(PhysicalOperatorProviderPtr provider) {
+    return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
 }
 
-TranslateToPhysicalOperators::TranslateToPhysicalOperators(PhysicalOperatorProviderPtr provider) : provider(provider) {}
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider) : provider(provider) {}
 
-QueryPlanPtr TranslateToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
+QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();
     for (auto node : nodes) {
         provider->lower(queryPlan, node->as<LogicalOperatorNode>());

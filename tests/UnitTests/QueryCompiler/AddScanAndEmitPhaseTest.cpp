@@ -65,9 +65,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
-#include <QueryCompiler/Phases/Pipelining/AlwaysBreakPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
-#include <QueryCompiler/Phases/Pipelining/FuseIfPossiblePolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>

@@ -21,15 +21,19 @@ namespace NES {
 namespace QueryCompilation {
 namespace Phases {
 
+/**
+ * @brief The default phase factory creates a default set of phases.
+ */
 class DefaultPhaseFactory : public PhaseFactory {
   public:
     static PhaseFactoryPtr create();
-    const  TranslateToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
+    const LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
     const PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
     const AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
-    const TranslateToGeneratableOperatorsPtr createLowerPipelinePlanPhase(QueryCompilerOptionsPtr options) override;
+    const LowerPhysicalToGeneratableOperatorsPtr
+    createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) override;
     const CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) override;
-    const TranslateToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
+    const LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
 };
 
 }// namespace Phases

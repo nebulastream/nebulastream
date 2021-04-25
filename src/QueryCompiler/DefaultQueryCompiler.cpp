@@ -29,9 +29,9 @@
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/Phases/Translations/TranslateToGeneratbaleOperatorsPhase.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToPhysicalOperators.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -41,18 +41,21 @@ namespace NES {
 namespace QueryCompilation {
 
 DefaultQueryCompiler::DefaultQueryCompiler(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory)
-    : QueryCompiler(options), translateToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
-      translateToGeneratableOperatorsPhase(phaseFactory->createLowerPipelinePlanPhase(options)),
+    : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
+      lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
       codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)),
-      translateToExecutableQueryPlanPhasePtr(phaseFactory->createLowerToExecutableQueryPlanPhase(options)) {}
+      lowerToExecutableQueryPlanPhasePtr(phaseFactory->createLowerToExecutableQueryPlanPhase(options)) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory) {
     return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory));
 }
 
 QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationRequestPtr request) {
+
+    try {
+
 
     auto queryId = request->getQueryPlan()->getQueryId();
     auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
@@ -67,7 +70,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
     auto logicalQueryPlan = request->getQueryPlan();
     dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
 
-    auto physicalQueryPlan = translateToPhysicalOperatorsPhase->apply(logicalQueryPlan);
+    auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
     dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
 
     auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
@@ -76,14 +79,19 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
     addScanAndEmitPhase->apply(pipelinedQueryPlan);
     dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
 
-    translateToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
+    lowerPhysicalToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
     dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
 
     codeGenerationPhase->apply(pipelinedQueryPlan);
     dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
 
-    auto executableQueryPlan = translateToExecutableQueryPlanPhasePtr->apply(pipelinedQueryPlan, request->getNodeEngine());
+    auto executableQueryPlan = lowerToExecutableQueryPlanPhasePtr->apply(pipelinedQueryPlan, request->getNodeEngine());
     return QueryCompilationResult::create(executableQueryPlan);
+    } catch (const QueryCompilationException& exception) {
+        auto currentException = std::current_exception();
+        return QueryCompilationResult::create(currentException);
+
+    }
 }
 
 }// namespace QueryCompilation

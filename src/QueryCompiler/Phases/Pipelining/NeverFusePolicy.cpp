@@ -13,11 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Phases/Pipelining/AlwaysBreakPolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
 
 namespace NES {
 namespace QueryCompilation {
-bool AlwaysBreakPolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; }
-PipelineBreakerPolicyPtr AlwaysBreakPolicy::create() { return std::make_shared<AlwaysBreakPolicy>(); }
+bool NeverFusePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; }
+OperatorFusionPolicyPtr NeverFusePolicy::create() { return std::make_shared<NeverFusePolicy>(); }
 }// namespace QueryCompilation
 }// namespace NES

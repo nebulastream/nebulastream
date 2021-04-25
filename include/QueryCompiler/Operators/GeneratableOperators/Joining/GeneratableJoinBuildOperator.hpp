@@ -23,13 +23,31 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Defines the code generation for the build side of a join operator.
  */
 class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
   public:
-
+    /**
+     * @brief Creates a new generatable join build operator.
+     * @param inputSchema the input schema for the operator.
+     * @param outputSchema the output schema for the operator.
+     * @param operatorHandler the join operator handler
+     * @param buildSide indicator if this is the left or right build side.
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+
+    /**
+     * @brief Creates a new generatable join build operator.
+     * @param id operator id
+     * @param inputSchema the input schema for the operator.
+     * @param outputSchema the output schema for the operator.
+     * @param operatorHandler the join operator handler
+     * @param buildSide indicator if this is the left or right build side.
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;

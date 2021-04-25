@@ -13,9 +13,9 @@
 # limitations under the License.
 
 add_source_nes(
-        AlwaysBreakPolicy.cpp
-        PipelineBreakerPolicy.cpp
-        FuseIfPossiblePolicy.cpp
+        NeverFusePolicy.cpp
+        OperatorFusionPolicy.cpp
+        FuseNonPipelineBreakerPolicy.cpp
         DefaultPipeliningPhase.cpp
 )
 

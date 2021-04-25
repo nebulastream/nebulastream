@@ -14,26 +14,34 @@
     limitations under the License.
 */
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <exception>
 
 namespace NES {
 namespace QueryCompilation {
 
 QueryCompilationResult::QueryCompilationResult(NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan): executableQueryPlan(executableQueryPlan) {}
+QueryCompilationResult::QueryCompilationResult(std::exception_ptr exception): exception(exception) {}
 
 QueryCompilationResultPtr QueryCompilationResult::create(NodeEngine::Execution::NewExecutableQueryPlanPtr qep) {
-    return std::make_shared<QueryCompilationResult>(qep);
+    return std::make_shared<QueryCompilationResult>(QueryCompilationResult(qep));
+}
+QueryCompilationResultPtr QueryCompilationResult::create(std::exception_ptr exception) {
+    return std::make_shared<QueryCompilationResult>(QueryCompilationResult(exception));
 }
 
 NodeEngine::Execution::NewExecutableQueryPlanPtr QueryCompilationResult::getExecutableQueryPlan() {
+    if(hasError()){
+        std::rethrow_exception(exception.value());
+    }
     return executableQueryPlan.value();
 }
 
 bool QueryCompilationResult::hasError() {
-    return error.has_value();
+    return exception.has_value();
 }
 
-QueryCompilationErrorPtr QueryCompilationResult::getError() {
-    return error.value();
+std::exception_ptr QueryCompilationResult::getError() {
+    return exception.value();
 }
 
 }// namespace QueryCompilation

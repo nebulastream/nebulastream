@@ -25,14 +25,14 @@
 namespace NES {
 namespace QueryCompilation {
 
-TranslateToGeneratableOperatorsPtr
-TranslateToGeneratableOperators::TranslateToGeneratableOperators::create(GeneratableOperatorProviderPtr provider) {
-    return std::make_shared<TranslateToGeneratableOperators>(provider);
+LowerPhysicalToGeneratableOperatorsPtr
+LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators::create(GeneratableOperatorProviderPtr provider) {
+    return std::make_shared<LowerPhysicalToGeneratableOperators>(provider);
 }
 
-TranslateToGeneratableOperators::TranslateToGeneratableOperators(GeneratableOperatorProviderPtr provider) : provider(provider) {}
+LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators(GeneratableOperatorProviderPtr provider) : provider(provider) {}
 
-PipelineQueryPlanPtr TranslateToGeneratableOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
+PipelineQueryPlanPtr LowerPhysicalToGeneratableOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     for (auto pipeline : pipelinedQueryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
@@ -41,7 +41,7 @@ PipelineQueryPlanPtr TranslateToGeneratableOperators::apply(PipelineQueryPlanPtr
     return pipelinedQueryPlan;
 }
 
-OperatorPipelinePtr TranslateToGeneratableOperators::apply(OperatorPipelinePtr operatorPipeline) {
+OperatorPipelinePtr LowerPhysicalToGeneratableOperators::apply(OperatorPipelinePtr operatorPipeline) {
     auto queryPlan = operatorPipeline->getQueryPlan();
     auto nodes = QueryPlanIterator(queryPlan).snapshot();
     for (auto node : nodes) {

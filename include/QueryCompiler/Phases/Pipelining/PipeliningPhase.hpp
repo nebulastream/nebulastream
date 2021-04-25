@@ -18,6 +18,10 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
 namespace QueryCompilation {
+
+/**
+ * @brief Pipelining phase to transform a query plan into a plan of pipelines.
+ */
 class PipeliningPhase {
   public:
     virtual PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) = 0;

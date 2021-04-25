@@ -84,7 +84,21 @@ class VizDumpHandler : public DumpHandler {
     VizDumpHandler(std::string rootDir);
 
     void dump(const NodePtr node) override;
+
+    /**
+     * @brief Dump a query plan with a specific context and scope.
+     * @param context the context
+     * @param scope the scope
+     * @param plan the query plan
+     */
     void dump(std::string context, std::string scope, QueryPlanPtr queryPlan) override;
+
+    /**
+     * @brief Dump a pipeline query plan with a specific context and scope.
+     * @param context the context
+     * @param scope the scope
+     * @param plan the query plan
+     */
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr ptr) override;
 
   private:

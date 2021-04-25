@@ -40,7 +40,14 @@ class CCodeGenerator : public CodeGenerator {
      * @return flag if the generation was successful.
      */
     bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) override;
+
+    /**
+     * @brief Code generation for a setup of a scan, which depends on a particular input schema.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
     bool generateCodeForScanSetup(PipelineContextPtr context) override;
+
     /**
      * @brief Code generation for a projection, which depends on a particular input schema.
      * @param projectExpressions The projection expression nodes.

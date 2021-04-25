@@ -25,7 +25,7 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Generates a conditional filter operator, which evaluates a predicate on all input values.
  */
 class GeneratableFilterOperator : public GeneratableOperator {
   public:

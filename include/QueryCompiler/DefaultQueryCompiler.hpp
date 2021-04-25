@@ -41,12 +41,13 @@ class DefaultQueryCompiler : public QueryCompiler {
     QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) override;
   protected:
     DefaultQueryCompiler(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory);
-    const TranslateToPhysicalOperatorsPtr translateToPhysicalOperatorsPhase;
-    const TranslateToGeneratableOperatorsPtr translateToGeneratableOperatorsPhase;
+    const LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
+    const LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
+    const LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhasePtr;
     const PipeliningPhasePtr pipeliningPhase;
     const AddScanAndEmitPhasePtr addScanAndEmitPhase;
     const CodeGenerationPhasePtr codeGenerationPhase;
-    const TranslateToExecutableQueryPlanPhasePtr translateToExecutableQueryPlanPhasePtr;
+
 };
 }// namespace QueryCompilation
 }// namespace NES

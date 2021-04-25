@@ -23,13 +23,13 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Generates the emit operator, which outputs a tuple buffer to the next pipeline.
  */
 class GeneratableBufferEmit : public GeneratableOperator {
   public:
-    void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     static GeneratableOperatorPtr create(SchemaPtr outputSchema);
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr outputSchema);
+    void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
   private:

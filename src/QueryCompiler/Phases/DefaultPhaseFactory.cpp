@@ -13,19 +13,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
-#include <QueryCompiler/Phases/Pipelining/AlwaysBreakPolicy.hpp>
-#include <QueryCompiler/Phases/Pipelining/FuseIfPossiblePolicy.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToGeneratbaleOperatorsPhase.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToPhysicalOperators.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
+#include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
+#include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/Phases/Translations/TranslateToGeneratbaleOperatorsPhase.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -39,38 +39,37 @@ PhaseFactoryPtr DefaultPhaseFactory::create() {
 const PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options) {
     if (options->isOperatorFusionEnabled()) {
         NES_DEBUG("Create pipelining phase with fuse policy");
-        auto operatorFusionPolicy = FuseIfPossiblePolicy::create();
+        auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
         return DefaultPipeliningPhase::create(operatorFusionPolicy);
     } else {
         NES_DEBUG("Create pipelining phase with always break policy");
-        auto operatorFusionPolicy = AlwaysBreakPolicy::create();
+        auto operatorFusionPolicy = NeverFusePolicy::create();
         return DefaultPipeliningPhase::create(operatorFusionPolicy);
     }
 }
 
-const TranslateToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr) {
+const LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create default lower logical plan phase");
     auto physicalOperatorProvider = DefaultPhysicalOperatorProvider::create();
-    return TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    return LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 }
 
 const AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
 }
-const TranslateToGeneratableOperatorsPtr DefaultPhaseFactory::createLowerPipelinePlanPhase(QueryCompilerOptionsPtr) {
+const LowerPhysicalToGeneratableOperatorsPtr DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create default lower pipeline plan phase");
     auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
-    return TranslateToGeneratableOperators::create(generatableOperatorProvider);
+    return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);
 }
 const CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create default code generation phase");
     return CodeGenerationPhase::create();
 }
-const TranslateToExecutableQueryPlanPhasePtr
-DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr) {
+const LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create lower to executable query plan phase");
-    return TranslateToExecutableQueryPlanPhase::create();
+    return LowerToExecutableQueryPlanPhase::create();
 }
 }// namespace Phases
 }// namespace QueryCompilation

@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_GENERATABLEOPERATOR_HPP_
 
-#include <Operators/OperatorNode.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableOperatorForwardRef.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
@@ -26,29 +26,37 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Base class for all generatable operators.
+ * It defines open, execute and close functions as a general code generation interface for all operators.
  */
 class GeneratableOperator : public UnaryOperatorNode {
 
   public:
     /**
-    * @brief Consume function, which generates code for the processing and calls the parent consume function.
-    */
-    virtual void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) = 0;
-
-    /**
-     * @brief Consume function, which generates code for the processing and calls the parent consume function.
+     * @brief Code generation function for the open call of an operator.
+     * The open function is called once per operator to initialize local state by a single thread.
+     * @param codegen reference to the code generator.
+     * @param context reference to the current pipeline context.
      */
     virtual void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context);
 
     /**
-     * @brief Consume function, which generates code for the processing and calls the parent consume function.
+    * @brief Code generation function for the execute call of an operator.
+    * The execute function is called for each tuple buffer consumed by this operator.
+    *  @param codegen reference to the code generator.
+    * @param context reference to the current pipeline context.
+    */
+    virtual void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) = 0;
+
+    /**
+     * @brie Code generation for the close call of an operator.
+     * @param codegen reference to the code generator.
+     * @param context reference to the current pipeline context.
      */
     virtual void generateClose(CodeGeneratorPtr codegen, PipelineContextPtr context);
 
   protected:
     GeneratableOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema);
-
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
