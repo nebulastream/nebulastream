@@ -42,7 +42,9 @@ PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQue
 OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     auto queryPlan = pipeline->getQueryPlan();
     auto pipelineRootOperators = queryPlan->getRootOperators();
-    NES_ASSERT(pipelineRootOperators.size() == 1, "A pipeline should only have one root operator");
+    if(pipelineRootOperators.size()!=1){
+        throw QueryCompilationException("A pipeline should only have one root operator");
+    }
     auto rootOperator = pipelineRootOperators[0];
     // insert buffer scan operator to the pipeline root if necessary
     if (!rootOperator->instanceOf<PhysicalOperators::AbstractScanOperator>()) {
@@ -51,7 +53,6 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
             auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
             pipeline->prependOperator(newScan);
         } else {
-            NES_ERROR("Pipeline root shot be a unary operator but was:" << rootOperator->toString());
             throw QueryCompilationException("Pipeline root shot be a unary operator but was:" + rootOperator->toString());
         }
     }

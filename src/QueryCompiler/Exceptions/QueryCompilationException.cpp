@@ -20,7 +20,9 @@ namespace NES {
 namespace QueryCompilation {
 
 QueryCompilationException::QueryCompilationException(std::string message)
-    : NesRuntimeException(message, NES::NodeEngine::collectAndPrintStacktrace()) {}
+    : NesRuntimeException(message, NES::NodeEngine::collectAndPrintStacktrace()) {
+    NES_ERROR(message);
+}
 
 }// namespace QueryCompilation
 }// namespace NES

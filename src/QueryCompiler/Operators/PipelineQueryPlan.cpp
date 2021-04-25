@@ -22,7 +22,12 @@
 namespace NES {
 namespace QueryCompilation {
 
-PipelineQueryPlanPtr PipelineQueryPlan::create() { return std::make_shared<PipelineQueryPlan>(); }
+PipelineQueryPlanPtr PipelineQueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId) {
+    return std::make_shared<PipelineQueryPlan>(PipelineQueryPlan(queryId, querySubPlanId));
+}
+
+PipelineQueryPlan::PipelineQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId)
+    : queryId(queryId), querySubPlanId(querySubPlanId){};
 
 void PipelineQueryPlan::addPipeline(OperatorPipelinePtr pipeline) { pipelines.emplace_back(pipeline); }
 
@@ -43,14 +48,12 @@ std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSinkPipelines() {
 std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() {
     std::vector<OperatorPipelinePtr> sinks;
     std::copy_if(pipelines.begin(), pipelines.end(), std::back_inserter(sinks), [](OperatorPipelinePtr pipeline) {
-      return pipeline->getPredecessors().empty();
+        return pipeline->getPredecessors().empty();
     });
     return sinks;
 }
 
-std::vector<OperatorPipelinePtr> PipelineQueryPlan::getPipelines() {
-    return pipelines;
-}
+std::vector<OperatorPipelinePtr> PipelineQueryPlan::getPipelines() { return pipelines; }
 QueryId PipelineQueryPlan::getQueryId() const { return queryId; }
 QuerySubPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 

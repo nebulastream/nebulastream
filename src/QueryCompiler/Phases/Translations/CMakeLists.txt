@@ -16,7 +16,7 @@ add_source_nes(
         LowerLogicalToPhysicalOperators.cpp
         PhysicalOperatorProvider.cpp
         DefaultPhysicalOperatorProvider.cpp
-        TranslateToGeneratableOperators.cpp
+        LowerPhysicalToGeneratableOperators.cpp
         LowerToExecutableQueryPlanPhase.cpp
         GeneratableOperatorProvider.cpp
         DefaultGeneratableOperatorProvider.cpp
