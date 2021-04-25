@@ -143,7 +143,6 @@ bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr query
     return true;
 }
 
-
 bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryPlan->getQueryId();
@@ -172,7 +171,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
         NodeEnginePtr self = this->inherited1::shared_from_this();
-        std::shared_ptr<SinkLogicalOperatorNode> test = sinkOperators[0];
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {
             auto operatorId = sources->getId();

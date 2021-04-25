@@ -33,7 +33,7 @@
 
 namespace NES {
 
-DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(std::shared_ptr<SinkLogicalOperatorNode> sink,
+DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkLogicalOperatorNodePtr sink,
                                                          NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
     auto schema = sink->getOutputSchema();
     auto sinkDescriptor = sink->getSinkDescriptor();
