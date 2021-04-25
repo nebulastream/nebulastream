@@ -13,25 +13,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
-#include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 
-CodeGenerationPhasePtr CodeGenerationPhase::create() {
-    return std::make_shared<CodeGenerationPhase>();
-}
+CodeGenerationPhasePtr CodeGenerationPhase::create() { return std::make_shared<CodeGenerationPhase>(); }
 
 PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) {
+    NES_DEBUG("Generate code for query plan " << queryPlan->getQueryId() << " - " << queryPlan->getQuerySubPlanId());
     for (auto pipeline : queryPlan->getPipelines()) {
         if (pipeline->isOperatorPipeline()) {
             apply(pipeline);
@@ -41,6 +41,7 @@ PipelineQueryPlanPtr CodeGenerationPhase::apply(PipelineQueryPlanPtr queryPlan) 
 }
 
 OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
+    NES_DEBUG("Generate code for pipeline " << pipeline->getPipelineId());
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
     auto pipelineRoots = pipeline->getQueryPlan()->getRootOperators();
@@ -57,7 +58,8 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
     generate(rootOperator, [&codeGenerator, &context](GeneratableOperators::GeneratableOperatorPtr operatorNode) {
         operatorNode->generateClose(codeGenerator, context);
     });
-    auto pipelineStage = codeGenerator->compile(context);;
+    auto pipelineStage = codeGenerator->compile(context);
+    ;
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.
     auto operatorHandlers = context->getOperatorHandlers();
@@ -68,12 +70,14 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
 
 void CodeGenerationPhase::generate(OperatorNodePtr rootOperator,
                                    std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)> applyFunction) {
-   auto iterator = DepthFirstNodeIterator(rootOperator);
-   for(auto node: iterator){
-       NES_ASSERT(node->instanceOf<GeneratableOperators::GeneratableOperator>(), "Operator should be of type GeneratableOperator but it is a " + node->toString());
-       auto generatableOperator = node->as<GeneratableOperators::GeneratableOperator>();
-       applyFunction(generatableOperator);
-   }
+    auto iterator = DepthFirstNodeIterator(rootOperator);
+    for (auto node : iterator) {
+        if(!node->instanceOf<GeneratableOperators::GeneratableOperator>()){
+            throw QueryCompilationException("Operator should be of type GeneratableOperator but it is a " + node->toString());
+        }
+        auto generatableOperator = node->as<GeneratableOperators::GeneratableOperator>();
+        applyFunction(generatableOperator);
+    }
 }
 
 }// namespace QueryCompilation

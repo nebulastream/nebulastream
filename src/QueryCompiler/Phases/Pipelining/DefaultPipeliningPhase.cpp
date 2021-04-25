@@ -13,7 +13,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Operators/OperatorNode.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -24,6 +23,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -67,14 +67,16 @@ void DefaultPipeliningPhase::processDemultiplex(PipelineQueryPlanPtr pipelinePla
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
-        process(pipelinePlan, pipelineOperatorMap, newPipeline, currentOperator->getChildren()[0]->as<PhysicalOperators::PhysicalOperator>());
+        process(pipelinePlan, pipelineOperatorMap, newPipeline,
+                currentOperator->getChildren()[0]->as<PhysicalOperators::PhysicalOperator>());
         pipelineOperatorMap[currentOperator] = newPipeline;
     }
 }
 
-void DefaultPipeliningPhase::processPipelineBreakerOperator(
-    PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                                            OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator) {
+void DefaultPipeliningPhase::processPipelineBreakerOperator(PipelineQueryPlanPtr pipelinePlan,
+                                                            std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                                            OperatorPipelinePtr currentPipeline,
+                                                            PhysicalOperators::PhysicalOperatorPtr currentOperator) {
     currentPipeline->prependOperator(currentOperator->as<PhysicalOperators::PhysicalOperator>()->copy());
     for (auto node : currentOperator->getChildren()) {
         auto newPipeline = OperatorPipeline::create();
@@ -106,8 +108,7 @@ void DefaultPipeliningPhase::processSink(PipelineQueryPlanPtr pipelinePlan,
     }
 }
 
-void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline,
-                                           std::map<OperatorNodePtr, OperatorPipelinePtr>&,
+void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline, std::map<OperatorNodePtr, OperatorPipelinePtr>&,
                                            OperatorPipelinePtr currentPipeline,
                                            PhysicalOperators::PhysicalOperatorPtr sourceOperator) {
     if (currentPipeline->hasOperators()) {
@@ -124,6 +125,10 @@ void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
                                      std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                      OperatorPipelinePtr currentPipeline,
                                      PhysicalOperators::PhysicalOperatorPtr currentOperators) {
+    if(!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>()){
+        throw QueryCompilationException("Pipelining can only be applyied to physical operator. But current operator was: " << currentOperators->toString());
+    }
+
     if (currentOperators->instanceOf<PhysicalOperators::PhysicalSourceOperator>()) {
         processSource(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalSinkOperator>()) {
@@ -140,13 +145,14 @@ void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
 }
 
 PipelineQueryPlanPtr DefaultPipeliningPhase::apply(QueryPlanPtr queryPlan) {
+    NES_DEBUG("Pipeline: query id: " << queryPlan->getQueryId() << " - " << queryPlan->getQuerySubPlanId());
     std::map<OperatorNodePtr, OperatorPipelinePtr> pipelineOperatorMap;
-    auto pipelinePlan = PipelineQueryPlan::create();
-    for (auto sourceOperators : queryPlan->getRootOperators()) {
+    auto pipelinePlan = PipelineQueryPlan::create(queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
+    for (auto sinkOperators : queryPlan->getRootOperators()) {
         auto pipeline = OperatorPipeline::createSinkPipeline();
-        pipeline->prependOperator(sourceOperators->copy());
+        pipeline->prependOperator(sinkOperators->copy());
         pipelinePlan->addPipeline(pipeline);
-        processSink(pipelinePlan, pipelineOperatorMap, pipeline, sourceOperators->as<PhysicalOperators::PhysicalOperator>());
+        processSink(pipelinePlan, pipelineOperatorMap, pipeline, sinkOperators->as<PhysicalOperators::PhysicalOperator>());
     }
     return pipelinePlan;
 }

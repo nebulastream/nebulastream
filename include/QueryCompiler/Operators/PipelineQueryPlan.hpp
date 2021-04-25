@@ -17,18 +17,21 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_
 
 #include <Nodes/Node.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
 #include <vector>
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief Representation of a query plan, which consists of a set of OperatorPipelines.
+ */
 class PipelineQueryPlan {
   public:
-    static PipelineQueryPlanPtr create();
+    static PipelineQueryPlanPtr create(QueryId queryId = -1, QuerySubPlanId querySubPlanId = -1);
     void addPipeline(OperatorPipelinePtr pipeline);
     std::vector<OperatorPipelinePtr> getSourcePipelines();
     std::vector<OperatorPipelinePtr> getSinkPipelines();
@@ -39,9 +42,10 @@ class PipelineQueryPlan {
     QuerySubPlanId getQuerySubPlanId() const;
 
   private:
-    std::vector<OperatorPipelinePtr> pipelines;
+    PipelineQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId);
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
+    std::vector<OperatorPipelinePtr> pipelines;
 };
 }// namespace QueryCompilation
 

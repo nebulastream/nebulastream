@@ -23,33 +23,120 @@
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief Defines a single pipeline, which contains of a query plan of operators.
+ * Each pipeline can have N successor and predecessor pipelines.
+ */
 class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
-
   public:
+
+    /**
+     * @brief The type of a pipeline.
+     * Source/Sink pipelines only have a single source and sink operator.
+     * Operator pipelines consist of arbitrary operators, except sources and sinks.
+     */
     enum Type{
         SourcePipelineType,
         SinkPipelineType,
         OperatorPipelineType
     };
+
+    /**
+     * @brief Creates a new operator pipeline
+     * @return OperatorPipelinePtr
+     */
     static OperatorPipelinePtr create();
+
+    /**
+     * @brief Creates a new source pipeline.
+     * @return OperatorPipelinePtr
+     */
     static OperatorPipelinePtr createSourcePipeline();
+
+    /**
+     * @brief Creates a new sink pipeline.
+     * @return OperatorPipelinePtr
+     */
     static OperatorPipelinePtr createSinkPipeline();
-    void addSuccessor(OperatorPipelinePtr pipeline);
-    void addPredecessor(OperatorPipelinePtr pipeline);
-    void removePredecessor(OperatorPipelinePtr pipeline);
-    void removeSuccessor(OperatorPipelinePtr pipeline);
+
+    /**
+     * @brief Adds a successor pipeline to the current one.
+     * @param successor
+     */
+    void addSuccessor(OperatorPipelinePtr successor);
+
+    /**
+     * @brief Adds a predecessor pipeline to the current one.
+     * @param predecessor
+     */
+    void addPredecessor(OperatorPipelinePtr predecessor);
+
+    /**
+     * @brief Removes a particular predecessor pipeline.
+     * @param predecessor
+     */
+    void removePredecessor(OperatorPipelinePtr predecessor);
+
+    /**
+     * @brief Removes a particular successor pipeline.
+     * @param successor
+     */
+    void removeSuccessor(OperatorPipelinePtr successor);
+
+    /**
+     * @brief Gets list of all predecessors
+     * @return std::vector<OperatorPipelinePtr>
+     */
     std::vector<OperatorPipelinePtr> getPredecessors();
+
+    /**
+     * @brief Gets list of all sucessors
+     * @return std::vector<OperatorPipelinePtr>
+     */
     std::vector<OperatorPipelinePtr> getSuccessors();
-    void prependOperator(OperatorNodePtr newRootOperator);
-    bool hasOperators();
+
+    /**
+     * @brief Removes all predecessors
+     */
     void clearPredecessors();
+
+    /**
+     * @brief Removes all successors
+     */
     void clearSuccessors();
+
+    /**
+     * @brief Returns the query plan
+     * @return QueryPlanPtr
+     */
     QueryPlanPtr getQueryPlan();
+
+    /**
+     * @brief Returns the pipeline id
+     * @return pipeline id.
+     */
     uint64_t getPipelineId();
+
+    /**
+     * @brief Sets the type of an pipeline to Source, Sink, or Operator
+     * @param pipelineType
+     */
+    void setType(Type pipelineType);
+
+    /**
+     * @brief Prepends a new operator to this pipeline.
+     * @param newRootOperator
+     */
+    void prependOperator(OperatorNodePtr newRootOperator);
+
+    /**
+     * @brief Checks if this pipeline has an operator.
+     * @return true if pipeline has an operator.
+     */
+    bool hasOperators();
     bool isSourcePipeline();
     bool isSinkPipeline();
     bool isOperatorPipeline();
-    void setType(Type pipelineType);
   protected:
     OperatorPipeline(uint64_t pipelineId, Type pipelineType);
   private:

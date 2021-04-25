@@ -35,18 +35,21 @@ DumpContextPtr DumpContext::create(std::string contextIdentifier) {
 void DumpContext::registerDumpHandler(DebugDumpHandlerPtr debugDumpHandler) { dumpHandlers.push_back(debugDumpHandler); }
 
 void DumpContext::dump(const NodePtr node) {
+    NES_DEBUG("Dump node - " << context);
     for (auto& handler : dumpHandlers) {
         handler->dump(node);
     }
 }
 
 void DumpContext::dump(std::string scope, const QueryPlanPtr queryPlan) {
+    NES_DEBUG("Dump query plan - " << context + "-" << scope);
     for (auto& handler : dumpHandlers) {
         handler->dump(context, scope, queryPlan);
     }
 }
 
 void DumpContext::dump(std::string scope, const QueryCompilation::PipelineQueryPlanPtr queryPlan) {
+    NES_DEBUG("Dump pipelined query plan - " << context + "-" << scope);
     for (auto& handler : dumpHandlers) {
         handler->dump(context, scope, queryPlan);
     }

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 namespace NES {
@@ -107,6 +108,9 @@ void OperatorPipeline::clearSuccessors() {
 
 std::vector<OperatorPipelinePtr> OperatorPipeline::getSuccessors() { return successorPipelines; }
 void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
+    if(!this->isOperatorPipeline() && this->hasOperators()){
+        throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
+    }
     this->queryPlan->appendOperatorAsNewRoot(newRootOperator);
 }
 

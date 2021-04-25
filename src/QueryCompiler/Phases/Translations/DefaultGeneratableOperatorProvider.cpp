@@ -56,6 +56,7 @@ GeneratableOperatorProviderPtr DefaultGeneratableOperatorProvider::create() {
 }
 
 void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    NES_DEBUG("Lower " << operatorNode->toString() << " to generatable operator");
     if (operatorNode->instanceOf<PhysicalOperators::PhysicalSourceOperator>()) {
         lowerSource(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSinkOperator>()) {
@@ -81,8 +82,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalJoinSinkOperator>()) {
         lowerJoinSink(queryPlan, operatorNode);
     } else {
-        NES_ERROR("No lowering defined for physical operator: " + operatorNode->toString());
-        throw QueryCompilationException("No lowering defined for physical operator: " + operatorNode->toString());
+       throw QueryCompilationException("No lowering defined for physical operator: " + operatorNode->toString());
     }
 }
 

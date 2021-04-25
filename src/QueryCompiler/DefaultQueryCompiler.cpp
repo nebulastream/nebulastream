@@ -30,8 +30,8 @@
 #include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToGeneratbaleOperatorsPhase.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
