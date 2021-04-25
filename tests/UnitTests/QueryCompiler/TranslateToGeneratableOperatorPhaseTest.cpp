@@ -64,7 +64,7 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
 
     void SetUp() {
         dumpContext = DumpContext::create();
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
+        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
@@ -141,7 +141,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = this->nodeEngine;
-    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
+    ConsoleDumpHandler::create(std::cout)->dump(sinkOperator);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableSinkOperator = translatePhase->transform(sinkOperator->as<OperatorNode>());
@@ -172,7 +172,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = this->nodeEngine;
-    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
+    ConsoleDumpHandler::create(std::cout)->dump(sinkOperator);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
 
     auto typeInferencePhase = TypeInferencePhase::create(std::make_shared<StreamCatalog>());

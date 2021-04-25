@@ -49,7 +49,7 @@ class LogicalOperatorNodeTest : public testing::Test {
 
     void SetUp() {
         dumpContext = DumpContext::create();
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
+        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         sPtr = streamCatalog->getStreamForLogicalStreamOrThrowException("default_logical");
@@ -1062,7 +1062,7 @@ TEST_F(LogicalOperatorNodeTest, prettyPrint) {
     ss1 << std::string(4, ' ') << filterOp4->toString() << std::endl;
 
     std::stringstream ss;
-    dumpContext->dump(filterOp6, ss);
+    ConsoleDumpHandler::create(ss)->dump(filterOp6);
     EXPECT_EQ(ss.str(), ss1.str());
 }
 
@@ -1079,7 +1079,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     filterOp2->addChild(filterOp3);
     filterOp3->addChild(filterOp4);
     filterOp4->addChild(filterOp4);
-    dumpContext->dump(filterOp6, std::cout);
+    dumpContext->dump(filterOp6);
     std::vector<NodePtr> expected{};
     expected.push_back(filterOp1);
     expected.push_back(filterOp2);
@@ -1123,7 +1123,7 @@ TEST_F(LogicalOperatorNodeTest, swap1) {
     expected << std::string(4, ' ') << filterOp5->toString() << std::endl;
 
     stringstream ss;
-    dumpContext->dump(filterOp6, ss);
+    ConsoleDumpHandler::create(ss)->dump(filterOp6);
     // std::cout << ss.str();
     EXPECT_EQ(ss.str(), expected.str());
 }
@@ -1154,7 +1154,7 @@ TEST_F(LogicalOperatorNodeTest, swap2) {
     expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
 
     stringstream ss;
-    dumpContext->dump(filterOp6, ss);
+    ConsoleDumpHandler::create(ss)->dump(filterOp6);
     // std::cout << ss.str();
     EXPECT_EQ(ss.str(), expected.str());
 }
@@ -1190,7 +1190,7 @@ TEST_F(LogicalOperatorNodeTest, swap3) {
     expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
 
     stringstream ss;
-    dumpContext->dump(filterOp6, ss);
+    ConsoleDumpHandler::create(ss)->dump(filterOp6);
     std::cout << ss.str();
     EXPECT_EQ(ss.str(), expected.str());
 }
@@ -1226,7 +1226,7 @@ TEST_F(LogicalOperatorNodeTest, swap4) {
     expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
 
     stringstream ss;
-    dumpContext->dump(filterOp6, ss);
+    ConsoleDumpHandler::create(ss)->dump(filterOp6);
     std::cout << ss.str();
     EXPECT_EQ(ss.str(), expected.str());
 }
@@ -1262,7 +1262,7 @@ TEST_F(LogicalOperatorNodeTest, swap5) {
     expected << std::string(6, ' ') << filterOp5->toString() << std::endl;
 
     stringstream ss;
-    dumpContext->dump(filterOp6, ss);
+    ConsoleDumpHandler::create(ss)->dump(filterOp6);
     std::cout << ss.str();
     EXPECT_EQ(ss.str(), expected.str());
 }
@@ -1381,7 +1381,7 @@ TEST_F(LogicalOperatorNodeTest, bfIterator) {
     filterOp2->addChild(filterOp6);
     filterOp4->addChild(filterOp7);
 
-    ConsoleDumpHandler::create()->dump(filterOp1, std::cout);
+    dumpContext->dump(filterOp1);
 
     auto bfNodeIterator = BreadthFirstNodeIterator(filterOp1);
     auto iterator = bfNodeIterator.begin();
@@ -1416,7 +1416,7 @@ TEST_F(LogicalOperatorNodeTest, dfIterator) {
     filterOp2->addChild(filterOp6);
     filterOp4->addChild(filterOp7);
 
-    ConsoleDumpHandler::create()->dump(filterOp1, std::cout);
+    dumpContext->dump(filterOp1);
 
     auto dfNodeIterator = DepthFirstNodeIterator(filterOp1);
     auto iterator = dfNodeIterator.begin();

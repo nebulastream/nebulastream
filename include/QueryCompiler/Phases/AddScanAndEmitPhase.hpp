@@ -23,8 +23,6 @@ class AddScanAndEmitPhase {
   public:
     static AddScanAndEmitPhasePtr create();
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
-
-  private:
     OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
 }
