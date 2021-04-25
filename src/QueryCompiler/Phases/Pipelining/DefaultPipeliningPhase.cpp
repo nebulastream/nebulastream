@@ -126,7 +126,7 @@ void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
                                      OperatorPipelinePtr currentPipeline,
                                      PhysicalOperators::PhysicalOperatorPtr currentOperators) {
     if(!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>()){
-        throw QueryCompilationException("Pipelining can only be applyied to physical operator. But current operator was: " << currentOperators->toString());
+        throw QueryCompilationException("Pipelining can only be applyied to physical operator. But current operator was: " + currentOperators->toString());
     }
 
     if (currentOperators->instanceOf<PhysicalOperators::PhysicalSourceOperator>()) {
