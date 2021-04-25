@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifdef ENABLE_MQTT_BUILD
 #include <NodeEngine/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
