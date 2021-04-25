@@ -13,16 +13,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSEIFPOSSIBLEPOLICY_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSEIFPOSSIBLEPOLICY_HPP_
-#include <QueryCompiler/Phases/Pipelining/PipelineBreakerPolicy.hpp>
+#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_
+#include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 namespace NES {
 namespace QueryCompilation {
-class FuseIfPossiblePolicy : public PipelineBreakerPolicy {
+
+/**
+ * @brief This policy permits operator fusion for all operators.
+ */
+class NeverFusePolicy : public OperatorFusionPolicy {
   public:
-    static PipelineBreakerPolicyPtr create();
+    static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
 }}
 
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSEIFPOSSIBLEPOLICY_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_

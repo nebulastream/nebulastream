@@ -23,7 +23,7 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Base class for all generatable window operators.
  */
 class GeneratableWindowOperator : public GeneratableOperator {
 

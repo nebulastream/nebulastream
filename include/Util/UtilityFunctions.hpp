@@ -58,9 +58,16 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 class UtilityFunctions {
   public:
 
-
+    /**
+     * @brief escapes all non text characters in a input string, such that the string could be processed as json.
+     * @param s input string.
+     * @return result sing.
+     */
     static std::string escapeJson(const std::string &s);
-    // removes leading and trailing whitespaces
+
+    /**
+     * @brief removes leading and trailing whitespaces
+     */
     static std::string trim(std::string s);
 
     /**

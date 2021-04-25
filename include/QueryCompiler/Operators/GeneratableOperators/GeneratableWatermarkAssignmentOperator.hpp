@@ -23,7 +23,8 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Generates the watermark assignment operator.
+ * Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
  */
 class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
   public:

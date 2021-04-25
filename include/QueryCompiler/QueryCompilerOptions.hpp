@@ -20,13 +20,41 @@
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief Set of common options for the query compiler
+ */
 class QueryCompilerOptions {
   public:
+    /**
+     * @brief Creates the default options.
+     * @return QueryCompilerOptionsPtr
+     */
     static QueryCompilerOptionsPtr createDefaultOptions();
+
+    /**
+     * @brief Enables operator fusion.
+     */
     void enableOperatorFusion();
+
+    /**
+     * @brief Disables operator fusion.
+     */
     void disableOperatorFusion();
+
+    /**
+     * @brief Returns if operator fusion is enabled.
+     */
     bool isOperatorFusionEnabled();
+
+    /**
+     * @brief Sets the number of local buffers per source.
+     * @param num of buffers
+     */
     void setNumSourceLocalBuffers(uint64_t num);
+    /**
+     * @brief Returns the number of local source buffers.
+     * @return uint64_t
+     */
     uint64_t getNumSourceLocalBuffers();
   protected:
     bool operatorFusion;

@@ -23,16 +23,16 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
-#include <QueryCompiler/Phases/Pipelining/PipelineBreakerPolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 
-DefaultPipeliningPhase::DefaultPipeliningPhase(PipelineBreakerPolicyPtr pipelineBreakerPolicy)
-    : pipelineBreakerPolicy(pipelineBreakerPolicy) {}
+DefaultPipeliningPhase::DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy)
+    : operatorFusionPolicy(operatorFusionPolicy) {}
 
-PipeliningPhasePtr DefaultPipeliningPhase::create(PipelineBreakerPolicyPtr pipelineBreakerPolicy) {
-    return std::make_shared<DefaultPipeliningPhase>(pipelineBreakerPolicy);
+PipeliningPhasePtr DefaultPipeliningPhase::create(OperatorFusionPolicyPtr operatorFusionPolicy) {
+    return std::make_shared<DefaultPipeliningPhase>(operatorFusionPolicy);
 }
 
 void DefaultPipeliningPhase::processMultiplex(PipelineQueryPlanPtr pipelinePlan,
@@ -132,7 +132,7 @@ void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
         processMultiplex(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
     } else if (currentOperators->instanceOf<PhysicalOperators::PhysicalDemultiplexOperator>()) {
         processDemultiplex(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
-    } else if (pipelineBreakerPolicy->isFusible(currentOperators)) {
+    } else if (operatorFusionPolicy->isFusible(currentOperators)) {
         processFusibleOperator(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
     } else {
         processPipelineBreakerOperator(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);

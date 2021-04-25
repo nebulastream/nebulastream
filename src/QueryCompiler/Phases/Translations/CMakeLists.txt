@@ -13,11 +13,11 @@
 # limitations under the License.
 
 add_source_nes(
-        TranslateToPhysicalOperators.cpp
+        LowerLogicalToPhysicalOperators.cpp
         PhysicalOperatorProvider.cpp
         DefaultPhysicalOperatorProvider.cpp
         TranslateToGeneratableOperators.cpp
-        TranslateToExecutableQueryPlanPhase.cpp
+        LowerToExecutableQueryPlanPhase.cpp
         GeneratableOperatorProvider.cpp
         DefaultGeneratableOperatorProvider.cpp
 )

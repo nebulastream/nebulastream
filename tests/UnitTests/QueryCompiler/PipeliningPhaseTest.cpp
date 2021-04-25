@@ -62,9 +62,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
-#include <QueryCompiler/Phases/Pipelining/AlwaysBreakPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
-#include <QueryCompiler/Phases/Pipelining/FuseIfPossiblePolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
+#include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
@@ -116,7 +116,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
 
@@ -152,7 +152,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
 
@@ -194,7 +194,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
     source2->addParent(multiplex);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
 
@@ -241,7 +241,7 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     joinBuildRight->addParent(joinSink);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
@@ -296,7 +296,7 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     joinBuildRight->addParent(joinSink);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
     auto sourcePipelines = pipelinePlan->getSourcePipelines();
@@ -349,7 +349,7 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
 
@@ -392,7 +392,7 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
     queryPlan->appendOperatorAsNewRoot(sink);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
 
@@ -440,7 +440,7 @@ TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
     sink2->addChild(demultiplex);
 
     NES_DEBUG(queryPlan->toString());
-    auto policy = QueryCompilation::FuseIfPossiblePolicy::create();
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
     auto pipelinePlan = phase->apply(queryPlan);
 

@@ -40,7 +40,21 @@ class ConsoleDumpHandler : public DumpHandler {
     * Dump the specific node and its children with details in multiple lines.
     */
     void multilineDump(const NodePtr node);
+
+    /**
+     * @brief Dump a query plan with a specific context and scope.
+     * @param context the context
+     * @param scope the scope
+     * @param plan the query plan
+     */
     void dump(std::string context, std::string scope, QueryPlanPtr plan) override;
+
+    /**
+     * @brief Dump a pipeline query plan with a specific context and scope.
+     * @param context the context
+     * @param scope the scope
+     * @param plan the query plan
+     */
     void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) override;
 
   private:

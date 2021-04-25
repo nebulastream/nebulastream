@@ -23,7 +23,7 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Base class for all generatable operators. It defines the general produce and consume methods as defined by Neumann.
+ * @brief Generates the projection operator, to select or rename certain attributes of an input tuple.
  */
 class GeneratableProjectionOperator : public GeneratableOperator {
   public:

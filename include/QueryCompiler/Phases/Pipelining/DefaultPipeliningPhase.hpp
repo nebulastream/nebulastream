@@ -19,10 +19,20 @@
 #include <map>
 namespace NES {
 namespace QueryCompilation {
+
+/**
+ * @brief The default pipelining phase,
+ * which splits query plans in pipelines of operators according to specific operator fusion policy.
+ */
 class DefaultPipeliningPhase: public PipeliningPhase {
   public:
-    static PipeliningPhasePtr create(PipelineBreakerPolicyPtr pipelineBreakerPolicy);
-    DefaultPipeliningPhase(PipelineBreakerPolicyPtr pipelineBreakerPolicy);
+    /**
+     * @brief Creates a new pipelining phase with a operator fusion policy.
+     * @param operatorFusionPolicy Policy to determine if an operator can be fused.
+     * @return PipeliningPhasePtr
+     */
+    static PipeliningPhasePtr create(OperatorFusionPolicyPtr operatorFusionPolicy);
+    DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy);
     PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) override;
   protected:
     void process(PipelineQueryPlanPtr pipeline,
@@ -43,7 +53,7 @@ class DefaultPipeliningPhase: public PipeliningPhase {
                                         OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
 
   private:
-    PipelineBreakerPolicyPtr pipelineBreakerPolicy;
+    OperatorFusionPolicyPtr operatorFusionPolicy;
 };
 }// namespace QueryCompilation
 }// namespace NES

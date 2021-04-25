@@ -23,6 +23,7 @@
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
@@ -31,20 +32,18 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
-#include <QueryCompiler/Phases/Translations/TranslateToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <variant>
 
 namespace NES {
 namespace QueryCompilation {
 
-TranslateToExecutableQueryPlanPhasePtr TranslateToExecutableQueryPlanPhase::create() {
-    return std::make_shared<TranslateToExecutableQueryPlanPhase>();
+LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create() {
+    return std::make_shared<LowerToExecutableQueryPlanPhase>();
 }
 
-NodeEngine::Execution::NewExecutableQueryPlanPtr
-TranslateToExecutableQueryPlanPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan, NodeEngine::NodeEnginePtr nodeEngine) {
+NodeEngine::Execution::NewExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan, NodeEngine::NodeEnginePtr nodeEngine) {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr> executablePipelines;
@@ -59,7 +58,7 @@ TranslateToExecutableQueryPlanPhase::apply(PipelineQueryPlanPtr pipelineQueryPla
         pipelineQueryPlan->getQueryId(), pipelineQueryPlan->getQuerySubPlanId(), std::move(sources), std::move(sinks),
         std::move(executablePipelines), nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
 }
-NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::processSuccessor(
+NodeEngine::Execution::SuccessorPipeline LowerToExecutableQueryPlanPhase::processSuccessor(
     OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine) {
 
@@ -71,7 +70,7 @@ NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::pr
     throw QueryCompilationException("The pipeline was of wrong type. It should be a sink pipeline or a operator pipeline");
 }
 
-void TranslateToExecutableQueryPlanPhase::processSource(
+void LowerToExecutableQueryPlanPhase::processSource(
     OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine) {
 
@@ -98,7 +97,7 @@ void TranslateToExecutableQueryPlanPhase::processSource(
     }
 }
 
-NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::processSink(
+NodeEngine::Execution::SuccessorPipeline LowerToExecutableQueryPlanPhase::processSink(
     OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>&, std::vector<DataSinkPtr>& sinks,
     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>&, NodeEngine::NodeEnginePtr nodeEngine) {
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
@@ -109,7 +108,7 @@ NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::pr
     return sink;
 }
 
-NodeEngine::Execution::SuccessorPipeline TranslateToExecutableQueryPlanPhase::processOperatorPipeline(
+NodeEngine::Execution::SuccessorPipeline LowerToExecutableQueryPlanPhase::processOperatorPipeline(
     OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines, NodeEngine::NodeEnginePtr nodeEngine) {
 

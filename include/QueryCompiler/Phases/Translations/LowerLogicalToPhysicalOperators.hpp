@@ -23,13 +23,13 @@ namespace NES {
 namespace QueryCompilation {
 
 /**
- * @brief This phase translates a query plan of logical operators into a query plan of physical operators.
- * The translation of individual operators is defined by the physical operator provider to improve extendability.
+ * @brief This phase lowers a query plan of logical operators into a query plan of physical operators.
+ * The lowering of individual operators is defined by the physical operator provider to improve extendability.
  */
-class TranslateToPhysicalOperators {
+class LowerLogicalToPhysicalOperators {
   public:
-    TranslateToPhysicalOperators(PhysicalOperatorProviderPtr provider);
-    static TranslateToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
+    LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider);
+    static LowerLogicalToPhysicalOperatorsPtr create(PhysicalOperatorProviderPtr provider);
     QueryPlanPtr apply(QueryPlanPtr queryPlan);
 
   private:

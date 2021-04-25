@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TRANSLATETOEXECUTABLEQUERYPLANPHASE_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TRANSLATETOEXECUTABLEQUERYPLANPHASE_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
 
 #include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -25,9 +25,9 @@
 namespace NES {
 namespace QueryCompilation {
 
-class TranslateToExecutableQueryPlanPhase {
+class LowerToExecutableQueryPlanPhase {
   public:
-    static TranslateToExecutableQueryPlanPhasePtr create();
+    static LowerToExecutableQueryPlanPhasePtr create();
     NodeEngine::Execution::NewExecutableQueryPlanPtr apply(PipelineQueryPlanPtr pipelineQueryPlan,
                                                            NodeEngine::NodeEnginePtr nodeEngine);
 
@@ -54,4 +54,4 @@ class TranslateToExecutableQueryPlanPhase {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TRANSLATETOEXECUTABLEQUERYPLANPHASE_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_

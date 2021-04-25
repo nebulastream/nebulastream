@@ -20,14 +20,19 @@ namespace NES {
 namespace QueryCompilation {
 namespace Phases {
 
+/**
+ * @brief A abstract factory, which allows the query compiler to create instances of particular phases,
+ * without knowledge about the concrete implementations. This ensures extendability.
+ */
 class PhaseFactory {
   public:
-    virtual const TranslateToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
+    virtual const LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
     virtual const PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) = 0;
     virtual const AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) = 0;
-    virtual const TranslateToGeneratableOperatorsPtr createLowerPipelinePlanPhase(QueryCompilerOptionsPtr options) = 0;
+    virtual const LowerPhysicalToGeneratableOperatorsPtr
+    createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) = 0;
     virtual const CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) = 0;
-    virtual const TranslateToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
+    virtual const LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
 }// namespace Phases
