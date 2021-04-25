@@ -17,7 +17,6 @@
 #include <Network/NetworkManager.hpp>
 #include <Network/NetworkSink.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
@@ -26,6 +25,7 @@
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -33,8 +33,8 @@
 
 namespace NES {
 
-DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkLogicalOperatorNodePtr sink,
-                                                         NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) {
+DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkLogicalOperatorNodePtr sink, NodeEngine::NodeEnginePtr nodeEngine,
+                                                         QuerySubPlanId querySubPlanId) {
     auto schema = sink->getOutputSchema();
     auto sinkDescriptor = sink->getSinkDescriptor();
     NES_ASSERT(nodeEngine, "Invalid node engine");
@@ -72,9 +72,10 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkLogicalOperatorNode
         const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
         // Two MQTT clients with the same client-id can not communicate with the same broker. Therefore, client-ids should generally be unique.
         // If the user does not pass a client-id explicitly, we utilize the operatorId to generate a client-id that is guaranteed to be unique.
-        std::string clientId = (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(sink->getId());
-        return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getAddress(),
-                              clientId, mqttSinkDescriptor->getTopic(), mqttSinkDescriptor->getUser(),
+        std::string clientId =
+            (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(sink->getId());
+        return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getAddress(), clientId,
+                              mqttSinkDescriptor->getTopic(), mqttSinkDescriptor->getUser(),
                               mqttSinkDescriptor->getMaxBufferedMSGs(), mqttSinkDescriptor->getTimeUnit(),
                               mqttSinkDescriptor->getMsgDelay(), mqttSinkDescriptor->getQualityOfService(),
                               mqttSinkDescriptor->getAsynchronousClient());
