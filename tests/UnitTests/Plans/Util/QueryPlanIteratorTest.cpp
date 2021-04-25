@@ -54,7 +54,7 @@ class QueryPlanIteratorTest : public testing::Test {
 
     void SetUp() {
         dumpContext = DumpContext::create();
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
+        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
