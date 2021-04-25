@@ -560,13 +560,6 @@ bool QueryManager::processQueryReconfiguration(OperatorId sourceOperatorId, Exec
     return true;
 }
 
-bool QueryManager::stopQueryUsingReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qepToStop) {
-    // Mimic an EoS message is received from source but only for this particular QEP
-    std::shared_lock lock(queryMutex);
-    std::unordered_set<Execution::ExecutableQueryPlanPtr> qeps = {qepToStop};
-    return endOfStreamForQeps(operatorId, true, qeps);
-}
-
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
@@ -847,6 +840,20 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
             NES_DEBUG("QueryManager: removed running QEP " << qepId);
+            break;
+        }
+        case StopQueryPlan: {
+            auto qepId = task.getParentPlanId();
+            auto it = runningQEPs.find(qepId);
+            if (it != runningQEPs.end()) {
+                Execution::ExecutableQueryPlanPtr& qep = it->second;
+                if (!stopQuery(qep)) {
+                    NES_ERROR("QueryManager::postReconfigurationCallback: stop of QEP " << qepId << " failed");
+                }
+                if (!deregisterQuery(qep)) {
+                    NES_ERROR("QueryManager::postReconfigurationCallback: deregister of QEP " << qepId << " failed");
+                }
+            }
             break;
         }
         default: {

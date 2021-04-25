@@ -16,6 +16,8 @@
 
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/StopQueryMessage.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -202,6 +204,31 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 for (auto& sink : sinks) {
                     sink->postReconfigurationCallback(task);
                 }
+                qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+                return;
+            }
+            break;
+        }
+        case StopQueryPlan: {
+            NES_DEBUG("QueryExecutionPlan: StopQueryPlan request received for query plan " << queryId << " sub plan "
+                                                                                           << querySubPlanId);
+            auto expected = Running;
+            auto targetStopQueryMessage = task.getUserData<StopQueryMessagePtr>();
+
+            if (qepStatus.compare_exchange_strong(expected, Stopped)) {
+                NES_DEBUG("QueryExecutionPlan: query plan " << queryId << " subplan " << querySubPlanId
+                                                            << " is marked as stopped now");
+                // Propagate reconfiguration message to all sinks before destruction of QEP
+                for (auto& sink : sinks) {
+                    std::any queryReconfigurationMessage = std::make_any<Network::Messages::QueryReconfigurationMessage>(
+                        targetStopQueryMessage->getQueryReconfigurationMessage());
+                    auto newReconf = ReconfigurationMessage(querySubPlanId, QueryReconfiguration, sink,
+                                                            std::move(queryReconfigurationMessage));
+                    queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
+                }
+                // Trigger cleanup of QEP in the QueryManager
+                queryManager->addReconfigurationMessage(
+                    querySubPlanId, ReconfigurationMessage(querySubPlanId, StopQueryPlan, queryManager), false);
                 qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
                 return;
             }
