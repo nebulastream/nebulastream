@@ -162,6 +162,8 @@ class ExecutablePipeline : public Reconfigurable {
     SchemaPtr outputSchema;
     std::atomic<bool> isRunning;
     std::atomic<uint32_t> activeProducers;
+    void forwardReconfiguration(ReconfigurationMessage& task, const std::weak_ptr<ExecutableQueryPlan>& targetQep,
+                                std::any& userdata);
 };
 
 }// namespace NES::NodeEngine::Execution

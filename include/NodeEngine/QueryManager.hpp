@@ -218,12 +218,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     /**
      * @brief handle reconfiguration request
-     * @return operatorId to associate QEP with
-     * @return qep to associate with operator
+     * @return sourceOperatorId to associate QEP with
+     * @return newQep to associate with operator
      * @return oldQep to un-associate with operator
      * @return queryReconfigurationMessage to pass onto further sinks
      */
-    bool addQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr qep,
+    bool processQueryReconfiguration(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr newQep,
                                  Execution::ExecutableQueryPlanPtr oldQep,
                                  Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
 

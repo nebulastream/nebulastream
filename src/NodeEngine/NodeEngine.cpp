@@ -492,7 +492,7 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
             auto oldQep = foundQEPNeedingReplacement->second;
             auto newQep = foundReplacementQEP->second;
             successfulReconfiguration =
-                queryManager->addQueryReconfiguration(operatorId, newQep, oldQep, queryReconfigurationMessage);
+                queryManager->processQueryReconfiguration(operatorId, newQep, oldQep, queryReconfigurationMessage);
             if (!successfulReconfiguration) {
                 NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to replace query with subplanId: "
                           << oldQep->getQuerySubPlanId() << " with query with subplanId: " << newQep->getQuerySubPlanId());
@@ -506,20 +506,13 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
         if (foundQueryReconfigurationQEP != reconfigurationQEPs.end()) {
             auto qep = foundQueryReconfigurationQEP->second;
             successfulReconfiguration =
-                queryManager->addQueryReconfiguration(operatorId, qep, nullptr, queryReconfigurationMessage);
+                queryManager->processQueryReconfiguration(operatorId, qep, nullptr, queryReconfigurationMessage);
             if (!successfulReconfiguration) {
                 NES_ERROR(
-                    "NodeEngine::onQueryReconfiguration: Failed to start query with subplanId: " << qep->getQuerySubPlanId());
+                    "NodeEngine::onQueryReconfiguration: Failed to start query with subPlanId: " << qep->getQuerySubPlanId());
             } else {
                 deployedQEPs[qep->getQuerySubPlanId()] = qep;
             }
-        }
-    }
-    // For a QEP to be stopped, we should also receive stopRequest from Coordinator
-    for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {
-        auto foundQEPToStop = deployedQEPs.find(querySubPlanId);
-        if (foundQEPToStop != deployedQEPs.end()) {
-            queryManager->stopQueryUsingReconfiguration(operatorId, foundQEPToStop->second);
         }
     }
 }
