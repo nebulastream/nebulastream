@@ -28,6 +28,7 @@
 #include <chrono>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
+#include <functional>
 #include <iostream>
 #include <memory>
 
@@ -47,6 +48,23 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
 class TestUtils {
   public:
     static constexpr uint64_t timeout = 60;
+
+    /**
+     * @brief This method is a generic timeout helper,which invokes a lambda to check completion status
+     * @param checkerFn: The lambda to invoke to perform check
+     * @return true if checkerFn returned true within timeout
+     */
+    static bool checkCompleteOrTimeout(std::function<bool()> checkerFn) {
+        auto timeoutInSec = std::chrono::seconds(timeout);
+        auto start_timestamp = std::chrono::system_clock::now();
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            if (checkerFn()) {
+                return true;
+            }
+            sleep(1);
+        }
+        return false;
+    }
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout

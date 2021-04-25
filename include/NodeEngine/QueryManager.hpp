@@ -259,12 +259,13 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @brief capture the start sequence of query
      * @param QEP to start
     */
-    bool beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep) const;
+    bool qepStartSequence(Execution::ExecutableQueryPlanPtr qep) const;
 
     bool triggerQepStop(OperatorId sourceOperatorId, const Execution::ExecutableQueryPlanPtr& oldQep,
                         const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
     bool triggerQepStart(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr& newQep,
                          const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+    void qepDestroySequence(QuerySubPlanId qepId);
 
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 

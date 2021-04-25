@@ -566,7 +566,10 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepSingleSource) {
     engine->onQueryReconfiguration(reconfigurationMessage);
 
     EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
-    EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+    // Timeout based check needed, since stopping of QEP is handled via reconfiguration task
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout([manager, firstQueryPlan]() {
+        return manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid;
+    }));
 
     // Trigger stop of QEP having network source via "onEndOfStream"
     Network::Messages::EndOfStreamMessage endOfStreamMsg{channelId, true};
@@ -635,7 +638,10 @@ TEST_F(EngineTest, testReconfigurationReplacementOfTerminalQepMultiSource) {
     engine->onQueryReconfiguration(secondSourceReconfigurationMessage);
 
     EXPECT_TRUE(manager->getQepStatus(secondQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Running);
-    EXPECT_TRUE(manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid);
+    // Timeout based check needed, since stopping of QEP is handled via reconfiguration task
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout([manager, firstQueryPlan]() {
+        return manager->getQepStatus(firstQueryPlan->getQuerySubPlanId()) == ExecutableQueryPlanStatus::Invalid;
+    }));
 
     // Trigger stop of QEP having network source via "onEndOfStream"
     Network::Messages::EndOfStreamMessage firstSourceEos{firstChannelId, true};

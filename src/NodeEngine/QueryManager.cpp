@@ -224,7 +224,7 @@ bool QueryManager::registerQueryForSources(Execution::ExecutableQueryPlanPtr qep
 }
 
 bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
-    if (!beginStartQuerySequence(qep)) {
+    if (!qepStartSequence(qep)) {
         return false;
     }
 
@@ -235,8 +235,8 @@ bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep) const {
-    NES_DEBUG("QueryManager::beginStartQuerySequence: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
+bool QueryManager::qepStartSequence(Execution::ExecutableQueryPlanPtr qep) const {
+    NES_DEBUG("QueryManager::qepStartSequence: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
@@ -293,7 +293,7 @@ bool QueryManager::beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep
 }
 
 bool QueryManager::deregisterQuery(Execution::ExecutableQueryPlanPtr qep) {
-    NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query" << qep);
+    NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query with subPlanId" << qep->getQuerySubPlanId());
 
     std::unique_lock lock(queryMutex);
     bool succeed = true;
@@ -501,10 +501,10 @@ bool QueryManager::processQueryReconfiguration(OperatorId sourceOperatorId, Exec
      */
     std::scoped_lock lock(queryMutex, statisticsMutex);
     bool success = true;
-    if (success && newQep) {
+    if (success && (newQep != nullptr)) {
         success = triggerQepStart(sourceOperatorId, newQep, queryReconfigurationMessage);
     }
-    if (success && oldQep) {
+    if (success && (oldQep != nullptr)) {
         success = triggerQepStop(sourceOperatorId, oldQep, queryReconfigurationMessage);
     }
     return success;
@@ -557,7 +557,7 @@ bool QueryManager::triggerQepStart(OperatorId sourceOperatorId, Execution::Execu
     if (runningQEPs.find(newQuerySubPlanId) != runningQEPs.end()) {
         NES_DEBUG("QueryManager::triggerQepStart: QEP for querySubPlanId" << newQuerySubPlanId << " is already in Running State");
     } else {
-        bool isStartSuccessful = beginStartQuerySequence(newQep);
+        bool isStartSuccessful = qepStartSequence(newQep);
         if (!isStartSuccessful) {
             NES_ERROR("QueryManager::triggerQepStart: QEP start failed for sourceOperatorId"
                       << sourceOperatorId << " QEP for querySubPlanId " << newQuerySubPlanId);
@@ -598,9 +598,8 @@ bool QueryManager::triggerQepStop(OperatorId sourceOperatorId, const Execution::
             auto weakQep = std::weak_ptr<Execution::ExecutableQueryPlan>(oldQep);
             StopQueryMessagePtr data = std::make_unique<StopQueryMessage>(weakQep, queryReconfigurationMessage);
             auto userData = std::make_any<StopQueryMessagePtr>(data);
-            const auto stopQueryPlanMsg =
-                ReconfigurationMessage(oldQuerySubPlanId, StopQueryPlan, threadPool->getNumberOfThreads(),
-                                       oldQep->getPipeline(targetStage), std::move(userData));
+            auto stopQueryPlanMsg =
+                ReconfigurationMessage(oldQuerySubPlanId, StopQueryPlan, oldQep->getPipeline(targetStage), std::move(userData));
             addReconfigurationMessage(oldQuerySubPlanId, stopQueryPlanMsg, false);
         }
     }
@@ -861,11 +860,12 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QuerySubPlanId qepId) {
 void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     switch (task.getType()) {
-        case Destroy: {
+        case Destroy:
+        case StopQueryPlan: {
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
+            NES_THROW_RUNTIME_ERROR("QueryManager: task type: " << task.getType() << " not supported");
         }
     }
 }
@@ -875,26 +875,20 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
     switch (task.getType()) {
         case Destroy: {
             auto qepId = task.getParentPlanId();
-            auto status = getQepStatus(qepId);
-            NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
-                           || status == Execution::ExecutableQueryPlanStatus::ErrorState,
-                       "query plan is not in valid state " << status);
-            std::unique_lock lock(queryMutex);
-            runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
-            NES_DEBUG("QueryManager: removed running QEP " << qepId);
+            qepDestroySequence(qepId);
             break;
         }
         case StopQueryPlan: {
             auto qepId = task.getParentPlanId();
-            auto it = runningQEPs.find(qepId);
-            if (it != runningQEPs.end()) {
-                Execution::ExecutableQueryPlanPtr& qep = it->second;
+            if (runningQEPs.find(qepId) != runningQEPs.end()) {
+                Execution::ExecutableQueryPlanPtr qep = runningQEPs[qepId];
                 if (!stopQuery(qep)) {
                     NES_ERROR("QueryManager::postReconfigurationCallback: stop of QEP " << qepId << " failed");
                 }
                 if (!deregisterQuery(qep)) {
                     NES_ERROR("QueryManager::postReconfigurationCallback: deregister of QEP " << qepId << " failed");
                 }
+                qepDestroySequence(qepId);
             }
             break;
         }
@@ -902,6 +896,15 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
             NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
+}
+void QueryManager::qepDestroySequence(QuerySubPlanId qepId) {
+    auto status = getQepStatus(qepId);
+    NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
+                   || status == Execution::ExecutableQueryPlanStatus::ErrorState,
+               "query plan is not in valid state " << status);
+    std::unique_lock lock(queryMutex);
+    runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
+    NES_DEBUG("QueryManager: removed running QEP " << qepId);
 }
 
 uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
