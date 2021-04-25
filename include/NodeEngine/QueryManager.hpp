@@ -261,6 +261,11 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     */
     bool beginStartQuerySequence(Execution::ExecutableQueryPlanPtr qep) const;
 
+    bool triggerQepStop(OperatorId sourceOperatorId, const Execution::ExecutableQueryPlanPtr& oldQep,
+                        const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+    bool triggerQepStart(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr& newQep,
+                         const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 
     std::deque<Task> taskQueue;
@@ -290,10 +295,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     uint16_t numThreads;
 
     std::atomic<bool> isDestroyed;
-    void triggerQepStop(OperatorId sourceOperatorId, const Execution::ExecutableQueryPlanPtr& oldQep,
-                        const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
-    void triggerQepStart(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr& newQep,
-                         const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
