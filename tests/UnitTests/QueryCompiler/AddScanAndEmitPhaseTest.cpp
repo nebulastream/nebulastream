@@ -100,15 +100,18 @@ class AddScanAndEmitPhaseTest : public testing::Test {
  *
  */
 TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
-    auto operatorPlan = QueryCompilation::OperatorPipeline::create();
+    auto pipelineQueryPlan = QueryCompilation::PipelineQueryPlan::create();
+    auto operatorPlan = QueryCompilation::OperatorPipeline::createSourcePipeline();
+
     auto source =
         QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     operatorPlan->prependOperator(source);
+    pipelineQueryPlan->addPipeline(operatorPlan);
 
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
-    operatorPlan = phase->process(operatorPlan);
+    pipelineQueryPlan = phase->apply(pipelineQueryPlan);
 
-    auto pipelineRootOperator = operatorPlan->getQueryPlan()->getRootOperators()[0];
+    auto pipelineRootOperator = pipelineQueryPlan->getSourcePipelines()[0]->getQueryPlan()->getRootOperators()[0];
 
     ASSERT_INSTANCE_OF(pipelineRootOperator, PhysicalSourceOperator);
     ASSERT_EQ(pipelineRootOperator->getChildren().size(), 0);
