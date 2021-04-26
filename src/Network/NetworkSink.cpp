@@ -74,6 +74,12 @@ void NetworkSink::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngi
             break;
         }
         case NodeEngine::QueryReconfiguration: {
+            /*
+             * TODO: Sending messages on all channels is inefficient and could lead to flooding of network when number of threads is high
+             * moreover there is no need to send message via all channel, since operatorId is the only required criterion to handle message
+             * Message can be sent once using `postReconfigurationCallback` but it needs to be refactored to accept `WorkerContext` as a param
+             * Blocker: `QueryManager::addReconfigurationMessage` calls task->postReconfiguration when blocking, what will workerContext be?
+             */
             auto queryReconfigurationMessage = task.getUserData<Messages::QueryReconfigurationMessage>();
             auto* channel = workerContext.getChannel(nesPartition.getOperatorId());
             channel->sendReconfigurationMessage(queryReconfigurationMessage);
