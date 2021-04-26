@@ -64,7 +64,7 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
     } else if (mode == "MemoryMode") {
         return E2EBase::InputOutputMode::MemoryMode;
     } else if (mode == "LambdaMode") {
-        return E2EBase::InputOutputMode::WindowMode;
+        return E2EBase::InputOutputMode::LambdaMode;
     } else if (mode == "JoinMode") {
         return E2EBase::InputOutputMode::JoinMode;
     } else if (mode == "Auto") {
@@ -222,6 +222,7 @@ void E2EBase::setupSources() {
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
     auto query = config->getQuery()->getValue();
     if (mode == InputOutputMode::Auto) {
+        NES_NOT_IMPLEMENTED();
         //stateless queries use
         if (query.find("join") == std::string::npos && query.find("window") == std::string::npos) {
             mode = InputOutputMode::MemoryMode;

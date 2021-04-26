@@ -11,30 +11,14 @@ from itertools import permutations
 from random import sample
 import numpy as np
 
-# set this if you run with DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
-withLatencyHistogram = True
-
 # folder = "./"#in this folder
 folder = "./"
-df_changingBufferSize = pd.read_csv(folder + 'changingBufferSize.csv')
-df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCnt.csv')
-df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
-
-df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCnt.csv')
-df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCnt.csv')
 
 df_changingThreadsAndSourceMedSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceMedSelectivity.csv')
 df_changingThreadsAndSourceHighSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceHighSelectivity.csv')
 df_changingThreadsAndSourceLowSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceLowSelectivity.csv')
 df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProc.csv')
 df_scalingLarge = pd.read_csv(folder + 'scalingLarge.csv')
-
-if (withLatencyHistogram == True):
-    df_latencyWrk1 = pd.read_csv(folder + 'latencyW1.log')
-    df_latencyWrk2 = pd.read_csv(folder + 'latencyW2.log')
-    df_latencyWrk4 = pd.read_csv(folder + 'latencyW4.log')
-    df_latencyWrk8 = pd.read_csv(folder + 'latencyW8.log')
-    df_latencyWrk12 = pd.read_csv(folder + 'latencyW12.log')
 
 import plotly.graph_objects as go
 import plotly
