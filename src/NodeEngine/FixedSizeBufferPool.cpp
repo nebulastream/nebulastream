@@ -18,6 +18,7 @@
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
 namespace NES::NodeEngine {
 FixedSizeBufferPool::FixedSizeBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
@@ -31,6 +32,20 @@ FixedSizeBufferPool::FixedSizeBufferPool(BufferManagerPtr bufferManager, std::de
         memSegment->controlBlock->resetBufferRecycler(this);
         NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
         exclusiveBuffers.emplace_back(memSegment);
+    }
+}
+
+FixedSizeBufferPool::FixedSizeBufferPool(BufferManagerPtr bufferManager,
+                                         size_t numberOfReservedBuffers, std::shared_ptr<uint8_t> memoryArea, const size_t memoryAreaSize)
+    : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers), isDestroyed(false) {
+
+    NES_ASSERT(memoryAreaSize < bufferManager->getBufferSize(), "The memory buffer has to fit in the buffer size");
+    for(uint64_t i = 0; i < numberOfReservedBuffers; i++)
+    {
+        auto buffer = TupleBuffer::wrapMemory(memoryArea.get(), bufferManager->getBufferSize(), this);
+        exclusiveBuffers.emplace_back(memoryArea, bufferManager->getBufferSize(), this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+          recycler->recyclePooledBuffer(segment);
+        });
     }
 }
 
