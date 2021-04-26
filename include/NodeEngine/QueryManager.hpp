@@ -261,11 +261,47 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     */
     bool qepStartSequence(Execution::ExecutableQueryPlanPtr qep) const;
 
-    bool triggerQepStop(OperatorId sourceOperatorId, const Execution::ExecutableQueryPlanPtr& oldQep,
-                        const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
-    bool triggerQepStart(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr& newQep,
-                         const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+    /**
+     * Trigger deregister, stop QEP for operatorId and propagate messages to sinks
+     * @param sourceOperatorId : operatorId to deregister QEP with
+     * @param oldQep : QEP to deregister and propagate messages to
+     * @param queryReconfigurationMessage : Message to propagate Sinks when all sources for Qep have triggered `StopQueryPlan`
+     * @return true if de-registration is successful else false
+     */
+    bool triggerQepStopReconfiguration(OperatorId sourceOperatorId, const Execution::ExecutableQueryPlanPtr& oldQep,
+                                       const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+    /**
+     * Trigger register, start of QEP for operatorId and propagate messages to sinks
+     * @param sourceOperatorId : operatorId to register QEP with
+     * @param newQep : QEP to register and start
+     * @param queryReconfigurationMessage : Message to propagate Sinks
+     * @return true if registration and start is successful else false
+     */
+    bool triggerQepStartReconfiguration(OperatorId sourceOperatorId, Execution::ExecutableQueryPlanPtr& newQep,
+                                        const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+
+    /**
+     * Remove QEP from running QEPs if QEP is stopped
+     * @param qepId : subPlanId of QEP to remove from running QEPs
+     */
     void qepDestroySequence(QuerySubPlanId qepId);
+
+    /**
+     * Propagate reconfiguration message to all QEPs consuming data from this operator
+     * @param sourceOperatorId : source operator from which message was received
+     * @param queryReconfigurationMessage : Reconfiguration Message received from source
+     * @return true if propagation was successful else false
+     */
+    bool propagateReconfigurationMessage(OperatorId sourceOperatorId,
+                                         const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
+
+    /**
+     * Propagate reconfiguration to downstream via sinks
+     * @param qep : QEP via which message has to be propagated
+     * @param queryReconfigurationMessage : Reconfiguration Message received from source
+     */
+    void propagateReconfigurationViaQepSinks(const Execution::ExecutableQueryPlanPtr& qep,
+                                             const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
 
     QueryManager::ExecutionResult terminateLoop(WorkerContext&);
 

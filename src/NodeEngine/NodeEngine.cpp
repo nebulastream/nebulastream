@@ -520,6 +520,9 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
         }
     }
     // TODO: Propagate message to other QEP consuming tuples from this OperatorId
+    if (!queryManager->propagateReconfigurationMessage(operatorId, queryReconfigurationMessage)) {
+        NES_ERROR("NodeEngine::onQueryReconfiguration: Failed to propagate message received from operator: " << operatorId);
+    }
 }
 
 bool NodeEngine::triggerQueryReconfiguration(OperatorId operatorId, Execution::ExecutableQueryPlanPtr oldQep,
