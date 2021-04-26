@@ -33,14 +33,12 @@
 
 namespace NES {
 
-DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkLogicalOperatorNodePtr sink, NodeEngine::NodeEnginePtr nodeEngine,
+DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkDescriptor, SchemaPtr schema, NodeEngine::NodeEnginePtr nodeEngine,
                                                          QuerySubPlanId querySubPlanId) {
-    auto schema = sink->getOutputSchema();
-    auto sinkDescriptor = sink->getSinkDescriptor();
     NES_ASSERT(nodeEngine, "Invalid node engine");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
-        return createTextPrintSink(sink->getOutputSchema(), querySubPlanId, nodeEngine, std::cout);
+        return createTextPrintSink(schema, querySubPlanId, nodeEngine, std::cout);
     } else if (sinkDescriptor->instanceOf<NullOutputSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating nulloutput sink" << schema->toString());
         return createNullOutputSink();
