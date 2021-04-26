@@ -71,7 +71,6 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
             }
         }
     }
-//    uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
     NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= globalBufferManager->getBufferSize(),
                     "value to write is larger than the buffer");
 
@@ -82,11 +81,10 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
         NES_ERROR("Buffer invalid after waiting on timeout");
         return std::nullopt;
     }
-//    auto numberOfTuplesToProduce = buffer->getBufferSize() / schema->getSchemaSizeInBytes();
     memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize());
 
 //        TODO: replace copy with inplace add like with the wraparound
-    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
+//    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
 
     refCnt++;
     if (memoryAreaSize > buffer->getBufferSize()) {

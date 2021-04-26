@@ -50,16 +50,6 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
     explicit FixedSizeBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers,
                                  size_t numberOfReservedBuffers);
 
-    /**
-     * @brief Construct a new LocalBufferPool from existing allocated memroy
-     * @param availableBuffers deque of exclusive buffers
-     * @param numberOfReservedBuffers number of exclusive buffers
-     * @param memoryArea of already allocated memory
-     * @param memoryAreaSize size of the allocated memory
-     */
-    explicit FixedSizeBufferPool(BufferManagerPtr bufferManager, size_t numberOfReservedBuffers,
-                                 std::shared_ptr<uint8_t> memoryArea, const size_t memoryAreaSize);
-
     ~FixedSizeBufferPool();
 
     /**
