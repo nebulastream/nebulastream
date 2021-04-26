@@ -48,6 +48,8 @@ std::string E2EBase::getInputOutputModeAsString(E2EBase::InputOutputMode mode) {
         return "LambdaMode";
     } else if (mode == E2EBase::InputOutputMode::WindowMode) {
         return "WindowMode";
+    } else if (mode == E2EBase::InputOutputMode::YSBMode) {
+        return "YSBMode";
     } else if (mode == E2EBase::InputOutputMode::JoinMode) {
         return "JoinMode";
     } else if (mode == E2EBase::InputOutputMode::Auto) {
@@ -65,6 +67,10 @@ E2EBase::InputOutputMode E2EBase::getInputOutputModeFromString(std::string mode)
         return E2EBase::InputOutputMode::MemoryMode;
     } else if (mode == "LambdaMode") {
         return E2EBase::InputOutputMode::LambdaMode;
+    } else if (mode == "WindowMode") {
+        return E2EBase::InputOutputMode::WindowMode;
+    } else if (mode == "YSBMode") {
+        return E2EBase::InputOutputMode::YSBMode;
     } else if (mode == "JoinMode") {
         return E2EBase::InputOutputMode::JoinMode;
     } else if (mode == "Auto") {
@@ -113,6 +119,7 @@ std::chrono::nanoseconds E2EBase::recordStatistics() {
         auto queryStatisticsPtrs = nodeEngine->getQueryStatistics(queryId);
         for (auto iter : queryStatisticsPtrs) {
             if (iter->getProcessedTuple() != 0) {
+                std::cout << "engine READY" << std::endl;
                 readyToMeasure = true;
             } else {
                 std::cout << "engine not ready yet" << std::endl;
@@ -304,6 +311,48 @@ void E2EBase::setupSources() {
                     records[u].value = u % 100;
                     records[u].timestamp = u;
                 }
+                records[0].id = 123;
+                records[0].value = 123;
+                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                                           .count();
+                return;
+            };
+
+            NES::AbstractPhysicalStreamConfigPtr conf =
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+
+            if (config->getScalability()->getValue() == "scale-out") {
+                wrk->registerPhysicalStream(conf);
+            } else {
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
+                                                                    "test_stream" + std::to_string(i), "input");
+                crd->getNodeEngine()->setConfig(conf);
+            }
+        }
+    } else if (mode == InputOutputMode::WindowMode) {
+        std::cout << "windowmode source mode" << std::endl;
+
+        for (uint64_t i = 0; i < sourceCnt; i++) {
+            auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+                struct Record {
+                    uint64_t id;
+                    uint64_t value;
+                    uint64_t timestamp;
+                };
+
+                auto records = buffer.getBufferAs<Record>();
+                auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::high_resolution_clock::now().time_since_epoch())
+                              .count();
+                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
+                    records[u].id = u;
+                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                    records[u].value = u % 10;
+                    records[u].timestamp = ts;
+                }
+
                 records[0].id = 123;
                 records[0].value = 123;
                 records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -601,6 +650,7 @@ std::string E2EBase::getResult() {
     std::cout << "runtimeInSec=" << runtimeInSec << std::endl;
 
     if (bufferProcessed == 0) {
+        NES_ERROR("bufferProcessed is zero thus the run is invalid");
         return out.str();
     }
 

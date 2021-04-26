@@ -43,7 +43,7 @@ class E2EBase {
      * WindowMode = generate increasing time stamps in different buffers (each buffer will have time(0) time stamps
      * JoinMode = generate two sources with increasing timestamp
      */
-    enum class InputOutputMode { FileMode, MemoryMode, LambdaMode, WindowMode, JoinMode, Auto, UndefinedInputMode };
+    enum class InputOutputMode { FileMode, MemoryMode, LambdaMode, WindowMode, YSBMode, JoinMode, Auto, UndefinedInputMode };
 
     /**
      * @brief Method to perform the benchmark
