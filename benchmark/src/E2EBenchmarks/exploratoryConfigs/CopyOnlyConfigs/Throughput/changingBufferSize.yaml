@@ -12,7 +12,7 @@ bufferSizeInBytes: 4096,8192,16384,32768,65536,131072,262144,524288,1048576,2097
 
 
 ##benchmark parameter for the entire run
-inputOutputMode: Auto
+inputOutputMode: MemoryMode
 outputFile: changingBufferSize.csv
 benchmarkName: changingBufferSize
 query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
@@ -20,7 +20,7 @@ query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
 scalability: scale-up
-logLevel: LOG_FATAL
+logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 5

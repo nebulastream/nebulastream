@@ -11,7 +11,7 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
-inputOutputMode: Auto
+inputOutputMode: LambdaMode
 outputFile: changingThreadsAndSourceLowSelectivity.csv
 benchmarkName: changingThreadsAndSourceLowSelectivity
 query: 'Query::from("input").filter(Attribute("value") < 10).sink(NullOutputSinkDescriptor::create());'

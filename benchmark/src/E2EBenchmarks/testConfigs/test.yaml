@@ -12,10 +12,12 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 4096
 
 ##benchmark parameter for the entire run
-inputOutputMode: Auto
+inputOutputMode: LambdaMode
 outputFile: out.csv
 benchmarkName: testBench
-query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("input").project(Attribute("id"), Attribute("value")).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").map(Attribute("field1") = 1).map(Attribute("field2") = 2).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 1000000
