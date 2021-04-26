@@ -32,22 +32,21 @@ class LowerToExecutableQueryPlanPhase {
                                                            NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
-
     void processSource(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                        std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                       NodeEngine::NodeEnginePtr nodeEngine);
+                       NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
 
     NodeEngine::Execution::SuccessorPipeline processSuccessor(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                                                               std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                                                              NodeEngine::NodeEnginePtr nodeEngine);
+                                                              NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
 
     NodeEngine::Execution::SuccessorPipeline processSink(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                        std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                       NodeEngine::NodeEnginePtr nodeEngine);
+                       NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
 
     NodeEngine::Execution::SuccessorPipeline processOperatorPipeline(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                                                      std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                                                     NodeEngine::NodeEnginePtr nodeEngine);
+                                                     NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
 
 
    };
