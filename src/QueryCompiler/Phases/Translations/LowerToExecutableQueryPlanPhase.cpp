@@ -106,7 +106,7 @@ NodeEngine::Execution::SuccessorPipeline LowerToExecutableQueryPlanPhase::proces
     QueryId, QuerySubPlanId subQueryPlanId) {
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
-    auto sink = ConvertLogicalToPhysicalSink::createDataSink(sinkOperator->getSinkDescriptor(), sinkOperator->getOutputSchema(),
+    auto sink = ConvertLogicalToPhysicalSink::createDataSink(sinkOperator->getId(), sinkOperator->getSinkDescriptor(), sinkOperator->getOutputSchema(),
                                                              nodeEngine, subQueryPlanId);
     sinks.emplace_back(sink);
     return sink;

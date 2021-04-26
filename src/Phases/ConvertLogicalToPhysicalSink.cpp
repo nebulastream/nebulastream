@@ -33,8 +33,9 @@
 
 namespace NES {
 
-DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkDescriptor, SchemaPtr schema, NodeEngine::NodeEnginePtr nodeEngine,
+DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(OperatorId operatorId, SinkDescriptorPtr sinkDescriptor, SchemaPtr schema, NodeEngine::NodeEnginePtr nodeEngine,
                                                          QuerySubPlanId querySubPlanId) {
+    NES_DEBUG("Convert sink " << operatorId);
     NES_ASSERT(nodeEngine, "Invalid node engine");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>()) {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink" << schema->toString());
@@ -57,7 +58,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
     }
 #endif
 #ifdef ENABLE_OPC_BUILD
-    else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
+    .else if (sinkDescriptor->instanceOf<OPCSinkDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating OPC sink");
         const OPCSinkDescriptorPtr opcSinkDescriptor = sinkDescriptor->as<OPCSinkDescriptor>();
         return createOPCSink(schema, querySubPlanId, nodeEngine, opcSinkDescriptor->getUrl(), opcSinkDescriptor->getNodeId(),
@@ -71,7 +72,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
         // Two MQTT clients with the same client-id can not communicate with the same broker. Therefore, client-ids should generally be unique.
         // If the user does not pass a client-id explicitly, we utilize the operatorId to generate a client-id that is guaranteed to be unique.
         std::string clientId =
-            (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(sink->getId());
+            (mqttSinkDescriptor->getClientId() != "") ? mqttSinkDescriptor->getClientId() : std::to_string(operatorId);
         return createMQTTSink(schema, querySubPlanId, nodeEngine, mqttSinkDescriptor->getAddress(), clientId,
                               mqttSinkDescriptor->getTopic(), mqttSinkDescriptor->getUser(),
                               mqttSinkDescriptor->getMaxBufferedMSGs(), mqttSinkDescriptor->getTimeUnit(),
