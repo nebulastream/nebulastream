@@ -87,7 +87,7 @@ void NESRequestProcessorService::start() {
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
 
-                    SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
+                    /*SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
                     if (!sharedQueryMetaData->isNew()) {
@@ -120,7 +120,7 @@ void NESRequestProcessorService::start() {
                                 "QueryRequestProcessingService: Failed to deploy query with global query Id "
                                     + std::to_string(sharedQueryId));
                         }
-                    }
+                    }*/
 
                     //Mark the meta data as deployed
                     sharedQueryMetaData->markAsDeployed();

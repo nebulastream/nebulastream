@@ -48,7 +48,7 @@ const std::string logo = "/*****************************************************
 int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
-    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsDebugLevel("LOG_DEBUG"));
+    NES::setupLogging("nesCoordinatorStarter.log", NES::getStringAsLogLevel("LOG_DEBUG"));
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
 
     map<string, string> commandLineParams;
@@ -67,7 +67,7 @@ int main(int argc, const char* argv[]) {
     if (argc >= 1) {
         coordinatorConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
-    NES::setLogLevel(NES::getStringAsDebugLevel(coordinatorConfig->getLogLevel()->getValue()));
+    NES::setLogLevel(NES::getStringAsLogLevel(coordinatorConfig->getLogLevel()->getValue()));
 
     NES_INFO("start coordinator with RestIp=" << coordinatorConfig->getRestIp()->getValue()
                                               << " restPort=" << coordinatorConfig->getRestPort()->getValue()

@@ -51,16 +51,15 @@ namespace Yaml {
 class Node;
 
 /**
-    * @breif Helper classes and functions
-    *
-    */
+ * @breif Helper classes and functions
+ *
+ */
 namespace impl {
 
 /**
-        * @breif Helper functionality, converting string to any data type.
-        *        Strings are left untouched.
-        *
-        */
+ * @breif Helper functionality, converting string to any data type.
+ *        Strings are left untouched.
+ */
 template<typename T>
 struct StringConverter {
     static T Get(const std::string& data) {
