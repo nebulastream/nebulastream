@@ -527,7 +527,7 @@ TEST_F(MaintenanceServiceIntegrationTest, simpleTestSecondStrat) {
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("exdra");
-    srcConf->setNumberOfBuffersToProduce(1000);
+    srcConf->setNumberOfBuffersToProduce(10000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk3->registerPhysicalStream(conf);
@@ -554,9 +554,32 @@ TEST_F(MaintenanceServiceIntegrationTest, simpleTestSecondStrat) {
     //auto resourceUsage = globalExecutionPlan->getExecutionNodeByNodeId(2)->getOccupiedResources(1);
     //maintenanceService->migrateSubqueries(3, 1, querySubPlans, resourceUsage);
     maintenanceService->submitMaintenanceRequest(2,2);
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+    NES_DEBUG("After maintenanceService----------------------------------------------------------------------------------------------------");
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
     auto querySubPlansOnNode3 = globalExecutionPlan->getExecutionNodeByNodeId(3)->getQuerySubPlans(1);
     NES_DEBUG("test");
+    bool success = queryService->validateAndQueueStopRequest(1);
+    EXPECT_TRUE(success);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
+
 }
 
 TEST_F(MaintenanceServiceIntegrationTest, DISABLED_testDeploymentAndStartOfSubqueries) {

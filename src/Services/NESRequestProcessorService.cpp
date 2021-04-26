@@ -96,6 +96,9 @@ void NESRequestProcessorService::start() {
                                                       "Unable to migrate Query with ID "
                                                           + std::to_string(nesRequests[0]->getQueryId()));
                     }
+                    else{
+                        queryCatalog->markQueryAs(nesRequests[0]->getQueryId(),QueryStatus::Running);
+                    }
                 }
                 catch( QueryMigrationException& ex){
                     NES_ERROR("QueryMigrationPhaseException: " << ex.what());
