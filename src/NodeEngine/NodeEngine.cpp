@@ -190,7 +190,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         for (const auto& sink : sinkOperators) {
             NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink->getSinkDescriptor(), sink->getOutputSchema(), self, querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink->getId(),sink->getSinkDescriptor(), sink->getOutputSchema(), self, querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
