@@ -1,0 +1,16 @@
+# ~~~ Configurations for the NES E2E Selection Benchmark ~~~
+
+#Location of query set
+# For each query set we will run the experiments
+querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QuerySet'
+#querySetLocation: '/home/ankit/dima/nebulastream/benchmark/src/Micro-Benchmarks/Query-Merger/QuerySet'
+
+# Parameter that are changed per run with comma separated list
+queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,Z3SignatureBasedCompleteQueryMergerRule
+enableQueryMerging: false,true,true,true
+noOfPhysicalSources: 10,10,10,10
+
+#benchmark internal parameter
+logLevel: LOG_NONE
+startupSleepIntervalInSeconds: 3
+numberOfMeasurementsToCollect: 3

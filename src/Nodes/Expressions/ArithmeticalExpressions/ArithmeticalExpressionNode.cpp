@@ -54,7 +54,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     }
 
     stamp = commonStamp;
-    NES_DEBUG("ArithmeticalExpressionNode: we assigned the following stamp: " << toString());
+    NES_TRACE("ArithmeticalExpressionNode: we assigned the following stamp: " << toString());
 }
 
 bool ArithmeticalExpressionNode::equal(NodePtr rhs) const {

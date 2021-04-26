@@ -59,9 +59,7 @@ QueryPlanPtr DistributeWindowRule::apply(QueryPlanPtr queryPlan) {
     } else {
         NES_DEBUG("DistributeWindowRule::apply: no window operator in query");
     }
-
     NES_DEBUG("DistributeWindowRule::apply: plan after replace " << queryPlan->toString());
-
     return queryPlan;
 }
 
