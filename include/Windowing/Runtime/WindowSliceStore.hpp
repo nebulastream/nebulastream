@@ -47,7 +47,9 @@ class WindowSliceStore {
             }
         }
         NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << ts);
-        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
+//        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
+        //TODO: change this back once we have the vector clocks
+        return 0;
     }
 
     /**
