@@ -52,7 +52,7 @@ CompilerFlagsPtr CompilerFlags::createBenchmarkingCompilerFlags() {
 #endif
 
 #ifdef NES_BENCHMARKS_NATIVE_MODE
-    std::cout << "use native flags" << std::endl;
+//    std::cout << "use native flags" << std::endl;
     flags->addFlag(CompilerFlags::AVX2);
     flags->addFlag(CompilerFlags::TUNE);
     flags->addFlag(CompilerFlags::ARCH);

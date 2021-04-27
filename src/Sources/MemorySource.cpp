@@ -102,11 +102,6 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     if (buffer->getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
-        uint64_t* latency = buffer->getBufferAs<uint64_t>();
-        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::high_resolution_clock::now().time_since_epoch())
-            .count();
-        latency[2] = now;
         return buffer;
     }
 }

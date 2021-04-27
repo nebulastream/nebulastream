@@ -12,7 +12,7 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 2097152
 
 ##benchmark parameter for the entire run
-inputOutputMode: WindowMode
+inputOutputMode: YSBMode
 outputFile: out.csv
 benchmarkName: testBench
 #query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
@@ -25,13 +25,14 @@ benchmarkName: testBench
 #         ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))) "
 #         ".byKey(Attribute(\"id\"))"
 #         ".apply(Sum(Attribute(\"value\")))";
-query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
+#query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("ysb").window(TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(100))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
-numberOfBuffersToProduce: 100000
+numberOfBuffersToProduce: 1000000
 scalability: scale-up
 logLevel: LOG_WARNING
 experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 3
+startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 5
 

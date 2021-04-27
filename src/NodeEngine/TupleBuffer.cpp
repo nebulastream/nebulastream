@@ -110,6 +110,10 @@ void TupleBuffer::setOriginId(uint64_t id) { controlBlock->setOriginId(id); }
 
 void TupleBuffer::setWatermark(uint64_t value) { controlBlock->setWatermark(value); }
 
+void TupleBuffer::setCreationTimestamp(uint64_t value) { controlBlock->setCreationTimestamp(value); }
+
+uint64_t TupleBuffer::getCreationTimestamp() { return controlBlock->getCreationTimestamp(); }
+
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
     std::swap(lhs.ptr, rhs.ptr);
     std::swap(lhs.size, rhs.size);

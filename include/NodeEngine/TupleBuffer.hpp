@@ -141,7 +141,28 @@ class TupleBuffer {
      */
     void setWatermark(uint64_t value);
 
+    /**
+     * @brief method to set the watermark with a timestamp
+     * @param value timestamp
+     */
+    void setCreationTimestamp(uint64_t value);
+
+    /**
+     * @brief method to get the creation timestamp
+     * @return ts
+     */
+    uint64_t getCreationTimestamp();
+
+    /**
+     * @brief set the origin id for the buffer (the operator id that creates this buffer)
+     * @param origin id
+     */
     void setOriginId(uint64_t id);
+
+    /**
+     * @brief returns the origin id of the buffer
+     * @return origin id
+     */
     uint64_t getOriginId() const;
 
   private:

@@ -67,6 +67,7 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
     std::string libraryName = basename + ".so";
     writeSourceToFile(filename, source);
     NES_DEBUG("compiler filename =" << filename);
+    formatAndPrintSource(filename);
     // if we are in compile in debugging mode we create print the source file.
 
     CompilerFlagsPtr flags;
@@ -77,10 +78,10 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
 
 #ifdef NES_RELEASE_MODE
 #ifdef NES_BENCHMARKS_FLAG_MODE
-    std::cout << "use benchmark flags" << std::endl;
+//    std::cout << "use benchmark flags" << std::endl;
     flags = CompilerFlags::createBenchmarkingCompilerFlags();
 #else
-    std::cout << "use release flags" << std::endl;
+//    std::cout << "use release flags" << std::endl;
     flags = CompilerFlags::createOptimizingCompilerFlags();
 #endif
 #endif

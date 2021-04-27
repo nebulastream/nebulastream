@@ -120,13 +120,14 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();
     auto watermark = inputBuffer.getWatermark();
+    auto creationTimestamp = inputBuffer.getCreationTimestamp();
     auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
     auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     if (payloadSize == 0) {
         return true;
     }
-    sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark);
+    sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark, creationTimestamp);
     inputBuffer.retain();
     auto sentBytesOpt =
         zmqSocket.send(zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer),
