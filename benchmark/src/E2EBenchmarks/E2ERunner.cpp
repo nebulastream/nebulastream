@@ -183,7 +183,9 @@ int main(int argc, const char* argv[]) {
            << parameterNameToValueVectorMap["numberOfBuffersInSourceLocalBufferPools"].at(i) << ","
            << parameterNameToValueVectorMap["bufferSizeInBytes"].at(i) << ",";
 
-        ss << benchmarkConfig->getQuery()->getValue() << "," << benchmarkConfig->getInputOutputMode()->getValue() << std::endl;
+        auto queryWithoutComma = benchmarkConfig->getQuery()->getValue();
+        std::replace( queryWithoutComma.begin(), queryWithoutComma.end(), ',', '_');
+        ss << queryWithoutComma << "," << benchmarkConfig->getInputOutputMode()->getValue() << std::endl;
     }
 
     std::cout << "result=" << std::endl;
