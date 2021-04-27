@@ -88,6 +88,7 @@ void RestEngine::handleGet(http_request request) {
             return;
         } else if (splittedPath[0] == "topology") {
             topologyController->handleGet(splittedPath, request);
+            return;
         }
     }
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
