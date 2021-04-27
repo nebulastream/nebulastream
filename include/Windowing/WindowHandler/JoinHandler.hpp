@@ -39,21 +39,25 @@ class JoinHandler : public AbstractJoinHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction, uint64_t id)
+                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
+                         uint64_t id,
+                         StateManager* stateManager)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
           executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2), isRunning(false) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
         lastWatermark = 0;
+        this->stateManager = stateManager;
         NES_TRACE("Created join handler with id=" << id);
     }
 
     static AbstractJoinHandlerPtr create(Join::LogicalJoinDefinitionPtr joinDefinition,
                                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                                          BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
-                                         uint64_t id) {
-        return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction, id);
+                                         uint64_t id,
+                                         StateManager* stateManager) {
+        return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction, id, stateManager);
     }
 
     virtual ~JoinHandler() { NES_TRACE("~JoinHandler()"); }
@@ -219,10 +223,10 @@ class JoinHandler : public AbstractJoinHandler {
             return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>();
         };
         this->leftJoinState =
-            StateManager::instance().registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
+            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
                 "leftSide" + toString(), leftDefaultCallback);
         this->rightJoinState =
-            StateManager::instance().registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
+            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
                 "rightSide" + toString(), rightDefaultCallback);
 
         executableJoinAction->setup(pipelineExecutionContext, originId);
@@ -318,6 +322,7 @@ class JoinHandler : public AbstractJoinHandler {
     Join::BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction;
     uint64_t id;
     std::atomic<uint32_t> refCnt;
+    StateManager* stateManager;
 };
 }// namespace NES::Join
 #endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_

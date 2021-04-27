@@ -326,12 +326,13 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 std::shared_ptr<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>
 createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema) {
 
+    StateManager stateManager;
     auto aggregation = sumType::create();
     auto trigger = Windowing::ExecutableOnTimeTriggerPolicy::create(1000);
     auto triggerAction = Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
         windowDefinition, aggregation, resultSchema, 1);
     return Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDefinition, aggregation,
-                                                                                               trigger, triggerAction, 1);
+                                                                                               trigger, triggerAction, 1, stateManager);
 }
 
 /**
