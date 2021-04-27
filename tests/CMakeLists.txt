@@ -440,11 +440,6 @@ add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
 target_link_libraries(query-deployment-test nes ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
 
-### StringQueryTest ###
-add_executable(string-query-test "Integration/StringQueryTest.cpp")
-target_link_libraries(string-query-test nes ${GTEST_LIBRARIES})
-add_test(NAME string-query-test COMMAND string-query-test)
-
 ### MQTTSinkDepleymentTest ###
 add_executable(mqtt-sink-deployment-test "Integration/MQTTSinkDeploymentTest.cpp")
 target_link_libraries(mqtt-sink-deployment-test nes ${GTEST_LIBRARIES})
@@ -553,6 +548,11 @@ add_test(NAME memory-source-integration-test COMMAND memory-source-integration-t
 add_executable(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")
 target_link_libraries(test-harness-util-test nes ${GTEST_LIBRARIES})
 add_test(NAME test-harness-util-test COMMAND test-harness-util-test)
+
+### StringQueryTest ###
+add_executable(string-query-test "Integration/StringQueryTest.cpp")
+target_link_libraries(string-query-test nes ${GTEST_LIBRARIES})
+add_test(NAME string-query-test COMMAND string-query-test)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###

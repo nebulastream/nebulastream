@@ -14,9 +14,10 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Util/Logger.hpp>
 #include <Util/TestHarness.hpp>
+
+#include <API/Schema.hpp>
 
 #include <gmock/gmock-generated-function-mockers.h>
 #include <gtest/gtest.h>
