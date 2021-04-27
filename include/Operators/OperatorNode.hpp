@@ -19,6 +19,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
+#include <any>
 
 namespace NES {
 
@@ -133,14 +134,14 @@ class OperatorNode : public Node {
      * @param key key of the new property
      * @param value value of the new property
      */
-    void addProperty(std::string key, std::string value);
+    void addProperty(std::string key, std::any value);
 
     /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key
      */
-    std::string getProperty(std::string key);
+    std::any getProperty(std::string key);
 
     /**
      * @brief Remove a property string from the stored properties map
@@ -171,7 +172,7 @@ class OperatorNode : public Node {
     /*
      * @brief Map of properties of the current node
      */
-    std::map<std::string, std::string> properties;
+    std::map<std::string, std::any> properties;
 };
 
 }// namespace NES
