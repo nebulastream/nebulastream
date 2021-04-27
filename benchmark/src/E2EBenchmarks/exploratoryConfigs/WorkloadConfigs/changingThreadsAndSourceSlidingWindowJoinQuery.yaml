@@ -8,7 +8,7 @@ numberOfSources: 1
 numberOfBuffersInGlobalBufferManager: 65536
 numberOfBuffersPerPipeline: 1024
 numberOfBuffersInSourceLocalBufferPool: 1024
-bufferSizeInBytes: 4194304
+bufferSizeInBytes: 1048576
 
 ##benchmark parameter for the entire run
 inputOutputMode: JoinMode
