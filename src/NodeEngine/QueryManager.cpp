@@ -622,7 +622,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer()) ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(),
                                                             qep->getPipeline(targetStage), std::move(weakQep));
-            NES_WARNING("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful
+            NES_FATAL_ERROR("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful
                                                                                         << " to stage " << targetStage << " tasks in queue=" << taskQueue.size());
         } else {
             // reconfigure at qep level
@@ -633,7 +633,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer())
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
-            NES_WARNING("EOS opId=" << sourceId << " reconfType=" << reconfigType
+            NES_FATAL_ERROR("EOS opId=" << sourceId << " reconfType=" << reconfigType
                                     << " queryExecutionPlanId=" << queryExecutionPlanId << " threadPool->getNumberOfThreads()="
                                     << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId() << " tasks in queue=" << taskQueue.size());
         }
