@@ -2,8 +2,7 @@
 
 #Location of query set
 # For each query set we will run the experiments
-querySetLocation: '/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/QuerySet'
-#querySetLocation: '/home/ankit/dima/nebulastream/benchmark/src/Micro-Benchmarks/Query-Merger/QuerySet'
+querySetLocation: '<Path To Query-Set Folder>'
 
 # Parameter that are changed per run with comma separated list
 queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,StringSignatureBasedCompleteQueryMergerRule,ImprovedStringSignatureBasedCompleteQueryMergerRule,Z3SignatureBasedCompleteQueryMergerRule

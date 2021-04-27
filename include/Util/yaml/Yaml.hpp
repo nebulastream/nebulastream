@@ -39,20 +39,17 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #include <string>
 
 /**
-* @breif Namespace wrapping mini-yaml classes.
-*
-*/
+ * @breif Namespace wrapping mini-yaml classes.
+ */
 namespace Yaml {
 
 /**
-    * @breif Forward declarations.
-    *
-    */
+ * @breif Forward declarations.
+ */
 class Node;
 
 /**
  * @breif Helper classes and functions
- *
  */
 namespace impl {
 

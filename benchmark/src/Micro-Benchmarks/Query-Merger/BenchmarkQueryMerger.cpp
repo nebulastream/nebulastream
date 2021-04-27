@@ -34,7 +34,7 @@ std::string querySetLocation;
 std::chrono::nanoseconds runtime;
 NES::NesCoordinatorPtr coordinator;
 
-void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSources) {
+void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSource, uint64_t noOfDistinctSources = 1) {
     NES::StreamCatalogPtr streamCatalog = nesCoordinator->getStreamCatalog();
     //register logical stream qnv
     NES::SchemaPtr schema = NES::Schema::create()
@@ -42,17 +42,14 @@ void setupSources(NesCoordinatorPtr nesCoordinator, uint64_t noOfPhysicalSources
                                 ->addField("val", NES::UINT64)
                                 ->addField("X", NES::UINT64)
                                 ->addField("Y", NES::UINT64);
-    //FIXME: We need to revisit it when running different benchmarks
-    //    for (int j = 0; j < NO_OF_DISTINCT_SOURCES; j++) {
-    streamCatalog->addLogicalStream("example", schema);
-    //    }
 
-    for (int i = 1; i <= noOfPhysicalSources; i++) {
-        auto topoNode = TopologyNode::create(i, "", i, i, 2);
-        //        for (int j = 0; j < NO_OF_DISTINCT_SOURCES; j++) {
-        auto streamCat = StreamCatalogEntry::create("CSV", "example", "benchmark" + std::to_string(i), topoNode);
-        streamCatalog->addPhysicalStream("example", streamCat);
-        //        }
+    for (int j = 0; j < noOfDistinctSources; j++) {
+        streamCatalog->addLogicalStream("example", schema);
+        for (int i = 1; i <= noOfPhysicalSource; i++) {
+            auto topoNode = TopologyNode::create(i, "", i, i, 2);
+            auto streamCat = StreamCatalogEntry::create("CSV", "example", "benchmark" + std::to_string(i), topoNode);
+            streamCatalog->addPhysicalStream("example", streamCat);
+        }
     }
 }
 
@@ -119,7 +116,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
 /**
  * @brief This benchmarks time taken in the preparation of Global Query Plan after merging @param{NO_OF_QUERIES_TO_SEND} number of queries.
  */
-int main() {
+int main(int argc, const char* argv[]) {
 
     NES::setupLogging("BenchmarkQueryMerger.log", NES::LOG_INFO);
     std::cout << "Setup BenchmarkQueryMerger test class." << std::endl;
@@ -128,8 +125,21 @@ int main() {
                        "Time,End_Time,Total_Run_Time"
                     << std::endl;
 
-    loadConfigFromYAMLFile("/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/Z3MergeConfig.yaml");
-    //    loadConfigFromYAMLFile("/home/ankit/dima/nebulastream/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/Z3MergeConfig.yaml");
+    std::map<string, string> commandLineParams;
+
+    for (int i = 1; i < argc; ++i) {
+        commandLineParams.insert(
+            std::pair<string, string>(string(argv[i]).substr(0, string(argv[i]).find("=")),
+                                      string(argv[i]).substr(string(argv[i]).find("=") + 1, string(argv[i]).length() - 1)));
+    }
+
+    auto configPath = commandLineParams.find("--configPath");
+
+    if (configPath != commandLineParams.end()) {
+        loadConfigFromYAMLFile(configPath->second.c_str());
+    } else {
+        loadConfigFromYAMLFile("/home/ankit-ldap/tmp/nes/benchmark/src/Micro-Benchmarks/Query-Merger/Confs/Z3MergeConfig.yaml");
+    }
 
     for (const auto& file : directory_iterator(querySetLocation)) {
 
