@@ -47,20 +47,20 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
 
     // adding property of the source
     std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load",1));
-    srcProp.insert(std::make_pair("dmf",1));
+    srcProp.insert(std::make_pair("load", 1));
+    srcProp.insert(std::make_pair("dmf", 1));
     properties.push_back(srcProp);
 
     // adding property of the filter
     std::map<std::string, std::any> filterProp;
-    filterProp.insert(std::make_pair("load",2));
-    filterProp.insert(std::make_pair("dmf",1));
+    filterProp.insert(std::make_pair("load", 2));
+    filterProp.insert(std::make_pair("dmf", 1));
     properties.push_back(filterProp);
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load",3));
-    sinkProp.insert(std::make_pair("dmf",1));
+    sinkProp.insert(std::make_pair("load", 3));
+    sinkProp.insert(std::make_pair("dmf", 1));
     properties.push_back(sinkProp);
 
     bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
@@ -92,16 +92,16 @@ TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes) {
 
     // adding property of the source
     std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load_int",1));
-    srcProp.insert(std::make_pair("dmf_double",0.5));
-    srcProp.insert(std::make_pair("misc_str",std::string("xyz")));
+    srcProp.insert(std::make_pair("load_int", 1));
+    srcProp.insert(std::make_pair("dmf_double", 0.5));
+    srcProp.insert(std::make_pair("misc_str", std::string("xyz")));
     properties.push_back(srcProp);
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load_int",1));
-    sinkProp.insert(std::make_pair("dmf_double",0.5));
-    sinkProp.insert(std::make_pair("misc_str",std::string("xyz")));
+    sinkProp.insert(std::make_pair("load_int", 1));
+    sinkProp.insert(std::make_pair("dmf_double", 0.5));
+    sinkProp.insert(std::make_pair("misc_str", std::string("xyz")));
     properties.push_back(sinkProp);
 
     bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
@@ -131,20 +131,20 @@ TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators) {
 
     // adding property of the source
     std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load",1));
-    srcProp.insert(std::make_pair("dmf",1));
+    srcProp.insert(std::make_pair("load", 1));
+    srcProp.insert(std::make_pair("dmf", 1));
     properties.push_back(srcProp);
 
     // adding property of the filter
     std::map<std::string, std::any> filterProp;
-    filterProp.insert(std::make_pair("load",2));
-    filterProp.insert(std::make_pair("dmf",1));
+    filterProp.insert(std::make_pair("load", 2));
+    filterProp.insert(std::make_pair("dmf", 1));
     properties.push_back(filterProp);
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load",3));
-    sinkProp.insert(std::make_pair("dmf",1));
+    sinkProp.insert(std::make_pair("load", 3));
+    sinkProp.insert(std::make_pair("dmf", 1));
     properties.push_back(sinkProp);
 
     // this should return false as properties of all operators has to be supplied if one of them is supplied
@@ -160,14 +160,14 @@ TEST_F(OperatorPropertiesTest, testAssignWithLessPropertiesThanOperators) {
 
     // adding property of the source
     std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load","1"));
-    srcProp.insert(std::make_pair("dmf","1"));
+    srcProp.insert(std::make_pair("load", "1"));
+    srcProp.insert(std::make_pair("dmf", "1"));
     properties.push_back(srcProp);
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load","3"));
-    sinkProp.insert(std::make_pair("dmf","1"));
+    sinkProp.insert(std::make_pair("load", "3"));
+    sinkProp.insert(std::make_pair("dmf", "1"));
     properties.push_back(sinkProp);
 
     // this should return false as properties of all operators has to be supplied if one of them is supplied
@@ -181,48 +181,48 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
     auto subQuery = Query::from("default_logical").filter(Attribute("field_1") <= 10);
 
     auto query = Query::from("default_logical")
-        .joinWith(subQuery)
-        .where(Attribute("id"))
-        .equalsTo(Attribute("id"))
-        .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
-        .sink(PrintSinkDescriptor::create());
+                     .joinWith(subQuery)
+                     .where(Attribute("id"))
+                     .equalsTo(Attribute("id"))
+                     .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
+                     .sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::any>> properties;
 
     // Adding properties of each operator. The order should be the same as used in the QueryPlanIterator
     // adding property of the source
     std::map<std::string, std::any> srcProp;
-    srcProp.insert(std::make_pair("load",1));
+    srcProp.insert(std::make_pair("load", 1));
     properties.push_back(srcProp);
 
     // adding property of the source watermark (watermarks are added automatically)
     std::map<std::string, std::any> srcWatermarkProp;
-    srcWatermarkProp.insert(std::make_pair("load",2));
+    srcWatermarkProp.insert(std::make_pair("load", 2));
     properties.push_back(srcWatermarkProp);
 
     // adding property of the source in the sub query
     std::map<std::string, std::any> srcSubProp;
-    srcSubProp.insert(std::make_pair("load",3));
+    srcSubProp.insert(std::make_pair("load", 3));
     properties.push_back(srcSubProp);
 
     // adding property of the watermark in the sub query (watermarks are added automatically)
     std::map<std::string, std::any> srcSubWatermarkProp;
-    srcSubWatermarkProp.insert(std::make_pair("load",4));
+    srcSubWatermarkProp.insert(std::make_pair("load", 4));
     properties.push_back(srcSubWatermarkProp);
 
     // adding property of the filter in the sub query
     std::map<std::string, std::any> filterSubProp;
-    filterSubProp.insert(std::make_pair("load",5));
+    filterSubProp.insert(std::make_pair("load", 5));
     properties.push_back(filterSubProp);
 
     // adding property of the join
     std::map<std::string, std::any> joinProp;
-    joinProp.insert(std::make_pair("load",6));
+    joinProp.insert(std::make_pair("load", 6));
     properties.push_back(joinProp);
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
-    sinkProp.insert(std::make_pair("load",7));
+    sinkProp.insert(std::make_pair("load", 7));
     properties.push_back(sinkProp);
 
     bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
@@ -254,4 +254,4 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
     ++queryPlanIterator;
 }
 
-} // namespace NES
+}// namespace NES

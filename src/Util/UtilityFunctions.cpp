@@ -439,13 +439,15 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
     size_t numOperators = 0;
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan);
-    for (auto node: queryPlanIterator) {
+    for (auto node : queryPlanIterator) {
         numOperators++;
     }
 
     // check if we supply operator properties for all operators
     if (numOperators != properties.size()) {
-        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of operators. The query plan is:\n" << queryPlan->toString());
+        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
+                  "operators. The query plan is:\n"
+                  << queryPlan->toString());
         return false;
     }
 
@@ -453,11 +455,11 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
     auto propertyIterator = properties.begin();
 
     // iterate over all operators in the query
-    for (auto node: queryPlanIterator) {
+    for (auto node : queryPlanIterator) {
         for (auto const& [key, val] : *propertyIterator) {
             // add the current property to the current operator
-             node->as<LogicalOperatorNode>()->addProperty(key,val);
-         }
+            node->as<LogicalOperatorNode>()->addProperty(key, val);
+        }
         ++propertyIterator;
     }
 
