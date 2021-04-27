@@ -25,6 +25,7 @@ namespace NES {
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
 
+namespace detail {
 /**
  * @brief Data model to visualize edges in the nezviz format.
  */
@@ -63,6 +64,7 @@ class VizGraph {
     std::vector<VizNode> nodes;
     std::string serialize();
 };
+}// namespace detail
 
 /**
  * @brief Dump handler to dump query plans to a viznez file.
@@ -102,8 +104,8 @@ class VizDumpHandler : public DumpHandler {
     void dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr ptr) override;
 
   private:
-    void extractNodeProperties(VizNode& node, OperatorNodePtr operatorNode);
-    void dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& graph);
+    void extractNodeProperties(detail::VizNode& node, OperatorNodePtr operatorNode);
+    void dump(QueryPlanPtr queryPlan, std::string parent, detail::VizGraph& graph);
     void writeToFile(std::string scope, std::string name, std::string content);
     std::string rootDir;
 };

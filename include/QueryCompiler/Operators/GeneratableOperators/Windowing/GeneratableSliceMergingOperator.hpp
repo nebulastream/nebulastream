@@ -28,7 +28,23 @@ namespace GeneratableOperators {
  */
 class GeneratableSliceMergingOperator : public GeneratableWindowOperator {
   public:
+    /**
+     * @brief Creates a new generatable slice merging operator, which consumes slices and merges them in the operator state.
+     * @param inputSchema of the input records
+     * @param outputSchema of the result records
+     * @param operatorHandler handler of the operator state
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr operatorHandler);
+
+    /**
+     * @brief Creates a new generatable slice merging operator, which consumes slices and merges them in the operator state.
+     * @param id operator id
+     * @param inputSchema of the input records
+     * @param outputSchema of the result records
+     * @param operatorHandler handler of the operator state
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr operatorHandler);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;

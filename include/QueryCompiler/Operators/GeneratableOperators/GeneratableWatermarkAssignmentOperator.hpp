@@ -28,15 +28,28 @@ namespace GeneratableOperators {
  */
 class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
   public:
-    void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-    const std::string toString() const override;
-
+    /**
+     * @brief Creates a new generatable watermark assignment operator, which computes a watermark ts an set it to the current buffer.
+     * @param inputSchema the input schema
+     * @param outputSchema the output schema
+     * @param watermarkStrategyDescriptor the watermark strategy
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
                                          Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    /**
+     * @brief Creates a new generatable watermark assignment operator, which computes a watermark ts an set it to the current buffer.
+     * @param id operator id
+     * @param inputSchema the input schema
+     * @param outputSchema the output schema
+     * @param watermarkStrategyDescriptor the watermark strategy
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                          Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+    const std::string toString() const override;
     OperatorNodePtr copy() override;
-
   private:
     GeneratableWatermarkAssignmentOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                            Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);

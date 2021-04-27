@@ -28,8 +28,26 @@ namespace GeneratableOperators {
  */
 class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator {
   public:
+    /**
+     * @brief Creates a new slice pre-aggregation operator, which consumes input records and aggregates records in the operator state.
+     * @param id operator id
+     * @param inputSchema of the input records
+     * @param outputSchema output schema
+     * @param operatorHandler captures operator state
+     * @param windowAggregation generator for the window aggregation
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                          Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
+
+    /**
+     * @brief Creates a new slice pre-aggregation operator, which consumes input records and aggregates records in the operator state.
+     * @param inputSchema of the input records
+     * @param outputSchema output schema
+     * @param operatorHandler captures operator state
+     * @param windowAggregation generator for the window aggregation
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
                                          Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;

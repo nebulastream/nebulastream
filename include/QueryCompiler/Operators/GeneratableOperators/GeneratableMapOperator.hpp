@@ -27,7 +27,23 @@ namespace GeneratableOperators {
  */
 class GeneratableMapOperator : public GeneratableOperator {
   public:
+    /**
+     * @brief Creates a new generatable map operator, which applies a map expression on a specific input record.
+     * @param inputSchema the input schema
+     * @param outputSchema the output schema
+     * @param mapExpression the map expression
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,FieldAssignmentExpressionNodePtr mapExpression);
+
+    /**
+     * @brief Creates a new generatable map operator, which applies a map expression on a specific input record.
+     * @param id operator id
+     * @param inputSchema the input schema
+     * @param outputSchema the output schema
+     * @param mapExpression the map expression
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,FieldAssignmentExpressionNodePtr mapExpression);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;

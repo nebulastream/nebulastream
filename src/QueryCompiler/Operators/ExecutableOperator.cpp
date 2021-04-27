@@ -29,7 +29,7 @@ ExecutableOperator::ExecutableOperator(OperatorId id,
 
 OperatorNodePtr ExecutableOperator::create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                            std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers) {
-    return std::make_shared<ExecutableOperator>(UtilityFunctions::getNextOperatorId(), executablePipelineStage, operatorHandlers);
+    return std::make_shared<ExecutableOperator>(ExecutableOperator(UtilityFunctions::getNextOperatorId(), executablePipelineStage, operatorHandlers));
 }
 
 NodeEngine::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage() {

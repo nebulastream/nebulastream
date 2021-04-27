@@ -29,18 +29,95 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
     void lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) override;
 
   protected:
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerSource(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a sink operator. In this case we perform no action, as physical sink operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a scan operator and creates a corresponding generatable buffer scan.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerScan(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerEmit(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerProjection(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerFilter(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerMap(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerWatermarkAssignment(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerWindowSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerSlicePreAggregation(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerJoinBuild(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     void lowerJoinSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+     * @brief Lowers a source operator. In this case we perform no action, as physical source operators can't be lowered.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
     GeneratableWindowAggregationPtr lowerWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 };
 
