@@ -142,41 +142,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     string optimizationStrategyName = req.at("strategyName").as_string();
                     NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
                                                                                                 << optimizationStrategyName);
-                    QueryId queryId;
-
-                    // only parse operatorProperties if it is supplied
-                    if (req.has_field("operatorProperties")) {
-                        std::vector<std::map<std::string, std::any>> parsedProperties = {};
-
-                        // parse the properties and store it to parsedProperties
-                        json::array allOperatorProperties = req.at("operatorProperties").as_array();
-                        NES_DEBUG("allOperatorProperties size=" << allOperatorProperties.size());
-
-                        // loop over all operators
-                        for (int i=0; i< allOperatorProperties.size(); i++) {
-                            json::array currentOperatorProperties = allOperatorProperties[i].as_array();
-                            std::map<std::string, std::any> parsedCurrentOperatorProperties;
-
-                            // loop over all properties for the current operator
-                            for (int j=0; j<currentOperatorProperties.size(); j++) {
-                                json::array currentPropertiesKeyVal = currentOperatorProperties[j].as_array();
-
-                                // parse the key and value of the property
-                                std::string currentKey = currentPropertiesKeyVal[j].at("key").as_string();
-                                std::any currentValue = currentPropertiesKeyVal[j].at("value");
-
-                                // insert to the property map
-                                parsedCurrentOperatorProperties.insert(std::make_pair(currentKey,currentValue));
-                            }
-
-                            // add the property map of current operator to the vector of properties from all operators
-                            parsedProperties.push_back(parsedCurrentOperatorProperties);
-                        }
-
-                        queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName, parsedProperties);
-                    } else {
-                        queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
-                    }
+                    QueryId queryId = queryService->validateAndQueueAddRequest(userQuery, optimizationStrategyName);
 
                     //Prepare the response
                     json::value restResponse{};

@@ -54,18 +54,6 @@ class QueryService {
     uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName);
 
     /**
-     * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
-     * @param queryString : query in string form.
-     * @param placementStrategyName : name of the placement strategy to be used.
-     * @param properties vector of property maps of each operator in the query
-     * @return queryId : query id of the valid input query.
-     * @throws InvalidQueryException : when query string is not valid.
-     * @throws InvalidArgumentException : when the placement strategy is not valid.
-     */
-    uint64_t validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName,
-                                        std::vector<std::map<std::string, std::any>> properties);
-
-    /**
      * @deprecated NOT TO BE USED
      * @brief This method is used for submitting the queries directly to the system.
      * @param queryString : Query string
