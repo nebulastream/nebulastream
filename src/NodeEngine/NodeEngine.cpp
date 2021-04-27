@@ -166,7 +166,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
                               .setQueryId(queryId)
                               .setQuerySubPlanId(querySubPlanId)
                               .addOperatorQueryPlan(generatableOperatorPlan);
-
+        // TODO: set statemanager definition
         std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 

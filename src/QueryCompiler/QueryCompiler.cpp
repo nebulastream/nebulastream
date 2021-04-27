@@ -127,7 +127,6 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
     detail::generateExecutablePipelines(builder.getQueryId(), builder.getQuerySubPlanId(), std::move(codeGenerator),
                                         builder.getBufferManager(), builder.getQueryManager(), std::move(context),
                                         executableStages);
-
     if (executableStages.empty()) {
         NES_ERROR("compilePipelineStages failure: no pipelines to generate");
         NES_THROW_RUNTIME_ERROR("No pipelines generated");

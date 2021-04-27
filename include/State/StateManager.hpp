@@ -34,16 +34,8 @@ class StateManager {
     std::mutex mutex;
     std::unordered_map<std::string, state_variable_base_type> state_variables;
 
-    ~StateManager() {
-        NES_DEBUG("~StateManager()");
-        std::unique_lock<std::mutex> lock(mutex);
-        for (auto& it : state_variables) {
-            delete it.second;
-        }
-        state_variables.clear();
-    }
-
   public:
+
     /**
      * Register a new StateVariable object with default value callback
      * @tparam Key
@@ -112,7 +104,16 @@ class StateManager {
     /**
      * Singleton accessor to the state manager. As of now, there is one per process.
      */
-    static StateManager& instance();
+    //static StateManager& instance();
+
+    ~StateManager() {
+        NES_DEBUG("~StateManager()");
+        std::unique_lock<std::mutex> lock(mutex);
+        for (auto& it : state_variables) {
+            delete it.second;
+        }
+        state_variables.clear();
+    }
 };
 }// namespace NES
 #endif//STATEMANAGER_HPP

@@ -33,7 +33,7 @@ class StateTest : public testing::Test {
 };
 
 TEST_F(StateTest, estAddClear) {
-    StateManager& stateManager = StateManager::instance();
+    StateManager stateManager;
     StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-0");
     auto kv = var[23];
 
@@ -55,7 +55,7 @@ TEST_F(StateTest, estAddClear) {
 }
 
 TEST_F(StateTest, testEmplaceClear) {
-    StateManager& stateManager = StateManager::instance();
+    StateManager stateManager;
     StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-1");
     auto kv = var[23];
 
@@ -77,7 +77,7 @@ TEST_F(StateTest, testEmplaceClear) {
 }
 
 TEST_F(StateTest, testMultipleAddLookup) {
-    StateManager& stateManager = StateManager::instance();
+    StateManager stateManager;
     StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-2");
 
     std::unordered_map<uint32_t, uint32_t> map;
@@ -99,7 +99,7 @@ TEST_F(StateTest, testMultipleAddLookup) {
 }
 
 TEST_F(StateTest, testMultipleAddLookupMt) {
-    StateManager& stateManager = StateManager::instance();
+    StateManager stateManager;
     StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-3");
 
     std::vector<std::thread> t;
@@ -140,7 +140,7 @@ TEST_F(StateTest, testMultipleAddLookupMt) {
 }
 
 TEST_F(StateTest, testAddRangeMt) {
-    StateManager& stateManager = StateManager::instance();
+    StateManager stateManager;
     StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-4");
 
     std::vector<std::thread> t;
@@ -193,7 +193,8 @@ struct window_metadata {
 };
 
 TEST_F(StateTest, testStruct) {
-    StateManager& stateManager = StateManager::instance();
+    //StateManager stateManager = new StateManager();
+    StateManager stateManager;
     StateVariable<uint32_t, window_metadata*> var = *stateManager.registerState<uint32_t, window_metadata*>("window-content-5");
 
     for (uint64_t i = 0; i < 8192; i++) {
