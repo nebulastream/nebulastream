@@ -12,7 +12,7 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 2097152
 
 ##benchmark parameter for the entire run
-inputOutputMode: JoinMode
+inputOutputMode: WindowMode
 outputFile: out.csv
 benchmarkName: testBench
 #query: 'Query::from("input").filter(Attribute("value") > 5).sink(NullOutputSinkDescriptor::create());'
@@ -27,7 +27,7 @@ benchmarkName: testBench
 #         ".apply(Sum(Attribute(\"value\")))";
 #query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
 #query: 'Query::from("ysb").window(TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(100))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
-query: 'Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 1000000

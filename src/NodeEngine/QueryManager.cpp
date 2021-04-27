@@ -622,8 +622,8 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer()) ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(),
                                                             qep->getPipeline(targetStage), std::move(weakQep));
-            NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful
-                                                                                        << " to stage " << targetStage);
+            NES_WARNING("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful
+                                                                                        << " to stage " << targetStage << " tasks in queue=" << taskQueue.size());
         } else {
             // reconfigure at qep level
             auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
@@ -635,7 +635,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
             NES_WARNING("EOS opId=" << sourceId << " reconfType=" << reconfigType
                                     << " queryExecutionPlanId=" << queryExecutionPlanId << " threadPool->getNumberOfThreads()="
-                                    << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId());
+                                    << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId() << " tasks in queue=" << taskQueue.size());
         }
 
         auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,
