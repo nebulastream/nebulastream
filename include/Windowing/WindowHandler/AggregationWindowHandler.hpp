@@ -56,7 +56,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     ~AggregationWindowHandler() {
-        NES_DEBUG("~AggregationWindowHandler(" << handlerType << "," << id << "):  calling destructor");
         NES_DEBUG("~AggregationWindowHandler(" << handlerType << "," << id << ")  finished destructor");
     }
 
@@ -158,7 +157,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     void trigger(bool forceFlush = false) override {
         std::unique_lock lock(windowMutex);
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window action "
+        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window trigger "
                                               << executableWindowAction->toString()
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString()
                                               << " forceFlush=" << forceFlush);

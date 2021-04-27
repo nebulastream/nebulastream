@@ -150,8 +150,8 @@ class DataBufferMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
 
-    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint64_t originId, uint64_t watermark)
-        : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark) {}
+    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint64_t originId, uint64_t watermark, uint64_t creationTimestamp)
+        : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark), creationTimestamp(creationTimestamp) {}
 
     /**
      * @brief get the payloadSize of the BufferMessage
@@ -177,11 +177,18 @@ class DataBufferMessage {
     */
     const uint64_t getWatermark() const { return watermark; }
 
+    /**
+     * @brief get the createion ts of the current BufferMessage
+     * @return ts
+    */
+    const uint64_t getCreationTimestamp() const { return creationTimestamp; }
+
   private:
     const uint32_t payloadSize;
     const uint32_t numOfRecords;
     const uint64_t originId;
     const uint64_t watermark;
+    const uint64_t creationTimestamp;
 };
 
 class NesNetworkError : public std::runtime_error {

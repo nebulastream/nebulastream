@@ -11,11 +11,10 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
-inputOutputMode: WindowMode
-outputFile: changingThreadsAndSourceNormalWindowQuery.csv
-benchmarkName: changingThreadsAndSourceNormalWindowQuery
-query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
-
+inputOutputMode: YSBMode
+outputFile: changingThreadsAndSourceYSBWindowQuery.csv
+benchmarkName: changingThreadsAndSourceYSBWindowQuery
+query: 'Query::from("ysb").window(TumblingWindow::of(EventTime(Attribute("current_ms")), Milliseconds(100))).byKey(Attribute("campaign_id")).apply(Sum(Attribute("user_id"))).sink(NullOutputSinkDescriptor::create());'
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
 scalability: scale-up

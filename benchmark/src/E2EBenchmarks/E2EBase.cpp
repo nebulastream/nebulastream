@@ -212,14 +212,14 @@ E2EBase::~E2EBase() {
 }
 
 void E2EBase::setupSources() {
-    schema = NES::Schema::create()
+    defaultSchema = NES::Schema::create()
                  ->addField(createField("id", NES::UINT64))
                  ->addField(createField("value", NES::UINT64))
                  ->addField(createField("timestamp", NES::UINT64));
 
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
-    std::string testSchemaFileName = "input.hpp";
+    std::string testSchemaFileName = "defaultSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << input;
     out.close();
@@ -271,7 +271,7 @@ void E2EBase::setupSources() {
             auto* memArea = reinterpret_cast<uint8_t*>(malloc(bufferSizeInBytes));
             memoryAreas.push_back(memArea);
             auto* records = reinterpret_cast<Record*>(memArea);
-            size_t recordSize = schema->getSchemaSizeInBytes();
+            size_t recordSize = defaultSchema->getSchemaSizeInBytes();
             size_t numRecords = std::floor(double(bufferSizeInBytes) / double(recordSize));
             std::cout << "memsource produces tuples=" << numRecords << std::endl;
             for (auto u = 0u; u < numRecords; ++u) {
@@ -305,17 +305,12 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-                for (auto u = 1u; u < numberOfTuplesToProduce - 1; ++u) {
+                for (auto u = 0u; u < numberOfTuplesToProduce - 1; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 100;
                     records[u].timestamp = u;
                 }
-                records[0].id = 123;
-                records[0].value = 123;
-                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                           std::chrono::high_resolution_clock::now().time_since_epoch())
-                                           .count();
                 return;
             };
 
@@ -346,18 +341,12 @@ void E2EBase::setupSources() {
                 auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
                               std::chrono::high_resolution_clock::now().time_since_epoch())
                               .count();
-                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
                 }
-
-                records[0].id = 123;
-                records[0].value = 123;
-                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                           std::chrono::high_resolution_clock::now().time_since_epoch())
-                                           .count();
                 return;
             };
 
@@ -373,45 +362,98 @@ void E2EBase::setupSources() {
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
-    } else if (mode == InputOutputMode::WindowMode) {
-        std::cout << "windowmode source mode" << std::endl;
+    } else if (mode == InputOutputMode::YSBMode) {
+        std::cout << "YSB Mode source mode" << std::endl;
+
+        auto ysbSchema =  Schema::create()
+            ->addField("ysb$user_id", UINT64)
+            ->addField("ysb$page_id", UINT64)
+            ->addField("ysb$campaign_id", UINT64)
+            ->addField("ysb$ad_type", UINT64)
+            ->addField("ysb$event_type", UINT64)
+            ->addField("ysb$current_ms", UINT64)
+            ->addField("ysb$ip", UINT64)
+            ->addField("ysb$d1", UINT64)
+            ->addField("ysb$d2", UINT64)
+            ->addField("ysb$d3", UINT32)
+            ->addField("ysb$d4", UINT16);
+
+        std::string input =
+            R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
+        std::string testSchemaFileName = "ysbSchema.hpp";
+        std::ofstream out(testSchemaFileName);
+        out << input;
+        out.close();
+        NES_ASSERT(crd->getNesWorker()->registerLogicalStream("ysb", testSchemaFileName), "failed to create logical stream ysb");
 
         for (uint64_t i = 0; i < sourceCnt; i++) {
             auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                struct Record {
-                    uint64_t id;
-                    uint64_t value;
-                    uint64_t timestamp;
+                struct __attribute__((packed)) YsbRecord {
+                    YsbRecord() = default;
+                    YsbRecord(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType,
+                              uint64_t currentMs, uint64_t ip)
+                        : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
+                          currentMs(currentMs), ip(ip) {}
+
+                    uint64_t userId;
+                    uint64_t pageId;
+                    uint64_t campaignId;
+                    uint64_t adType;
+                    uint64_t eventType;
+                    uint64_t currentMs;
+                    uint64_t ip;
+
+                    // placeholder to reach 78 bytes
+                    uint64_t dummy1{0};
+                    uint64_t dummy2{0};
+                    uint32_t dummy3{0};
+                    uint16_t dummy4{0};
+
+                    YsbRecord(const YsbRecord& rhs) {
+                        userId = rhs.userId;
+                        pageId = rhs.pageId;
+                        campaignId = rhs.campaignId;
+                        adType = rhs.adType;
+                        eventType = rhs.eventType;
+                        currentMs = rhs.currentMs;
+                        ip = rhs.ip;
+                    }
+                    std::string toString() const {
+                        return "YsbRecord(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
+                            + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType)
+                            + ", eventType=" + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs)
+                            + ", ip=" + std::to_string(ip);
+                    }
                 };
 
-                auto records = buffer.getBufferAs<Record>();
+                auto records = buffer.getBufferAs<YsbRecord>();
                 auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
                               std::chrono::high_resolution_clock::now().time_since_epoch())
                               .count();
-                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
-                    records[u].id = u;
-                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-                    records[u].value = u % 10;
-                    records[u].timestamp = ts;
+
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+//                    memset(&records, 0, sizeof(YsbRecord));
+                    records[u].userId = 1;
+                    records[u].pageId = 0;
+                    records[u].adType = 0;
+                    records[u].campaignId = rand() % 10000;
+                    records[u].eventType = u % 3;
+                    records[u].currentMs = ts;
+                    records[u].ip = 0x01020304;
                 }
 
-                records[0].id = 123;
-                records[0].value = 123;
-                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                           std::chrono::high_resolution_clock::now().time_since_epoch())
-                                           .count();
                 return;
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy_" + std::to_string(i), "ysb", func,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
                 crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "test_stream" + std::to_string(i), "input");
+                                                                    "YSB_phy_" + std::to_string(i), "ysb");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
@@ -430,17 +472,12 @@ void E2EBase::setupSources() {
                               std::chrono::high_resolution_clock::now().time_since_epoch())
                               .count();
 
-                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
                 }
-                records[0].id = 123;
-                records[0].value = 123;
-                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                           std::chrono::high_resolution_clock::now().time_since_epoch())
-                                           .count();
 
                 return;
             };
@@ -456,17 +493,13 @@ void E2EBase::setupSources() {
                 auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
                               std::chrono::high_resolution_clock::now().time_since_epoch())
                               .count();
-                for (auto u = 1u; u < numberOfTuplesToProduce; ++u) {
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
                     records[u].id = u;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
                 }
-                records[0].id = 123;
-                records[0].value = 123;
-                records[0].timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                           std::chrono::high_resolution_clock::now().time_since_epoch())
-                                           .count();
+
                 return;
             };
 
@@ -655,11 +688,11 @@ std::string E2EBase::getResult() {
     }
 
     uint64_t throughputInTupsPerSec = tuplesProcessed / runtimeInSec;
-    uint64_t throughputInMBPerSec = (tuplesProcessed * schema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
+    uint64_t throughputInMBPerSec = (tuplesProcessed * defaultSchema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
     uint64_t avgLatencyInMs = latencySum / bufferProcessed;
 
     out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
-        << tuplesProcessed * schema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec << ","
+        << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec << ","
         << avgLatencyInMs;
 
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));

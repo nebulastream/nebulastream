@@ -122,7 +122,7 @@ class E2EBase {
     NES::QueryServicePtr queryService;
     QueryId queryId;
     NES::QueryCatalogPtr queryCatalog;
-    NES::SchemaPtr schema;
+    NES::SchemaPtr defaultSchema;
 
     std::vector<uint8_t*> memoryAreas;
     E2EBenchmarkConfigPtr config;
