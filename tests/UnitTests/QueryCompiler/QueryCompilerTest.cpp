@@ -171,7 +171,6 @@ TEST_F(QueryCompilerTest, windowQuery) {
         .dump()
         .build();
     auto result = queryCompiler->compileQuery(request);
-    result->getExecutableQueryPlan()
     ASSERT_FALSE(result->hasError());
 }
 
