@@ -126,9 +126,28 @@ class NewExecutablePipeline : public Reconfigurable {
      */
     void incrementProducerCount();
 
+    /**
+     * @brief Gets the successor pipeline
+     * @return SuccessorPipeline
+     */
     std::vector<SuccessorPipeline> getSuccessors();
+
+    /**
+     * @brief Gets the predecessor pipeline
+     * @return PredecessorPipeline
+     */
     std::vector<PredecessorPipeline> getPredecessor();
+
+    /**
+     * @brief Adds a new predecessor pipeline
+     * @param predecessorPipeline
+     */
     void addPredecessor(PredecessorPipeline predecessorPipeline);
+
+    /**
+     * @brief Adds a new successor pipeline
+     * @param predecessorPipeline
+     */
     void addSuccessor(SuccessorPipeline predecessorPipeline);
 
   private:

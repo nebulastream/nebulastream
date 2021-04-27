@@ -25,15 +25,31 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 /**
- * @brief Generates a conditional filter operator, which evaluates a predicate on all input values.
+ * @brief Generates a conditional filter operator, which evaluates a predicate on all input records.
  */
 class GeneratableFilterOperator : public GeneratableOperator {
   public:
-    static GeneratableOperatorPtr create( SchemaPtr inputSchema, ExpressionNodePtr predicate);
+
+    /**
+     * @brief Creates a new generatable filer operator, which evaluates a predicate on all input records.
+     * @param inputSchema input schema of the incoming records.
+     * @param predicate the predicate we evaluate
+     * @return GeneratableOperatorPtr
+     */
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema, ExpressionNodePtr predicate);
+
+    /**
+    * @brief Creates a new generatable filer operator, which evaluates a predicate on all input records.
+    * @param id operator id
+    * @param inputSchema input schema of the incoming records.
+    * @param predicate the predicate we evaluate
+    * @return GeneratableOperatorPtr
+    */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
   private:
     GeneratableFilterOperator(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate);
     ExpressionNodePtr predicate;

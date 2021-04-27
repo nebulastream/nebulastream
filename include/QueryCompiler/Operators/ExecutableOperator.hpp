@@ -20,17 +20,37 @@
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief A executable operator, represents an executable version of one or more operators in a query plan.
+ * It is currently used to represent compiled executable pipeline stages in a query plan.
+ * Based on this query plan we then create the executable query plan.
+ */
 class ExecutableOperator : public UnaryOperatorNode {
   public:
-    ExecutableOperator(OperatorId id, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                       std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
-    static OperatorNodePtr create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
+    /**
+     * @brief Creates a new executable operator, which captures a pipeline stage and a set of operator handlers.
+     * @param executablePipelineStage the executable pipeline stage
+     * @param operatorHandlers a list of operator handlers
+     * @return OperatorNodePtr
+     */
+    static OperatorNodePtr create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
+
+    /**
+     * @brief Gets the executable pipeline stage.
+     * @return ExecutablePipelineStagePtr
+     */
     NodeEngine::Execution::ExecutablePipelineStagePtr getExecutablePipelineStage();
+
+    /**
+     * @brief Gets the operator handlers, which capture specific operator state.
+     * @return std::vector<NodeEngine::Execution::OperatorHandlerPtr>
+     */
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
     const std::string toString() const override;
     OperatorNodePtr copy() override;
   private:
+    ExecutableOperator(OperatorId id, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                       std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
     NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage;
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
 };

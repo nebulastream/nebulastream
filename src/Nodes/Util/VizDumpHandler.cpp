@@ -28,9 +28,9 @@
 
 namespace NES {
 
-VizGraph::VizGraph(std::string name) : name(name) {}
+detail::VizGraph::VizGraph(std::string name) : name(name) {}
 
-std::string VizGraph::serialize() {
+std::string detail::VizGraph::serialize() {
     std::stringstream ss;
     ss << "{";
     ss << "\"nodes\": [";
@@ -53,13 +53,13 @@ std::string VizGraph::serialize() {
     return ss.str();
 }
 
-VizNode::VizNode(std::string id, std::string label, std::string parent) : id(id), label(label), parent(parent) {}
+detail::VizNode::VizNode(std::string id, std::string label, std::string parent) : id(id), label(label), parent(parent) {}
 
-void VizNode::addProperty(std::tuple<std::string, std::string> item) { properties.emplace_back(item); }
+void detail::VizNode::addProperty(std::tuple<std::string, std::string> item) { properties.emplace_back(item); }
 
-VizNode::VizNode(std::string id, std::string label) : VizNode(id, label, "") {}
+detail::VizNode::VizNode(std::string id, std::string label) : VizNode(id, label, "") {}
 
-std::string VizNode::serialize() {
+std::string detail::VizNode::serialize() {
     std::stringstream ss;
     ss << "{ \"data\": "
           "{\"id\": \""
@@ -83,9 +83,9 @@ std::string VizNode::serialize() {
     return ss.str();
 }
 
-VizEdge::VizEdge(std::string id, std::string source, std::string target) : id(id), source(source), target(target) {}
+detail::VizEdge::VizEdge(std::string id, std::string source, std::string target) : id(id), source(source), target(target) {}
 
-std::string VizEdge::serialize() {
+std::string detail::VizEdge::serialize() {
     std::stringstream ss;
     ss << "{ \"data\": "
           "{\"id\": \""
@@ -114,22 +114,22 @@ void VizDumpHandler::dump(const NodePtr) {
 
 void VizDumpHandler::dump(std::string context, std::string scope, QueryPlanPtr queryPlan) {
     NES_DEBUG("Dump query plan: " << queryPlan->getQueryId() << " : " << queryPlan->getQuerySubPlanId() << " for context " << context << " and scope " << scope);
-    auto graph = VizGraph("graph");
+    auto graph = detail::VizGraph("graph");
     dump(queryPlan, "", graph);
     writeToFile(context, scope, graph.serialize());
 }
 
-void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& graph) {
+void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, detail::VizGraph& graph) {
      auto queryPlanIter = QueryPlanIterator(queryPlan);
     for (auto op : queryPlanIter) {
         auto operatorNode = op->as<OperatorNode>();
-        auto vizNode = VizNode(std::to_string(operatorNode->getId()), op->toString(), parent);
+        auto vizNode = detail::VizNode(std::to_string(operatorNode->getId()), op->toString(), parent);
         extractNodeProperties(vizNode, operatorNode);
         graph.nodes.emplace_back(vizNode);
         for (auto child : operatorNode->getChildren()) {
             auto childOperator = child->as<OperatorNode>();
             auto edgeId = std::to_string(operatorNode->getId()) + "_" + std::to_string(childOperator->getId());
-            auto vizEdge = VizEdge(edgeId, std::to_string(operatorNode->getId()), std::to_string(childOperator->getId()));
+            auto vizEdge = detail::VizEdge(edgeId, std::to_string(operatorNode->getId()), std::to_string(childOperator->getId()));
             graph.edges.emplace_back(vizEdge);
         }
     }
@@ -137,16 +137,16 @@ void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, VizGraph& 
 
 void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) {
     NES_DEBUG("Dump query plan: " << pipelinePlan->getQueryId() << " : " << pipelinePlan->getQuerySubPlanId() << " for scope " << scope);
-    auto graph = VizGraph("graph");
+    auto graph = detail::VizGraph("graph");
     for (auto pipeline : pipelinePlan->getPipelines()) {
         auto currentId = "p_" + std::to_string(pipeline->getPipelineId());
-        auto vizNode = VizNode(currentId, "Pipeline");
+        auto vizNode = detail::VizNode(currentId, "Pipeline");
         graph.nodes.emplace_back(vizNode);
         dump(pipeline->getQueryPlan(), currentId, graph);
         for (auto successor : pipeline->getSuccessors()) {
             auto successorId = "p_" + std::to_string(successor->getPipelineId());
             auto edgeId = currentId + "_" + successorId;
-            auto vizEdge = VizEdge(edgeId, currentId, successorId);
+            auto vizEdge = detail::VizEdge(edgeId, currentId, successorId);
             graph.edges.emplace_back(vizEdge);
         }
     }
@@ -166,7 +166,7 @@ void VizDumpHandler::writeToFile(std::string scope, std::string name, std::strin
     outputFile << content;
     outputFile.close();
 }
-void VizDumpHandler::extractNodeProperties(VizNode& node, OperatorNodePtr operatorNode) {
+void VizDumpHandler::extractNodeProperties(detail::VizNode& node, OperatorNodePtr operatorNode) {
     //node.addProperty({"NodeSourceLocation", operatorNode->getNodeSourceLocation()});
     if (operatorNode->instanceOf<QueryCompilation::ExecutableOperator>()) {
         auto executableOperator = operatorNode->as<QueryCompilation::ExecutableOperator>();

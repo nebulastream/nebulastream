@@ -27,8 +27,24 @@ namespace GeneratableOperators {
  */
 class GeneratableProjectionOperator : public GeneratableOperator {
   public:
+    /**
+     * @brief Creates a new generatable projection operator, which projects the set of input fields.
+     * @param inputSchema the input schema
+     * @param outputSchema the output schema
+     * @param expressions the projections
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
                                          std::vector<ExpressionNodePtr> expressions);
+
+    /**
+     * @brief Creates a new generatable projection operator, which projects the set of input fields.
+     * @param id operator id
+     * @param inputSchema the input schema
+     * @param outputSchema the output schema
+     * @param expressions the projections
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                          std::vector<ExpressionNodePtr> expressions);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;

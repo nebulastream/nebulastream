@@ -383,6 +383,11 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     bool visited;
     bool recStack;
+
+    /**
+     * @brief Stores the stacktrace while node creation.
+     * It is empty if CMAKE_NES_TRACE_NODE_CREATION == false.
+     */
     std::string stackTrace;
 };
 }// namespace NES

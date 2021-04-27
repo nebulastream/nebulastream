@@ -100,8 +100,16 @@ class NewExecutableQueryPlan : public Reconfigurable {
      */
     std::vector<NewExecutablePipelinePtr> getPipelines();
 
+    /**
+     * @brief Returns a reference to the query manager
+     * @return QueryManagerPtr
+     */
     QueryManagerPtr getQueryManager();
 
+    /**
+     * @brief Returns a reference to the buffer manager
+     * @return BufferManagerPtr
+     */
     BufferManagerPtr getBufferManager();
 
     /**

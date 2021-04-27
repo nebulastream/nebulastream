@@ -27,12 +27,23 @@ namespace GeneratableOperators {
  */
 class GeneratableBufferScan : public GeneratableOperator {
   public:
+    /**
+     * @brief Creates a new generatable buffer scan operator.
+     * @param inputSchema the schema, which describes the input of an operator.
+     * @return GeneratableOperatorPtr
+     */
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema);
+
+    /**
+    * @brief Creates a new generatable buffer scan operator.
+    * @param id operator id
+    * @param inputSchema the schema, which describes the input of an operator.
+    * @return GeneratableOperatorPtr
+    */
+    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema);
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-
     const std::string toString() const override;
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema);
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema);
     OperatorNodePtr copy() override;
 
   private:

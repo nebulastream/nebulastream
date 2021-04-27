@@ -27,7 +27,19 @@ namespace GeneratableOperators {
  */
 class GeneratableBufferEmit : public GeneratableOperator {
   public:
+    /**
+     * @brief Creates a new generatable emit buffer, which emits record according to a specific output schema.
+     * @param outputSchema of the result records
+     * @return GeneratableOperatorPtr
+     */
     static GeneratableOperatorPtr create(SchemaPtr outputSchema);
+
+    /**
+    * @brief Creates a new generatable emit buffer, which emits record according to a specific output schema.
+    * @param id operator id
+    * @param outputSchema of the result records
+    * @return GeneratableOperatorPtr
+    */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr outputSchema);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
