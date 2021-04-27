@@ -42,14 +42,4 @@ std::string LogicalOperatorNode::getStringSignature() { return stringSignature; 
 
 void LogicalOperatorNode::setStringSignature(std::string signature) { this->stringSignature = signature; }
 
-void LogicalOperatorNode::addProperty(std::string key, std::string value) {
-    properties.insert(std::make_pair(key, value));
-}
-std::string LogicalOperatorNode::getProperty(std::string key) {
-    return properties.at(key);
-}
-void LogicalOperatorNode::removeProperty(std::string key) {
-    properties.erase(key);
-}
-
 }// namespace NES

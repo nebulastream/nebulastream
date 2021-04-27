@@ -128,6 +128,26 @@ class OperatorNode : public Node {
     */
     virtual bool isExchangeOperator() const = 0;
 
+    /**
+     * @brief Add a new property string to the stored properties map
+     * @param key key of the new property
+     * @param value value of the new property
+     */
+    void addProperty(std::string key, std::string value);
+
+    /**
+     * @brief Get a the value of a property
+     * @param key key of the value to retrieve
+     * @return value of the property with the given key
+     */
+    std::string getProperty(std::string key);
+
+    /**
+     * @brief Remove a property string from the stored properties map
+     * @param key key of the property to remove
+     */
+    void removeProperty(std::string key);
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
@@ -147,6 +167,11 @@ class OperatorNode : public Node {
      * @brief Unique Identifier of the operator within a query.
      */
     u_int64_t id;
+
+    /*
+     * @brief Map of properties of the current node
+     */
+    std::map<std::string, std::string> properties;
 };
 
 }// namespace NES

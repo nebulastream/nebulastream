@@ -79,32 +79,11 @@ class LogicalOperatorNode : public virtual OperatorNode {
      */
     std::string getStringSignature();
 
-    /**
-     * @brief Add a new property string to the stored properties map
-     * @param key key of the new property
-     * @param value value of the new property
-     */
-    void addProperty(std::string key, std::string value);
-
-    /**
-     * @brief Get a the value of a property
-     * @param key key of the value to retrieve
-     * @return value of the property with the given key
-     */
-    std::string getProperty(std::string key);
-
-    /**
-     * @brief Remove a property string from the stored properties map
-     * @param key key of the property to remove
-     */
-    void removeProperty(std::string key);
-
     virtual bool inferSchema() = 0;
 
   protected:
     Optimizer::QuerySignaturePtr z3Signature;
     std::string stringSignature;
-    std::map<std::string, std::string> properties;
 };
 
 }// namespace NES
