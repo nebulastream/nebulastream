@@ -67,11 +67,6 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
             for (auto& [fieldName, fieldExpr] : schemaFieldToExpMaps) {
                 bool fieldMatch = false;
                 for (auto& [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
-                    //                    solver->push();
-                    //                    solver->add((*fieldExpr != *otherFieldExpr).simplify());
-                    //                    bool equal = solver->check() == z3::unsat;
-                    //                    solver->pop();
-                    //                    if (equal) {
                     if (z3::eq(*fieldExpr, *otherFieldExpr)) {
                         fieldMatch = true;
                         break;
@@ -130,9 +125,7 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     //Create a negation of CNF of all conditions collected till now
     solver->push();
     solver->add(!z3::mk_and(allConditions).simplify());
-    //    NES_ERROR(*solver);
     bool equal = solver->check() == z3::unsat;
-    //    NES_ERROR("Equality " << equal);
     solver->pop();
     return equal;
 }
