@@ -111,7 +111,6 @@ TEST_F(StringQueryTest, DISABLED_paddingTest) {
 
 /// Conduct a comparison between two string attributes.
 TEST_F(StringQueryTest, DISABLED_condition_on_attribute) {
-
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
@@ -142,7 +141,6 @@ TEST_F(StringQueryTest, DISABLED_condition_on_attribute) {
 
 /// Tests not-equal operator.
 TEST_F(StringQueryTest, DISABLED_neq_on_chars) {
-
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
@@ -173,7 +171,6 @@ TEST_F(StringQueryTest, DISABLED_neq_on_chars) {
 
 /// Test equality operator and equality comparison conducted by logical representation of the schema.
 TEST_F(StringQueryTest, DISABLED_eq_on_chars_multiple_return) {
-
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
@@ -206,7 +203,6 @@ TEST_F(StringQueryTest, DISABLED_eq_on_chars_multiple_return) {
 /// Test equality operator: Set up a query which matches the data's attribute to a fixed string.
 /// The filter allows only a single attribute. Test the query's output.
 TEST_F(StringQueryTest, DISABLED_eq_on_string) {
-
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
@@ -266,7 +262,7 @@ TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int_not_comparator)
     EXPECT_THAT(actualOutput, ::testing::Not(::testing::UnorderedElementsAreArray(expectedOutput)));
 }
 
-/// Thest a query on a schema which contains a fixed-size char array. A filter predicate is evaluated on a value that
+/// Test a query on a schema which contains a fixed-size char array. A filter predicate is evaluated on a value that
 /// is not of type non-fixed-size char.
 TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int) {
 
@@ -298,7 +294,7 @@ TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-/// Thest a query on a schema which contains a fixed-size char array. A filter predicate is evaluated on a value that
+/// Test a query on a schema which contains a fixed-size char array. A filter predicate is evaluated on a value that
 /// is not of type non-fixed-size char. The values of the string type are the same.
 TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int_same) {
 
