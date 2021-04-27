@@ -39,7 +39,7 @@ class LogicalExpressionTest : public testing::Test {
 
     static void TearDownTestCase() { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test class."); }
 
-    inline static void test_binary_operator(std::string const &op) noexcept {
+    inline static void testBinaryOperator(std::string const &op) noexcept {
 
         std::vector<std::tuple<std::string, std::string>> pairs{
             {"0", R"(Attribute("value"))"},
@@ -85,20 +85,20 @@ class LogicalExpressionTest : public testing::Test {
 
 //TODO: re-enable tests when finishing #1170, #1781
 
-TEST_F(LogicalExpressionTest, DISABLED_testEqualityExpression) { test_binary_operator("=="); }
+TEST_F(LogicalExpressionTest, DISABLED_testEqualityExpression) { testBinaryOperator("=="); }
 
-TEST_F(LogicalExpressionTest, DISABLED_testInequalityExpression) { test_binary_operator("!="); }
+TEST_F(LogicalExpressionTest, DISABLED_testInequalityExpression) { testBinaryOperator("!="); }
 
-TEST_F(LogicalExpressionTest, DISABLED_testAndCompile) { test_binary_operator("&&"); }
+TEST_F(LogicalExpressionTest, DISABLED_testAndCompile) { testBinaryOperator("&&"); }
 
-TEST_F(LogicalExpressionTest, DISABLED_testOrExpression) { test_binary_operator("||"); }
+TEST_F(LogicalExpressionTest, DISABLED_testOrExpression) { testBinaryOperator("||"); }
 
-TEST_F(LogicalExpressionTest, DISABLED_testLeqExpression) { test_binary_operator("<="); }
+TEST_F(LogicalExpressionTest, DISABLED_testLeqExpression) { testBinaryOperator("<="); }
 
-TEST_F(LogicalExpressionTest, DISABLED_testGeqExpression) { test_binary_operator(">="); }
+TEST_F(LogicalExpressionTest, DISABLED_testGeqExpression) { testBinaryOperator(">="); }
 
-TEST_F(LogicalExpressionTest, DISABLED_testLtExpression) { test_binary_operator("<"); }
+TEST_F(LogicalExpressionTest, DISABLED_testLtExpression) { testBinaryOperator("<"); }
 
-TEST_F(LogicalExpressionTest, DISABLED_testGtExpression) { test_binary_operator(">"); }
+TEST_F(LogicalExpressionTest, DISABLED_testGtExpression) { testBinaryOperator(">"); }
 
 }
