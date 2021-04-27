@@ -823,7 +823,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     std::unique_lock lock(workMutex);
 #endif
 
-    NES_WARNING(s"QueryManager::completedWork: Work for task=" << task.toString());
+    NES_WARNING("QueryManager::completedWork: Work for task=" << task.toString());
     if (queryToStatisticsMap.contains(task.getPipeline()->getQepParentId())) {
         auto statistics = queryToStatisticsMap.find(task.getPipeline()->getQepParentId());
 
