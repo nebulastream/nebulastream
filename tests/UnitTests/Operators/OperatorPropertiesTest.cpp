@@ -43,24 +43,24 @@ class OperatorPropertiesTest : public testing::Test {
 TEST_F(OperatorPropertiesTest, testAssignProperties) {
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
-    std::vector<std::map<std::string, std::string>> properties;
+    std::vector<std::map<std::string, std::any>> properties;
 
     // adding property of the source
-    std::map<std::string, std::string> srcProp;
-    srcProp.insert(std::make_pair("load","1"));
-    srcProp.insert(std::make_pair("dmf","1"));
+    std::map<std::string, std::any> srcProp;
+    srcProp.insert(std::make_pair("load",1));
+    srcProp.insert(std::make_pair("dmf",1));
     properties.push_back(srcProp);
 
     // adding property of the filter
-    std::map<std::string, std::string> filterProp;
-    filterProp.insert(std::make_pair("load","2"));
-    filterProp.insert(std::make_pair("dmf","0.25"));
+    std::map<std::string, std::any> filterProp;
+    filterProp.insert(std::make_pair("load",2));
+    filterProp.insert(std::make_pair("dmf",1));
     properties.push_back(filterProp);
 
     // adding property of the sink
-    std::map<std::string, std::string> sinkProp;
-    sinkProp.insert(std::make_pair("load","3"));
-    sinkProp.insert(std::make_pair("dmf","1"));
+    std::map<std::string, std::any> sinkProp;
+    sinkProp.insert(std::make_pair("load",3));
+    sinkProp.insert(std::make_pair("dmf",1));
     properties.push_back(sinkProp);
 
     bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
@@ -71,16 +71,55 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
     // Assert if the property are added correctly
     auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
 
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "1");
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "1");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 1);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf")), 1);
     ++queryPlanIterator;
 
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "2");
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "0.25");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 2);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf")), 1);
     ++queryPlanIterator;
 
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "3");
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf"), "1");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 3);
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf")), 1);
+    ++queryPlanIterator;
+}
+
+// test assigning different types of operators properties
+TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes) {
+    auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
+
+    std::vector<std::map<std::string, std::any>> properties;
+
+    // adding property of the source
+    std::map<std::string, std::any> srcProp;
+    srcProp.insert(std::make_pair("load_int",1));
+    srcProp.insert(std::make_pair("dmf_double",0.5));
+    srcProp.insert(std::make_pair("misc_str",std::string("xyz")));
+    properties.push_back(srcProp);
+
+    // adding property of the sink
+    std::map<std::string, std::any> sinkProp;
+    sinkProp.insert(std::make_pair("load_int",1));
+    sinkProp.insert(std::make_pair("dmf_double",0.5));
+    sinkProp.insert(std::make_pair("misc_str",std::string("xyz")));
+    properties.push_back(sinkProp);
+
+    bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
+
+    // Assert if the assignment success
+    ASSERT_TRUE(res);
+
+    // Assert if the property are added correctly
+    auto queryPlanIterator = QueryPlanIterator(query.getQueryPlan()).begin();
+
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load_int")), 1);
+    ASSERT_EQ(std::any_cast<double>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf_double")), 0.5);
+    ASSERT_EQ(std::any_cast<std::string>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("misc_str")), "xyz");
+    ++queryPlanIterator;
+
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load_int")), 1);
+    ASSERT_EQ(std::any_cast<double>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("dmf_double")), 0.5);
+    ASSERT_EQ(std::any_cast<std::string>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("misc_str")), "xyz");
     ++queryPlanIterator;
 }
 
@@ -88,24 +127,24 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
 TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators) {
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
 
-    std::vector<std::map<std::string, std::string>> properties;
+    std::vector<std::map<std::string, std::any>> properties;
 
     // adding property of the source
-    std::map<std::string, std::string> srcProp;
-    srcProp.insert(std::make_pair("load","1"));
-    srcProp.insert(std::make_pair("dmf","1"));
+    std::map<std::string, std::any> srcProp;
+    srcProp.insert(std::make_pair("load",1));
+    srcProp.insert(std::make_pair("dmf",1));
     properties.push_back(srcProp);
 
     // adding property of the filter
-    std::map<std::string, std::string> filterProp;
-    filterProp.insert(std::make_pair("load","2"));
-    filterProp.insert(std::make_pair("dmf","0.25"));
+    std::map<std::string, std::any> filterProp;
+    filterProp.insert(std::make_pair("load",2));
+    filterProp.insert(std::make_pair("dmf",1));
     properties.push_back(filterProp);
 
     // adding property of the sink
-    std::map<std::string, std::string> sinkProp;
-    sinkProp.insert(std::make_pair("load","3"));
-    sinkProp.insert(std::make_pair("dmf","1"));
+    std::map<std::string, std::any> sinkProp;
+    sinkProp.insert(std::make_pair("load",3));
+    sinkProp.insert(std::make_pair("dmf",1));
     properties.push_back(sinkProp);
 
     // this should return false as properties of all operators has to be supplied if one of them is supplied
@@ -117,16 +156,16 @@ TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators) {
 TEST_F(OperatorPropertiesTest, testAssignWithLessPropertiesThanOperators) {
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
-    std::vector<std::map<std::string, std::string>> properties;
+    std::vector<std::map<std::string, std::any>> properties;
 
     // adding property of the source
-    std::map<std::string, std::string> srcProp;
+    std::map<std::string, std::any> srcProp;
     srcProp.insert(std::make_pair("load","1"));
     srcProp.insert(std::make_pair("dmf","1"));
     properties.push_back(srcProp);
 
     // adding property of the sink
-    std::map<std::string, std::string> sinkProp;
+    std::map<std::string, std::any> sinkProp;
     sinkProp.insert(std::make_pair("load","3"));
     sinkProp.insert(std::make_pair("dmf","1"));
     properties.push_back(sinkProp);
@@ -148,42 +187,42 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
         .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
         .sink(PrintSinkDescriptor::create());
 
-    std::vector<std::map<std::string, std::string>> properties;
+    std::vector<std::map<std::string, std::any>> properties;
 
     // Adding properties of each operator. The order should be the same as used in the QueryPlanIterator
     // adding property of the source
-    std::map<std::string, std::string> srcProp;
-    srcProp.insert(std::make_pair("load","1"));
+    std::map<std::string, std::any> srcProp;
+    srcProp.insert(std::make_pair("load",1));
     properties.push_back(srcProp);
 
     // adding property of the source watermark (watermarks are added automatically)
-    std::map<std::string, std::string> srcWatermarkProp;
-    srcWatermarkProp.insert(std::make_pair("load","2"));
+    std::map<std::string, std::any> srcWatermarkProp;
+    srcWatermarkProp.insert(std::make_pair("load",2));
     properties.push_back(srcWatermarkProp);
 
     // adding property of the source in the sub query
-    std::map<std::string, std::string> srcSubProp;
-    srcSubProp.insert(std::make_pair("load","3"));
+    std::map<std::string, std::any> srcSubProp;
+    srcSubProp.insert(std::make_pair("load",3));
     properties.push_back(srcSubProp);
 
     // adding property of the watermark in the sub query (watermarks are added automatically)
-    std::map<std::string, std::string> srcSubWatermarkProp;
-    srcSubWatermarkProp.insert(std::make_pair("load","4"));
+    std::map<std::string, std::any> srcSubWatermarkProp;
+    srcSubWatermarkProp.insert(std::make_pair("load",4));
     properties.push_back(srcSubWatermarkProp);
 
     // adding property of the filter in the sub query
-    std::map<std::string, std::string> filterSubProp;
-    filterSubProp.insert(std::make_pair("load","5"));
+    std::map<std::string, std::any> filterSubProp;
+    filterSubProp.insert(std::make_pair("load",5));
     properties.push_back(filterSubProp);
 
     // adding property of the join
-    std::map<std::string, std::string> joinProp;
-    joinProp.insert(std::make_pair("load","6"));
+    std::map<std::string, std::any> joinProp;
+    joinProp.insert(std::make_pair("load",6));
     properties.push_back(joinProp);
 
     // adding property of the sink
-    std::map<std::string, std::string> sinkProp;
-    sinkProp.insert(std::make_pair("load","7"));
+    std::map<std::string, std::any> sinkProp;
+    sinkProp.insert(std::make_pair("load",7));
     properties.push_back(sinkProp);
 
     bool res = UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties);
@@ -193,25 +232,25 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
 
     // Assert the property values
     // source (main)
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "1");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 1);
     ++queryPlanIterator;
     // source (main) watermark
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "2");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 2);
     ++queryPlanIterator;
     // source of subquery
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "3");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 3);
     ++queryPlanIterator;
     // watermark of subquery
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "4");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 4);
     ++queryPlanIterator;
     // filter in the subquery
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "5");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 5);
     ++queryPlanIterator;
     // join
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "6");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 6);
     ++queryPlanIterator;
     // sink
-    ASSERT_EQ((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load"), "7");
+    ASSERT_EQ(std::any_cast<int>((*queryPlanIterator)->as<LogicalOperatorNode>()->getProperty("load")), 7);
     ++queryPlanIterator;
 }
 

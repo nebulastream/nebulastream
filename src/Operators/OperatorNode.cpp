@@ -163,10 +163,10 @@ NodePtr OperatorNode::getChildWithOperatorId(uint64_t operatorId) {
     return nullptr;
 }
 
-void OperatorNode::addProperty(std::string key, std::string value) {
+void OperatorNode::addProperty(std::string key, std::any value) {
     properties.insert(std::make_pair(key, value));
 }
-std::string OperatorNode::getProperty(std::string key) {
+std::any OperatorNode::getProperty(std::string key) {
     return properties.at(key);
 }
 void OperatorNode::removeProperty(std::string key) {

@@ -43,11 +43,12 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog, NESRequestQueuePtr quer
 QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
 
 uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName) {
-    std::vector<std::map<std::string, std::string>> properties = {};
+    std::vector<std::map<std::string, std::any>> properties = {};
     return validateAndQueueAddRequest(queryString, placementStrategyName, properties);
 }
 
-uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName, std::vector<std::map<std::string, std::string>> properties) {
+uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::string placementStrategyName,
+                                                  std::vector<std::map<std::string, std::any>> properties) {
     NES_INFO("QueryService: Validating and registering the user query.");
     QueryId queryId = PlanIdGenerator::getNextQueryId();
 

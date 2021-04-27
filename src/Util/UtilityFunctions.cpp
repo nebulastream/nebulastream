@@ -434,7 +434,8 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
-bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan, std::vector<std::map<std::string, std::string>> properties) {
+bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
+                                                        std::vector<std::map<std::string, std::any>> properties) {
     size_t numOperators = 0;
     // count the number of operators in the query
     auto queryPlanIterator = QueryPlanIterator(queryPlan).begin();
