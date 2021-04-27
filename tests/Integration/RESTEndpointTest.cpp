@@ -249,11 +249,11 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
         })
         .wait();
 
-    auto connectivityResponse = response.as_array();
+    auto connectivityResponse = response.as_object();
     NES_DEBUG("Response: " << response.serialize());
     EXPECT_TRUE(connectivityResponse.size() == 1);
-    EXPECT_TRUE(connectivityResponse.at(0).has_number_field("success"));
-    ASSERT_EQ(true, connectivityResponse.at(0).as_bool());
+    EXPECT_TRUE(connectivityResponse.find("success") != connectivityResponse.end());
+    EXPECT_TRUE(connectivityResponse.at("success").as_bool());
 
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
