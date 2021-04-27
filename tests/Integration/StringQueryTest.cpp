@@ -24,7 +24,8 @@
 
 namespace NES {
 
-struct StringQueryTest : public testing::Test {
+class StringQueryTest : public testing::Test {
+  public:
 
     /// Return the pointer to instance of Schema.
     template<std::size_t s>
@@ -49,7 +50,8 @@ struct StringQueryTest : public testing::Test {
         }
     };
 
-    /// Schema format used throughout the string query tests.
+    /// Schema format used throughout the string query tests which consists of an uint key and a
+    /// fixed-size char array.
     template<std::size_t s, typename = std::enable_if_t<s != 0>>
     struct SchemaClass {
         uint32_t key;
@@ -67,10 +69,12 @@ struct StringQueryTest : public testing::Test {
             }
         }
 
+        /// Compare the key and all value entries.
         constexpr auto operator==(SchemaClass<s> const& rhs) const noexcept -> bool {
             return key == rhs.key && this->compare(rhs);
         }
 
+        /// Constexpr loop which compares all the values making use of short-circuit evaluation.
         template<std::size_t i = s - 1, typename = std::enable_if_t<i<s>>
         constexpr auto compare(SchemaClass<s> const& rhs) const noexcept -> bool {
             if constexpr (i) {
@@ -136,10 +140,6 @@ TEST_F(StringQueryTest, DISABLED_condition_on_attribute) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-// TODO: Unary expressions seem unsupported in LegacyExpressions.
-//       Therefore this test currently fails on the version patched for supporting fixed size arrays.
-// TODO: re-enable
-
 /// Tests not-equal operator.
 TEST_F(StringQueryTest, DISABLED_neq_on_chars) {
 
@@ -203,7 +203,8 @@ TEST_F(StringQueryTest, DISABLED_eq_on_chars_multiple_return) {
 }
 
 
-/// Test equality operator.
+/// Test equality operator: Set up a query which matches the data's attribute to a fixed string.
+/// The filter allows only a single attribute. Test the query's output.
 TEST_F(StringQueryTest, DISABLED_eq_on_string) {
 
     constexpr auto fixedArraySize = 4;
@@ -228,7 +229,6 @@ TEST_F(StringQueryTest, DISABLED_eq_on_string) {
     ASSERT_EQ(testHarness.getWorkerCount(), 1u);
 
     std::vector<Schema_t> expectedOutput{{1, "112"}};
-    //std::vector<Schema_t> expectedOutput{};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
