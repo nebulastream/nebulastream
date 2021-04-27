@@ -438,10 +438,9 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
                                                         std::vector<std::map<std::string, std::any>> properties) {
     size_t numOperators = 0;
     // count the number of operators in the query
-    auto queryPlanIterator = QueryPlanIterator(queryPlan).begin();
-    while(*queryPlanIterator) {
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto node: queryPlanIterator) {
         numOperators++;
-        ++queryPlanIterator;
     }
 
     // check if we supply operator properties for all operators
@@ -451,18 +450,14 @@ bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
     }
 
     // prepare the query plan iterator
-    queryPlanIterator = QueryPlanIterator(queryPlan).begin();
     auto propertyIterator = properties.begin();
 
     // iterate over all operators in the query
-    while(*queryPlanIterator) {
-        // iterate over key:val pairs in the property of current operator
+    for (auto node: queryPlanIterator) {
         for (auto const& [key, val] : *propertyIterator) {
             // add the current property to the current operator
-            (*queryPlanIterator)->as<LogicalOperatorNode>()->addProperty(key,val);
-        }
-
-        ++queryPlanIterator;
+             node->as<LogicalOperatorNode>()->addProperty(key,val);
+         }
         ++propertyIterator;
     }
 
