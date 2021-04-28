@@ -473,7 +473,7 @@ void E2EBase::setupSources() {
                               .count();
 
                 for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                    records[u].id = u % 2;
+                    records[u].id = u % 20;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
@@ -494,7 +494,7 @@ void E2EBase::setupSources() {
                               std::chrono::high_resolution_clock::now().time_since_epoch())
                               .count();
                 for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                    records[u].id = u % 3;
+                    records[u].id = u % 20 + 30;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
