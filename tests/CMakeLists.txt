@@ -101,7 +101,6 @@ add_executable(add-scan-and-emit-phase-tests "UnitTests/QueryCompiler/AddScanAnd
 target_link_libraries(add-scan-and-emit-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME add-scan-and-emit-phase-tests COMMAND add-scan-and-emit-phase-tests)
 
-
 ### Pipelining Tests ###
 add_executable(pipelining-phase-tests "UnitTests/QueryCompiler/PipeliningPhaseTest.cpp")
 target_link_libraries(pipelining-phase-tests nes ${GTEST_LIBRARIES})

@@ -24,7 +24,7 @@ namespace NES {
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
 /**
- * @brief Convert a compiler node to a human readable string and print it to the console.
+ * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
  */
 class ConsoleDumpHandler : public DumpHandler {
 

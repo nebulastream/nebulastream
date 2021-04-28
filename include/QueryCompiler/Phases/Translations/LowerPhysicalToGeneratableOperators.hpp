@@ -30,9 +30,30 @@ namespace QueryCompilation {
  */
 class LowerPhysicalToGeneratableOperators {
   public:
+    /**
+     * @brief Constructor to create a LowerPhysicalToGeneratableOperatorPhase
+     * @param provider to lower specific physical operator to generatabale operators
+     */
     LowerPhysicalToGeneratableOperators(GeneratableOperatorProviderPtr provider);
+
+    /**
+     * @brief Create a LowerPhysicalToGeneratableOperatorPhase
+     * @param provider to lower specific physical operator to generatabale operators
+     */
     static LowerPhysicalToGeneratableOperatorsPtr create(GeneratableOperatorProviderPtr provider);
-    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
+
+    /**
+     * @brief Applies the phase on a pipelined query plan.
+     * @param pipelined query plan
+     * @return PipelineQueryPlanPtr
+     */
+    PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan);
+
+    /**
+     * @brief Applies the phase on a pipelined and lower physical operator to generatable once.
+     * @param pipeline
+     * @return OperatorPipelinePtr
+     */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:

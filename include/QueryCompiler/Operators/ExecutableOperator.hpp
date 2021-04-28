@@ -48,6 +48,7 @@ class ExecutableOperator : public UnaryOperatorNode {
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+
   private:
     ExecutableOperator(OperatorId id, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                        std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);

@@ -28,10 +28,30 @@ namespace PhysicalOperators {
  */
 class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOperator{
   public:
+    /**
+     * @brief Constructor for the physical emit operator
+     * @param id operator id
+     * @param inputSchema input schema for the emit operator
+     */
     PhysicalEmitOperator(OperatorId id, SchemaPtr inputSchema);
+
+    /**
+     * @brief Creates a physical emit operator
+     * @param id operator id
+     * @param inputSchema
+     * @return PhysicalOperatorPtr
+     */
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema);
+
+    /**
+     * @brief Creates a physical emit operator
+     * @param inputSchema
+     * @return PhysicalOperatorPtr
+     */
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
+
     const std::string toString() const override;
+
     OperatorNodePtr copy() override;
 };
 }

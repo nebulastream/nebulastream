@@ -54,6 +54,7 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
 endif ()
 
+# enables tracing of stack traces if operator / expression nodes are created
 if (CMAKE_NES_TRACE_NODE_CREATION)
     set(NES_SPECIFIC_FLAGS "-DNES_TRACE_NODE_CREATION=1")
 endif ()

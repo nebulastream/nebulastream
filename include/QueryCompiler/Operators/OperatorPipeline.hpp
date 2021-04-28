@@ -134,9 +134,25 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @return true if pipeline has an operator.
      */
     bool hasOperators();
+
+    /**
+     * @brief Indicates if this is a source pipeline.
+     * @return true if source pipeline
+     */
     bool isSourcePipeline();
+
+    /**
+     * @brief Indicates if this is a sink pipeline.
+     * @return true if sink pipeline
+     */
     bool isSinkPipeline();
+
+    /**
+     * @brief Indicates if this is a operator pipeline.
+     * @return true if operator pipeline
+     */
     bool isOperatorPipeline();
+
   protected:
     OperatorPipeline(uint64_t pipelineId, Type pipelineType);
   private:

@@ -93,9 +93,10 @@ class AddScanAndEmitPhaseTest : public testing::Test {
 
 /**
  * @brief Input Query Plan:
- *
+ * Input:
  * | Physical Source |
  *
+ * Expected Result:
  * | Physical Source |
  *
  */
@@ -119,9 +120,10 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
 
 /**
  * @brief Input Query Plan:
- *
+ * Input:
  * | Physical Sink |
  *
+ * Expected Result:
  * | Physical Sink |
  *
  */
@@ -142,9 +144,10 @@ TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
 
 /**
  * @brief Input Query Plan:
- *
+ * Input:
  * | Physical Filter |
  *
+ * Expected Result:
  * | Physical Scan --- Physical Filter --- Physical Emit|
  *
  */

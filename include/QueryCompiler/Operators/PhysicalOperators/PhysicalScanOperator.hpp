@@ -28,8 +28,24 @@ namespace PhysicalOperators {
  */
 class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOperator{
   public:
+    /**
+     * @brief Constructor for the physical scan operator
+     * @param id operator id
+     * @param outputSchema output schema
+     */
     PhysicalScanOperator(OperatorId id, SchemaPtr outputSchema);
+
+    /**
+     * @brief Creates for the physical scan operator
+     * @param id operator id
+     * @param outputSchema output schema
+     */
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr outputSchema);
+
+    /**
+     * @brief Constructor for the physical scan operator
+     * @param outputSchema output schema
+     */
     static PhysicalOperatorPtr create(SchemaPtr outputSchema);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
