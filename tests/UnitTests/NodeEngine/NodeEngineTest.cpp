@@ -170,7 +170,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
         }
 
         NES_DEBUG("TEST: return");
-        return Ok;
+        return ExecutionResult::Ok;
     }
 };
 
