@@ -21,23 +21,72 @@
 namespace NES {
 namespace QueryCompilation {
 
+/**
+ * @brief Represents a query compilation request.
+ * The request encapsulates the query plan and addition properties.
+ */
 class QueryCompilationRequest {
   public:
     class Builder {
       public:
         Builder(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine);
+
+        /**
+         * @brief Enables debugging flag for this query
+         * @return Builder
+         */
         Builder& debug();
+
+        /**
+         * @brief Enables optimization flags for this request.
+         * @return Builder
+         */
         Builder& optimze();
+
+        /**
+         * @brief Enables dumping of intermediate query plans in the nes format.
+         * @return Builder
+         */
         Builder& dump();
+
+        /**
+         * @brief Creates the QueryCompilationRequestPtr based on the parameters.
+         * @return QueryCompilationRequestPtr
+         */
         QueryCompilationRequestPtr build();
       private:
         QueryCompilationRequestPtr request;
     };
     static QueryCompilationRequestPtr create(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine);
+
+    /**
+     * @brief Checks if debugging is enabled
+     * @return bool
+     */
     bool isDebugEnabled();
+
+    /**
+     * @brief Checks if optimization flags is enabled
+     * @return bool
+     */
     bool isOptimizeEnabled();
+
+    /**
+     * @brief Checks if dumping to nesviz is enabled
+     * @return bool
+     */
     bool isDumpEnabled();
+
+    /**
+     * @brief Gets the query plan of this request
+     * @return QueryPlanPtr
+     */
     QueryPlanPtr getQueryPlan();
+
+    /**
+     * @brief Gets the node engine
+     * @return NodeEngine::NodeEnginePtr
+     */
     NodeEngine::NodeEnginePtr getNodeEngine();
 
   private:

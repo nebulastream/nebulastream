@@ -31,11 +31,24 @@ namespace detail {
  */
 class VizEdge {
   public:
+    /**
+     * @brief Creates a new viz edge object, which represents a edge in the nezviz format
+     * @param id edge id
+     * @param source source id
+     * @param target target id
+     */
     VizEdge(std::string id, std::string source, std::string target);
+
+    /**
+     * @brief Serialize the edge to the nezviz format.
+     * @return serialized edge
+     */
+    std::string serialize();
+
     std::string id;
     std::string source;
     std::string target;
-    std::string serialize();
+
 };
 
 /**
@@ -43,14 +56,36 @@ class VizEdge {
  */
 class VizNode {
   public:
+    /**
+     * @brief Creates a new viz node object, which represents a edge in the nezviz format
+     * @param id edge id
+     * @param label node label
+     * @param parent node parent
+     */
     VizNode(std::string id, std::string label, std::string parent);
+
+    /**
+     * @brief Creates a new viz node object, which represents a edge in the nezviz format
+     * @param id edge id
+     * @param label node label
+     */
     VizNode(std::string id, std::string label);
+
+    /**
+     * @brief Add properties to the node
+     */
+    void addProperty(std::tuple<std::string, std::string>);
+
+    /**
+     * @brief Serialize the edge to the nezviz format.
+     * @return serialized node
+     */
+    std::string serialize();
     std::string id;
     std::string label;
     std::string parent;
     std::vector<std::tuple<std::string, std::string>> properties;
-    void addProperty(std::tuple<std::string, std::string>);
-    std::string serialize();
+
 };
 
 /**
@@ -58,11 +93,21 @@ class VizNode {
  */
 class VizGraph {
   public:
+    /**
+     * @brief Creates a new viz graph object
+     * @param name of the graph
+     */
     VizGraph(std::string name);
+
+    /**
+     * @brief Serialize the edge to the nezviz format.
+     * @return serialized graph
+     */
+    std::string serialize();
+
     std::string name;
     std::vector<VizEdge> edges;
     std::vector<VizNode> nodes;
-    std::string serialize();
 };
 }// namespace detail
 

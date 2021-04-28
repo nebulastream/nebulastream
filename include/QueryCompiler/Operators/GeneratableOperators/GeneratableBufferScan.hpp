@@ -41,9 +41,13 @@ class GeneratableBufferScan : public GeneratableOperator {
     * @return GeneratableOperatorPtr
     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema);
+
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+
     const std::string toString() const override;
+
     OperatorNodePtr copy() override;
 
   private:

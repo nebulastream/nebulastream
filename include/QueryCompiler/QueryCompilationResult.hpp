@@ -41,6 +41,7 @@ class QueryCompilationResult {
 
     /**
      * @brief Indicates if the query compilation succeeded.
+     * @return true if the request has an error
      */
     bool hasError();
 

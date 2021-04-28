@@ -21,7 +21,8 @@ namespace NES {
 namespace QueryCompilation {
 
 /**
- * @brief Query compiler interface.
+ * @brief General interface for the query compiler interface.
+ * Subclasses can provide their own implementation on how to to process a query compilation request.
  */
 class QueryCompiler {
   public:
@@ -33,7 +34,7 @@ class QueryCompiler {
     virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
   protected:
     QueryCompiler(const QueryCompilerOptionsPtr);
-    const QueryCompilerOptionsPtr options;
+    const QueryCompilerOptionsPtr queryCompilerOptions;
 };
 }// namespace QueryCompilation
 }// namespace NES

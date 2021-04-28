@@ -50,10 +50,6 @@
 
 namespace NES {
 
-// removes leading and trailing whitespaces
-
-
-
 std::string UtilityFunctions::escapeJson(const std::string &s) {
     std::ostringstream o;
     for (auto c = s.cbegin(); c != s.cend(); c++) {

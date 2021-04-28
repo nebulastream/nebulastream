@@ -59,7 +59,7 @@ OperatorPipelinePtr CodeGenerationPhase::apply(OperatorPipelinePtr pipeline) {
         operatorNode->generateClose(codeGenerator, context);
     });
     auto pipelineStage = codeGenerator->compile(context);
-    ;
+
     // we replace the current pipeline operators with an executable operator.
     // this allows us to keep the pipeline structure.
     auto operatorHandlers = context->getOperatorHandlers();

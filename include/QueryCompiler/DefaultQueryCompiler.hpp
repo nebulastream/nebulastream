@@ -39,6 +39,7 @@ class DefaultQueryCompiler : public QueryCompiler {
     * @return QueryCompilationResultPtr result for the query compilation.
     */
     QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) override;
+
   protected:
     DefaultQueryCompiler(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory);
     const LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;

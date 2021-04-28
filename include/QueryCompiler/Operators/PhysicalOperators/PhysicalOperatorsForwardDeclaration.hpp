@@ -39,7 +39,6 @@ typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptor
 
 }// namespace NES::Windowing
 
-
 namespace QueryCompilation {
 
 namespace PhysicalOperators{
@@ -98,12 +97,8 @@ typedef std::shared_ptr<PhysicalWatermarkAssignmentOperator> PhysicalWatermarkAs
 class PhysicalJoinSinkOperator;
 typedef std::shared_ptr<PhysicalJoinSinkOperator> PhysicalJoinSinkOperatorPtr;
 
-
 }
-
-
 }// namespace QueryCompilation
-
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_PHYSICALOPERATORS_QUERYCOMPILERFORWARDDECLARATION_HPP_

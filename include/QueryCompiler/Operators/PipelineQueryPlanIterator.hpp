@@ -34,6 +34,7 @@ class PipelineQueryPlanIterator {
     explicit PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan);
 
     class iterator : public std::iterator<std::forward_iterator_tag, OperatorPipelinePtr, OperatorPipelinePtr, OperatorPipelinePtr*, OperatorPipelinePtr&> {
+        // use PipelineQueryPlanIterator as a fiend to access its state
         friend class PipelineQueryPlanIterator;
 
       public:
@@ -46,12 +47,13 @@ class PipelineQueryPlanIterator {
 
         /**
          * @brief Checks if the iterators are not at the same position
+         * @return boolean
          */
         bool operator!=(const iterator& other) const;
 
         /**
          * @brief Gets the node at the current iterator position.
-         * @return
+         * @return OperatorPipelinePtr
          */
         OperatorPipelinePtr operator*();
 

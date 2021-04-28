@@ -26,12 +26,48 @@ namespace Phases {
  */
 class PhaseFactory {
   public:
+
+    /**
+     * @brief Creates a lower logical operator to physical operator phase
+     * @param QueryCompilerOptionsPtr options
+     * @return LowerLogicalToPhysicalOperatorsPtr
+     */
     virtual const LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
+
+    /**
+     * @brief Creates pipelining phase
+     * @param QueryCompilerOptionsPtr options
+     * @return PipeliningPhasePtr
+     */
     virtual const PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) = 0;
+
+    /**
+    * @brief Creates add scan and emit phase
+    * @param QueryCompilerOptionsPtr options
+    * @return AddScanAndEmitPhasePtr
+    */
     virtual const AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) = 0;
+
+    /**
+    * @brief Creates lower physical operator to generatable operator phase
+    * @param QueryCompilerOptionsPtr options
+    * @return LowerPhysicalToGeneratableOperatorsPtr
+    */
     virtual const LowerPhysicalToGeneratableOperatorsPtr
     createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr options) = 0;
+
+    /**
+    * @brief Creates code generation phase
+    * @param QueryCompilerOptionsPtr options
+    * @return CodeGenerationPhasePtr
+    */
     virtual const CodeGenerationPhasePtr createCodeGenerationPhase(QueryCompilerOptionsPtr options) = 0;
+
+    /**
+    * @brief Creates lower operator plan to executable query plan phase
+    * @param QueryCompilerOptionsPtr options
+    * @return LowerToExecutableQueryPlanPhasePtr
+    */
     virtual const LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
