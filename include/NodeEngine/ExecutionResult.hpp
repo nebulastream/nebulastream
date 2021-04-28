@@ -19,7 +19,14 @@
 
 namespace NES {
 
-enum class ExecutionResult : unsigned char { Ok = 0, Error, Finished };
+enum class ExecutionResult : unsigned char {
+    /// Execution completed successfully
+    Ok = 0,
+    /// Execution completed unsuccessfully -> Must handle error
+    Error,
+    /// Execution completed successfully and no further data are to be expected
+    Finished
+};
 
 }
 
