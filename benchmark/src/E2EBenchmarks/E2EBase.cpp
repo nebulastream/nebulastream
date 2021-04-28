@@ -342,7 +342,7 @@ void E2EBase::setupSources() {
                               std::chrono::high_resolution_clock::now().time_since_epoch())
                               .count();
                 for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                    records[u].id = u;
+                    records[u].id = u % 100;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
@@ -473,7 +473,7 @@ void E2EBase::setupSources() {
                               .count();
 
                 for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                    records[u].id = u;
+                    records[u].id = u % 2;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
@@ -494,7 +494,7 @@ void E2EBase::setupSources() {
                               std::chrono::high_resolution_clock::now().time_since_epoch())
                               .count();
                 for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-                    records[u].id = u;
+                    records[u].id = u % 3;
                     //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
                     records[u].value = u % 10;
                     records[u].timestamp = ts;
@@ -504,28 +504,29 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf1 =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", func1,
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "phy_input_1", "input1", func1,
                                                       config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+
+            NES::AbstractPhysicalStreamConfigPtr conf2 =
+                NES::LambdaSourceStreamConfig::create("LambdaSource", "phy_input_2", "input2", func2,
+                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+
             if (config->getScalability()->getValue() == "scale-out") {
+                NES_NOT_IMPLEMENTED();
                 wrk->registerLogicalStream("input1", testSchemaFileName);
                 wrk->registerLogicalStream("input2", testSchemaFileName);
                 wrk->registerPhysicalStream(conf1);
+                wrk->registerPhysicalStream(conf2);
+
             } else {
                 crd->getNesWorker()->registerLogicalStream("input1", testSchemaFileName);
                 crd->getNesWorker()->registerLogicalStream("input2", testSchemaFileName);
                 crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "test_stream1" + std::to_string(i), "input1");
+                                                                    "phy_input_1" + std::to_string(i), "input1");
                 crd->getNodeEngine()->setConfig(conf1);
-            }
 
-            NES::AbstractPhysicalStreamConfigPtr conf2 =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", func2,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
-            if (config->getScalability()->getValue() == "scale-out") {
-                wrk->registerPhysicalStream(conf2);
-            } else {
                 crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "test_stream2" + std::to_string(i), "input2");
+                                                                    "phy_input_2" + std::to_string(i), "input2");
                 crd->getNodeEngine()->setConfig(conf2);
             }
         }
