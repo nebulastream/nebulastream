@@ -20,6 +20,6 @@ numberOfBuffersToProduce: 5000000
 scalability: scale-up
 logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
-startupSleepIntervalInSeconds: 3
+startupSleepIntervalInSeconds: 0
 numberOfMeasurementsToCollect: 5
 
