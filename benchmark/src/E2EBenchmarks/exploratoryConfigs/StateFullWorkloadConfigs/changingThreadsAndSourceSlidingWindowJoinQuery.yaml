@@ -5,10 +5,10 @@ numberOfWorkerThreads: 1
 numberOfSources: 1
 
 # engine configuration parameter
-numberOfBuffersInGlobalBufferManager: 65536
-numberOfBuffersPerPipeline: 1024
-numberOfBuffersInSourceLocalBufferPool: 1024
-bufferSizeInBytes: 1048576
+numberOfBuffersInGlobalBufferManager: 1024
+numberOfBuffersPerPipeline: 124
+numberOfBuffersInSourceLocalBufferPool: 124
+bufferSizeInBytes: 65536
 
 ##benchmark parameter for the entire run
 inputOutputMode: JoinMode
