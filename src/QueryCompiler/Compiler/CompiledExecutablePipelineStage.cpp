@@ -93,7 +93,7 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
                   "call setup and start.");
         // TODO we have to assure that execute is never called after stop.
         // This is somehow not working currently.
-        return Error;
+        return ExecutionResult::Error;
     }
     return executablePipelineStage->execute(inputTupleBuffer, pipelineExecutionContext, workerContext);
 }

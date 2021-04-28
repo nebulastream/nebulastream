@@ -40,14 +40,14 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     while (running) {
         try {
             switch (queryManager->processNextTask(running, workerContext)) {
-                case Ok: {
+                case ExecutionResult::Ok: {
                     break;
                 }
-                case Finished: {
+                case ExecutionResult::Finished: {
                     running = false;
                     break;
                 }
-                case Error: {
+                case ExecutionResult::Error: {
                     // TODO add here error handling (see issues 524 and 463)
                     NES_ERROR("Threadpool: finished task with error");
                     running = false;
@@ -57,18 +57,18 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
                     NES_THROW_RUNTIME_ERROR("unsupported");
                 }
             }
-        } catch (std::exception& error) {
+        } catch (std::exception const& error) {
             NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
             NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
         }
     }
+    // to drain the queue for pending reconfigurations
     try {
         queryManager->processNextTask(running, workerContext);
-    } catch (std::exception& error) {
+    } catch (std::exception const& error) {
         NES_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
         NES_THROW_RUNTIME_ERROR("Got fatal error on thread " << workerContext.getId() << ": " << error.what());
     }
-
     NES_DEBUG("Threadpool: end runningRoutine");
 }
 

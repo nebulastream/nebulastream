@@ -79,7 +79,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
         NES_TRACE("QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint completed on thread "
                   << workerContext.getId());
         task->postWait();
-        return Ok;
+        return ExecutionResult::Ok;
     }
 };
 
@@ -558,7 +558,9 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
+#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
+#endif
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
@@ -716,11 +718,11 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
         taskQueue.pop_front();
         lock.unlock();
         auto ret = task(workerContext);
-        if (ret) {
+        if (ret == ExecutionResult::Ok) {
             completedWork(task, workerContext);
-            return Ok;
+            return ExecutionResult::Ok;
         }
-        return Error;
+        return ExecutionResult::Error;
     } else {
         NES_DEBUG("QueryManager: Thread pool was shut down but has still tasks");
         lock.unlock();
@@ -772,7 +774,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
         }
     }
     lock.unlock();
-    return Finished;
+    return ExecutionResult::Finished;
 }
 #else
 ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
