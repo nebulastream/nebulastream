@@ -15,7 +15,7 @@ bufferSizeInBytes: 65536
 inputOutputMode: WindowMode
 outputFile: changingThreadsAndSourceTumblingWindowQuery.csv
 benchmarkName: changingThreadsAndSourceTumblingWindowQuery
-query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000

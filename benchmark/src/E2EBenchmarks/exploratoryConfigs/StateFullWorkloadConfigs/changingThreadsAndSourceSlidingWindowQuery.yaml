@@ -8,14 +8,14 @@ numberOfSources: 1
 numberOfBuffersInGlobalBufferManager: 1024
 numberOfBuffersPerPipeline: 124
 numberOfBuffersInSourceLocalBufferPool: 124
-bufferSizeInBytes: 4096
+bufferSizeInBytes: 65536
 
 
 ##benchmark parameter for the entire run
 inputOutputMode: WindowMode
 outputFile: changingThreadsAndSourceSlidingWindowQuery.csv
 benchmarkName: changingThreadsAndSourceSlidingWindowQuery
-query: 'Query::from("input").window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100), Milliseconds(10))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000), Milliseconds(100))).byKey(Attribute("id")).apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
