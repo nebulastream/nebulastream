@@ -83,4 +83,25 @@ bool TopologyNode::containAsChild(NodePtr node) {
     return found != children.end();
 }
 
+void TopologyNode::addProperty(std::string key, std::any value) { properties.insert(std::make_pair(key, value)); }
+
+std::any TopologyNode::getProperty(std::string key) {
+    if (properties.find(key) == properties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
+    } else {
+        return properties.at(key);
+    }
+}
+
+bool TopologyNode::removeProperty(std::string key) {
+    if (properties.find(key) == properties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        return false;
+    } else {
+        properties.erase(key);
+        return true;
+    }
+}
+
 }// namespace NES

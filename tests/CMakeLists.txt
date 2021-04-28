@@ -121,6 +121,11 @@ add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
+### NES Topology Tests ###
+add_executable(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
+target_link_libraries(topology-property-tests nes ${GTEST_LIBRARIES})
+add_test(NAME topology-property-tests COMMAND topology-property-tests)
+
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
 target_link_libraries(buffer-manager-tests nes ${GTEST_LIBRARIES})

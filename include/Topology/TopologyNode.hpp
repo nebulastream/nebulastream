@@ -19,6 +19,7 @@
 
 #include <NodeStats.pb.h>
 #include <Nodes/Node.hpp>
+#include <any>
 
 namespace NES {
 
@@ -101,6 +102,26 @@ class TopologyNode : public Node {
 
     bool containAsChild(NodePtr ptr) override;
 
+    /**
+     * @brief Add a new property to the stored properties map
+     * @param key key of the new property
+     * @param value value of the new property
+     */
+    void addProperty(std::string key, std::any value);
+
+    /**
+     * @brief Get a the value of a property
+     * @param key key of the value to retrieve
+     * @return value of the property with the given key
+     */
+    std::any getProperty(std::string key);
+
+    /**
+     * @brief Remove a property string from the stored properties map
+     * @param key key of the property to remove
+     */
+    bool removeProperty(std::string key);
+
   private:
     uint64_t id;
     std::string ipAddress;
@@ -113,6 +134,10 @@ class TopologyNode : public Node {
     //FIXME: as part of the issue #955 A potential solution for adding network link properties
     //    std::vector<LinkPropertiesPtr> inputLinks;
     //    std::vector<LinkPropertiesPtr> outputLinks;
+    /**
+     * @brief A field to store a map of node properties
+     */
+    std::map<std::string, std::any> properties;
 };
 }// namespace NES
 
