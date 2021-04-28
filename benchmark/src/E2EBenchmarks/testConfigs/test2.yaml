@@ -14,7 +14,7 @@ bufferSizeInBytes: 1048576
 inputOutputMode: JoinMode
 outputFile: changingThreadsAndSourceTumblingWindowJoinQuery.csv
 benchmarkName: changingThreadsAndSourceTumblingWindowJoinQuery
-query: 'Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000))).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000), Milliseconds(100))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
