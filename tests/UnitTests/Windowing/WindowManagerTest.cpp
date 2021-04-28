@@ -80,7 +80,7 @@ class MockedExecutablePipelineStage : public NodeEngine::Execution::ExecutablePi
     }
 
     ExecutionResult execute(TupleBuffer&, NodeEngine::Execution::PipelineExecutionContext&, NodeEngine::WorkerContext&) override {
-        return Ok;
+        return ExecutionResult::Ok;
     }
 };
 

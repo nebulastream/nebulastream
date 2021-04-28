@@ -388,7 +388,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                                                  DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0"));
     /* ExecutionResult ret = Ok; */
     auto varDeclReturn = VariableDeclaration::create(tf.createAnonymusDataType("ExecutionResult"), "ret",
-                                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "Ok"));
+                                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"));
     /* int32_t sum = 0;*/
     auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum",
                                                   DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
@@ -494,7 +494,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                                                                   std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     stage->setup(*context.get());
     stage->start(*context.get());
-    ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), 0u);
+    ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), ExecutionResult::Ok);
     auto outputBuffer = context->buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
     /* check result for correctness */
