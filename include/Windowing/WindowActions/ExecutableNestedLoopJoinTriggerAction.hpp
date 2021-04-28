@@ -77,8 +77,7 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
             for (auto& rightHashTable : rightJoinSate->rangeAll()) {
                 NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: rightHashTable " << toString()
                                                                    << " check key=" << rightHashTable.first
-                                                                   << " nextEdge=" << rightHashTable.second->nextEdge
-                                                                    );
+                                                                   << " nextEdge=" << rightHashTable.second->nextEdge);
                 {
                     if (leftHashTable.first == rightHashTable.first) {
 
