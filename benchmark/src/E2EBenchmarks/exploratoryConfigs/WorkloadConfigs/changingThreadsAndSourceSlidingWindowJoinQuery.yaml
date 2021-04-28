@@ -12,8 +12,8 @@ bufferSizeInBytes: 1048576
 
 ##benchmark parameter for the entire run
 inputOutputMode: JoinMode
-outputFile: changingThreadsAndSourceTumblingWindowJoinQuery.csv
-benchmarkName: changingThreadsAndSourceTumblingWindowJoinQuery
+outputFile: changingThreadsAndSourceSlidingWindowJoinQuery.csv
+benchmarkName: changingThreadsAndSourceSlidingWindowJoinQuery
 query: 'Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(SlidingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(100), Milliseconds(10))).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
