@@ -232,20 +232,20 @@ TEST_F(RESTEndpointTest, testConnectivityCheck) {
 
     web::json::value response;
     web::http::client::http_client getConnectivityCheck("http://127.0.0.1:" + std::to_string(restPort)
-                                                              + "/v1/nes/connectivity/check");
+                                                        + "/v1/nes/connectivity/check");
 
     web::uri_builder builder(("/"));
     getConnectivityCheck.request(web::http::methods::GET, builder.to_string())
         .then([](const web::http::http_response& response) {
-          return response.extract_json();
+            return response.extract_json();
         })
         .then([&response](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("get status of checking connectivity");
-              response = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("Error while setting return. " << e.what());
-          }
+            try {
+                NES_INFO("get status of checking connectivity");
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
         })
         .wait();
 
