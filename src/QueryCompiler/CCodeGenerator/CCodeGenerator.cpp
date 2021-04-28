@@ -168,7 +168,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
     // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
     code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
         VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"), "ret",
-                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "Ok"))
+                                    DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
             .copy());
 
     code->varDeclarationInputTuples = VariableDeclaration::create(
