@@ -16,15 +16,20 @@
 //
 // Created by balint on 17.04.21.
 //
+#include <GRPC/WorkerRPCClient.hpp>
+#include <Network/NodeLocation.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Phases/QueryMigrationPhase.hpp>
-#include <Util/Logger.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <WorkQueues/RequestTypes/MigrateQueryRequest.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 namespace NES {
 
 QueryMigrationPhase::QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
@@ -88,12 +93,14 @@ std::vector<TopologyNodePtr> QueryMigrationPhase::findParentExecutionNodesAsTopo
 bool QueryMigrationPhase::migrateSubqueries(std::vector<TopologyNodePtr> candidateTopologyNodes,
                                             std::vector<QueryPlanPtr> queryPlans) {
     //TODO: calculate resource usage of subqueries
+    auto queryId = queryPlans[0]->getQueryId();
     auto candidateTopologyNode = candidateTopologyNodes.at(0)->getParents().at(0)->as<TopologyNode>();
     auto exNode = getExecutionNode(candidateTopologyNode->getId());
     for (auto queryPlan : queryPlans){
         exNode->addNewQuerySubPlan(queryPlan->getQueryId(),queryPlan);
     }
-
+    auto map = buildNetworkSinks(queryPlans,queryId,candidateTopologyNode);
+    //for every QuerySubPlan, change the networkSink to point to new node
     auto deploySuccess = deployQuery(queryPlans.at(0)->getQueryId(), {exNode});
     auto startSuccess =  startQuery(queryPlans.at(0)->getQueryId(),{exNode});
     if(deploySuccess&&startSuccess){
@@ -184,6 +191,19 @@ bool QueryMigrationPhase::startQuery(QueryId queryId, std::vector<ExecutionNodeP
     NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id " << queryId << " success=" << result);
     return result;
 }
-
+std::map<QuerySubPlanId ,OperatorNodePtr> QueryMigrationPhase::buildNetworkSinks(std::vector<QueryPlanPtr> querySubPlans,QueryId queryId, const TopologyNodePtr& destinationNode) {
+    std::map<QuerySubPlanId ,OperatorNodePtr> querySubPlanIdToNetworkSinkMap;
+    for(auto& querySubPlan : querySubPlans) {
+        Network::NodeLocation nodeLocation(destinationNode->getId(), destinationNode->getIpAddress(),
+                                           destinationNode->getDataPort());
+        uint64_t opId = UtilityFunctions::getNextOperatorId();
+        Network::NesPartition nesPartition(queryId, opId, 0, 0);
+        auto networkSink = LogicalOperatorFactory::createSinkOperator(
+            Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, NSINK_RETRY_WAIT, NSINK_RETRIES));
+        auto elem = std::pair<QuerySubPlanId ,OperatorNodePtr>(querySubPlan->getQuerySubPlanId(),networkSink);
+        querySubPlanIdToNetworkSinkMap.insert(elem);
+    }
+   return querySubPlanIdToNetworkSinkMap;
+}
 
 }//namespace NES

@@ -52,6 +52,9 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class ExecutionNode;
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
 class QueryMigrationPhase{
 
   public:
@@ -88,6 +91,10 @@ class QueryMigrationPhase{
     std::vector<TopologyNodePtr> findParentExecutionNodesAsTopologyNodes(QueryId queryId, TopologyNodeId topologyNodeId);
 
   private:
+
+    static constexpr auto NSINK_RETRIES = 3;
+    static constexpr auto NSINK_RETRY_WAIT = std::chrono::seconds(5);
+
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient);
 
     bool migrateSubqueries(std::vector<TopologyNodePtr> candidateTopologyNodes, std::vector<QueryPlanPtr> queryPlans);
@@ -106,6 +113,13 @@ class QueryMigrationPhase{
      * @return bool indicating success
      */
     bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+
+    /**
+     *
+     * @param nodeId
+     * @return
+     */
+std::map<QuerySubPlanId, OperatorNodePtr> buildNetworkSinks(std::vector<QueryPlanPtr> querySubPlans, QueryId queryId, const TopologyNodePtr& destinationNode);
 
     ExecutionNodePtr getExecutionNode(TopologyNodeId nodeId);
 
