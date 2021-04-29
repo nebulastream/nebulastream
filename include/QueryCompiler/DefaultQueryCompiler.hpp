@@ -44,7 +44,7 @@ class DefaultQueryCompiler : public QueryCompiler {
     DefaultQueryCompiler(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory);
     const LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     const LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
-    const LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhasePtr;
+    const LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
     const PipeliningPhasePtr pipeliningPhase;
     const AddScanAndEmitPhasePtr addScanAndEmitPhase;
     const CodeGenerationPhasePtr codeGenerationPhase;

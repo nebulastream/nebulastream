@@ -148,7 +148,7 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id, Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
+    uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id, Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
 
 
     /**

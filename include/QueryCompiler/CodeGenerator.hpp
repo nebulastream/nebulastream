@@ -194,7 +194,7 @@ class CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    virtual uint64_t generateJoinSinkSetup(Join::LogicalJoinDefinitionPtr window, PipelineContextPtr context, uint64_t id,
+    virtual uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr window, PipelineContextPtr context, uint64_t id,
                                            Join::JoinOperatorHandlerPtr joinOperatorHandler) = 0;
 
     /**

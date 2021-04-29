@@ -37,7 +37,7 @@ namespace NES::NodeEngine::Execution {
 
 /**
  * @brief Represents an executable plan of an particular query.
- * Each executable query plan contains of at least one pipeline.
+ * Each executable query plan contains at least one pipeline.
  * This class is thread-safe.
  */
 class NewExecutableQueryPlan : public Reconfigurable {

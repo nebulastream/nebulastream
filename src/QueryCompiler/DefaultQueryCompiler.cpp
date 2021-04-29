@@ -46,7 +46,7 @@ DefaultQueryCompiler::DefaultQueryCompiler(const QueryCompilerOptionsPtr options
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
       codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)),
-      lowerToExecutableQueryPlanPhasePtr(phaseFactory->createLowerToExecutableQueryPlanPhase(options)) {}
+      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)) {}
 
 QueryCompilerPtr DefaultQueryCompiler::create(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory) {
     return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory));
@@ -85,7 +85,7 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
     codeGenerationPhase->apply(pipelinedQueryPlan);
     dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
 
-    auto executableQueryPlan = lowerToExecutableQueryPlanPhasePtr->apply(pipelinedQueryPlan, request->getNodeEngine());
+    auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
     return QueryCompilationResult::create(executableQueryPlan);
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();
