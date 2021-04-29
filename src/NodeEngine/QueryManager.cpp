@@ -85,14 +85,14 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 }// namespace detail
 
-#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
 #endif
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
     : operatorIdToQueryMap(), queryMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId),
       numThreads(numThreads)
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
       ,
       workMutex()
 #else
@@ -127,7 +127,7 @@ void QueryManager::destroy() {
         threadPool->stop();
         threadPool.reset();
     }
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
     NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
@@ -378,7 +378,7 @@ bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
 #endif
 }
 
-#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 namespace detail {
 class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
     typedef Execution::ExecutablePipelineStage base;
@@ -388,13 +388,13 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
         // nop
     }
 
-    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) { return Finished; }
+    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) { return ExecutionResult::Finished; }
 };
 }
 #endif
 
 void QueryManager::unblockThreads() {
-#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     if (!threadPool) {
         return;
     }
@@ -444,7 +444,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
             source->stop(true);
         }
     }
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     {
         std::unique_lock taskLock(workMutex);
         NES_WARNING("Number of tasks in queue when stopped=" << taskQueue.size());
@@ -468,7 +468,7 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
 }
 
 uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock workLock(workMutex);
     return taskQueue.size();
 #else
@@ -535,7 +535,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
             }
         }
 #endif
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         //TODO: this is a problem now as it can become the bottleneck
         std::unique_lock workQueueLock(workMutex);
         uint64_t stageId = operatorIdToPipelineStage[operatorId];
@@ -558,7 +558,7 @@ void QueryManager::addWork(const OperatorId operatorId, TupleBuffer& buf) {
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {
     NES_DEBUG("QueryManager: QueryManager::addReconfigurationMessage begins on plan "
               << queryExecutionPlanId << " blocking=" << blocking << " type " << message.getType());
-#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
 #endif
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
@@ -570,7 +570,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(-1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext, 1,
                                                           nullptr, nullptr, nullptr, true);
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     {
         std::unique_lock lock(workMutex);
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
@@ -600,7 +600,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     //@Ventrua we have to do this because otherwise we can run into the situation to get threads from two barriers waiting
     // TODO thanks staffan for mispelling my name
     std::unique_lock lock(workMutex);
@@ -643,7 +643,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
         auto pipeline = Execution::ExecutablePipeline::create(
             /** default pipeline Id*/ -1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
             /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         {
             //            std::unique_lock lock(workMutex);
 
@@ -692,13 +692,13 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     }
     return true;
 }
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, WorkerContext& workerContext) {
 #else
 ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& workerContext) {
 #endif
     NES_TRACE("QueryManager: QueryManager::getWork wait get lock");
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock(workMutex);
     // wait while queue is empty but thread pool is running
     while (taskQueue.empty() && running) {
@@ -735,9 +735,9 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
         NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         auto result = task(workerContext);
         switch (result) {
-            case Ok: {
+            case ExecutionResult::Ok: {
                 completedWork(task, workerContext);
-                return Ok;
+                return ExecutionResult::Ok;
             }
             default: {
                 return result;
@@ -749,7 +749,7 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
 #endif
 }
 
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     std::unique_lock lock(workMutex);
     //    this->threadBarrier->wait();
@@ -792,13 +792,13 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
             }
         }
     }
-    return Finished;
+    return ExecutionResult::Finished;
 }
 #endif
 
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::ExecutablePipelinePtr nextPipeline) {
     std::unique_lock lock(queryMutex);// we need this mutex because runningQEPs can be concurrently modified
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock2(workMutex);
     // dispatch buffer as task
     auto it = runningQEPs.find(nextPipeline->getQepParentId());
