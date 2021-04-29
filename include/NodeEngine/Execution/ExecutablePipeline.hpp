@@ -22,6 +22,7 @@
 #include <NodeEngine/ReconfigurationMessage.hpp>
 #include <NodeEngine/Task.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <State/StateManager.hpp>
 #include <memory>
 #include <vector>
 
@@ -73,7 +74,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @brief Starts a pipeline stage
      * @return boolean if successful
      */
-    bool start();
+    bool start(StateManager* stateManager);
 
     /**
      * @brief Stops pipeline stage

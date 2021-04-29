@@ -26,6 +26,7 @@
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <State/StateManager.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>
@@ -60,7 +61,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     * @brief Starts thread to check if the window should be triggered.
     * @return boolean if the window thread is started
     */
-    virtual bool start() = 0;
+    virtual bool start(StateManager* stateManager) = 0;
 
     /**
      * @brief Stops the window thread.

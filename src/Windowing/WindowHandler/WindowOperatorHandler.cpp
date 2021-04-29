@@ -15,6 +15,7 @@
 */
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <State/StateManager.hpp>
 namespace NES::Windowing {
 
 WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
@@ -38,7 +39,7 @@ LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() { return
 void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHandler) { this->windowHandler = windowHandler; }
 
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
-void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->start(); }
+void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, StateManager* stateManager) { windowHandler->start(stateManager); }
 void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
 void WindowOperatorHandler::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);

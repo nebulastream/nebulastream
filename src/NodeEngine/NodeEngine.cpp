@@ -103,6 +103,7 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
     this->queryManager = std::move(queryManager);
     this->bufferManager = std::move(bufferManager);
     this->partitionManager = std::move(partitionManager);
+    this->stateManager = new StateManager();
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
@@ -247,7 +248,7 @@ bool NodeEngine::startQuery(QueryId queryId) {
         }
 
         for (auto querySubPlanId : querySubPlanIds) {
-            if (queryManager->startQuery(deployedQEPs[querySubPlanId])) {
+            if (queryManager->startQuery(deployedQEPs[querySubPlanId], stateManager)) {
                 NES_DEBUG("NodeEngine: start of QEP " << querySubPlanId << " succeeded");
             } else {
                 NES_DEBUG("NodeEngine: start of QEP " << querySubPlanId << " failed");

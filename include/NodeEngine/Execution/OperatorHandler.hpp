@@ -19,6 +19,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Util/Logger.hpp>
+#include <State/StateManager.hpp>
 
 namespace NES {
 namespace NodeEngine {
@@ -36,7 +37,7 @@ class OperatorHandler : public Reconfigurable {
      * @brief Starts the operator handler.
      * @param pipelineExecutionContext
      */
-    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext) = 0;
+    virtual void start(PipelineExecutionContextPtr pipelineExecutionContext, StateManager* stateManager) = 0;
 
     /**
      * @brief Stops the operator handler.

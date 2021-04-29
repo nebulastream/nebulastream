@@ -65,7 +65,7 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
         return std::static_pointer_cast<JoinHandlerType<KeyType, LeftStreamType, RightStreamType>>(joinHandler);
     }
 
-    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, StateManager* stateManager) override;
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     LogicalJoinDefinitionPtr getJoinDefinition();
