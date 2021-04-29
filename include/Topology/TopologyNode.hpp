@@ -132,9 +132,6 @@ class TopologyNode : public Node {
     uint16_t usedResources;
     NodeStats nodeStats;
 
-    //FIXME: as part of the issue #955 A potential solution for adding network link properties
-    //    std::vector<LinkPropertiesPtr> inputLinks;
-    //    std::vector<LinkPropertiesPtr> outputLinks;
     /**
      * @brief A field to store a map of node properties
      */
