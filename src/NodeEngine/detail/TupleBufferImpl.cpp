@@ -98,20 +98,22 @@ BufferControlBlock::BufferControlBlock(MemorySegment* owner, BufferRecycler* rec
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples = that.numberOfTuples;
+    numberOfTuples = that.numberOfTuples.load();
+    creationTimestamp = that.creationTimestamp.load();
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark = that.watermark;
-    originId = that.originId;
+    watermark = that.watermark.load();
+    originId = that.originId.load();
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples = that.numberOfTuples;
+    numberOfTuples = that.numberOfTuples.load();
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark = that.watermark;
-    originId = that.originId;
+    watermark = that.watermark.load();
+    creationTimestamp = that.creationTimestamp.load();
+    originId = that.originId.load();
     return *this;
 }
 
@@ -148,7 +150,7 @@ void fillThreadOwnershipInfo(std::string& threadName, std::string& callstack) {
 }
 #endif
 bool BufferControlBlock::prepare() {
-    uint32_t expected = 0;
+    int32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     // store the current thread that owns the buffer and track which function obtained the buffer
     std::unique_lock lock(owningThreadsMutex);

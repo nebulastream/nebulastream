@@ -57,7 +57,7 @@ static std::string getDebugLevelAsString(DebugLevel level) {
 
 //DISABLE_WARNING_PUSH
 //DISABLE_WARNING_UNREFERENCED_FUNCTION
-static DebugLevel getStringAsDebugLevel(std::string level) {
+static DebugLevel getDebugLevelFromString(std::string level) {
     if (level == "LOG_NONE") {
         return LOG_NONE;
     } else if (level == "LOG_WARNING") {
