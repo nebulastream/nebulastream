@@ -38,7 +38,7 @@ GeneratableOperatorPtr GeneratableJoinSinkOperator::create(SchemaPtr inputSchema
 
 void GeneratableJoinSinkOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto joinDefinition = operatorHandler->getJoinDefinition();
-    codegen->generateJoinSinkSetup(joinDefinition, context, this->id, operatorHandler);
+    codegen->generateCodeForJoinSinkSetup(joinDefinition, context, this->id, operatorHandler);
 }
 
 void GeneratableJoinSinkOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {

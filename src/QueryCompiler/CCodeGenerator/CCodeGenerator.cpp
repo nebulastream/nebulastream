@@ -928,7 +928,7 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     return joinOperatorHandlerIndex;
 }
 
-uint64_t CCodeGenerator::generateJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id,
+uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id,
                                                Join::JoinOperatorHandlerPtr joinOperatorHandler) {
     auto tf = getTypeFactory();
     NES_ASSERT(join, "invalid join definition");

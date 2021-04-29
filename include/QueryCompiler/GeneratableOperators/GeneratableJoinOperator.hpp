@@ -58,7 +58,6 @@ class GeneratableJoinOperator : public JoinLogicalOperatorNode, public Generatab
     explicit GeneratableJoinOperator(SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema,
                                      Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
 
-  private:
     Join::LogicalJoinDefinitionPtr joinDefinition;
 };
 
