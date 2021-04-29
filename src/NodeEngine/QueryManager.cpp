@@ -97,7 +97,8 @@ QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId
       workMutex()
 #else
       ,
-      taskQueue(DEFAULT_QUEUE_INITIAL_CAPACITY) // TODO consider if we could use something num of buffers in buffer manager but maybe it could be too much
+      taskQueue(
+          DEFAULT_QUEUE_INITIAL_CAPACITY)// TODO consider if we could use something num of buffers in buffer manager but maybe it could be too much
 #endif
 {
     NES_DEBUG("Init QueryManager::QueryManager");
@@ -388,9 +389,11 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
         // nop
     }
 
-    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) { return ExecutionResult::Finished; }
+    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) {
+        return ExecutionResult::Finished;
+    }
 };
-}
+}// namespace detail
 #endif
 
 void QueryManager::unblockThreads() {
@@ -426,14 +429,14 @@ void QueryManager::unblockThreads() {
 bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful) {
     NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
-//    std::unique_lock lock(queryMutex);
+    //    std::unique_lock lock(queryMutex);
     // here im using COW to avoid keeping the lock for long
     // however, this is not a long-term fix
     // because it wont lead to correct behaviour
     // under heavy query deployment ops
     auto sources = qep->getSources();
     auto copiedSources = std::vector(sources.begin(), sources.end());
-//    lock.unlock();
+    //    lock.unlock();
 
     if (qep->getStatus() != Execution::Running) {
         return true;
@@ -622,8 +625,9 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer()) ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(),
                                                             qep->getPipeline(targetStage), std::move(weakQep));
-            NES_FATAL_ERROR("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful
-                                                                                        << " to stage " << targetStage << " tasks in queue=" << taskQueue.size());
+            NES_FATAL_ERROR("QueryManager: QueryManager::addEndOfStream for source operator "
+                            << sourceId << " graceful=" << graceful << " to stage " << targetStage
+                            << " tasks in queue=" << taskQueue.size());
         } else {
             // reconfigure at qep level
             auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
@@ -634,8 +638,9 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             new (buffer.getBuffer())
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
             NES_FATAL_ERROR("EOS opId=" << sourceId << " reconfType=" << reconfigType
-                                    << " queryExecutionPlanId=" << queryExecutionPlanId << " threadPool->getNumberOfThreads()="
-                                    << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId() << " tasks in queue=" << taskQueue.size());
+                                        << " queryExecutionPlanId=" << queryExecutionPlanId
+                                        << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
+                                        << qep->getQueryId() << " tasks in queue=" << taskQueue.size());
         }
 
         auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,

@@ -115,7 +115,7 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
 
     //we use a on time trigger as default that triggers on each change of the watermark
     auto triggerPolicy = OnWatermarkChangeTriggerPolicyDescription::create();
-//    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
+    //    auto triggerPolicy = OnTimeTriggerPolicyDescription::create(1000);
 
     //we use a lazy NL join because this is currently the only one that is implemented
     auto triggerAction = Join::LazyNestLoopJoinTriggerActionDescriptor::create();

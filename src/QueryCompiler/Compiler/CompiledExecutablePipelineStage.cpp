@@ -82,9 +82,10 @@ uint32_t CompiledExecutablePipelineStage::open(NodeEngine::Execution::PipelineEx
     return executablePipelineStage->open(pipelineExecutionContext, workerContext);
 }
 
-ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
-                                                  NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
-                                                  NodeEngine::WorkerContext& workerContext) {
+ExecutionResult
+CompiledExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
+                                         NodeEngine::Execution::PipelineExecutionContext& pipelineExecutionContext,
+                                         NodeEngine::WorkerContext& workerContext) {
     // we dont get the lock here as we dont was to serialize the execution.
     // currentExecutionStage is an atomic so its still save to read it
     if (currentExecutionStage != Running) {

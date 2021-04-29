@@ -184,7 +184,7 @@ int main(int argc, const char* argv[]) {
            << parameterNameToValueVectorMap["bufferSizeInBytes"].at(i) << ",";
 
         auto queryWithoutComma = benchmarkConfig->getQuery()->getValue();
-        std::replace( queryWithoutComma.begin(), queryWithoutComma.end(), ',', '_');
+        std::replace(queryWithoutComma.begin(), queryWithoutComma.end(), ',', '_');
         ss << queryWithoutComma << "," << benchmarkConfig->getInputOutputMode()->getValue() << std::endl;
     }
 

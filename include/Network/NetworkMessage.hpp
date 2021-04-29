@@ -150,8 +150,10 @@ class DataBufferMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
 
-    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint64_t originId, uint64_t watermark, uint64_t creationTimestamp)
-        : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark), creationTimestamp(creationTimestamp) {}
+    explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords, uint64_t originId, uint64_t watermark,
+                               uint64_t creationTimestamp)
+        : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
+          creationTimestamp(creationTimestamp) {}
 
     /**
      * @brief get the payloadSize of the BufferMessage

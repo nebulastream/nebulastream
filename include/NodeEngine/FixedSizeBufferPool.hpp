@@ -38,7 +38,6 @@ class MemorySegment;
 
 const std::chrono::seconds DEFAULT_BUFFER_TIMEOUT = std::chrono::seconds(10);
 
-
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */

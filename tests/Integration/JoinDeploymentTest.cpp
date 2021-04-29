@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
@@ -28,7 +29,6 @@
 #include <Util/TestUtils.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <iostream>
-#include <Catalogs/LambdaSourceStreamConfig.hpp>
 
 using namespace std;
 
@@ -1327,7 +1327,6 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     NES_INFO("JoinDeploymentTest: Test finished");
 }
 
-
 /**
  * Test deploying join with different streams
  */
@@ -1375,58 +1374,57 @@ TEST_F(JoinDeploymentTest, testJoinBenchmarkQuery) {
     out.close();
 
     auto func1 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-      struct Record {
-          uint64_t id;
-          uint64_t value;
-          uint64_t timestamp;
-      };
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
 
-      auto records = buffer.getBufferAs<Record>();
-      auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::high_resolution_clock::now().time_since_epoch())
-          .count();
+        auto records = buffer.getBufferAs<Record>();
+        auto ts =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count();
 
-      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-          records[u].id = u;
-          //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-          records[u].value = u % 10;
-          records[u].timestamp = ts;
-      }
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].id = u;
+            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+            records[u].value = u % 10;
+            records[u].timestamp = ts;
+        }
 
-      return;
+        return;
     };
 
     wrk1->registerLogicalStream("input1", testSchemaFileName);
 
     NES::AbstractPhysicalStreamConfigPtr conf1 =
-        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", func1,
-                                              10, 1, "frequency");
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream1", "input1", func1, 10, 1, "frequency");
     wrk1->registerPhysicalStream(conf1);
 
     auto func2 = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-      struct Record {
-          uint64_t id;
-          uint64_t value;
-          uint64_t timestamp;
-      };
+        struct Record {
+            uint64_t id;
+            uint64_t value;
+            uint64_t timestamp;
+        };
 
-      auto records = buffer.getBufferAs<Record>();
-      auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::high_resolution_clock::now().time_since_epoch())
-          .count();
-      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-          records[u].id = u;
-          //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-          records[u].value = u % 10;
-          records[u].timestamp = ts;
-      }
+        auto records = buffer.getBufferAs<Record>();
+        auto ts =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count();
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+            records[u].id = u;
+            //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+            records[u].value = u % 10;
+            records[u].timestamp = ts;
+        }
 
-      return;
+        return;
     };
 
     wrk2->registerLogicalStream("input2", testSchemaFileName);
-    NES::AbstractPhysicalStreamConfigPtr conf2 =        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", func2,
-                                              10, 1, "frequency");
+    NES::AbstractPhysicalStreamConfigPtr conf2 =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream2", "input2", func2, 10, 1, "frequency");
 
     wrk2->registerPhysicalStream(conf2);
 

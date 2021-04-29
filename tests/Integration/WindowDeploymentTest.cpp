@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
@@ -30,7 +31,6 @@
 #include <Util/UtilityFunctions.hpp>
 #include <gmock/gmock.h>
 #include <iostream>
-#include <Catalogs/LambdaSourceStreamConfig.hpp>
 
 using namespace std;
 
@@ -243,21 +243,21 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
             records[u].currentMs = ts;
             records[u].ip = 0x01020304;
         }
-        NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce-1].toString());
+        NES_WARNING("Lambda last entry is=" << records[numberOfTuplesToProduce - 1].toString());
         return;
     };
 
     std::string outputFilePath = "ysb.out";
-    NES::AbstractPhysicalStreamConfigPtr conf = NES::LambdaSourceStreamConfig::create(
-        "LambdaSource", "YSB_phy", "ysb", func,
-        10, 100, "frequency");
+    NES::AbstractPhysicalStreamConfigPtr conf =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy", "ysb", func, 10, 100, "frequency");
 
     wrk1->registerPhysicalStream(conf);
 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"ysb\").window(TumblingWindow::of(EventTime(Attribute(\"current_ms\")), "
-                   "Milliseconds(10))).byKey(Attribute(\"campaign_id\")).apply(Sum(Attribute(\"user_id\"))).sink(FileSinkDescriptor::create(\""
-                   + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+                   "Milliseconds(10))).byKey(Attribute(\"campaign_id\")).apply(Sum(Attribute(\"user_id\"))).sink("
+                   "FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
