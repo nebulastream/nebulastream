@@ -117,7 +117,7 @@ int main(int argc, const char* argv[]) {
     } else if (argc >= 1) {
         benchmarkConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
-    NES::setupLogging("benchmarkRunner.log", NES::getStringAsDebugLevel(benchmarkConfig->getLogLevel()->getValue()));
+    NES::setupLogging("benchmarkRunner.log", NES::getDebugLevelFromString(benchmarkConfig->getLogLevel()->getValue()));
 
     std::cout << "start benchmark with " << benchmarkConfig->toString() << std::endl;
 
