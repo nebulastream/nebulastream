@@ -213,9 +213,9 @@ E2EBase::~E2EBase() {
 
 void E2EBase::setupSources() {
     defaultSchema = NES::Schema::create()
-                 ->addField(createField("id", NES::UINT64))
-                 ->addField(createField("value", NES::UINT64))
-                 ->addField(createField("timestamp", NES::UINT64));
+                        ->addField(createField("id", NES::UINT64))
+                        ->addField(createField("value", NES::UINT64))
+                        ->addField(createField("timestamp", NES::UINT64));
 
     std::string input =
         R"(Schema::create()->addField(createField("id", UINT64))->addField(createField("value", UINT64))->addField(createField("timestamp", UINT64));)";
@@ -365,18 +365,18 @@ void E2EBase::setupSources() {
     } else if (mode == InputOutputMode::YSBMode) {
         std::cout << "YSB Mode source mode" << std::endl;
 
-        auto ysbSchema =  Schema::create()
-            ->addField("ysb$user_id", UINT64)
-            ->addField("ysb$page_id", UINT64)
-            ->addField("ysb$campaign_id", UINT64)
-            ->addField("ysb$ad_type", UINT64)
-            ->addField("ysb$event_type", UINT64)
-            ->addField("ysb$current_ms", UINT64)
-            ->addField("ysb$ip", UINT64)
-            ->addField("ysb$d1", UINT64)
-            ->addField("ysb$d2", UINT64)
-            ->addField("ysb$d3", UINT32)
-            ->addField("ysb$d4", UINT16);
+        auto ysbSchema = Schema::create()
+                             ->addField("ysb$user_id", UINT64)
+                             ->addField("ysb$page_id", UINT64)
+                             ->addField("ysb$campaign_id", UINT64)
+                             ->addField("ysb$ad_type", UINT64)
+                             ->addField("ysb$event_type", UINT64)
+                             ->addField("ysb$current_ms", UINT64)
+                             ->addField("ysb$ip", UINT64)
+                             ->addField("ysb$d1", UINT64)
+                             ->addField("ysb$d2", UINT64)
+                             ->addField("ysb$d3", UINT32)
+                             ->addField("ysb$d4", UINT16);
 
         std::string input =
             R"(Schema::create()->addField("ysb$user_id", UINT64)->addField("ysb$page_id", UINT64)->addField("ysb$campaign_id", UINT64)->addField("ysb$ad_type", UINT64)->addField("ysb$event_type", UINT64)->addField("ysb$current_ms", UINT64)->addField("ysb$ip", UINT64)->addField("ysb$d1", UINT64)->addField("ysb$d2", UINT64)->addField("ysb$d3", UINT32)->addField("ysb$d4", UINT16);)";
@@ -432,7 +432,7 @@ void E2EBase::setupSources() {
                               .count();
 
                 for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
-//                    memset(&records, 0, sizeof(YsbRecord));
+                    //                    memset(&records, 0, sizeof(YsbRecord));
                     records[u].userId = 1;
                     records[u].pageId = 0;
                     records[u].adType = 0;
@@ -689,12 +689,13 @@ std::string E2EBase::getResult() {
     }
 
     uint64_t throughputInTupsPerSec = tuplesProcessed / runtimeInSec;
-    uint64_t throughputInMBPerSec = (tuplesProcessed * defaultSchema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
+    uint64_t throughputInMBPerSec =
+        (tuplesProcessed * defaultSchema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
     uint64_t avgLatencyInMs = latencySum / bufferProcessed;
 
     out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
-        << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec << ","
-        << avgLatencyInMs;
+        << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec
+        << "," << avgLatencyInMs;
 
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
     std::cout << "tuples=" << tuplesProcessed << std::endl;

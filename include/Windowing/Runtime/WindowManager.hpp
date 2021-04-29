@@ -59,7 +59,8 @@ class WindowManager {
      */
     template<class PartialAggregateType>
     inline void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType>* store, int64_t key = 0) {
-        NES_DEBUG("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << key << " allowedLateness=" << allowedLateness);
+        NES_DEBUG("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << key
+                                        << " allowedLateness=" << allowedLateness);
         // updates the maximal record ts
         // check if the slice store is empty
         if (store->empty()) {

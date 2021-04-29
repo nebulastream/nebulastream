@@ -17,8 +17,8 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/Task.hpp>
 #include <NodeEngine/ExecutionResult.hpp>
+#include <NodeEngine/Task.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
@@ -31,8 +31,7 @@ Task::Task(Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buffer) : pip
 
 Task::Task() : pipeline(nullptr), buf(), id(-1) {}
 
-ExecutionResult Task::operator()(WorkerContextRef workerContext) {
-    return pipeline->execute(buf, workerContext); }
+ExecutionResult Task::operator()(WorkerContextRef workerContext) { return pipeline->execute(buf, workerContext); }
 
 uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 

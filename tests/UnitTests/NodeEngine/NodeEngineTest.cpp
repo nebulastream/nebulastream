@@ -137,7 +137,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
     std::promise<bool> completedPromise;
 
     ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
-                     WorkerContext& wctx) override {
+                            WorkerContext& wctx) override {
         auto tuples = inputTupleBuffer.getBufferAs<uint64_t>();
 
         NES_INFO("Test: Start execution");

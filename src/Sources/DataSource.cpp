@@ -193,7 +193,7 @@ void DataSource::runningRoutineWithIngestionRate() {
                 auto& buf = optBuf.value();
                 buf.setOriginId(operatorId);
                 buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::high_resolution_clock::now().time_since_epoch())
+                                             std::chrono::high_resolution_clock::now().time_since_epoch())
                                              .count());
                 queryManager->addWork(this->operatorId, buf);
 
@@ -310,18 +310,16 @@ void DataSource::runningRoutineWithFrequency() {
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
                 NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
-                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
-                                        << " orgID=" << this->operatorId);
+                                                       << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                                       << " iteration=" << cnt << " operatorId=" << this->operatorId
+                                                       << " orgID=" << this->operatorId);
                 buf.setOriginId(operatorId);
                 buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                    std::chrono::high_resolution_clock::now().time_since_epoch())
+                                             std::chrono::high_resolution_clock::now().time_since_epoch())
                                              .count());
                 queryManager->addWork(operatorId, buf);
                 cnt++;
-            }
-            else
-            {
+            } else {
                 NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
                 running = false;
                 wasGracefullyStopped = false;

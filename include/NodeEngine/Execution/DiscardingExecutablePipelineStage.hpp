@@ -30,7 +30,7 @@ class DiscardingExecutablePipelineStage : public ExecutablePipelineStage {
 
   public:
     ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
-                     WorkerContext& workerContext) override;
+                            WorkerContext& workerContext) override;
 };
 }// namespace NES::NodeEngine::Execution
 #endif//NES_INCLUDE_NODEENGINE_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_

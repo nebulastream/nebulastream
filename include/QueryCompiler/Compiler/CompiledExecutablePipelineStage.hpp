@@ -48,7 +48,7 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
     uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
-                     NodeEngine::WorkerContext& workerContext) override;
+                            NodeEngine::WorkerContext& workerContext) override;
 
     std::string getCodeAsString() override;
 

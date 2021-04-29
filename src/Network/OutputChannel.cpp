@@ -127,7 +127,8 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     if (payloadSize == 0) {
         return true;
     }
-    sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark, creationTimestamp);
+    sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark,
+                                                           creationTimestamp);
     inputBuffer.retain();
     auto sentBytesOpt =
         zmqSocket.send(zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer),

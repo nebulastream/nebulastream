@@ -490,7 +490,7 @@ class TestUtils {
             }
         }
         NES_ERROR("checkIfOutputFileIsNotEmtpy: expected (" << count << ") result not reached (" << minNumberOfLines
-                                                     << ") within set timeout content");
+                                                            << ") within set timeout content");
         return false;
     }
 

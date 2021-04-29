@@ -71,7 +71,7 @@ class ExecutablePipelineStage {
     * @return 0 if an error occurred.
     */
     virtual ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
-                             WorkerContext& workerContext) = 0;
+                                    WorkerContext& workerContext) = 0;
 
     /**
      * @brief Must be called exactly once per worker thread to remove worker local state.
