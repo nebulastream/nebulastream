@@ -123,4 +123,8 @@ uint64_t QueryService::addQueryRequest(std::string queryString, QueryPtr query, 
     }
 }
 
+uint64_t QueryService::addQueryRequest(QueryPtr query, std::string placementStrategyName) {
+    return addQueryRequest("", query, placementStrategyName);
+}
+
 }// namespace NES

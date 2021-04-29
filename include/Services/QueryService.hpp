@@ -64,6 +64,15 @@ class QueryService {
     uint64_t addQueryRequest(std::string queryString, QueryPtr queryPtr, std::string placementStrategyName);
 
     /**
+     * @deprecated NOT TO BE USED
+     * @brief This method calls addQueryRequest with an empty string.
+     * @param queryPtr : Query Object
+     * @param placementStrategyName : Name of the placement strategy
+     * @return query id
+     */
+    uint64_t addQueryRequest(QueryPtr queryPtr, std::string placementStrategyName);
+
+    /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryId : query id of the query to be stopped.
      * @returns: true if successful
