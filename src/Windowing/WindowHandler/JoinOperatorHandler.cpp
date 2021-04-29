@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <State/StateManager.hpp>
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 namespace NES::Join {
@@ -43,9 +44,9 @@ LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinD
 void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = joinHandler; }
 
 SchemaPtr JoinOperatorHandler::getResultSchema() { return resultSchema; }
-void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr) {
+void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, StateManager* stateManager) {
     if (joinHandler) {
-        joinHandler->start();
+        joinHandler->start(stateManager);
     }
 }
 

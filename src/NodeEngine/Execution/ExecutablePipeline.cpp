@@ -22,6 +22,7 @@
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <utility>
 
@@ -55,11 +56,11 @@ bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
     return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }
 
-bool ExecutablePipeline::start() {
+bool ExecutablePipeline::start(StateManager* stateManager) {
     auto expected = false;
     if (isRunning.compare_exchange_strong(expected, true)) {
         for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
-            operatorHandler->start(pipelineContext);
+            operatorHandler->start(pipelineContext, stateManager);
         }
         executablePipelineStage->start(*pipelineContext.get());
         return true;

@@ -24,6 +24,7 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwaredRefs.hpp>
+#include <State/StateManager.hpp>
 #include <atomic>
 #include <future>
 #include <map>
@@ -60,7 +61,7 @@ class ExecutableQueryPlan : public Reconfigurable {
     /**
      * @brief Start the query plan, e.g., start window thread.
      */
-    bool start();
+    bool start(StateManager* stateManager);
 
     /**
      * @brief Stop the query plan and free all associated resources.

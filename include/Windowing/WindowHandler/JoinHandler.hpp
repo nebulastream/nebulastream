@@ -40,24 +40,21 @@ class JoinHandler : public AbstractJoinHandler {
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                          BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
-                         uint64_t id,
-                         StateManager* stateManager)
+                         uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
           executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2), isRunning(false) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
         lastWatermark = 0;
-        this->stateManager = stateManager;
         NES_TRACE("Created join handler with id=" << id);
     }
 
     static AbstractJoinHandlerPtr create(Join::LogicalJoinDefinitionPtr joinDefinition,
                                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
                                          BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
-                                         uint64_t id,
-                                         StateManager* stateManager) {
-        return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction, id, stateManager);
+                                         uint64_t id) {
+        return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction, id);
     }
 
     virtual ~JoinHandler() { NES_TRACE("~JoinHandler()"); }
@@ -66,10 +63,25 @@ class JoinHandler : public AbstractJoinHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start() override {
+    bool start(StateManager* stateManager) override {
+        this->stateManager = stateManager;
         std::unique_lock lock(mutex);
         NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
+        // Initialize StateVariable
+        auto leftDefaultCallback = [](const KeyType&) {
+          return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
+        };
+        auto rightDefaultCallback = [](const KeyType&) {
+          return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>();
+        };
+        this->leftJoinState =
+            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
+                "leftSide" + toString(), leftDefaultCallback);
+        this->rightJoinState =
+            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
+                "rightSide" + toString(), rightDefaultCallback);
+
         if (isRunning.compare_exchange_strong(expected, true)) {
             return executablePolicyTrigger->start(this->shared_from_base<AbstractJoinHandler>());
         }
@@ -215,19 +227,6 @@ class JoinHandler : public AbstractJoinHandler {
         // Initialize JoinHandler Manager
         //TODO: note allowed lateness is currently not supported for windwos
         this->windowManager = std::make_shared<Windowing::WindowManager>(joinDefinition->getWindowType(), 0, id);
-        // Initialize StateVariable
-        auto leftDefaultCallback = [](const KeyType&) {
-            return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
-        };
-        auto rightDefaultCallback = [](const KeyType&) {
-            return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>();
-        };
-        this->leftJoinState =
-            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
-                "leftSide" + toString(), leftDefaultCallback);
-        this->rightJoinState =
-            stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
-                "rightSide" + toString(), rightDefaultCallback);
 
         executableJoinAction->setup(pipelineExecutionContext, originId);
         return true;
@@ -238,10 +237,6 @@ class JoinHandler : public AbstractJoinHandler {
      * @return WindowManager.
      */
     Windowing::WindowManagerPtr getWindowManager() override { return this->windowManager; }
-
-    auto getLeftJoinState() { return leftJoinState; }
-
-    auto getRightJoinState() { return rightJoinState; }
 
     /**
      * @brief reconfigure machinery for the join handler: do not nothing (for now)

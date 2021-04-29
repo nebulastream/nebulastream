@@ -28,6 +28,7 @@
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sources/DataSource.hpp>
+#include <State/StateManager.hpp>
 #include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
@@ -141,7 +142,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool startQuery(Execution::ExecutableQueryPlanPtr qep, StateManager* stateManager);
 
     /**
      * @brief method to start a query

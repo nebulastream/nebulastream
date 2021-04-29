@@ -36,14 +36,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
         BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,
-        uint64_t id, StateManager* stateManager)
+        uint64_t id)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
           id(id), isRunning(false), windowStateVariable(nullptr) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
-        this->stateManager = stateManager;
         handlerType = this->windowDefinition->getDistributionType()->toString();
     }
 
@@ -52,10 +51,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
            BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
            BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,
-           uint64_t id,
-           StateManager* stateManager) {
+           uint64_t id) {
         return std::make_shared<AggregationWindowHandler>(windowDefinition, windowAggregation, executablePolicyTrigger,
-                                                          executableWindowAction, id, stateManager);
+                                                          executableWindowAction, id);
     }
 
     ~AggregationWindowHandler() {
@@ -66,9 +64,16 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start() override {
+    bool start(StateManager* stateManager) override {
+        this->stateManager = stateManager;
         std::unique_lock lock(windowMutex);
         auto expected = false;
+        auto defaultCallback = [](const KeyType&) {
+          return new Windowing::WindowSliceStore<PartialAggregateType>(0);
+        };
+        this->windowStateVariable =
+            stateManager->registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(toString(),
+                                                                                                     defaultCallback);
         if (isRunning.compare_exchange_strong(expected, true)) {
             return executablePolicyTrigger->start(this->AbstractWindowHandler::shared_from_base<AggregationWindowHandler>());
         }
@@ -249,13 +254,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         this->windowManager =
             std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness(), id);
         // Initialize StateVariable
-        auto defaultCallback = [](const KeyType&) {
-            return new Windowing::WindowSliceStore<PartialAggregateType>(0);
-        };
 
-        this->windowStateVariable =
-            stateManager->registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(toString(),
-                                                                                                                defaultCallback);
+
+
         executableWindowAction->setup(pipelineExecutionContext);
         return true;
     }

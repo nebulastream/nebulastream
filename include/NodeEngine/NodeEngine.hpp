@@ -258,6 +258,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
+    StateManager* stateManager;
     QueryCompilerPtr queryCompiler;
     std::atomic<bool> isRunning;
     mutable std::recursive_mutex engineMutex;

@@ -18,6 +18,7 @@
 
 #include <NodeEngine/Execution/OperatorHandler.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <State/StateManager.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 namespace NES::Windowing {
 
@@ -71,7 +72,7 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
             windowHandler);
     }
 
-    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, StateManager* stateManager) override;
 
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 

@@ -237,14 +237,14 @@ bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep) {
+bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep, StateManager* stateManager) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     // TODO do not change the start sequence plz
     // 1. start the qep and handlers, if any
-    if (!qep->setup() || !qep->start()) {
+    if (!qep->setup() || !qep->start(stateManager)) {
         NES_FATAL_ERROR("QueryManager: query execution plan could not started");
         return false;
     }
