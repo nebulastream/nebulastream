@@ -119,6 +119,7 @@ class TopologyNode : public Node {
     /**
      * @brief Remove a property string from the stored properties map
      * @param key key of the property to remove
+     * @return true if the removal is successful
      */
     bool removeProperty(std::string key);
 

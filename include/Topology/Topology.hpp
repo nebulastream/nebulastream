@@ -21,6 +21,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <any>
 
 namespace NES {
 
@@ -188,6 +189,33 @@ class Topology {
     std::vector<TopologyNodePtr> findNodesBetween(std::vector<TopologyNodePtr> sourceNodes,
                                                   std::vector<TopologyNodePtr> destinationNodes);
 
+    /**
+     * @brief Add a new link property of key and value between src and dst node
+     * @param src source node of the link
+     * @param dst destination node of the link
+     * @param key key of the property to add
+     * @param value value of the property to add
+     */
+    void addLinkProperty(TopologyNodePtr src, TopologyNodePtr dst, std::string key, std::any value);
+
+    /**
+     * @brief get the link property between src and dst node with specified key
+     * @param src source node of the link
+     * @param dst destination node of the link
+     * @param key key of the property to get
+     * @return the value of the property for the given key
+     */
+    std::any getLinkProperty(TopologyNodePtr src, TopologyNodePtr dst, std::string key);
+
+    /**
+     * @brief remove the link property between src and dst node with specified key
+     * @param src source node of the link
+     * @param dst destination node of the link
+     * @param key key of the property to remove
+     * @return true if the removal is successful
+     */
+    bool removeLinkProperty(TopologyNodePtr src, TopologyNodePtr dst, std::string key);
+
     ~Topology();
 
   private:
@@ -208,6 +236,11 @@ class Topology {
     TopologyNodePtr rootNode;
     std::mutex topologyLock;
     std::map<uint64_t, TopologyNodePtr> indexOnNodeIds;
+
+    /**
+     * @brief Properties of link between a pair of srcNode and a dstNode
+     */
+    std::map<std::pair<std::pair<TopologyNodePtr, TopologyNodePtr>, std::string>, std::any> linkProperties;
 };
 }// namespace NES
 #endif//NES_TOPOLOGY_HPP
