@@ -26,19 +26,13 @@ df_changingThreadsAndSourceProjectionTwoOut = pd.read_csv(folder + 'changingThre
 df_changingThreadsAndSourceMapOneField = pd.read_csv(folder + 'changingThreadsAndSourceMapOneField.csv')
 df_changingThreadsAndSourceMapTwoField = pd.read_csv(folder + 'changingThreadsAndSourceMapTwoField.csv')
 
-df_changingThreadsAndSourceTumblingWindowQuery = pd.read_csv(folder + 'changingThreadsAndSourceTumblingWindowQuery.csv')
-df_changingThreadsAndSourceYSBWindowQuery = pd.read_csv(folder + 'changingThreadsAndSourceYSBWindowQuery.csv')
-df_changingThreadsAndSourceSlidingWindowQuery = pd.read_csv(folder + 'changingThreadsAndSourceSlidingWindowQuery.csv')
-
-
-
 import plotly.graph_objects as go
 import plotly
 
 # ###############################################################
 fig = make_subplots(
-    rows=3, cols=11,
-    column_widths=[3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4],
+    rows=3, cols=8,
+    column_widths=[3, 3, 3, 3, 3, 3, 3, 3],
     row_heights=[1, 1, 1],
     shared_xaxes=False,
     subplot_titles=[
@@ -50,9 +44,6 @@ fig = make_subplots(
         'Project 1 out of 3 out',
         'Map add 1 field',
         'Map add 2 field',
-        'Tumbling Window',
-        'Sliding Window',
-        'YSB Query',
     ],
 )
 
@@ -487,158 +478,12 @@ fig.add_trace(
 fig.update_xaxes(title_text="Map add 2 fields", row=3, col=8)
 ###############
 
-############################################# df_changingThreadsAndSourceTumblingWindowQuery #######################################################
-
-df_changingThreadsAndSourceTumblingWindowQuery["src"] = "W" + df_changingThreadsAndSourceTumblingWindowQuery[
-    "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceTumblingWindowQuery["SourceCnt"].astype(str)
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceTumblingWindowQuery['src'],
-               y=df_changingThreadsAndSourceTumblingWindowQuery['ThroughputInTupsPerSec'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='red',
-                         width=2),
-               name="Throughput in Tuples/sec",
-               showlegend=False
-               ),
-    row=1, col=9
-)
-fig.update_xaxes(title_text="Tumbling Window", row=1, col=9)
-
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceTumblingWindowQuery['src'],
-               y=df_changingThreadsAndSourceTumblingWindowQuery['ThroughputInMBPerSec'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='blue',
-                         width=2),
-               name="ThroughputInMBPerSec",
-               showlegend=False
-               ),
-    row=2, col=9
-)
-fig.update_xaxes(title_text="Tumbling Window", row=3, col=9)
-
-df_changingThreadsAndSourceTumblingWindowQuery["src"] = "W" + df_changingThreadsAndSourceTumblingWindowQuery[
-    "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceTumblingWindowQuery["SourceCnt"].astype(str)
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceTumblingWindowQuery['src'],
-               y=df_changingThreadsAndSourceTumblingWindowQuery['AvgLatencyInMs'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='green',
-                         width=2),
-               name="AvgLatencyInMs",
-               showlegend=False
-               ),
-    row=3, col=9
-)
-fig.update_xaxes(title_text="Tumbling Window", row=3, col=9)
-
-##########
-############################################# df_changingThreadsAndSourceSlidingWindowQuery #######################################################
-
-df_changingThreadsAndSourceSlidingWindowQuery["src"] = "W" + df_changingThreadsAndSourceSlidingWindowQuery[
-    "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceSlidingWindowQuery["SourceCnt"].astype(str)
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceSlidingWindowQuery['src'],
-               y=df_changingThreadsAndSourceSlidingWindowQuery['ThroughputInTupsPerSec'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='red',
-                         width=2),
-               name="Throughput in Tuples/sec",
-               showlegend=False
-               ),
-    row=1, col=10
-)
-fig.update_xaxes(title_text="Sliding Window", row=1, col=10)
-
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceSlidingWindowQuery['src'],
-               y=df_changingThreadsAndSourceSlidingWindowQuery['ThroughputInMBPerSec'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='blue',
-                         width=2),
-               name="ThroughputInMBPerSec",
-               showlegend=False
-               ),
-    row=2, col=10
-)
-fig.update_xaxes(title_text="Sliding Window", row=3, col=10)
-
-df_changingThreadsAndSourceSlidingWindowQuery["src"] = "W" + df_changingThreadsAndSourceSlidingWindowQuery[
-    "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceSlidingWindowQuery["SourceCnt"].astype(str)
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceSlidingWindowQuery['src'],
-               y=df_changingThreadsAndSourceSlidingWindowQuery['AvgLatencyInMs'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='green',
-                         width=2),
-               name="AvgLatencyInMs",
-               showlegend=False
-               ),
-    row=3, col=10
-)
-fig.update_xaxes(title_text="Sliding Window", row=3, col=10)
-#######
-
-############################################# df_changingThreadsAndSourceYSBWindowQuery #######################################################
-
-df_changingThreadsAndSourceYSBWindowQuery["src"] = "W" + df_changingThreadsAndSourceYSBWindowQuery[
-    "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceYSBWindowQuery["SourceCnt"].astype(str)
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceYSBWindowQuery['src'],
-               y=df_changingThreadsAndSourceYSBWindowQuery['ThroughputInTupsPerSec'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='red',
-                         width=2),
-               name="Throughput in Tuples/sec",
-               showlegend=False
-               ),
-    row=1, col=11
-)
-fig.update_xaxes(title_text="YSB Query", row=1, col=11)
-
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceYSBWindowQuery['src'],
-               y=df_changingThreadsAndSourceYSBWindowQuery['ThroughputInMBPerSec'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='blue',
-                         width=2),
-               name="ThroughputInMBPerSec",
-               showlegend=False
-               ),
-    row=2, col=11
-)
-fig.update_xaxes(title_text="YSB Query", row=3, col=11)
-
-df_changingThreadsAndSourceYSBWindowQuery["src"] = "W" + df_changingThreadsAndSourceYSBWindowQuery[
-    "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceYSBWindowQuery["SourceCnt"].astype(str)
-fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceYSBWindowQuery['src'],
-               y=df_changingThreadsAndSourceYSBWindowQuery['AvgLatencyInMs'],
-               hoverinfo='x+y',
-               mode='markers+lines',
-               line=dict(color='green',
-                         width=2),
-               name="AvgLatencyInMs",
-               showlegend=False
-               ),
-    row=3, col=11
-)
-fig.update_xaxes(title_text="YSB Query", row=3, col=11)
-####
 
 fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
-        'text': "<b>NebulaStream Performance Numbers -- Different Workloads </b><br>"
-                "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB,  TupleSize=24Byte (3 Attributes))"
+        'text': "<b>NebulaStream Performance Numbers -- Different StateLess Workloads </b><br>"
+                "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB, TupleSize=24Byte (3 Attributes))"
                 "<br>",
         'y': 0.98,
         'x': 0.5,
@@ -675,4 +520,4 @@ fig.update_layout(legend=dict(
 ))
 
 ###############################################################
-plotly.offline.plot(fig, filename='DifferentWorkloads.html')
+plotly.offline.plot(fig, filename='DifferentStateLessWorkloads.html')
