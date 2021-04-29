@@ -12,10 +12,12 @@
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
     See the License for the specific language governing permissions and
     limitations under the License.
-*/
+*//*
+
 #ifndef NES_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
 #define NES_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
 
+*/
 /**
  * @brief The following pragma disables particular compiler warnings for a particular code fragment.
  * For example:
@@ -33,7 +35,8 @@
  *  The macro works for GCC, CLANG, and Visual Studio.
  *  Details here: https://www.fluentcpp.com/2019/08/30/how-to-disable-a-warning-in-cpp
  *
- */
+ *//*
+
 #if defined(_MSC_VER)
 #define DISABLE_WARNING_PUSH __pragma(warning(push))
 #define DISABLE_WARNING_POP __pragma(warning(pop))
@@ -60,3 +63,4 @@
 #endif
 
 #endif//NES_INCLUDE_UTIL_DISABLEWARNINGSPRAGMA_HPP_
+*/

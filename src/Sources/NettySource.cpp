@@ -81,9 +81,6 @@ NettySource::NettySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferMa
 
     fileEnded = false;
 
-//connection to netty socket
-
-
 }
 
 
@@ -121,7 +118,8 @@ std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
                 NES_DEBUG("NettySource:: Data Finished");
                 NES_TRACE("NettySource::fillBuffer: read produced buffer= "
                               << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
-                buf.setNumberOfTuples(0);
+
+
                 return buf;
             }
             boost::algorithm::split(parsed, buffer, boost::is_any_of("\n"));

@@ -203,13 +203,12 @@ void DataSource::runningRoutine() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
+
                 NES_DEBUG("DataSource " << operatorId << " type=" << getType() << " string=" << toString()
                                         << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                         << " iteration=" << cnt << " operatorId=" << this->operatorId
                                         << " orgID=" << this->operatorId);
-                if(buf.getNumberOfTuples() == 0){
-                    running = false;
-                }
+
                 buf.setOriginId(operatorId);
                 queryManager->addWork(operatorId, buf);
                 cnt++;
