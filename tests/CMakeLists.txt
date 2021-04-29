@@ -339,6 +339,11 @@ add_executable(global-execution-plan-tests "UnitTests/Plans/Global/Execution/Glo
 target_link_libraries(global-execution-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-execution-plan-tests COMMAND global-execution-plan-tests)
 
+### Util Function Test ###
+add_executable(util-function-tests "UnitTests/Util/UtilFunctionTest.cpp")
+target_link_libraries(util-function-tests nes ${GTEST_LIBRARIES})
+add_test(NAME util-function-tests COMMAND util-function-tests)
+
 ### Z3 Validation Test ###
 add_executable(z3-validation-tests "UnitTests/Z3ValidationTest.cpp")
 target_link_libraries(z3-validation-tests nes ${GTEST_LIBRARIES})
