@@ -358,8 +358,9 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
 }
 
 const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace){
+    if (origin.find(search) != std::string::npos){
         return origin.replace(origin.find(search), search.size(), replace);
-
+    } else return origin;
 }
 
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
