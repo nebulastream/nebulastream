@@ -14,11 +14,10 @@
     limitations under the License.
 */
 
-
+#include <gtest/gtest.h>
 #include <Util/Logger.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <gtest/gtest.h>
 
 namespace NES {
 
@@ -38,12 +37,12 @@ class TopologyPropertiesTest : public testing::Test {
 };
 
 // test assigning topology properties
-TEST_F(TopologyPropertiesTest, testAssignProperties) {
+TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties) {
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
-    // create a nodes
+    // create a node
     auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
     node->addProperty("cores",2);
     node->addProperty("architecture", std::string("arm64"));
@@ -59,12 +58,12 @@ TEST_F(TopologyPropertiesTest, testAssignProperties) {
 }
 
 // test removing a topology properties
-TEST_F(TopologyPropertiesTest, testRemoveAProperty) {
+TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
-    // create a nodes
+    // create a node
     auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
     node->addProperty("cores",2);
 
@@ -74,5 +73,49 @@ TEST_F(TopologyPropertiesTest, testRemoveAProperty) {
     EXPECT_THROW(node->getProperty("cores"), NesRuntimeException);
 }
 
+// test assigning topology properties
+TEST_F(TopologyPropertiesTest, testAssignTopologyLinkProperties) {
+    TopologyPtr topology = Topology::create();
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // create src and dst nodes
+    auto srcNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+
+    grpcPort++;
+    dataPort++;
+    auto dstNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
+
+    topology->addLinkProperty(srcNode, dstNode, "bandWidth", 512);
+    topology->addLinkProperty(srcNode, dstNode, "type", std::string("local"));
+
+    EXPECT_TRUE(topology->getLinkProperty(srcNode, dstNode, "bandWidth").has_value());
+    EXPECT_TRUE(topology->getLinkProperty(srcNode, dstNode, "type").has_value());
+
+    EXPECT_EQ(std::any_cast<int>(topology->getLinkProperty(srcNode, dstNode, "bandWidth")), 512);
+    EXPECT_EQ(std::any_cast<std::string>(topology->getLinkProperty(srcNode, dstNode, "type")), "local");
+}
+
+// test removing topology link properties
+TEST_F(TopologyPropertiesTest, testRemoveTopologyLinkProperties) {
+    TopologyPtr topology = Topology::create();
+    uint32_t grpcPort = 4000;
+    uint32_t dataPort = 5000;
+
+    // create src and dst nodes
+    auto srcNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+
+    grpcPort++;
+    dataPort++;
+    auto dstNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
+
+    topology->addLinkProperty(srcNode, dstNode, "bandWidth", 512);
+
+    ASSERT_TRUE(topology->getLinkProperty(srcNode, dstNode, "bandWidth").has_value());
+
+    topology->removeLinkProperty(srcNode, dstNode, "bandWidth");
+
+    EXPECT_THROW(topology->getLinkProperty(srcNode, dstNode, "bandWidth"), NesRuntimeException);
+}
 
 }// namespace NES

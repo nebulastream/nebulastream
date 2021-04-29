@@ -557,4 +557,40 @@ std::vector<TopologyNodePtr> Topology::findNodesBetween(std::vector<TopologyNode
     return findNodesBetween(commonAncestorForChildren, commonChildForParents);
 }
 
+void Topology::addLinkProperty(TopologyNodePtr src, TopologyNodePtr dst, std::string key, std::any value) {
+    std::pair<TopologyNodePtr, TopologyNodePtr> linkPair = std::make_pair(src, dst);
+    std::pair<std::pair<TopologyNodePtr, TopologyNodePtr>, std::string> propertyKey = std::make_pair(linkPair, key);
+
+    if (linkProperties.find(propertyKey) != linkProperties.end()) {
+        NES_WARNING("Topology: Property ' " << key << "'between nodeId=" << src->getId() << " and " << dst->getId() << " already exists.");
+    }
+
+    linkProperties.insert( std::make_pair(propertyKey, value));
+}
+
+std::any Topology::getLinkProperty(TopologyNodePtr src, TopologyNodePtr dst, std::string key) {
+    std::pair<TopologyNodePtr, TopologyNodePtr> linkPair = std::make_pair(src, dst);
+    std::pair<std::pair<TopologyNodePtr, TopologyNodePtr>, std::string> propertyKey = std::make_pair(linkPair, key);
+
+    if (linkProperties.find(propertyKey) == linkProperties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
+    } else {
+        return linkProperties.at(propertyKey);
+    }
+}
+
+bool Topology::removeLinkProperty(TopologyNodePtr src, TopologyNodePtr dst, std::string key) {
+    std::pair<TopologyNodePtr, TopologyNodePtr> linkPair = std::make_pair(src, dst);
+    std::pair<std::pair<TopologyNodePtr, TopologyNodePtr>, std::string> propertyKey = std::make_pair(linkPair, key);
+
+    if (linkProperties.find(propertyKey) == linkProperties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        return false;
+    } else {
+        linkProperties.erase(propertyKey);
+        return true;
+    }
+}
+
 }// namespace NES
