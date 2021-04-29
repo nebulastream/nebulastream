@@ -43,10 +43,8 @@
 #include <unordered_map>
 #include <unordered_set>
 
-#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-//#include <NodeEngine/internal/blockingconcurrentqueue.h>
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #include <folly/MPMCQueue.h>
-//#include <NodeEngine/internal/atomic_queue.h>
 #endif
 
 
@@ -101,7 +99,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return an execution result
      *
      */
-#ifndef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     ExecutionResult processNextTask(std::atomic<bool>& running, WorkerContext& workerContext);
 #else
     ExecutionResult processNextTask(bool running, WorkerContext& workerContext);
@@ -246,13 +244,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
     std::shared_mutex queryMutex;
-#ifdef USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+#ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
         folly::MPMCQueue<Task> taskQueue;
-//    moodycamel::BlockingConcurrentQueue<Task> taskQueue;
-
-//    using OptimistAtomicQueue2 = std::common_type<atomic_queue::AtomicQueue2<Task, 1024, true, true, false, false>>;
-//    using TaskQueueType = OptimistAtomicQueue2::type;
-//    TaskQueueType taskQueue;
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;

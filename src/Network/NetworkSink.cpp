@@ -42,7 +42,7 @@ bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Wo
     if (channel) {
         return channel->sendBuffer(inputBuffer, sinkFormat->getSchemaPtr()->getSchemaSizeInBytes());
     }
-//    NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
+    NES_ASSERT2_FMT(false, "invalid channel on " << nesPartition);
     return false;
 }
 

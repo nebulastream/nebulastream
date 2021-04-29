@@ -1512,7 +1512,6 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 
     auto functionBuilder = FunctionDefinition::create("execute")
                                ->returns(tf->createAnonymusDataType("ExecutionResult"))
-//                               ->returns(tf->createDataType(DataTypeFactory::createUInt32()))
                                ->addParameter(code->varDeclarationInputBuffer)
                                ->addParameter(code->varDeclarationExecutionContext)
                                ->addParameter(code->varDeclarationWorkerContext);
