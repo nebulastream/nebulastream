@@ -21,6 +21,7 @@
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <NodeEngine/ExecutionResult.hpp>
 #include <memory>
 #include <variant>
 #include <vector>
@@ -66,7 +67,7 @@ class NewExecutablePipeline : public Reconfigurable {
      * @param workerContext
      * @return true if no error occurred
      */
-    bool execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
     /**
    * @brief Initialises a pipeline stage
