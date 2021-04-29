@@ -64,7 +64,6 @@ class QueryService {
     uint64_t addQueryRequest(std::string queryString, QueryPtr queryPtr, std::string placementStrategyName);
 
     /**
-     * @deprecated NOT TO BE USED
      * @brief This method calls addQueryRequest with an empty string.
      * @param queryPtr : Query Object
      * @param placementStrategyName : Name of the placement strategy
