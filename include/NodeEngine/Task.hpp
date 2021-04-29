@@ -39,8 +39,6 @@ class Task {
 
     explicit Task();
 
-    ~Task() = default;
-
     /**
      * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
      */
@@ -77,6 +75,12 @@ class Task {
     std::string toString();
 
     uint64_t getId();
+
+    /**
+     * This method returns the reference to the buffer of this task
+     * @return
+     */
+    TupleBuffer& getBufferRef();
 
   private:
     Execution::ExecutablePipelinePtr pipeline;

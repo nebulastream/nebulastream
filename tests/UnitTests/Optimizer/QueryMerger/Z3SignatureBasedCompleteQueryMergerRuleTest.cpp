@@ -18,24 +18,24 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Plans/Query/QueryPlan.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
+#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
+#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
-#include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
-#include <Optimizer/Phases/Z3SignatureInferencePhase.hpp>
-#include <iostream>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Phases/TypeInferencePhase.hpp>
-#include <Optimizer/Utils/SignatureEqualityUtil.hpp>
-#include <z3++.h>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <iostream>
+#include <z3++.h>
 
 using namespace NES;
 
@@ -108,7 +108,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingEqualQueries) {
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -203,7 +203,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, DISABLED_testMergingEqualQue
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -282,7 +282,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -370,7 +370,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -455,7 +455,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -540,9 +540,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
-    z3InferencePhase->execute(queryPlan1);
-    z3InferencePhase->execute(queryPlan2);
+    auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    signatureInferencePhase->execute(queryPlan1);
+    signatureInferencePhase->execute(queryPlan2);
 
     auto globalQueryPlan = GlobalQueryPlan::create();
     globalQueryPlan->addQueryPlan(queryPlan1);
@@ -619,7 +619,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -697,7 +697,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -776,7 +776,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -855,7 +855,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -923,7 +923,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .windowByKey(Attribute("type"), windowType1, aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -935,7 +937,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .windowByKey(Attribute("type"), windowType2, aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -947,7 +951,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1015,7 +1019,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .windowByKey(Attribute("type"), windowType1, aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1027,7 +1033,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .windowByKey(Attribute("type"), windowType2, aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1039,7 +1047,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1107,7 +1115,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .windowByKey(Attribute("type"), windowType1, aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1119,7 +1129,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("id") < 40)
-                       .windowByKey(Attribute("type"), windowType2, aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
@@ -1131,7 +1143,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1200,7 +1212,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     Query query1 = Query::from("car")
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
-                       .windowByKey(Attribute("type"), windowType1, aggregation1)
+                       .window(windowType1)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation1)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
@@ -1211,7 +1225,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     auto aggregation2 = Sum(Attribute("value"));
     Query query2 = Query::from("car")
                        .map(Attribute("value") = 40)
-                       .windowByKey(Attribute("type"), windowType2, aggregation2)
+                       .window(windowType2)
+                       .byKey(Attribute("type"))
+                       .apply(aggregation2)
                        .filter(Attribute("type") < 40)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();
@@ -1224,7 +1240,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWi
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1313,7 +1329,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1402,7 +1418,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1491,7 +1507,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1581,7 +1597,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameWa
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1674,7 +1690,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1765,7 +1781,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithUnionO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1857,7 +1873,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1945,7 +1961,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -2042,7 +2058,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -2136,7 +2152,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -2230,7 +2246,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -2323,7 +2339,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithJoinOp
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase = Optimizer::Z3SignatureInferencePhase::create(context);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 

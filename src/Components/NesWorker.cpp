@@ -109,6 +109,8 @@ void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }
 
+uint64_t NesWorker::getWorkerId() { return coordinatorRpcClient->getId(); }
+
 bool NesWorker::start(bool blocking, bool withConnect) {
     NES_DEBUG("NesWorker: start with blocking " << blocking << " coordinatorIp=" << coordinatorIp
                                                 << " coordinatorPort=" << coordinatorPort << " localWorkerIp=" << localWorkerIp
@@ -224,7 +226,7 @@ bool NesWorker::connect() {
     coordinatorRpcClient = std::make_shared<CoordinatorRPCClient>(address);
     std::string localAddress = localWorkerIp + ":" + std::to_string(localWorkerRpcPort);
 
-    NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddres=" << localAddress);
+    NES_DEBUG("NesWorker::connect() with server address= " << address << " localaddress=" << localAddress);
     // todo add nodeEngine->getNodePropertiesAsString()
     auto nodeStatsProvider = nodeEngine->getNodeStatsProvider();
     nodeStatsProvider->update();

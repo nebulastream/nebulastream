@@ -19,8 +19,11 @@
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <cpprest/json.h>
+#include <map>
 #include <string>
+
 /*
 - * The above undef ensures that NES will compile.
 - * There is a 3rd-party library that defines U as a macro for some internal stuff.
@@ -187,6 +190,23 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextTaskId();
+
+    /**
+     *
+     * @param queryPlan queries to which the properties are assigned
+     * @param properties properties to assign
+     * @return true if the assignment success, and false otherwise
+     */
+    static bool assignPropertiesToQueryOperators(QueryPlanPtr queryPlan, std::vector<std::map<std::string, std::any>> properties);
+
+  private:
+    /**
+     * @brief This method is responsible for returning the location where the sub query terminates
+     * @param startOfUnionWith : the location where unionWith starts
+     * @param queryCodeSnippet: the whole string code snippet
+     * @return location where sub query terminates
+     */
+    static uint64_t findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet);
 };
 }// namespace NES
 

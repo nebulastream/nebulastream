@@ -70,7 +70,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @param tupleBuffer the output tuple buffer that is passed to the runtime
      * @param workerContext the worker context
      */
-    void emitBuffer(TupleBuffer& tupleBuffer, WorkerContext&);
+    void emitBuffer(TupleBuffer tupleBuffer, WorkerContext&);
 
     /**
     * @brief Dispatch a buffer as a new task to the query manager.
@@ -78,7 +78,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     * @param outputBuffer the output tuple buffer that is passed to the runtime
     * @param workerContext the worker context
     */
-    void dispatchBuffer(TupleBuffer& tupleBuffer);
+    void dispatchBuffer(TupleBuffer tupleBuffer);
 
     /**
      * @brief Retrieve all registered operator handlers.

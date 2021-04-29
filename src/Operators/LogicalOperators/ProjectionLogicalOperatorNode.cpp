@@ -25,7 +25,9 @@
 namespace NES {
 
 ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, uint64_t id)
-    : expressions(expressions), UnaryOperatorNode(id) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), expressions(expressions) {}
+
+std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
 
 bool ProjectionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<ProjectionLogicalOperatorNode>()->getId() == id;
@@ -45,23 +47,8 @@ const std::string ProjectionLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string ProjectionLogicalOperatorNode::getStringBasedSignature() {
-    std::stringstream ss;
-    std::vector<std::string> fields;
-    for (auto& field : outputSchema->fields) {
-        fields.push_back(field->getName());
-    }
-    std::sort(fields.begin(), fields.end());
-    ss << "PROJECTION(";
-    for (auto field : fields) {
-        ss << " " << field << " ";
-    }
-    ss << ")." << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-    return ss.str();
-}
-
 bool ProjectionLogicalOperatorNode::inferSchema() {
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     NES_DEBUG("proj input=" << inputSchema->toString() << " outputSchema=" << outputSchema->toString()
@@ -91,12 +78,33 @@ bool ProjectionLogicalOperatorNode::inferSchema() {
     return true;
 }
 
-std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
-
 OperatorNodePtr ProjectionLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createProjectionOperator(expressions, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
+}
+
+void ProjectionLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("ProjectionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_ASSERT(!children.empty(), "ProjectionLogicalOperatorNode: Project should have children.");
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    std::vector<std::string> fields;
+    for (auto& field : outputSchema->fields) {
+        fields.push_back(field->getName());
+    }
+    std::sort(fields.begin(), fields.end());
+    signatureStream << "PROJECTION(";
+    for (auto field : fields) {
+        signatureStream << " " << field << " ";
+    }
+    signatureStream << ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES

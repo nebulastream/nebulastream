@@ -171,7 +171,6 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
 
         NodeEnginePtr self = this->inherited1::shared_from_this();
-
         // Translate all operator source to the physical sources and add them to the query plan
         for (const auto& sources : sourceOperators) {
             auto operatorId = sources->getId();
@@ -190,10 +189,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
 
         for (const auto& sink : sinkOperators) {
             NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
-            auto sinkDescriptor = sink->getSinkDescriptor();
-            auto schema = sink->getOutputSchema();
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(schema, sinkDescriptor, self, querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink, self, querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
@@ -390,29 +387,13 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
             ++it;
         }
     }
-
-    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-    NES_DEBUG("refcnt nm " << networkManager.use_count());
-    NES_DEBUG("refcnt qm " << queryManager.use_count());
-
     // release components
     // TODO do not touch the sequence here as it will lead to errors in the shutdown sequence
     deployedQEPs.clear();
     queryIdToQuerySubPlanIds.clear();
     queryManager->destroy();
     networkManager->destroy();
-    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-    NES_DEBUG("refcnt nm " << networkManager.use_count());
-    NES_DEBUG("refcnt qm " << queryManager.use_count());
-    queryCompiler.reset();
-    queryManager.reset();
-    networkManager.reset();
-    NES_DEBUG("refcnt bm " << bufferManager.use_count());
-    NES_DEBUG("refcnt nm " << networkManager.use_count());
-    NES_DEBUG("refcnt qm " << queryManager.use_count());
-
     bufferManager->destroy();
-    bufferManager.reset();
     return !withError;
 }
 

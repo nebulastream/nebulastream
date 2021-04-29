@@ -35,6 +35,7 @@
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <Topology/Topology.hpp>
@@ -51,7 +52,6 @@ using Clock = std::chrono::high_resolution_clock;
 namespace NES {
 
 // removes leading and trailing whitespaces
-
 std::string UtilityFunctions::trim(std::string s) {
     auto not_space = [](char c) {
         return isspace(c) == 0;
@@ -99,12 +99,11 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
 
         if (merge) {//if contains merge
             auto pos1 = queryCodeSnippet.find("unionWith(");
-            std::string tmp = queryCodeSnippet.substr(pos1);
-            auto pos2 = tmp.find(")).");//find the end bracket of merge query
-            std::string subquery = tmp.substr(10, pos2 - 9);
+            uint64_t closingLoc = findSubQueryTermination(pos1, queryCodeSnippet);
+            std::string subquery = queryCodeSnippet.substr(pos1 + 10, closingLoc - pos1 - 10);
             NES_DEBUG("UtilityFunctions: subquery = " << subquery);
             code << "auto subQuery = " << subquery << ";" << std::endl;
-            newQuery.replace(pos1, pos2 + 1, "unionWith(&subQuery");
+            newQuery.replace(pos1, closingLoc - pos1, "unionWith(&subQuery");
             NES_DEBUG("UtilityFunctions: newQuery = " << newQuery);
         }
 
@@ -122,7 +121,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "}" << std::endl;
         NES_DEBUG("UtilityFunctions: query code \n" << code.str());
         Compiler compiler;
-        CompiledCodePtr compiled_code = compiler.compile(code.str(), true);
+        CompiledCodePtr compiled_code = compiler.compile(code.str());
         if (!code) {
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
@@ -145,6 +144,26 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
     }
 }
 
+uint64_t UtilityFunctions::findSubQueryTermination(uint64_t startOfUnionWith, const std::string& queryCodeSnippet) {
+    uint64_t closingLoc = 0;
+    uint64_t parenthesisCount = 0;
+    //Iterate over the code string and identify the last location where the parenthesis are getting balanced
+    for (uint64_t i = startOfUnionWith + 9; i < queryCodeSnippet.size(); i++) {
+        if (queryCodeSnippet[i] == '(') {//When found open parenthesis, increment the parenthesis count
+            parenthesisCount++;
+        } else if (queryCodeSnippet[i] == ')') {//When found open parenthesis, decrement the parenthesis count
+            parenthesisCount--;
+        }
+
+        if (parenthesisCount == 0) {//When found parenthesis count as zero then return the position
+            closingLoc = i;
+            break;
+        }
+    }
+    //return the location where the parenthesis are getting balanced
+    return closingLoc;
+}
+
 SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSnippet) {
     try {
         /* translate user code to a shared library, load and execute function, then return query object */
@@ -158,7 +177,8 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
         code << "}" << std::endl;
         code << "}" << std::endl;
         Compiler compiler;
-        CompiledCodePtr compiled_code = compiler.compile(code.str(), false);
+        NES_DEBUG("generated code=" << code.str());
+        CompiledCodePtr compiled_code = compiler.compile(code.str());
         if (!code) {
             NES_ERROR("Compilation of schema code failed! Code: " << code.str());
         }
@@ -425,4 +445,35 @@ web::json::value UtilityFunctions::getTopologyAsJson(TopologyNodePtr root) {
     return topologyJson;
 }
 
+bool UtilityFunctions::assignPropertiesToQueryOperators(QueryPlanPtr queryPlan,
+                                                        std::vector<std::map<std::string, std::any>> properties) {
+    size_t numOperators = 0;
+    // count the number of operators in the query
+    auto queryPlanIterator = QueryPlanIterator(queryPlan);
+    for (auto node : queryPlanIterator) {
+        numOperators++;
+    }
+
+    // check if we supply operator properties for all operators
+    if (numOperators != properties.size()) {
+        NES_ERROR("UtilityFunctions::assignPropertiesToQueryOperators: the number of properties does not match the number of "
+                  "operators. The query plan is:\n"
+                  << queryPlan->toString());
+        return false;
+    }
+
+    // prepare the query plan iterator
+    auto propertyIterator = properties.begin();
+
+    // iterate over all operators in the query
+    for (auto node : queryPlanIterator) {
+        for (auto const& [key, val] : *propertyIterator) {
+            // add the current property to the current operator
+            node->as<LogicalOperatorNode>()->addProperty(key, val);
+        }
+        ++propertyIterator;
+    }
+
+    return true;
+}
 }// namespace NES

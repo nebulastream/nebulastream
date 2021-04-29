@@ -52,14 +52,14 @@ std::string Compiler::getFileName() {
 
     std::random_device dev;
     std::mt19937 rng(dev());
-    std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000);
+    std::uniform_int_distribution<std::mt19937::result_type> dist(1, 10000000);
 
     std::stringstream ss;
     ss << "gen_query_" << std::put_time(&localtime, "%d-%m-%Y_%H-%M-%S") << "_" << dist(rng);
     return ss.str();
 }
 
-CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
+CompiledCodePtr Compiler::compile(const std::string& source) {
 
     // write source to cpp file
     std::string basename = getFileName();
@@ -68,12 +68,23 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
     writeSourceToFile(filename, source);
     NES_DEBUG("compiler filename =" << filename);
     // if we are in compile in debugging mode we create print the source file.
-    if (debugging) {
-        formatAndPrintSource(filename);
-    }
 
-    // init compilation flag dependent on compilation mode
-    auto flags = debugging ? CompilerFlags::createDebuggingCompilerFlags() : CompilerFlags::createDefaultCompilerFlags();
+    CompilerFlagsPtr flags;
+#ifdef NES_DEBUG_MODE
+    NES_DEBUG("use debug flags");
+    flags = CompilerFlags::createDebuggingCompilerFlags();
+#endif
+
+#ifdef NES_RELEASE_MODE
+#ifdef NES_BENCHMARKS_FLAG_MODE
+    std::cout << "use benchmark flags" << std::endl;
+    flags = CompilerFlags::createBenchmarkingCompilerFlags();
+#else
+    std::cout << "use release flags" << std::endl;
+    flags = CompilerFlags::createOptimizingCompilerFlags();
+#endif
+#endif
+
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
     flags->addFlag("-I" + IncludePath);
@@ -102,6 +113,7 @@ CompiledCodePtr Compiler::compile(const std::string& source, bool debugging) {
 #endif
 
     flags->addFlag("-fno-diagnostics-color");
+    flags->addFlag("-g");
     flags->addFlag(filename);
 
     // call compiler to generate shared lib from source code

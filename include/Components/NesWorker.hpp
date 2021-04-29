@@ -158,6 +158,8 @@ class NesWorker {
      */
     bool isWorkerRunning();
 
+    uint64_t getWorkerId();
+
   private:
     /**
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls

@@ -22,18 +22,13 @@
 
 namespace NES::Optimizer {
 
-QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, std::string queryMergerRuleName) {
-    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(context, queryMergerRuleName));
+QueryMergerPhasePtr QueryMergerPhase::create(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule) {
+    return std::make_shared<QueryMergerPhase>(QueryMergerPhase(context, queryMergerRule));
 }
 
-QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, std::string queryMergerRuleName) {
-    auto queryMergerEnum = stringToMergerRuleEnum.find(queryMergerRuleName);
-    if (queryMergerEnum == stringToMergerRuleEnum.end()) {
-        NES_FATAL_ERROR("Unhandled Query Merger Rule Type " << queryMergerRuleName);
-        throw Exception("Unhandled Query Merger Rule Type " + queryMergerRuleName);
-    }
+QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRuleName) {
 
-    switch (queryMergerEnum->second) {
+    switch (queryMergerRuleName) {
         case QueryMergerRule::SyntaxBasedCompleteQueryMergerRule:
             queryMergerRule = SyntaxBasedCompleteQueryMergerRule::create();
             break;
@@ -41,8 +36,12 @@ QueryMergerPhase::QueryMergerPhase(z3::ContextPtr context, std::string queryMerg
             queryMergerRule = Z3SignatureBasedCompleteQueryMergerRule::create(context);
             break;
         case QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule:
+        case QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule:
             queryMergerRule = StringSignatureBasedCompleteQueryMergerRule::create();
             break;
+        case QueryMergerRule::SyntaxBasedPartialQueryMergerRule:
+        case QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule:
+        case QueryMergerRule::StringSignatureBasedPartialQueryMergerRule: NES_NOT_IMPLEMENTED();
     }
 }
 

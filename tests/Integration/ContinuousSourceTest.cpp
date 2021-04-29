@@ -26,7 +26,7 @@
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
-#include <Util/TestHarness.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
 #include <iostream>
 
@@ -1544,64 +1544,6 @@ TEST_F(ContinuousSourceTest, testWithManyInputBuffer) {
         expectedOutput.push_back({1, 1, (i + 1) * 100});
     }
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
-
-    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
-    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
-}
-
-/*
- * Testing test harness CSV source
- */
-TEST_F(ContinuousSourceTest, DISABLED_testWithManyInputBufferAndLargeFrequency) {
-    //TODO: will be addressed with issue #1737
-    uint64_t numBuffersToProduce = 1000;
-
-    struct Car {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-    };
-
-    auto carSchema = Schema::create()
-                         ->addField("key", DataTypeFactory::createUInt32())
-                         ->addField("value", DataTypeFactory::createUInt32())
-                         ->addField("timestamp", DataTypeFactory::createUInt64());
-
-    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
-
-    std::string queryWithFilterOperator = R"(Query::from("car"))";
-    TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
-
-    //register physical stream
-
-    SourceConfigPtr sourceConfig = SourceConfig::create();
-    sourceConfig->setSourceType("CSVSource");
-    sourceConfig->setLogicalStreamName("car");
-    sourceConfig->setPhysicalStreamName("car");
-    sourceConfig->setSourceConfig("../tests/test_data/long_running.csv");
-    sourceConfig->setSourceFrequency(100);
-    sourceConfig->setNumberOfTuplesToProducePerBuffer(1);
-    sourceConfig->setNumberOfBuffersToProduce(numBuffersToProduce);
-    sourceConfig->setSkipHeader(false);
-
-    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-    testHarness.addCSVSource(conf, carSchema);
-
-    ASSERT_EQ(testHarness.getWorkerCount(), 1);
-
-    struct Output {
-        uint32_t key;
-        uint32_t value;
-        uint64_t timestamp;
-
-        bool operator==(Output const& rhs) const { return (key == rhs.key && value == rhs.value && timestamp == rhs.timestamp); }
-    };
-    std::vector<Output> expectedOutput = {};
-    for (uint64_t i = 0; i < numBuffersToProduce; i++) {
-        expectedOutput.push_back({1, 1, (i + 1) * 100});
-    }
-
-    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp", 360);
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));

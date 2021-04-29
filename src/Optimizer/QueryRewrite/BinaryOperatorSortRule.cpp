@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>

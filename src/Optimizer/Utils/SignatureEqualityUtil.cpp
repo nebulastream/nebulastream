@@ -27,6 +27,9 @@ SignatureEqualityUtilPtr SignatureEqualityUtil::create(z3::ContextPtr context) {
 
 SignatureEqualityUtil::SignatureEqualityUtil(z3::ContextPtr context) {
     this->context = context;
+    this->context->set("solver2_unknown", true);
+    this->context->set("ignore_solver1", true);
+    this->context->set("timeout", 100);
     solver = std::make_unique<z3::solver>(*context);
 }
 
@@ -54,14 +57,14 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
 
     //Iterate over all distinct schema maps
     // and identify if there is an equivalent schema map in the other signature
-    for (auto& schemaMap : signature1->getSchemaFieldToExprMaps()) {
+    for (auto& schemaFieldToExpMaps : signature1->getSchemaFieldToExprMaps()) {
         bool schemaExists = false;
         for (auto otherSchemaMapItr = otherSchemaFieldToExprMaps.begin(); otherSchemaMapItr != otherSchemaFieldToExprMaps.end();
              otherSchemaMapItr++) {
             bool schemaMatched = false;
             //Iterate over all the field expressions from one schema and other
             // and check if they are matching
-            for (auto& [fieldName, fieldExpr] : schemaMap) {
+            for (auto& [fieldName, fieldExpr] : schemaFieldToExpMaps) {
                 bool fieldMatch = false;
                 for (auto& [otherFieldName, otherFieldExpr] : *otherSchemaMapItr) {
                     if (z3::eq(*fieldExpr, *otherFieldExpr)) {
@@ -120,9 +123,10 @@ bool SignatureEqualityUtil::checkEquality(QuerySignaturePtr signature1, QuerySig
     allConditions.push_back(to_expr(*context, Z3_mk_eq(*context, *conditions, *otherConditions)));
 
     //Create a negation of CNF of all conditions collected till now
+    solver->push();
     solver->add(!z3::mk_and(allConditions).simplify());
     bool equal = solver->check() == z3::unsat;
-    solver->reset();
+    solver->pop();
     return equal;
 }
 

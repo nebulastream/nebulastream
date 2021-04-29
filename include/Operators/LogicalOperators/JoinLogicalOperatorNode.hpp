@@ -17,8 +17,8 @@
 #ifndef Join_LOGICAL_OPERATOR_NODE_HPP
 #define Join_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+
 #include <memory>
 #include <z3++.h>
 
@@ -27,10 +27,16 @@ namespace NES {
 /**
  * @brief Join operator, which contains an expression as a predicate.
  */
-class JoinLogicalOperatorNode : public BinaryOperatorNode {
+class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
   public:
     explicit JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
     ~JoinLogicalOperatorNode() = default;
+
+    /**
+    * @brief get join definition.
+    * @return LogicalJoinDefinition
+    */
+    Join::LogicalJoinDefinitionPtr getJoinDefinition();
 
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
@@ -38,9 +44,7 @@ class JoinLogicalOperatorNode : public BinaryOperatorNode {
     bool inferSchema() override;
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
-
-    Join::LogicalJoinDefinitionPtr getJoinDefinition();
-    std::string getStringBasedSignature() override;
+    void inferStringSignature() override;
 
   private:
     Join::LogicalJoinDefinitionPtr joinDefinition;

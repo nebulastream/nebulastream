@@ -402,8 +402,15 @@ class TestUtils {
    * @param outputFilePath
    * @return true if successful
    */
-    static bool checkOutputOrTimeout(string expectedContent, string outputFilePath) {
-        auto timeoutInSec = std::chrono::seconds(timeout);
+    static bool checkOutputOrTimeout(string expectedContent, string outputFilePath, uint64_t customTimeout = 0) {
+        std::chrono::seconds timeoutInSec;
+        if (customTimeout == 0) {
+            timeoutInSec = std::chrono::seconds(timeout);
+        } else {
+            timeoutInSec = std::chrono::seconds(customTimeout);
+        }
+
+        NES_DEBUG("using timeout=" << timeoutInSec.count());
         auto start_timestamp = std::chrono::system_clock::now();
         uint64_t found = 0;
         uint64_t count = 0;

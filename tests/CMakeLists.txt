@@ -91,6 +91,11 @@ add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest
 target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
+### Translate Physical Operator Tests ###
+add_executable(translate-physical-operator-tests "UnitTests/QueryCompiler/TranslateToPhysicalOperatorPhaseTest.cpp")
+target_link_libraries(translate-physical-operator-tests nes ${GTEST_LIBRARIES})
+add_test(NAME translate-physical-operator-tests COMMAND translate-physical-operator-tests)
+
 ### Operator Code Generation Tests ###
 add_executable(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorCodeGenerationTest.cpp")
 target_link_libraries(operator-code-generation-tests nes ${GTEST_LIBRARIES})
@@ -124,7 +129,7 @@ add_test(NAME zmq-tests COMMAND zmq-tests)
 ### Source Tests ###
 add_executable(source-tests "UnitTests/Source/SourceTest.cpp")
 target_link_libraries(source-tests nes ${LIBRARIES} ${GTEST_LIBRARIES})
-#add_test(NAME source-tests COMMAND source-tests)
+add_test(NAME source-tests COMMAND source-tests)
 
 ### Sink Tests ###
 add_executable(sink-tests "UnitTests/Sink/SinkTest.cpp" UnitTests/Sink/SinkTest.cpp)
@@ -204,6 +209,11 @@ add_executable(expression-node-test "UnitTests/Operators/ExpressionNodeTest.cpp"
 target_link_libraries(expression-node-test nes ${GTEST_LIBRARIES})
 add_test(NAME expression-node-test COMMAND expression-node-test)
 
+# OperatorPropertiesTest
+add_executable(operator-properties-tests "UnitTests/Operators/OperatorPropertiesTest.cpp")
+target_link_libraries(operator-properties-tests nes ${GTEST_LIBRARIES})
+add_test(NAME operator-properties-tests COMMAND operator-properties-tests)
+
 # QueryTest
 add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
@@ -215,9 +225,9 @@ target_link_libraries(translate-to-generatable-operator-phase-tests nes ${GTEST_
 add_test(NAME translate-to-generatable-operator-phase-tests COMMAND translate-to-generatable-operator-phase-tests)
 
 # QueryPlanIteratorTest
-add_executable(queryplan-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
-target_link_libraries(queryplan-iterator-test nes ${GTEST_LIBRARIES})
-add_test(NAME queryplan-iterator-test COMMAND queryplan-iterator-test)
+add_executable(queryplan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
+target_link_libraries(queryplan-util-iterator-test nes ${GTEST_LIBRARIES})
+add_test(NAME queryplan-util-iterator-test COMMAND queryplan-util-iterator-test)
 
 # ConvertLogicalToPhysicalSinkTest
 add_executable(convert-logical-to-physical-sink-tests "UnitTests/Phases/ConvertLogicalToPhysicalSinkTest.cpp")
@@ -335,7 +345,7 @@ target_link_libraries(query-signature-util-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-signature-util-tests COMMAND query-signature-util-tests)
 
 ### Z3 Signature Inference Phase Test ###
-add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/Z3SignatureInferencePhaseTest.cpp")
+add_executable(z3-signature-inference-phase-test "UnitTests/Optimizer/Phases/SignatureInferencePhaseTest.cpp")
 target_link_libraries(z3-signature-inference-phase-test nes ${GTEST_LIBRARIES})
 add_test(NAME z3-signature-inference-phase-test COMMAND z3-signature-inference-phase-test)
 

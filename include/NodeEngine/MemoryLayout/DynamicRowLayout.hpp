@@ -26,16 +26,38 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 typedef uint64_t FIELD_OFFSET;
 
 /**
- * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function as well as adding fieldOffsets as a new member
+ * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
+ * This class is non-thread safe
  */
-class DynamicRowLayout : public DynamicMemoryLayout {
+class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicRowLayout> {
 
   public:
-    DynamicMemoryLayoutPtr copy() const override;
+    /**
+     * @brief Constructor for DynamicRowLayout
+     * @param checkBoundaries
+     * @param schema
+     */
     DynamicRowLayout(bool checkBoundaries, SchemaPtr schema);
+
+    DynamicMemoryLayoutPtr copy() const override;
+    /**
+     * @brief Creates a DynamicColumnLayout as a shared_ptr
+     * @param schema
+     * @param checkBoundaries
+     * @return
+     */
     static DynamicRowLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
-    std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
+
+    /**
+     * @return fieldOffSets vector
+     */
     const std::vector<FIELD_SIZE>& getFieldOffSets() const;
+    /**
+     * Binds a memoryLayout to a tupleBuffer
+     * @param tupleBuffer
+     * @return shared_ptr to DynamicRowLayoutBuffer
+     */
+    DynamicRowLayoutBufferPtr bind(TupleBuffer tupleBuffer);
 
   private:
     std::vector<FIELD_OFFSET> fieldOffSets;

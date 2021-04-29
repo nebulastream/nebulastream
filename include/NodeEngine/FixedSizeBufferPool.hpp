@@ -24,6 +24,7 @@
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 namespace NES {
 
@@ -60,6 +61,14 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
     * @return a new buffer
     */
     TupleBuffer getBufferBlocking();
+
+    /**
+     * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
+     * timeout_ms.
+     * @param timeout_ms the amount of time to wait for a new buffer to be retuned
+     * @return a new buffer
+     */
+    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms);
 
     /**
      * @brief provide number of available exclusive buffers

@@ -17,8 +17,8 @@
 #ifndef SINK_LOGICAL_OPERATOR_NODE_HPP
 #define SINK_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES {
@@ -29,7 +29,7 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 /**
  * @brief Node representing logical sink operator
  */
-class SinkLogicalOperatorNode : public UnaryOperatorNode {
+class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     SinkLogicalOperatorNode(OperatorId id);
     SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id);
@@ -41,7 +41,7 @@ class SinkLogicalOperatorNode : public UnaryOperatorNode {
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorNodePtr copy() override;
     bool inferSchema() override;
-    std::string getStringBasedSignature() override;
+    void inferStringSignature() override;
 
   private:
     SinkDescriptorPtr sinkDescriptor;

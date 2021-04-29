@@ -17,7 +17,7 @@
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/SharedLibrary.hpp>
-#include <boost/filesystem/operations.hpp>
+#include <filesystem>
 #include <iostream>
 namespace NES {
 
@@ -31,20 +31,29 @@ void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name
 }
 
 void SystemCompilerCompiledCode::cleanUp() {
-    if (boost::filesystem::exists(baseFileName + ".c")) {
-        boost::filesystem::remove(baseFileName + ".c");
+    NES_WARNING("delete all in folder=" << baseFileName);
+    if (std::filesystem::exists(baseFileName + ".c")) {
+        std::filesystem::remove(baseFileName + ".c");
     }
 
-    if (boost::filesystem::exists(baseFileName + ".o")) {
-        boost::filesystem::remove(baseFileName + ".o");
+    if (std::filesystem::exists(baseFileName + ".o")) {
+        std::filesystem::remove(baseFileName + ".o");
     }
 
-    if (boost::filesystem::exists(baseFileName + ".so")) {
-        boost::filesystem::remove(baseFileName + ".so");
+    if (std::filesystem::exists(baseFileName + ".so")) {
+        std::filesystem::remove(baseFileName + ".so");
     }
 
-    if (boost::filesystem::exists(baseFileName + ".c.orig")) {
-        boost::filesystem::remove(baseFileName + ".c.orig");
+    if (std::filesystem::exists(baseFileName + ".cpp")) {
+        std::filesystem::remove(baseFileName + ".cpp");
+    }
+
+    if (std::filesystem::exists(baseFileName + ".hpp")) {
+        std::filesystem::remove(baseFileName + ".hpp");
+    }
+
+    if (std::filesystem::exists(baseFileName + ".c.orig")) {
+        std::filesystem::remove(baseFileName + ".c.orig");
     }
 }
 

@@ -19,6 +19,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Operators/OperatorId.hpp>
+#include <any>
 
 namespace NES {
 
@@ -99,12 +100,6 @@ class OperatorNode : public Node {
     NodePtr getChildWithOperatorId(uint64_t operatorId);
 
     /**
-     * @brief Method to infer the schema for this operator
-     * @return bool indicating success
-     */
-    virtual bool inferSchema() = 0;
-
-    /**
      * @brief Method to get the output schema of the operator
      * @return output schema
      */
@@ -134,6 +129,26 @@ class OperatorNode : public Node {
     */
     virtual bool isExchangeOperator() const = 0;
 
+    /**
+     * @brief Add a new property string to the stored properties map
+     * @param key key of the new property
+     * @param value value of the new property
+     */
+    void addProperty(std::string key, std::any value);
+
+    /**
+     * @brief Get a the value of a property
+     * @param key key of the value to retrieve
+     * @return value of the property with the given key
+     */
+    std::any getProperty(std::string key);
+
+    /**
+     * @brief Remove a property string from the stored properties map
+     * @param key key of the property to remove
+     */
+    void removeProperty(std::string key);
+
   protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
@@ -153,6 +168,11 @@ class OperatorNode : public Node {
      * @brief Unique Identifier of the operator within a query.
      */
     u_int64_t id;
+
+    /*
+     * @brief Map of properties of the current node
+     */
+    std::map<std::string, std::any> properties;
 };
 
 }// namespace NES

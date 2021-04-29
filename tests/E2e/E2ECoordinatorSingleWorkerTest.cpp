@@ -251,14 +251,14 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     remove(outputFilePath.c_str());
 
     string coordinatorRPCPort = std::to_string(rpcPort);
-    string cmdCoord = "../nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+    string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
     bp::child coordinatorProc(cmdCoord.c_str());
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
     NES_INFO("started coordinator with pid = " << coordinatorProc.id());
 
     string worker1RPCPort = std::to_string(rpcPort + 3);
     string worker1DataPort = std::to_string(dataPort);
-    string path2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
+    string path2 = "./nesWorker --coordinatorPort=" + coordinatorRPCPort + " --rpcPort=" + worker1RPCPort
         + " --dataPort=" + worker1DataPort
         + " --physicalStreamName=test_stream --logicalStreamName=default_logical "
           "--numberOfBuffersToProduce=2 --sourceFrequency=1";
@@ -493,7 +493,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
 
     std::stringstream schema;
     schema << "{\"streamName\" : \"window\",\"schema\" "
-              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT32))->addField(createField(\\\"id\\\",UINT32))->"
+              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
               "addField(createField(\\\"timestamp\\\",UINT64));\"}";
     schema << endl;
     NES_INFO("schema submit=" << schema.str());
@@ -513,9 +513,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-          "TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)), "
-          "Max(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\")"
+          ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
+          ".byKey(Attribute(\\\"id\\\"))"
+          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -580,9 +581,10 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
 
     std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\"Query::from(\\\"window\\\").windowByKey(Attribute(\\\"id\\\"), "
-          "SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)), "
-          "Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+    ss << "\"Query::from(\\\"window\\\")"
+          ".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10), Seconds(5)))"
+          ".byKey(Attribute(\\\"id\\\"))"
+          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";

@@ -24,10 +24,10 @@
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <REST/RestServer.hpp>
-#include <Services/QueryRequestProcessorService.hpp>
+#include <Services/NESRequestProcessorService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
-#include <WorkQueues/QueryRequestQueue.hpp>
+#include <WorkQueues/NESRequestQueue.hpp>
 #include <thread>
 
 //GRPC Includes
@@ -65,11 +65,20 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     queryCatalog = std::make_shared<QueryCatalog>();
     coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
     workerRpcClient = std::make_shared<WorkerRPCClient>();
-    queryRequestQueue = std::make_shared<QueryRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
+    queryRequestQueue = std::make_shared<NESRequestQueue>(coordinatorConfig->getQueryBatchSize()->getValue());
     globalQueryPlan = GlobalQueryPlan::create();
-    queryRequestProcessorService = std::make_shared<QueryRequestProcessorService>(
-        globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
-        coordinatorConfig->getEnableQueryMerging()->getValue(), coordinatorConfig->getQueryMergerRule()->getValue());
+
+    std::string queryMergerRuleName = coordinatorConfig->getQueryMergerRule()->getValue();
+    auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
+
+    if (found != Optimizer::stringToMergerRuleEnum.end()) {
+        queryRequestProcessorService = std::make_shared<NESRequestProcessorService>(
+            globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
+            coordinatorConfig->getEnableQueryMerging()->getValue(), found->second);
+    } else {
+        NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
+    }
+
     queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue, streamCatalog,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 }
@@ -117,6 +126,8 @@ NesCoordinator::~NesCoordinator() {
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
     NES_ASSERT(coordinatorEngine.use_count() == 0, "NesCoordinator coordinatorEngine leaked");
 }
+
+NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
 
 NodeEngine::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
@@ -284,5 +295,6 @@ GlobalQueryPlanPtr NesCoordinator::getGlobalQueryPlan() { return globalQueryPlan
 void NesCoordinator::onFatalError(int, std::string) {}
 
 void NesCoordinator::onFatalException(const std::shared_ptr<std::exception>, std::string) {}
+const CoordinatorEnginePtr NesCoordinator::getCoordinatorEngine() const { return coordinatorEngine; }
 
 }// namespace NES

@@ -205,4 +205,63 @@ TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
 }
+
+TEST_F(RESTEndpointTest, testConnectivityCheck) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    web::json::value response;
+    web::http::client::http_client getConnectivityCheck("http://127.0.0.1:" + std::to_string(restPort)
+                                                        + "/v1/nes/connectivity/check");
+
+    web::uri_builder builder(("/"));
+    getConnectivityCheck.request(web::http::methods::GET, builder.to_string())
+        .then([](const web::http::http_response& response) {
+            return response.extract_json();
+        })
+        .then([&response](const pplx::task<web::json::value>& task) {
+            try {
+                NES_INFO("get status of checking connectivity");
+                response = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("Error while setting return. " << e.what());
+            }
+        })
+        .wait();
+
+    auto connectivityResponse = response.as_object();
+    NES_DEBUG("Response: " << response.serialize());
+    EXPECT_TRUE(connectivityResponse.size() == 1);
+    EXPECT_TRUE(connectivityResponse.find("success") != connectivityResponse.end());
+    EXPECT_TRUE(connectivityResponse.at("success").as_bool());
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+}
 }// namespace NES

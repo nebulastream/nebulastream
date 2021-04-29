@@ -17,3 +17,4 @@ add_source_nes(
 )
 
 add_subdirectory(LogicalOperators)
+add_subdirectory(AbstractOperators)

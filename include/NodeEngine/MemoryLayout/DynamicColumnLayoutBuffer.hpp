@@ -29,13 +29,26 @@ typedef uint64_t COL_OFFSET_SIZE;
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
  * Additionally, it adds a std::vector of columnOffsets which is useful for calcOffset(). As the name suggests, it is a columnar storage and as such it serializes all fields.
+ * This class is non-thread safe
  */
 class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
   public:
-    DynamicColumnLayoutBuffer(TupleBuffer& tupleBuffer, uint64_t capacity, DynamicColumnLayout& dynamicColLayout,
+    DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity, std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                               std::vector<COL_OFFSET_SIZE> columnOffsets);
-    const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout.getFieldSizes(); }
+
+    /**
+     * @return retrieves the field sizes of the column layout
+     */
+    const std::vector<FIELD_SIZE>& getFieldSizes() { return dynamicColLayout->getFieldSizes(); }
+
+    /**
+     * @param fieldName
+     * @return field index from the fieldName
+     */
+    std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
+        return dynamicColLayout->getFieldIndexFromName(fieldName);
+    };
 
     /**
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
@@ -48,7 +61,6 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
     /**
      * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
-     * This function will memcpy every field into a predeclared tuple via std::apply(). The tuple will then be returned.
      * @tparam Types
      * @param record
      */
@@ -57,58 +69,107 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
     /**
      * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
-     * This function will memcpy every field from record to the associated buffer via std::apply()
      * @tparam Types
      * @param record
      */
     template<bool boundaryChecks, typename... Types>
-    void pushRecord(std::tuple<Types...> record);
+    bool pushRecord(std::tuple<Types...> record);
 
   private:
-    std::vector<COL_OFFSET_SIZE> columnOffsets;
-    const DynamicColumnLayout& dynamicColLayout;
+    /**
+     * Copies fields of tuple sequentially to address
+     */
+    template<size_t I = 0, typename... Ts>
+    typename std::enable_if<I == sizeof...(Ts), void>::type
+    copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
+    template<size_t I = 0, typename... Ts>
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type
+    copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
+
+    /**
+     * Copies fields of tuple sequentially from address
+     */
+    template<size_t I = 0, typename... Ts>
+    typename std::enable_if<I == sizeof...(Ts), void>::type
+    copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint64_t recordIndex,
+                              const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
+    template<size_t I = 0, typename... Ts>
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type
+    copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint64_t recordIndex,
+                              const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
+
+    const std::vector<COL_OFFSET_SIZE> columnOffsets;
+    const std::shared_ptr<DynamicColumnLayout> dynamicColLayout;
+    const uint8_t* basePointer;
 };
 
+template<size_t I, typename... Ts>
+typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
+    std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+    // Iterated through tuple, so simply return
+    ((void) tup);
+    ((void) fieldSizes);
+    return;
+}
+
+template<size_t I, typename... Ts>
+typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
+    std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+    // Get current type of tuple and cast address to this type pointer
+    auto address = basePointer + columnOffsets[I] + fieldSizes[I] * numberOfRecords;
+    *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address)) = std::get<I>(tup);
+
+    // Go to the next field of tuple
+    copyTupleFieldsToBuffer<I + 1>(tup, fieldSizes);
+}
+
+template<size_t I, typename... Ts>
+typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsFromBuffer(
+    std::tuple<Ts...>& tup, uint64_t recordIndex,
+    const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+    // Iterated through tuple, so simply return
+    ((void) tup);
+    ((void) fieldSizes);
+    ((void) recordIndex);
+    return;
+}
+
+template<size_t I, typename... Ts>
+typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsFromBuffer(
+    std::tuple<Ts...>& tup, uint64_t recordIndex,
+    const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+    // Get current type of tuple and cast address to this type pointer
+    auto address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;
+    std::get<I>(tup) = *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address));
+
+    // Go to the next field of tuple
+    copyTupleFieldsFromBuffer<I + 1>(tup, recordIndex, fieldSizes);
+}
+
 template<bool boundaryChecks, typename... Types>
-void DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
-    auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
-    auto fieldSizes = dynamicColLayout.getFieldSizes();
+bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
+    if (boundaryChecks && numberOfRecords >= capacity) {
+        NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is full and thus no tuple can be added!");
+        return false;
+    }
 
-    auto address = &(byteBuffer[0]);
-    size_t tupleIndex = 0;
-    auto fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks);
+    copyTupleFieldsToBuffer(record, this->getFieldSizes());
+    ++numberOfRecords;
 
-    // std::apply iterates over tuple and copies via memcpy the fields from retTuple to the buffer
-    std::apply(
-        [&tupleIndex, &address, &fieldAddress, fieldSizes, this](auto&&... args) {
-            ((fieldAddress = address + calcOffset(numberOfRecords, tupleIndex, boundaryChecks),
-              memcpy(fieldAddress, &args, fieldSizes[tupleIndex]), ++tupleIndex),
-             ...);
-        },
-        record);
-
-    tupleBuffer.setNumberOfTuples(++numberOfRecords);
+    tupleBuffer.setNumberOfTuples(numberOfRecords);
+    return true;
 }
 
 template<bool boundaryChecks, typename... Types>
 std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex) {
-    auto byteBuffer = tupleBuffer.getBufferAs<uint8_t>();
+    if (boundaryChecks && recordIndex >= capacity) {
+        NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutBuffer: Trying to access a record above capacity");
+    }
 
     std::tuple<Types...> retTuple;
-    auto fieldSizes = dynamicColLayout.getFieldSizes();
-
-    auto address = &(byteBuffer[0]);
-    size_t tupleIndex = 0;
-    unsigned char* fieldAddress;
-
-    // std::apply iterates over tuple and copies via memcpy the fields into retTuple
-    std::apply(
-        [&tupleIndex, address, &fieldAddress, recordIndex, fieldSizes, this](auto&&... args) {
-            ((fieldAddress = address + calcOffset(recordIndex, tupleIndex, boundaryChecks),
-              memcpy(&args, fieldAddress, fieldSizes[tupleIndex]), ++tupleIndex),
-             ...);
-        },
-        retTuple);
+    copyTupleFieldsFromBuffer(retTuple, recordIndex, this->getFieldSizes());
 
     return retTuple;
 }

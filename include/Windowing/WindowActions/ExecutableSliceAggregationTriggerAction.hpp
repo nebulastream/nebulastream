@@ -144,14 +144,8 @@ class ExecutableSliceAggregationTriggerAction
                           << "slices[sliceId].getEndTs()=" << slices[sliceId].getEndTs() << " currentWatermark="
                           << currentWatermark << " sliceID=" << sliceId << " recCnt=" << slices[sliceId].getRecordsPerSlice());
 
-                //TODO: we only need to send slides that are not empty
-                writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
-                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId],
-                                                        slices[sliceId].getRecordsPerSlice());
-                currentNumberOfTuples++;
-                maxSliceEnd = std::max(maxSliceEnd, slices[sliceId].getEndTs());
                 //if we would write to a new buffer and we still have tuples to write
-                if (currentNumberOfTuples * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
+                if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
                     && sliceId + 1 < slices.size()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
@@ -168,6 +162,12 @@ class ExecutableSliceAggregationTriggerAction
                     tupleBuffer.setOriginId(windowDefinition->getOriginId());
                     currentNumberOfTuples = 0;
                 }
+                //TODO: we only need to send slides that are not empty
+                writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
+                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId],
+                                                        slices[sliceId].getRecordsPerSlice());
+                currentNumberOfTuples++;
+                maxSliceEnd = std::max(maxSliceEnd, slices[sliceId].getEndTs());
 
             } else {
                 NES_DEBUG("ExecutableSliceAggregationTriggerAction "

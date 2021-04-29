@@ -55,7 +55,7 @@ const string logo = "/********************************************************\n
 int main(int argc, char** argv) {
     std::cout << logo << std::endl;
 
-    NES::setupLogging("nesWorkerStarter.log", NES::getStringAsDebugLevel("LOG_DEBUG"));
+    NES::setupLogging("nesWorkerStarter.log", NES::getStringAsLogLevel("LOG_DEBUG"));
 
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr sourceConfig = SourceConfig::create();
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
-    NES::setLogLevel(NES::getStringAsDebugLevel(workerConfig->getLogLevel()->getValue()));
+    NES::setLogLevel(NES::getStringAsLogLevel(workerConfig->getLogLevel()->getValue()));
 
     NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="
                                                   << workerConfig->getDataPort()->getValue() << " pid=" << getpid()

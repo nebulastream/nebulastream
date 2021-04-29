@@ -26,20 +26,8 @@ typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
-class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
-
-class LogicalSourceExpansionRule;
-typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
-
 class FilterPushDownRule;
 typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
-
-class DistributeWindowRule;
-typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
-
-class DistributeJoinRule;
-typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
 
 class RenameStreamToProjectOperatorRule;
 typedef std::shared_ptr<RenameStreamToProjectOperatorRule> RenameStreamToProjectOperatorRulePtr;
@@ -47,12 +35,18 @@ typedef std::shared_ptr<RenameStreamToProjectOperatorRule> RenameStreamToProject
 class ProjectBeforeUnionOperatorRule;
 typedef std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRulePtr;
 
+class AttributeSortRule;
+typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
+
+class BinaryOperatorSortRule;
+typedef std::shared_ptr<BinaryOperatorSortRule> BinaryOperatorSortRulePtr;
+
 /**
  * @brief This phase is responsible for re-writing the query plan
  */
 class QueryRewritePhase {
   public:
-    static QueryRewritePhasePtr create(StreamCatalogPtr streamCatalog);
+    static QueryRewritePhasePtr create(bool applyRulesImprovingSharingIdentification);
 
     /**
      * @brief Perform query plan re-write for the input query plan
@@ -64,13 +58,13 @@ class QueryRewritePhase {
     ~QueryRewritePhase();
 
   private:
-    explicit QueryRewritePhase(StreamCatalogPtr streamCatalog);
-    LogicalSourceExpansionRulePtr logicalSourceExpansionRule;
+    explicit QueryRewritePhase(bool applyRulesImprovingSharingIdentification);
+    bool applyRulesImprovingSharingIdentification;
     FilterPushDownRulePtr filterPushDownRule;
-    DistributeWindowRulePtr distributeWindowRule;
-    DistributeJoinRulePtr distributeJoinRule;
     RenameStreamToProjectOperatorRulePtr renameStreamToProjectOperatorRule;
     ProjectBeforeUnionOperatorRulePtr projectBeforeUnionOperatorRule;
+    AttributeSortRulePtr attributeSortRule;
+    BinaryOperatorSortRulePtr binaryOperatorSortRule;
 };
 }// namespace NES
 #endif//NES_QUERYREWRITEPHASE_HPP

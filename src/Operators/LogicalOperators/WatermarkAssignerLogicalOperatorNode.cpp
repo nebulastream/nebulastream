@@ -23,18 +23,15 @@ namespace NES {
 
 WatermarkAssignerLogicalOperatorNode::WatermarkAssignerLogicalOperatorNode(
     const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
-    : watermarkStrategyDescriptor(watermarkStrategyDescriptor), UnaryOperatorNode(id) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
+
+Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::getWatermarkStrategyDescriptor() const {
+    return watermarkStrategyDescriptor;
+}
 
 const std::string WatermarkAssignerLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "WATERMARKASSIGNER(" << id << ")";
-    return ss.str();
-}
-
-std::string WatermarkAssignerLogicalOperatorNode::getStringBasedSignature() {
-    std::stringstream ss;
-    ss << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ").";
-    ss << children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
     return ss.str();
 }
 
@@ -54,19 +51,32 @@ OperatorNodePtr WatermarkAssignerLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setStringSignature(stringSignature);
+    copy->setZ3Signature(z3Signature);
     return copy;
 }
 
-Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperatorNode::getWatermarkStrategyDescriptor() const {
-    return watermarkStrategyDescriptor;
-}
-
 bool WatermarkAssignerLogicalOperatorNode::inferSchema() {
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     watermarkStrategyDescriptor->inferStamp(inputSchema);
     return true;
+}
+
+void WatermarkAssignerLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("Inferring String signature for " << operatorNode->toString());
+
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "WATERMARKASSIGNER(" << watermarkStrategyDescriptor->toString() << ")."
+                    << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 
 }// namespace NES

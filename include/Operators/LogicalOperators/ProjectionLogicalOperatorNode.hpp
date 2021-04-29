@@ -17,7 +17,7 @@
 #ifndef PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 #define PROJECTION_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,10 +25,16 @@ namespace NES {
 /**
  * @brief projection operator, which contains an resets the output schema
  */
-class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
+class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, OperatorId id);
     ~ProjectionLogicalOperatorNode() = default;
+
+    /**
+     * @brief returns the list of fields that remain in the output schema.
+     * @return  std::vector<ExpressionNodePtr>
+     */
+    std::vector<ExpressionNodePtr> getExpressions();
 
     /**
      * @brief check if two operators have the same output schema
@@ -38,6 +44,7 @@ class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
     bool equal(const NodePtr rhs) const override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
+    void inferStringSignature() override;
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.
@@ -45,9 +52,6 @@ class ProjectionLogicalOperatorNode : public UnaryOperatorNode {
     */
     bool inferSchema() override;
     OperatorNodePtr copy() override;
-
-    std::vector<ExpressionNodePtr> getExpressions();
-    std::string getStringBasedSignature() override;
 
   private:
     std::vector<ExpressionNodePtr> expressions;

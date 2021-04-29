@@ -38,8 +38,8 @@ class UpdateTopologyRemoteTest : public testing::Test {
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();
     std::string ipAddress = "127.0.0.1";
-    uint16_t coordinatorNumberOfSlots = processorCount * 2;
-    uint16_t workerNumberOfSlots = processorCount;
+    uint16_t coordinatorNumberOfSlots = 12;
+    uint16_t workerNumberOfSlots = 6;
 
     static void SetUpTestCase() {
         NES::setupLogging("UpdateTopologyRemoteTest.log", NES::LOG_DEBUG);
@@ -58,6 +58,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
+    workerConfig->setNumberOfSlots(workerNumberOfSlots);
     workerConfig->setCoordinatorPort(rpcPort);
 
     coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
@@ -137,6 +139,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
 
     coordinatorConfig->setRpcPort(rpcPort);
     coordinatorConfig->setRestPort(restPort);
+    coordinatorConfig->setNumberOfSlots(coordinatorNumberOfSlots);
+    workerConfig->setNumberOfSlots(workerNumberOfSlots);
     workerConfig->setCoordinatorPort(rpcPort);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);

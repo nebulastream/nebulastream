@@ -14,6 +14,7 @@
 
 add_source_nes(
         ExecutionPlanRollbackException.cpp
+        RequestTypeNotHandledException.cpp
         GlobalQueryPlanUpdateException.cpp
         InvalidArgumentException.cpp
         InvalidFieldException.cpp

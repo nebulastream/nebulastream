@@ -38,7 +38,7 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
     explicit LambdaSourceStreamConfig(
         std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
         std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-        uint64_t numBuffersToProcess, uint64_t frequency);
+        uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode);
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -82,11 +82,13 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
     static AbstractPhysicalStreamConfigPtr
     create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
            std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-           uint64_t numBuffersToProcess, uint64_t frequency);
+           uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode);
 
   private:
     std::string sourceType;
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
+    uint64_t gatheringValue;
+    DataSource::GatheringMode gatheringMode;
 };
 
 }// namespace NES

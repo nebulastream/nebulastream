@@ -22,6 +22,7 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <benchmark/benchmark.h>
 
@@ -59,14 +60,13 @@ static void BM_WriteRecordsRowLayoutNewLayout(benchmark::State& state) {
         state.PauseTiming();
 
         DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-        DynamicRowLayoutBufferPtr mappedRowLayout =
-            std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+        DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
         state.ResumeTiming();
         std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                    int32_t, int32_t, int32_t, int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            mappedRowLayout->pushRecord<false>(writeRecord);
+            bindedRowLayout->pushRecord<false>(writeRecord);
         }
     }
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
@@ -80,14 +80,13 @@ static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-    DynamicRowLayoutBufferPtr mappedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+    DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedRowLayout->pushRecord<false>(writeRecord);
+        bindedRowLayout->pushRecord<false>(writeRecord);
     }
 
     for (auto singleState : state) {
@@ -95,7 +94,7 @@ static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
             std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                        int32_t, int32_t, int32_t, int32_t>
                 readRecord =
-                    mappedRowLayout->readRecord<false, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                    bindedRowLayout->readRecord<false, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                                                 int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t>(
                         recordIndex);
             ((void) readRecord);
@@ -115,14 +114,13 @@ static void BM_WriteRecordsColumnLayoutNewLayout(benchmark::State& state) {
         state.PauseTiming();
 
         DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
-        DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-            static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+        DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
         state.ResumeTiming();
         std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                    int32_t, int32_t, int32_t, int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            mappedColumnLayout->pushRecord<false>(writeRecord);
+            bindedColumnLayout->pushRecord<false>(writeRecord);
         }
     }
     state.SetItemsProcessed(NUM_TUPLES * int64_t(state.iterations()));
@@ -136,14 +134,13 @@ static void BM_ReadRecordsColumnLayoutNewLayout(benchmark::State& state) {
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                    int32_t, int32_t, int32_t, int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
-        mappedColumnLayout->pushRecord<false>(writeRecord);
+        bindedColumnLayout->pushRecord<false>(writeRecord);
     }
 
     for (auto singleState : state) {
@@ -151,7 +148,7 @@ static void BM_ReadRecordsColumnLayoutNewLayout(benchmark::State& state) {
             std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                        int32_t, int32_t, int32_t, int32_t>
                 readRecord =
-                    mappedColumnLayout->readRecord<false, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
+                    bindedColumnLayout->readRecord<false, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                                                    int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t>(
                         recordIndex);
             ((void) readRecord);
@@ -168,17 +165,16 @@ static void BM_ReadFieldRowLayoutNewLayout(benchmark::State& state) {
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-    DynamicRowLayoutBufferPtr mappedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+    DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                    int32_t, int32_t, int32_t, int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
-        mappedRowLayout->pushRecord<false>(writeRecord);
+        bindedRowLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             int32_t tmp = field0[recordIndex];
@@ -197,17 +193,16 @@ static void BM_ReadFieldColumnLayoutNewLayout(benchmark::State& state) {
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedColumnLayout->pushRecord<false>(writeRecord);
+        bindedColumnLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
+    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, bindedColumnLayout);
     for (auto singleState : state) {
         int32_t tmp = 0;
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
@@ -227,10 +222,9 @@ static void BM_WriteFieldRowLayoutNewLayout(benchmark::State& state) {
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-    DynamicRowLayoutBufferPtr mappedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+    DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
-    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             field0[recordIndex] = 2;
@@ -247,10 +241,9 @@ static void BM_WriteFieldColumnLayoutNewLayout(benchmark::State& state) {
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
-    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
+    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, bindedColumnLayout);
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             field0[recordIndex] = 2;
@@ -267,28 +260,27 @@ static void BM_WriteWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& 
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
-    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
-    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, mappedColumnLayout);
-    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, mappedColumnLayout);
-    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, mappedColumnLayout);
+    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, bindedColumnLayout);
+    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, bindedColumnLayout);
+    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, bindedColumnLayout);
+    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, bindedColumnLayout);
 
-    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, mappedColumnLayout);
-    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, mappedColumnLayout);
-    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, mappedColumnLayout);
-    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, mappedColumnLayout);
+    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, bindedColumnLayout);
+    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, bindedColumnLayout);
+    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, bindedColumnLayout);
+    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, bindedColumnLayout);
 
-    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, mappedColumnLayout);
-    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, mappedColumnLayout);
-    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, mappedColumnLayout);
-    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, mappedColumnLayout);
+    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, bindedColumnLayout);
+    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, bindedColumnLayout);
+    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, bindedColumnLayout);
+    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, bindedColumnLayout);
 
-    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, mappedColumnLayout);
-    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, mappedColumnLayout);
-    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, mappedColumnLayout);
-    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, mappedColumnLayout);
+    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, bindedColumnLayout);
+    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, bindedColumnLayout);
+    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, bindedColumnLayout);
+    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, bindedColumnLayout);
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
@@ -324,28 +316,27 @@ static void BM_WriteWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& sta
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-    DynamicRowLayoutBufferPtr mappedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+    DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
-    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
-    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
-    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, mappedRowLayout);
-    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, mappedRowLayout);
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
+    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, bindedRowLayout);
+    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, bindedRowLayout);
+    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, bindedRowLayout);
 
-    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, mappedRowLayout);
-    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, mappedRowLayout);
-    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, mappedRowLayout);
-    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, mappedRowLayout);
+    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, bindedRowLayout);
+    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, bindedRowLayout);
+    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, bindedRowLayout);
+    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, bindedRowLayout);
 
-    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, mappedRowLayout);
-    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, mappedRowLayout);
-    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, mappedRowLayout);
-    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, mappedRowLayout);
+    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, bindedRowLayout);
+    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, bindedRowLayout);
+    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, bindedRowLayout);
+    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, bindedRowLayout);
 
-    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, mappedRowLayout);
-    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, mappedRowLayout);
-    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, mappedRowLayout);
-    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, mappedRowLayout);
+    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, bindedRowLayout);
+    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, bindedRowLayout);
+    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, bindedRowLayout);
+    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, bindedRowLayout);
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
@@ -381,35 +372,34 @@ static void BM_ReadWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& s
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-        static_cast<DynamicColumnLayoutBuffer*>(columnLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedColumnLayout->pushRecord<false>(writeRecord);
+        bindedColumnLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
-    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, mappedColumnLayout);
-    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, mappedColumnLayout);
-    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, mappedColumnLayout);
+    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, bindedColumnLayout);
+    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, bindedColumnLayout);
+    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, bindedColumnLayout);
+    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, bindedColumnLayout);
 
-    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, mappedColumnLayout);
-    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, mappedColumnLayout);
-    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, mappedColumnLayout);
-    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, mappedColumnLayout);
+    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, bindedColumnLayout);
+    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, bindedColumnLayout);
+    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, bindedColumnLayout);
+    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, bindedColumnLayout);
 
-    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, mappedColumnLayout);
-    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, mappedColumnLayout);
-    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, mappedColumnLayout);
-    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, mappedColumnLayout);
+    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, bindedColumnLayout);
+    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, bindedColumnLayout);
+    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, bindedColumnLayout);
+    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, bindedColumnLayout);
 
-    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, mappedColumnLayout);
-    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, mappedColumnLayout);
-    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, mappedColumnLayout);
-    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, mappedColumnLayout);
+    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, bindedColumnLayout);
+    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, bindedColumnLayout);
+    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, bindedColumnLayout);
+    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, bindedColumnLayout);
 
     for (auto singleState : state) {
         int32_t tmp0 = 0, tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0, tmp5 = 0, tmp6 = 0, tmp7 = 0;
@@ -489,35 +479,34 @@ static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& stat
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
 
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-    DynamicRowLayoutBufferPtr mappedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+    DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedRowLayout->pushRecord<false>(writeRecord);
+        bindedRowLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
-    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
-    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, mappedRowLayout);
-    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, mappedRowLayout);
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
+    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, bindedRowLayout);
+    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, bindedRowLayout);
+    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, bindedRowLayout);
 
-    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, mappedRowLayout);
-    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, mappedRowLayout);
-    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, mappedRowLayout);
-    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, mappedRowLayout);
+    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, bindedRowLayout);
+    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, bindedRowLayout);
+    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, bindedRowLayout);
+    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, bindedRowLayout);
 
-    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, mappedRowLayout);
-    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, mappedRowLayout);
-    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, mappedRowLayout);
-    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, mappedRowLayout);
+    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, bindedRowLayout);
+    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, bindedRowLayout);
+    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, bindedRowLayout);
+    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, bindedRowLayout);
 
-    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, mappedRowLayout);
-    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, mappedRowLayout);
-    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, mappedRowLayout);
-    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, mappedRowLayout);
+    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, bindedRowLayout);
+    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, bindedRowLayout);
+    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, bindedRowLayout);
+    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, bindedRowLayout);
 
     for (auto singleState : state) {
         int32_t tmp0 = 0, tmp1 = 0, tmp2 = 0, tmp3 = 0, tmp4 = 0, tmp5 = 0, tmp6 = 0, tmp7 = 0;
@@ -600,34 +589,33 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-    DynamicRowLayoutBufferPtr mappedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+    DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedRowLayout->pushRecord<false>(writeRecord);
+        bindedRowLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
-    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
-    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, mappedRowLayout);
-    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, mappedRowLayout);
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
+    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, bindedRowLayout);
+    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, bindedRowLayout);
+    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, bindedRowLayout);
 
-    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, mappedRowLayout);
-    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, mappedRowLayout);
-    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, mappedRowLayout);
-    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, mappedRowLayout);
+    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, bindedRowLayout);
+    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, bindedRowLayout);
+    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, bindedRowLayout);
+    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, bindedRowLayout);
 
-    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, mappedRowLayout);
-    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, mappedRowLayout);
-    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, mappedRowLayout);
-    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, mappedRowLayout);
+    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, bindedRowLayout);
+    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, bindedRowLayout);
+    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, bindedRowLayout);
+    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, bindedRowLayout);
 
-    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, mappedRowLayout);
-    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, mappedRowLayout);
-    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, mappedRowLayout);
-    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, mappedRowLayout);
+    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, bindedRowLayout);
+    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, bindedRowLayout);
+    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, bindedRowLayout);
+    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, bindedRowLayout);
 
     switch (state.range(0)) {
         case 0: {
@@ -1313,35 +1301,34 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-        static_cast<DynamicColumnLayoutBuffer*>(colLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr bindedColumnLayout = colLayout->bind(tupleBuffer);
     state.ResumeTiming();
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedColumnLayout->pushRecord<false>(writeRecord);
+        bindedColumnLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, mappedColumnLayout);
-    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, mappedColumnLayout);
-    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, mappedColumnLayout);
-    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, mappedColumnLayout);
+    auto field0 = DynamicColumnLayoutField<int32_t, false>::create(0, bindedColumnLayout);
+    auto field1 = DynamicColumnLayoutField<int32_t, false>::create(1, bindedColumnLayout);
+    auto field2 = DynamicColumnLayoutField<int32_t, false>::create(2, bindedColumnLayout);
+    auto field3 = DynamicColumnLayoutField<int32_t, false>::create(3, bindedColumnLayout);
 
-    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, mappedColumnLayout);
-    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, mappedColumnLayout);
-    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, mappedColumnLayout);
-    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, mappedColumnLayout);
+    auto field4 = DynamicColumnLayoutField<int32_t, false>::create(4, bindedColumnLayout);
+    auto field5 = DynamicColumnLayoutField<int32_t, false>::create(5, bindedColumnLayout);
+    auto field6 = DynamicColumnLayoutField<int32_t, false>::create(6, bindedColumnLayout);
+    auto field7 = DynamicColumnLayoutField<int32_t, false>::create(7, bindedColumnLayout);
 
-    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, mappedColumnLayout);
-    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, mappedColumnLayout);
-    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, mappedColumnLayout);
-    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, mappedColumnLayout);
+    auto field8 = DynamicColumnLayoutField<int32_t, false>::create(8, bindedColumnLayout);
+    auto field9 = DynamicColumnLayoutField<int32_t, false>::create(9, bindedColumnLayout);
+    auto field10 = DynamicColumnLayoutField<int32_t, false>::create(10, bindedColumnLayout);
+    auto field11 = DynamicColumnLayoutField<int32_t, false>::create(11, bindedColumnLayout);
 
-    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, mappedColumnLayout);
-    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, mappedColumnLayout);
-    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, mappedColumnLayout);
-    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, mappedColumnLayout);
+    auto field12 = DynamicColumnLayoutField<int32_t, false>::create(12, bindedColumnLayout);
+    auto field13 = DynamicColumnLayoutField<int32_t, false>::create(13, bindedColumnLayout);
+    auto field14 = DynamicColumnLayoutField<int32_t, false>::create(14, bindedColumnLayout);
+    auto field15 = DynamicColumnLayoutField<int32_t, false>::create(15, bindedColumnLayout);
 
     switch (state.range(0)) {
         case 0: {
@@ -2027,35 +2014,34 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
-    DynamicRowLayoutBufferPtr mappedRowLayout =
-        std::unique_ptr<DynamicRowLayoutBuffer>(static_cast<DynamicRowLayoutBuffer*>(rowLayout->map(tupleBuffer).release()));
+    DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
     state.ResumeTiming();
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        mappedRowLayout->pushRecord<false>(writeRecord);
+        bindedRowLayout->pushRecord<false>(writeRecord);
     }
 
-    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, mappedRowLayout);
-    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, mappedRowLayout);
-    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, mappedRowLayout);
-    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, mappedRowLayout);
+    auto field0 = DynamicRowLayoutField<int32_t, false>::create(0, bindedRowLayout);
+    auto field1 = DynamicRowLayoutField<int32_t, false>::create(1, bindedRowLayout);
+    auto field2 = DynamicRowLayoutField<int32_t, false>::create(2, bindedRowLayout);
+    auto field3 = DynamicRowLayoutField<int32_t, false>::create(3, bindedRowLayout);
 
-    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, mappedRowLayout);
-    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, mappedRowLayout);
-    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, mappedRowLayout);
-    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, mappedRowLayout);
+    auto field4 = DynamicRowLayoutField<int32_t, false>::create(4, bindedRowLayout);
+    auto field5 = DynamicRowLayoutField<int32_t, false>::create(5, bindedRowLayout);
+    auto field6 = DynamicRowLayoutField<int32_t, false>::create(6, bindedRowLayout);
+    auto field7 = DynamicRowLayoutField<int32_t, false>::create(7, bindedRowLayout);
 
-    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, mappedRowLayout);
-    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, mappedRowLayout);
-    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, mappedRowLayout);
-    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, mappedRowLayout);
+    auto field8 = DynamicRowLayoutField<int32_t, false>::create(8, bindedRowLayout);
+    auto field9 = DynamicRowLayoutField<int32_t, false>::create(9, bindedRowLayout);
+    auto field10 = DynamicRowLayoutField<int32_t, false>::create(10, bindedRowLayout);
+    auto field11 = DynamicRowLayoutField<int32_t, false>::create(11, bindedRowLayout);
 
-    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, mappedRowLayout);
-    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, mappedRowLayout);
-    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, mappedRowLayout);
-    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, mappedRowLayout);
+    auto field12 = DynamicRowLayoutField<int32_t, false>::create(12, bindedRowLayout);
+    auto field13 = DynamicRowLayoutField<int32_t, false>::create(13, bindedRowLayout);
+    auto field14 = DynamicRowLayoutField<int32_t, false>::create(14, bindedRowLayout);
+    auto field15 = DynamicRowLayoutField<int32_t, false>::create(15, bindedRowLayout);
 
     switch (state.range(0)) {
         case 0: {
@@ -2319,8 +2305,7 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
     auto tupleBuffer = bufferManager->getBufferBlocking();
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);
-    DynamicColumnLayoutBufferPtr mappedColumnLayout = std::unique_ptr<DynamicColumnLayoutBuffer>(
-        static_cast<DynamicColumnLayoutBuffer*>(colLayout->map(tupleBuffer).release()));
+    DynamicColumnLayoutBufferPtr mappedColumnLayout = colLayout->bind(tupleBuffer);
     state.ResumeTiming();
     std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
                int32_t, int32_t, int32_t, int32_t>

@@ -35,6 +35,7 @@
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
+#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -59,8 +60,8 @@
 #include <iostream>
 
 #include <API/Windowing.hpp>
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
-#include <Operators/LogicalOperators/Arity/ExchangeOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>

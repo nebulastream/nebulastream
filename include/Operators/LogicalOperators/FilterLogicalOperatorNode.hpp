@@ -17,22 +17,22 @@
 #ifndef FILTER_LOGICAL_OPERATOR_NODE_HPP
 #define FILTER_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
+
 namespace NES {
 
 /**
  * @brief Filter operator, which contains an expression as a predicate.
  */
-class FilterLogicalOperatorNode : public UnaryOperatorNode {
+class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit FilterLogicalOperatorNode(const ExpressionNodePtr, OperatorId id);
     ~FilterLogicalOperatorNode() = default;
 
     /**
-     * @brief get the filter predicate.
-     * @return PredicatePtr
-     */
+   * @brief get the filter predicate.
+   * @return PredicatePtr
+   */
     ExpressionNodePtr getPredicate();
 
     /**
@@ -51,7 +51,7 @@ class FilterLogicalOperatorNode : public UnaryOperatorNode {
     */
     bool inferSchema() override;
     OperatorNodePtr copy() override;
-    std::string getStringBasedSignature() override;
+    void inferStringSignature() override;
 
   private:
     ExpressionNodePtr predicate;

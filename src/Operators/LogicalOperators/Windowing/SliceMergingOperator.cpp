@@ -24,7 +24,7 @@
 namespace NES {
 
 SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : WindowOperatorNode(windowDefinition, id) {
+    : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
     this->windowDefinition->setTriggerPolicy(windowDefinition->getTriggerPolicy());
@@ -80,5 +80,7 @@ bool SliceMergingOperator::inferSchema() {
                                                   windowAggregation->on()->getStamp()));
     return true;
 }
+
+void SliceMergingOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
 
 }// namespace NES

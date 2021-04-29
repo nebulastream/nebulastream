@@ -33,8 +33,8 @@ namespace NES {
 CSVSource::CSVSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                      const std::string filePath, const std::string delimiter, uint64_t numberOfTuplesToProducePerBuffer,
                      uint64_t numBuffersToProcess, uint64_t frequency, bool skipHeader, OperatorId operatorId,
-                     size_t numSourceLocalBuffers)
-    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers), filePath(filePath),
+                     size_t numSourceLocalBuffers, GatheringMode gatheringMode)
+    : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode), filePath(filePath),
       delimiter(delimiter), numberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer), currentPosInFile(0),
       skipHeader(skipHeader) {
     this->numBuffersToProcess = numBuffersToProcess;

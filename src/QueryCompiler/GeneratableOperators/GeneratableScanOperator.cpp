@@ -39,7 +39,7 @@ GeneratableScanOperatorPtr GeneratableScanOperator::create(SchemaPtr inputSchema
 }
 
 GeneratableScanOperator::GeneratableScanOperator(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id)
-    : UnaryOperatorNode(id) {
+    : OperatorNode(id), UnaryOperatorNode(id) {
     if (!inputSchema) {
         NES_ERROR("GeneratableScanOperator invalid input schema");
     }

@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/Compiler/CompilerFlags.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -30,6 +31,33 @@ CompilerFlagsPtr CompilerFlags::createDefaultCompilerFlags() {
     flags->addFlag(CompilerFlags::WERROR);
     flags->addFlag(CompilerFlags::WPARENTHESES_EQUALITY);
     //    flags->addFlag(CompilerFlags::LOGGING_FATAL_FLAG);
+    return flags;
+}
+
+CompilerFlagsPtr CompilerFlags::createBenchmarkingCompilerFlags() {
+    auto flags = createDefaultCompilerFlags();
+    flags->addFlag(CompilerFlags::ALL_OPTIMIZATIONS);
+#ifdef SSE41_FOUND
+    flags->addFlag(CompilerFlags::SSE_4_1);
+#endif
+#ifdef SSE42_FOUND
+    flags->addFlag(CompilerFlags::SSE_4_2);
+#endif
+#ifdef AVX_FOUND
+    flags->addFlag(CompilerFlags::AVX);
+#endif
+#ifdef AVX2_FOUND
+    std::cout << "add avx2 flag" << std::endl;
+    flags->addFlag(CompilerFlags::AVX2);
+#endif
+
+#ifdef NES_BENCHMARKS_NATIVE_MODE
+    std::cout << "use native flags" << std::endl;
+    flags->addFlag(CompilerFlags::AVX2);
+    flags->addFlag(CompilerFlags::TUNE);
+    flags->addFlag(CompilerFlags::ARCH);
+#endif
+
     return flags;
 }
 

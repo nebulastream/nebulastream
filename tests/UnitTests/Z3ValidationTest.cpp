@@ -168,8 +168,13 @@ TEST_F(Z3ValidationTest, equalityChecks) {
     solver s(c);
 
     //We prove that equation (x==y and y==x) != (y==x and x==y) is unsatisfiable
+    s.push();
     s.add((x == y && y == x) != (x == y && y == x));
+    NES_INFO(s);
     ASSERT_EQ(s.check(), unsat);
+    s.pop();
+    s.add((x == y && y == x) == (x == y && y == x));
+    ASSERT_EQ(s.check(), sat);
 }
 
 /**

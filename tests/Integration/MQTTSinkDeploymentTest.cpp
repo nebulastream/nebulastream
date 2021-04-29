@@ -26,7 +26,6 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <iostream>
 
 using namespace std;
 
@@ -99,10 +98,12 @@ TEST_F(MQTTSinkDeploymentTest, DISABLED_testDeployOneWorker) {
     NES_INFO("MQTTSinkDeploymentTest: Submit query");
 
     // arguments are given so that ThingsBoard accepts the messages sent by the MQTT client
-    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("127.0.0.1:8081", "nes-mqtt-test-client",
-                "v1/devices/me/telemetry", "rfRqLGZRChg8eS30PEeR", 5, MQTTSinkDescriptor::milliseconds, 500, MQTTSinkDescriptor::atLeastOnce, true));)";
+    string query = R"(Query::from("default_logical").sink(MQTTSinkDescriptor::create("ws://127.0.0.1:9001",
+            "/nesui", "rfRqLGZRChg8eS30PEeR", 5, MQTTSinkDescriptor::milliseconds, 500, MQTTSinkDescriptor::atLeastOnce, false));)";
+
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
-    // From here on at some point the DataSource.cpp 'runningRoutine()' function is called
+
+    // Comment for better understanding: From here on at some point the DataSource.cpp 'runningRoutine()' function is called
     // this function, because "default_logical" is used, uses 'DefaultSource.cpp', which create a TupleBuffer with 10 id:value
     // pairs, each being 1,1
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

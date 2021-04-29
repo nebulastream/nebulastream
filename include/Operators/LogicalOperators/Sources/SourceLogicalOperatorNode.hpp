@@ -17,14 +17,14 @@
 #ifndef SOURCE_LOGICAL_OPERATOR_NODE_HPP
 #define SOURCE_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 
 namespace NES {
 
 /**
  * @brief Node representing logical source operator
  */
-class SourceLogicalOperatorNode : public UnaryOperatorNode {
+class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit SourceLogicalOperatorNode(SourceDescriptorPtr sourceDescriptor, OperatorId id);
 
@@ -48,13 +48,11 @@ class SourceLogicalOperatorNode : public UnaryOperatorNode {
     bool inferSchema() override;
 
     bool equal(const NodePtr rhs) const override;
-
+    void inferStringSignature() override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-
     void setProjectSchema(SchemaPtr schema);
-    std::string getStringBasedSignature() override;
 
   private:
     SourceDescriptorPtr sourceDescriptor;

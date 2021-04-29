@@ -20,6 +20,11 @@
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <iostream>
 
+namespace z3 {
+class context;
+typedef std::shared_ptr<context> ContextPtr;
+}// namespace z3
+
 namespace NES::Optimizer {
 
 enum class QueryMergerRule {
@@ -28,6 +33,7 @@ enum class QueryMergerRule {
     Z3SignatureBasedCompleteQueryMergerRule,
     Z3SignatureBasedPartialQueryMergerRule,
     StringSignatureBasedCompleteQueryMergerRule,
+    ImprovedStringSignatureBasedCompleteQueryMergerRule,
     StringSignatureBasedPartialQueryMergerRule
 };
 
@@ -37,6 +43,7 @@ static const std::map<std::string, QueryMergerRule> stringToMergerRuleEnum{
     {"Z3SignatureBasedCompleteQueryMergerRule", QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule},
     {"Z3SignatureBasedPartialQueryMergerRule", QueryMergerRule::Z3SignatureBasedPartialQueryMergerRule},
     {"StringSignatureBasedCompleteQueryMergerRule", QueryMergerRule::StringSignatureBasedCompleteQueryMergerRule},
+    {"ImprovedStringSignatureBasedCompleteQueryMergerRule", QueryMergerRule::ImprovedStringSignatureBasedCompleteQueryMergerRule},
     {"StringSignatureBasedPartialQueryMergerRule", QueryMergerRule::StringSignatureBasedPartialQueryMergerRule},
 };
 
@@ -52,7 +59,7 @@ typedef std::shared_ptr<Z3SignatureBasedCompleteQueryMergerRule> Z3SignatureBase
 class QueryMergerPhase {
 
   public:
-    static QueryMergerPhasePtr create(z3::ContextPtr context, std::string queryMergerRuleName);
+    static QueryMergerPhasePtr create(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule);
 
     /**
      * @brief execute method to apply different query merger rules on the global query plan.
@@ -62,7 +69,7 @@ class QueryMergerPhase {
     bool execute(GlobalQueryPlanPtr globalQueryPlan);
 
   private:
-    explicit QueryMergerPhase(z3::ContextPtr context, std::string queryMergerRuleName);
+    explicit QueryMergerPhase(z3::ContextPtr context, Optimizer::QueryMergerRule queryMergerRule);
     BaseQueryMergerRulePtr queryMergerRule;
 };
 }// namespace NES::Optimizer

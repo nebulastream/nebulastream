@@ -20,24 +20,26 @@
 
 namespace NES {
 
-LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : signature(nullptr), OperatorNode(id) {}
+LogicalOperatorNode::LogicalOperatorNode(uint64_t id) : OperatorNode(id), z3Signature(nullptr), stringSignature("INVALID") {}
 
-Optimizer::QuerySignaturePtr LogicalOperatorNode::getSignature() { return signature; }
+Optimizer::QuerySignaturePtr LogicalOperatorNode::getZ3Signature() { return z3Signature; }
 
-void LogicalOperatorNode::inferSignature(z3::ContextPtr context) {
+void LogicalOperatorNode::inferZ3Signature(z3::ContextPtr context) {
     OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
     NES_TRACE("Inferring Z3 expressions for " << operatorNode->toString());
 
     //Infer query signatures for child operators
     for (auto& child : children) {
         const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
-        childOperator->inferSignature(context);
+        childOperator->inferZ3Signature(context);
     }
-    signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
+    z3Signature = Optimizer::QuerySignatureUtil::createQuerySignatureForOperator(context, operatorNode);
 }
 
-void LogicalOperatorNode::setSignature(Optimizer::QuerySignaturePtr signature) { this->signature = signature; }
+void LogicalOperatorNode::setZ3Signature(Optimizer::QuerySignaturePtr signature) { this->z3Signature = signature; }
 
-std::string LogicalOperatorNode::getStringBasedSignature() { return "UNKNOWN"; }
+std::string LogicalOperatorNode::getStringSignature() { return stringSignature; }
+
+void LogicalOperatorNode::setStringSignature(std::string signature) { this->stringSignature = signature; }
 
 }// namespace NES

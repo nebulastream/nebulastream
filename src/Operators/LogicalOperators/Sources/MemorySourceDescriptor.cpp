@@ -15,23 +15,27 @@
 */
 
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Sources/DataSource.hpp>
 #include <utility>
 
 namespace NES {
 
 MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
-                                               uint64_t numBuffersToProcess, std::chrono::milliseconds frequency)
+                                               uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                               DataSource::GatheringMode gatheringMode)
     : SourceDescriptor(std::move(schema)), memoryArea(memoryArea), memoryAreaSize(memoryAreaSize),
-      numBuffersToProcess(numBuffersToProcess), frequency(frequency) {
+      numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }
 
 std::shared_ptr<MemorySourceDescriptor> MemorySourceDescriptor::create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
                                                                        size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                                                       std::chrono::milliseconds frequency) {
+                                                                       uint64_t gatheringValue,
+                                                                       DataSource::GatheringMode gatheringMode) {
     NES_ASSERT(memoryArea != nullptr && memoryAreaSize > 0, "invalid memory area");
     NES_ASSERT(schema, "invalid schema");
-    return std::make_shared<MemorySourceDescriptor>(schema, memoryArea, memoryAreaSize, numBuffersToProcess, frequency);
+    return std::make_shared<MemorySourceDescriptor>(schema, memoryArea, memoryAreaSize, numBuffersToProcess, gatheringValue,
+                                                    gatheringMode);
 }
 std::string MemorySourceDescriptor::toString() { return "MemorySourceDescriptor"; }
 
@@ -47,5 +51,7 @@ std::shared_ptr<uint8_t> MemorySourceDescriptor::getMemoryArea() { return memory
 
 size_t MemorySourceDescriptor::getMemoryAreaSize() const { return memoryAreaSize; }
 uint64_t MemorySourceDescriptor::getNumBuffersToProcess() const { return numBuffersToProcess; }
-std::chrono::milliseconds MemorySourceDescriptor::getFrequency() const { return frequency; }
+DataSource::GatheringMode MemorySourceDescriptor::getGatheringMode() const { return gatheringMode; }
+
+uint64_t MemorySourceDescriptor::getGatheringValue() const { return gatheringValue; }
 }// namespace NES

@@ -61,7 +61,7 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -82,7 +82,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
 
-    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -92,7 +92,7 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     EXPECT_TRUE(registeredQueries.size() == 1);
 
     //SendStop request
-    catalogEntry = queryCatalog->addQueryStopRequest(queryId);
+    catalogEntry = queryCatalog->stopQuery(queryId);
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -112,7 +112,7 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -138,7 +138,7 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    auto catalogEntry = queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
+    auto catalogEntry = queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
 
     //Assert
     EXPECT_TRUE(catalogEntry);
@@ -157,7 +157,7 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     const QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
-    queryCatalog->addNewQueryRequest(queryString, queryPlan, "BottomUp");
+    queryCatalog->addNewQuery(queryString, queryPlan, "BottomUp");
     queryCatalog->markQueryAs(queryId, QueryStatus::Running);
 
     //Assert

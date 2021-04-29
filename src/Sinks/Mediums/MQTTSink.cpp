@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #ifdef ENABLE_MQTT_BUILD
 #include <NodeEngine/QueryManager.hpp>
 #include <Sinks/Mediums/MQTTSink.hpp>
@@ -79,7 +80,8 @@ bool MQTTSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Worke
     try {
         // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
         // and afterwards sent to an MQTT broker, via the MQTT client
-
+        auto baseStartIterator = sinkFormat->getTupleIterator(inputBuffer).begin();
+        auto baseEndIterator = sinkFormat->getTupleIterator(inputBuffer).end();
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer)) {
             NES_TRACE("MQTTSink::writeData Sending Payload: " << formattedTuple);
             client->sendPayload(formattedTuple);
@@ -103,7 +105,7 @@ const std::string MQTTSink::toString() const {
     std::stringstream ss;
     ss << "MQTT_SINK(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << "), ";
-    ss << "ADDRESS" << address << ", ";
+    ss << "ADDRESS=" << address << ", ";
     ss << "CLIENT_ID=" << clientId << ", ";
     ss << "TOPIC=" << topic << ", ";
     ss << "USER=" << user << ", ";
@@ -148,11 +150,8 @@ bool MQTTSink::disconnect() {
     if (connected) {
         client->disconnect();
         connected = false;
-    }
-    if (!connected) {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": disconnected");
     } else {
-        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT disconnected");
+        NES_DEBUG("MQTTSink::disconnect: " << this << ": NOT connected");
     }
     NES_TRACE("MQTTSink::disconnect: connected value is" << connected);
     return !connected;

@@ -62,9 +62,8 @@ std::vector<SinkLogicalOperatorNodePtr> QueryPlan::getSinkOperators() {
     NES_DEBUG("QueryPlan: Get all sink operators by traversing all the root nodes.");
     std::vector<SinkLogicalOperatorNodePtr> sinkOperators;
     for (const auto& rootOperator : rootOperators) {
-        auto sinkOptrs = rootOperator->getNodesByType<SinkLogicalOperatorNode>();
-        NES_DEBUG("QueryPlan: insert all sink operators to the collection");
-        sinkOperators.insert(sinkOperators.end(), sinkOptrs.begin(), sinkOptrs.end());
+        auto sinkOperator = rootOperator->as<SinkLogicalOperatorNode>();
+        sinkOperators.emplace_back(sinkOperator);
     }
     NES_DEBUG("QueryPlan: Found " << sinkOperators.size() << " sink operators.");
     return sinkOperators;
@@ -195,6 +194,17 @@ void QueryPlan::removeAsRootOperator(OperatorNodePtr root) {
                   << root->toString() << " in the root operator list. Removing the operator as the root of the query plan.");
         rootOperators.erase(found);
     }
+}
+
+bool QueryPlan::replaceRootOperator(OperatorNodePtr oldRoot, OperatorNodePtr newRoot) {
+    for (uint64_t i = 0; i < rootOperators.size(); i++) {
+        // compares the pointers and checks if we found the correct operator.
+        if (rootOperators[i] == oldRoot) {
+            rootOperators[i] = newRoot;
+            return true;
+        }
+    }
+    return false;
 }
 
 QueryPlanPtr QueryPlan::copy() {

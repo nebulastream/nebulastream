@@ -17,6 +17,7 @@
 #ifndef NES_GLOBALQUERYPLANUPDATEPHASE_HPP
 #define NES_GLOBALQUERYPLANUPDATEPHASE_HPP
 
+#include <Phases/QueryMergerPhase.hpp>
 #include <memory>
 #include <vector>
 
@@ -28,14 +29,15 @@ typedef std::shared_ptr<context> ContextPtr;
 namespace NES {
 
 namespace Optimizer {
-class Z3SignatureInferencePhase;
-typedef std::shared_ptr<Z3SignatureInferencePhase> SignatureInferencePhasePtr;
+class SignatureInferencePhase;
+typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
 
 class QueryMergerPhase;
 typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 }// namespace Optimizer
 
-class QueryCatalogEntry;
+class NESRequest;
+typedef std::shared_ptr<NESRequest> NESRequestPtr;
 
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
@@ -48,6 +50,9 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
 class QueryRewritePhase;
 typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
+
+class TopologySpecificQueryRewritePhase;
+typedef std::shared_ptr<TopologySpecificQueryRewritePhase> TopologySpecificQueryRewritePhasePtr;
 
 class QueryCatalog;
 typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
@@ -66,34 +71,34 @@ class GlobalQueryPlanUpdatePhase {
      * @param streamCatalog: the catalog of streams
      * @param globalQueryPlan: the input global query plan
      * @param enableQueryMerging: enable or disable query merging
+     * @param queryMergerRule: Rule to be used fro performing query merging if merging enabled
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
     static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
                                                 GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
-                                                bool enableQueryMerging, std::string queryMergerRule);
+                                                bool enableQueryMerging, Optimizer::QueryMergerRule queryMergerRule);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
      * @param queryRequests: a batch of query requests (in the form of Query Catalog Entry) to be processed to update global query plan
      * @return Shared pointer to the Global Query Plan for further processing
      */
-    GlobalQueryPlanPtr execute(const std::vector<QueryCatalogEntry>& queryRequests);
+    GlobalQueryPlanPtr execute(const std::vector<NESRequestPtr>& queryRequests);
 
   private:
     explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
                                         GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context, bool enableQueryMerging,
-                                        std::string queryMergerRule);
+                                        Optimizer::QueryMergerRule queryMergerRule);
 
     bool enableQueryMerging;
     QueryCatalogPtr queryCatalog;
-    StreamCatalogPtr streamCatalog;
     GlobalQueryPlanPtr globalQueryPlan;
     TypeInferencePhasePtr typeInferencePhase;
     QueryRewritePhasePtr queryRewritePhase;
+    TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
     Optimizer::QueryMergerPhasePtr queryMergerPhase;
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     z3::ContextPtr z3Context;
-    std::string queryMergerRule;
 };
 }// namespace NES
 

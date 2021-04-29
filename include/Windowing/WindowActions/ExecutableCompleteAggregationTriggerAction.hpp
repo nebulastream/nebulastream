@@ -98,6 +98,8 @@ class ExecutableCompleteAggregationTriggerAction
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
             executionContext->dispatchBuffer(tupleBuffer);
+        } else {
+            tupleBuffer.release();
         }
         return true;
     }
@@ -223,21 +225,9 @@ class ExecutableCompleteAggregationTriggerAction
                           << id << ": (" << this->windowDefinition->getDistributionType()->toString() << "): write i=" << i
                           << " key=" << key << " value=" << value << " window.start()=" << window.getStartTs()
                           << " window.getEndTs()=" << window.getEndTs() << " recordsPerWindow[i]=" << recordsPerWindow[i]);
-                if (recordsPerWindow[i] != 0) {
-                    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
-                                                                window.getEndTs(), key, value, recordsPerWindow[i]);
-                    } else {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
-                                                                window.getEndTs(), key, value);
-                    }
-
-                    currentNumberOfTuples++;
-                }
 
                 //if we would write to a new buffer and we still have tuples to write
-                if (currentNumberOfTuples * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()
-                    && i + 1 < partialFinalAggregates.size()) {
+                if ((currentNumberOfTuples + 1) * this->windowSchema->getSchemaSizeInBytes() > tupleBuffer.getBufferSize()) {
                     tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
                     //write full buffer
                     NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
@@ -250,6 +240,18 @@ class ExecutableCompleteAggregationTriggerAction
                     // request new buffer
                     tupleBuffer = executionContext->allocateTupleBuffer();
                     currentNumberOfTuples = 0;
+                }
+
+                if (recordsPerWindow[i] != 0) {
+                    if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
+                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
+                                                                window.getEndTs(), key, value, recordsPerWindow[i]);
+                    } else {
+                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
+                                                                window.getEndTs(), key, value);
+                    }
+
+                    currentNumberOfTuples++;
                 }
             }//end of for
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction " << id << ": ("

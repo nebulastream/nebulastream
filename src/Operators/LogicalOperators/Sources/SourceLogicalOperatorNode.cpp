@@ -22,7 +22,7 @@
 namespace NES {
 
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor, OperatorId id)
-    : sourceDescriptor(sourceDescriptor), UnaryOperatorNode(id) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), sourceDescriptor(sourceDescriptor) {}
 
 bool SourceLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<SourceLogicalOperatorNode>()->getId() == id;
@@ -42,8 +42,6 @@ const std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string SourceLogicalOperatorNode::getStringBasedSignature() { return "SOURCE(" + sourceDescriptor->getStreamName() + ")"; }
-
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() { return sourceDescriptor; }
 
 bool SourceLogicalOperatorNode::inferSchema() {
@@ -62,11 +60,16 @@ OperatorNodePtr SourceLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setSignature(signature);
+    copy->setStringSignature(stringSignature);
+    copy->setZ3Signature(z3Signature);
     if (copy->instanceOf<SourceLogicalOperatorNode>()) {
         copy->as<SourceLogicalOperatorNode>()->setProjectSchema(projectSchema);
     }
 
     return copy;
+}
+
+void SourceLogicalOperatorNode::inferStringSignature() {
+    setStringSignature("SOURCE(" + sourceDescriptor->getStreamName() + ")");
 }
 }// namespace NES

@@ -18,20 +18,21 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/OperatorNode.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
+#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Plans/Global/Query/GlobalQueryPlan.hpp>
 
 using namespace NES;
 
@@ -616,6 +617,66 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     EXPECT_TRUE(filterOperatorPQ2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(filterOperatorPQ3->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
+}
+
+TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    NES::SchemaPtr schema = NES::Schema::create()
+                                ->addField("id", NES::UINT64)
+                                ->addField("val", NES::UINT64)
+                                ->addField("X", NES::UINT64)
+                                ->addField("Y", NES::UINT64);
+    streamCatalog->addLogicalStream("example", schema);
+
+    NES_INFO("Setup FilterPushDownTest test case.");
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
+    streamCatalog->addPhysicalStream("example", sce);
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    auto query = Query::from("example")
+                     .map(Attribute("Y") = Attribute("Y") - 2)
+                     .map(Attribute("NEW_id2") = Attribute("Y") / Attribute("Y"))
+                     .filter(Attribute("Y") >= 49)
+                     .sink(NullOutputSinkDescriptor::create());
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
+    auto itr = queryPlanNodeIterator.begin();
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperatorPQ1 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ1 = (*itr);
+    ++itr;
+    const NodePtr mapOperatorPQ2 = (*itr);
+    ++itr;
+    const NodePtr srcOperatorPQ = (*itr);
+
+    // Execute
+    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
+    const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
+    NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
+
+    // Validate
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperators()[0]);
+    itr = updatedQueryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperatorPQ1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperatorPQ2->equal((*itr)));
     ++itr;
     EXPECT_TRUE(srcOperatorPQ->equal((*itr)));
 }

@@ -40,26 +40,21 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
     NES_INFO("Applying FilterPushDownRule to query " << queryPlan->toString());
     const auto rootOperators = queryPlan->getRootOperators();
     std::vector<FilterLogicalOperatorNodePtr> filterOperators;
-
     for (auto rootOperator : rootOperators) {
         //FIXME: this will result in adding same filter operator twice in the vector
         // remove the duplicate filters from the vector
         auto filters = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
         filterOperators.insert(filterOperators.end(), filters.begin(), filters.end());
     }
-
     NES_DEBUG("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
-
     std::sort(filterOperators.begin(), filterOperators.end(),
               [](FilterLogicalOperatorNodePtr lhs, FilterLogicalOperatorNodePtr rhs) {
                   return lhs->getId() < rhs->getId();
               });
-
     NES_DEBUG("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan");
     for (auto filterOperator : filterOperators) {
         pushDownFilter(filterOperator);
     }
-
     NES_INFO("FilterPushDownRule: Return the updated query plan " << queryPlan->toString());
     return queryPlan;
 }
@@ -77,31 +72,23 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         NES_TRACE("FilterPushDownRule: Get first operator for processing");
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
-
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
             || node->instanceOf<FilterLogicalOperatorNode>() || node->instanceOf<ProjectionLogicalOperatorNode>()) {
 
             NES_TRACE("FilterPushDownRule: Filter can't be pushed below the " + node->toString() + " operator");
-
             if (node->as<OperatorNode>()->getId() != filterOperator->getId()) {
-
                 NES_TRACE("FilterPushDownRule: Adding Filter operator between current operator and its parents");
-
-                if (isFilterAboveUnionOperator) {
-
+                if (isFilterAboveUnionOperator) {//If  filter was above a union operator
                     NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
+                    //Create duplicate of the filter
                     OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
                     duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
-
-                    if (!(duplicatedFilterOperator->removeAndJoinParentAndChildren()
-                          && node->insertBetweenThisAndParentNodes(duplicatedFilterOperator))) {
-
+                    //Inset it between currently traversed node and its parent
+                    if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
                         NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                         throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                     }
-
                     isFilterAboveUnionOperator = false;
-                    continue;
                 } else if (!(filterOperator->removeAndJoinParentAndChildren()
                              && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
 
@@ -114,11 +101,21 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
             std::string mapFieldName = getFieldNameUsedByMapOperator(node);
             bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
-
             if (predicateFieldManipulated) {
-                OperatorNodePtr copyOptr = filterOperator->duplicate();
-                if (!(copyOptr->removeAndJoinParentAndChildren() && node->insertBetweenThisAndParentNodes(copyOptr))) {
-
+                NES_TRACE("FilterPushDownRule: Adding Filter operator between current operator and its parents");
+                if (isFilterAboveUnionOperator) {//If  filter was above a union operator
+                    NES_TRACE("FilterPushDownRule: Create a duplicate filter operator with new operator ID");
+                    //Create duplicate of the filter
+                    OperatorNodePtr duplicatedFilterOperator = filterOperator->copy();
+                    duplicatedFilterOperator->setId(UtilityFunctions::getNextOperatorId());
+                    //Inset it between currently traversed node and its parent
+                    if (!node->insertBetweenThisAndParentNodes(duplicatedFilterOperator)) {
+                        NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
+                        throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
+                    }
+                    isFilterAboveUnionOperator = false;
+                } else if (!(filterOperator->removeAndJoinParentAndChildren()
+                             && node->insertBetweenThisAndParentNodes(filterOperator->copy()))) {
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule");
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
                 }
@@ -132,7 +129,6 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                 }
             }
         } else if (node->instanceOf<UnionLogicalOperatorNode>()) {
-
             isFilterAboveUnionOperator = true;
             std::vector<NodePtr> childrenOfMergeOP = node->getChildren();
             std::copy(childrenOfMergeOP.begin(), childrenOfMergeOP.end(), std::front_inserter(nodesToProcess));
@@ -140,10 +136,6 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                       nodesToProcess.end());//To ensure consistency in nodes traversed below a merge operator
         }
     }
-
-    NES_TRACE("FilterPushDownRule: Remove all parents can children of the filter operator");
-    filterOperator->removeAllParent();
-    filterOperator->removeChildren();
 }
 
 bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator,
@@ -152,13 +144,10 @@ bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodeP
     NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
-
     for (auto itr = depthFirstNodeIterator.begin(); itr != depthFirstNodeIterator.end(); ++itr) {
-
         NES_TRACE("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node");
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-
             NES_TRACE("FilterPushDownRule: Check if the input field name is same as the FieldAccessExpression field name");
             if (accessExpressionNode->getFieldName() == fieldName) {
                 return true;

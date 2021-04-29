@@ -28,6 +28,9 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
+class FieldAssignmentExpressionNode;
+typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
+
 class FilterLogicalOperatorNode;
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 

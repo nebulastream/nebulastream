@@ -24,6 +24,7 @@
 #include <API/Windowing.hpp>
 
 #include <API/Expressions/Expressions.hpp>
+#include <API/WindowedQuery.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
@@ -150,6 +151,10 @@ class Query {
     ~Query() = default;
 
     friend class JoinOperatorBuilder::JoinCondition;// we need that because we make the original joinWith() private
+    friend class WindowOperatorBuilder::WindowedQuery;
+    friend class WindowOperatorBuilder::KeyedWindowedQuery;
+
+    WindowOperatorBuilder::WindowedQuery window(const Windowing::WindowTypePtr windowType);
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
@@ -213,29 +218,12 @@ class Query {
     Query& filter(const ExpressionNodePtr filterExpression);
 
     /**
-     * @brief: Creates a window aggregation.
-     * @param windowType Window definition.
-     * @param aggregation Window aggregation function.
-     * @return query.
-     */
-    Query& windowByKey(const ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
-                       const Windowing::WindowAggregationPtr aggregation);
-
-    /**
      * @brief: Create watermark assginer operator.
      * @param onField filed to retrieve the timestamp for watermark.
      * @param delay timestamp delay of the watermark.
      * @return query.
      */
     Query& assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
-
-    /**
-     * @brief: Creates a window aggregation.
-     * @param windowType Window definition.
-     * @param aggregation Window aggregation function.
-     * @return query.
-     */
-    Query& window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation);
 
     /**
      * @brief: Map records according to a map expression.
@@ -278,6 +266,24 @@ class Query {
      */
     Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
                     const Windowing::WindowTypePtr windowType);
+
+    /**
+     * @new change: similar to join, the original window and windowByKey become private --> only internal use
+     * @brief: Creates a window aggregation.
+     * @param windowType Window definition.
+     * @param aggregation Window aggregation function.
+     * @return query.
+     */
+    Query& window(const Windowing::WindowTypePtr windowType, const Windowing::WindowAggregationPtr aggregation);
+
+    /**
+      * @brief: Creates a window aggregation.
+      * @param windowType Window definition.
+      * @param aggregation Window aggregation function.
+      * @return query.
+      */
+    Query& windowByKey(const ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
+                       const Windowing::WindowAggregationPtr aggregation);
 };
 
 typedef std::shared_ptr<Query> QueryPtr;

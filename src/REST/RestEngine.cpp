@@ -83,10 +83,12 @@ void RestEngine::handleGet(http_request request) {
         } else if (splittedPath[0] == "monitoring") {
             monitoringController->handleGet(splittedPath, request);
             return;
-        } else if (splittedPath[0] == "connectivity" && splittedPath.size() == 1) {
+        } else if (splittedPath[0] == "connectivity" && splittedPath.size() == 2) {
             connectivityController->handleGet(splittedPath, request);
+            return;
         } else if (splittedPath[0] == "topology") {
             topologyController->handleGet(splittedPath, request);
+            return;
         }
     }
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));

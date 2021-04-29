@@ -17,8 +17,10 @@
 #ifndef NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_
 #define NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_
 #include <atomic>
+#include <map>
 #include <memory>
 #include <string>
+#include <vector>
 namespace NES::NodeEngine {
 
 class QueryStatistics {
@@ -79,6 +81,17 @@ class QueryStatistics {
     void incProcessedTuple(uint64_t tupleCnt);
 
     /**
+    * @brief increment
+    */
+    void incLatencySum(uint64_t latency);
+
+    /**
+     * @brief get sum of all latencies
+     * @return value
+     */
+    const std::atomic<uint64_t> getLatencySum() const;
+
+    /**
     * @brief increment processedWatermarks
     */
     void incProcessedWatermarks();
@@ -107,13 +120,28 @@ class QueryStatistics {
      */
     uint64_t getSubQueryId() const;
 
+    /**
+     * Add for the current time stamp (now) a new latency value
+     * @param now
+     * @param latency
+     */
+    void addTimestampToLatencyValue(uint64_t now, uint64_t latency);
+
+    /**
+     * get the ts to latency map which stores ts as key and latencies in vectors
+     * @return
+     */
+    std::map<uint64_t, std::vector<uint64_t>> getTsToLatencyMap();
+
   private:
     std::atomic<uint64_t> processedTasks;
     std::atomic<uint64_t> processedTuple;
     std::atomic<uint64_t> processedBuffers;
     std::atomic<uint64_t> processedWatermarks;
+    std::atomic<uint64_t> latencySum;
     std::atomic<uint64_t> queryId;
     std::atomic<uint64_t> subQueryId;
+    std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
 };
 
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;

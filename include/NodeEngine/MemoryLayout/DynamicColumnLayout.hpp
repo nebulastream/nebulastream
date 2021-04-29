@@ -23,18 +23,37 @@
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
- * @brief This class derives from DynamicMemoryLayout. It implements abstract map() function
+ * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
+ * This class is non-thread safe
  */
 class DynamicColumnLayout;
-typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
 
-class DynamicColumnLayout : public DynamicMemoryLayout {
+class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicColumnLayout> {
 
   public:
     DynamicMemoryLayoutPtr copy() const override;
-    DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
+
+    /**
+     * @brief Creates a DynamicColumnLayout as a shared_ptr
+     * @param schema
+     * @param checkBoundaries
+     * @return
+     */
     static DynamicColumnLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
-    std::unique_ptr<DynamicLayoutBuffer> map(TupleBuffer& tupleBuffer) override;
+
+    /**
+     * Binds a memoryLayout to a tupleBuffer
+     * @param tupleBuffer
+     * @return shared_ptr to DynamicRowLayoutBuffer
+     */
+    DynamicColumnLayoutBufferPtr bind(TupleBuffer tupleBuffer);
+
+    /**
+     * @brief Constructor for DynamicColumnLayout
+     * @param checkBoundaries
+     * @param schema
+     */
+    DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema);
 };
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

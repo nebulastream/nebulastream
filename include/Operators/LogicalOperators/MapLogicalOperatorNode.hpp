@@ -17,7 +17,7 @@
 #ifndef MAP_LOGICAL_OPERATOR_NODE_HPP
 #define MAP_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/UnaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,14 +25,14 @@ namespace NES {
 /**
  * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
  */
-class MapLogicalOperatorNode : public UnaryOperatorNode {
+class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id);
 
     /**
-     * @brief Returns the expression of this map operator
-     * @return FieldAssignmentExpressionNodePtr
-     */
+    * @brief Returns the expression of this map operator
+    * @return FieldAssignmentExpressionNodePtr
+    */
     FieldAssignmentExpressionNodePtr getMapExpression();
 
     /**
@@ -43,14 +43,14 @@ class MapLogicalOperatorNode : public UnaryOperatorNode {
      * @return true if inference was possible
      */
     bool inferSchema() override;
+    void inferStringSignature() override;
     bool equal(const NodePtr rhs) const override;
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
-    std::string getStringBasedSignature() override;
 
   private:
-    FieldAssignmentExpressionNodePtr mapExpression;
+    const FieldAssignmentExpressionNodePtr mapExpression;
 };
 
 }// namespace NES

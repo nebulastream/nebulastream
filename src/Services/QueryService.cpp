@@ -27,11 +27,13 @@
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <WorkQueues/QueryRequestQueue.hpp>
+#include <WorkQueues/NESRequestQueue.hpp>
+#include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
 
 namespace NES {
 
-QueryService::QueryService(QueryCatalogPtr queryCatalog, QueryRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
+QueryService::QueryService(QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
                            bool enableSemanticQueryValidation)
     : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), streamCatalog(streamCatalog),
       enableSemanticQueryValidation(enableSemanticQueryValidation) {
@@ -85,9 +87,10 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
 
     NES_INFO("QueryService: Queuing the query for the execution");
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
-        queryRequestQueue->add(entry);
+        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
+        queryRequestQueue->add(request);
         return queryId;
     } else {
         throw Exception("QueryService: unable to create query catalog entry");
@@ -99,9 +102,10 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
         throw QueryNotFoundException("QueryService: Unable to find query with id " + std::to_string(queryId)
                                      + " in query catalog.");
     }
-    QueryCatalogEntryPtr entry = queryCatalog->addQueryStopRequest(queryId);
+    QueryCatalogEntryPtr entry = queryCatalog->stopQuery(queryId);
     if (entry) {
-        return queryRequestQueue->add(entry);
+        auto request = StopQueryRequest::create(queryId);
+        return queryRequestQueue->add(request);
     }
     return false;
 }
@@ -109,9 +113,10 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
 uint64_t QueryService::addQueryRequest(std::string queryString, QueryPtr query, std::string placementStrategyName) {
     NES_INFO("QueryService: Queuing the query for the execution");
     auto queryPlan = query->getQueryPlan();
-    QueryCatalogEntryPtr entry = queryCatalog->addNewQueryRequest(queryString, queryPlan, placementStrategyName);
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
-        queryRequestQueue->add(entry);
+        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
+        queryRequestQueue->add(request);
         return queryPlan->getQueryId();
     } else {
         throw Exception("QueryService: unable to create query catalog entry");

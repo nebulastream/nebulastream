@@ -14,7 +14,7 @@
     limitations under the License.
 */
 #include <Util/Logger.hpp>
-#include <Util/TestHarness.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -225,7 +225,7 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithWindowOperator =
-        R"(Query::from("car").windowByKey(Attribute("key"), TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)), Sum(Attribute("value"))))";
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value"))))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");

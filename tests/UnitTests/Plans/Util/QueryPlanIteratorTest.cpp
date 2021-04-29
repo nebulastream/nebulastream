@@ -93,8 +93,6 @@ class QueryPlanIteratorTest : public testing::Test {
 
     std::vector<NodePtr> children{};
     std::vector<NodePtr> parents{};
-
-    NodeEngine::NodeEnginePtr nodeEngine;
 };
 
 /**

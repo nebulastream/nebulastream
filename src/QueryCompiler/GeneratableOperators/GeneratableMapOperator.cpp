@@ -39,7 +39,7 @@ GeneratableMapOperatorPtr GeneratableMapOperator::create(MapLogicalOperatorNodeP
 }
 
 GeneratableMapOperator::GeneratableMapOperator(FieldAssignmentExpressionNodePtr mapExpression, OperatorId id)
-    : MapLogicalOperatorNode(mapExpression, id) {}
+    : OperatorNode(id), MapLogicalOperatorNode(mapExpression, id) {}
 
 const std::string GeneratableMapOperator::toString() const {
     std::stringstream ss;

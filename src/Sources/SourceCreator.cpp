@@ -69,23 +69,34 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(NodeEngine::Buf
 
 const DataSourcePtr createLambdaSource(
     SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-    uint64_t numbersOfBufferToProduce, std::chrono::milliseconds frequency,
+    uint64_t numbersOfBufferToProduce, uint64_t gatheringValue,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<LambdaSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
-                                          std::move(generationFunction), operatorId, numSourceLocalBuffers);
+    OperatorId operatorId, size_t numSourceLocalBuffers, DataSource::GatheringMode gatheringMode) {
+    return std::make_shared<LambdaSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, gatheringValue,
+                                          std::move(generationFunction), operatorId, numSourceLocalBuffers, gatheringMode);
+}
+
+const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                       NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
+                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                       OperatorId operatorId, size_t numSourceLocalBuffers,
+                                       DataSource::GatheringMode gatheringMode) {
+    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess,
+                                          gatheringValue, operatorId, numSourceLocalBuffers, gatheringMode);
 }
 
 const DataSourcePtr createZmqSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, const std::string& host, const uint16_t port,
                                     OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, operatorId, numSourceLocalBuffers);
+    return std::make_shared<ZmqSource>(schema, bufferManager, queryManager, host, port, operatorId, numSourceLocalBuffers,
+                                       DataSource::FREQUENCY_MODE);
 }
 
 const DataSourcePtr createBinaryFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                            NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
                                            OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<BinarySource>(schema, bufferManager, queryManager, pathToFile, operatorId, numSourceLocalBuffers);
+    return std::make_shared<BinarySource>(schema, bufferManager, queryManager, pathToFile, operatorId, numSourceLocalBuffers,
+                                          DataSource::FREQUENCY_MODE);
 }
 
 const DataSourcePtr createSenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
@@ -101,9 +112,8 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema, NodeEngine::BufferMana
                                         OperatorId operatorId, size_t numSourceLocalBuffers) {
     return std::make_shared<CSVSource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                        numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency, skipHeader,
-                                       operatorId, numSourceLocalBuffers);
+                                       operatorId, numSourceLocalBuffers, DataSource::FREQUENCY_MODE);
 }
-
 const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                           NodeEngine::QueryManagerPtr queryManager, const std::string& pathToFile,
                                           const std::string& delimiter, uint64_t numberOfTuplesToProducePerBuffer,
@@ -113,17 +123,6 @@ const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferMa
                                          numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency,
                                          skipHeader, operatorId,address,numSourceLocalBuffers);
 }
-
-
-
-const DataSourcePtr createMemorySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                       NodeEngine::QueryManagerPtr queryManager, std::shared_ptr<uint8_t> memoryArea,
-                                       size_t memoryAreaSize, uint64_t numBuffersToProcess, std::chrono::milliseconds frequency,
-                                       OperatorId operatorId, size_t numSourceLocalBuffers) {
-    return std::make_shared<MemorySource>(schema, memoryArea, memoryAreaSize, bufferManager, queryManager, numBuffersToProcess,
-                                          frequency, operatorId, numSourceLocalBuffers);
-}
-
 const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                         NodeEngine::QueryManagerPtr queryManager, Network::NetworkManagerPtr networkManager,
                                         Network::NesPartition nesPartition, size_t numSourceLocalBuffers) {

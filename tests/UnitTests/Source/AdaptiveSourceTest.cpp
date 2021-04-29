@@ -51,7 +51,9 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
     MockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                           uint64_t initialGatheringInterval, std::string filePath, uint64_t intervalIncrease)
-        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1, 12), filePath(filePath) {
+        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1, 12,
+                         DataSource::GatheringMode::FREQUENCY_MODE),
+          filePath(filePath) {
         this->intervalIncrease = std::chrono::milliseconds(intervalIncrease);
     };
 

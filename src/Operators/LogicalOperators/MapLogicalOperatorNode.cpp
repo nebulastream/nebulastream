@@ -23,7 +23,9 @@
 namespace NES {
 
 MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression, OperatorId id)
-    : mapExpression(mapExpression), UnaryOperatorNode(id) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), mapExpression(mapExpression) {}
+
+FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
 
 bool MapLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;
@@ -39,7 +41,7 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 bool MapLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
 
@@ -69,17 +71,26 @@ const std::string MapLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string MapLogicalOperatorNode::getStringBasedSignature() {
-    return "MAP(" + mapExpression->toString() + ")." + children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-}
-
-FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
-
 OperatorNodePtr MapLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createMapOperator(mapExpression, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
-    copy->setSignature(signature);
+    copy->setStringSignature(stringSignature);
+    copy->setZ3Signature(z3Signature);
     return copy;
+}
+
+void MapLogicalOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("MapLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_ASSERT(!children.empty(), "MapLogicalOperatorNode: Map should have 2 children.");
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "MAP(" + mapExpression->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES

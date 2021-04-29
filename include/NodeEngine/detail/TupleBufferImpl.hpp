@@ -81,7 +81,7 @@ class BufferControlBlock {
     /**
      * @return get the reference counter
      */
-    uint32_t getReferenceCount();
+    int32_t getReferenceCount();
 
     /**
      * @brief Decrease the reference counter by one.
@@ -131,9 +131,9 @@ class BufferControlBlock {
 
   private:
     std::atomic<uint32_t> referenceCounter;
-    std::atomic<uint32_t> numberOfTuples;
-    std::atomic<int64_t> watermark;
-    std::atomic<uint64_t> originId;
+    uint32_t numberOfTuples;
+    int64_t watermark;
+    uint64_t originId;
 
   public:
     MemorySegment* owner;

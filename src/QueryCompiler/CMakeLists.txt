@@ -24,6 +24,8 @@ add_source_nes(
         LegacyExpression.cpp
 )
 add_subdirectory(CCodeGenerator)
+add_subdirectory(Operators)
 add_subdirectory(Compiler)
 add_subdirectory(GeneratableTypes)
 add_subdirectory(GeneratableOperators)
+add_subdirectory(Phases)

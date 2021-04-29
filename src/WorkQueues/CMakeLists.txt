@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(RequestTypes)
 add_source_nes(
-        QueryRequestQueue.cpp
+        NESRequestQueue.cpp
 )

@@ -30,6 +30,7 @@ class CentralWindowOperator : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     bool inferSchema() override;
+    void inferStringSignature() override;
 };
 
 }// namespace NES

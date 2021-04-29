@@ -71,7 +71,7 @@ bool Z3SignatureBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQue
                 auto hostSinks = hostQueryPlan->getSinkOperators();
                 for (auto& hostSink : hostSinks) {
                     //Check if the address and target sink operator signatures match each other
-                    if (signatureEqualityUtil->checkEquality(hostSink->getSignature(), targetSink->getSignature())) {
+                    if (signatureEqualityUtil->checkEquality(hostSink->getZ3Signature(), targetSink->getZ3Signature())) {
                         targetToHostSinkOperatorMap[targetSink] = hostSink;
                         foundMatch = true;
                         break;

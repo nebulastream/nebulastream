@@ -21,8 +21,10 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
+#include <cstring>
 #include <iostream>
 #include <thread>
+#include <unistd.h>
 
 namespace NES::NodeEngine {
 
@@ -79,8 +81,20 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
     if (isConfigured) {
         NES_THROW_RUNTIME_ERROR("[BufferManager] Already configured - we cannot change the buffer manager at runtime for now!");
     }
+
+    long pages = sysconf(_SC_PHYS_PAGES);
+    long page_size = sysconf(_SC_PAGE_SIZE);
+    auto memorySizeInBytes = pages * page_size;
+
     this->bufferSize = bufferSize;
     this->numOfBuffers = numOfBuffers;
+    uint64_t requiredMemorySpace = (uint64_t) this->bufferSize * (uint64_t) this->numOfBuffers;
+    NES_DEBUG("NES malloc " << requiredMemorySpace << " out of " << memorySizeInBytes << " available bytes");
+
+    if (requiredMemorySpace > memorySizeInBytes) {
+        NES_THROW_RUNTIME_ERROR("NES tries to malloc more memory than physically available");
+    }
+
     allBuffers.reserve(numOfBuffers);
     size_t realSize = bufferSize + sizeof(detail::BufferControlBlock);
     for (size_t i = 0; i < numOfBuffers; ++i) {
@@ -88,6 +102,8 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
         if (ptr == nullptr) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
         }
+        //We touch each buffer to make sure that is really allocated
+        std::memset(ptr, 0, sizeof(uint64_t));
         allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
             recycler->recyclePooledBuffer(segment);
         });
@@ -102,6 +118,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
     //TODO: remove this
 
     while (availableBuffers.empty()) {
+        NES_ERROR("All global Buffers are exhausted");
         availableBuffersCvar.wait(lock);
     }
     auto memSegment = availableBuffers.front();

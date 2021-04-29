@@ -36,7 +36,7 @@ GeneratableWatermarkAssignerOperator::create(WatermarkAssignerLogicalOperatorNod
 
 GeneratableWatermarkAssignerOperator::GeneratableWatermarkAssignerOperator(
     const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
-    : WatermarkAssignerLogicalOperatorNode(watermarkStrategyDescriptor, id) {}
+    : OperatorNode(id), WatermarkAssignerLogicalOperatorNode(watermarkStrategyDescriptor, id) {}
 
 void GeneratableWatermarkAssignerOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     getChildren()[0]->as<GeneratableOperator>()->produce(codegen, context);

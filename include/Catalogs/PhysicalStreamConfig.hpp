@@ -38,7 +38,7 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
  * @param physicalStreamName: name of the stream created by this source
  * @param logicalStreamName: name of the logical steam where this physical stream contributes to
  */
-struct PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
+class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
   public:
     static PhysicalStreamConfigPtr createEmpty();

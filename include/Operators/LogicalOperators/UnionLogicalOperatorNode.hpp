@@ -17,7 +17,7 @@
 #ifndef UNION_LOGICAL_OPERATOR_NODE_HPP
 #define UNION_LOGICAL_OPERATOR_NODE_HPP
 
-#include <Operators/LogicalOperators/Arity/BinaryOperatorNode.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES {
@@ -25,7 +25,7 @@ namespace NES {
 /**
  * @brief Union operator that Union two streams together. This operator behaves similar to the unionWith operator in RDBMS.
  */
-class UnionLogicalOperatorNode : public BinaryOperatorNode {
+class UnionLogicalOperatorNode : public LogicalBinaryOperatorNode {
   public:
     explicit UnionLogicalOperatorNode(OperatorId id);
     ~UnionLogicalOperatorNode() = default;
@@ -34,9 +34,9 @@ class UnionLogicalOperatorNode : public BinaryOperatorNode {
     const std::string toString() const override;
     //infer schema of two child operators
     bool inferSchema() override;
+    void inferStringSignature() override;
     OperatorNodePtr copy() override;
     bool equal(const NodePtr rhs) const override;
-    std::string getStringBasedSignature() override;
 };
 }// namespace NES
 #endif// UNION_LOGICAL_OPERATOR_NODE_HPP

@@ -27,6 +27,7 @@
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <memory>
+#include <stack>
 #include <utility>
 
 //#define QUERY_PROCESSING_WITH_SLOWDOWN
@@ -85,7 +86,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
     : taskQueue(), operatorIdToQueryMap(), queryMutex(), workMutex(), bufferManager(std::move(bufferManager)),
-      nodeEngineId(nodeEngineId), numThreads(numThreads), waitCounter(0) {
+      nodeEngineId(nodeEngineId), numThreads(numThreads), isDestroyed(false) {
     NES_DEBUG("Init QueryManager::QueryManager");
     reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
 }
@@ -104,18 +105,19 @@ bool QueryManager::startThreadPool() {
 }
 
 void QueryManager::destroy() {
-    if (waitCounter != 0) {
-        NES_ERROR("QueryManager waitCounter="
-                  << waitCounter
-                  << " which means the source was blocked and could produce in full-speed this is maybe a problem");
+    auto expected = false;
+    if (!isDestroyed.compare_exchange_strong(expected, true)) {
+        return;
     }
-
+    std::unique_lock lock(workMutex);
+    NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
+    lock.unlock();
     if (threadPool) {
         threadPool->stop();
         threadPool.reset();
     }
     std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-    NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
+    NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
     taskQueue.clear();
     NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << operatorIdToQueryMap.size());
 
@@ -508,6 +510,9 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 
 bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::shared_lock queryLock(queryMutex);
+    //@Ventrua we have to do this because otherwise we can run into the situation to get threads from two barriers waiting
+    std::unique_lock lock(workMutex);
+
     NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful);
     NES_VERIFY(operatorIdToQueryMap[sourceId].size() > 0, "Operator id to query map for operator is empty");
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
@@ -536,6 +541,9 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             //use in-place construction to create the reconfig task within a buffer
             new (buffer.getBuffer())
                 ReconfigurationMessage(queryExecutionPlanId, reconfigType, threadPool->getNumberOfThreads(), qep);
+            NES_WARNING("EOS opId=" << sourceId << " reconfType=" << reconfigType
+                                    << " queryExecutionPlanId=" << queryExecutionPlanId << " threadPool->getNumberOfThreads()="
+                                    << threadPool->getNumberOfThreads() << " qep" << qep->getQueryId());
         }
 
         auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId,
@@ -544,12 +552,29 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
             /** default pipeline Id*/ -1, queryExecutionPlanId, reconfigurationExecutable, pipelineContext,
             /** numberOfProducingPipelines**/ 1, nullptr, nullptr, nullptr, true);
         {
-            std::unique_lock lock(workMutex);
-            for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
-                if (graceful) {
+            //            std::unique_lock lock(workMutex);
+
+            if (graceful) {
+                for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
                     taskQueue.emplace_back(pipeline, buffer);
-                } else {
+                }
+            } else {
+                std::stack<Task> temp;
+                while (!taskQueue.empty()) {
+                    Task task = taskQueue.front();
+                    if (task.getPipeline()->isReconfiguration()) {
+                        temp.push(task);
+                        taskQueue.pop_front();
+                    } else {
+                        break;// reached a data task
+                    }
+                }
+                for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
                     taskQueue.emplace_front(pipeline, buffer);
+                }
+                while (!temp.empty()) {
+                    taskQueue.emplace_front(temp.top());
+                    temp.pop();
                 }
             }
             cv.notify_all();
@@ -633,8 +658,11 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Execut
 }
 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
+#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
+    std::unique_lock lock(workMutex);
+#endif
+
     NES_TRACE("QueryManager::completedWork: Work for task=" << task.toString());
-    std::unique_lock lock(statisticsMutex);
     if (queryToStatisticsMap.contains(task.getPipeline()->getQepParentId())) {
         auto statistics = queryToStatisticsMap.find(task.getPipeline()->getQepParentId());
 
@@ -643,8 +671,18 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
             statistics->incProcessedWatermarks();
         } else if (!task.getPipeline()->isReconfiguration()) {
             statistics->incProcessedBuffers();
+            auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                           .count();
+            auto diff = now - latency[2];
+            statistics->incLatencySum(diff);
+#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
+            statistics->addTimestampToLatencyValue(now, diff);
+#endif
         }
         statistics->incProcessedTuple(task.getNumberOfTuples());
+
     } else {
         NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");
     }

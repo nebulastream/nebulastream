@@ -23,7 +23,7 @@
 namespace NES {
 
 RenameStreamOperatorNode::RenameStreamOperatorNode(const std::string newStreamName, uint64_t id)
-    : newStreamName(newStreamName), UnaryOperatorNode(id) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), newStreamName(newStreamName) {}
 
 bool RenameStreamOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<RenameStreamOperatorNode>()->getId() == id;
@@ -43,12 +43,8 @@ const std::string RenameStreamOperatorNode::toString() const {
     return ss.str();
 }
 
-std::string RenameStreamOperatorNode::getStringBasedSignature() {
-    return children[0]->as<LogicalOperatorNode>()->getStringBasedSignature();
-}
-
 bool RenameStreamOperatorNode::inferSchema() {
-    if (!UnaryOperatorNode::inferSchema()) {
+    if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
     //Update output schema by changing the qualifier and corresponding attribute names
@@ -68,6 +64,23 @@ OperatorNodePtr RenameStreamOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createRenameStreamOperator(newStreamName, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
+    copy->setZ3Signature(z3Signature);
+    copy->setStringSignature(stringSignature);
     return copy;
+}
+
+void RenameStreamOperatorNode::inferStringSignature() {
+    OperatorNodePtr operatorNode = shared_from_this()->as<OperatorNode>();
+    NES_TRACE("RenameStreamOperatorNode: Inferring String signature for " << operatorNode->toString());
+    NES_ASSERT(!children.empty(), "RenameStreamOperatorNode: Rename Stream should have children.");
+    //Infer query signatures for child operators
+    for (auto& child : children) {
+        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
+        childOperator->inferStringSignature();
+    }
+    std::stringstream signatureStream;
+    signatureStream << "RENAME_STREAM(newStreamName=" << newStreamName << ")."
+                    << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    setStringSignature(signatureStream.str());
 }
 }// namespace NES

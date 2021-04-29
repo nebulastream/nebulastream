@@ -34,6 +34,7 @@ class SliceMergingOperator : public WindowOperatorNode {
     OperatorNodePtr copy() override;
     bool isIdentical(NodePtr rhs) const override;
     virtual bool inferSchema() override;
+    void inferStringSignature() override;
 };
 
 }// namespace NES

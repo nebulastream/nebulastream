@@ -78,8 +78,8 @@ bool Z3SignatureBasedPartialQueryMergerRule::apply(GlobalQueryPlanPtr globalQuer
                     while (*hostQueryPlanItr) {
                         auto hostOperator = (*hostQueryPlanItr)->as<LogicalOperatorNode>();
                         if (!hostOperator->instanceOf<SinkLogicalOperatorNode>()) {
-                            if (signatureEqualityUtil->checkEquality(targetOperator->getSignature(),
-                                                                     hostOperator->getSignature())) {
+                            if (signatureEqualityUtil->checkEquality(targetOperator->getZ3Signature(),
+                                                                     hostOperator->getZ3Signature())) {
                                 targetToHostOperatorMap[targetOperator] = hostOperator;
                                 foundMatch = true;
                                 break;

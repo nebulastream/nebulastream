@@ -29,8 +29,8 @@
 #include <thread>
 
 namespace NES {
-class QueryRequestQueue;
-typedef std::shared_ptr<QueryRequestQueue> QueryRequestQueuePtr;
+class NESRequestQueue;
+typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
@@ -56,8 +56,8 @@ typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
 class NesWorker;
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 
-class QueryRequestProcessorService;
-typedef std::shared_ptr<QueryRequestProcessorService> QueryRequestProcessorServicePtr;
+class NESRequestProcessorService;
+typedef std::shared_ptr<NESRequestProcessorService> QueryRequestProcessorServicePtr;
 
 class QueryService;
 typedef std::shared_ptr<QueryService> QueryServicePtr;
@@ -145,6 +145,14 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      */
     bool isCoordinatorRunning();
 
+    /**
+     * getter for the coordinator engine
+     * @return
+     */
+    const CoordinatorEnginePtr getCoordinatorEngine() const;
+
+    NesWorkerPtr getNesWorker();
+
   private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
@@ -167,6 +175,8 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     std::shared_ptr<std::thread> queryRequestProcessorThread;
     NesWorkerPtr worker;
     CoordinatorEnginePtr coordinatorEngine;
+
+  private:
     GlobalExecutionPlanPtr globalExecutionPlan;
     QueryCatalogPtr queryCatalog;
     StreamCatalogPtr streamCatalog;
@@ -178,7 +188,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;
     WorkerRPCClientPtr workerRpcClient;
-    QueryRequestQueuePtr queryRequestQueue;
+    NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;

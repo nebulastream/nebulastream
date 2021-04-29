@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
+#include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
@@ -25,29 +25,30 @@
 
 namespace NES {
 
-QueryRewritePhasePtr QueryRewritePhase::create(StreamCatalogPtr streamCatalog) {
-    return std::make_shared<QueryRewritePhase>(QueryRewritePhase(streamCatalog));
+QueryRewritePhasePtr QueryRewritePhase::create(bool applyRulesImprovingSharingIdentification) {
+    return std::make_shared<QueryRewritePhase>(QueryRewritePhase(applyRulesImprovingSharingIdentification));
 }
 
-QueryRewritePhase::QueryRewritePhase(StreamCatalogPtr streamCatalog) {
+QueryRewritePhase::QueryRewritePhase(bool applyRulesImprovingSharingIdentification)
+    : applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification) {
     filterPushDownRule = FilterPushDownRule::create();
-    logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
-    distributeWindowRule = DistributeWindowRule::create();
-    distributeJoinRule = DistributeJoinRule::create();
     renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
     projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
+    attributeSortRule = AttributeSortRule::create();
+    binaryOperatorSortRule = BinaryOperatorSortRule::create();
 }
 
 QueryRewritePhase::~QueryRewritePhase() { NES_DEBUG("~QueryRewritePhase()"); }
 
 QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     auto duplicateQueryPlan = queryPlan->copy();
+    if (applyRulesImprovingSharingIdentification) {
+        duplicateQueryPlan = attributeSortRule->apply(duplicateQueryPlan);
+        duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
+    }
     duplicateQueryPlan = renameStreamToProjectOperatorRule->apply(duplicateQueryPlan);
     duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = logicalSourceExpansionRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = distributeJoinRule->apply(duplicateQueryPlan);
-    return distributeWindowRule->apply(duplicateQueryPlan);
+    return filterPushDownRule->apply(duplicateQueryPlan);
 }
 
 }// namespace NES

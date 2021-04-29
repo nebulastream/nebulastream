@@ -65,6 +65,7 @@ MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycl
 MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, BufferRecycler* recycler,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction, bool)
     : ptr(ptr), size(size) {
+    // TODO ensure this doesnt break zmq recycle callback (Ventura)
     controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
     if (!this->ptr) {
         NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
@@ -97,20 +98,20 @@ BufferControlBlock::BufferControlBlock(MemorySegment* owner, BufferRecycler* rec
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples.store(that.numberOfTuples.load());
+    numberOfTuples = that.numberOfTuples;
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark.store(that.watermark.load());
-    originId.store(that.originId.load());
+    watermark = that.watermark;
+    originId = that.originId;
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples.store(that.numberOfTuples.load());
+    numberOfTuples = that.numberOfTuples;
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark.store(that.watermark.load());
-    originId.store(that.originId.load());
+    watermark = that.watermark;
+    originId = that.originId;
     return *this;
 }
 
@@ -155,7 +156,11 @@ bool BufferControlBlock::prepare() {
     fillThreadOwnershipInfo(info.threadName, info.callstack);
     owningThreads[std::this_thread::get_id()].emplace_back(info);
 #endif
-    return referenceCounter.compare_exchange_strong(expected, 1);
+    if (referenceCounter.compare_exchange_strong(expected, 1)) {
+        return true;
+    }
+    NES_ERROR("Invalid reference counter: " << expected);
+    return false;
 }
 
 BufferControlBlock* BufferControlBlock::retain() {
@@ -173,21 +178,23 @@ BufferControlBlock* BufferControlBlock::retain() {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 void BufferControlBlock::dumpOwningThreadInfo() {
     std::unique_lock lock(owningThreadsMutex);
-    NES_ERROR("Buffer " << getOwner() << " has " << referenceCounter.load() << " live references");
+    NES_FATAL_ERROR("Buffer " << getOwner() << " has " << referenceCounter.load() << " live references");
     for (auto& item : owningThreads) {
         for (auto& v : item.second) {
-            NES_ERROR("Thread " << v.threadName << " has buffer " << getOwner() << " requested on callstack: " << v.callstack);
+            NES_FATAL_ERROR("Thread " << v.threadName << " has buffer " << getOwner()
+                                      << " requested on callstack: " << v.callstack);
         }
     }
 }
 #endif
 
-uint32_t BufferControlBlock::getReferenceCount() { return referenceCounter.load(); }
+int32_t BufferControlBlock::getReferenceCount() { return referenceCounter.load(); }
 
 bool BufferControlBlock::release() {
     uint32_t prevRefCnt;
     if ((prevRefCnt = referenceCounter.fetch_sub(1)) == 1) {
-        numberOfTuples.store(0);
+        numberOfTuples = 0;
+        //        numberOfTuples = 0;
         recycleCallback(owner, owningBufferRecycler.load());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
@@ -196,7 +203,7 @@ bool BufferControlBlock::release() {
         }
 #endif
         return true;
-    } else if (prevRefCnt == 0) {
+    } else if (prevRefCnt <= 0) {
         NES_THROW_RUNTIME_ERROR("BufferControlBlock: releasing an already released buffer");
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

@@ -119,8 +119,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     string query = "Query::from(\"window\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
                    "Milliseconds()))"
-                   ".windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)), "
-                   "Sum(Attribute(\"value\")))"
+                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))) "
+                   ".byKey(Attribute(\"id\"))"
+                   ".apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -236,8 +237,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     string query = "Query::from(\"window\")"
                    ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
                    "Milliseconds()))"
-                   ".windowByKey(Attribute(\"id\"), TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1)), "
-                   "Sum(Attribute(\"value\")))"
+                   ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1))) "
+                   ".byKey(Attribute(\"id\"))"
+                   ".apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
@@ -330,13 +332,13 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
 
     // The query contains a watermark assignment with 50 ms allowed lateness
     NES_INFO("AssignWatermarkTest: Submit query");
-    string query =
-        "Query::from(\"window\")"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
-        "Milliseconds()))"
-        ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)), "
-        "Sum(Attribute(\"value\")))"
-        ".sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\")"
+                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50), "
+                   "Milliseconds()))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500))) "
+                   ".byKey(Attribute(\"id\"))"
+                   ".apply(Sum(Attribute(\"value\")))"
+                   ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -452,8 +454,9 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     string query =
         "Query::from(\"window\")"
         ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"timestamp\"),Milliseconds(50),Milliseconds()))"
-        ".windowByKey(Attribute(\"id\"), SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)), "
-        "Sum(Attribute(\"value\")))"
+        ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(1),Milliseconds(500)))"
+        ".byKey(Attribute(\"id\"))"
+        ".apply(Sum(Attribute(\"value\")))"
         ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
 

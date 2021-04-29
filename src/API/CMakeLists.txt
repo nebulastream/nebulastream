@@ -19,5 +19,6 @@ add_source_nes(
         Pattern.cpp
         AttributeField.cpp
         Windowing.cpp
+        WindowedQuery.cpp
 )
 add_subdirectory(Expressions)

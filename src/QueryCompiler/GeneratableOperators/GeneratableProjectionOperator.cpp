@@ -20,7 +20,7 @@
 namespace NES {
 
 GeneratableProjectionOperator::GeneratableProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id)
-    : ProjectionLogicalOperatorNode(expressions, id) {}
+    : OperatorNode(id), ProjectionLogicalOperatorNode(expressions, id) {}
 
 GeneratableProjectionOperatorPtr GeneratableProjectionOperator::create(ProjectionLogicalOperatorNodePtr projectLogicalOperator,
                                                                        OperatorId id) {

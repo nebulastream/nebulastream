@@ -77,14 +77,14 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -110,14 +110,14 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -141,14 +141,14 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -174,14 +174,14 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -207,14 +207,14 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -240,14 +240,14 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -273,13 +273,13 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createFilterOperator(predicate1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createFilterOperator(predicate2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -302,14 +302,14 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -332,14 +332,14 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -364,16 +364,16 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
     logicalOperator12->inferSchema();
-    logicalOperator12->inferSignature(context);
-    auto sig1 = logicalOperator12->getSignature();
+    logicalOperator12->inferZ3Signature(context);
+    auto sig1 = logicalOperator12->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator21->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator22->addChild(logicalOperator21);
     logicalOperator22->inferSchema();
-    logicalOperator22->inferSignature(context);
-    auto sig2 = logicalOperator22->getSignature();
+    logicalOperator22->inferZ3Signature(context);
+    auto sig2 = logicalOperator22->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -400,16 +400,16 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     LogicalOperatorNodePtr logicalOperator12 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator12->addChild(logicalOperator11);
     logicalOperator12->inferSchema();
-    logicalOperator12->inferSignature(context);
-    auto sig1 = logicalOperator12->getSignature();
+    logicalOperator12->inferZ3Signature(context);
+    auto sig1 = logicalOperator12->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator21 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator21->addChild(sourceOperator);
     LogicalOperatorNodePtr logicalOperator22 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator22->addChild(logicalOperator21);
     logicalOperator22->inferSchema();
-    logicalOperator22->inferSignature(context);
-    auto sig2 = logicalOperator22->getSignature();
+    logicalOperator22->inferZ3Signature(context);
+    auto sig2 = logicalOperator22->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -434,14 +434,14 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createMapOperator(expression1);
     logicalOperator1->addChild(sourceOperator);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createMapOperator(expression2);
     logicalOperator2->addChild(sourceOperator);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -458,13 +458,13 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameStreamName) {
     //Create source operator
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -483,13 +483,13 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentStreamName) {
     //Create source
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     logicalOperator1->inferSchema();
-    logicalOperator1->inferSignature(context);
-    auto sig1 = logicalOperator1->getSignature();
+    logicalOperator1->inferZ3Signature(context);
+    auto sig1 = logicalOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     logicalOperator2->inferSchema();
-    logicalOperator2->inferSignature(context);
-    auto sig2 = logicalOperator2->getSignature();
+    logicalOperator2->inferZ3Signature(context);
+    auto sig2 = logicalOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -513,14 +513,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
     projectionOperator1->inferSchema();
-    projectionOperator1->inferSignature(context);
-    auto sig1 = projectionOperator1->getSignature();
+    projectionOperator1->inferZ3Signature(context);
+    auto sig1 = projectionOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
     projectionOperator2->inferSchema();
-    projectionOperator2->inferSignature(context);
-    auto sig2 = projectionOperator2->getSignature();
+    projectionOperator2->inferZ3Signature(context);
+    auto sig2 = projectionOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -544,14 +544,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
     projectionOperator1->inferSchema();
-    projectionOperator1->inferSignature(context);
-    auto sig1 = projectionOperator1->getSignature();
+    projectionOperator1->inferZ3Signature(context);
+    auto sig1 = projectionOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
     projectionOperator2->inferSchema();
-    projectionOperator2->inferSignature(context);
-    auto sig2 = projectionOperator2->getSignature();
+    projectionOperator2->inferZ3Signature(context);
+    auto sig2 = projectionOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -574,14 +574,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     projectionOperator1->addChild(logicalOperator1);
     projectionOperator1->inferSchema();
-    projectionOperator1->inferSignature(context);
-    auto sig1 = projectionOperator1->getSignature();
+    projectionOperator1->inferZ3Signature(context);
+    auto sig1 = projectionOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     projectionOperator2->addChild(logicalOperator2);
     projectionOperator2->inferSchema();
-    projectionOperator2->inferSignature(context);
-    auto sig2 = projectionOperator2->getSignature();
+    projectionOperator2->inferZ3Signature(context);
+    auto sig2 = projectionOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -607,14 +607,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
-    watermarkOperator1->inferSignature(context);
-    auto sig1 = watermarkOperator1->getSignature();
+    watermarkOperator1->inferZ3Signature(context);
+    auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
-    watermarkOperator2->inferSignature(context);
-    auto sig2 = watermarkOperator2->getSignature();
+    watermarkOperator2->inferZ3Signature(context);
+    auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -638,14 +638,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
-    watermarkOperator1->inferSignature(context);
-    auto sig1 = watermarkOperator1->getSignature();
+    watermarkOperator1->inferZ3Signature(context);
+    auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
-    watermarkOperator2->inferSignature(context);
-    auto sig2 = watermarkOperator2->getSignature();
+    watermarkOperator2->inferZ3Signature(context);
+    auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -670,14 +670,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
-    watermarkOperator1->inferSignature(context);
-    auto sig1 = watermarkOperator1->getSignature();
+    watermarkOperator1->inferZ3Signature(context);
+    auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
-    watermarkOperator2->inferSignature(context);
-    auto sig2 = watermarkOperator2->getSignature();
+    watermarkOperator2->inferZ3Signature(context);
+    auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -703,14 +703,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
-    watermarkOperator1->inferSignature(context);
-    auto sig1 = watermarkOperator1->getSignature();
+    watermarkOperator1->inferZ3Signature(context);
+    auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
-    watermarkOperator2->inferSignature(context);
-    auto sig2 = watermarkOperator2->getSignature();
+    watermarkOperator2->inferZ3Signature(context);
+    auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);
@@ -736,14 +736,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
     watermarkOperator1->inferSchema();
-    watermarkOperator1->inferSignature(context);
-    auto sig1 = watermarkOperator1->getSignature();
+    watermarkOperator1->inferZ3Signature(context);
+    auto sig1 = watermarkOperator1->getZ3Signature();
 
     LogicalOperatorNodePtr logicalOperator2 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor2);
     watermarkOperator2->addChild(logicalOperator2);
     watermarkOperator2->inferSchema();
-    watermarkOperator2->inferSignature(context);
-    auto sig2 = watermarkOperator2->getSignature();
+    watermarkOperator2->inferZ3Signature(context);
+    auto sig2 = watermarkOperator2->getZ3Signature();
 
     //Assert
     auto signatureEqualityUtil = Optimizer::SignatureEqualityUtil::create(context);

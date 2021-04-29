@@ -23,9 +23,10 @@ add_source_nes(
         JoinLogicalOperatorNode.cpp
         WatermarkAssignerLogicalOperatorNode.cpp
         RenameStreamOperatorNode.cpp
+        LogicalBinaryOperatorNode.cpp
+        LogicalUnaryOperatorNode.cpp
 )
 
-add_subdirectory(Arity)
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Windowing)

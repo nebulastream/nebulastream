@@ -273,7 +273,6 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager(), 1, 12);
@@ -386,34 +385,37 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 /**
  * @brief This test verify that the watermark assigned correctly.
  * WindowSource -> WatermarkAssignerOperator -> TestSink
+ *
  */
-TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
-    uint64_t millisecondOfallowedLateness = 8; /*second of allowedLateness*/
+TEST_F(QueryExecutionTest, watermarkAssignerTest) {
+    uint64_t millisecondOfallowedLateness = 2; /*milliseconds of allowedLateness*/
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 1,
+    auto windowSource = WindowSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
                                              /*frequency*/ 1000, /*varyWatermark*/ true);
 
     auto query = TestQuery::from(windowSource->getSchema());
-    // 2. dd window operator:
-    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
-    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(12));
+    // 2. add window operator:
+    // 2.1 add Tumbling window of size 10s and a sum aggregation on the value. Use window of 5ms to ensure that it is closed.
+    auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(5));
+
+    // add a watermark assigner operator with the specified allowedLateness
     query = query.assignWatermark(EventTimeWatermarkStrategyDescriptor::create(
         Attribute("ts"), Milliseconds(millisecondOfallowedLateness), Milliseconds()));
 
-    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
+    query = query.window(windowType).byKey(Attribute("key", INT64)).apply(Sum(Attribute("value", INT64)));
     // add a watermark assigner operator with allowedLateness of 1 millisecond
 
     // 3. add sink. We expect that this sink will receive one buffer
-    //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
     auto windowResultSchema = Schema::create()
-                                  ->addField(createField("start", UINT64))
-                                  ->addField(createField("end", UINT64))
-                                  ->addField(createField("key", INT64))
-                                  ->addField("value", INT64);
+                                  ->addField(createField("_$start", UINT64))
+                                  ->addField(createField("_$end", UINT64))
+                                  ->addField(createField("test$key", INT64))
+                                  ->addField("test$value", INT64);
 
-    auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
+    // each source buffer produce 1 result buffer, totalling 2 buffers
+    auto testSink = TestSink::create(/*expected result buffer*/ 2, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
     auto typeInferencePhase = TypeInferencePhase::create(nullptr);
@@ -450,7 +452,11 @@ TEST_F(QueryExecutionTest, DISABLED_watermarkAssignerTest) {
 
     auto& resultBuffer = testSink->get(0);
 
-    EXPECT_EQ(resultBuffer.getWatermark(), 15);
+    // 10 records, starting at ts=5 with 1ms difference each record, hence ts of the last record=14
+    EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
+
+    nodeEngine->stopQuery(1);
+    testSink->cleanupBuffers();
 }
 
 /**
@@ -469,7 +475,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("test$ts")), Milliseconds(10));
 
-    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
+    query = query.window(windowType).byKey(Attribute("key", INT64)).apply(Sum(Attribute("value", INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -553,7 +559,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
     auto windowType = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(10));
 
-    query = query.windowByKey(Attribute("key", INT64), windowType, Sum(Attribute("value", INT64)));
+    query = query.window(windowType).byKey(Attribute("key", INT64)).apply(Sum(Attribute("value", INT64)));
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -631,7 +637,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(10), Milliseconds(5));
 
     auto aggregation = Sum(Attribute("value"));
-    query = query.windowByKey(Attribute("key"), windowType, aggregation);
+    query = query.window(windowType).byKey(Attribute("key")).apply(aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -706,7 +712,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(15), Milliseconds(5));
 
     auto aggregation = Sum(Attribute("value"));
-    query = query.windowByKey(Attribute("key"), windowType, aggregation);
+    query = query.window(windowType).byKey(Attribute("key")).apply(aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);
@@ -793,7 +799,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     auto windowType = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
 
     auto aggregation = Sum(Attribute("value"));
-    query = query.windowByKey(Attribute("key"), windowType, aggregation);
+    query = query.window(windowType).byKey(Attribute("key")).apply(aggregation);
 
     // 3. add sink. We expect that this sink will receive one buffer
     //    auto windowResultSchema = Schema::create()->addField("sum", BasicType::INT64);

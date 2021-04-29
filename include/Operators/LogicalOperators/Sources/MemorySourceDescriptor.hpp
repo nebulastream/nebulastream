@@ -18,6 +18,7 @@
 #define NES_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES {
 /**
@@ -32,7 +33,8 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryAreaSize the size of the area of memory
      */
     explicit MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
-                                    uint64_t numBuffersToProcess, std::chrono::milliseconds frequency);
+                                    uint64_t numBuffersToProcess, uint64_t gatheringValue,
+                                    DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -43,7 +45,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
      */
     static std::shared_ptr<MemorySourceDescriptor> create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
                                                           size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                                          std::chrono::milliseconds frequency);
+                                                          uint64_t gatheringValue, DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Provides the string representation of the memory source
@@ -70,14 +72,30 @@ class MemorySourceDescriptor : public SourceDescriptor {
      */
     size_t getMemoryAreaSize() const;
 
+    /**
+     * @brief returns number of buffer to process
+     * @return
+     */
     uint64_t getNumBuffersToProcess() const;
-    std::chrono::milliseconds getFrequency() const;
+
+    /**
+    * @brief return the gathering mode
+    * @return
+    */
+    DataSource::GatheringMode getGatheringMode() const;
+
+    /**
+     * @brief return the gathering value
+     * @return
+     */
+    uint64_t getGatheringValue() const;
 
   private:
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
     uint64_t numBuffersToProcess;
-    std::chrono::milliseconds frequency;
+    uint64_t gatheringValue;
+    DataSource::GatheringMode gatheringMode;
 };
 }// namespace NES
 

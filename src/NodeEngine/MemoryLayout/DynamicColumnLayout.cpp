@@ -25,11 +25,14 @@ DynamicColumnLayout::DynamicColumnLayout(bool checkBoundaries, SchemaPtr schema)
     this->checkBoundaryFieldChecks = checkBoundaries;
     this->recordSize = schema->getSchemaSizeInBytes();
     this->fieldSizes = std::vector<FIELD_SIZE>();
+    this->nameFieldIndexMap = std::map<std::string, uint64_t>();
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto const& field : schema->fields) {
+    for (size_t fieldIndex = 0; fieldIndex < schema->fields.size(); ++fieldIndex) {
+        auto const& field = schema->fields[fieldIndex];
         auto curFieldSize = physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
         fieldSizes.emplace_back(curFieldSize);
+        nameFieldIndexMap[field->getName()] = fieldIndex;
     }
 }
 
@@ -46,7 +49,7 @@ DynamicColumnLayoutPtr DynamicColumnLayout::create(SchemaPtr schema, bool checkB
 
 DynamicMemoryLayoutPtr DynamicColumnLayout::copy() const { return std::make_shared<DynamicColumnLayout>(*this); }
 
-std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::map(TupleBuffer& tupleBuffer) {
+DynamicColumnLayoutBufferPtr DynamicColumnLayout::bind(TupleBuffer tupleBuffer) {
     std::vector<COL_OFFSET_SIZE> columnOffsets;
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
@@ -55,6 +58,6 @@ std::unique_ptr<DynamicLayoutBuffer> DynamicColumnLayout::map(TupleBuffer& tuple
         columnOffsets.emplace_back(offsetCounter);
         offsetCounter += (*it) * capacity;
     }
-    return std::make_unique<DynamicColumnLayoutBuffer>(tupleBuffer, capacity, *this, columnOffsets);
+    return std::make_shared<DynamicColumnLayoutBuffer>(tupleBuffer, capacity, this->shared_from_this(), columnOffsets);
 }
 }// namespace NES::NodeEngine::DynamicMemoryLayout

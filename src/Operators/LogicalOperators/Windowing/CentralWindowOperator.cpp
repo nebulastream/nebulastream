@@ -30,7 +30,7 @@
 namespace NES {
 
 CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefinitionPtr windowDefinition, OperatorId id)
-    : WindowOperatorNode(windowDefinition, id) {
+    : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCompleteWindowType());
 }
 
@@ -87,4 +87,6 @@ bool CentralWindowOperator::inferSchema() {
                                                   windowAggregation->on()->getStamp()));
     return true;
 }
+
+void CentralWindowOperator::inferStringSignature() { NES_NOT_IMPLEMENTED(); }
 }// namespace NES
