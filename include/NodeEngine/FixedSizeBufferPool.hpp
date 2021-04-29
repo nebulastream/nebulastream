@@ -36,6 +36,9 @@ namespace detail {
 class MemorySegment;
 }
 
+const std::chrono::seconds DEFAULT_BUFFER_TIMEOUT = std::chrono::seconds(10);
+
+
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */
@@ -69,7 +72,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
      * @param timeout_ms the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms);
+    std::optional<TupleBuffer> getBufferTimeout(std::chrono::seconds timeout);
 
     /**
      * @brief provide number of available exclusive buffers

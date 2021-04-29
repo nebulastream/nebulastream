@@ -21,6 +21,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 
 namespace NES::NodeEngine {
+
 FixedSizeBufferPool::FixedSizeBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
                                          size_t numberOfReservedBuffers)
     : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers), isDestroyed(false) {
@@ -63,12 +64,12 @@ size_t FixedSizeBufferPool::getAvailableExclusiveBuffers() const {
     return exclusiveBuffers.size();
 }
 
-std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::milliseconds timeout_ms) {
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::seconds timeout) {
     std::unique_lock lock(mutex);
     auto pred = [this]() {
         return exclusiveBuffers.size() > 0;// false if waiting must be continued
     };
-    if (!cvar.wait_for(lock, timeout_ms, std::move(pred))) {
+    if (!cvar.wait_for(lock, timeout, std::move(pred))) {
         return std::nullopt;
     }
     detail::MemorySegment* memSegment = exclusiveBuffers.front();

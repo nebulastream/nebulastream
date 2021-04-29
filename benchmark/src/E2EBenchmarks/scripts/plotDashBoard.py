@@ -24,10 +24,7 @@ df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
 df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCnt.csv')
 df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCnt.csv')
 
-# df_changingThreadsAndSourceMedSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceMedSelectivity.csv')
-# df_changingThreadsAndSourceHighSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceHighSelectivity.csv')
-# df_changingThreadsAndSourceLowSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceLowSelectivity.csv')
-# df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProc.csv')
+
 df_scalingLarge = pd.read_csv(folder + 'scalingLarge.csv')
 
 if (withLatencyHistogram == True):

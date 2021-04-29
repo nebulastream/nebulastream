@@ -50,7 +50,6 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     if (memoryAreaSize <= globalBufferManager->getBufferSize()) {
         numberOfTuples = std::floor(double(memoryAreaSize) / double(schema->getSchemaSizeInBytes()));
     } else {
-        NES_NOT_IMPLEMENTED();
         //if the memory area spans multiple buffers
         auto restTuples = (memoryAreaSize - currentPositionInBytes) / schema->getSchemaSizeInBytes();
         auto numberOfTuplesPerBuffer =
@@ -76,20 +75,20 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
 
     using namespace std::chrono_literals;
 
-    auto buffer = this->bufferManager->getBufferTimeout(1s);
+    auto buffer = this->bufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
     if (!buffer) {
         NES_ERROR("Buffer invalid after waiting on timeout");
         return std::nullopt;
     }
     memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize());
 
-//        TODO: replace copy with inplace add like with the wraparound
-//    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
+    //        TODO: replace copy with inplace add like with the wraparound #1853
+    //    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
 
     refCnt++;
     if (memoryAreaSize > buffer->getBufferSize()) {
-        NES_NOT_IMPLEMENTED();
-        NES_DEBUG("MemorySource::receiveData: add offset=" << globalBufferManager->getBufferSize() << " to currentpos=" << currentPositionInBytes);
+        NES_DEBUG("MemorySource::receiveData: add offset=" << globalBufferManager->getBufferSize()
+                                                           << " to currentpos=" << currentPositionInBytes);
         currentPositionInBytes += globalBufferManager->getBufferSize();
     }
 
