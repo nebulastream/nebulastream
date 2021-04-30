@@ -43,11 +43,11 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 #include <random>
-#include <unistd.h>
 #include <sstream>
+#include <unistd.h>
 
 namespace NES {
 
@@ -123,7 +123,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         if (pattern) {
             findAndReplaceAll(newQuery, "Pattern::from", "return Pattern::from");
         } else {// if Query
-           newQuery  = replaceFirst(newQuery, "Query::from", "return Query::from");
+            newQuery = replaceFirst(newQuery, "Query::from", "return Query::from");
         }
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
@@ -357,10 +357,11 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
     }
 }
 
-const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace){
-    if (origin.find(search) != std::string::npos){
+const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace) {
+    if (origin.find(search) != std::string::npos) {
         return origin.replace(origin.find(search), search.size(), replace);
-    } else return origin;
+    } else
+        return origin;
 }
 
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
