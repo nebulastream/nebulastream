@@ -32,7 +32,8 @@ NewExecutablePipeline::NewExecutablePipeline(uint32_t pipelineId, QuerySubPlanId
                                              std::vector<SuccessorPipeline> successorPipelines, bool reconfiguration)
     : pipelineStageId(pipelineId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
       pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration), isRunning(reconfiguration),
-      activeProducers(predecessorPipelines.size()), predecessorPipelines(predecessorPipelines), successorPipelines(successorPipelines) {
+      activeProducers(predecessorPipelines.size()), predecessorPipelines(predecessorPipelines),
+      successorPipelines(successorPipelines) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
@@ -118,17 +119,17 @@ void NewExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerCont
 }
 
 void NewExecutablePipeline::addSuccessor(SuccessorPipeline successorPipeline) {
-    if(!this->isRunning){
+    if (!this->isRunning) {
         successorPipelines.emplace_back(successorPipeline);
-    }else{
+    } else {
         NES_ERROR("It is not allowed to add pipelines during execution!");
     }
 }
 
 void NewExecutablePipeline::addPredecessor(PredecessorPipeline predecessorPipeline) {
-    if(!this->isRunning){
+    if (!this->isRunning) {
         predecessorPipelines.emplace_back(predecessorPipeline);
-    }else{
+    } else {
         NES_ERROR("It is not allowed to add pipelines during execution!");
     }
 }

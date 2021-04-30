@@ -35,7 +35,8 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
      * @param buildSide indicator if this is the left or right build side.
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                         Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
 
     /**
      * @brief Creates a new generatable join build operator.
@@ -46,14 +47,16 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
      * @param buildSide indicator if this is the left or right build side.
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                         Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
 
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   protected:
-    GeneratableJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+    GeneratableJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                 Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
     JoinBuildSide buildSide;
 };
 }// namespace GeneratableOperators

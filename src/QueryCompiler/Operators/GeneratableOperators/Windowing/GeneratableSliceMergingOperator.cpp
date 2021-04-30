@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
@@ -27,7 +27,8 @@ GeneratableOperatorPtr GeneratableSliceMergingOperator::create(OperatorId id, Sc
         GeneratableSliceMergingOperator(id, inputSchema, outputSchema, operatorHandler));
 }
 
-GeneratableOperatorPtr GeneratableSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr operatorHandler) {
+GeneratableOperatorPtr GeneratableSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                               Windowing::WindowOperatorHandlerPtr operatorHandler) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
 }
 
@@ -37,7 +38,7 @@ GeneratableSliceMergingOperator::GeneratableSliceMergingOperator(OperatorId id, 
 
 void GeneratableSliceMergingOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {
     // todo remove operator id from all runtime classes.
-        // auto registerID = codegen->generateWindowSetup(windowDefinition, outputSchema, context, operatorID);
+    // auto registerID = codegen->generateWindowSetup(windowDefinition, outputSchema, context, operatorID);
 }
 
 void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr, PipelineContextPtr) {
@@ -46,9 +47,7 @@ void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr, Pipeline
 
 const std::string GeneratableSliceMergingOperator::toString() const { return "GeneratableSliceMergingOperator"; }
 
-OperatorNodePtr GeneratableSliceMergingOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler);
-}
+OperatorNodePtr GeneratableSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

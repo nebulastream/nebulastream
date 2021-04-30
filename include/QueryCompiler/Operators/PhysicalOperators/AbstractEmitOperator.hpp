@@ -23,10 +23,9 @@ namespace PhysicalOperators {
 /**
  * @brief Abstract Emit operator.
  */
-class AbstractEmitOperator {
-};
-}
-}
-}
+class AbstractEmitOperator {};
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_

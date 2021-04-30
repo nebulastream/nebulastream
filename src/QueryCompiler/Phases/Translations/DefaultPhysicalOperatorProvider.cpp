@@ -23,9 +23,9 @@
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
@@ -80,7 +80,7 @@ void DefaultPhysicalOperatorProvider::lower(QueryPlanPtr queryPlan, LogicalOpera
         lowerUnaryOperator(queryPlan, operatorNode);
     } else if (operatorNode->isBinaryOperator()) {
         lowerBinaryOperator(queryPlan, operatorNode);
-    } else if(operatorNode->isExchangeOperator()){
+    } else if (operatorNode->isExchangeOperator()) {
         // exchange operators just vanish for now, as we already created an demultiplex operator for all incoming edges.
         operatorNode->removeAndJoinParentAndChildren();
     }

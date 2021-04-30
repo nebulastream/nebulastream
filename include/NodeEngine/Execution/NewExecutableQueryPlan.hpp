@@ -17,8 +17,8 @@
 #ifndef INCLUDE_NODEENGINE_EXECUTABLEQUERYPLAN_H_
 #define INCLUDE_NODEENGINE_EXECUTABLEQUERYPLAN_H_
 
-#include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
@@ -44,8 +44,8 @@ class NewExecutableQueryPlan : public Reconfigurable {
 
   public:
     explicit NewExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
-    std::vector<DataSinkPtr>&& sinks, std::vector<NewExecutablePipelinePtr>&& pipelines,
-    QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
+                                    std::vector<DataSinkPtr>&& sinks, std::vector<NewExecutablePipelinePtr>&& pipelines,
+                                    QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
     ~NewExecutableQueryPlan();
 

@@ -213,7 +213,6 @@ bool QueryPlan::replaceOperator(OperatorNodePtr oldOperator, OperatorNodePtr new
     return true;
 }
 
-
 QueryPlanPtr QueryPlan::copy() {
     NES_INFO("QueryPlan: make copy of this query plan");
     // 1. We start by copying the root operators of this query plan to the queue of operators to be processed

@@ -48,7 +48,6 @@ class DefaultQueryCompiler : public QueryCompiler {
     const PipeliningPhasePtr pipeliningPhase;
     const AddScanAndEmitPhasePtr addScanAndEmitPhase;
     const CodeGenerationPhasePtr codeGenerationPhase;
-
 };
 }// namespace QueryCompilation
 }// namespace NES

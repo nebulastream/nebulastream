@@ -47,7 +47,8 @@ class CodeGenerationPhase {
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
   private:
-    void generate(OperatorNodePtr rootOperator, std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)> applyFunction);
+    void generate(OperatorNodePtr rootOperator,
+                  std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)> applyFunction);
 };
 }// namespace QueryCompilation
 };// namespace NES

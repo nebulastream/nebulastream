@@ -48,7 +48,6 @@ class VizEdge {
     std::string id;
     std::string source;
     std::string target;
-
 };
 
 /**
@@ -85,7 +84,6 @@ class VizNode {
     std::string label;
     std::string parent;
     std::vector<std::tuple<std::string, std::string>> properties;
-
 };
 
 /**

@@ -228,8 +228,10 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
 TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     auto source1 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    auto joinBuildLeft = PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Left);
-    auto joinBuildRight = PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
+    auto joinBuildLeft =
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Left);
+    auto joinBuildRight =
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
     auto joinSink = PhysicalJoinSinkOperator::create(SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
@@ -262,9 +264,6 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     auto sinkPipe = joinSinkPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
     ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
-
-
-
 }
 
 /**
@@ -281,8 +280,10 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source3 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
-    auto joinBuildLeft = PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Left);
-    auto joinBuildRight = PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
+    auto joinBuildLeft =
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Left);
+    auto joinBuildRight =
+        PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
     auto joinSink = PhysicalJoinSinkOperator::create(SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
@@ -359,10 +360,10 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
     auto sourcePipeline1 = sourcePipelines[0];
     ASSERT_INSTANCE_OF(sourcePipeline1->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
 
-    auto preAggregationPipeline =  sourcePipeline1->getSuccessors()[0];
+    auto preAggregationPipeline = sourcePipeline1->getSuccessors()[0];
     ASSERT_INSTANCE_OF(preAggregationPipeline->getQueryPlan()->getRootOperators()[0], PhysicalWatermarkAssignmentOperator);
 
-    auto windowSinkPipeline =  preAggregationPipeline->getSuccessors()[0];
+    auto windowSinkPipeline = preAggregationPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(windowSinkPipeline->getQueryPlan()->getRootOperators()[0], PhysicalWindowSinkOperator);
 
     auto sinkPipe = windowSinkPipeline->getSuccessors()[0];
@@ -402,7 +403,7 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
     auto sourcePipeline = sourcePipelines[0];
     ASSERT_INSTANCE_OF(sourcePipeline->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
 
-    auto projectFilterMapPipeline =  sourcePipeline->getSuccessors()[0];
+    auto projectFilterMapPipeline = sourcePipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(projectFilterMapPipeline->getQueryPlan()->getRootOperators()[0], PhysicalProjectOperator);
 
     auto sinkPipe = projectFilterMapPipeline->getSuccessors()[0];

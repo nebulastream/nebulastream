@@ -928,8 +928,8 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     return joinOperatorHandlerIndex;
 }
 
-uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id,
-                                               Join::JoinOperatorHandlerPtr joinOperatorHandler) {
+uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context,
+                                                      uint64_t id, Join::JoinOperatorHandlerPtr joinOperatorHandler) {
     auto tf = getTypeFactory();
     NES_ASSERT(join, "invalid join definition");
     NES_ASSERT(!join->getLeftJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
@@ -1080,7 +1080,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
-    auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(), "InputTupleLeft" , "InputTupleRight");
+    auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(),
+                                                        "InputTupleLeft", "InputTupleRight");
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
 
@@ -1289,19 +1290,17 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
-    if(buildSide==QueryCompilation::Left){
-        auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(),
-                                                            "InputTuple" , "InputTupleRight");
+    if (buildSide == QueryCompilation::Left) {
+        auto getJoinHandlerStatement = getJoinWindowHandler(
+            windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(), "InputTuple", "InputTupleRight");
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
-    }else{
-        auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(),
-                                                            "InputTupleLeft" , "InputTuple");
+    } else {
+        auto getJoinHandlerStatement = getJoinWindowHandler(
+            windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(), "InputTupleLeft", "InputTuple");
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
     }
-
-
 
     //-------------------------
 
@@ -1690,9 +1689,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     return true;
 }
 
-uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr,
-                                             PipelineContextPtr context, uint64_t id,
-                                             Windowing::WindowOperatorHandlerPtr windowOperatorHandler) {
+uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr, PipelineContextPtr context,
+                                             uint64_t id, Windowing::WindowOperatorHandlerPtr windowOperatorHandler) {
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 

@@ -31,7 +31,7 @@ class AddScanAndEmitPhase {
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
     OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
-}
-};
+}// namespace QueryCompilation
+};// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITOPERATOR_HPP_

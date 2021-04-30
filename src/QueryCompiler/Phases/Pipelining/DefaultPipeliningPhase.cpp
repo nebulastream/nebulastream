@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <Plans/Utils/QueryPlanIterator.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMultiplexOperator.hpp>
@@ -23,7 +24,6 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -151,8 +151,9 @@ void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
                                      PhysicalOperators::PhysicalOperatorPtr currentOperators) {
 
     // Pipelining only works on physical operators.
-    if(!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>()){
-        throw QueryCompilationException("Pipelining can only be applyied to physical operator. But current operator was: " + currentOperators->toString());
+    if (!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>()) {
+        throw QueryCompilationException("Pipelining can only be applyied to physical operator. But current operator was: "
+                                        + currentOperators->toString());
     }
 
     // Depending on the operator we apply different pipelining strategies

@@ -21,9 +21,9 @@
 #include <API/Schema.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
@@ -195,7 +195,7 @@ class CodeGenerator {
     * @return the operator id
     */
     virtual uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr window, PipelineContextPtr context, uint64_t id,
-                                           Join::JoinOperatorHandlerPtr joinOperatorHandler) = 0;
+                                                  Join::JoinOperatorHandlerPtr joinOperatorHandler) = 0;
 
     /**
     * @brief Code generation for a join operator, which depends on a particular join definition
@@ -216,7 +216,8 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
-                                          Join::JoinOperatorHandlerPtr joinOperatorHandler, QueryCompilation::JoinBuildSide buildSide) = 0;
+                                          Join::JoinOperatorHandlerPtr joinOperatorHandler,
+                                          QueryCompilation::JoinBuildSide buildSide) = 0;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

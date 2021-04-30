@@ -31,6 +31,7 @@ class FuseNonPipelineBreakerPolicy : public OperatorFusionPolicy {
     static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
-}}
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_FUSENONPIPELINEBREAKERPOLICY_HPP_

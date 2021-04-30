@@ -33,9 +33,7 @@ PhysicalOperatorPtr PhysicalSinkOperator::create(OperatorId id, SchemaPtr inputS
     return std::make_shared<PhysicalSinkOperator>(id, inputSchema, outputSchema, sinkDescriptor);
 }
 
-SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() {
-    return sinkDescriptor;
-}
+SinkDescriptorPtr PhysicalSinkOperator::getSinkDescriptor() { return sinkDescriptor; }
 
 const std::string PhysicalSinkOperator::toString() const { return "PhysicalSinkOperator"; }
 

@@ -16,8 +16,8 @@
 
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES {

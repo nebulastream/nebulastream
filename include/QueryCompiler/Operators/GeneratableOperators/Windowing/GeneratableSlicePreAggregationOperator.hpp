@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GENERATABLESLICEPREAGGREGATIONOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_WINDOWING_GENERATABLESLICEPREAGGREGATIONOPERATOR_HPP_
 
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
@@ -38,7 +38,8 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
+                                         Windowing::WindowOperatorHandlerPtr operatorHandler,
+                                         GeneratableWindowAggregationPtr windowAggregation);
 
     /**
      * @brief Creates a new slice pre-aggregation operator, which consumes input records and aggregates records in the operator state.
@@ -49,7 +50,8 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
+                                         Windowing::WindowOperatorHandlerPtr operatorHandler,
+                                         GeneratableWindowAggregationPtr windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
@@ -57,7 +59,8 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
 
   private:
     GeneratableSlicePreAggregationOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                           Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
+                                           Windowing::WindowOperatorHandlerPtr operatorHandler,
+                                           GeneratableWindowAggregationPtr windowAggregation);
     GeneratableWindowAggregationPtr windowAggregation;
 };
 }// namespace GeneratableOperators

@@ -36,20 +36,21 @@ class LowerToExecutableQueryPlanPhase {
                        std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
                        NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
 
-    NodeEngine::Execution::SuccessorPipeline processSuccessor(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
-                                                              std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                                                              NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
+    NodeEngine::Execution::SuccessorPipeline
+    processSuccessor(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
+                     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
+                     NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
 
-    NodeEngine::Execution::SuccessorPipeline processSink(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
-                       std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                       NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
+    NodeEngine::Execution::SuccessorPipeline
+    processSink(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
+                std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
+                NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
 
-    NodeEngine::Execution::SuccessorPipeline processOperatorPipeline(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
-                                                     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
-                                                     NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
-
-
-   };
+    NodeEngine::Execution::SuccessorPipeline
+    processOperatorPipeline(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
+                            std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
+                            NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId);
+};
 }// namespace QueryCompilation
 }// namespace NES
 

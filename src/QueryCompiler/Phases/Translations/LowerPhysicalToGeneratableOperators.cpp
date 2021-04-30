@@ -30,7 +30,8 @@ LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators::create
     return std::make_shared<LowerPhysicalToGeneratableOperators>(provider);
 }
 
-LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators(GeneratableOperatorProviderPtr provider) : provider(provider) {}
+LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators(GeneratableOperatorProviderPtr provider)
+    : provider(provider) {}
 
 PipelineQueryPlanPtr LowerPhysicalToGeneratableOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     for (auto pipeline : pipelinedQueryPlan->getPipelines()) {

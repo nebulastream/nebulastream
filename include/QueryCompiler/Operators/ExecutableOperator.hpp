@@ -33,7 +33,8 @@ class ExecutableOperator : public UnaryOperatorNode {
      * @param operatorHandlers a list of operator handlers
      * @return OperatorNodePtr
      */
-    static OperatorNodePtr create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
+    static OperatorNodePtr create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers);
 
     /**
      * @brief Gets the executable pipeline stage.

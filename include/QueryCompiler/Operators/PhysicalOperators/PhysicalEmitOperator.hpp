@@ -26,7 +26,7 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Emit operator.
  */
-class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOperator{
+class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
     /**
      * @brief Constructor for the physical emit operator
@@ -54,8 +54,8 @@ class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOp
 
     OperatorNodePtr copy() override;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEMITOPERATOR_HPP_

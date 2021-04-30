@@ -14,25 +14,30 @@
     limitations under the License.
 */
 
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinBuildOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableOperatorPtr GeneratableJoinBuildOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide) {
+GeneratableOperatorPtr GeneratableJoinBuildOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                            Join::JoinOperatorHandlerPtr operatorHandler,
+                                                            JoinBuildSide buildSide) {
     return std::make_shared<GeneratableJoinBuildOperator>(
         GeneratableJoinBuildOperator(id, inputSchema, outputSchema, operatorHandler, buildSide));
 }
 
-GeneratableOperatorPtr GeneratableJoinBuildOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide) {
+GeneratableOperatorPtr GeneratableJoinBuildOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                            Join::JoinOperatorHandlerPtr operatorHandler,
+                                                            JoinBuildSide buildSide) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
-GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide)
+GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                           Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide)
     : OperatorNode(id), GeneratableJoinOperator(id, inputSchema, outputSchema, operatorHandler), buildSide(buildSide) {}
 
 void GeneratableJoinBuildOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
@@ -42,9 +47,7 @@ void GeneratableJoinBuildOperator::generateExecute(CodeGeneratorPtr codegen, Pip
 
 const std::string GeneratableJoinBuildOperator::toString() const { return "GeneratableJoinBuildOperator"; }
 
-OperatorNodePtr GeneratableJoinBuildOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler, buildSide);
-}
+OperatorNodePtr GeneratableJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler, buildSide); }
 
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

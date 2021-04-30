@@ -15,23 +15,25 @@
 */
 
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableJoinSinkOperator::GeneratableJoinSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler)
+GeneratableJoinSinkOperator::GeneratableJoinSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                         Join::JoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableJoinOperator(id, inputSchema, outputSchema, operatorHandler) {}
 
-GeneratableOperatorPtr GeneratableJoinSinkOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,Join::JoinOperatorHandlerPtr operatorHandler) {
-    return std::make_shared<GeneratableJoinSinkOperator>(GeneratableJoinSinkOperator(id, inputSchema, outputSchema, operatorHandler));
+GeneratableOperatorPtr GeneratableJoinSinkOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                           Join::JoinOperatorHandlerPtr operatorHandler) {
+    return std::make_shared<GeneratableJoinSinkOperator>(
+        GeneratableJoinSinkOperator(id, inputSchema, outputSchema, operatorHandler));
 }
 
-GeneratableOperatorPtr GeneratableJoinSinkOperator::create(SchemaPtr inputSchema,
-                                                           SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableJoinSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
                                                            Join::JoinOperatorHandlerPtr operatorHandler) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
 }
@@ -46,9 +48,7 @@ void GeneratableJoinSinkOperator::generateExecute(CodeGeneratorPtr codegen, Pipe
 }
 const std::string GeneratableJoinSinkOperator::toString() const { return "GeneratableJoinSinkOperator"; }
 
-OperatorNodePtr GeneratableJoinSinkOperator::copy() {
-    return create(id, inputSchema, outputSchema, operatorHandler);
-}
+OperatorNodePtr GeneratableJoinSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

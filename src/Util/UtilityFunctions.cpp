@@ -44,18 +44,17 @@
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <boost/algorithm/string/replace.hpp>
+#include <iomanip>
 #include <random>
 #include <sstream>
-#include <iomanip>
 
 namespace NES {
 
-std::string UtilityFunctions::escapeJson(const std::string &s) {
+std::string UtilityFunctions::escapeJson(const std::string& s) {
     std::ostringstream o;
     for (auto c = s.cbegin(); c != s.cend(); c++) {
         if (*c == '"' || *c == '\\' || ('\x00' <= *c && *c <= '\x1f')) {
-            o << "\\u"
-              << std::hex << std::setw(4) << std::setfill('0') << (int)*c;
+            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) *c;
         } else {
             o << *c;
         }

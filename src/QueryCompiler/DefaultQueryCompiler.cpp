@@ -56,41 +56,39 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
 
     try {
 
+        auto queryId = request->getQueryPlan()->getQueryId();
+        auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
 
-    auto queryId = request->getQueryPlan()->getQueryId();
-    auto subPlanId = request->getQueryPlan()->getQuerySubPlanId();
+        // create new context for handling debug output
+        auto dumpContext = DumpContext::create("QueryCompilation-" + std::to_string(queryId) + "-" + std::to_string(subPlanId));
+        if (request->isDumpEnabled()) {
+            dumpContext->registerDumpHandler(VizDumpHandler::create());
+        }
 
-    // create new context for handling debug output
-    auto dumpContext = DumpContext::create("QueryCompilation-" + std::to_string(queryId) + "-" + std::to_string(subPlanId));
-    if (request->isDumpEnabled()) {
-        dumpContext->registerDumpHandler(VizDumpHandler::create());
-    }
+        NES_DEBUG("compile query with id: " << queryId << " subPlanId: " << subPlanId);
+        auto logicalQueryPlan = request->getQueryPlan();
+        dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
 
-    NES_DEBUG("compile query with id: " << queryId << " subPlanId: " << subPlanId);
-    auto logicalQueryPlan = request->getQueryPlan();
-    dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
+        auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
+        dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
 
-    auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
-    dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
+        auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
+        dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
 
-    auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
-    dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
+        addScanAndEmitPhase->apply(pipelinedQueryPlan);
+        dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
 
-    addScanAndEmitPhase->apply(pipelinedQueryPlan);
-    dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
+        lowerPhysicalToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
+        dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
 
-    lowerPhysicalToGeneratableOperatorsPhase->apply(pipelinedQueryPlan);
-    dumpContext->dump("5. GeneratableOperators", pipelinedQueryPlan);
+        codeGenerationPhase->apply(pipelinedQueryPlan);
+        dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
 
-    codeGenerationPhase->apply(pipelinedQueryPlan);
-    dumpContext->dump("6. ExecutableOperatorPlan", pipelinedQueryPlan);
-
-    auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
-    return QueryCompilationResult::create(executableQueryPlan);
+        auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
+        return QueryCompilationResult::create(executableQueryPlan);
     } catch (const QueryCompilationException& exception) {
         auto currentException = std::current_exception();
         return QueryCompilationResult::create(currentException);
-
     }
 }
 

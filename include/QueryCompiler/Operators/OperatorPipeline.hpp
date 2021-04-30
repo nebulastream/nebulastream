@@ -16,10 +16,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORPIPELINE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORPIPELINE_HPP_
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Nodes/Node.hpp>
-#include <vector>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <memory>
+#include <vector>
 namespace NES {
 namespace QueryCompilation {
 
@@ -29,17 +29,12 @@ namespace QueryCompilation {
  */
 class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
   public:
-
     /**
      * @brief The type of a pipeline.
      * Source/Sink pipelines only have a single source and sink operator.
      * Operator pipelines consist of arbitrary operators, except sources and sinks.
      */
-    enum Type{
-        SourcePipelineType,
-        SinkPipelineType,
-        OperatorPipelineType
-    };
+    enum Type { SourcePipelineType, SinkPipelineType, OperatorPipelineType };
 
     /**
      * @brief Creates a new operator pipeline
@@ -155,13 +150,13 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
 
   protected:
     OperatorPipeline(uint64_t pipelineId, Type pipelineType);
+
   private:
     uint64_t id;
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
     QueryPlanPtr queryPlan;
     Type pipelineType;
-
 };
 }// namespace QueryCompilation
 

@@ -16,8 +16,8 @@
 
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableCombiningWindowOperator.hpp>
-#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES {
@@ -31,7 +31,8 @@ void GeneratableCombiningWindowOperator::produce(CodeGeneratorPtr codegen, Pipel
 
 void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, outputSchema);
-    auto windowOperatorIndex = codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id,windowOperatorHandler);
+    auto windowOperatorIndex =
+        codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id, windowOperatorHandler);
     codegen->generateCodeForCombiningWindow(windowDefinition, generatableWindowAggregation, context, windowOperatorIndex);
 }
 

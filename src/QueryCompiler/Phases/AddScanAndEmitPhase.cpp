@@ -42,7 +42,7 @@ PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQue
 OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     auto queryPlan = pipeline->getQueryPlan();
     auto pipelineRootOperators = queryPlan->getRootOperators();
-    if(pipelineRootOperators.size()!=1){
+    if (pipelineRootOperators.size() != 1) {
         throw QueryCompilationException("A pipeline should only have one root operator");
     }
     auto rootOperator = pipelineRootOperators[0];

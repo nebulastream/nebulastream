@@ -29,11 +29,13 @@ GeneratableMapOperator::GeneratableMapOperator(OperatorId id, SchemaPtr inputSch
                                                FieldAssignmentExpressionNodePtr mapExpression)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), mapExpression(mapExpression) {}
 
-GeneratableOperatorPtr GeneratableMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
+GeneratableOperatorPtr GeneratableMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                      FieldAssignmentExpressionNodePtr mapExpression) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, mapExpression);
 }
 
-GeneratableOperatorPtr GeneratableMapOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
+GeneratableOperatorPtr GeneratableMapOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                      FieldAssignmentExpressionNodePtr mapExpression) {
     return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(id, inputSchema, outputSchema, mapExpression));
 }
 
@@ -47,9 +49,7 @@ void GeneratableMapOperator::generateExecute(CodeGeneratorPtr codegen, PipelineC
 
 const std::string GeneratableMapOperator::toString() const { return "GeneratableMapOperator"; }
 
-OperatorNodePtr GeneratableMapOperator::copy() {
-    return create(id, inputSchema, outputSchema, mapExpression);
-}
+OperatorNodePtr GeneratableMapOperator::copy() { return create(id, inputSchema, outputSchema, mapExpression); }
 
 }// namespace GeneratableOperators
 

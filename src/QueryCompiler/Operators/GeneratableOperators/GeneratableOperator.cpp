@@ -20,7 +20,8 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema): OperatorNode(id), UnaryOperatorNode(id) {
+GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema)
+    : OperatorNode(id), UnaryOperatorNode(id) {
     UnaryOperatorNode::setInputSchema(inputSchema);
     UnaryOperatorNode::setOutputSchema(outputSchema);
 }
@@ -28,6 +29,6 @@ GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, S
 void GeneratableOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
 void GeneratableOperator::generateClose(CodeGeneratorPtr, PipelineContextPtr) {}
-}
+}// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES

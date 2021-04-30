@@ -13,34 +13,30 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 namespace NES {
 namespace QueryCompilation {
 
-ExecutableOperator::ExecutableOperator(OperatorId id,
-                                       NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers):
-                                                                                                                  OperatorNode(id),
-                                                                                                                  UnaryOperatorNode(id),
-                                                                                                                  executablePipelineStage(executablePipelineStage),
-                                                                                                                  operatorHandlers(operatorHandlers){}
+ExecutableOperator::ExecutableOperator(OperatorId id, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
+    : OperatorNode(id), UnaryOperatorNode(id), executablePipelineStage(executablePipelineStage),
+      operatorHandlers(operatorHandlers) {}
 
 OperatorNodePtr ExecutableOperator::create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                            std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers) {
-    return std::make_shared<ExecutableOperator>(ExecutableOperator(UtilityFunctions::getNextOperatorId(), executablePipelineStage, operatorHandlers));
+    return std::make_shared<ExecutableOperator>(
+        ExecutableOperator(UtilityFunctions::getNextOperatorId(), executablePipelineStage, operatorHandlers));
 }
 
 NodeEngine::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage() {
     return executablePipelineStage;
 }
 
-std::vector<NodeEngine::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers() {
-    return operatorHandlers;
-}
+std::vector<NodeEngine::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers() { return operatorHandlers; }
 
-const std::string ExecutableOperator::toString() const { return "ExecutableOperator";}
+const std::string ExecutableOperator::toString() const { return "ExecutableOperator"; }
 
 OperatorNodePtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
 
