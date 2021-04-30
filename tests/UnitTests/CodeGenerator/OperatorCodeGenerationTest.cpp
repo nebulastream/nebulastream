@@ -63,7 +63,6 @@
 
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
@@ -994,14 +993,23 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
 
     auto resultBuffer = queryContext->buffers[0];
 
-    auto inputLayout = NodeEngine::createRowLayout(inputSchema);
-    auto outputLayout = NodeEngine::createRowLayout(outputSchema);
+    auto inputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(inputSchema, true);
+    auto outputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+
+    auto bindedInputLayout = inputLayout->bind(inputBuffer);
+    auto bindedOutputLayout = outputLayout->bind(resultBuffer);
+
+    auto floatValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputLayout);
+    auto doubleValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputLayout);
+
+    auto mappedValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(4, bindedOutputLayout);
+
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
-        auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/ 2)->read(inputBuffer);
-        auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 3)->read(inputBuffer);
+        auto floatValue = floatValueFields[recordIndex];
+        auto doubleValue = doubleValueFields[recordIndex];
         auto reference = ((floatValue * doubleValue) + 2) * doubleValue;
-        auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/ 4)->read(resultBuffer);
-        EXPECT_EQ(reference, mapedValue);
+        auto mappedValue = mappedValueFields[recordIndex];
+        EXPECT_EQ(reference, mappedValue);
     }
 }
 
