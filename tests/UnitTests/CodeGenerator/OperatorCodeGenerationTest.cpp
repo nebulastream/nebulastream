@@ -1002,14 +1002,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTwoMapPredicateTest) {
     auto floatValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputLayout);
     auto doubleValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputLayout);
 
-    auto mappedValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(4, bindedOutputLayout);
+    auto mappedValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputLayout);
 
     for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
         auto floatValue = floatValueFields[recordIndex];
         auto doubleValue = doubleValueFields[recordIndex];
         auto reference = ((floatValue * doubleValue) + 2) * doubleValue;
-        auto mappedValue = mappedValueFields[recordIndex];
-        EXPECT_EQ(reference, mappedValue);
+        EXPECT_EQ(reference, mappedValueFields[recordIndex]);
     }
 }
 
