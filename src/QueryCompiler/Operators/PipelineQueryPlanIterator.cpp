@@ -14,9 +14,9 @@
     limitations under the License.
 */
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
-#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
 
 namespace NES {
 namespace QueryCompilation {

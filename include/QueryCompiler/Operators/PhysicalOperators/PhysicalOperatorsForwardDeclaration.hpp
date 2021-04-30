@@ -24,7 +24,7 @@ typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
 
 class JoinOperatorHandler;
 typedef std::shared_ptr<JoinOperatorHandler> JoinOperatorHandlerPtr;
-}// namespace NES::Join
+}// namespace Join
 
 namespace Windowing {
 
@@ -37,11 +37,11 @@ typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
 class WatermarkStrategyDescriptor;
 typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
 
-}// namespace NES::Windowing
+}// namespace Windowing
 
 namespace QueryCompilation {
 
-namespace PhysicalOperators{
+namespace PhysicalOperators {
 
 class PhysicalOperator;
 typedef std::shared_ptr<PhysicalOperator> PhysicalOperatorPtr;
@@ -97,7 +97,7 @@ typedef std::shared_ptr<PhysicalWatermarkAssignmentOperator> PhysicalWatermarkAs
 class PhysicalJoinSinkOperator;
 typedef std::shared_ptr<PhysicalJoinSinkOperator> PhysicalJoinSinkOperatorPtr;
 
-}
+}// namespace PhysicalOperators
 }// namespace QueryCompilation
 }// namespace NES
 

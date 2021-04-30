@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <optional>
 
 namespace NES {
@@ -50,6 +50,7 @@ class QueryCompilationResult {
      * @return std::exception_ptr
      */
     std::exception_ptr getError();
+
   private:
     QueryCompilationResult(NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan);
     QueryCompilationResult(std::exception_ptr exception);

@@ -22,7 +22,7 @@ namespace NodeEngine {
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
-namespace Execution{
+namespace Execution {
 class OperatorHandler;
 typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
 
@@ -35,7 +35,7 @@ typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
 class NewExecutableQueryPlan;
 typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
 
-}
+}// namespace Execution
 
 }// namespace NodeEngine
 
@@ -94,7 +94,6 @@ namespace QueryCompilation {
 
 enum JoinBuildSide { Left, Right };
 
-
 class QueryCompilationError;
 typedef std::shared_ptr<QueryCompilationError> QueryCompilationErrorPtr;
 
@@ -109,7 +108,6 @@ typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
 
 class QueryCompilerOptions;
 typedef std::shared_ptr<QueryCompilerOptions> QueryCompilerOptionsPtr;
-
 
 class OperatorPipeline;
 typedef std::shared_ptr<OperatorPipeline> OperatorPipelinePtr;

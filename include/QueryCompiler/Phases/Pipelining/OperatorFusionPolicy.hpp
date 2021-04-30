@@ -32,5 +32,6 @@ class OperatorFusionPolicy {
      */
     virtual bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) = 0;
 };
-}}
+}// namespace QueryCompilation
+}// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PHASES_PIPELINEBREAKERPOLICY_HPP_

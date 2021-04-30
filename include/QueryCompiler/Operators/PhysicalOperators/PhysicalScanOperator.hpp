@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_
 
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -26,7 +26,7 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Scan operator.
  */
-class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOperator{
+class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     /**
      * @brief Constructor for the physical scan operator
@@ -50,8 +50,8 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 };
-}
-}
-}
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_

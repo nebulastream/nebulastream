@@ -24,7 +24,7 @@ namespace QueryCompilation {
  * @brief The default pipelining phase,
  * which splits query plans in pipelines of operators according to specific operator fusion policy.
  */
-class DefaultPipeliningPhase: public PipeliningPhase {
+class DefaultPipeliningPhase : public PipeliningPhase {
   public:
     /**
      * @brief Creates a new pipelining phase with a operator fusion policy.
@@ -34,23 +34,26 @@ class DefaultPipeliningPhase: public PipeliningPhase {
     static PipeliningPhasePtr create(OperatorFusionPolicyPtr operatorFusionPolicy);
     DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy);
     PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+
   protected:
-    void process(PipelineQueryPlanPtr pipeline,
-                 std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                 OperatorPipelinePtr currentPipeline,
-                 PhysicalOperators::PhysicalOperatorPtr currentOperators);
+    void process(PipelineQueryPlanPtr pipeline, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                 OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperators);
     void processSink(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                      OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
     void processSource(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                        OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr sourceOperator);
     void processMultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                           OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processDemultiplex(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    void processDemultiplex(PipelineQueryPlanPtr pipelinePlan,
+                            std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                             OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processFusibleOperator(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+    void processFusibleOperator(PipelineQueryPlanPtr pipelinePlan,
+                                std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
                                 OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
-    void processPipelineBreakerOperator(PipelineQueryPlanPtr pipelinePlan, std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
-                                        OperatorPipelinePtr currentPipeline, PhysicalOperators::PhysicalOperatorPtr currentOperator);
+    void processPipelineBreakerOperator(PipelineQueryPlanPtr pipelinePlan,
+                                        std::map<OperatorNodePtr, OperatorPipelinePtr>& pipelineOperatorMap,
+                                        OperatorPipelinePtr currentPipeline,
+                                        PhysicalOperators::PhysicalOperatorPtr currentOperator);
 
   private:
     OperatorFusionPolicyPtr operatorFusionPolicy;

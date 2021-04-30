@@ -21,8 +21,7 @@ namespace NES {
 namespace QueryCompilation {
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
-    : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType)
-{}
+    : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType) {}
 
 OperatorPipelinePtr OperatorPipeline::create() {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), OperatorPipelineType));
@@ -36,21 +35,13 @@ OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
     return std::make_shared<OperatorPipeline>(OperatorPipeline(UtilityFunctions::getNextPipelineId(), SourcePipelineType));
 }
 
-void OperatorPipeline::setType(Type pipelineType) {
-   this->pipelineType = pipelineType;
-}
+void OperatorPipeline::setType(Type pipelineType) { this->pipelineType = pipelineType; }
 
-bool OperatorPipeline::isOperatorPipeline() {
-    return pipelineType == OperatorPipelineType;
-}
+bool OperatorPipeline::isOperatorPipeline() { return pipelineType == OperatorPipelineType; }
 
-bool OperatorPipeline::isSinkPipeline(){
-    return pipelineType == SinkPipelineType;
-}
+bool OperatorPipeline::isSinkPipeline() { return pipelineType == SinkPipelineType; }
 
-bool OperatorPipeline::isSourcePipeline() {
-    return pipelineType == SourcePipelineType;
-}
+bool OperatorPipeline::isSourcePipeline() { return pipelineType == SourcePipelineType; }
 
 void OperatorPipeline::addPredecessor(OperatorPipelinePtr pipeline) {
     pipeline->successorPipelines.emplace_back(shared_from_this());
@@ -108,7 +99,7 @@ void OperatorPipeline::clearSuccessors() {
 
 std::vector<OperatorPipelinePtr> OperatorPipeline::getSuccessors() { return successorPipelines; }
 void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
-    if(!this->isOperatorPipeline() && this->hasOperators()){
+    if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
     }
     this->queryPlan->appendOperatorAsNewRoot(newRootOperator);

@@ -15,8 +15,8 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTGENERATABLEOPERATORPROVIDER_HPP_
-#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 namespace NES {
 namespace QueryCompilation {
 

@@ -17,11 +17,11 @@
 #ifndef INCLUDE_NES_NODEENGINE_EXECUTABLEPIPELINE_H_
 #define INCLUDE_NES_NODEENGINE_EXECUTABLEPIPELINE_H_
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
-#include <NodeEngine/ExecutionResult.hpp>
 #include <memory>
 #include <variant>
 #include <vector>
@@ -41,8 +41,7 @@ class NewExecutablePipeline : public Reconfigurable {
                                    PipelineExecutionContextPtr pipelineExecutionContext,
                                    ExecutablePipelineStagePtr executablePipelineStage,
                                    std::vector<PredecessorPipeline> predecessorPipelines,
-                                   std::vector<SuccessorPipeline> successorPipelines,
-                                   bool reconfiguration);
+                                   std::vector<SuccessorPipeline> successorPipelines, bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -58,8 +57,7 @@ class NewExecutablePipeline : public Reconfigurable {
                                            PipelineExecutionContextPtr pipelineExecutionContext,
                                            ExecutablePipelineStagePtr executablePipelineStage,
                                            std::vector<PredecessorPipeline> predecessorPipelines,
-                                           std::vector<SuccessorPipeline> successorPipelines,
-                                           bool reconfiguration = false);
+                                           std::vector<SuccessorPipeline> successorPipelines, bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage

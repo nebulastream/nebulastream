@@ -43,9 +43,7 @@ void GeneratableProjectionOperator::generateExecute(CodeGeneratorPtr codegen, Pi
 
 const std::string GeneratableProjectionOperator::toString() const { return "GeneratableProjectionOperator"; }
 
-OperatorNodePtr GeneratableProjectionOperator::copy() {
-    return create(id, inputSchema, outputSchema, expressions);
-}
+OperatorNodePtr GeneratableProjectionOperator::copy() { return create(id, inputSchema, outputSchema, expressions); }
 
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

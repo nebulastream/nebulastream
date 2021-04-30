@@ -29,7 +29,6 @@ namespace GeneratableOperators {
  */
 class GeneratableFilterOperator : public GeneratableOperator {
   public:
-
     /**
      * @brief Creates a new generatable filer operator, which evaluates a predicate on all input records.
      * @param inputSchema input schema of the incoming records.

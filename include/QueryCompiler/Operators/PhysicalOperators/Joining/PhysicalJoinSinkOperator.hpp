@@ -15,8 +15,8 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINSINKOPERATOR_HPP_
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
@@ -26,7 +26,7 @@ namespace PhysicalOperators {
  * @brief Physical operator for the join sink.
  * This operator queries the operator state and computes final join results.
  */
-class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator{
+class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
   public:
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
                                       SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);

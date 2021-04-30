@@ -27,9 +27,9 @@ namespace GeneratableOperators {
  */
 class GeneratableJoinOperator : public GeneratableOperator {
   protected:
-    GeneratableJoinOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
+    GeneratableJoinOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                            Join::JoinOperatorHandlerPtr operatorHandler);
     Join::JoinOperatorHandlerPtr operatorHandler;
-
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

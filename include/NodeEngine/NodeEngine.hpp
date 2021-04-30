@@ -248,6 +248,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return
      */
     SourceDescriptorPtr createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
+
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;

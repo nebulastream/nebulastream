@@ -24,7 +24,7 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Source operator.
  */
-class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator{
+class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalSourceOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,

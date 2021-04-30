@@ -26,7 +26,6 @@ namespace Phases {
  */
 class PhaseFactory {
   public:
-
     /**
      * @brief Creates a lower logical operator to physical operator phase
      * @param QueryCompilerOptionsPtr options

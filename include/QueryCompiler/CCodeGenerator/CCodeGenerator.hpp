@@ -96,7 +96,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return the operator id
     */
     uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                 PipelineContextPtr context, uint64_t id, Windowing::WindowOperatorHandlerPtr windowOperatorHandler) override;
+                                 PipelineContextPtr context, uint64_t id,
+                                 Windowing::WindowOperatorHandlerPtr windowOperatorHandler) override;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -148,8 +149,8 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id, Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
-
+    uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id,
+                                          Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -170,7 +171,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
-                                          Join::JoinOperatorHandlerPtr joinOperatorHandler, QueryCompilation::JoinBuildSide buildSide);
+                                          Join::JoinOperatorHandlerPtr joinOperatorHandler,
+                                          QueryCompilation::JoinBuildSide buildSide);
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
@@ -211,8 +213,8 @@ class CCodeGenerator : public CodeGenerator {
                                                         DataTypePtr inputType, DataTypePtr partialAggregateType,
                                                         DataTypePtr finalAggregateType);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType,  std::string leftType,
-                                                 std::string rightType);
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType,
+                                                 std::string leftType, std::string rightType);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 

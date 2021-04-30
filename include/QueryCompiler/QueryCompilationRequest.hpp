@@ -54,6 +54,7 @@ class QueryCompilationRequest {
          * @return QueryCompilationRequestPtr
          */
         QueryCompilationRequestPtr build();
+
       private:
         QueryCompilationRequestPtr request;
     };

@@ -29,15 +29,15 @@
 #include <Operators/OperatorNode.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <memory>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <memory>
 
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -97,7 +97,6 @@ using namespace NES::API;
 using namespace NES::QueryCompilation;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-
 class QueryCompilerTest : public testing::Test {
   public:
     static void SetUpTestCase() {
@@ -133,9 +132,7 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
-                       .dump()
-                       .build();
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
     auto result = queryCompiler->compileQuery(request);
 
     ASSERT_FALSE(result->hasError());
@@ -159,17 +156,17 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
 
-    auto query = Query::from("streamName").window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)))
-        .byKey(Attribute("key"))
-        .apply(Sum(Attribute("value"))).sink(NullOutputSinkDescriptor::create());
+    auto query = Query::from("streamName")
+                     .window(SlidingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10), Seconds(2)))
+                     .byKey(Attribute("key"))
+                     .apply(Sum(Attribute("value")))
+                     .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
-        .dump()
-        .build();
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
 }
@@ -194,15 +191,14 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto phaseFactory = Phases::DefaultPhaseFactory::create();
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
     auto query1 = Query::from("streamName");
-    auto query2 = Query::from("streamName").filter(Attribute("key") == 32).unionWith(&query1).sink(NullOutputSinkDescriptor::create());
+    auto query2 =
+        Query::from("streamName").filter(Attribute("key") == 32).unionWith(&query1).sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query2.getQueryPlan();
 
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
-        .dump()
-        .build();
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
 }
@@ -229,7 +225,9 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
     auto query1 = Query::from("leftStream");
     auto query2 = Query::from("rightStream")
-                      .joinWith(query1).where(Attribute("leftStream$key")).equalsTo(Attribute("rightStream$key"))
+                      .joinWith(query1)
+                      .where(Attribute("leftStream$key"))
+                      .equalsTo(Attribute("rightStream$key"))
                       .window(TumblingWindow::of(IngestionTime(), Seconds(10)))
                       .sink(NullOutputSinkDescriptor::create());
     auto queryPlan = query2.getQueryPlan();
@@ -237,13 +235,9 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine)
-        .dump()
-        .build();
+    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
 }
-
-
 
 }// namespace NES

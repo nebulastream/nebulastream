@@ -41,9 +41,7 @@ void GeneratableFilterOperator::generateExecute(CodeGeneratorPtr codegen, Pipeli
 
 const std::string GeneratableFilterOperator::toString() const { return "GeneratableFilterOperator"; }
 
-OperatorNodePtr GeneratableFilterOperator::copy() {
-    return create(id, inputSchema, predicate);
-}
+OperatorNodePtr GeneratableFilterOperator::copy() { return create(id, inputSchema, predicate); }
 
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

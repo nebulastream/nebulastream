@@ -32,9 +32,7 @@ namespace NES {
 namespace QueryCompilation {
 namespace Phases {
 
-PhaseFactoryPtr DefaultPhaseFactory::create() {
-    return std::make_shared<DefaultPhaseFactory>();
-}
+PhaseFactoryPtr DefaultPhaseFactory::create() { return std::make_shared<DefaultPhaseFactory>(); }
 
 const PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompilerOptionsPtr options) {
     if (options->isOperatorFusionEnabled()) {
@@ -58,7 +56,8 @@ const AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(Quer
     NES_DEBUG("Create add scan and emit phase");
     return AddScanAndEmitPhase::create();
 }
-const LowerPhysicalToGeneratableOperatorsPtr DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr) {
+const LowerPhysicalToGeneratableOperatorsPtr
+DefaultPhaseFactory::createLowerPhysicalToGeneratableOperatorsPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create default lower pipeline plan phase");
     auto generatableOperatorProvider = DefaultGeneratableOperatorProvider::create();
     return LowerPhysicalToGeneratableOperators::create(generatableOperatorProvider);

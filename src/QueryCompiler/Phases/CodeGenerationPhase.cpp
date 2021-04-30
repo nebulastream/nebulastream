@@ -72,7 +72,7 @@ void CodeGenerationPhase::generate(OperatorNodePtr rootOperator,
                                    std::function<void(GeneratableOperators::GeneratableOperatorPtr operatorNode)> applyFunction) {
     auto iterator = DepthFirstNodeIterator(rootOperator);
     for (auto node : iterator) {
-        if(!node->instanceOf<GeneratableOperators::GeneratableOperator>()){
+        if (!node->instanceOf<GeneratableOperators::GeneratableOperator>()) {
             throw QueryCompilationException("Operator should be of type GeneratableOperator but it is a " + node->toString());
         }
         auto generatableOperator = node->as<GeneratableOperators::GeneratableOperator>();

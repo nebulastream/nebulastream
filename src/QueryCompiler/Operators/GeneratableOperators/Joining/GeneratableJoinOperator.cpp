@@ -21,7 +21,8 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableJoinOperator::GeneratableJoinOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler)
+GeneratableJoinOperator::GeneratableJoinOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                                 Join::JoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(operatorHandler) {}
 
 }// namespace GeneratableOperators

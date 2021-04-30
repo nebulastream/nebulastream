@@ -56,6 +56,7 @@ class QueryCompilerOptions {
      * @return uint64_t
      */
     uint64_t getNumSourceLocalBuffers();
+
   protected:
     bool operatorFusion;
     uint64_t numSourceLocalBuffers;

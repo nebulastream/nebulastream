@@ -82,7 +82,7 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalJoinSinkOperator>()) {
         lowerJoinSink(queryPlan, operatorNode);
     } else {
-       throw QueryCompilationException("No lowering defined for physical operator: " + operatorNode->toString());
+        throw QueryCompilationException("No lowering defined for physical operator: " + operatorNode->toString());
     }
 }
 
@@ -92,8 +92,7 @@ void DefaultGeneratableOperatorProvider::lowerSink(QueryPlanPtr, PhysicalOperato
     NES_ASSERT(operatorNode->getParents().size(), "A sink node should have no parents");
 }
 
-void DefaultGeneratableOperatorProvider::lowerSource(QueryPlanPtr,
-                                                     PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSource(QueryPlanPtr, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a source operator should be in a pipeline on its own.
     NES_ASSERT(operatorNode->getChildren().size(), "A source operator should have no children");
     NES_ASSERT(operatorNode->getParents().size(), "A source operator should have no parents");

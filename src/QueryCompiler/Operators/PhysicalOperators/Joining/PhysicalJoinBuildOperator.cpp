@@ -31,15 +31,16 @@ PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id, SchemaPtr i
 
 PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                                      Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide)
-    : OperatorNode(id), PhysicalJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema), joinBuildSide(buildSide){};
+    : OperatorNode(id), PhysicalJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema),
+      joinBuildSide(buildSide){};
 
 const std::string PhysicalJoinBuildOperator::toString() const { return "PhysicalJoinBuildOperator"; }
 
-OperatorNodePtr PhysicalJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide); }
-
-JoinBuildSide PhysicalJoinBuildOperator::getBuildSide() {
-    return joinBuildSide;
+OperatorNodePtr PhysicalJoinBuildOperator::copy() {
+    return create(id, inputSchema, outputSchema, operatorHandler, joinBuildSide);
 }
+
+JoinBuildSide PhysicalJoinBuildOperator::getBuildSide() { return joinBuildSide; }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

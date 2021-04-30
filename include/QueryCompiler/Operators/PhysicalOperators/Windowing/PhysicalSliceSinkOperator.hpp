@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICESINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICESINKOPERATOR_HPP_
 
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -28,7 +28,7 @@ namespace PhysicalOperators {
  * A slice sink, passes pre-aggregated slices to the downstream operator.
  * A slice is a non overlapping fraction of one or multiple final windows.
  */
-class PhysicalSliceSinkOperator : public PhysicalWindowOperator, public AbstractScanOperator{
+class PhysicalSliceSinkOperator : public PhysicalWindowOperator, public AbstractScanOperator {
   public:
     PhysicalSliceSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                               Windowing::WindowOperatorHandlerPtr handler);

@@ -19,8 +19,9 @@
 namespace NES {
 namespace QueryCompilation {
 
-QueryCompilationResult::QueryCompilationResult(NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan): executableQueryPlan(executableQueryPlan) {}
-QueryCompilationResult::QueryCompilationResult(std::exception_ptr exception): exception(exception) {}
+QueryCompilationResult::QueryCompilationResult(NodeEngine::Execution::NewExecutableQueryPlanPtr executableQueryPlan)
+    : executableQueryPlan(executableQueryPlan) {}
+QueryCompilationResult::QueryCompilationResult(std::exception_ptr exception) : exception(exception) {}
 
 QueryCompilationResultPtr QueryCompilationResult::create(NodeEngine::Execution::NewExecutableQueryPlanPtr qep) {
     return std::make_shared<QueryCompilationResult>(QueryCompilationResult(qep));
@@ -30,19 +31,15 @@ QueryCompilationResultPtr QueryCompilationResult::create(std::exception_ptr exce
 }
 
 NodeEngine::Execution::NewExecutableQueryPlanPtr QueryCompilationResult::getExecutableQueryPlan() {
-    if(hasError()){
+    if (hasError()) {
         std::rethrow_exception(exception.value());
     }
     return executableQueryPlan.value();
 }
 
-bool QueryCompilationResult::hasError() {
-    return exception.has_value();
-}
+bool QueryCompilationResult::hasError() { return exception.has_value(); }
 
-std::exception_ptr QueryCompilationResult::getError() {
-    return exception.value();
-}
+std::exception_ptr QueryCompilationResult::getError() { return exception.value(); }
 
 }// namespace QueryCompilation
 }// namespace NES

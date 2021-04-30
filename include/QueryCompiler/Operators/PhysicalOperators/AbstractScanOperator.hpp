@@ -23,11 +23,9 @@ namespace PhysicalOperators {
 /**
  * @brief Abstract Scan operator.
  */
-class AbstractScanOperator {
-
-};
-}
-}
-}
+class AbstractScanOperator {};
+}// namespace PhysicalOperators
+}// namespace QueryCompilation
+}// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTSCANOPERATOR_HPP_

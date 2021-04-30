@@ -18,8 +18,7 @@
 namespace NES {
 namespace QueryCompilation {
 
-QueryCompiler::QueryCompiler(const QueryCompilerOptionsPtr options)
-    : queryCompilerOptions(options){}
+QueryCompiler::QueryCompiler(const QueryCompilerOptionsPtr options) : queryCompilerOptions(options) {}
 
 }// namespace QueryCompilation
 }// namespace NES

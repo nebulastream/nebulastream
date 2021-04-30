@@ -71,7 +71,7 @@ std::string detail::VizNode::serialize() {
         ss << "\"parent\":\"" << parent << "\",";
     }
     ss << "\"properties\":[";
-    for (auto &tuple : properties) {
+    for (auto& tuple : properties) {
         auto quotedValue = UtilityFunctions::escapeJson(std::get<1>(tuple));
         ss << "{\"" << std::get<0>(tuple) << "\":\"" << quotedValue << "\"}";
         if (&properties.back() != &tuple) {
@@ -108,19 +108,18 @@ DebugDumpHandlerPtr VizDumpHandler::create() {
     return std::make_shared<VizDumpHandler>(path);
 }
 
-void VizDumpHandler::dump(const NodePtr) {
-    NES_NOT_IMPLEMENTED();
-}
+void VizDumpHandler::dump(const NodePtr) { NES_NOT_IMPLEMENTED(); }
 
 void VizDumpHandler::dump(std::string context, std::string scope, QueryPlanPtr queryPlan) {
-    NES_DEBUG("Dump query plan: " << queryPlan->getQueryId() << " : " << queryPlan->getQuerySubPlanId() << " for context " << context << " and scope " << scope);
+    NES_DEBUG("Dump query plan: " << queryPlan->getQueryId() << " : " << queryPlan->getQuerySubPlanId() << " for context "
+                                  << context << " and scope " << scope);
     auto graph = detail::VizGraph("graph");
     dump(queryPlan, "", graph);
     writeToFile(context, scope, graph.serialize());
 }
 
 void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, detail::VizGraph& graph) {
-     auto queryPlanIter = QueryPlanIterator(queryPlan);
+    auto queryPlanIter = QueryPlanIterator(queryPlan);
     for (auto op : queryPlanIter) {
         auto operatorNode = op->as<OperatorNode>();
         auto vizNode = detail::VizNode(std::to_string(operatorNode->getId()), op->toString(), parent);
@@ -136,7 +135,8 @@ void VizDumpHandler::dump(QueryPlanPtr queryPlan, std::string parent, detail::Vi
 }
 
 void VizDumpHandler::dump(std::string scope, std::string name, QueryCompilation::PipelineQueryPlanPtr pipelinePlan) {
-    NES_DEBUG("Dump query plan: " << pipelinePlan->getQueryId() << " : " << pipelinePlan->getQuerySubPlanId() << " for scope " << scope);
+    NES_DEBUG("Dump query plan: " << pipelinePlan->getQueryId() << " : " << pipelinePlan->getQuerySubPlanId() << " for scope "
+                                  << scope);
     auto graph = detail::VizGraph("graph");
     for (auto pipeline : pipelinePlan->getPipelines()) {
         auto currentId = "p_" + std::to_string(pipeline->getPipelineId());

@@ -32,6 +32,7 @@ class QueryCompiler {
      * @return QueryCompilationResultPtr result for the query compilation.
      */
     virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
+
   protected:
     QueryCompiler(const QueryCompilerOptionsPtr);
     const QueryCompilerOptionsPtr queryCompilerOptions;
