@@ -83,23 +83,43 @@ bool TopologyNode::containAsChild(NodePtr node) {
     return found != children.end();
 }
 
-void TopologyNode::addProperty(std::string key, std::any value) { properties.insert(std::make_pair(key, value)); }
+void TopologyNode::addNodeProperty(std::string key, std::any value) { nodeProperties.insert(std::make_pair(key, value)); }
 
-std::any TopologyNode::getProperty(std::string key) {
-    if (properties.find(key) == properties.end()) {
+std::any TopologyNode::getNodeProperty(std::string key) {
+    if (nodeProperties.find(key) == nodeProperties.end()) {
         NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
         NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
     } else {
-        return properties.at(key);
+        return nodeProperties.at(key);
     }
 }
 
-bool TopologyNode::removeProperty(std::string key) {
-    if (properties.find(key) == properties.end()) {
-        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+bool TopologyNode::removeNodeProperty(std::string key) {
+    if (nodeProperties.find(key) == nodeProperties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "' does not exist");
         return false;
     } else {
-        properties.erase(key);
+        nodeProperties.erase(key);
+        return true;
+    }
+}
+void TopologyNode::addLinkProperty(TopologyNodePtr linkedNode, LinkPropertyPtr topologyLink) {
+    linkProperties.insert(std::make_pair(linkedNode, topologyLink));
+}
+LinkPropertyPtr TopologyNode::getLinkProperty(TopologyNodePtr linkedNode) {
+    if (linkProperties.find(linkedNode) == linkProperties.end()) {
+        NES_ERROR("TopologyNode: Link property with node '" << linkedNode->getId() << "' does not exist");
+        NES_THROW_RUNTIME_ERROR("TopologyNode: Link property to node with id='" << linkedNode->getId() << "' does not exist");
+    } else {
+        return linkProperties.at(linkedNode);
+    }
+}
+bool TopologyNode::removeLinkProperty(TopologyNodePtr linkedNode) {
+    if (linkProperties.find(linkedNode) == linkProperties.end()) {
+        NES_ERROR("TopologyNode: Link property to node with id='" << linkedNode << "' does not exist");
+        return false;
+    } else {
+        linkProperties.erase(linkedNode);
         return true;
     }
 }

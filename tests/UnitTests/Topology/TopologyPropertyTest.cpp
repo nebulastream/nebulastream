@@ -44,17 +44,17 @@ TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties) {
 
     // create a node
     auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
-    node->addProperty("cores",2);
-    node->addProperty("architecture", std::string("arm64"));
-    node->addProperty("withGPU",false);
+    node->addNodeProperty("cores", 2);
+    node->addNodeProperty("architecture", std::string("arm64"));
+    node->addNodeProperty("withGPU", false);
 
-    EXPECT_TRUE(node->getProperty("cores").has_value());
-    EXPECT_TRUE(node->getProperty("architecture").has_value());
-    EXPECT_TRUE(node->getProperty("withGPU").has_value());
+    EXPECT_TRUE(node->getNodeProperty("cores").has_value());
+    EXPECT_TRUE(node->getNodeProperty("architecture").has_value());
+    EXPECT_TRUE(node->getNodeProperty("withGPU").has_value());
 
-    EXPECT_EQ(std::any_cast<int>(node->getProperty("cores")), 2);
-    EXPECT_EQ(std::any_cast<std::string>(node->getProperty("architecture")), "arm64");
-    EXPECT_EQ(std::any_cast<bool>(node->getProperty("withGPU")), false);
+    EXPECT_EQ(std::any_cast<int>(node->getNodeProperty("cores")), 2);
+    EXPECT_EQ(std::any_cast<std::string>(node->getNodeProperty("architecture")), "arm64");
+    EXPECT_EQ(std::any_cast<bool>(node->getNodeProperty("withGPU")), false);
 }
 
 // test removing a topology properties
@@ -65,57 +65,74 @@ TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
 
     // create a node
     auto node = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
-    node->addProperty("cores",2);
+    node->addNodeProperty("cores", 2);
 
-    ASSERT_TRUE(node->getProperty("cores").has_value());
+    ASSERT_TRUE(node->getNodeProperty("cores").has_value());
 
-    node->removeProperty("cores");
-    EXPECT_THROW(node->getProperty("cores"), NesRuntimeException);
+    node->removeNodeProperty("cores");
+    EXPECT_THROW(node->getNodeProperty("cores"), NesRuntimeException);
 }
 
-// test assigning topology properties
-TEST_F(TopologyPropertiesTest, testAssignTopologyLinkProperties) {
+// test assigning link properties
+TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
     // create src and dst nodes
-    auto srcNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
 
     grpcPort++;
     dataPort++;
-    auto dstNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
+    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
 
-    topology->addLinkProperty(srcNode, dstNode, "bandWidth", 512);
-    topology->addLinkProperty(srcNode, dstNode, "type", std::string("local"));
+    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 
-    EXPECT_TRUE(topology->getLinkProperty(srcNode, dstNode, "bandWidth").has_value());
-    EXPECT_TRUE(topology->getLinkProperty(srcNode, dstNode, "type").has_value());
+    sourceNode->addLinkProperty(destinationNode, linkProperty);
+    destinationNode->addLinkProperty(sourceNode, linkProperty);
 
-    EXPECT_EQ(std::any_cast<int>(topology->getLinkProperty(srcNode, dstNode, "bandWidth")), 512);
-    EXPECT_EQ(std::any_cast<std::string>(topology->getLinkProperty(srcNode, dstNode, "type")), "local");
+    // we should be able to retrieve the assigned link property
+    EXPECT_NO_THROW(sourceNode->getLinkProperty(destinationNode));
+    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512);
+    EXPECT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100);
+
+    EXPECT_NO_THROW(destinationNode->getLinkProperty(sourceNode));
+    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512);
+    EXPECT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100);
 }
 
-// test removing topology link properties
-TEST_F(TopologyPropertiesTest, testRemoveTopologyLinkProperties) {
+// test removing link properties
+TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
 
     // create src and dst nodes
-    auto srcNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
+    auto sourceNode = TopologyNode::create(1, "localhost", grpcPort, dataPort, 8);
 
     grpcPort++;
     dataPort++;
-    auto dstNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
+    auto destinationNode = TopologyNode::create(2, "localhost", grpcPort, dataPort, 8);
 
-    topology->addLinkProperty(srcNode, dstNode, "bandWidth", 512);
+    LinkPropertyPtr linkProperty = std::make_shared<LinkProperty>(LinkProperty(512, 100));
 
-    ASSERT_TRUE(topology->getLinkProperty(srcNode, dstNode, "bandWidth").has_value());
+    sourceNode->addLinkProperty(destinationNode, linkProperty);
+    destinationNode->addLinkProperty(sourceNode, linkProperty);
 
-    topology->removeLinkProperty(srcNode, dstNode, "bandWidth");
+    // we should be able to retrieve the assigned link property
+    ASSERT_NO_THROW(sourceNode->getLinkProperty(destinationNode));
+    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->bandwidth, 512);
+    ASSERT_EQ(sourceNode->getLinkProperty(destinationNode)->latency, 100);
 
-    EXPECT_THROW(topology->getLinkProperty(srcNode, dstNode, "bandWidth"), NesRuntimeException);
+    ASSERT_NO_THROW(destinationNode->getLinkProperty(sourceNode));
+    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->bandwidth, 512);
+    ASSERT_EQ(destinationNode->getLinkProperty(sourceNode)->latency, 100);
+
+    sourceNode->removeLinkProperty(destinationNode);
+    destinationNode->removeLinkProperty(sourceNode);
+
+    EXPECT_THROW(sourceNode->getLinkProperty(destinationNode), NesRuntimeException);
+    EXPECT_THROW(destinationNode->getLinkProperty(sourceNode), NesRuntimeException);
 }
 
 }// namespace NES

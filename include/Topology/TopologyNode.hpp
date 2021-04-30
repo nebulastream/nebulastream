@@ -19,6 +19,7 @@
 
 #include <NodeStats.pb.h>
 #include <Nodes/Node.hpp>
+#include <Topology/LinkProperty.hpp>
 #include <any>
 
 namespace NES {
@@ -107,21 +108,42 @@ class TopologyNode : public Node {
      * @param key key of the new property
      * @param value value of the new property
      */
-    void addProperty(std::string key, std::any value);
+    void addNodeProperty(std::string key, std::any value);
 
     /**
      * @brief Get a the value of a property
      * @param key key of the value to retrieve
      * @return value of the property with the given key
      */
-    std::any getProperty(std::string key);
+    std::any getNodeProperty(std::string key);
 
     /**
-     * @brief Remove a property string from the stored properties map
+     * @brief Remove a property from the stored properties map
      * @param key key of the property to remove
      * @return true if the removal is successful
      */
-    bool removeProperty(std::string key);
+    bool removeNodeProperty(std::string key);
+
+    /**
+     * @brief add a new link property to the stored properties map
+     * @param linked topology node to which the property will be associated
+     * @param value of the link property
+     */
+    void addLinkProperty(TopologyNodePtr linkedNode, LinkPropertyPtr topologyLink);
+
+    /**
+     * @brief get a the value of a link property
+     * @param linked topology node associated with the link property to retrieve
+     * @return value of the link property
+     */
+    LinkPropertyPtr getLinkProperty(TopologyNodePtr linkedNode);
+
+    /**
+     * @brief remove a a link property from the stored map
+     * @param linked topology node associated with the link property to remove
+     * @return true if the removal is successful
+     */
+    bool removeLinkProperty(TopologyNodePtr linkedNode);
 
   private:
     uint64_t id;
@@ -135,7 +157,12 @@ class TopologyNode : public Node {
     /**
      * @brief A field to store a map of node properties
      */
-    std::map<std::string, std::any> properties;
+    std::map<std::string, std::any> nodeProperties;
+
+    /**
+     * @brief A field to store a map of linked nodes and its link property
+     */
+    std::map<TopologyNodePtr, LinkPropertyPtr> linkProperties;
 };
 }// namespace NES
 
