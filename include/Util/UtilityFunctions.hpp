@@ -216,7 +216,6 @@ class UtilityFunctions {
      */
     static const std::string replaceFirst(std::string origin, std::string search, std::string replace);
 
-
     /**
      *
      * @param queryPlan queries to which the properties are assigned
