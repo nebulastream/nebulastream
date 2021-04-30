@@ -159,6 +159,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief release all resource of the node engine
      * @param withError true if the node engine stopped with an error
      */
+
+    bool updateNetworkSinks(QueryId queryId, std::map<QuerySubPlanId ,OperatorNodePtr> querySubPlanToOperatorMap);
+
     bool stop(bool markQueriesAsFailed = false);
 
     /**

@@ -443,4 +443,14 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 }
 bool NodeEngine::bufferData(QueryId) { return true; }
 
+bool NodeEngine::updateNetworkSinks(QueryId queryId,std::map<QuerySubPlanId ,OperatorNodePtr> querySubPlanToOperatorMap) {
+
+    NES_DEBUG(queryId);
+    for(auto& entry : querySubPlanToOperatorMap ) {
+        NES_DEBUG(entry.second->toString());
+        NES_DEBUG(entry.first);
+    }
+    return true;
+}
+
 }// namespace NES::Runtime

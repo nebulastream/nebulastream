@@ -33,6 +33,8 @@ service WorkerRPCService {
   rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
 
   rpc BeginBuffer(BufferRequest) returns (BufferReply){}
+
+  rpc UpdateNetworkSinks(UpdateNetworkSinksRequest) returns (UpdateNetworkSinksReply){}
 }
 
 message DeployQueryRequest {
@@ -97,7 +99,19 @@ message MonitoringDataRequest {
 message MonitoringDataReply {
   bytes buffer = 1;
 }
+message UpdateNetworkSinksRequest{
+  uint64 queryId = 1;
+  repeated NetworkSinkMessage networkSinks = 2;
+}
 
+message NetworkSinkMessage {
+  NES.SerializableOperator networkSink =1;
+  uint64 querySubPlanId = 3;
+}
+
+message UpdateNetworkSinksReply{
+  bool success = 1;
+}
 message BufferRequest {
   uint64 queryId = 1;
 }

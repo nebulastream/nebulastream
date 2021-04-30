@@ -100,6 +100,12 @@ bool QueryMigrationPhase::migrateSubqueries(std::vector<TopologyNodePtr> candida
         exNode->addNewQuerySubPlan(queryPlan->getQueryId(),queryPlan);
     }
     auto map = buildNetworkSinks(queryPlans,queryId,candidateTopologyNode);
+    auto ipAddress = candidateTopologyNode->getIpAddress();
+    auto grpcPort = candidateTopologyNode->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+
+    workerRPCClient->updateNetworkSinks(rpcAddress, queryId,map);
+
     //for every QuerySubPlan, change the networkSink to point to new node
     auto deploySuccess = deployQuery(queryPlans.at(0)->getQueryId(), {exNode});
     auto startSuccess =  startQuery(queryPlans.at(0)->getQueryId(),{exNode});
@@ -205,5 +211,6 @@ std::map<QuerySubPlanId ,OperatorNodePtr> QueryMigrationPhase::buildNetworkSinks
     }
    return querySubPlanIdToNetworkSinkMap;
 }
+
 
 }//namespace NES

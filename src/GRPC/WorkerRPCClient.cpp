@@ -15,6 +15,7 @@
 */
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
@@ -23,6 +24,7 @@
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <google/protobuf/map.h>
 #include <Util/Logger.hpp>
 namespace NES {
 
@@ -383,7 +385,42 @@ bool WorkerRPCClient::bufferData(std::string address, QueryId queryId) {
         throw Exception("Error while WorkerRPCClient::stopQuery");
     }
 }
+bool WorkerRPCClient::updateNetworkSinks(std::string address, QueryId queryId, std::map<QuerySubPlanId ,OperatorNodePtr> map) {
+    UpdateNetworkSinksRequest request;
+    request.set_queryid(queryId);
+    for(auto& entry : map) {
+        auto querySubPlanId = entry.first;
+        auto op = entry.second;
+        auto serializedOperator =  new SerializableOperator();
+        auto sOp = OperatorSerializationUtil::serializeOperator(op,serializedOperator);
+        NetworkSinkMessage* subRequest = request.add_networksinks();
+        subRequest->set_allocated_networksink(sOp);
+        subRequest->set_querysubplanid(querySubPlanId);
+    }
 
 
+
+
+    UpdateNetworkSinksReply reply;
+    ClientContext context;
+
+    //NES_DEBUG(test);
+
+    std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
+    std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
+    Status status = workerStub->UpdateNetworkSinks(&context, request, &reply);
+
+    if (status.ok()) {
+        NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success=" << reply.success());
+        return reply.success();
+    } else {
+        NES_ERROR(" WorkerRPCClient::BeginBuffer "
+                  "error="
+                      << status.error_code() << ": " << status.error_message());
+        throw Exception("Error while WorkerRPCClient::stopQuery");
+    }
+
+
+}
 
 }// namespace NES

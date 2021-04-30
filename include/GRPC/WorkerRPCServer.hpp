@@ -37,6 +37,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
   public:
     WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent);
 
+
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
     Status UnregisterQuery(ServerContext* context, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) override;
@@ -52,6 +53,8 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
     Status BeginBuffer(ServerContext* context, const BufferRequest* request, BufferReply* reply) override;
+
+    Status UpdateNetworkSinks(ServerContext*, const UpdateNetworkSinksRequest* request, UpdateNetworkSinksReply* reply) override;
 
   private:
     Runtime::NodeEnginePtr nodeEngine;

@@ -16,6 +16,7 @@
 
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <GRPC/Serialization/SchemaSerializationUtil.hpp>
+#include <GRPC/Serialization/OperatorSerializationUtil.hpp>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
@@ -24,6 +25,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <utility>
+#include <google/protobuf/map.h>
 
 namespace NES {
 
@@ -126,6 +128,33 @@ Status WorkerRPCServer::GetMonitoringData(ServerContext*, const MonitoringDataRe
 Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request, BufferReply* reply) {
     NES_DEBUG("WorkerRPCServer::BeginBuffer: got request for " << request->queryid());
     bool success = nodeEngine->bufferData(request->queryid());
+    if (success) {
+        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        reply->set_success(true);
+        return Status::OK;
+    } else {
+        NES_ERROR("WorkerRPCServer::StopQuery: failed");
+        reply->set_success(false);
+        return Status::CANCELLED;
+    }
+}
+Status WorkerRPCServer::UpdateNetworkSinks(ServerContext*, const UpdateNetworkSinksRequest* request,
+                                           UpdateNetworkSinksReply* reply) {
+    NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: got request for " << request->queryid());
+    auto queryId = request->queryid();
+    auto length = request->networksinks_size();
+    std::map<QuerySubPlanId , OperatorNodePtr> querySubPlanToOperatorMap;
+    for(int i = 0; i< length; i++){
+        auto networkSinkMessage = request->networksinks(i);
+        auto serializedOperator = networkSinkMessage.networksink();
+        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator((SerializableOperator*) &serializedOperator);
+        auto querySubPlanId = networkSinkMessage.querysubplanid();
+        querySubPlanToOperatorMap[querySubPlanId] = deserializedOperator;
+    }
+
+
+
+    bool success = nodeEngine->updateNetworkSinks(queryId,querySubPlanToOperatorMap);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);

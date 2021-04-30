@@ -18,6 +18,7 @@
 #define NES_INCLUDE_GRPC_WORKER_RPC_CLIENT_HPP_
 
 #include <Plans/Query/QueryId.hpp>
+#include <Plans/Query/QuerySubPlanId.hpp>
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
@@ -154,6 +155,8 @@ class WorkerRPCClient {
     * @return true if succesful, esle fasle
     */
     bool bufferData(std::string address,QueryId queryId);
+
+    bool updateNetworkSinks(std::string address, QueryId queryId, std::map<QuerySubPlanId ,OperatorNodePtr> map);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return
