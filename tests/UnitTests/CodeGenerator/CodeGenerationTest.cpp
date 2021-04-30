@@ -532,7 +532,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     stage->setup(*context.get());
     stage->start(*context.get());
-    ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), 0u);
+    ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), ExecutionResult::Ok);
     auto outputBuffer = context->buffers[0];
     NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(outputBuffer, recordSchema));
 
