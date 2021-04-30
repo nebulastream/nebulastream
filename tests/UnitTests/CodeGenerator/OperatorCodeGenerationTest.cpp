@@ -332,7 +332,7 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
     auto triggerAction = Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
         windowDefinition, aggregation, resultSchema, 1);
     return Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDefinition, aggregation,
-                                                                                               trigger, triggerAction, 1, stateManager);
+                                                                                               trigger, triggerAction, 1);
 }
 
 /**
@@ -979,10 +979,10 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     NodeEngine::WorkerContext wctx(NodeEngine::NesThread::getId());
     stage1->setup(*executionContext.get());
     stage1->start(*executionContext.get());
-    executionContext->getOperatorHandlers()[0]->start(executionContext);
+    executionContext->getOperatorHandlers()[0]->start(executionContext, nodeEngine->getStateManager());
     executionContext->getOperatorHandler<Join::JoinOperatorHandler>(0)
         ->getJoinHandler<Join::JoinHandler, int64_t, int64_t, int64_t>()
-        ->start();
+        ->start(nodeEngine->getStateManager());
     stage1->execute(inputBuffer, *executionContext.get(), wctx);
     stage3->execute(inputBuffer, *executionContext.get(), wctx);
 
@@ -1071,14 +1071,14 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
                                                                                input_schema, windowOutputSchema, false);
 
         ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-        ASSERT_TRUE(firstPipeline->start());
+        ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
         ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-        ASSERT_TRUE(nextPipeline->start());
+        ASSERT_TRUE(nextPipeline->start(nodeEngine->getStateManager()));
         stage1->setup(*executionContext.get());
         stage1->start(*executionContext.get());
         stage2->setup(*executionContext.get());
         stage2->start(*executionContext.get());
-        windowHandler->start();
+        windowHandler->start(nodeEngine->getStateManager());
         windowHandler->setup(executionContext);
         source->open();
         /* prepare input tuple buffer */
@@ -1153,14 +1153,14 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
                                                                            input_schema, windowOutputSchema, false);
 
     ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-    ASSERT_TRUE(firstPipeline->start());
+    ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
     ASSERT_TRUE(nextPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
-    ASSERT_TRUE(nextPipeline->start());
+    ASSERT_TRUE(nextPipeline->start(nodeEngine->getStateManager()));
     stage1->setup(*executionContext.get());
     stage1->start(*executionContext.get());
     stage2->setup(*executionContext.get());
     stage2->start(*executionContext.get());
-    windowHandler->start();
+    windowHandler->start(nodeEngine->getStateManager());
     windowHandler->setup(executionContext);
 
     /* prepare input tuple buffer */

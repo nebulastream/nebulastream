@@ -304,7 +304,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start();
+    plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     NodeEngine::WorkerContext workerContext{1};
     plan->getPipeline(0)->execute(buffer, workerContext);
@@ -360,7 +360,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
-    plan->start();
+    plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     NodeEngine::WorkerContext workerContext{1};
     plan->getPipeline(0)->execute(buffer, workerContext);
@@ -919,7 +919,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // TODO do not rely on sleeps
     // ingest test data
     plan->setup();
-    plan->start();
+    plan->start(nodeEngine->getStateManager());
     NodeEngine::WorkerContext workerContext{1};
     auto stage_0 = plan->getPipeline(0);
     auto stage_1 = plan->getPipeline(1);

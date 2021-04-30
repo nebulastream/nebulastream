@@ -186,6 +186,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     BufferManagerPtr getBufferManager();
 
     /**
+    * @brief getter of state manager
+    * @return stateManager
+    */
+    StateManager* getStateManager();
+
+    /**
      * @brief getter of buffer manager
      * @return bufferManager
      */
