@@ -402,6 +402,8 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
 
 BufferManagerPtr NodeEngine::getBufferManager() { return bufferManager; }
 
+StateManager* NodeEngine::getStateManager() { return stateManager; }
+
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 
 QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }

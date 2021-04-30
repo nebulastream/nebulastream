@@ -64,8 +64,8 @@ class JoinHandler : public AbstractJoinHandler {
    * @return boolean if the window thread is started
    */
     bool start(StateManager* stateManager) override {
-        this->stateManager = stateManager;
         std::unique_lock lock(mutex);
+        this->stateManager = stateManager;
         NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
         // Initialize StateVariable
@@ -307,6 +307,14 @@ class JoinHandler : public AbstractJoinHandler {
                 break;
             }
         }
+    }
+
+    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* getLeftJoinState() {
+        return leftJoinState;
+    }
+
+    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* getRightJoinState() {
+        return rightJoinState;
     }
 
   private:
