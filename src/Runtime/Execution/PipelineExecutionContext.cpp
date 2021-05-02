@@ -50,4 +50,9 @@ std::vector<OperatorHandlerPtr> PipelineExecutionContext::getOperatorHandlers() 
 
 std::string PipelineExecutionContext::toString() const { return "PipelineContext(queryID:" + std::to_string(queryId); }
 
+void PipelineExecutionContext::updateEmitFunctionHandler(
+    std::function<void(TupleBuffer&, WorkerContext&)>&& emitFunction) {
+    emitFunctionHandler = std::move(emitFunction);
+}
+
 }// namespace NES::Runtime::Execution

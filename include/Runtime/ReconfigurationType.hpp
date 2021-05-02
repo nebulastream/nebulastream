@@ -29,6 +29,8 @@ enum ReconfigurationType : uint8_t {
     SoftEndOfStream,
     // use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
     HardEndOfStream,
+    //use UpdateSinks for updating Sinks of a QEP
+    UpdateSinks,
 };
 }
 

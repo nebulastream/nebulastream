@@ -110,6 +110,10 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
     std::function<void(TupleBuffer&)> emitToQueryManagerFunctionHandler;
 
     /**
+     *
+     */
+    void updateEmitFunctionHandler(std::function<void(TupleBuffer&, WorkerContext&)>&& emitFunction);
+    /**
      * @brief List of registered operator handlers.
      */
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
