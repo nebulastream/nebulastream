@@ -51,6 +51,8 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
                                          Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
 
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
+
+    void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

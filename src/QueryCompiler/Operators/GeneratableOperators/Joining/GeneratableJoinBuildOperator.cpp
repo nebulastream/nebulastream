@@ -40,6 +40,14 @@ GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id, Schema
                                                            Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide)
     : OperatorNode(id), GeneratableJoinOperator(id, inputSchema, outputSchema, operatorHandler), buildSide(buildSide) {}
 
+void GeneratableJoinBuildOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    if(this->buildSide == Left){
+
+        auto joinDefinition = operatorHandler->getJoinDefinition();
+        codegen->generateCodeForJoinSinkSetup(joinDefinition, context, this->id, operatorHandler);
+    }
+}
+
 void GeneratableJoinBuildOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto joinDefinition = operatorHandler->getJoinDefinition();
     codegen->generateCodeForJoinBuild(joinDefinition, context, operatorHandler, buildSide);
