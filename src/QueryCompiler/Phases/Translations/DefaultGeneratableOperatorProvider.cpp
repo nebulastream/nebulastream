@@ -196,7 +196,7 @@ void DefaultGeneratableOperatorProvider::lowerJoinSink(QueryPlanPtr queryPlan,
                                                        PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalJoinSink = operatorNode->as<PhysicalOperators::PhysicalJoinSinkOperator>();
     auto generatableJoinOperator = GeneratableOperators::GeneratableJoinSinkOperator::create(
-        physicalJoinSink->getLeftInputSchema(), physicalJoinSink->getOutputSchema(), physicalJoinSink->getJoinHandler());
+        physicalJoinSink->getOutputSchema(), physicalJoinSink->getOutputSchema(), physicalJoinSink->getJoinHandler());
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
 }
 

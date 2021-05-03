@@ -1286,7 +1286,8 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
     auto windowStateVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowStateVar");
     auto windowJoinVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinHandler");
-    auto operatorHandlerIndex = context->getHandlerIndex(joinOperatorHandler);
+    auto operatorHandlerIndex =  context->registerOperatorHandler(joinOperatorHandler);
+
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
@@ -1384,7 +1385,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
-        if (context->arity == PipelineContext::BinaryRight) {
+        if (buildSide == QueryCompilation::JoinBuildSide::Right) {
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
             //Extract the schema of the right side
@@ -1468,7 +1469,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                                   << " with code=" << context->code);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
-    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
+    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, buildSide == QueryCompilation::JoinBuildSide::Right);
     return true;
 }
 
