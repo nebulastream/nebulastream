@@ -22,12 +22,10 @@
 #include <gmock/gmock-generated-function-mockers.h>
 #include <gtest/gtest.h>
 
-
 namespace NES {
 
 class StringQueryTest : public testing::Test {
   public:
-
     /// Return the pointer to instance of Schema.
     template<std::size_t s>
     static auto schemaPointer() noexcept -> SchemaPtr {
@@ -58,8 +56,8 @@ class StringQueryTest : public testing::Test {
         uint32_t key;
         char value[s];
 
-        inline SchemaClass(uint32_t key, std::string const &str) : key(key), value() {
-            auto const *value= str.c_str();
+        inline SchemaClass(uint32_t key, std::string const& str) : key(key), value() {
+            auto const* value = str.c_str();
 
             if (auto const pSize = str.size() + 1; pSize != s) {
                 throw std::runtime_error("Schema constructed from string of incorrect size.");
@@ -76,8 +74,8 @@ class StringQueryTest : public testing::Test {
         }
 
         /// Constexpr loop which compares all the values making use of short-circuit evaluation.
-        template<std::size_t i = s - 1, typename = std::enable_if_t<i<s>>
-        constexpr auto compare(SchemaClass<s> const& rhs) const noexcept -> bool {
+        template<std::size_t i = s - 1,
+                 typename = std::enable_if_t<i<s>> constexpr auto compare(SchemaClass<s> const& rhs) const noexcept->bool {
             if constexpr (i > 0) {
                 return (value[i] == rhs.value[i]) && this->template compare<i - 1>(rhs);
             } else {
@@ -95,12 +93,10 @@ class StringQueryTest : public testing::Test {
         rpcPort += 30;
     }
 
-    static void TearDownTestCase() noexcept {
-        NES_INFO("Tear down StringQuery test class.");
-    }
+    static void TearDownTestCase() noexcept { NES_INFO("Tear down StringQuery test class."); }
 
-    uint16_t restPort {8080};
-    uint16_t rpcPort {4000};
+    uint16_t restPort{8080};
+    uint16_t rpcPort{4000};
 };
 
 /// Test that padding has no influence on the actual size of an element in NES' implementation.
@@ -199,7 +195,6 @@ TEST_F(StringQueryTest, DISABLED_eq_on_chars_multiple_return) {
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
-
 
 /// Test equality operator: Set up a query which matches the data's attribute to a fixed string.
 /// The filter allows only a single attribute. Test the query's output.
