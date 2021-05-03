@@ -15,7 +15,7 @@
 */
 
 #include <Util/Logger.hpp>
-#include <Util/TestHarness.hpp>
+#include <Util/TestHarness/TestHarness.hpp>
 
 #include <API/Schema.hpp>
 
