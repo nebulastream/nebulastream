@@ -107,9 +107,9 @@ class WindowSource : public NES::DefaultSource {
     bool decreaseTime;
     WindowSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                  const uint64_t numbersOfBufferToProduce, uint64_t frequency, bool varyWatermark, bool decreaseTime,
-                 int64_t timestamp)
+                 int64_t timestamp, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
         : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
-                        1, 12),
+                        1, 12, successors),
           varyWatermark(varyWatermark), decreaseTime(decreaseTime), timestamp(timestamp) {}
 
     std::optional<TupleBuffer> receiveData() override {
@@ -188,7 +188,7 @@ class WindowSource : public NES::DefaultSource {
                                 ->addField("test$ts", BasicType::UINT64)
                                 ->addField("test$empty", BasicType::UINT64);
         return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
-                                              varyWatermark, decreaseTime, timestamp);
+                                              varyWatermark, decreaseTime, timestamp, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
     }
 };
 

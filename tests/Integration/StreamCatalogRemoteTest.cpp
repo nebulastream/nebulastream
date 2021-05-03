@@ -23,6 +23,7 @@
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
+#include <fstream>
 
 using namespace std;
 namespace NES {
