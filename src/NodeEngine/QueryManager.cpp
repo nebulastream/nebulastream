@@ -843,32 +843,37 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #endif
     NES_FATAL_ERROR("QueryManager::completedWork: Work for task=" << task.toString());
     auto executable = task.getExecutable();
+
     // todo also support data sinks
-    if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
-        auto qepId = (*executablePipeline)->getQepParentId();
-        if (queryToStatisticsMap.contains(qepId)) {
-            auto statistics = queryToStatisticsMap.find(qepId);
+    uint64_t qepId = 0;
+    if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
+        qepId = (*sink)->getParentPlanId();
+    } else if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
+        qepId = (*executablePipeline)->getQepParentId();
+    }
 
-            statistics->incProcessedTasks();
-            if (task.isWatermarkOnly()) {
-                statistics->incProcessedWatermarks();
-            } else if (!(*executablePipeline)->isReconfiguration()) {
-                statistics->incProcessedBuffers();
-                auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
-                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                               std::chrono::high_resolution_clock::now().time_since_epoch())
-                               .count();
-                auto diff = now - latency[2];
-                statistics->incLatencySum(diff);
+    if (queryToStatisticsMap.contains(qepId)) {
+        auto statistics = queryToStatisticsMap.find(qepId);
+
+        statistics->incProcessedTasks();
+        if (task.isWatermarkOnly()) {
+            statistics->incProcessedWatermarks();
+        } else if (!task.isReconfiguration()) {
+            statistics->incProcessedBuffers();
+            auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                           std::chrono::high_resolution_clock::now().time_since_epoch())
+                           .count();
+            auto diff = now - latency[2];
+            statistics->incLatencySum(diff);
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
-                statistics->addTimestampToLatencyValue(now, diff);
+            statistics->addTimestampToLatencyValue(now, diff);
 #endif
-            }
-            statistics->incProcessedTuple(task.getNumberOfTuples());
-
-        } else {
-            NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");
         }
+        statistics->incProcessedTuple(task.getNumberOfTuples());
+
+    } else {
+        NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");
     }
 }
 
