@@ -941,7 +941,7 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
                "right join type is undefined");
 
     auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", join->getRightStreamType());
-    context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
+    //context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
     auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", join->getLeftStreamType());
     context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
 
