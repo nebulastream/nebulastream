@@ -19,6 +19,7 @@
 
 #include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 #include <Common/ForwardDeclaration.hpp>
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkManager.hpp>
 #include <NodeEngine/ErrorListener.hpp>
@@ -26,7 +27,6 @@
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Plans/Query/QueryId.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <iostream>
 #include <pthread.h>
@@ -85,7 +85,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&,
-                        QueryCompilerPtr&&, StateManagerPtr&&, uint64_t nodeEngineId,
+                        QueryCompilation::QueryCompilerPtr&&, StateManagerPtr&&, uint64_t nodeEngineId,
                         uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerPipeline);
 
@@ -114,7 +114,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
+    bool deployQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief undeploy stops and undeploy a query
@@ -128,7 +128,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
+    bool registerQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan);
 
     /**
      * @brief registers a query
@@ -196,7 +196,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief getter of buffer manager
      * @return bufferManager
      */
-    QueryCompilerPtr getCompiler();
+    QueryCompilation::QueryCompilerPtr getCompiler();
 
     /**
      * @brief getter of network manager
@@ -259,14 +259,15 @@ class NodeEngine : public Network::ExchangeProtocolListener,
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
+    std::map<OperatorId , std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
     std::map<QueryId, std::vector<QuerySubPlanId>> queryIdToQuerySubPlanIds;
-    std::map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> deployedQEPs;
+    std::map<QuerySubPlanId, Execution::NewExecutableQueryPlanPtr> deployedQEPs;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
     StateManagerPtr stateManager;
-    QueryCompilerPtr queryCompiler;
+    QueryCompilation::QueryCompilerPtr queryCompiler;
     std::atomic<bool> isRunning;
     mutable std::recursive_mutex engineMutex;
     uint64_t nodeEngineId;

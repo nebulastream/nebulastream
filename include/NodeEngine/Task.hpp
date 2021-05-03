@@ -36,7 +36,7 @@ class Task {
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buf);
+    explicit Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer& buf);
 
     explicit Task();
 
@@ -55,7 +55,7 @@ class Task {
      * @brief method to return the qep of a task
      * @return
      */
-    Execution::ExecutablePipelinePtr getPipeline();
+    Execution::SuccessorExecutablePipeline getExecutable();
 
     /**
      * @brief method to check if it is a watermark-only buffer
@@ -84,7 +84,7 @@ class Task {
     TupleBuffer& getBufferRef();
 
   private:
-    Execution::ExecutablePipelinePtr pipeline;
+    Execution::SuccessorExecutablePipeline pipeline;
     TupleBuffer buf;
     uint64_t id;
 };

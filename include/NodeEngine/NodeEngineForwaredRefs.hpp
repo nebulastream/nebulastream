@@ -17,6 +17,7 @@
 #ifndef NES_INCLUDE_NODEENGINE_NODEENGINEFORWAREDREFS_HPP_
 #define NES_INCLUDE_NODEENGINE_NODEENGINEFORWAREDREFS_HPP_
 #include <memory>
+#include <variant>
 
 namespace NES {
 
@@ -27,6 +28,12 @@ typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
+
+class SinkMedium;
+typedef std::shared_ptr<SinkMedium> DataSinkPtr;
+
+class DataSource;
+typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 namespace NodeEngine {
 
@@ -92,6 +99,10 @@ typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
 class NewExecutableQueryPlan;
 typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
 
+typedef std::variant<DataSinkPtr, NewExecutablePipelinePtr> SuccessorExecutablePipeline;
+typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<NewExecutablePipeline>> PredecessorExecutablePipeline;
+
+
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 
@@ -119,6 +130,11 @@ typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
 }// namespace DynamicMemoryLayout
 
 }// namespace NodeEngine
+
+namespace QueryCompilation{
+class QueryCompiler;
+typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
+}
 
 }// namespace NES
 

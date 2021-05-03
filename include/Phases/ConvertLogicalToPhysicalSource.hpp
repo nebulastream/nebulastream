@@ -36,7 +36,7 @@ class ConvertLogicalToPhysicalSource {
      * @return Data source pointer for the physical source
      */
     static DataSourcePtr createDataSource(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
-                                          NodeEngine::NodeEnginePtr nodeEngine, size_t numSourceLocalBuffers);
+                                          NodeEngine::NodeEnginePtr nodeEngine, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors = std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
 
   private:
     ConvertLogicalToPhysicalSource() = default;

@@ -17,6 +17,8 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -29,6 +31,11 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <State/StateManager.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
@@ -69,7 +76,9 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
             NES_ERROR("NodeEngine: error while creating stateManager");
             throw Exception("Error while creating stateManager");
         }
-        auto compiler = createDefaultQueryCompiler(numberOfBuffersPerPipeline);
+         auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+        auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
+        auto compiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory);
         if (!compiler) {
             NES_ERROR("NodeEngine: error while creating compiler");
             throw Exception("Error while creating compiler");
@@ -94,7 +103,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
-                       Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler,
+                       Network::PartitionManagerPtr&& partitionManager, QueryCompilation::QueryCompilerPtr&& queryCompiler,
                        StateManagerPtr&& stateManager, uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
                        uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
     : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId),
@@ -130,7 +139,7 @@ NodeEngine::~NodeEngine() {
     stop();
 }
 
-bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
+bool NodeEngine::deployQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << queryExecutionPlan);
     bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
@@ -154,56 +163,15 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryPlan->getQueryId();
     QueryId querySubPlanId = queryPlan->getQuerySubPlanId();
+
     NES_INFO("Creating ExecutableQueryPlan for " << queryId << " " << querySubPlanId);
+
+    auto request = QueryCompilation::QueryCompilationRequest::Builder(queryPlan, inherited1::shared_from_this()).dump().build();
+    auto result = queryCompiler->compileQuery(request);
+
     try {
-        // Translate the query operators in their legacy representation
-        // todo this is not required if later the query compiler can handle it by it self.
-        //auto translationPhase = TranslateToLegacyPlanPhase::create();
-        auto translationPhase = TranslateToGeneratableOperatorPhase::create();
-        //ToDo: At present assume that the query plan has two different root operators with
-        // same upstream operator chain.
-        auto queryOperators = queryPlan->getRootOperators()[0];
-        auto generatableOperatorPlan = translationPhase->transform(queryOperators);
-
-        // Compile legacy operators with qep builder.
-        auto qepBuilder = GeneratedQueryExecutionPlanBuilder::create()
-                              .setQueryManager(queryManager)
-                              .setBufferManager(bufferManager)
-                              .setCompiler(queryCompiler)
-                              .setQueryId(queryId)
-                              .setQuerySubPlanId(querySubPlanId)
-                              .addOperatorQueryPlan(generatableOperatorPlan);
-        std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
-        std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
-
-        NodeEnginePtr self = this->inherited1::shared_from_this();
-        // Translate all operator source to the physical sources and add them to the query plan
-        for (const auto& sources : sourceOperators) {
-            auto operatorId = sources->getId();
-            auto sourceDescriptor = sources->getSourceDescriptor();
-            //perform the operation only for Logical stream source descriptor
-            if (sourceDescriptor->instanceOf<LogicalStreamSourceDescriptor>()) {
-                sourceDescriptor = createLogicalSourceDescriptor(sourceDescriptor);
-            }
-            auto legacySource = ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, self,
-                                                                                 numberOfBuffersInSourceLocalBufferPool);
-            qepBuilder.addSource(legacySource);
-            NES_DEBUG("ExecutableTransferObject:: add source" << legacySource->toString());
-        }
-
-        // Translate all operator sink to the physical sink and add them to the query plan
-
-        for (const auto& sink : sinkOperators) {
-            NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
-            // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink->getId(), sink->getSinkDescriptor(),
-                                                                           sink->getOutputSchema(), self, querySubPlanId);
-            qepBuilder.addSink(legacySink);
-            NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
-        }
-
-        bool ret = registerQueryInNodeEngine(qepBuilder.build());
-        return ret;
+        auto executablePlan = result->getExecutableQueryPlan();
+        return registerQueryInNodeEngine(executablePlan);
     } catch (std::exception& error) {
         NES_ERROR("Error while building query execution plan " << error.what());
         NES_ASSERT(false, "Error while building query execution plan " << error.what());
@@ -211,7 +179,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
+bool NodeEngine::registerQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
@@ -412,7 +380,7 @@ StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 
-QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
+QueryCompilation::QueryCompilerPtr NodeEngine::getCompiler() { return queryCompiler; }
 
 Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId) {
     std::unique_lock lock(engineMutex);

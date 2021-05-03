@@ -37,6 +37,10 @@
 #include <zconf.h>
 namespace NES {
 
+std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors() {
+    return executableSuccessors;
+}
+
 DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mode) {
     UtilityFunctions::trim(mode);
     if (mode == "frequency") {
@@ -50,14 +54,22 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mod
 
 DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode)
+                       GatheringMode gatheringMode,
+                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : running(false), thread(nullptr), schema(pSchema), globalBufferManager(bufferManager), queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId),
-      numSourceLocalBuffers(numSourceLocalBuffers), wasGracefullyStopped(true), gatheringMode(gatheringMode) {
+      numSourceLocalBuffers(numSourceLocalBuffers), wasGracefullyStopped(true), gatheringMode(gatheringMode), executableSuccessors(executableSuccessors) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
 }
+
+void DataSource::emitWork(NodeEngine::TupleBuffer buffer) {
+    for(auto successor: executableSuccessors){
+        queryManager->addWorkForNextPipeline(buffer, successor);
+    }
+}
+
 OperatorId DataSource::getOperatorId() { return operatorId; }
 
 void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = operatorId; }
@@ -65,6 +77,7 @@ void DataSource::setOperatorId(OperatorId operatorId) { this->operatorId = opera
 SchemaPtr DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
+    executableSuccessors.clear();
     stop(false);
     NES_DEBUG("DataSource " << operatorId << ": Destroy Data Source.");
 }
@@ -195,7 +208,7 @@ void DataSource::runningRoutineWithIngestionRate() {
                 buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
                                              std::chrono::high_resolution_clock::now().time_since_epoch())
                                              .count());
-                queryManager->addWork(this->operatorId, buf);
+                emitWork(buf);
 
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
@@ -317,7 +330,7 @@ void DataSource::runningRoutineWithFrequency() {
                 buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
                                              std::chrono::high_resolution_clock::now().time_since_epoch())
                                              .count());
-                queryManager->addWork(operatorId, buf);
+                emitWork(buf);
                 cnt++;
             } else {
                 NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");

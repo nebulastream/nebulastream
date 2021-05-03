@@ -28,6 +28,11 @@ namespace NES {
  */
 class TestQuery : public Query {
   public:
+    static Query from(SourceDescriptorPtr descriptor) {
+        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
+        auto queryPlan = QueryPlan::create(sourceOperator);
+        return Query(queryPlan);
+    }
     static Query from(SchemaPtr inputSchme) {
         auto sourceOperator = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(inputSchme));
         auto queryPlan = QueryPlan::create(sourceOperator);

@@ -30,9 +30,9 @@ namespace NES {
 
 DefaultSource::DefaultSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                              NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
-                             uint64_t frequency, OperatorId operatorId, size_t numSourceLocalBuffers)
+                             uint64_t frequency, OperatorId operatorId, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId,
-                      numSourceLocalBuffers, DataSource::GatheringMode::FREQUENCY_MODE) {
+                      numSourceLocalBuffers, DataSource::GatheringMode::FREQUENCY_MODE, successors) {
     NES_DEBUG("DefaultSource:" << this << " creating");
     this->gatheringInterval = std::chrono::milliseconds(frequency);
 }

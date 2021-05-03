@@ -27,9 +27,6 @@
 #include <vector>
 namespace NES::NodeEngine::Execution {
 
-typedef std::variant<DataSinkPtr, NewExecutablePipelinePtr> SuccessorPipeline;
-typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<NewExecutablePipeline>> PredecessorPipeline;
-
 /**
  * @brief An ExecutablePipeline represents a fragment of an overall query.
  * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
@@ -40,8 +37,8 @@ class NewExecutablePipeline : public Reconfigurable {
     explicit NewExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId,
                                    PipelineExecutionContextPtr pipelineExecutionContext,
                                    ExecutablePipelineStagePtr executablePipelineStage,
-                                   std::vector<PredecessorPipeline> predecessorPipelines,
-                                   std::vector<SuccessorPipeline> successorPipelines, bool reconfiguration);
+                                   uint32_t numOfProducingPipelines,
+                                   std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -56,8 +53,8 @@ class NewExecutablePipeline : public Reconfigurable {
     static NewExecutablePipelinePtr create(uint32_t pipelineId, QuerySubPlanId qepId,
                                            PipelineExecutionContextPtr pipelineExecutionContext,
                                            ExecutablePipelineStagePtr executablePipelineStage,
-                                           std::vector<PredecessorPipeline> predecessorPipelines,
-                                           std::vector<SuccessorPipeline> successorPipelines, bool reconfiguration = false);
+                                           uint32_t numOfProducingPipelines,
+                                           std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage
@@ -130,25 +127,15 @@ class NewExecutablePipeline : public Reconfigurable {
      * @brief Gets the successor pipeline
      * @return SuccessorPipeline
      */
-    std::vector<SuccessorPipeline> getSuccessors();
-
-    /**
-     * @brief Gets the predecessor pipeline
-     * @return PredecessorPipeline
-     */
-    std::vector<PredecessorPipeline> getPredecessor();
-
-    /**
-     * @brief Adds a new predecessor pipeline
-     * @param predecessorPipeline
-     */
-    void addPredecessor(PredecessorPipeline predecessorPipeline);
+    std::vector<SuccessorExecutablePipeline> getSuccessors();
 
     /**
      * @brief Adds a new successor pipeline
      * @param predecessorPipeline
      */
-    void addSuccessor(SuccessorPipeline predecessorPipeline);
+    void addSuccessor(SuccessorExecutablePipeline predecessorPipeline);
+
+    bool isPipelineRunning();
 
   private:
     uint32_t pipelineStageId;
@@ -158,8 +145,7 @@ class NewExecutablePipeline : public Reconfigurable {
     bool reconfiguration;
     std::atomic<bool> isRunning;
     std::atomic<uint32_t> activeProducers;
-    std::vector<PredecessorPipeline> predecessorPipelines;
-    std::vector<SuccessorPipeline> successorPipelines;
+    std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 
 }// namespace NES::NodeEngine::Execution

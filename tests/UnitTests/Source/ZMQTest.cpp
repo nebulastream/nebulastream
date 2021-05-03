@@ -86,7 +86,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE", UINT32);
     auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_ADDRESS,
-                                      LOCAL_PORT, 1, 12);
+                                      LOCAL_PORT, 1, 12, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
     std::cout << zmq_source->toString() << std::endl;
     // bufferManager->resizeFixedBufferSize(testDataSize);
 
