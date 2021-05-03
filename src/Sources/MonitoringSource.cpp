@@ -32,9 +32,9 @@ namespace NES {
 MonitoringSource::MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog,
                                    NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                                    const uint64_t numbersOfBufferToProduce, uint64_t frequency, OperatorId operatorId,
-                                   size_t numSourceLocalBuffers)
+                                   size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
     : DefaultSource(Schema::create(), bufferManager, queryManager, numbersOfBufferToProduce, frequency, operatorId,
-                    numSourceLocalBuffers),
+                    numSourceLocalBuffers, successors),
       monitoringPlan(monitoringPlan), metricGroup(monitoringPlan->createMetricGroup(metricCatalog)) {
     schema = metricGroup->createSchema();
     NES_INFO("MonitoringSources: Created with schema:\n" << schema->toString());

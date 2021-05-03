@@ -68,8 +68,13 @@ class DataSource : public NodeEngine::Reconfigurable {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                        OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode);
+    explicit DataSource(SchemaPtr schema,
+                        NodeEngine::BufferManagerPtr bufferManager,
+                        NodeEngine::QueryManagerPtr queryManager,
+                        OperatorId operatorId,
+                        size_t numSourceLocalBuffers,
+                        GatheringMode gatheringMode,
+                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors = std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
 
     DataSource() = delete;
 
@@ -180,6 +185,8 @@ class DataSource : public NodeEngine::Reconfigurable {
 
     static GatheringMode getGatheringModeFromString(std::string mode);
 
+    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
+
   protected:
     SchemaPtr schema;
     uint64_t generatedTuples;
@@ -193,6 +200,8 @@ class DataSource : public NodeEngine::Reconfigurable {
     NodeEngine::BufferManagerPtr globalBufferManager;
     NodeEngine::FixedSizeBufferPoolPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
+    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
+    void emitWork(NodeEngine::TupleBuffer buffer);
 
   private:
     //bool indicating if the source is currently running'

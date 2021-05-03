@@ -30,9 +30,9 @@ using namespace std;
 namespace NES {
 
 SenseSource::SenseSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                         const std::string& udsf, OperatorId operatorId, size_t numSourceLocalBuffers)
+                         const std::string& udsf, OperatorId operatorId, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers,
-                 DataSource::GatheringMode::FREQUENCY_MODE),
+                 DataSource::GatheringMode::FREQUENCY_MODE, successors),
       udsf(udsf) {}
 
 std::optional<NodeEngine::TupleBuffer> SenseSource::receiveData() {

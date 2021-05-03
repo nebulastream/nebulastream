@@ -20,13 +20,14 @@
 #include <Sources/MemorySource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <cmath>
 namespace NES {
 
 MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
                            NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                            uint64_t numBuffersToProcess, uint64_t gatheringValue, OperatorId operatorId,
-                           size_t numSourceLocalBuffers, GatheringMode gatheringMode)
-    : DataSource(std::move(schema), bufferManager, std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode),
+                           size_t numSourceLocalBuffers, GatheringMode gatheringMode, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+    : DataSource(std::move(schema), bufferManager, std::move(queryManager), operatorId, numSourceLocalBuffers, gatheringMode, successors),
       memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), globalBufferManager(bufferManager),
       refCnt(0) {
     this->numBuffersToProcess = numBuffersToProcess;

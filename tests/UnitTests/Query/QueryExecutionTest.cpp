@@ -43,7 +43,9 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/NewQueryCompiler.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 
@@ -54,6 +56,7 @@
 
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
+#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
@@ -277,28 +280,20 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager(), 1, 12);
 
-    auto query = TestQuery::from(testSource->getSchema()).filter(Attribute("id") < 5).sink(DummySink::create());
+    auto query = TestQuery::from(DefaultSourceDescriptor::create(testSchema,1, 12))
+                     .filter(Attribute("id") < 5)
+                     .sink(DummySink::create());
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
     auto testSink = std::make_shared<TestSink>(10, testSchema, nodeEngine->getBufferManager());
 
-    auto plan = GeneratedQueryExecutionPlanBuilder::create()
-                    .addSink(testSink)
-                    .addSource(testSource)
-                    .addOperatorQueryPlan(generatableOperators)
-                    .setCompiler(nodeEngine->getCompiler())
-                    .setBufferManager(nodeEngine->getBufferManager())
-                    .setQueryManager(nodeEngine->getQueryManager())
-                    .setQueryId(1)
-                    .setQuerySubPlanId(1)
-                    .build();
-
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto result = nodeEngine->getCompiler()->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getNumberOfPipelines(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
@@ -307,7 +302,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     NodeEngine::WorkerContext workerContext{1};
-    plan->getPipeline(0)->execute(buffer, workerContext);
+    plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);

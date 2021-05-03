@@ -16,41 +16,63 @@
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <utility>
 
 namespace NES::NodeEngine {
 
-Task::Task(Execution::ExecutablePipelinePtr pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
+Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer& buffer) : pipeline(std::move(pipeline)), buf(buffer) {
     id = UtilityFunctions::getNextTaskId();
 }
 
-Task::Task() : pipeline(nullptr), buf(), id(-1) {}
+Task::Task() : pipeline(), buf(), id(-1) {}
 
-ExecutionResult Task::operator()(WorkerContextRef workerContext) { return pipeline->execute(buf, workerContext); }
+ExecutionResult Task::operator()(WorkerContextRef workerContext) {
+    // execute this task.
+    // a task could be a executable pipeline, or a data sink.
+    if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&pipeline)) {
+        return (*executablePipeline)->execute(buf, workerContext);
+    } else if (auto dataSink = std::get_if<DataSinkPtr>(&pipeline)) {
+        auto result = (*dataSink)->writeData(buf, workerContext);
+        if (result) {
+            return ExecutionResult::Ok;
+        } else {
+            return ExecutionResult::Error;
+        }
+    } else {
+        NES_ERROR("Executable pipeline was not of any suitable type");
+        return ExecutionResult::Error;
+    }
+}
 
 uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
 bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
 
-Execution::ExecutablePipelinePtr Task::getPipeline() { return pipeline; }
+Execution::SuccessorExecutablePipeline Task::getExecutable() { return pipeline; }
 
 TupleBuffer& Task::getBufferRef() { return buf; }
 
-bool Task::operator!() const { return pipeline == nullptr; }
+bool Task::operator!() const { return pipeline.valueless_by_exception(); }
 
-Task::operator bool() const { return pipeline != nullptr; }
+Task::operator bool() const { return !pipeline.valueless_by_exception(); }
 uint64_t Task::getId() { return id; }
 
 std::string Task::toString() {
     std::stringstream ss;
     ss << "Task: id=" << id;
-    ss << " execute pipelineId=" << pipeline->getPipeStageId() << " qepParentId=" << pipeline->getQepParentId()
-       << " nextPipelineId=" << pipeline->getNextPipeline();
+    if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&pipeline)) {
+        ss << " execute pipelineId=" << (*executablePipeline)->getPipeStageId()
+           << " qepParentId=" << (*executablePipeline)->getQepParentId();
+    } else if (std::holds_alternative<DataSinkPtr>(pipeline)) {
+        ss << " execute data sink";
+    }
     ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples()
        << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
     return ss.str();

@@ -19,6 +19,8 @@
 
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
+#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
+#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
@@ -82,7 +84,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * respective map
      * @param QueryExecutionPlan to be deployed
      */
-    bool registerQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool registerQuery(Execution::NewExecutableQueryPlanPtr qep);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -90,7 +92,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param QueryExecutionPlan to be deployed
      * @return bool indicating if register was successful
      */
-    bool deregisterQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool deregisterQuery(Execution::NewExecutableQueryPlanPtr qep);
 
     /**
      * @brief process task from task queue
@@ -119,7 +121,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the pipeline stage that will be executed next
      */
-    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::ExecutablePipelinePtr nextPipeline);
+    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline nextPipeline);
 
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
@@ -142,7 +144,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager);
+    bool startQuery(Execution::NewExecutableQueryPlanPtr qep, StateManagerPtr stateManager);
 
     /**
      * @brief method to start a query
@@ -150,14 +152,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    bool stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful = false);
+    bool stopQuery(Execution::NewExecutableQueryPlanPtr qep, bool graceful = false);
 
     /**
     * @brief method to fail a query
     * @param qep of the query to fail
     * @return bool indicating success
     */
-    bool failQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool failQuery(Execution::NewExecutableQueryPlanPtr qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and try again
@@ -230,14 +232,18 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     ExecutionResult terminateLoop(WorkerContext&);
 
+    bool addSoftEndOfStream(OperatorId sourceId);
+    bool addHardEndOfStream(OperatorId sourceId);
+
     ThreadPoolPtr threadPool;
 
-    std::map<OperatorId, std::unordered_set<Execution::ExecutableQueryPlanPtr>> operatorIdToQueryMap;
+    std::map<OperatorId, Execution::NewExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
+    std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
     std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
     std::map<OperatorId, uint64_t> operatorIdToPipelineStage;
 
-    std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
+    std::unordered_map<QuerySubPlanId, Execution::NewExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;

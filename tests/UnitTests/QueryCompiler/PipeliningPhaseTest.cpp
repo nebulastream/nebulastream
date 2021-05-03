@@ -170,6 +170,47 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
 /**
  * @brief Input Query Plan:
  *
+ * --- Physical Sink 1 --- Physical Multiplex Operator --- Physical Source 1
+ *                                                                        \
+ *                                                                         --- Physical Source 2
+ *
+ * --- | Physical Sink 1 |  --- | Physical Source 1 |
+ *                            \
+ *                              --- | Physical Source 2 |
+ *
+ */
+TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
+    auto source1 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
+    auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
+    auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+
+    auto queryPlan = QueryPlan::create(source1);
+    queryPlan->appendOperatorAsNewRoot(multiplex);
+    queryPlan->appendOperatorAsNewRoot(sink);
+    source2->addParent(multiplex);
+
+    NES_DEBUG(queryPlan->toString());
+    auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
+    auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
+    auto pipelinePlan = phase->apply(queryPlan);
+
+    auto sourcePipelines = pipelinePlan->getSourcePipelines();
+    ASSERT_EQ(sourcePipelines.size(), 2);
+    auto sourcePipeline1 = sourcePipelines[0];
+
+    ASSERT_INSTANCE_OF(sourcePipeline1->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
+    auto sourcePipeline2 = sourcePipelines[1];
+    ASSERT_INSTANCE_OF(sourcePipeline2->getQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
+    ASSERT_EQ(sourcePipeline1->getSuccessors()[0], sourcePipeline2->getSuccessors()[0]);
+    auto sinkPipe = sourcePipeline1->getSuccessors()[0];
+    ASSERT_INSTANCE_OF(sinkPipe->getQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
+    ASSERT_EQ(sinkPipe->getSuccessors().size(), 0);
+}
+
+/**
+ * @brief Input Query Plan:
+ *
  * --- Physical Sink 1 --- Physical Filter --- Physical Multiplex Operator --- Physical Source 1
  *                                                                        \
  *                                                                         --- Physical Source 2
