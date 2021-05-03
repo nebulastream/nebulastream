@@ -1330,7 +1330,7 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
 /**
  * Test deploying join with different streams
  */
-TEST_F(JoinDeploymentTest, testJoinBenchmarkQuery) {
+TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
