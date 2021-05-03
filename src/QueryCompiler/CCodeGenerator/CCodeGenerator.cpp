@@ -269,7 +269,9 @@ bool CCodeGenerator::generateCodeForFilter(PredicatePtr pred, PipelineContextPtr
     // create if statement
     auto ifStatement = IF(*predicateExpression);
     // update current compound_stmt
+    // first, add the head and brackets of the if-statement
     context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+    // second, move insertion point. the rest of the pipeline will be generated within the brackets of the if-statement
     context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement();
 
     return true;
@@ -1283,8 +1285,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
     auto windowStateVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowStateVar");
     auto windowJoinVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinHandler");
-    auto operatorHandlerIndex = context->registerOperatorHandler(joinOperatorHandler);
-
+    auto operatorHandlerIndex = context->getHandlerIndex(joinOperatorHandler);
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
@@ -1386,7 +1387,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         //TODO: this has to be changed once we close #1543 and thus we would have 2 times the attribute
         //Extract the name of the window field used for time characteristics
         std::string windowTimeStampFieldName = joinDef->getWindowType()->getTimeCharacteristic()->getField()->getName();
-        if (buildSide == QueryCompilation::JoinBuildSide::Right) {
+        if (context->arity == PipelineContext::BinaryRight) {
             NES_DEBUG("windowTimeStampFieldName bin right=" << windowTimeStampFieldName);
 
             //Extract the schema of the right side
@@ -1472,9 +1473,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
     generateCodeForWatermarkUpdaterJoin(context,
-                                        windowJoinVariableDeclration,
-                                        buildSide == QueryCompilation::JoinBuildSide::Left);
-
+                                        windowJoinVariableDeclration, context->arity == PipelineContext::BinaryLeft);
     return true;
 }
 

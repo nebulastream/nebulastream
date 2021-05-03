@@ -20,6 +20,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -196,6 +197,14 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(ExpressionNod
         serializeExpression(divExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
         serializeExpression(divExpressionNode->getRight(), serializedExpressionNode.mutable_right());
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
+    } else if (expression->instanceOf<PowExpressionNode>()) {
+        // serialize pow expression node.
+        NES_TRACE("ExpressionSerializationUtil:: serialize POWER arithmetical expression to SerializableExpression_PowExpression");
+        auto powExpressionNode = expression->as<PowExpressionNode>();
+        auto serializedExpressionNode = SerializableExpression_PowExpression();
+        serializeExpression(powExpressionNode->getLeft(), serializedExpressionNode.mutable_left());
+        serializeExpression(powExpressionNode->getRight(), serializedExpressionNode.mutable_right());
+        serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else {
         NES_FATAL_ERROR("TranslateToLegacyPhase: No serialization implemented for this arithmetical expression node: "
                         << expression->toString());
@@ -312,6 +321,14 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
         auto left = deserializeExpression(serializedExpressionNode.release_left());
         auto right = deserializeExpression(serializedExpressionNode.release_right());
         return DivExpressionNode::create(left, right);
+    } else if (serializedExpression->details().Is<SerializableExpression_PowExpression>()) {
+        // de-serialize POWER expression node.
+        NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as POWER expression node.");
+        auto serializedExpressionNode = SerializableExpression_PowExpression();
+        serializedExpression->details().UnpackTo(&serializedExpressionNode);
+        auto left = deserializeExpression(serializedExpressionNode.release_left());
+        auto right = deserializeExpression(serializedExpressionNode.release_right());
+        return PowExpressionNode::create(left, right);
     }
     return nullptr;
 }

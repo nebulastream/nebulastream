@@ -35,6 +35,7 @@ const std::string toString(const BinaryOperatorType& type) {
                                  "MINUS_OP",
                                  "MULTIPLY_OP",
                                  "DIVISION_OP",
+                                 "POWER_OP",
                                  "MODULO_OP",
                                  "LOGICAL_AND_OP",
                                  "LOGICAL_OR_OP",
@@ -52,7 +53,7 @@ const std::string toString(const BinaryOperatorType& type) {
 
 const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
     const char* const names[] = {
-        "==", "!=", "<", "<=", ">", ">=", "+", "-", "*", "/", "%", "&&", "||", "&", "|", "^", "<<", ">>", "=", "[]", "->", ".",
+        "==", "!=", "<", "<=", ">", ">=", "+", "-", "*", "/", "pow(,)", "%", "&&", "||", "&", "|", "^", "<<", ">>", "=", "[]", "->", ".",
     };
     return std::make_shared<CodeExpression>(names[type]);
 }
@@ -84,6 +85,11 @@ const CodeExpressionPtr BinaryOperatorStatement::getCode() const {
         code = combine(lhs_->getCode(), std::make_shared<CodeExpression>("["));
         code = combine(code, rhs_->getCode());
         code = combine(code, std::make_shared<CodeExpression>("]"));
+    } else if (POWER_OP == op_) {
+        code = combine(std::make_shared<CodeExpression>("pow("), lhs_->getCode());
+        code = combine(code, std::make_shared<CodeExpression>(","));
+        code = combine(code, rhs_->getCode());
+        code = combine(code, std::make_shared<CodeExpression>(")"));
     } else {
         code = combine(lhs_->getCode(), toCodeExpression(op_));
         code = combine(code, rhs_->getCode());

@@ -19,6 +19,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -97,6 +98,12 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformArithmeticalExpression
         auto legacyLeft = transformExpression(divExpressionNode->getLeft());
         auto legacyRight = transformExpression(divExpressionNode->getRight());
         return Predicate(BinaryOperatorType::DIVISION_OP, legacyLeft, legacyRight).copy();
+    } else if (expression->instanceOf<PowExpressionNode>()) {
+        // Translate POWER expression node.
+        auto powExpressionNode = expression->as<PowExpressionNode>();
+        auto legacyLeft = transformExpression(powExpressionNode->getLeft());
+        auto legacyRight = transformExpression(powExpressionNode->getRight());
+        return Predicate(BinaryOperatorType::POWER_OP, legacyLeft, legacyRight).copy();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
                     << expression->toString());

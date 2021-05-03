@@ -44,6 +44,7 @@ enum BinaryOperatorType {
     MINUS_OP,
     MULTIPLY_OP,
     DIVISION_OP,
+    POWER_OP,
     MODULO_OP,
     LOGICAL_AND_OP,
     LOGICAL_OR_OP,
