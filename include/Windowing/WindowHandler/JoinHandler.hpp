@@ -309,11 +309,11 @@ class JoinHandler : public AbstractJoinHandler {
         }
     }
 
-    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* getLeftJoinState() {
+    auto getLeftJoinState() {
         return leftJoinState;
     }
 
-    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* getRightJoinState() {
+    auto getRightJoinState() {
         return rightJoinState;
     }
 
