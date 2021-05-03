@@ -35,8 +35,12 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <gtest/gtest.h>
 #include <random>
@@ -671,7 +675,11 @@ std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname
             return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager);
         };
-        auto compiler = createDefaultQueryCompiler(12);
+        auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
+        auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+        options->setNumSourceLocalBuffers(12);
+        auto compiler = QueryCompilation::DefaultQueryCompiler::create(options, phaseFactory);
+
         return std::make_shared<MockedNodeEngine>(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
                                                   std::move(networkManagerCreator), std::move(partitionManager),
                                                   std::move(compiler), std::forward<ExtraParameters>(extraParams)...);
@@ -706,8 +714,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             PhysicalStreamConfigPtr streamConf, NES::NodeEngine::BufferManagerPtr&& bufferManager,
             NES::NodeEngine::QueryManagerPtr&& queryManager,
             std::function<Network::NetworkManagerPtr(NES::NodeEngine::NodeEnginePtr)>&& networkManagerCreator,
-            Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, std::promise<bool>& completed,
-            NesPartition nesPartition, std::atomic<int>& bufferCnt)
+            Network::PartitionManagerPtr&& partitionManager, QueryCompilation::QueryCompilerPtr&& queryCompiler,
+            std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
             : NodeEngine(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
                          std::move(networkManagerCreator), std::move(partitionManager), std::move(queryCompiler),
                          std::make_shared<NES::NodeEngine::StateManager>(), 0, 64, 64, 12),
@@ -799,12 +807,18 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
     auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 12);
     auto netManager = nodeEngine->getNetworkManager();
     // create NetworkSink
-    auto networkSource1 = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                          netManager, nesPartition, 64);
-    auto testSink = std::make_shared<TestSink>(schema, nodeEngine->getBufferManager());
+
+
 
     auto query = TestQuery::from(schema).sink(DummySink::create());
 
+    auto request1 = QueryCompilation::QueryCompilationRequest::create(query.getQueryPlan(), nodeEngine);
+    auto result1 = nodeEngine->getCompiler()->compileQuery(request1);
+
+    /**
+    auto networkSource1 = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                          netManager, nesPartition, 64);
+    auto testSink = std::make_shared<TestSink>(schema, nodeEngine->getBufferManager());
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
@@ -820,15 +834,21 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                 .setQueryId(1)
                                                                 .setQuerySubPlanId(1);
 
+                                                                */
+
     // creating query plan
+    /**
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
                                                                     nodeEngine->getQueryManager(), 1, 64);
     auto networkSink = std::make_shared<NetworkSink>(schema, 2, netManager, nodeLocation, nesPartition,
                                                      nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
 
+     */
     auto query2 = TestQuery::from(schema).filter(Attribute("id") < 5).sink(DummySink::create());
+    auto request2 = QueryCompilation::QueryCompilationRequest::create(query2.getQueryPlan(), nodeEngine);
+    auto result2 = nodeEngine->getCompiler()->compileQuery(request1);
 
-    auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
+ /*   auto queryPlan2 = typeInferencePhase->execute(query2.getQueryPlan());
     auto generatableOperators2 = translatePhase->transform(queryPlan2->getRootOperators()[0]);
 
     GeneratedQueryExecutionPlanBuilder builderGeneratorQEP = GeneratedQueryExecutionPlanBuilder::create()
@@ -840,14 +860,17 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
                                                                  .setQueryManager(nodeEngine->getQueryManager())
                                                                  .setQueryId(2)
                                                                  .setQuerySubPlanId(2);
+*/
 
-    nodeEngine->registerQueryInNodeEngine(builderGeneratorQEP.build());
-    nodeEngine->registerQueryInNodeEngine(builderReceiverQEP.build());
+
+
+    nodeEngine->registerQueryInNodeEngine(result2->getExecutableQueryPlan());
+    nodeEngine->registerQueryInNodeEngine(result1->getExecutableQueryPlan());
 
     nodeEngine->startQuery(2);
     nodeEngine->startQuery(1);
 
-    ASSERT_EQ(10, testSink->completed.get_future().get());
+  //  ASSERT_EQ(10, testSink->completed.get_future().get());
 
     nodeEngine->undeployQuery(2);
     nodeEngine->undeployQuery(1);

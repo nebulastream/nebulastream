@@ -28,6 +28,7 @@
 #include <chrono>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
+#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <memory>
 
