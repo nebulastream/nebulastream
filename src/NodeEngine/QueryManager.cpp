@@ -567,26 +567,39 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 }
 
 bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
+    // we should have a mutex here on work
+    // TODO add check?
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
     auto weakQep = std::make_any<std::weak_ptr<Execution::NewExecutableQueryPlan>>(executableQueryPlan);
-    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
-    NES_ASSERT(!!optBuffer, "invalid buffer");
-    auto buffer = optBuffer.value();
+
     // todo adopt this code for multiple source pipelines
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
-    auto firstSourcePipeline = pipelineSuccessors[0];
-
-    new (buffer.getBuffer()) ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(), SoftEndOfStream,
-                                                    threadPool->getNumberOfThreads(), (executableQueryPlan), std::move(weakQep));
-    NES_FATAL_ERROR("QueryManager: QueryManager::addEndOfStream for source operator "
-                    << sourceId << " graceful=" << SoftEndOfStream << " tasks in queue=" << taskQueue.size());
-    auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(
-        executableQueryPlan->getQuerySubPlanId(), inherited0::shared_from_this());
-    auto pipeline = Execution::NewExecutablePipeline::create(
-        /** default pipeline Id*/ -1, executableQueryPlan->getQuerySubPlanId(), pipelineContext, reconfigurationExecutable,
-        /** numberOfProducingPipelines**/ 1, std::vector<Execution::SuccessorExecutablePipeline>(), true);
-    for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
-        taskQueue.emplace_back(pipeline, buffer);
+    for (auto successor : pipelineSuccessors) {
+        auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+        NES_ASSERT(!!optBuffer, "invalid buffer");
+        auto buffer = optBuffer.value();
+        // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
+        // If successor is a data sink we send the reconfiguration message to the query plan.
+        if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&successor)) {
+            new (buffer.getBuffer())
+                ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(), SoftEndOfStream,
+                                       threadPool->getNumberOfThreads(), (*executablePipeline), std::move(weakQep));
+        } else {
+            new (buffer.getBuffer())
+                ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(), SoftEndOfStream,
+                                       threadPool->getNumberOfThreads(), (executableQueryPlan), std::move(weakQep));
+        }
+        NES_FATAL_ERROR("QueryManager: QueryManager::addEndOfStream for source operator "
+                        << sourceId << " graceful=" << SoftEndOfStream << " tasks in queue=" << taskQueue.size());
+        auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(
+            executableQueryPlan->getQuerySubPlanId(), inherited0::shared_from_this());
+        auto pipeline = Execution::NewExecutablePipeline::create(
+            /** default pipeline Id*/ -1, executableQueryPlan->getQuerySubPlanId(), pipelineContext, reconfigurationExecutable,
+            /** numberOfProducingPipelines**/ 1, std::vector<Execution::SuccessorExecutablePipeline>(), true);
+        // emit the end of stream for each processing task
+        for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+            taskQueue.emplace_back(pipeline, buffer);
+        }
     }
     return true;
 }
@@ -830,6 +843,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #endif
     NES_FATAL_ERROR("QueryManager::completedWork: Work for task=" << task.toString());
     auto executable = task.getExecutable();
+    // todo also support data sinks
     if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
         auto qepId = (*executablePipeline)->getQepParentId();
         if (queryToStatisticsMap.contains(qepId)) {
