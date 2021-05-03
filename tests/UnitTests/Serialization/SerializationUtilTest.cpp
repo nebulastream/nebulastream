@@ -16,6 +16,7 @@
 
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Schema.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <GRPC/Serialization/DataTypeSerializationUtil.hpp>
@@ -27,6 +28,7 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -449,6 +451,13 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto map = LogicalOperatorFactory::createMapOperator(Attribute("f2") = 10);
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
+        auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(map->equal(mapOperator));
+    }
+
+    {
+        auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = POWER(2, Attribute("f3")));
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
         auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(map->equal(mapOperator));

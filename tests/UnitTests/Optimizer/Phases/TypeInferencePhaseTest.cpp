@@ -320,6 +320,61 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("f1"));
 }
 
+
+/**
+ * @brief In this test we test the power operator
+ */
+TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
+
+    auto inputSchema = Schema::create();
+    inputSchema->addField("f1", BasicType::INT32);
+    inputSchema->addField("f2", BasicType::FLOAT64);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->removeLogicalStream("default_logical");
+    streamCatalog->addLogicalStream("default_logical", inputSchema);
+
+    auto query = Query::from("default_logical")
+        .map(Attribute("powIntInt") = POWER(Attribute("f1"), 2))
+        .map(Attribute("powFloatInt") = POWER(Attribute("f2"), 2))
+        .sink(FileSinkDescriptor::create(""));
+    auto plan = query.getQueryPlan();
+
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    plan = phase->execute(plan);
+    auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
+    auto mapOperator = plan->getOperatorByType<MapLogicalOperatorNode>();
+    auto sinkOperator = plan->getOperatorByType<SinkLogicalOperatorNode>();
+
+    SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
+    EXPECT_TRUE(sourceOutputSchema->fields.size() == 2);
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(sourceOutputSchema->hasFieldName("default_logical$f2"));
+
+    SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
+    EXPECT_TRUE(mapOutputSchema->fields.size() == 4);
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f1"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$f2"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$powIntInt"));
+    EXPECT_TRUE(mapOutputSchema->hasFieldName("default_logical$powFloatInt"));
+
+    auto f1 = mapOutputSchema->get("default_logical$f1");
+    auto f2 = mapOutputSchema->get("default_logical$f2");
+    auto powIntInt = mapOutputSchema->get("default_logical$powIntInt");
+    auto powFloatInt = mapOutputSchema->get("default_logical$powFloatInt");
+
+    EXPECT_TRUE(f1->getDataType()->isEquals(DataTypeFactory::createInt32()));
+    EXPECT_TRUE(f2->getDataType()->isEquals(DataTypeFactory::createDouble()));
+    EXPECT_TRUE(powIntInt->getDataType()->isEquals(DataTypeFactory::createUInt32()));
+    EXPECT_TRUE(powFloatInt->getDataType()->isEquals(DataTypeFactory::createDouble()));
+
+    SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
+    EXPECT_TRUE(sinkOutputSchema->fields.size() == 4);
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f1"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("f2"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("powIntInt"));
+    EXPECT_TRUE(sinkOutputSchema->hasFieldName("powFloatInt"));
+}
+
 /**
  * @brief In this test we test the type inference for query with Project operator
  */
