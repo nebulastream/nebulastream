@@ -15,8 +15,8 @@
 */
 
 #include <Util/Logger.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <Util/UtilityFunctions.hpp>
 
 #include <gtest/gtest.h>
 
@@ -34,13 +34,9 @@ class LogicalExpressionTest : public testing::Test {
 
     void SetUp() {}
 
-    void TearDown() {
-        NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test case.");
-    }
+    void TearDown() { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test case."); }
 
-    static void TearDownTestCase() {
-        NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test class.");
-    }
+    static void TearDownTestCase() { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test class."); }
 
     inline static void testBinaryOperator(std::string const& op) noexcept {
 
@@ -76,7 +72,7 @@ class LogicalExpressionTest : public testing::Test {
             {R"(Attribute("value"))", R"(Attribute("value"))"},
         };
 
-        for (auto const &[v1, v2] : pairs) {
+        for (auto const& [v1, v2] : pairs) {
             auto const q1 = R"(Query::from("").filter()" + v1 + op + v2 + R"( );)";
             EXPECT_NO_THROW(UtilityFunctions::createQueryFromCodeString(q1));
 
@@ -88,7 +84,7 @@ class LogicalExpressionTest : public testing::Test {
 
 /// Template that can check that different Operators can be used with all designated data types that construct an
 /// ExpressionItem.
-template<template<typename, auto...> typename CompilesFromArgs, template<typename ...> typename CompilesFromTypes>
+template<template<typename, auto...> typename CompilesFromArgs, template<typename...> typename CompilesFromTypes>
 void checkBinary() {
 
     bool compiles = CompilesFromArgs<ExpressionNodePtr, 0, 0>::value;
@@ -202,4 +198,4 @@ TEST_F(LogicalExpressionTest, DISABLED_testGtExpression) {
     testBinaryOperator(">");
 }
 
-}
+}// namespace NES

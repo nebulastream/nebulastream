@@ -29,7 +29,6 @@
  */
 namespace NES {
 
-
 /// Create compile-time tests that allow checking a specific function's type for a specific function by calling
 ///     [function-name]CompilesFromType<Return Type, Types of arguments, ...>
 /// or  [function-name]Compiles<Return Type, argument 1, argument 2>.
@@ -37,26 +36,33 @@ namespace NES {
 /// Note that the non-type compile time checks for the non-type template arguments are limited to consteval-
 /// constructible and non-floating point types.
 /// Another limitation is that as of now, type and non type template argument tests cannot be mixed.
-#define SETUP_COMPILE_TIME_TESTS(name, f) SETUP_COMPILE_TIME_TEST(name, f); SETUP_COMPILE_TIME_TEST_ARGS(name, f)
+#define SETUP_COMPILE_TIME_TESTS(name, f)                                                                                        \
+    SETUP_COMPILE_TIME_TEST(name, f);                                                                                            \
+    SETUP_COMPILE_TIME_TEST_ARGS(name, f)
 
 /// Check if function #func compiles from constexpr arguments and produce the expected return type that is provided
 /// as the check's first template argument.
-#define SETUP_COMPILE_TIME_TEST_ARGS(name, func) \
-namespace detail {                                                                                                     \
-  template<typename, auto...> struct name ## FromArgs:std::false_type{};                                               \
-  template<auto... args> struct name ## FromArgs<decltype(func(args...)), args...> : std::true_type{};                 \
-}                                                                                                                      \
-template<typename R, auto ...a> using name ## Compiles = detail::name ## FromArgs<R, a...>                             \
+#define SETUP_COMPILE_TIME_TEST_ARGS(name, func)                                                                                 \
+    namespace detail {                                                                                                           \
+    template<typename, auto...>                                                                                                  \
+    struct name##FromArgs : std::false_type {};                                                                                  \
+    template<auto... args>                                                                                                       \
+    struct name##FromArgs<decltype(func(args...)), args...> : std::true_type {};                                                 \
+    }                                                                                                                            \
+    template<typename R, auto... a>                                                                                              \
+    using name##Compiles = detail::name##FromArgs<R, a...>
 
 /// Check if function #func compiles from argument of given types produce the expected return type that is provided as
 /// the check's first template argument.
-#define SETUP_COMPILE_TIME_TEST(name, func)                                                                            \
-namespace detail {                                                                                                     \
-  template<typename, typename...> struct name ## FromType:std::false_type{};                                           \
-  template<typename... Ts> struct name ## FromType<decltype(func(std::declval<Ts>()...)), Ts...> : std::true_type{};   \
-}                                                                                                                      \
-template<typename ...Args> using name ## CompilesFromType = detail::name ## FromType<Args...>                          \
-
+#define SETUP_COMPILE_TIME_TEST(name, func)                                                                                      \
+    namespace detail {                                                                                                           \
+    template<typename, typename...>                                                                                              \
+    struct name##FromType : std::false_type {};                                                                                  \
+    template<typename... Ts>                                                                                                     \
+    struct name##FromType<decltype(func(std::declval<Ts>()...)), Ts...> : std::true_type {};                                     \
+    }                                                                                                                            \
+    template<typename... Args>                                                                                                   \
+    using name##CompilesFromType = detail::name##FromType<Args...>
 
 class TestHarness {
   public:
