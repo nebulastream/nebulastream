@@ -15,7 +15,6 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/NewExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/ExecutionResult.hpp>
@@ -54,6 +53,13 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext) {
 uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
 bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
+
+bool Task::isReconfiguration() {
+    if(auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&pipeline)){
+        return (*executablePipeline)->isReconfiguration();
+    }
+    return false;
+}
 
 Execution::SuccessorExecutablePipeline Task::getExecutable() { return pipeline; }
 
