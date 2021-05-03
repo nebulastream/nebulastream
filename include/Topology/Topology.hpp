@@ -17,11 +17,11 @@
 #ifndef NES_TOPOLOGY_HPP
 #define NES_TOPOLOGY_HPP
 
+#include <any>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <vector>
-#include <any>
 
 namespace NES {
 
