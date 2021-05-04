@@ -101,12 +101,11 @@ message MonitoringDataReply {
 }
 message UpdateNetworkSinksRequest{
   uint64 queryId = 1;
-  repeated NetworkSinkMessage networkSinks = 2;
-}
-
-message NetworkSinkMessage {
-  NES.SerializableOperator networkSink =1;
-  uint64 querySubPlanId = 3;
+  repeated uint64 querySubPlanId = 2;
+  uint64 nodeId = 3;
+  string hostname = 4;
+  uint32  port = 5;
+  repeated uint64 destinationOperatorId = 6;
 }
 
 message UpdateNetworkSinksReply{
