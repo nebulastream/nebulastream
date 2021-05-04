@@ -289,7 +289,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
 
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id")).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
@@ -348,7 +348,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
 
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("value")).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
@@ -406,7 +406,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
 
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("value")).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
@@ -463,7 +463,7 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
 
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("asd")).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
         FAIL();
@@ -481,7 +481,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
 
     auto query = TestQuery::from(testSource->getSchema()).project(Attribute("asd")).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
 
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -517,9 +517,9 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan=" << queryPlan->toString() << std::endl;
 
@@ -596,7 +596,7 @@ TEST_F(ProjectionTest, tumblingWindowQueryTestWithWrongProjection) {
     query.sink(DummySink::create());
 
     bool success = false;
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     try {
         auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     } catch (...) {
@@ -637,7 +637,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
 
             auto testSink = std::make_shared<TestSink>(expectedBuf, testSchema, nodeEngine->getBufferManager());
 
-            auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+            auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
 
             auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
         },
@@ -674,7 +674,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(expectedBuf, outputSchema, nodeEngine->getBufferManager());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);

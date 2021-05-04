@@ -17,18 +17,19 @@
 #ifndef NES_ATTRIBUTESORTRULE_HPP
 #define NES_ATTRIBUTESORTRULE_HPP
 
-#include <Common/ValueTypes/BasicValue.hpp>
-#include <Nodes/Expressions/BinaryExpressionNode.hpp>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
+
+namespace NES {
+class FieldAccessExpressionNode;
+class ConstantValueExpressionNode;
+}// namespace NES
 
 namespace NES::Optimizer {
 
 class AttributeSortRule;
 typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
-
-class FieldAccessExpressionNode;
 
 /**
  * @brief This rule is only used for evaluating efficiency of query merging using string based signature computation. This rule

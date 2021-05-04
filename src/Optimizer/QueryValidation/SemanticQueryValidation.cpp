@@ -29,7 +29,7 @@
 
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr scp) { streamCatalog = scp; }
+SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(StreamCatalogPtr scp) {
     return std::make_shared<SemanticQueryValidation>(scp);

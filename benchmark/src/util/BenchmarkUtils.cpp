@@ -127,7 +127,7 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
                                   std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
                                   NodeEngine::NodeEnginePtr nodeEngine, Query query) {
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);

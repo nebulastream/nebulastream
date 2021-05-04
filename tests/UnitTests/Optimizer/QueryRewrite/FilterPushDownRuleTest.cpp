@@ -87,7 +87,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
@@ -129,7 +129,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
@@ -176,7 +176,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
@@ -222,7 +222,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
@@ -261,7 +261,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
     const NodePtr srcOperator = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
 
     // Validate
@@ -313,7 +313,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowABinaryOperator) {
     const NodePtr srcOperatorPQ = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
@@ -377,7 +377,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyBelowABinaryOperator)
     const NodePtr srcOperatorPQ = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
@@ -441,7 +441,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersBelowABinaryOperator) {
     const NodePtr srcOperatorSQ = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
@@ -512,7 +512,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterAlreadyBelowAndTwoFiltersBelo
     const NodePtr srcOperatorPQ = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
@@ -588,7 +588,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFiltersAlreadyAtBottomAndTwoFilters
     const NodePtr srcOperatorSQ = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());
@@ -662,7 +662,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBetweenTwoMaps) {
     const NodePtr srcOperatorPQ = (*itr);
 
     // Execute
-    FilterPushDownRulePtr filterPushDownRule = FilterPushDownRule::create();
+    auto filterPushDownRule = Optimizer::FilterPushDownRule::create();
     NES_DEBUG("Input Query Plan: " + (queryPlan)->toString());
     const QueryPlanPtr updatedPlan = filterPushDownRule->apply(queryPlan);
     NES_DEBUG("Updated Query Plan: " + (updatedPlan)->toString());

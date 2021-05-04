@@ -138,7 +138,7 @@ TEST_F(DistributeWindowRuleTest, testRuleForCentralWindow) {
 
     std::cout << " plan before=" << queryPlan->toString() << std::endl;
     // Execute
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
     const QueryPlanPtr updatedPlan = distributeWindowRule->apply(queryPlan);
 
     std::cout << " plan after=" << queryPlan->toString() << std::endl;
@@ -159,14 +159,14 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindow) {
                       .apply(Sum(Attribute("value")))
                       .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
-    LogicalSourceExpansionRulePtr logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
     std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
     updatedPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 
@@ -191,14 +191,14 @@ TEST_F(DistributeWindowRuleTest, testRuleForDistributedWindowWithMerger) {
                       .sink(printSinkDescriptor);
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan = TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
+    queryPlan = Optimizer::TypeInferencePhase::create(streamCatalog)->execute(queryPlan);
     std::cout << " plan before log expand=" << queryPlan->toString() << std::endl;
-    LogicalSourceExpansionRulePtr logicalSourceExpansionRule = LogicalSourceExpansionRule::create(streamCatalog);
+    auto logicalSourceExpansionRule = Optimizer::LogicalSourceExpansionRule::create(streamCatalog);
     QueryPlanPtr updatedPlan = logicalSourceExpansionRule->apply(queryPlan);
     std::cout << " plan after log expand=" << queryPlan->toString() << std::endl;
 
     std::cout << " plan before window distr=" << queryPlan->toString() << std::endl;
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
     updatedPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan after window distr=" << queryPlan->toString() << std::endl;
 

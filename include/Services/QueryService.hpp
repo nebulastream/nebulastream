@@ -21,6 +21,14 @@
 #include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
 
+namespace NES::Optimizer {
+class SyntacticQueryValidation;
+typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
+
+class SemanticQueryValidation;
+typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
+}// namespace NES::Optimizer
+
 namespace NES {
 
 class QueryService;
@@ -83,7 +91,8 @@ class QueryService {
   private:
     QueryCatalogPtr queryCatalog;
     NESRequestQueuePtr queryRequestQueue;
-    StreamCatalogPtr streamCatalog;
+    Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
+    Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     bool enableSemanticQueryValidation;
 };
 

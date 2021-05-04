@@ -103,7 +103,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingEqualQueries) {
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -190,7 +190,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingPartiallyEqualQuer
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 
@@ -270,7 +270,7 @@ TEST_F(Z3SignatureBasedPartialQueryMergerRuleTest, testMergingQueriesWithDiffere
     QueryId queryId2 = PlanIdGenerator::getNextQueryId();
     queryPlan2->setQueryId(queryId2);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan1);
     typeInferencePhase->execute(queryPlan2);
 

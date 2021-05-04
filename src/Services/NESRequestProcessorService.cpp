@@ -54,13 +54,14 @@ NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr gl
       globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
-    typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3Context = std::make_shared<z3::context>();
-    globalQueryPlanUpdatePhase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context,
-                                                                    enableQueryMerging, queryMergerRule);
+    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan,
+                                                                               z3Context, enableQueryMerging, queryMergerRule);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }

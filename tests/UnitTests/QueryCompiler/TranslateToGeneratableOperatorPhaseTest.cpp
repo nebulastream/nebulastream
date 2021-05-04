@@ -175,9 +175,9 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     ConsoleDumpHandler::create(std::cout)->dump(sinkOperator);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
 
-    auto typeInferencePhase = TypeInferencePhase::create(std::make_shared<StreamCatalog>());
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(std::make_shared<StreamCatalog>());
     auto queryPlan = typeInferencePhase->execute(QueryPlan::create(sinkOperator));
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
 
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();

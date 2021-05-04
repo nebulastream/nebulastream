@@ -803,7 +803,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
 
     auto query = TestQuery::from(schema).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);

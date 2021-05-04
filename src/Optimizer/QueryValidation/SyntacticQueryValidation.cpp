@@ -20,6 +20,8 @@
 
 namespace NES::Optimizer {
 
+SyntacticQueryValidationPtr SyntacticQueryValidation::create() { return std::shared_ptr<SyntacticQueryValidation>(); }
+
 void SyntacticQueryValidation::checkValidity(std::string inputQuery) {
     try {
         // Compiling the query string to an object
@@ -30,8 +32,8 @@ void SyntacticQueryValidation::checkValidity(std::string inputQuery) {
     }
 }
 
-QueryPtr SyntacticQueryValidation::checkValidityAndGetQuery(std::string inputQuery) {
-    QueryPtr query;
+NES::QueryPtr SyntacticQueryValidation::checkValidityAndGetQuery(std::string inputQuery) {
+    NES::QueryPtr query;
     try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
