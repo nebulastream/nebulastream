@@ -47,6 +47,9 @@ class NewExecutableQueryPlan : public Reconfigurable {
                                     std::vector<DataSinkPtr>&& sinks, std::vector<NewExecutablePipelinePtr>&& pipelines,
                                     QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
 
+    static NewExecutableQueryPlanPtr create(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr> sources,
+                                            std::vector<DataSinkPtr> sinks, std::vector<NewExecutablePipelinePtr> pipelines,
+                                            QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
     ~NewExecutableQueryPlan();
 
     /**
