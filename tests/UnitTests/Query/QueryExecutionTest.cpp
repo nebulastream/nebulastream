@@ -257,7 +257,7 @@ class TestSink : public SinkMedium {
      * @return
      */
 
-    TupleBuffer& get(uint64_t index) {
+    TupleBuffer get(uint64_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];
     }
@@ -268,9 +268,13 @@ class TestSink : public SinkMedium {
 
     std::string toString() { return "Test_Sink"; }
 
-    void shutdown() override {}
+    void shutdown() override {
+        std::unique_lock lock(m);
+        cleanupBuffers();
+    }
 
     ~TestSink() override {
+        NES_DEBUG("~TestSink()");
         std::unique_lock lock(m);
         cleanupBuffers();
     };
@@ -283,7 +287,6 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
     void cleanupBuffers() {
-        std::unique_lock lock(m);
         for (auto& buffer : resultBuffers) {
             buffer.release();
         }
@@ -361,7 +364,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
 
@@ -373,7 +376,6 @@ TEST_F(QueryExecutionTest, filterQuery) {
     }
 
     buffer.release();
-    testSink->cleanupBuffers();
     plan->stop();
 }
 
@@ -425,7 +427,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
@@ -587,7 +589,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     // wait till all buffers have been produced
     testSink->completed.get_future().get();
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
 
     // 10 records, starting at ts=5 with 1ms difference each record, hence ts of the last record=14
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
@@ -657,7 +659,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
 
     // get result buffer, which should contain two results.
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
 
     NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
@@ -748,7 +750,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
     // get result buffer, which should contain two results.
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     NES_DEBUG("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
@@ -832,7 +834,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
 
     // get result buffer
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
@@ -904,7 +906,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     NES_INFO("QueryExecutionTest: The test sink contains " << testSink->getNumberOfResultBuffers() << " result buffers.");
     // get result buffer
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     std::string expectedContent = "+----------------------------------------------------+\n"
@@ -914,7 +916,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
 
-    auto& resultBuffer2 = testSink->get(1);
+    auto resultBuffer2 = testSink->get(1);
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer2.getNumberOfTuples() << " tuples.");
     NES_INFO("QueryExecutionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
     std::string expectedContent2 = "+----------------------------------------------------+\n"
@@ -989,7 +991,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     // get result buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
 
     NES_INFO("QueryExecutionTest: The result buffer contains " << resultBuffer.getNumberOfTuples() << " tuples.");
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
@@ -1082,7 +1084,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     testSink->completed.get_future().get();
     plan->stop();
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
 
@@ -1094,7 +1096,4 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     }
 
     testSink->shutdown();
-    //  testSource1->stop(false);
-    //  testSource2->stop(false);
-    testSink->cleanupBuffers();
 }
