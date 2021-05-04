@@ -50,7 +50,7 @@ class MQTTSource : public DataSource {
     explicit MQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                         const std::string serverAddress, const std::string clientId, const std::string user,
                         const std::string topic, OperatorId operatorId, size_t numSourceLocalBuffers,
-                        GatheringMode gatheringMode);
+                        GatheringMode gatheringMode, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction

@@ -86,7 +86,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         return createMQTTSource(mqttSourceDescriptor->getSchema(), bufferManager, queryManager,
                                 mqttSourceDescriptor->getServerAddress(), mqttSourceDescriptor->getClientId(),
                                 mqttSourceDescriptor->getUser(), mqttSourceDescriptor->getTopic(), operatorId,
-                                numSourceLocalBuffers);
+                                numSourceLocalBuffers, successors);
 #endif
 #ifdef ENABLE_OPC_BUILD
     } else if (sourceDescriptor->instanceOf<OPCSourceDescriptor>()) {
@@ -94,7 +94,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(OperatorId operat
         const OPCSourceDescriptorPtr opcSourceDescriptor = sourceDescriptor->as<OPCSourceDescriptor>();
         return createOPCSource(opcSourceDescriptor->getSchema(), bufferManager, queryManager, opcSourceDescriptor->getUrl(),
                                opcSourceDescriptor->getNodeId(), opcSourceDescriptor->getUser(),
-                               opcSourceDescriptor->getPassword(), operatorId, numSourceLocalBuffers);
+                               opcSourceDescriptor->getPassword(), operatorId, numSourceLocalBuffers, successors);
 #endif
     } else if (sourceDescriptor->instanceOf<SenseSourceDescriptor>()) {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating sense source");

@@ -135,17 +135,17 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManage
 #ifdef ENABLE_OPC_BUILD
 const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId, std::string user,
-                                    std::string password, OperatorId operatorId, size_t numSourceLocalBuffers) {
+                                    std::string password, OperatorId operatorId, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
     return std::make_shared<OPCSource>(schema, bufferManager, queryManager, url, nodeId, user, password, operatorId,
-                                       numSourceLocalBuffers, DataSource::FREQUENCY_MODE);
+                                       numSourceLocalBuffers, DataSource::FREQUENCY_MODE, successors );
 }
 #endif
 #ifdef ENABLE_MQTT_BUILD
 const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                      NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId,
-                                     std::string user, std::string topic, OperatorId operatorId, size_t numSourceLocalBuffers) {
+                                     std::string user, std::string topic, OperatorId operatorId, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
     return std::make_shared<MQTTSource>(schema, bufferManager, queryManager, serverAddress, clientId, user, topic, operatorId,
-                                        numSourceLocalBuffers, DataSource::FREQUENCY_MODE);
+                                        numSourceLocalBuffers, DataSource::FREQUENCY_MODE, successors);
 }
 #endif
 }// namespace NES
