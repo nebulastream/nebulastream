@@ -53,6 +53,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 
+#include "../../util/TestQueryCompiler.hpp"
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
@@ -188,7 +189,8 @@ class WindowSource : public NES::DefaultSource {
                                 ->addField("test$ts", BasicType::UINT64)
                                 ->addField("test$empty", BasicType::UINT64);
         return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
-                                              varyWatermark, decreaseTime, timestamp, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+                                              varyWatermark, decreaseTime, timestamp,
+                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
     }
 };
 
@@ -282,34 +284,33 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1, 12);
+    auto testSourceDescriptor =
+        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
+                             [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+                                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+                                 return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                                      nodeEngine->getQueryManager(), id,
+                                                                                      numSourceLocalBuffers, successors);
+                             });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id")).sink(DummySink::create());
+    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
-
     std::cout << "plan=" << queryPlan->toString() << std::endl;
-    auto plan = GeneratedQueryExecutionPlanBuilder::create()
-                    .addSink(testSink)
-                    .addSource(testSource)
-                    .addOperatorQueryPlan(generatableOperators)
-                    .setCompiler(nodeEngine->getCompiler())
-                    .setBufferManager(nodeEngine->getBufferManager())
-                    .setQueryManager(nodeEngine->getQueryManager())
-                    .setQueryId(1)
-                    .setQuerySubPlanId(1)
-                    .build();
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
+    auto plan = result->getExecutableQueryPlan();
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getNumberOfPipelines(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
@@ -318,7 +319,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     NodeEngine::WorkerContext workerContext{1};
-    plan->getPipeline(0)->execute(buffer, workerContext);
+    plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -341,34 +342,33 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1, 12);
+    auto testSourceDescriptor =
+        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
+                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                                                                 nodeEngine->getQueryManager(), id,
+                                                                                                                 numSourceLocalBuffers, successors);
+                                                          });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("value")).sink(DummySink::create());
+    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("value")).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
-
     std::cout << "plan=" << queryPlan->toString() << std::endl;
-    auto plan = GeneratedQueryExecutionPlanBuilder::create()
-                    .addSink(testSink)
-                    .addSource(testSource)
-                    .addOperatorQueryPlan(generatableOperators)
-                    .setCompiler(nodeEngine->getCompiler())
-                    .setBufferManager(nodeEngine->getBufferManager())
-                    .setQueryManager(nodeEngine->getQueryManager())
-                    .setQueryId(1)
-                    .setQuerySubPlanId(1)
-                    .build();
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
+    auto plan = result->getExecutableQueryPlan();
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getNumberOfPipelines(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
@@ -377,7 +377,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     NodeEngine::WorkerContext workerContext{1};
-    plan->getPipeline(0)->execute(buffer, workerContext);
+    plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -399,34 +399,33 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1, 12);
+    auto testSourceDescriptor =
+        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
+                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                                                                 nodeEngine->getQueryManager(), id,
+                                                                                                                 numSourceLocalBuffers, successors);
+                                                          });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("value")).sink(DummySink::create());
+    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("value")).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
-
     std::cout << "plan=" << queryPlan->toString() << std::endl;
-    auto plan = GeneratedQueryExecutionPlanBuilder::create()
-                    .addSink(testSink)
-                    .addSource(testSource)
-                    .addOperatorQueryPlan(generatableOperators)
-                    .setCompiler(nodeEngine->getCompiler())
-                    .setBufferManager(nodeEngine->getBufferManager())
-                    .setQueryManager(nodeEngine->getQueryManager())
-                    .setQueryId(1)
-                    .setQuerySubPlanId(1)
-                    .build();
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
+    auto plan = result->getExecutableQueryPlan();
 
     // The plan should have one pipeline
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
-    EXPECT_EQ(plan->getNumberOfPipelines(), 1);
+    EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = NodeEngine::createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
@@ -435,7 +434,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     plan->start(nodeEngine->getStateManager());
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
     NodeEngine::WorkerContext workerContext{1};
-    plan->getPipeline(0)->execute(buffer, workerContext);
+    plan->getPipelines()[0]->execute(buffer, workerContext);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -458,10 +457,20 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1, 12);
+    auto testSourceDescriptor =
+        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
+                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+                                                                                                                 nodeEngine->getQueryManager(), id,
+                                                                                                                 numSourceLocalBuffers, successors);
+                                                          });
 
-    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("id"), Attribute("asd")).sink(DummySink::create());
+    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id"), Attribute("asd")).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     try {
@@ -476,10 +485,7 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                    nodeEngine->getQueryManager(), 1, 12);
-
-    auto query = TestQuery::from(testSource->getSchema()).project(Attribute("asd")).sink(DummySink::create());
+    auto query = TestQuery::from(testSchema).project(Attribute("asd")).sink(DummySink::create());
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
 
@@ -535,7 +541,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
-                       .setCompiler(nodeEngine->getCompiler())
+                 //      .setCompiler(nodeEngine->getCompiler())
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
                        .addSource(windowSource)
@@ -543,7 +549,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
                        .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
-    nodeEngine->registerQueryInNodeEngine(plan);
+  //  nodeEngine->registerQueryInNodeEngine(plan);
     nodeEngine->startQuery(1);
 
     // wait till all buffers have been produced
@@ -618,17 +624,17 @@ TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
 
             PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
-            auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                             nodeEngine->getQueryManager(), 1, 12);
+           // auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+            //                                                                 nodeEngine->getQueryManager(), 1, 12);
 
-            auto query1 = TestQuery::from(testSource1->getSchema());
+            auto query1 = TestQuery::from(testSchema);
 
             query1 = query1.filter(Attribute("id") < 5);
 
             // creating P2
-            auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                             nodeEngine->getQueryManager(), 1, 12);
-            auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5).project(Attribute("id"));
+           // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+           //                                                                  nodeEngine->getQueryManager(), 1, 12);
+            auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5).project(Attribute("id"));
 
             // creating P3
             // merge does not change schema
@@ -654,17 +660,17 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
-    auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1, 12);
+  //  auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+     //                                                                nodeEngine->getQueryManager(), 1, 12);
 
-    auto query1 = TestQuery::from(testSource1->getSchema());
+    auto query1 = TestQuery::from(testSchema);
 
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
-    auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1, 12);
-    auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
+   // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+     //                                                                nodeEngine->getQueryManager(), 1, 12);
+    auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
 
     // creating P3
     // merge does not change schema
@@ -682,16 +688,16 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
-                       .setCompiler(nodeEngine->getCompiler())
+                       //.setCompiler(nodeEngine->getCompiler())
                        .addOperatorQueryPlan(generatableOperators)
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
-                       .addSource(testSource1)
-                       .addSource(testSource2)
+                      // .addSource(testSource1)
+                      // .addSource(testSource2)
                        .addSink(testSink);
 
     auto plan = builder.build();
-    nodeEngine->getQueryManager()->registerQuery(plan);
+    //nodeEngine->getQueryManager()->registerQuery(plan);
 
     // The plan should have three pipeline
     EXPECT_EQ(plan->getNumberOfPipelines(), 3);
@@ -735,6 +741,6 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     }
 
     testSink->shutdown();
-    testSource1->stop(false);
-    testSource2->stop(false);
+   // testSource1->stop(false);
+  //  testSource2->stop(false);
 }

@@ -27,11 +27,14 @@ namespace QueryCompilation {
 
 class LowerToExecutableQueryPlanPhase {
   public:
-    static LowerToExecutableQueryPlanPhasePtr create();
+    LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
+    static LowerToExecutableQueryPlanPhasePtr create(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
     NodeEngine::Execution::NewExecutableQueryPlanPtr apply(PipelineQueryPlanPtr pipelineQueryPlan,
                                                            NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
+    DataSinkProviderPtr sinkProvider;
+    DataSourceProviderPtr sourceProvider;
     void processSource(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                        std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
                        NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId,  std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
@@ -50,6 +53,7 @@ class LowerToExecutableQueryPlanPhase {
     processOperatorPipeline(OperatorPipelinePtr pipeline, std::vector<DataSourcePtr>& sources, std::vector<DataSinkPtr>& sinks,
                             std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
                             NodeEngine::NodeEnginePtr nodeEngine, QueryId queryId, QuerySubPlanId subQueryPlanId, std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
+
 };
 }// namespace QueryCompilation
 }// namespace NES
