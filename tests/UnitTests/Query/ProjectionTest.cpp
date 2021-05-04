@@ -255,7 +255,7 @@ class TestSink : public SinkMedium {
      * @return
      */
 
-    TupleBuffer& get(uint64_t index) {
+    TupleBuffer get(uint64_t index) {
         std::unique_lock lock(m);
         return resultBuffers[index];
     }
@@ -310,8 +310,8 @@ void fillBuffer(TupleBuffer& buf, NodeEngine::DynamicMemoryLayout::DynamicRowLay
         recordIndexFields[recordIndex] = recordIndex;
         fields01[recordIndex] = 3;
         fields02[recordIndex] = 8;
-
     }
+
     buf.setNumberOfTuples(10);
 }
 
@@ -365,19 +365,20 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultRecordIndexFields =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
+
     buffer.release();
-    testSink->shutdown();
     plan->stop();
 }
 
@@ -431,7 +432,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
@@ -442,7 +443,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
     }
-    testSink->shutdown();
+
     plan->stop();
 }
 
@@ -496,7 +497,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
@@ -510,7 +511,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
         EXPECT_EQ(resultFields01[recordIndex], 8);
     }
-    testSink->shutdown();
+
     plan->stop();
 }
 
@@ -624,7 +625,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
 
     // get result buffer, which should contain two results.
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
 
     NES_DEBUG("ProjectionTest: buffer=" << UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     //TODO 1 Tuple im result buffer in 312 2 results?
@@ -804,7 +805,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     testSink->completed.get_future().get();
     plan->stop();
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
 
@@ -817,6 +818,4 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     }
 
     testSink->shutdown();
-    // testSource1->stop(false);
-    //  testSource2->stop(false);
 }
