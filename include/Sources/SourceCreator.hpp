@@ -210,7 +210,7 @@ const DataSourcePtr createKafkaSource(SchemaPtr schema, NodeEngine::BufferManage
  */
 const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                     NodeEngine::QueryManagerPtr queryManager, std::string url, UA_NodeId nodeId, std::string user,
-                                    std::string password, OperatorId operatorId, size_t numSourceLocalBuffers);
+                                    std::string password, OperatorId operatorId, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 #endif
 
 #ifdef ENABLE_MQTT_BUILD
@@ -226,7 +226,7 @@ const DataSourcePtr createOPCSource(SchemaPtr schema, NodeEngine::BufferManagerP
  */
 const DataSourcePtr createMQTTSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                      NodeEngine::QueryManagerPtr queryManager, std::string serverAddress, std::string clientId,
-                                     std::string user, std::string topic, OperatorId operatorId, size_t numSourceLocalBuffers);
+                                     std::string user, std::string topic, OperatorId operatorId, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 #endif
 
 }// namespace NES

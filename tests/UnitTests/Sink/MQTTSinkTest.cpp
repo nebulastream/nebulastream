@@ -27,6 +27,8 @@
 #include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <random>
 
 using namespace NES;
 /**
