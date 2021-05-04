@@ -19,8 +19,8 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Topology/TopologyNode.hpp>
 //#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
 //#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>

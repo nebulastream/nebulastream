@@ -17,7 +17,7 @@
 #ifndef NES_GLOBALQUERYPLANUPDATEPHASE_HPP
 #define NES_GLOBALQUERYPLANUPDATEPHASE_HPP
 
-#include <Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>
 #include <vector>
 
@@ -28,19 +28,21 @@ typedef std::shared_ptr<context> ContextPtr;
 
 namespace NES {
 
-namespace Optimizer {
-class SignatureInferencePhase;
-typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
-
-class QueryMergerPhase;
-typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
-}// namespace Optimizer
-
 class NESRequest;
 typedef std::shared_ptr<NESRequest> NESRequestPtr;
 
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+}// namespace NES
+
+namespace NES::Optimizer {
 
 class GlobalQueryPlanUpdatePhase;
 typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
@@ -54,11 +56,11 @@ typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 class TopologySpecificQueryRewritePhase;
 typedef std::shared_ptr<TopologySpecificQueryRewritePhase> TopologySpecificQueryRewritePhasePtr;
 
-class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+class SignatureInferencePhase;
+typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
 
-class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+class QueryMergerPhase;
+typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
 
 /**
  * @brief This class is responsible for accepting a batch of query requests and then updating the Global Query Plan accordingly.
@@ -100,6 +102,6 @@ class GlobalQueryPlanUpdatePhase {
     Optimizer::SignatureInferencePhasePtr signatureInferencePhase;
     z3::ContextPtr z3Context;
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_GLOBALQUERYPLANUPDATEPHASE_HPP

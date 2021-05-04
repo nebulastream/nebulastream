@@ -29,8 +29,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>

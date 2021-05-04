@@ -20,11 +20,15 @@
 #include <memory>
 
 namespace NES {
-class QueryRewritePhase;
-typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class QueryRewritePhase;
+typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 
 class FilterPushDownRule;
 typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
@@ -66,5 +70,5 @@ class QueryRewritePhase {
     AttributeSortRulePtr attributeSortRule;
     BinaryOperatorSortRulePtr binaryOperatorSortRule;
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_QUERYREWRITEPHASE_HPP

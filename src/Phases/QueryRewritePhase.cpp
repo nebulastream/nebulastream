@@ -14,13 +14,13 @@
     limitations under the License.
 */
 
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
-#include <Phases/QueryRewritePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {

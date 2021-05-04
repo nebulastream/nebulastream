@@ -23,7 +23,7 @@
 #include <util/YSBBenchmarkSource.hpp>
 #include <vector>
 
-#include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Version/version.hpp>

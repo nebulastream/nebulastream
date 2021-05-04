@@ -24,13 +24,13 @@
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryPlacementPhase.hpp>
 #include <Phases/QueryPlacementRefinementPhase.hpp>
-#include <Phases/QueryRewritePhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>

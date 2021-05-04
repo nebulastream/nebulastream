@@ -17,11 +17,14 @@
 #ifndef NES_OPTIMIZE_SEMANTIC_QUERY_VALIDATION_HPP
 #define NES_OPTIMIZE_SEMANTIC_QUERY_VALIDATION_HPP
 
-#include <API/Query.hpp>
-#include <API/Schema.hpp>
 #include <memory>
 
 namespace NES {
+class schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
 
 class SemanticQueryValidation;
 typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
@@ -72,6 +75,6 @@ class SemanticQueryValidation {
 
 typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
 
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_OPTIMIZE_SEMANTIC_QUERY_VALIDATION_HPP

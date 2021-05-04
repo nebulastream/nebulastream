@@ -19,12 +19,12 @@
 #include <Exceptions/GlobalQueryPlanUpdateException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/RequestTypeNotHandledException.hpp>
+#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
-#include <Phases/QueryMergerPhase.hpp>
-#include <Phases/QueryRewritePhase.hpp>
-#include <Phases/TopologySpecificQueryRewritePhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Plans/Query/QueryPlan.hpp>

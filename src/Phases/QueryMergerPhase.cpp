@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
+#include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <Optimizer/QueryMerger/StringSignatureBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/SyntaxBasedCompleteQueryMergerRule.hpp>
 #include <Optimizer/QueryMerger/Z3SignatureBasedCompleteQueryMergerRule.hpp>
-#include <Phases/QueryMergerPhase.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::Optimizer {

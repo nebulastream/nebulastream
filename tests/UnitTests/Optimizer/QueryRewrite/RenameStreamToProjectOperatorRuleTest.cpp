@@ -18,16 +18,16 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Phases/TypeInferencePhase.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
