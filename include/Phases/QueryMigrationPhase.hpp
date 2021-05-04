@@ -114,16 +114,8 @@ class QueryMigrationPhase{
      */
     bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
 
-    /**
-     *builds NetworkSinks
-     * @param nodeId
-     * @return
-     */
-std::map<QuerySubPlanId, OperatorNodePtr> buildNetworkSinks(std::vector<QueryPlanPtr> querySubPlans, QueryId queryId, const TopologyNodePtr& destinationNode);
-
-bool updateNetworkSinks(std::string address, QueryId queryId, OperatorNodePtr op);
-
     ExecutionNodePtr getExecutionNode(TopologyNodeId nodeId);
+
 
     WorkerRPCClientPtr  workerRPCClient;
     TopologyPtr topology;
