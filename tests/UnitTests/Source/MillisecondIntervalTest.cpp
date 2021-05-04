@@ -38,6 +38,14 @@ namespace NES {
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
+/**
+ * This test set holds the corner cases for moving our sampling frequencies to
+ * sub-second intervals. Before, NES was sampling every second and was checking
+ * every second if that future timestamp is now stale (older).
+ *
+ * First we check for sub-second unit-tests on a soruce and its behavior. Then,
+ * we include an E2Etest with a stream that samples at sub-second interval.
+ */
 class MillisecondIntervalTest : public testing::Test {
   public:
     CoordinatorConfigPtr crdConf;
