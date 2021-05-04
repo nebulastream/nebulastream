@@ -20,10 +20,10 @@
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
 
-namespace {
+namespace NES {
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
-}// namespace
+}// namespace NES
 
 namespace NES::Optimizer {
 

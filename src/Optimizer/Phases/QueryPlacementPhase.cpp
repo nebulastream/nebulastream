@@ -51,4 +51,4 @@ bool QueryPlacementPhase::execute(std::string placementStrategy, QueryPlanPtr qu
     return placementStrategyPtr->updateGlobalExecutionPlan(queryPlan);
 }
 
-}// namespace NES
+}// namespace NES::Optimizer
