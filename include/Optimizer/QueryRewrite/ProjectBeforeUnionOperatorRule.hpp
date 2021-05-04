@@ -21,9 +21,6 @@
 
 namespace NES {
 
-class ProjectBeforeUnionOperatorRule;
-typedef std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRulePtr;
-
 class LogicalOperatorNode;
 typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
@@ -32,6 +29,12 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class ProjectBeforeUnionOperatorRule;
+typedef std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRulePtr;
 
 /**
  * @brief This rule is defined for adding a Projection Operator before a Union Operator. Following are the conditions:
@@ -55,5 +58,5 @@ class ProjectBeforeUnionOperatorRule : public BaseRewriteRule {
     LogicalOperatorNodePtr constructProjectOperator(SchemaPtr sourceSchema, SchemaPtr destinationSchema);
 };
 
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_PROJECTBEFOREUNIONOPERATORRULE_HPP

@@ -19,8 +19,6 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-#include <memory>
-
 namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
@@ -28,11 +26,15 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
-class DistributeWindowRule;
-typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
-
 class WindowOperatorNode;
 typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
+
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class DistributeWindowRule;
+typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
 
 /**
  * @brief This rule will replace the logical window operator with either a centralized or distributed implementation.
@@ -107,5 +109,5 @@ class DistributeWindowRule : public BaseRewriteRule {
     void createCentralWindowOperator(WindowOperatorNodePtr currentWindowOperator);
     void createDistributedWindowOperator(WindowOperatorNodePtr logicalWindowOperaotr, QueryPlanPtr queryPlan);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_DistributeWindowRule_HPP

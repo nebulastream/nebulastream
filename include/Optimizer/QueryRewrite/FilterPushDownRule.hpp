@@ -26,6 +26,9 @@ typedef std::shared_ptr<Node> NodePtr;
 
 class FilterLogicalOperatorNode;
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
+}// namespace NES
+
+namespace NES::Optimizer {
 
 class FilterPushDownRule;
 typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
@@ -71,6 +74,6 @@ class FilterPushDownRule : public BaseRewriteRule {
     bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator, const std::string fieldName) const;
 };
 
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_IMPL_OPTIMIZER_QUERYREWRITE_FILTERPUSHDOWN_HPP_

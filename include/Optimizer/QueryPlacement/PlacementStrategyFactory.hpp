@@ -22,6 +22,18 @@
 
 namespace NES {
 
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
+class StreamCatalog;
+typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+
 enum NESPlacementStrategyType {
     TopDown,
     BottomUp,
@@ -44,20 +56,11 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
     //    {"HighAvailability", HighAvailability},
 };
 
-class BasePlacementStrategy;
-typedef std::shared_ptr<BasePlacementStrategy> BasePlacementStrategyPtr;
-
-class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
-
 class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
-class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
-
-class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+class BasePlacementStrategy;
+typedef std::shared_ptr<BasePlacementStrategy> BasePlacementStrategyPtr;
 
 class PlacementStrategyFactory {
 
@@ -76,5 +79,5 @@ class PlacementStrategyFactory {
                                                               TypeInferencePhasePtr typeInferencePhase,
                                                               StreamCatalogPtr streamCatalog);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_PLACEMENTSTRATEGYFACTORY_HPP
