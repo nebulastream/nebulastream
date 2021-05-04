@@ -72,4 +72,4 @@ void BinaryOperatorSortRule::sortChildren(BinaryOperatorNodePtr binaryOperator) 
         binaryOperator->setLeftInputSchema(rightInputSchema);
     }
 }
-}// namespace NES
+}// namespace NES::Optimizer
