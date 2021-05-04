@@ -385,26 +385,24 @@ bool WorkerRPCClient::bufferData(std::string address, QueryId queryId) {
         throw Exception("Error while WorkerRPCClient::stopQuery");
     }
 }
-bool WorkerRPCClient::updateNetworkSinks(std::string address, QueryId queryId, std::map<QuerySubPlanId ,OperatorNodePtr> map) {
+bool WorkerRPCClient::updateNetworkSinks(const std::string& address, QueryId queryId,std::vector<QuerySubPlanId> querySubPlans,
+                                         uint64_t nodeId,const std::string& hostname,
+                                         uint32_t port, std::vector<OperatorId> destinationOperators)
+{
     UpdateNetworkSinksRequest request;
     request.set_queryid(queryId);
-    for(auto& entry : map) {
-        auto querySubPlanId = entry.first;
-        auto op = entry.second;
-        auto serializedOperator =  new SerializableOperator();
-        auto sOp = OperatorSerializationUtil::serializeOperator(op,serializedOperator);
-        NetworkSinkMessage* subRequest = request.add_networksinks();
-        subRequest->set_allocated_networksink(sOp);
-        subRequest->set_querysubplanid(querySubPlanId);
+    request.set_nodeid(nodeId);
+    request.set_hostname(hostname);
+    request.set_port(port);
+
+    for(uint8_t i = 0; i<querySubPlans.size(); i++){
+        request.add_querysubplanid(querySubPlans.at(i));
+        request.add_destinationoperatorid(destinationOperators.at(i));
     }
-
-
 
 
     UpdateNetworkSinksReply reply;
     ClientContext context;
-
-    //NES_DEBUG(test);
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
