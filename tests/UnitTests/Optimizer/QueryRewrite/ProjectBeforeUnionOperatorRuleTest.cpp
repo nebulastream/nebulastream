@@ -79,10 +79,10 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_TRUE(projectionOperators.empty());
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
 
-    auto projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
+    auto projectBeforeUnionOperatorRule = Optimizer::ProjectBeforeUnionOperatorRule::create();
     auto updatedQueryPlan = projectBeforeUnionOperatorRule->apply(queryPlan);
 
     typeInferencePhase->execute(updatedQueryPlan);
@@ -108,10 +108,10 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     auto projectionOperators = queryPlan->getOperatorByType<ProjectionLogicalOperatorNode>();
     EXPECT_TRUE(projectionOperators.empty());
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
 
-    auto projectBeforeUnionOperatorRule = ProjectBeforeUnionOperatorRule::create();
+    auto projectBeforeUnionOperatorRule = Optimizer::ProjectBeforeUnionOperatorRule::create();
     auto updatedQueryPlan = projectBeforeUnionOperatorRule->apply(queryPlan);
 
     typeInferencePhase->execute(updatedQueryPlan);

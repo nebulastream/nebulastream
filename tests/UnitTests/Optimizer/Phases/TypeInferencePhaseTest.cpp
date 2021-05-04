@@ -83,7 +83,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
     plan->appendOperatorAsNewRoot(map);
     plan->appendOperatorAsNewRoot(sink);
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(plan);
 
     // we just access the old references
@@ -115,7 +115,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
@@ -141,7 +141,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
     plan->appendOperatorAsNewRoot(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -154,7 +154,7 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
     auto plan = query.getQueryPlan();
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
@@ -181,7 +181,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
     auto plan = query.getQueryPlan();
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sink = plan->getSinkOperators()[0];
 
@@ -217,7 +217,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -244,7 +244,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, physicalNode);
     streamCatalog->addPhysicalStream("default_logical", sce);
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     ASSERT_ANY_THROW(phase->execute(plan));
 }
 
@@ -266,7 +266,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
     plan->appendOperatorAsNewRoot(sink);
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto maps = plan->getOperatorByType<MapLogicalOperatorNode>();
     phase->execute(plan);
     NES_DEBUG("result schema is=" << maps[0]->getOutputSchema()->toString());
@@ -292,7 +292,7 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -339,7 +339,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -392,7 +392,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStream) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -446,7 +446,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProject) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -504,7 +504,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -552,7 +552,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -615,7 +615,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto mergeOperator = plan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -686,7 +686,7 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameStreamAndProjectWithFullyQual
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -773,7 +773,7 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto filterOperator = plan->getOperatorByType<FilterLogicalOperatorNode>();
@@ -853,7 +853,7 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
                      .sink(FileSinkDescriptor::create(""));
 
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     auto windows = resultPlan->getOperatorByType<WindowOperatorNode>();
@@ -912,7 +912,7 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
                      .apply(Sum(Attribute("default_logical2$f3")))
                      .sink(FileSinkDescriptor::create(""));
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
 
     NES_DEBUG(resultPlan->getSinkOperators()[0]->getOutputSchema()->toString());
@@ -973,7 +973,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourStreams) {
 
     auto plan = query.getQueryPlan();
 
-    auto phase = TypeInferencePhase::create(streamCatalog);
+    auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);
     plan = phase->execute(plan);
     auto sourceOperator = plan->getOperatorByType<SourceLogicalOperatorNode>();
     auto joinOperators = plan->getOperatorByType<JoinLogicalOperatorNode>();

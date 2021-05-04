@@ -18,8 +18,16 @@
 #define NES_OPTIMIZE_SYNTACTIC_QUERY_VALIDATION_HPP
 
 #include <memory>
+namespace NES {
+
+class Query;
+typedef std::shared_ptr<Query> QueryPtr;
+}// namespace NES
 
 namespace NES::Optimizer {
+
+class SyntacticQueryValidation;
+typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
 
 /**
  * @brief This class is responsible for Syntactic Query Validation
@@ -27,23 +35,23 @@ namespace NES::Optimizer {
 class SyntacticQueryValidation {
   private:
     /**
-         * @brief Throws InvalidQueryException with formatted exception message
-         */
+     * @brief Throws InvalidQueryException with formatted exception message
+     */
     void handleException(const std::exception& ex);
 
   public:
     /**
-         * @brief Checks the syntactic validity of a Query string
-         */
+     * @brief Checks the syntactic validity of a Query string
+     */
     void checkValidity(std::string inputQuery);
 
     /**
-         * @brief Checks the syntactic validity of a Query string and returns the created Query object
-         */
+     * @brief Checks the syntactic validity of a Query string and returns the created Query object
+     */
     QueryPtr checkValidityAndGetQuery(std::string inputQuery);
-};
 
-typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
+    static SyntacticQueryValidationPtr create();
+};
 
 }// namespace NES::Optimizer
 

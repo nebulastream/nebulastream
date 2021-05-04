@@ -25,14 +25,7 @@ class context;
 typedef std::shared_ptr<context> ContextPtr;
 }// namespace z3
 
-namespace NES {
-
-class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
-
-class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
-
+namespace NES::Optimizer {
 class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
@@ -42,14 +35,23 @@ typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
 class QueryPlacementPhase;
 typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
 
+class GlobalQueryPlanUpdatePhase;
+typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
+}// namespace NES::Optimizer
+
+namespace NES {
+
+class GlobalQueryPlan;
+typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
+class QueryCatalog;
+typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+
 class QueryDeploymentPhase;
 typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
 
 class QueryUndeploymentPhase;
 typedef std::shared_ptr<QueryUndeploymentPhase> QueryUndeploymentPhasePtr;
-
-class GlobalQueryPlanUpdatePhase;
-typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
@@ -98,13 +100,13 @@ class NESRequestProcessorService {
     std::mutex queryProcessorStatusLock;
     bool queryProcessorRunning;
     QueryCatalogPtr queryCatalog;
-    TypeInferencePhasePtr typeInferencePhase;
-    QueryPlacementPhasePtr queryPlacementPhase;
+    Optimizer::TypeInferencePhasePtr typeInferencePhase;
+    Optimizer::QueryPlacementPhasePtr queryPlacementPhase;
     QueryDeploymentPhasePtr queryDeploymentPhase;
     QueryUndeploymentPhasePtr queryUndeploymentPhase;
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
-    GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
+    Optimizer::GlobalQueryPlanUpdatePhasePtr globalQueryPlanUpdatePhase;
     z3::ContextPtr z3Context;
 };
 }// namespace NES

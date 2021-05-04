@@ -14,8 +14,9 @@
     limitations under the License.
 */
 
-#include "Exceptions/InvalidQueryException.hpp"
+#include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Util/Logger.hpp>
@@ -37,7 +38,7 @@ class SemanticQueryValidationTest : public testing::Test {
     void CallValidation(std::string queryString) {
         PrintQString(queryString);
         StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-        SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+        auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
         QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
         filterQuery->sink(FileSinkDescriptor::create(""));
         semanticQueryValidation->checkSatisfiability(filterQuery);
@@ -100,7 +101,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Satisfiable Query with later added filters");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10).filter(Attribute(\"value\") < 10); ";
@@ -120,7 +121,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     NES_INFO("Unatisfiable Query with later added filters");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     std::string queryString =
         "Query::from(\"default_logical\").filter(Attribute(\"id\") > 100).filter(Attribute(\"value\") < 10); ";
@@ -161,7 +162,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_validAsOperatorTest) {
     NES_INFO("Valid as operator test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     std::string queryString = "Query::from(\"default_logical\").as(\"dl\").filter(Attribute(\"value\") > 100); ";
 
@@ -174,7 +175,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_invalidAsOperatorTest) {
     NES_INFO("Invalid as operator test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     std::string queryString = "Query::from(\"default_logical\").as(\"value\").filter(Attribute(\"value\") > 100); ";
 
@@ -187,7 +188,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_validProjectionTest) {
     NES_INFO("Valid projection test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     auto query = Query::from("default_logical")
                      .project(Attribute("id").rename("new_id"), Attribute("value"))
@@ -204,7 +205,7 @@ TEST_F(SemanticQueryValidationTest, DISABLED_invalidProjectionTest) {
     NES_INFO("Invalid projection test");
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     auto query = Query::from("default_logical")
                      .map(Attribute("value") = Attribute("value") + 2)
