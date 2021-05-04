@@ -20,4 +20,11 @@
 #ifndef NES_NODELOCATIONPOD_HPP
 #define NES_NODELOCATIONPOD_HPP
 
+struct NodeLocationPOD{
+    uint64_t nodeId;
+    std::string hostname;
+    uint32_t port;
+
+};
+
 #endif//NES_NODELOCATIONPOD_HPP
