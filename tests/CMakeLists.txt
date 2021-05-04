@@ -265,7 +265,7 @@ target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRA
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
 # Type inference test
-add_executable(type-inference-tests "UnitTests/Phases/TypeInferencePhaseTest.cpp")
+add_executable(type-inference-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp")
 target_link_libraries(type-inference-tests nes ${GTEST_LIBRARIES})
 add_test(NAME type-inference-tests COMMAND type-inference-tests)
 
@@ -320,7 +320,7 @@ target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
 
 ### Query Merger Phase Tests ###
-add_executable(global-query-plan-update-phase-tests "UnitTests/Phases/GlobalQueryPlanUpdatePhaseTest.cpp")
+add_executable(global-query-plan-update-phase-tests "UnitTests/Optimizer/Phases/GlobalQueryPlanUpdatePhaseTest.cpp")
 target_link_libraries(global-query-plan-update-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-update-phase-tests COMMAND global-query-plan-update-phase-tests)
 

@@ -17,10 +17,9 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 BinaryOperatorSortRulePtr BinaryOperatorSortRule::create() {
     return std::make_shared<BinaryOperatorSortRule>(BinaryOperatorSortRule());

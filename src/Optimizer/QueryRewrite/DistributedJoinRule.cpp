@@ -14,20 +14,15 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 
-#include <algorithm>
-namespace NES {
+namespace NES::Optimizer {
 
 DistributeJoinRule::DistributeJoinRule() {}
 
@@ -65,4 +60,4 @@ QueryPlanPtr DistributeJoinRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

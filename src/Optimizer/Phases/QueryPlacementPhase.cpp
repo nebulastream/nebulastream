@@ -20,7 +20,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)

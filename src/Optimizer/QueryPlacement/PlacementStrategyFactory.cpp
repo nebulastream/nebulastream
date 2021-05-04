@@ -18,7 +18,7 @@
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 std::unique_ptr<BasePlacementStrategy>
 PlacementStrategyFactory::getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
@@ -37,4 +37,4 @@ PlacementStrategyFactory::getStrategy(std::string strategyName, GlobalExecutionP
     }
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

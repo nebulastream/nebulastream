@@ -14,17 +14,13 @@
     limitations under the License.
 */
 
-#include "Exceptions/InvalidQueryException.hpp"
+#include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/QueryValidation/SyntacticQueryValidation.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger.hpp>
-#include <string.h>
-#include <z3++.h>
 
-namespace NES {
+namespace NES::Optimizer {
 
-void NES::SyntacticQueryValidation::checkValidity(std::string inputQuery) {
+void SyntacticQueryValidation::checkValidity(std::string inputQuery) {
     try {
         // Compiling the query string to an object
         // If it's unsuccessful, the validity check fails
@@ -34,7 +30,7 @@ void NES::SyntacticQueryValidation::checkValidity(std::string inputQuery) {
     }
 }
 
-QueryPtr NES::SyntacticQueryValidation::checkValidityAndGetQuery(std::string inputQuery) {
+QueryPtr SyntacticQueryValidation::checkValidityAndGetQuery(std::string inputQuery) {
     QueryPtr query;
     try {
         // Compiling the query string to an object
@@ -48,7 +44,7 @@ QueryPtr NES::SyntacticQueryValidation::checkValidityAndGetQuery(std::string inp
     return query;
 }
 
-void NES::SyntacticQueryValidation::handleException(const std::exception& ex) {
+void SyntacticQueryValidation::handleException(const std::exception& ex) {
 
     // We only keep the meaningful part of the exception message for better readability
     std::string error_message = ex.what();
@@ -69,4 +65,4 @@ void NES::SyntacticQueryValidation::handleException(const std::exception& ex) {
     throw InvalidQueryException(clean_error_message + "\n");
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

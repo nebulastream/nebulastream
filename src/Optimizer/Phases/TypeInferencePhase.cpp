@@ -20,11 +20,9 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {
     NES_DEBUG("TypeInferencePhase()");
@@ -85,4 +83,4 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan) {
     }
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

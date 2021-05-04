@@ -14,31 +14,28 @@
     limitations under the License.
 */
 
+#include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/OperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger.hpp>
 #include <string.h>
 #include <z3++.h>
 
-namespace NES {
+namespace NES::Optimizer {
 
-NES::SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr scp) { streamCatalog = scp; }
+SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr scp) { streamCatalog = scp; }
 
-SemanticQueryValidationPtr NES::SemanticQueryValidation::create(StreamCatalogPtr scp) {
+SemanticQueryValidationPtr SemanticQueryValidation::create(StreamCatalogPtr scp) {
     return std::make_shared<SemanticQueryValidation>(scp);
 }
 
-void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
+void SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
 
     // Creating a z3 context for the signature inference and the z3 solver
     z3::ContextPtr context = std::make_shared<z3::context>();
@@ -82,7 +79,7 @@ void NES::SemanticQueryValidation::checkSatisfiability(QueryPtr inputQuery) {
     }
 }
 
-void NES::SemanticQueryValidation::handleException(std::string& predicateString) {
+void SemanticQueryValidation::handleException(std::string& predicateString) {
 
     // Removing unnecessary data from the error messages for better readability
     eraseAllSubStr(predicateString, "[INTEGER]");
@@ -107,14 +104,14 @@ void NES::SemanticQueryValidation::handleException(std::string& predicateString)
                                 + "\n");
 }
 
-void NES::SemanticQueryValidation::eraseAllSubStr(std::string& mainStr, const std::string& toErase) {
+void SemanticQueryValidation::eraseAllSubStr(std::string& mainStr, const std::string& toErase) {
     size_t pos = std::string::npos;
     while ((pos = mainStr.find(toErase)) != std::string::npos) {
         mainStr.erase(pos, toErase.length());
     }
 }
 
-void NES::SemanticQueryValidation::findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr) {
+void SemanticQueryValidation::findAndReplaceAll(std::string& data, std::string toSearch, std::string replaceStr) {
     size_t pos = data.find(toSearch);
     while (pos != std::string::npos) {
         data.replace(pos, toSearch.size(), replaceStr);
@@ -122,7 +119,7 @@ void NES::SemanticQueryValidation::findAndReplaceAll(std::string& data, std::str
     }
 }
 
-void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
+void SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPlan, StreamCatalogPtr streamCatalog) {
 
     // Getting the source operators from the query plan
     auto sourceOperators = queryPlan->getSourceOperators();
@@ -143,4 +140,4 @@ void NES::SemanticQueryValidation::sourceValidityCheck(NES::QueryPlanPtr queryPl
     }
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

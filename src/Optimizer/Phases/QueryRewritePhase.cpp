@@ -23,7 +23,7 @@
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 QueryRewritePhasePtr QueryRewritePhase::create(bool applyRulesImprovingSharingIdentification) {
     return std::make_shared<QueryRewritePhase>(QueryRewritePhase(applyRulesImprovingSharingIdentification));
@@ -51,4 +51,4 @@ QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr queryPlan) {
     return filterPushDownRule->apply(duplicateQueryPlan);
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

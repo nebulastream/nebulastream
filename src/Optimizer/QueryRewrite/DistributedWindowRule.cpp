@@ -14,24 +14,18 @@
     limitations under the License.
 */
 
-#include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/WatermarkAssignerLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <algorithm>
-
-#include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/SliceAggregationTriggerActionDescriptor.hpp>
-#include <Windowing/WindowActions/SliceCombinerTriggerActionDescriptor.hpp>
-namespace NES {
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+
+namespace NES::Optimizer {
 
 DistributeWindowRule::DistributeWindowRule() {}
 
@@ -185,4 +179,4 @@ void DistributeWindowRule::createDistributedWindowOperator(WindowOperatorNodePtr
     }
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

@@ -38,7 +38,7 @@
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 AttributeSortRulePtr AttributeSortRule::create() { return std::make_shared<AttributeSortRule>(); }
 

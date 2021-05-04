@@ -19,9 +19,8 @@
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 ProjectBeforeUnionOperatorRulePtr ProjectBeforeUnionOperatorRule::create() {
     return std::make_shared<ProjectBeforeUnionOperatorRule>(ProjectBeforeUnionOperatorRule());
@@ -74,4 +73,4 @@ LogicalOperatorNodePtr ProjectBeforeUnionOperatorRule::constructProjectOperator(
     return LogicalOperatorFactory::createProjectionOperator(projectExpressions);
 }
 
-}// namespace NES
+}// namespace NES::Optimizer
