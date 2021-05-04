@@ -606,7 +606,7 @@ void assertKiller() {
                                   uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager),
-                         std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+                         std::move(compiler), nullptr, nodeEngineId, numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
@@ -634,7 +634,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
                                   uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
-                         std::move(partitionManager), std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+                         std::move(partitionManager), std::move(compiler), nullptr, nodeEngineId, numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
@@ -690,7 +690,7 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
                                   uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
                                   uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
             : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
-                         std::move(partitionManager), std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+                         std::move(partitionManager), std::move(compiler), nullptr, nodeEngineId, numberOfBuffersInGlobalBufferManager,
                          numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
