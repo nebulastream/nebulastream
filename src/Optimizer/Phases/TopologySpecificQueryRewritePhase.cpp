@@ -17,13 +17,10 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
-#include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
-#include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 TopologySpecificQueryRewritePhasePtr TopologySpecificQueryRewritePhase::create(StreamCatalogPtr streamCatalog) {
     return std::make_shared<TopologySpecificQueryRewritePhase>(TopologySpecificQueryRewritePhase(streamCatalog));
@@ -43,4 +40,4 @@ QueryPlanPtr TopologySpecificQueryRewritePhase::execute(QueryPlanPtr queryPlan) 
     return distributeWindowRule->apply(queryPlan);
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

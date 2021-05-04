@@ -17,11 +17,16 @@
 #ifndef NES_QueryPlacementRefinementPhase_HPP
 #define NES_QueryPlacementRefinementPhase_HPP
 
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <memory>
 
-namespace NES {
+namespace {
+class GlobalExecutionPlan;
+typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+}// namespace
+
+namespace NES::Optimizer {
+
 class QueryPlacementRefinementPhase;
 typedef std::shared_ptr<QueryPlacementRefinementPhase> QueryPlacementRefinementPhasePtr;
 
@@ -46,5 +51,5 @@ class QueryPlacementRefinementPhase {
 
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_QueryPlacementRefinementPhase_HPP

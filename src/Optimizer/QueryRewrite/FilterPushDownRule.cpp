@@ -29,7 +29,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <queue>
 
-namespace NES {
+namespace NES::Optimizer {
 
 FilterPushDownRulePtr FilterPushDownRule::create() { return std::make_shared<FilterPushDownRule>(FilterPushDownRule()); }
 
@@ -166,4 +166,4 @@ std::string FilterPushDownRule::getFieldNameUsedByMapOperator(NodePtr node) cons
     return mapFieldName;
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

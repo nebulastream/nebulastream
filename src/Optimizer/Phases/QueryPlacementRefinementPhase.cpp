@@ -14,9 +14,10 @@
     limitations under the License.
 */
 
-#include <Phases/QueryPlacementRefinementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementRefinementPhase.hpp>
 #include <Util/Logger.hpp>
-namespace NES {
+
+namespace NES::Optimizer {
 
 QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExecutionPlanPtr globalPlan) {
     return std::make_shared<QueryPlacementRefinementPhase>(QueryPlacementRefinementPhase(globalPlan));
@@ -33,4 +34,4 @@ bool QueryPlacementRefinementPhase::execute(QueryId queryId) {
     return true;
 }
 
-}// namespace NES
+}// namespace NES::Optimizer
