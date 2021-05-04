@@ -128,4 +128,4 @@ GlobalQueryPlanPtr GlobalQueryPlanUpdatePhase::execute(const std::vector<NESRequ
     }
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

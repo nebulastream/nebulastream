@@ -305,4 +305,4 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
     return childNodes;
 }
 
-}// namespace NES
+}// namespace NES::Optimizer
