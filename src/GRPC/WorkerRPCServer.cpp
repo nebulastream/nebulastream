@@ -142,19 +142,17 @@ Status WorkerRPCServer::UpdateNetworkSinks(ServerContext*, const UpdateNetworkSi
                                            UpdateNetworkSinksReply* reply) {
     NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: got request for " << request->queryid());
     auto queryId = request->queryid();
-    auto length = request->networksinks_size();
-    std::map<QuerySubPlanId , OperatorNodePtr> querySubPlanToOperatorMap;
-    for(int i = 0; i< length; i++){
-        auto networkSinkMessage = request->networksinks(i);
-        auto serializedOperator = networkSinkMessage.networksink();
-        auto deserializedOperator = OperatorSerializationUtil::deserializeOperator((SerializableOperator*) &serializedOperator);
-        auto querySubPlanId = networkSinkMessage.querysubplanid();
-        querySubPlanToOperatorMap[querySubPlanId] = deserializedOperator;
+    uint64_t nodeId = request->nodeid();
+    std::string hostname = request->hostname();
+    uint32_t port = request->port();
+    std::map<QuerySubPlanId ,OperatorId> queryIdToOperatorIdMap;
+    for(uint32_t i=0; i<request->destinationoperatorid_size(); i++){
+        queryIdToOperatorIdMap[request->querysubplanid(i)] = request->destinationoperatorid(i);
     }
 
 
 
-    bool success = nodeEngine->updateNetworkSinks(queryId,querySubPlanToOperatorMap);
+    bool success = nodeEngine->updateNetworkSinks(queryId,nodeId,hostname,port, queryIdToOperatorIdMap);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
