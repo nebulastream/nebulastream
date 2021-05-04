@@ -20,6 +20,8 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
+#include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
+#include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
@@ -68,7 +70,9 @@ const CodeGenerationPhasePtr DefaultPhaseFactory::createCodeGenerationPhase(Quer
 }
 const LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr) {
     NES_DEBUG("Create lower to executable query plan phase");
-    return LowerToExecutableQueryPlanPhase::create();
+    auto sourceProvider = DataSourceProvider::create();
+    auto sinkProvider = DataSinkProvider::create();
+    return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
 }// namespace Phases
 }// namespace QueryCompilation

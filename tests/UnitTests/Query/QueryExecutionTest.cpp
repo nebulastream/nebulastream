@@ -415,7 +415,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan=" << queryPlan->toString() << std::endl;
 
@@ -483,9 +483,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto testSink = TestSink::create(/*expected result buffer*/ 1, windowResultSchema, nodeEngine->getBufferManager());
     query.sink(DummySink::create());
 
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan=" << queryPlan->toString() << std::endl;
 
@@ -569,7 +569,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan=" << queryPlan->toString() << std::endl;
 
@@ -647,7 +647,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     NES_DEBUG(" QueryExecutionTest: plan=" << queryPlan->toString());
 
@@ -722,7 +722,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     NES_DEBUG("QueryExecutionTest: plan=" << queryPlan->toString());
 
@@ -809,7 +809,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
+Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     NES_DEBUG(" QueryExecutionTest: plan=" << queryPlan->toString());
 

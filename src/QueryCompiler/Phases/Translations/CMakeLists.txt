@@ -20,5 +20,7 @@ add_source_nes(
         LowerToExecutableQueryPlanPhase.cpp
         GeneratableOperatorProvider.cpp
         DefaultGeneratableOperatorProvider.cpp
+        DataSinkProvider.cpp
+        DataSourceProvider.cpp
 )
 

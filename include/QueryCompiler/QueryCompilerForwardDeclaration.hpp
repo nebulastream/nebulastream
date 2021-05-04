@@ -142,6 +142,11 @@ typedef std::shared_ptr<PipeliningPhase> PipeliningPhasePtr;
 class OperatorFusionPolicy;
 typedef std::shared_ptr<OperatorFusionPolicy> OperatorFusionPolicyPtr;
 
+class DataSinkProvider;
+typedef std::shared_ptr<DataSinkProvider> DataSinkProviderPtr;
+
+class DataSourceProvider;
+typedef std::shared_ptr<DataSourceProvider> DataSourceProviderPtr;
 namespace Phases {
 
 class PhaseFactory;
