@@ -26,6 +26,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <sstream>
 #include <string>
+#include <fstream>
 
 namespace NES {
 using NodeEngine::TupleBuffer;
