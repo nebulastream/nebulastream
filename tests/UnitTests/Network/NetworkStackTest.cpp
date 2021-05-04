@@ -708,7 +708,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
             Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, std::promise<bool>& completed,
             NesPartition nesPartition, std::atomic<int>& bufferCnt)
             : NodeEngine(std::move(streamConf), std::move(bufferManager), std::move(queryManager),
-                         std::move(networkManagerCreator), std::move(partitionManager), std::move(queryCompiler), 0, 64, 64, 12),
+                         std::move(networkManagerCreator), std::move(partitionManager), std::move(queryCompiler), nullptr, 0, 64, 64, 12),
               completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt) {}
         void onDataBuffer(Network::NesPartition id, TupleBuffer&) override {
             if (nesPartition == id) {
