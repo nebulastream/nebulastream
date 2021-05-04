@@ -829,17 +829,17 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // created buffer per source * number of sources
     uint64_t expectedBuf = 20;
 
-    auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1, 12);
+    //auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+    //                                                                 nodeEngine->getQueryManager(), 1, 12);
 
-    auto query1 = TestQuery::from(testSource1->getSchema());
+    auto query1 = TestQuery::from(testSchema);
 
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
-    auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                     nodeEngine->getQueryManager(), 1, 12);
-    auto query2 = TestQuery::from(testSource2->getSchema()).filter(Attribute("id") <= 5);
+   // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+    //                                                                 nodeEngine->getQueryManager(), 1, 12);
+    auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
 
     // creating P3
     // merge does not change schema
@@ -850,18 +850,18 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+   // auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+   // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
-                       .setCompiler(nodeEngine->getCompiler())
+                   //    .setCompiler(nodeEngine->getCompiler())
                        .addOperatorQueryPlan(generatableOperators)
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
-                       .addSource(testSource1)
-                       .addSource(testSource2)
+                      // .addSource(testSource1)
+                      // .addSource(testSource2)
                        .addSink(testSink);
 
     auto plan = builder.build();
@@ -907,7 +907,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     }
 
     testSink->shutdown();
-    testSource1->stop(false);
-    testSource2->stop(false);
+  //  testSource1->stop(false);
+  //  testSource2->stop(false);
     testSink->cleanupBuffers();
 }
