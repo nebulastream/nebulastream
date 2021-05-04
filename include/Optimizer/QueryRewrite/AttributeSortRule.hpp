@@ -23,7 +23,7 @@
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 
-namespace NES {
+namespace NES::Optimizer {
 
 class AttributeSortRule;
 typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
@@ -122,5 +122,5 @@ class AttributeSortRule : public BaseRewriteRule {
      */
     std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_ATTRIBUTESORTRULE_HPP

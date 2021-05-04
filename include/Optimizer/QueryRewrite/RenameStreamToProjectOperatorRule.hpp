@@ -19,7 +19,7 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 class RenameStreamToProjectOperatorRule;
 typedef std::shared_ptr<RenameStreamToProjectOperatorRule> RenameStreamToProjectOperatorRulePtr;
@@ -45,6 +45,6 @@ class RenameStreamToProjectOperatorRule : public BaseRewriteRule {
     OperatorNodePtr convert(OperatorNodePtr operatorNode);
 };
 
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_RENAMESTREAMTOPROJECTOPERATORRULE_HPP

@@ -21,9 +21,11 @@
 #include <memory>
 
 namespace NES {
-
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
 
 class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
 
@@ -63,6 +65,6 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
         }
     }
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_IMPL_OPTIMIZER_QUERYREWRITE_BASERULE_HPP_

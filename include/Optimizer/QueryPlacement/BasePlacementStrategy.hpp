@@ -57,14 +57,17 @@ typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
-class TypeInferencePhase;
-typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
-
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 class SourceLogicalOperatorNode;
 typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class TypeInferencePhase;
+typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
@@ -161,5 +164,5 @@ class BasePlacementStrategy {
      */
     void addExecutionNodeAsRoot(ExecutionNodePtr& executionNode);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NESPLACEMENTOPTIMIZER_HPP

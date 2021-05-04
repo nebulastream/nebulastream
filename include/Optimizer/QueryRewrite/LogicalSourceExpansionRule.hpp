@@ -31,7 +31,9 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+}// namespace NES
 
+namespace NES::Optimizer {
 class LogicalSourceExpansionRule;
 typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
 
@@ -106,5 +108,5 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      */
     std::tuple<OperatorNodePtr, std::set<OperatorNodePtr>> getLogicalGraphToDuplicate(OperatorNodePtr operatorNode);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_LOGICALSOURCEEXPANSIONRULE_HPP

@@ -24,6 +24,10 @@ namespace NES {
 class BinaryOperatorNode;
 typedef std::shared_ptr<BinaryOperatorNode> BinaryOperatorNodePtr;
 
+}// namespace NES
+
+namespace NES::Optimizer {
+
 class BinaryOperatorSortRule;
 typedef std::shared_ptr<BinaryOperatorSortRule> BinaryOperatorSortRulePtr;
 
@@ -53,6 +57,6 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
 
     BinaryOperatorSortRule();
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_BINARYOPERATORSORTRULE_HPP

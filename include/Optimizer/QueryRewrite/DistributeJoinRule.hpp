@@ -19,8 +19,6 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-#include <memory>
-
 namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
