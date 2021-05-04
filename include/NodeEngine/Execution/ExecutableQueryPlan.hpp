@@ -61,7 +61,7 @@ class ExecutableQueryPlan : public Reconfigurable {
     /**
      * @brief Start the query plan, e.g., start window thread.
      */
-    bool start(StateManager* stateManager);
+    bool start(StateManagerPtr stateManager);
 
     /**
      * @brief Stop the query plan and free all associated resources.

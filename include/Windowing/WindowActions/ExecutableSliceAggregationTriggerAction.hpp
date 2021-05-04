@@ -63,7 +63,7 @@ class ExecutableSliceAggregationTriggerAction
         windowTupleLayout = NodeEngine::createRowLayout(this->windowSchema);
     }
 
-    bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
+    bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
                   uint64_t lastWatermark) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction " << id << ": doAction for currentWatermark=" << currentWatermark
                                                              << " lastWatermark=" << lastWatermark);

@@ -85,7 +85,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&,
-                        QueryCompilerPtr&&, uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
+                        QueryCompilerPtr&&, StateManagerPtr&&, uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
                         uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline);
 
     virtual ~NodeEngine();
@@ -189,7 +189,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     * @brief getter of state manager
     * @return stateManager
     */
-    StateManager* getStateManager();
+    StateManagerPtr getStateManager();
 
     /**
      * @brief getter of buffer manager
@@ -264,7 +264,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     BufferManagerPtr bufferManager;
     Network::NetworkManagerPtr networkManager;
     Network::PartitionManagerPtr partitionManager;
-    StateManager* stateManager;
+    StateManagerPtr stateManager;
     QueryCompilerPtr queryCompiler;
     std::atomic<bool> isRunning;
     mutable std::recursive_mutex engineMutex;

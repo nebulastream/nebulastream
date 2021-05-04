@@ -21,7 +21,7 @@
 #include <mutex>
 #include <unordered_map>
 namespace NES {
-
+namespace NodeEngine {
 /**
  * This class is the entry point for stateful operators that require state
  * This class is used as a singleton and creates StateVariable<K, V>, i.e., mutable data set of key-value pairs.
@@ -35,6 +35,7 @@ class StateManager {
     std::unordered_map<std::string, state_variable_base_type> state_variables;
 
   public:
+    StateManager() = default;
 
     /**
      * Register a new StateVariable object with default value callback
@@ -107,7 +108,10 @@ class StateManager {
     //static StateManager& instance();
 
     ~StateManager() {
-        NES_DEBUG("~StateManager()");
+        destroy();
+    }
+
+    void destroy() {
         std::unique_lock<std::mutex> lock(mutex);
         for (auto& it : state_variables) {
             delete it.second;
@@ -115,5 +119,6 @@ class StateManager {
         state_variables.clear();
     }
 };
+}// namespace NodeEngine
 }// namespace NES
 #endif//STATEMANAGER_HPP

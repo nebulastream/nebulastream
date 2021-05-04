@@ -16,14 +16,15 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
+#include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
+#include <State/StateManager.hpp>
 
 namespace NES::Windowing {
 
@@ -58,15 +59,16 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     ~AggregationWindowHandler() {
         NES_DEBUG("~AggregationWindowHandler(" << handlerType << "," << id << ")  finished destructor");
+        stop();
     }
 
     /**
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start(StateManager* stateManager) override {
-        this->stateManager = stateManager;
+    bool start(NodeEngine::StateManagerPtr stateManager) override {
         std::unique_lock lock(windowMutex);
+        this->stateManager = stateManager;
         auto expected = false;
         auto defaultCallback = [](const KeyType&) {
           return new Windowing::WindowSliceStore<PartialAggregateType>(0);
@@ -85,7 +87,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     bool stop() override {
-        std::unique_lock lock(windowMutex);
+//        std::unique_lock lock(windowMutex);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop called");
         auto expected = true;
         bool result = false;
@@ -253,10 +255,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         //for agg handler we create a unique id from the
         this->windowManager =
             std::make_shared<WindowManager>(windowDefinition->getWindowType(), windowDefinition->getAllowedLateness(), id);
-        // Initialize StateVariable
-
-
-
         executableWindowAction->setup(pipelineExecutionContext);
         return true;
     }
@@ -277,7 +275,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
   private:
-    StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
+    NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
@@ -285,7 +283,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     uint64_t id;
     mutable std::recursive_mutex windowMutex;
     std::atomic<bool> isRunning;
-    StateManager* stateManager;
+    NodeEngine::StateManagerPtr stateManager;
 };
 
 }// namespace NES::Windowing

@@ -93,7 +93,7 @@ bool ExecutableQueryPlan::setup() {
     return true;
 }
 
-bool ExecutableQueryPlan::start(StateManager* stateManager) {
+bool ExecutableQueryPlan::start(StateManagerPtr stateManager) {
     NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
     auto expected = Deployed;
     if (qepStatus.compare_exchange_strong(expected, Running)) {

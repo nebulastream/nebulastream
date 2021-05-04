@@ -326,7 +326,6 @@ template<class KeyType, class InputType, class PartialAggregateType, class Final
 std::shared_ptr<Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>>
 createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema) {
 
-    StateManager stateManager;
     auto aggregation = sumType::create();
     auto trigger = Windowing::ExecutableOnTimeTriggerPolicy::create(1000);
     auto triggerAction = Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(
@@ -553,6 +552,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
     auto stateVar = windowHandler->getTypedWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
+    windowHandler->stop();
 }
 
 /**
@@ -689,6 +689,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
     EXPECT_EQ(results[9], 210);
     EXPECT_EQ(results[10], 5);
     EXPECT_EQ(results[11], 12);
+    windowHandler->stop();
 }
 
 TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {

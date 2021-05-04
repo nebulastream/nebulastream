@@ -74,7 +74,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @brief Starts a pipeline stage
      * @return boolean if successful
      */
-    bool start(StateManager* stateManager);
+    bool start(StateManagerPtr stateManager);
 
     /**
      * @brief Stops pipeline stage

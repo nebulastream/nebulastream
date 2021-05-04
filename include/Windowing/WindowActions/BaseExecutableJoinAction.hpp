@@ -30,8 +30,8 @@ class BaseExecutableJoinAction {
      * @brief This function does the action
      * @return bool indicating success
      */
-    virtual bool doAction(StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
-                          StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
+    virtual bool doAction(NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
+                          NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
                           uint64_t currentWatermark, uint64_t lastWatermark) = 0;
 
     virtual std::string toString() = 0;

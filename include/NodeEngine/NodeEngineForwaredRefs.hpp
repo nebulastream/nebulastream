@@ -67,6 +67,9 @@ typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 class QueryManager;
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
+class StateManager;
+typedef std::shared_ptr<StateManager> StateManagerPtr;
+
 class QueryStatistics;
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 

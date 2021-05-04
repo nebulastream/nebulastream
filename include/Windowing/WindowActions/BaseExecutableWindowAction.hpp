@@ -18,6 +18,8 @@
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <State/StateManager.hpp>
+#include <State/StateVariable.hpp>
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
@@ -34,7 +36,7 @@ class BaseExecutableWindowAction {
      * @param lastWatermark
      * @return bool indicating success
      */
-    virtual bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
+    virtual bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                           uint64_t currentWatermark, uint64_t lastWatermark) = 0;
 
     virtual std::string toString() = 0;

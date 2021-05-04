@@ -142,7 +142,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(Execution::ExecutableQueryPlanPtr qep, StateManager* stateManager);
+    bool startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager);
 
     /**
      * @brief method to start a query

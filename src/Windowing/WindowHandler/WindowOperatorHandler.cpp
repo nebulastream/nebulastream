@@ -39,7 +39,9 @@ LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() { return
 void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHandler) { this->windowHandler = windowHandler; }
 
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
-void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, StateManager* stateManager) { windowHandler->start(stateManager); }
+void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, NodeEngine::StateManagerPtr stateManager) {
+    windowHandler->start(stateManager);
+}
 void WindowOperatorHandler::stop(NodeEngine::Execution::PipelineExecutionContextPtr) { windowHandler->stop(); }
 void WindowOperatorHandler::reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);

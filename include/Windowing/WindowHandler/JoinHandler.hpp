@@ -20,6 +20,7 @@
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <State/StateManager.hpp>
+#include <State/StateVariable.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -63,7 +64,7 @@ class JoinHandler : public AbstractJoinHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start(StateManager* stateManager) override {
+    bool start(NodeEngine::StateManagerPtr stateManager) override {
         std::unique_lock lock(mutex);
         this->stateManager = stateManager;
         NES_DEBUG("JoinHandler start id=" << id << " " << this);
@@ -320,12 +321,12 @@ class JoinHandler : public AbstractJoinHandler {
   private:
     std::recursive_mutex mutex;
     std::atomic<bool> isRunning;
-    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* leftJoinState;
-    StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>* rightJoinState;
+    NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* leftJoinState;
+    NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>* rightJoinState;
     Join::BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction;
     uint64_t id;
     std::atomic<uint32_t> refCnt;
-    StateManager* stateManager;
+    NodeEngine::StateManagerPtr stateManager;
 };
 }// namespace NES::Join
 #endif//NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
