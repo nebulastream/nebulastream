@@ -570,7 +570,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
     // we should have a mutex here on work
     // TODO add check?
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
-    auto weakQep = std::make_any<std::weak_ptr<Execution::NewExecutableQueryPlan>>(executableQueryPlan);
+
 
     // todo adopt this code for multiple source pipelines
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
@@ -580,6 +580,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         auto buffer = optBuffer.value();
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
+        auto weakQep = std::make_any<std::weak_ptr<Execution::NewExecutableQueryPlan>>(executableQueryPlan);
         if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&successor)) {
             new (buffer.getBuffer())
                 ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(), SoftEndOfStream,
