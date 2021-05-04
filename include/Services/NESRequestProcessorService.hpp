@@ -17,7 +17,7 @@
 #ifndef NES_NESREQUESTPROCESSORSERVICE_HPP
 #define NES_NESREQUESTPROCESSORSERVICE_HPP
 
-#include <Phases/QueryMergerPhase.hpp>
+#include <Optimizer/Phases/QueryMergerPhase.hpp>
 #include <memory>
 
 namespace z3 {

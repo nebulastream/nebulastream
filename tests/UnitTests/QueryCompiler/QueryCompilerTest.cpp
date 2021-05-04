@@ -48,9 +48,9 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>

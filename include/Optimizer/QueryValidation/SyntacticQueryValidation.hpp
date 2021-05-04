@@ -17,11 +17,9 @@
 #ifndef NES_OPTIMIZE_SYNTACTIC_QUERY_VALIDATION_HPP
 #define NES_OPTIMIZE_SYNTACTIC_QUERY_VALIDATION_HPP
 
-#include <API/Query.hpp>
-#include <API/Schema.hpp>
 #include <memory>
 
-namespace NES {
+namespace NES::Optimizer {
 
 /**
  * @brief This class is responsible for Syntactic Query Validation
@@ -47,6 +45,6 @@ class SyntacticQueryValidation {
 
 typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
 
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_OPTIMIZE_SYNTACTIC_QUERY_VALIDATION_HPP

@@ -17,26 +17,26 @@
 // clang-format off
 #include <gtest/gtest.h>
 // clang-format on
-#include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include <API/Schema.hpp>
-#include <Util/Logger.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
+#include <API/Schema.hpp>
+#include <API/Windowing.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
-#include <iostream>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
+#include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Optimizer/Utils/SignatureEqualityUtil.hpp>
-#include <z3++.h>
-#include <Phases/TypeInferencePhase.hpp>
+#include <Util/Logger.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
-#include <API/Windowing.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <iostream>
+#include <z3++.h>
 
 using namespace NES;
 

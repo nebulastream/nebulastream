@@ -14,13 +14,13 @@
     limitations under the License.
 */
 
+#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeJoinRule.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Optimizer/QueryRewrite/ProjectBeforeUnionOperatorRule.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
-#include <Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
 namespace NES {

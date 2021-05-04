@@ -19,9 +19,9 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>

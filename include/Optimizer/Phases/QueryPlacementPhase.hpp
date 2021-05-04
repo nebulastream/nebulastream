@@ -21,24 +21,26 @@
 
 namespace NES {
 
-class QueryPlacementPhase;
-typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
-
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
 
-class TypeInferencePhase;
-typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
-
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class GlobalExecutionPlan;
 typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+}// namespace NES
 
+namespace NES::Optimizer {
+
+class QueryPlacementPhase;
+typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
+
+class TypeInferencePhase;
+typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 /**
  * @brief This class is responsible for placing operators of an input query plan on a global execution plan.
  */
@@ -66,5 +68,5 @@ class QueryPlacementPhase {
     TypeInferencePhasePtr typeInferencePhase;
     StreamCatalogPtr streamCatalog;
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_QUERYPLACEMENTPHASE_HPP

@@ -23,8 +23,8 @@
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>

@@ -17,7 +17,7 @@
 #include <util/BenchmarkUtils.hpp>
 
 #include "../../../tests/util/DummySink.hpp"
-#include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>

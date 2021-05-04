@@ -24,12 +24,16 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
-class TypeInferencePhase;
-typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class TypeInferencePhase;
+typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 
 /**
  * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
@@ -68,6 +72,6 @@ class TypeInferencePhase {
     explicit TypeInferencePhase(StreamCatalogPtr streamCatalog);
     StreamCatalogPtr streamCatalog;
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//NES_INCLUDE_NODES_PHASES_TYPEINFERENCEPHASE_HPP_

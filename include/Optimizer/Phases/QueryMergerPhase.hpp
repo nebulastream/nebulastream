@@ -19,6 +19,7 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <iostream>
+#include <map>
 
 namespace z3 {
 class context;

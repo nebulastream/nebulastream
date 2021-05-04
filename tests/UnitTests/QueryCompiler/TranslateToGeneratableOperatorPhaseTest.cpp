@@ -36,9 +36,9 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>

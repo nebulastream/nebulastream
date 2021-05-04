@@ -33,7 +33,7 @@
 #include "../../util/TestQuery.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <Sinks/Formats/NesFormat.hpp>

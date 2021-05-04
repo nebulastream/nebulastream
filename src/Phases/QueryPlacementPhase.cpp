@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
-#include <Phases/QueryPlacementPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 

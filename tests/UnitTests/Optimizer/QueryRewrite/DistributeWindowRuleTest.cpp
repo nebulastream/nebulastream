@@ -18,27 +18,26 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Topology/TopologyNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Phases/TypeInferencePhase.hpp>
-#include <Util/Logger.hpp>
-#include <iostream>
-#include <Windowing/TimeCharacteristic.hpp>
-#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
-#include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
 #include <Operators/LogicalOperators/Windowing/SliceCreationOperator.hpp>
 #include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Operators/OperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/Logger.hpp>
+#include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <Windowing/WindowTypes/WindowType.hpp>
+#include <iostream>
 using namespace NES;
 
 class DistributeWindowRuleTest : public testing::Test {

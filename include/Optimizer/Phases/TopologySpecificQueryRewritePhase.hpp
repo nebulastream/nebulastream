@@ -20,14 +20,18 @@
 #include <memory>
 
 namespace NES {
-class TopologySpecificQueryRewritePhase;
-typedef std::shared_ptr<TopologySpecificQueryRewritePhase> TopologySpecificQueryRewritePhasePtr;
 
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class TopologySpecificQueryRewritePhase;
+typedef std::shared_ptr<TopologySpecificQueryRewritePhase> TopologySpecificQueryRewritePhasePtr;
 
 class LogicalSourceExpansionRule;
 typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
@@ -60,5 +64,5 @@ class TopologySpecificQueryRewritePhase {
     DistributeWindowRulePtr distributeWindowRule;
     DistributeJoinRulePtr distributeJoinRule;
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_TOPOLOGYSPECIFICQUERYREWRITEPHASE_HPP

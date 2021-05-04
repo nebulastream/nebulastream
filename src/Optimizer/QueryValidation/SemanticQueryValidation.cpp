@@ -21,10 +21,10 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryMerger/Signature/QuerySignature.hpp>
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <string.h>

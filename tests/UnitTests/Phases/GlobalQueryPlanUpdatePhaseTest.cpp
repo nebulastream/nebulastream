@@ -22,7 +22,7 @@
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
