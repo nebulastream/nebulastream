@@ -44,7 +44,7 @@ LogicalJoinDefinitionPtr JoinOperatorHandler::getJoinDefinition() { return joinD
 void JoinOperatorHandler::setJoinHandler(AbstractJoinHandlerPtr joinHandler) { this->joinHandler = joinHandler; }
 
 SchemaPtr JoinOperatorHandler::getResultSchema() { return resultSchema; }
-void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, StateManager* stateManager) {
+void JoinOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, NodeEngine::StateManagerPtr stateManager) {
     if (joinHandler) {
         joinHandler->start(stateManager);
     }

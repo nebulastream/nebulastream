@@ -31,6 +31,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
+#include <State/StateManager.hpp>
 
 namespace NES::NodeEngine {
 
@@ -51,6 +52,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
         auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
+        auto stateManager = std::make_shared<StateManager>();
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
             throw Exception("Error while creating partition manager");
@@ -62,6 +64,10 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
         if (!queryManager) {
             NES_ERROR("NodeEngine: error while creating queryManager");
             throw Exception("Error while creating queryManager");
+        }
+        if (!stateManager) {
+            NES_ERROR("NodeEngine: error while creating stateManager");
+            throw Exception("Error while creating stateManager");
         }
         auto compiler = createDefaultQueryCompiler(numberOfBuffersPerPipeline);
         if (!compiler) {
@@ -75,7 +81,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(), numThreads);
             },
-            std::move(partitionManager), std::move(compiler), nodeEngineId, numberOfBuffersInGlobalBufferManager,
+            std::move(partitionManager), std::move(compiler), std::move(stateManager), nodeEngineId, numberOfBuffersInGlobalBufferManager,
             numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline);
         installGlobalErrorListener(engine);
         return engine;
@@ -88,7 +94,8 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
-                       Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler, uint64_t nodeEngineId,
+                       Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler,
+                       StateManagerPtr&& stateManager, uint64_t nodeEngineId,
                        uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool,
                        uint64_t numberOfBuffersPerPipeline)
     : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId),
@@ -103,7 +110,7 @@ NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffer
     this->queryManager = std::move(queryManager);
     this->bufferManager = std::move(bufferManager);
     this->partitionManager = std::move(partitionManager);
-    this->stateManager = new StateManager();
+    this->stateManager = std::move(stateManager);
     // here shared_from_this() does not work because of the machinery behind make_shared
     // as a result, we need to use a trick, i.e., a shared ptr that does not deallocate the node engine
     // plz make sure that ExchangeProtocol never leaks the impl pointer
@@ -397,12 +404,13 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     queryManager->destroy();
     networkManager->destroy();
     bufferManager->destroy();
+    stateManager->destroy();
     return !withError;
 }
 
 BufferManagerPtr NodeEngine::getBufferManager() { return bufferManager; }
 
-StateManager* NodeEngine::getStateManager() { return stateManager; }
+StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 

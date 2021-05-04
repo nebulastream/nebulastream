@@ -67,7 +67,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     * @brief Starts thread to check if the window should be triggered.
     * @return boolean if the window thread is started
     */
-    virtual bool start(StateManager* stateManager) = 0;
+    virtual bool start(NodeEngine::StateManagerPtr stateManager) = 0;
 
     /**
      * @brief Stops the window thread.
