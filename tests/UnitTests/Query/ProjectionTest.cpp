@@ -285,9 +285,6 @@ class TestSink : public SinkMedium {
 
   private:
     void cleanupBuffers() {
-        for (auto& buffer : resultBuffers) {
-            buffer.release();
-        }
         resultBuffers.clear();
     }
 
