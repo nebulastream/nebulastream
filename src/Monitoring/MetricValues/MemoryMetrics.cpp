@@ -19,6 +19,7 @@
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/json.h>
@@ -64,25 +65,33 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
         auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
 
-        std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                   uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>
-            outputTuple;
-        outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t,
-                                                  uint64_t,uint64_t, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(i);
+        auto totalRamFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto totalSwapFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto freeRamFields     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto sharedRamFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto bufferRamFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto freeSwapFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto totalHighFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto freeHighFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto procsFields       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto memUnitFields     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto load1MinFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto load5MinFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        auto load15MinFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
 
-        output.TOTAL_RAM = std::get<0>(outputTuple);
-        output.TOTAL_SWAP = std::get<1>(outputTuple);
-        output.FREE_RAM = std::get<2>(outputTuple);
-        output.SHARED_RAM = std::get<3>(outputTuple);
-        output.BUFFER_RAM = std::get<4>(outputTuple);
-        output.FREE_SWAP = std::get<5>(outputTuple);
-        output.TOTAL_HIGH = std::get<6>(outputTuple);
-        output.FREE_HIGH = std::get<7>(outputTuple);
-        output.PROCS = std::get<8>(outputTuple);
-        output.MEM_UNIT = std::get<9>(outputTuple);
-        output.LOADS_1MIN = std::get<10>(outputTuple);
-        output.LOADS_5MIN = std::get<11>(outputTuple);
-        output.LOADS_15MIN = std::get<12>(outputTuple);
+        output.TOTAL_RAM = totalRamFields[0];
+        output.TOTAL_SWAP = totalSwapFields[0];
+        output.FREE_RAM = freeRamFields[0];
+        output.SHARED_RAM = sharedRamFields[0];
+        output.BUFFER_RAM = bufferRamFields[0];
+        output.FREE_SWAP = freeSwapFields[0];
+        output.TOTAL_HIGH = totalHighFields[0];
+        output.FREE_HIGH = freeHighFields[0];
+        output.PROCS = procsFields[0];
+        output.MEM_UNIT = memUnitFields[0];
+        output.LOADS_1MIN = load1MinFields[0];
+        output.LOADS_5MIN = load5MinFields[0];
+        output.LOADS_15MIN = load15MinFields[0];
     } else {
         NES_THROW_RUNTIME_ERROR("MemoryMetrics: Metrics could not be parsed from schema " + schema->toString());
     }
