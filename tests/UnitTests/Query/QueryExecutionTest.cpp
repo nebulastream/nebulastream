@@ -287,9 +287,6 @@ class TestSink : public SinkMedium {
     SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
     void cleanupBuffers() {
-        for (auto& buffer : resultBuffers) {
-            buffer.release();
-        }
         resultBuffers.clear();
     }
 
