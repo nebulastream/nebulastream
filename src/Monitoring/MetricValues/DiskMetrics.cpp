@@ -22,6 +22,7 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
+#include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <cpprest/json.h>
 #include <cstring>
 
@@ -63,14 +64,18 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& b
     auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t, uint64_t> outputTuple;
-    outputTuple = bindedRowLayout->readRecord<true, uint64_t, uint64_t, uint64_t, uint64_t, uint64_t>(0);
+    auto fBSizeFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto fFrSizeFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto fBlocksFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto fBFreeFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    auto fBAvailFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
 
-    output.fBsize = std::get<0>(outputTuple);
-    output.fFrsize = std::get<1>(outputTuple);
-    output.fBlocks = std::get<2>(outputTuple);
-    output.fBfree = std::get<3>(outputTuple);
-    output.fBavail = std::get<4>(outputTuple);
+
+    output.fBsize = fBSizeFields[0];
+    output.fFrsize = fFrSizeFields[0];
+    output.fBlocks = fBlocksFields[0];
+    output.fBfree = fBFreeFields[0];
+    output.fBavail = fBAvailFields[0];
 
     return output;
 }
