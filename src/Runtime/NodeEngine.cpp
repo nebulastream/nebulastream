@@ -17,6 +17,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
+#include <Network/NodeLocationPOD.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
@@ -443,14 +444,46 @@ void NodeEngine::onFatalException(const std::shared_ptr<std::exception> exceptio
 }
 bool NodeEngine::bufferData(QueryId) { return true; }
 
-bool NodeEngine::updateNetworkSinks(QueryId queryId,std::map<QuerySubPlanId ,OperatorNodePtr> querySubPlanToOperatorMap) {
+bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort,
+                                    const std::map<QuerySubPlanId, std::vector<uint64_t>>& queryToNetworkSinkIdsMap) {
+    NodeEnginePtr self = this->inherited1::shared_from_this();
 
-    NES_DEBUG(queryId);
-    for(auto& entry : querySubPlanToOperatorMap ) {
-        NES_DEBUG(entry.second->toString());
+    NodeLocationPOD pod{newNodeId, newHostname, newPort};
+    for (auto& entry : queryToNetworkSinkIdsMap) {
         NES_DEBUG(entry.first);
+        auto qep = deployedQEPs[entry.first];
+        auto networkSinks = qep->getSinks();
+
+        for(auto sinkId: entry.second){
+            auto it = std::find_if(networkSinks.begin(), networkSinks.end(),[sinkId](const DataSinkPtr& dataSink){
+                                return dataSink->getOperatorId() == sinkId;
+                            });
+            if(it != networkSinks.end()){
+                auto networkSink = *it;
+                ReconfigurationMessage message = ReconfigurationMessage(entry.first,UpdateSinks,networkSink, pod);
+                queryManager->addReconfigurationMessage(entry.first,message,true);
+            }
+        }
+        //auto qepPendingNetworkSinkUpdate = deployedQEPs[querySubPlanId];
+        //       //TODO: for every NetworkSink that has the old node location, update it to new nodeLocation
+        //
+        //        for(auto& dataSink : qepPendingNetworkSinkUpdate->getSinks()){
+        //            NES_DEBUG(oldNodeId);
+        //            NES_DEBUG(oldHostname);
+        //            NES_DEBUG(oldPort);
+        //            //filter out NetworkSinks
+        //            //check if node location matches old data
+        //            //if yes add reconfigurationMessage
+        //            auto networkSink = dataSink.get();
+        //            NES_DEBUG(networkSink->getSinkMediumType());
+        //
+        //            NES_DEBUG(dataSink->toString());
+        //            DataSinkPtr sink;
+        //            ReconfigurationMessage message = ReconfigurationMessage(querySubPlanId,UpdateSinks,dataSink, pod);
+        //            queryManager->addReconfigurationMessage(querySubPlanId,message,true);
     }
     return true;
+    //TODO: update emitFunctionHandler of the last Pipeline of every qep with updated network Sinks
 }
 
 }// namespace NES::Runtime

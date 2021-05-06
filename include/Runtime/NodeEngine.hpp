@@ -160,7 +160,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @param withError true if the node engine stopped with an error
      */
 
-    bool updateNetworkSinks(QueryId queryId, std::map<QuerySubPlanId ,OperatorNodePtr> querySubPlanToOperatorMap);
+    bool updateNetworkSinks(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort, const std::map<QuerySubPlanId , std::vector<uint64_t>>& queryToNetworkSinkIdsMap);
 
     bool stop(bool markQueriesAsFailed = false);
 
