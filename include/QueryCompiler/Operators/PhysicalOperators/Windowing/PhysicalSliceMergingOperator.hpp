@@ -26,7 +26,7 @@ namespace PhysicalOperators {
  * @brief Physical operator for slice merging.
  * This operator receives pre-aggregated slices, e.g., from the slice merger, and merges them in its local operator state.
  */
-class PhysicalSliceMergingOperator : public PhysicalWindowOperator, AbstractEmitOperator {
+class PhysicalSliceMergingOperator : public PhysicalWindowOperator, public AbstractEmitOperator {
   public:
     PhysicalSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                  Windowing::WindowOperatorHandlerPtr handler);
