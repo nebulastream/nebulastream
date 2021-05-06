@@ -53,5 +53,15 @@ Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {
     NES_TRACE("WorkerContext: retrieving channel for operator " << ownerId << " for context " << workerId);
     return channels[ownerId].get();
 }
+void WorkerContext::updateChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel) {
+    auto it = channels.find(id);
+    if (it != channels.end()) {
+        if (it->second) {
+            it->second->shutdownZMQSocket();
+        }
+        channels.erase(it);
+    }
+    channels[id] = std::move(channel);
+}
 
 }// namespace NES::Runtime
