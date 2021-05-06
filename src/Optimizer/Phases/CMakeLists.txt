@@ -15,4 +15,11 @@
 
 add_source_nes(
         SignatureInferencePhase.cpp
+        TopologySpecificQueryRewritePhase.cpp
+        QueryMergerPhase.cpp
+        QueryPlacementRefinementPhase.cpp
+        GlobalQueryPlanUpdatePhase.cpp
+        TypeInferencePhase.cpp
+        QueryPlacementPhase.cpp
+        QueryRewritePhase.cpp
 )

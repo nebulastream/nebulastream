@@ -192,6 +192,10 @@ void DataSource::runningRoutineWithIngestionRate() {
                 // here we got a valid bu fer
                 NES_DEBUG("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
+                buf.setOriginId(operatorId);
+                buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                             std::chrono::high_resolution_clock::now().time_since_epoch())
+                                             .count());
                 queryManager->addWork(this->operatorId, buf);
 
                 buffersProcessedCnt++;
@@ -307,20 +311,26 @@ void DataSource::runningRoutineWithFrequency() {
             //this checks we received a valid output buffer
             if (optBuf.has_value()) {
                 auto& buf = optBuf.value();
-
-                NES_DEBUG("DataSource " << operatorId << " type=" << getType() << " string=" << toString()
-                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
-                                        << " orgID=" << this->operatorId);
-
+                NES_DEBUG("DataSource produced buffer" << operatorId << " type=" << getType() << " string=" << toString()
+                                                       << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                                       << " iteration=" << cnt << " operatorId=" << this->operatorId
+                                                       << " orgID=" << this->operatorId);
                 buf.setOriginId(operatorId);
+                buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                             std::chrono::high_resolution_clock::now().time_since_epoch())
+                                             .count());
                 queryManager->addWork(operatorId, buf);
                 cnt++;
+            } else {
+                NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
+                running = false;
+                wasGracefullyStopped = false;
             }
         } else {
             NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
                                     << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return");
             running = false;
+            wasGracefullyStopped = true;
         }
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }

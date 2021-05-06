@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
+#include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 
 namespace NES::NodeEngine::Execution {
@@ -35,6 +36,7 @@ class ExecutablePipelineStage {
      * @return the arity of this pipeline
      */
     PipelineStageArity getArity() const { return arity; }
+
     /**
     * @brief Must be called only once per executable pipeline and initializes the pipeline execution context.
     * e.g, creates the individual operator states -> window handler
@@ -69,8 +71,8 @@ class ExecutablePipelineStage {
     * @param workerContext
     * @return 0 if an error occurred.
     */
-    virtual uint32_t execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
-                             WorkerContext& workerContext) = 0;
+    virtual ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
+                                    WorkerContext& workerContext) = 0;
 
     /**
      * @brief Must be called exactly once per worker thread to remove worker local state.

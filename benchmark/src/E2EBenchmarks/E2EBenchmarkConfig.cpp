@@ -46,8 +46,8 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
     outputFile = ConfigOption<std::string>::create("outputFile", "E2EBenchmarkRunner", "name of the benchmark");
     benchmarkName = ConfigOption<std::string>::create("benchmarkName", "E2ERunner", "benchmark output file");
     scalability = ConfigOption<std::string>::create("scalability", "scale-up", "scale-out or scale-up");
-    logLevel = ConfigOption<std::string>::create("logLevel", "LOG_NONE",
-                                                 "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
+    logLevel = ConfigOption<std::string>::create(
+        "logLevel", "LOG_NONE", "Log level (LOG_NONE, LOG_FATAL, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
 
     experimentMeasureIntervalInSeconds =
         ConfigOption<uint32_t>::create("experimentMeasureIntervalInSeconds", 1, "measuring duration of one sample");

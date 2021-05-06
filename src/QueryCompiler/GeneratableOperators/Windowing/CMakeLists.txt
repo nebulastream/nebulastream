@@ -14,7 +14,7 @@
 
 add_source_nes(
         GeneratableWindowOperator.cpp
-        GeneratableCompleteWindowOperator.cpp
+        GeneratableSliceMergingOperator.cpp
         GeneratableDistributedWindowCombinerOperator.cpp
         GeneratableDistributedWindowSliceCreationOperator.cpp
 )

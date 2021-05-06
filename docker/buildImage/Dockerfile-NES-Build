@@ -54,6 +54,36 @@ RUN cd ${HOME} && git clone --branch v1.28.1 https://github.com/grpc/grpc.git &&
   cmake .. -DBUILD_SHARED_LIBS=1 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DUA_NAMESPACE_ZERO=FULL && make -j && make install && \
   apt-get purge -y wget && apt autoremove -y
 
+RUN cd ${HOME} && apt-get install -qq \
+    g++ \
+    cmake \
+    libboost-all-dev \
+    libevent-dev \
+    libdouble-conversion-dev \
+    libgoogle-glog-dev \
+    libgflags-dev \
+    libiberty-dev \
+    liblz4-dev \
+    liblzma-dev \
+    libsnappy-dev \
+    make \
+    zlib1g-dev \
+    binutils-dev \
+    libjemalloc-dev \
+    libssl-dev \
+    pkg-config \
+    libunwind-dev && cd && \
+    git clone https://github.com/fmtlib/fmt.git && cd fmt && \
+    mkdir _build && cd _build && \
+    cmake .. -DBUILD_SHARED_LIBS=ON && \
+    make -j$(nproc) && \
+    make install && cd && git clone https://github.com/facebook/folly.git && \
+    cd folly && mkdir _build && cd _build && \
+    cmake .. -DBUILD_SHARED_LIBS=ON && \
+    make -j$(nproc) && make install && cd && rm -rf fmt folly
+
+
+
 ENV BENCHMARK_SCRIPT_ARGS='-f ../../build/benchmark/ -nc -b (filter|map)-query-benchmark -m Run-with-docker'
 
 # docker buildx, TARGETARCH,TARGETOS available in the intermediate container during build time

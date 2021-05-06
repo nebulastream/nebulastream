@@ -20,9 +20,8 @@
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 QueryPlanPtr RenameStreamToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
     NES_DEBUG("RenameStreamToProjectOperatorRule: Convert all Rename Stream operator to the project operator");
@@ -68,4 +67,4 @@ RenameStreamToProjectOperatorRulePtr RenameStreamToProjectOperatorRule::create()
     return std::make_shared<RenameStreamToProjectOperatorRule>(RenameStreamToProjectOperatorRule());
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

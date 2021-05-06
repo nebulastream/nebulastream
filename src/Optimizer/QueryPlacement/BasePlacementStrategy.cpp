@@ -14,21 +14,14 @@
     limitations under the License.
 */
 
+#include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
-#include <Phases/TypeInferencePhase.hpp>
-#include <Topology/TopologyNode.hpp>
-//#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
-//#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
-//#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
-//#include <Optimizer/QueryPlacement/MinimumEnergyConsumptionStrategy.hpp>
-//#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -36,7 +29,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr,
                                              TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
@@ -345,4 +338,4 @@ bool BasePlacementStrategy::runTypeInferencePhase(QueryId queryId) {
     return true;
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

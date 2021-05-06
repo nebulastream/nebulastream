@@ -15,7 +15,7 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSOURCEOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSOURCEOPERATOR_HPP_
-
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES {
@@ -24,12 +24,13 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Source operator.
  */
-class PhysicalSourceOperator : public PhysicalUnaryOperator {
+class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
   public:
     PhysicalSourceOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                       SourceDescriptorPtr sourceDescriptor);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+    SourceDescriptorPtr getSourceDescriptor();
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

@@ -99,9 +99,9 @@ void QueryPlan::prependOperatorAsLeafNode(OperatorNodePtr operatorNode) {
 
 std::string QueryPlan::toString() {
     std::stringstream ss;
-    auto dumpHandler = ConsoleDumpHandler::create();
+    auto dumpHandler = ConsoleDumpHandler::create(ss);
     for (auto rootOperator : rootOperators) {
-        dumpHandler->dump(rootOperator, ss);
+        dumpHandler->dump(rootOperator);
     }
     return ss.str();
 }
@@ -205,6 +205,12 @@ bool QueryPlan::replaceRootOperator(OperatorNodePtr oldRoot, OperatorNodePtr new
         }
     }
     return false;
+}
+
+bool QueryPlan::replaceOperator(OperatorNodePtr oldOperator, OperatorNodePtr newOperator) {
+    replaceRootOperator(oldOperator, newOperator);
+    oldOperator->replace(newOperator);
+    return true;
 }
 
 QueryPlanPtr QueryPlan::copy() {

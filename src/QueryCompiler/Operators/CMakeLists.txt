@@ -12,4 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_nes(
+        OperatorPipeline.cpp
+        PipelineQueryPlan.cpp
+        ExecutableOperator.cpp
+        PipelineQueryPlanIterator.cpp
+)
+
+add_subdirectory(GeneratableOperators)
 add_subdirectory(PhysicalOperators)

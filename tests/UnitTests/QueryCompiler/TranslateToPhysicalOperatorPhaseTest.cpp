@@ -18,6 +18,7 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
+#include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperatorNode.hpp>
@@ -45,8 +46,8 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
-#include <QueryCompiler/Phases/DefaultPhysicalOperatorProvider.hpp>
-#include <QueryCompiler/Phases/TranslateToPhysicalOperators.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -151,7 +152,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -168,7 +169,50 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterQuery) {
 /**
  * @brief Input Query Plan:
  *
- * --- Sink 1 --- Filter -- Source 1
+ * --- Sink 1 --- Braodcast -- Source 1
+ *            /
+ *           /
+ * --- Sink 2
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Demultiplex Operator -- Physical Source 1
+ *                      /
+ *                     /
+ * --- Physical Sink 2
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexBroadcastQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    auto broadcastOperator = LogicalOperatorFactory::createBroadcastOperator();
+    queryPlan->appendOperatorAsNewRoot(broadcastOperator);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+    sinkOp2->addChild(broadcastOperator);
+    queryPlan->addRootOperator(sinkOp2);
+
+    NES_DEBUG(queryPlan->toString());
+
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalDemultiplexOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- BroadcastOperator -- Source 1
  *            /
  *           /
  * --- Sink 2
@@ -189,8 +233,9 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateDemultiplexFilterQuery) {
     queryPlan->addRootOperator(sinkOp2);
 
     NES_DEBUG(queryPlan->toString());
+
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -231,7 +276,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterMultiplexQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -271,7 +316,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateFilterImplicitMultiplexQue
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -319,7 +364,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSimpleJoinQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -374,7 +419,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateJoinQueryWithMultiplex) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -439,7 +484,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateJoinQueryWithMultiplex4Edg
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -485,7 +530,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateWindowQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -521,7 +566,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceCreationQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -556,7 +601,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSliceMergingQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -589,7 +634,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateMapQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());
@@ -620,7 +665,7 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateProjectQuery) {
 
     NES_DEBUG(queryPlan->toString());
     auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
-    auto phase = QueryCompilation::TranslateToPhysicalOperators::create(physicalOperatorProvider);
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
 
     phase->apply(queryPlan);
     NES_DEBUG(queryPlan->toString());

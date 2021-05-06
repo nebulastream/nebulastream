@@ -15,6 +15,7 @@
 add_source_nes(
         DumpHandler.cpp
         ConsoleDumpHandler.cpp
+        VizDumpHandler.cpp
         DumpContext.cpp
 )
 

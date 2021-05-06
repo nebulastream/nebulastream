@@ -93,7 +93,6 @@ const std::string logo = "/*****************************************************
 int main(int argc, const char* argv[]) {
     std::cout << logo << std::endl;
 
-    NES::setupLogging("benchmarkRunner.log", NES::getStringAsLogLevel("LOG_NONE"));
     E2EBenchmarkConfigPtr benchmarkConfig = E2EBenchmarkConfig::create();
 
     map<string, string> commandLineParams;
@@ -118,10 +117,10 @@ int main(int argc, const char* argv[]) {
     } else if (argc >= 1) {
         benchmarkConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
+    NES::setupLogging("benchmarkRunner.log", NES::getDebugLevelFromString(benchmarkConfig->getLogLevel()->getValue()));
 
     std::cout << "start benchmark with " << benchmarkConfig->toString() << std::endl;
 
-    NES::setLogLevel(NES::getStringAsLogLevel(benchmarkConfig->getLogLevel()->getValue()));
     std::string benchmarkName = benchmarkConfig->getBenchmarkName()->getValue();
     std::string nesVersion = NES_VERSION;
 
@@ -184,7 +183,9 @@ int main(int argc, const char* argv[]) {
            << parameterNameToValueVectorMap["numberOfBuffersInSourceLocalBufferPools"].at(i) << ","
            << parameterNameToValueVectorMap["bufferSizeInBytes"].at(i) << ",";
 
-        ss << benchmarkConfig->getQuery()->getValue() << "," << benchmarkConfig->getInputOutputMode()->getValue() << std::endl;
+        auto queryWithoutComma = benchmarkConfig->getQuery()->getValue();
+        std::replace(queryWithoutComma.begin(), queryWithoutComma.end(), ',', '_');
+        ss << queryWithoutComma << "," << benchmarkConfig->getInputOutputMode()->getValue() << std::endl;
     }
 
     std::cout << "result=" << std::endl;

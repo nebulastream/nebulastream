@@ -190,12 +190,14 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
         for (const auto& sink : sinkOperators) {
             NES_ASSERT(sink, "Got invalid sink in query " << qepBuilder.getQueryId());
             // todo use the correct schema
-            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink, self, querySubPlanId);
+            auto legacySink = ConvertLogicalToPhysicalSink::createDataSink(sink->getId(), sink->getSinkDescriptor(),
+                                                                           sink->getOutputSchema(), self, querySubPlanId);
             qepBuilder.addSink(legacySink);
             NES_DEBUG("NodeEngine::registerQueryInNodeEngine: add source" << legacySink->toString());
         }
 
-        return registerQueryInNodeEngine(qepBuilder.build());
+        bool ret = registerQueryInNodeEngine(qepBuilder.build());
+        return ret;
     } catch (std::exception& error) {
         NES_ERROR("Error while building query execution plan " << error.what());
         NES_ASSERT(false, "Error while building query execution plan " << error.what());
@@ -467,6 +469,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
 
     NES_DEBUG("QueryManager: Check if query is registered");
     auto foundQuerySubPlanIds = queryIdToQuerySubPlanIds.find(queryId);
+    NES_DEBUG("Founded members = " << foundQuerySubPlanIds->second.size());
     if (foundQuerySubPlanIds == queryIdToQuerySubPlanIds.end()) {
         NES_ERROR("QueryManager::getQueryStatistics: query does not exists " << queryId);
         return queryStatistics;
@@ -475,6 +478,8 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
     NES_DEBUG("QueryManager: Extracting query execution ids for the input query " << queryId);
     std::vector<QuerySubPlanId> querySubPlanIds = (*foundQuerySubPlanIds).second;
     for (auto querySubPlanId : querySubPlanIds) {
+        NES_DEBUG("querySubPlanId=" << querySubPlanId << " stat="
+                                    << queryManager->getQueryStatistics(querySubPlanId)->getQueryStatisticsAsString());
         queryStatistics.emplace_back(queryManager->getQueryStatistics(querySubPlanId));
     }
     return queryStatistics;

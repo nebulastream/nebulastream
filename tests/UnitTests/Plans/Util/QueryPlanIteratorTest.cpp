@@ -29,8 +29,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
@@ -54,7 +54,7 @@ class QueryPlanIteratorTest : public testing::Test {
 
     void SetUp() {
         dumpContext = DumpContext::create();
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
+        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));

@@ -33,6 +33,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <Windowing/Runtime/WindowManager.hpp>" << std::endl;
     builder.declations << "#include <Windowing/Runtime/WindowSliceStore.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/TupleBuffer.hpp>" << std::endl;
+    builder.declations << "#include <NodeEngine/ExecutionResult.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/WorkerContext.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/Execution/PipelineExecutionContext.hpp>" << std::endl;
     builder.declations << "#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>" << std::endl;
@@ -49,6 +50,7 @@ FileBuilder FileBuilder::create(const std::string&) {
     builder.declations << "#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>" << std::endl;
     builder.declations << "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>" << std::endl;
+
     return builder;
 }
 FileBuilder& FileBuilder::addDeclaration(DeclarationPtr declaration) {

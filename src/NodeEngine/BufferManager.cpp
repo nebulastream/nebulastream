@@ -118,7 +118,7 @@ TupleBuffer BufferManager::getBufferBlocking() {
     //TODO: remove this
 
     while (availableBuffers.empty()) {
-        NES_ERROR("All global Buffers are exhausted");
+        NES_TRACE("All global Buffers are exhausted");
         availableBuffersCvar.wait(lock);
     }
     auto memSegment = availableBuffers.front();
@@ -230,11 +230,6 @@ void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment) {
             }
         }
     }
-    NES_THROW_RUNTIME_ERROR("recycleUnpooledBuffer called on invalid buffer");
-    //    // we could not recycle a position
-    //    probe.segment.reset(segment);
-    //    probe.markFree();
-    //    unpooledBuffers.insert(candidate, std::move(probe));
 }
 
 size_t BufferManager::getBufferSize() const { return bufferSize; }

@@ -12,7 +12,8 @@ from random import sample
 import numpy as np
 
 # set this if you run with DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
-withLatencyHistogram = True
+
+withLatencyHistogram = False 
 
 # folder = "./"#in this folder
 folder = "./"
@@ -23,10 +24,7 @@ df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
 df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCnt.csv')
 df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCnt.csv')
 
-df_changingThreadsAndSourceMedSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceMedSelectivity.csv')
-df_changingThreadsAndSourceHighSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceHighSelectivity.csv')
-df_changingThreadsAndSourceLowSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceLowSelectivity.csv')
-df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProc.csv')
+
 df_scalingLarge = pd.read_csv(folder + 'scalingLarge.csv')
 
 if (withLatencyHistogram == True):
@@ -709,164 +707,164 @@ if (withLatencyHistogram == True):
     )
         , row=4, col=1)
 
-df_latencyWrk2_pivot = pd.pivot_table(df_latencyWrk2, values='latency',
+    df_latencyWrk2_pivot = pd.pivot_table(df_latencyWrk2, values='latency',
                                       index=['ts'],
                                       columns='SourceCnt',
                                       aggfunc=np.sum)
-for i in range(len(df_latencyWrk2_pivot.columns)):
-    col = df_latencyWrk2_pivot.columns[i]
-    fig.add_trace(
-        go.Scatter(x=df_latencyWrk2_pivot.index, y=df_latencyWrk2_pivot[col].values,
-                   name=str('Src' + str(col)),
-                   hoverinfo='x+y',
-                   mode='markers+lines',
-                   line=dict(shape='linear', color=dictOfNamesSrc[col],
-                             width=2),
-                   connectgaps=True,
-                   showlegend=False
-                   ),
-        row=4, col=2
+    for i in range(len(df_latencyWrk2_pivot.columns)):
+        col = df_latencyWrk2_pivot.columns[i]
+        fig.add_trace(
+            go.Scatter(x=df_latencyWrk2_pivot.index, y=df_latencyWrk2_pivot[col].values,
+                       name=str('Src' + str(col)),
+                       hoverinfo='x+y',
+                       mode='markers+lines',
+                       line=dict(shape='linear', color=dictOfNamesSrc[col],
+                                 width=2),
+                       connectgaps=True,
+                       showlegend=False
+                       ),
+            row=4, col=2
+        )
+    fig.update_xaxes(title_text="ts (Wrk 2)", row=4, col=2)
+
+    fig.add_shape(go.layout.Shape(
+        type="line",
+        yref="paper",
+        xref="x",
+        x0=50,
+        # y0=0,
+        y0=df_latencyWrk2_pivot.index.min() * 1.2,
+        x1=50,
+        y1=df_latencyWrk2['latency'].max() * 1.2,
+        line=dict(color="blue", width=2),
     )
-fig.update_xaxes(title_text="ts (Wrk 2)", row=4, col=2)
+        , row=4, col=2)
 
-fig.add_shape(go.layout.Shape(
-    type="line",
-    yref="paper",
-    xref="x",
-    x0=50,
-    # y0=0,
-    y0=df_latencyWrk2_pivot.index.min() * 1.2,
-    x1=50,
-    y1=df_latencyWrk2['latency'].max() * 1.2,
-    line=dict(color="blue", width=2),
-)
-    , row=4, col=2)
+    # fig.add_annotation(go.layout.Annotation(
+    #     x=50,
+    #     y=df_latencyWrk2['latency'].max() * 1.2,
+    #     yref='paper',
+    #     showarrow=True,
+    #     text='Start'
+    # )
+    #     , row=4, col=2)
 
-# fig.add_annotation(go.layout.Annotation(
-#     x=50,
-#     y=df_latencyWrk2['latency'].max() * 1.2,
-#     yref='paper',
-#     showarrow=True,
-#     text='Start'
-# )
-#     , row=4, col=2)
-
-df_latencyWrk4_pivot = pd.pivot_table(df_latencyWrk4, values='latency',
-                                      index=['ts'],
-                                      columns='SourceCnt',
-                                      aggfunc=np.sum)
-for i in range(len(df_latencyWrk4_pivot.columns)):
-    col = df_latencyWrk4_pivot.columns[i]
-    fig.add_trace(
-        go.Scatter(x=df_latencyWrk4_pivot.index, y=df_latencyWrk4_pivot[col].values,
-                   name=str('Src' + str(col)),
-                   hoverinfo='x+y',
-                   mode='markers+lines',
-                   line=dict(shape='linear', color=dictOfNamesSrc[col],
-                             width=2),
-                   connectgaps=True,
-                   showlegend=False
-                   ),
-        row=4, col=3
+    df_latencyWrk4_pivot = pd.pivot_table(df_latencyWrk4, values='latency',
+                                          index=['ts'],
+                                          columns='SourceCnt',
+                                          aggfunc=np.sum)
+    for i in range(len(df_latencyWrk4_pivot.columns)):
+        col = df_latencyWrk4_pivot.columns[i]
+        fig.add_trace(
+            go.Scatter(x=df_latencyWrk4_pivot.index, y=df_latencyWrk4_pivot[col].values,
+                       name=str('Src' + str(col)),
+                       hoverinfo='x+y',
+                       mode='markers+lines',
+                       line=dict(shape='linear', color=dictOfNamesSrc[col],
+                                 width=2),
+                       connectgaps=True,
+                       showlegend=False
+                       ),
+            row=4, col=3
+        )
+    fig.update_xaxes(title_text="ts (Wrk 4)", row=4, col=3)
+    fig.add_shape(go.layout.Shape(
+        type="line",
+        yref="paper",
+        xref="x",
+        x0=50,
+        # y0=0,
+        y0=df_latencyWrk4_pivot.index.min() * 1.2,
+        x1=50,
+        y1=df_latencyWrk4['latency'].max() * 1.2,
+        line=dict(color="blue", width=2),
     )
-fig.update_xaxes(title_text="ts (Wrk 4)", row=4, col=3)
-fig.add_shape(go.layout.Shape(
-    type="line",
-    yref="paper",
-    xref="x",
-    x0=50,
-    # y0=0,
-    y0=df_latencyWrk4_pivot.index.min() * 1.2,
-    x1=50,
-    y1=df_latencyWrk4['latency'].max() * 1.2,
-    line=dict(color="blue", width=2),
-)
-    , row=4, col=3)
+        , row=4, col=3)
 
-# fig.add_annotation(go.layout.Annotation(
-#     x=50,
-#     y=df_latencyWrk4['latency'].max() * 1.2,
-#     yref='paper',
-#     showarrow=True,
-#     text='Start'
-# )
-#     , row=4, col=3)
+    # fig.add_annotation(go.layout.Annotation(
+    #     x=50,
+    #     y=df_latencyWrk4['latency'].max() * 1.2,
+    #     yref='paper',
+    #     showarrow=True,
+    #     text='Start'
+    # )
+    #     , row=4, col=3)
 
-df_latencyWrk8_pivot = pd.pivot_table(df_latencyWrk8, values='latency',
-                                      index=['ts'],
-                                      columns='SourceCnt',
-                                      aggfunc=np.sum)
-for i in range(len(df_latencyWrk8_pivot.columns)):
-    col = df_latencyWrk8_pivot.columns[i]
-    fig.add_trace(
-        go.Scatter(x=df_latencyWrk8_pivot.index, y=df_latencyWrk8_pivot[col].values,
-                   name=str('Src' + str(col)),
-                   hoverinfo='x+y',
-                   mode='markers+lines',
-                   line=dict(shape='linear', color=dictOfNamesSrc[col],
-                             width=2),
-                   connectgaps=True,
-                   showlegend=False
-                   ),
-        row=4, col=4
+    df_latencyWrk8_pivot = pd.pivot_table(df_latencyWrk8, values='latency',
+                                          index=['ts'],
+                                          columns='SourceCnt',
+                                          aggfunc=np.sum)
+    for i in range(len(df_latencyWrk8_pivot.columns)):
+        col = df_latencyWrk8_pivot.columns[i]
+        fig.add_trace(
+            go.Scatter(x=df_latencyWrk8_pivot.index, y=df_latencyWrk8_pivot[col].values,
+                       name=str('Src' + str(col)),
+                       hoverinfo='x+y',
+                       mode='markers+lines',
+                       line=dict(shape='linear', color=dictOfNamesSrc[col],
+                                 width=2),
+                       connectgaps=True,
+                       showlegend=False
+                       ),
+            row=4, col=4
+        )
+    fig.update_xaxes(title_text="ts (Wrk 8)", row=4, col=4)
+    fig.update_yaxes(row=4, col=4)  # type="log",
+    fig.add_shape(go.layout.Shape(
+        type="line",
+        yref="paper",
+        xref="x",
+        x0=50,
+        # y0=0,
+        y0=df_latencyWrk8_pivot.index.min() * 1.2,
+        x1=50,
+        y1=df_latencyWrk8['latency'].max() * 1.2,
+        line=dict(color="blue", width=2),
     )
-fig.update_xaxes(title_text="ts (Wrk 8)", row=4, col=4)
-fig.update_yaxes(row=4, col=4)  # type="log",
-fig.add_shape(go.layout.Shape(
-    type="line",
-    yref="paper",
-    xref="x",
-    x0=50,
-    # y0=0,
-    y0=df_latencyWrk8_pivot.index.min() * 1.2,
-    x1=50,
-    y1=df_latencyWrk8['latency'].max() * 1.2,
-    line=dict(color="blue", width=2),
-)
-    , row=4, col=4)
+        , row=4, col=4)
 
-# fig.add_annotation(go.layout.Annotation(
-#     x=50,
-#     y=df_latencyWrk8['latency'].max() * 1.2,
-#     yref='paper',
-#     showarrow=True,
-#     text='Start'
-# )
-#     , row=4, col=4)
+    # fig.add_annotation(go.layout.Annotation(
+    #     x=50,
+    #     y=df_latencyWrk8['latency'].max() * 1.2,
+    #     yref='paper',
+    #     showarrow=True,
+    #     text='Start'
+    # )
+    #     , row=4, col=4)
 
 
-df_latencyWrk12_pivot = pd.pivot_table(df_latencyWrk12, values='latency',
-                                      index=['ts'],
-                                      columns='SourceCnt',
-                                      aggfunc=np.sum)
-for i in range(len(df_latencyWrk12_pivot.columns)):
-    col = df_latencyWrk12_pivot.columns[i]
-    fig.add_trace(
-        go.Scatter(x=df_latencyWrk12_pivot.index, y=df_latencyWrk12_pivot[col].values,
-                   name=str('Src' + str(col)),
-                   hoverinfo='x+y',
-                   mode='markers+lines',
-                   line=dict(shape='linear', color=dictOfNamesSrc[col],
-                             width=2),
-                   connectgaps=True,
-                   showlegend=False
-                   ),
-        row=4, col=5
+    df_latencyWrk12_pivot = pd.pivot_table(df_latencyWrk12, values='latency',
+                                          index=['ts'],
+                                          columns='SourceCnt',
+                                          aggfunc=np.sum)
+    for i in range(len(df_latencyWrk12_pivot.columns)):
+        col = df_latencyWrk12_pivot.columns[i]
+        fig.add_trace(
+            go.Scatter(x=df_latencyWrk12_pivot.index, y=df_latencyWrk12_pivot[col].values,
+                       name=str('Src' + str(col)),
+                       hoverinfo='x+y',
+                       mode='markers+lines',
+                       line=dict(shape='linear', color=dictOfNamesSrc[col],
+                                 width=2),
+                       connectgaps=True,
+                       showlegend=False
+                       ),
+            row=4, col=5
+        )
+    fig.update_xaxes(title_text="ts (Wrk 12)", row=4, col=5)
+    fig.update_yaxes(row=4, col=5)  # type="log",
+    fig.add_shape(go.layout.Shape(
+        type="line",
+        yref="paper",
+        xref="x",
+        x0=50,
+        # y0=0,
+        y0=df_latencyWrk8_pivot.index.min() * 1.2,
+        x1=50,
+        y1=df_latencyWrk8['latency'].max() * 1.2,
+        line=dict(color="blue", width=2),
     )
-fig.update_xaxes(title_text="ts (Wrk 12)", row=4, col=5)
-fig.update_yaxes(row=4, col=5)  # type="log",
-fig.add_shape(go.layout.Shape(
-    type="line",
-    yref="paper",
-    xref="x",
-    x0=50,
-    # y0=0,
-    y0=df_latencyWrk8_pivot.index.min() * 1.2,
-    x1=50,
-    y1=df_latencyWrk8['latency'].max() * 1.2,
-    line=dict(color="blue", width=2),
-)
-    , row=4, col=5)
+        , row=4, col=5)
 
 # fig.add_annotation(go.layout.Annotation(
 #     x=50,

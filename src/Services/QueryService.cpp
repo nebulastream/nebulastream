@@ -35,9 +35,11 @@ namespace NES {
 
 QueryService::QueryService(QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
                            bool enableSemanticQueryValidation)
-    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue), streamCatalog(streamCatalog),
+    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       enableSemanticQueryValidation(enableSemanticQueryValidation) {
     NES_DEBUG("QueryService()");
+    syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
+    semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalog);
 }
 
 QueryService::~QueryService() { NES_DEBUG("~QueryService()"); }
@@ -51,8 +53,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     QueryPtr query;
     try {
         // Checking the syntactic validity and compiling the query string to an object
-        SyntacticQueryValidation syntacticQueryValidation;
-        query = syntacticQueryValidation.checkValidityAndGetQuery(queryString);
+        query = syntacticQueryValidation->checkValidityAndGetQuery(queryString);
     } catch (const std::exception& exc) {
         NES_ERROR("QueryService: Syntactic Query Validation: " + std::string(exc.what()));
         // On compilation error we record the query to the catalog as failed
@@ -62,7 +63,7 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
     }
 
     NES_INFO("QueryService: Validating placement strategy");
-    if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
+    if (Optimizer::stringToPlacementStrategyType.find(placementStrategyName) == Optimizer::stringToPlacementStrategyType.end()) {
         NES_ERROR("QueryService: Unknown placement strategy name: " + placementStrategyName);
         throw InvalidArgumentException("placementStrategyName", placementStrategyName);
     }
@@ -75,7 +76,6 @@ uint64_t QueryService::validateAndQueueAddRequest(std::string queryString, std::
         NES_INFO("QueryService: Executing Semantic validation");
         try {
             // Checking semantic validity
-            SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalog);
             semanticQueryValidation->checkSatisfiability(query);
         } catch (const std::exception& exc) {
             // If semantically invalid, we record the query to the catalog as failed
@@ -121,6 +121,10 @@ uint64_t QueryService::addQueryRequest(std::string queryString, QueryPtr query, 
     } else {
         throw Exception("QueryService: unable to create query catalog entry");
     }
+}
+
+uint64_t QueryService::addQueryRequest(QueryPtr query, std::string placementStrategyName) {
+    return addQueryRequest("", query, placementStrategyName);
 }
 
 }// namespace NES

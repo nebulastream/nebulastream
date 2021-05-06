@@ -16,6 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSINKOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSINKOPERATOR_HPP_
 
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES {
@@ -25,12 +27,14 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Sink operator.
  */
-class PhysicalSinkOperator : public PhysicalUnaryOperator {
+class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
   public:
     PhysicalSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                       SinkDescriptorPtr sinkDescriptor);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    SinkDescriptorPtr getSinkDescriptor();
+
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

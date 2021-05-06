@@ -128,6 +128,7 @@ bool JoinLogicalOperatorNode::inferSchema() {
 
     NES_DEBUG("Outputschme for join=" << outputSchema->toString());
     joinDefinition->updateOutputDefinition(outputSchema);
+    joinDefinition->updateStreamTypes(leftInputSchema, rightInputSchema);
     return true;
 }
 

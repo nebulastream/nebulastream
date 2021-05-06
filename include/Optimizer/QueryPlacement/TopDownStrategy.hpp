@@ -20,7 +20,7 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <stack>
 
-namespace NES {
+namespace NES::Optimizer {
 
 class TopDownStrategy : public BasePlacementStrategy {
 
@@ -76,5 +76,5 @@ class TopDownStrategy : public BasePlacementStrategy {
                                                  ExecutionNodePtr executionNode);
 };
 
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//TOPDOWN_HPP

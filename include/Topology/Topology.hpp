@@ -17,6 +17,7 @@
 #ifndef NES_TOPOLOGY_HPP
 #define NES_TOPOLOGY_HPP
 
+#include <any>
 #include <map>
 #include <memory>
 #include <mutex>
@@ -87,11 +88,6 @@ class Topology {
      */
     std::vector<TopologyNodePtr> findPathBetween(std::vector<TopologyNodePtr> sourceNodes,
                                                  std::vector<TopologyNodePtr> destinationNodes);
-
-    //FIXME: as part of the issue #955
-    //    std::vector<LinkProperties> getLinkPropertiesBetween(PhysicalNodePtr startNode, PhysicalNodePtr destinationNde);
-    //    std::vector<LinkProperties> getInputLinksForNode(PhysicalNodePtr node);
-    //    std::vector<LinkProperties> getOutputLinksForNode(PhysicalNodePtr node);
 
     /**
      * @brief a Physical Node with the ip address and grpc port exists

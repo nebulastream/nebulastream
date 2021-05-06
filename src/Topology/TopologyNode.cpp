@@ -83,4 +83,45 @@ bool TopologyNode::containAsChild(NodePtr node) {
     return found != children.end();
 }
 
+void TopologyNode::addNodeProperty(std::string key, std::any value) { nodeProperties.insert(std::make_pair(key, value)); }
+
+std::any TopologyNode::getNodeProperty(std::string key) {
+    if (nodeProperties.find(key) == nodeProperties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "'does not exist");
+        NES_THROW_RUNTIME_ERROR("TopologyNode: Property '" << key << "'does not exist");
+    } else {
+        return nodeProperties.at(key);
+    }
+}
+
+bool TopologyNode::removeNodeProperty(std::string key) {
+    if (nodeProperties.find(key) == nodeProperties.end()) {
+        NES_ERROR("TopologyNode: Property '" << key << "' does not exist");
+        return false;
+    } else {
+        nodeProperties.erase(key);
+        return true;
+    }
+}
+void TopologyNode::addLinkProperty(TopologyNodePtr linkedNode, LinkPropertyPtr topologyLink) {
+    linkProperties.insert(std::make_pair(linkedNode, topologyLink));
+}
+LinkPropertyPtr TopologyNode::getLinkProperty(TopologyNodePtr linkedNode) {
+    if (linkProperties.find(linkedNode) == linkProperties.end()) {
+        NES_ERROR("TopologyNode: Link property with node '" << linkedNode->getId() << "' does not exist");
+        NES_THROW_RUNTIME_ERROR("TopologyNode: Link property to node with id='" << linkedNode->getId() << "' does not exist");
+    } else {
+        return linkProperties.at(linkedNode);
+    }
+}
+bool TopologyNode::removeLinkProperty(TopologyNodePtr linkedNode) {
+    if (linkProperties.find(linkedNode) == linkProperties.end()) {
+        NES_ERROR("TopologyNode: Link property to node with id='" << linkedNode << "' does not exist");
+        return false;
+    } else {
+        linkProperties.erase(linkedNode);
+        return true;
+    }
+}
+
 }// namespace NES

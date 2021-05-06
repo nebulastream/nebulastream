@@ -16,12 +16,20 @@
 
 #include <Nodes/Node.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Util/StacktraceLoader.hpp>
 #include <queue>
-#include <unordered_set>
 
 namespace NES {
 
-Node::Node() : visited(false), recStack(false) {}
+Node::Node() : visited(false), recStack(false) {
+// The CMAKE_NES_TRACE_NODE_CREATION flag enables the stack trace collection for every node creation.
+// This can be useful for the debugging of optimizations, but could lead to a substantial performance impact.
+#ifdef CMAKE_NES_TRACE_NODE_CREATION
+    stackTrace = NodeEngine::collectAndPrintStacktrace();
+#else
+    stackTrace = "No source location set. Build in debug mode.";
+#endif
+}
 
 Node::~Node() {}
 
@@ -581,6 +589,8 @@ std::vector<NodePtr> Node::getAndFlattenAllAncestors() {
     }
     return result;
 }
+
+std::string Node::getNodeSourceLocation() { return stackTrace; }
 
 bool Node::isCyclic() {
     auto allChildren = getAndFlattenAllChildren(false);

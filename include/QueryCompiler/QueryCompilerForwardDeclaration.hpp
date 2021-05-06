@@ -18,6 +18,42 @@
 #include <memory>
 namespace NES {
 
+namespace NodeEngine {
+class NodeEngine;
+typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+
+namespace Execution {
+class OperatorHandler;
+typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
+
+class ExecutablePipelineStage;
+typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+
+class NewExecutablePipeline;
+typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
+
+class NewExecutableQueryPlan;
+typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
+
+}// namespace Execution
+
+}// namespace NodeEngine
+
+class ExpressionNode;
+typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+
+class PipelineContext;
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+
+class CodeGenerator;
+typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
+class JoinLogicalOperatorNode;
+typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
+
 namespace Join {
 class LogicalJoinDefinition;
 typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
@@ -56,18 +92,72 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 namespace QueryCompilation {
 
-class TranslateToPhysicalOperators;
-typedef std::shared_ptr<TranslateToPhysicalOperators> TranslateToPhysicalOperatorsPtr;
+enum JoinBuildSide { Left, Right };
+
+class QueryCompilationError;
+typedef std::shared_ptr<QueryCompilationError> QueryCompilationErrorPtr;
+
+class QueryCompilationRequest;
+typedef std::shared_ptr<QueryCompilationRequest> QueryCompilationRequestPtr;
+
+class QueryCompilationResult;
+typedef std::shared_ptr<QueryCompilationResult> QueryCompilationResultPtr;
+
+class QueryCompiler;
+typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
+
+class QueryCompilerOptions;
+typedef std::shared_ptr<QueryCompilerOptions> QueryCompilerOptionsPtr;
+
+class OperatorPipeline;
+typedef std::shared_ptr<OperatorPipeline> OperatorPipelinePtr;
+
+class LowerLogicalToPhysicalOperators;
+typedef std::shared_ptr<LowerLogicalToPhysicalOperators> LowerLogicalToPhysicalOperatorsPtr;
 
 class PhysicalOperatorProvider;
 typedef std::shared_ptr<PhysicalOperatorProvider> PhysicalOperatorProviderPtr;
 
-class PhysicalQueryPlan;
-typedef std::shared_ptr<PhysicalQueryPlan> PhysicalQueryPlanPtr;
+class GeneratableOperatorProvider;
+typedef std::shared_ptr<GeneratableOperatorProvider> GeneratableOperatorProviderPtr;
+
+class LowerPhysicalToGeneratableOperators;
+typedef std::shared_ptr<LowerPhysicalToGeneratableOperators> LowerPhysicalToGeneratableOperatorsPtr;
+
+class LowerToExecutableQueryPlanPhase;
+typedef std::shared_ptr<LowerToExecutableQueryPlanPhase> LowerToExecutableQueryPlanPhasePtr;
+
+class PipelineQueryPlan;
+typedef std::shared_ptr<PipelineQueryPlan> PipelineQueryPlanPtr;
+
+class AddScanAndEmitPhase;
+typedef std::shared_ptr<AddScanAndEmitPhase> AddScanAndEmitPhasePtr;
+
+class CodeGenerationPhase;
+typedef std::shared_ptr<CodeGenerationPhase> CodeGenerationPhasePtr;
+
+class PipeliningPhase;
+typedef std::shared_ptr<PipeliningPhase> PipeliningPhasePtr;
+
+class OperatorFusionPolicy;
+typedef std::shared_ptr<OperatorFusionPolicy> OperatorFusionPolicyPtr;
+
+namespace Phases {
+
+class PhaseFactory;
+typedef std::shared_ptr<PhaseFactory> PhaseFactoryPtr;
+
+}// namespace Phases
+
+namespace GeneratableOperators {
+class GeneratableOperator;
+typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
+}// namespace GeneratableOperators
 
 namespace PhysicalOperators {
 class PhysicalOperator;
 typedef std::shared_ptr<PhysicalOperator> PhysicalOperatorPtr;
+
 }// namespace PhysicalOperators
 
 }// namespace QueryCompilation

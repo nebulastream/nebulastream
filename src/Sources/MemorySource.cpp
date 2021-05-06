@@ -14,8 +14,7 @@
     limitations under the License.
 */
 
-#include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/LocalBufferPool.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/MemorySource.hpp>
@@ -45,7 +44,6 @@ MemorySource::MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea
 
 std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     NES_DEBUG("MemorySource::receiveData called on operatorId=" << operatorId);
-    //    auto buffer = this->bufferManager->getBufferBlocking();
 
     uint64_t numberOfTuples = 0;
     //if the memory area is smaller than a buffer
@@ -72,25 +70,35 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
             }
         }
     }
-    uint64_t offset = numberOfTuples * schema->getSchemaSizeInBytes();
-
     NES_ASSERT2_FMT(numberOfTuples * schema->getSchemaSizeInBytes() <= globalBufferManager->getBufferSize(),
                     "value to write is larger than the buffer");
 
-    //    memcpy(buffer.getBuffer(), memoryArea.get() + currentPositionInBytes, offset);
-    auto buffer = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, offset, this);
+    using namespace std::chrono_literals;
+
+    auto buffer = this->bufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
+    if (!buffer) {
+        NES_ERROR("Buffer invalid after waiting on timeout");
+        return std::nullopt;
+    }
+    memcpy(buffer->getBuffer(), memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize());
+
+    //        TODO: replace copy with inplace add like with the wraparound #1853
+    //    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
+
     refCnt++;
-    if (memoryAreaSize > buffer.getBufferSize()) {
-        NES_DEBUG("MemorySource::receiveData: add offset=" << offset << " to currentpos=" << currentPositionInBytes);
-        currentPositionInBytes += offset;
+    if (memoryAreaSize > buffer->getBufferSize()) {
+        NES_DEBUG("MemorySource::receiveData: add offset=" << globalBufferManager->getBufferSize()
+                                                           << " to currentpos=" << currentPositionInBytes);
+        currentPositionInBytes += globalBufferManager->getBufferSize();
     }
 
-    buffer.setNumberOfTuples(numberOfTuples);
+    buffer->setNumberOfTuples(numberOfTuples);
 
-    generatedTuples += buffer.getNumberOfTuples();
+    generatedTuples += buffer->getNumberOfTuples();
     generatedBuffers++;
-    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
-    if (buffer.getNumberOfTuples() == 0) {
+
+    NES_DEBUG("MemorySource::receiveData filled buffer with tuples=" << buffer->getNumberOfTuples());
+    if (buffer->getNumberOfTuples() == 0) {
         return std::nullopt;
     } else {
         return buffer;

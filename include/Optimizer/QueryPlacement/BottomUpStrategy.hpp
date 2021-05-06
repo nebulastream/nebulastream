@@ -24,6 +24,9 @@ namespace NES {
 
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+}// namespace NES
+
+namespace NES::Optimizer {
 
 /**\brief:
  *          This class implements Bottom Up placement strategy. In this strategy, the source and sink operators are
@@ -74,6 +77,6 @@ class BottomUpStrategy : public BasePlacementStrategy {
      */
     QueryPlanPtr getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operatorNode, ExecutionNodePtr executionNode);
 };
-}// namespace NES
+}// namespace NES::Optimizer
 
 #endif//BOTTOMUP_HPP

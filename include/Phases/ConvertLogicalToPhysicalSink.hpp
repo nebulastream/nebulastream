@@ -40,8 +40,8 @@ class ConvertLogicalToPhysicalSink {
      * @param querySubPlanId: the id of the owning subplan
      * @return Data sink pointer representing the physical sink
      */
-    static DataSinkPtr createDataSink(SinkLogicalOperatorNodePtr sink, NodeEngine::NodeEnginePtr nodeEngine,
-                                      QuerySubPlanId querySubPlanId);
+    static DataSinkPtr createDataSink(OperatorId operatorId, SinkDescriptorPtr sinkDescriptor, SchemaPtr schema,
+                                      NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId);
 
   private:
     ConvertLogicalToPhysicalSink() = default;

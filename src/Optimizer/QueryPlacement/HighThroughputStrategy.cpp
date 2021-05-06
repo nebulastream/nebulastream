@@ -22,9 +22,9 @@
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>

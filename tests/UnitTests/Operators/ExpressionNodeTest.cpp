@@ -60,7 +60,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
     EXPECT_TRUE(lessThen->isPredicate());
 
     auto andExpression = AndExpressionNode::create(expression, lessThen);
-    ConsoleDumpHandler::create()->dump(andExpression, std::cout);
+    ConsoleDumpHandler::create(std::cout)->dump(andExpression);
     EXPECT_TRUE(andExpression->isPredicate());
 }
 

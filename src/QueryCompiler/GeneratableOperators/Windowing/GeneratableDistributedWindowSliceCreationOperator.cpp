@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratableOperators/Windowing/GeneratableSlicingWindowOperator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <utility>
 
 namespace NES {
@@ -29,7 +30,9 @@ void GeneratableSlicingWindowOperator::produce(CodeGeneratorPtr codegen, Pipelin
 }
 
 void GeneratableSlicingWindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-    auto operatorIndex = codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id);
+
+    auto windowOperatorHandler = Windowing::WindowOperatorHandler::create(windowDefinition, outputSchema);
+    auto operatorIndex = codegen->generateWindowSetup(windowDefinition, outputSchema, context, this->id, windowOperatorHandler);
     codegen->generateCodeForSlicingWindow(windowDefinition, generatableWindowAggregation, context, operatorIndex);
 }
 GeneratableDistributedlWindowSliceCreationOperatorPtr

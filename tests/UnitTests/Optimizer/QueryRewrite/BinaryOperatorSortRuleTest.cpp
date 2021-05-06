@@ -18,17 +18,17 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
-#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/OperatorNode.hpp>
-#include <Phases/TypeInferencePhase.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
+#include <Operators/OperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
@@ -72,7 +72,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -86,7 +86,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
 
     typeInferencePhase->execute(queryPlan);
 
-    auto binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -103,7 +103,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
@@ -117,7 +117,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
 
     typeInferencePhase->execute(queryPlan);
 
-    auto binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -133,7 +133,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
     auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
 
@@ -154,7 +154,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
 
     typeInferencePhase->execute(queryPlan);
 
-    auto binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
@@ -170,7 +170,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
     auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
 
@@ -191,7 +191,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
 
     typeInferencePhase->execute(queryPlan);
 
-    auto binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedJoinOperators = queryPlan->getOperatorByType<JoinLogicalOperatorNode>();
@@ -207,7 +207,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
     auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
 
@@ -234,7 +234,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
 
     typeInferencePhase->execute(queryPlan);
 
-    auto binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();
@@ -257,7 +257,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
     StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
     setupSensorNodeAndStreamCatalog(streamCatalog);
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
 
     auto windowType1 = SlidingWindow::of(EventTime(Attribute("ts")), Milliseconds(4), Milliseconds(2));
 
@@ -284,7 +284,7 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWith
 
     typeInferencePhase->execute(queryPlan);
 
-    auto binaryOperatorSortRule = BinaryOperatorSortRule::create();
+    auto binaryOperatorSortRule = Optimizer::BinaryOperatorSortRule::create();
     binaryOperatorSortRule->apply(queryPlan);
 
     auto updatedUnionOperators = queryPlan->getOperatorByType<UnionLogicalOperatorNode>();

@@ -31,7 +31,7 @@ class WindowSliceStore {
         : defaultValue(value), sliceMetaData(std::vector<SliceMetaData>()),
           partialAggregates(std::vector<PartialAggregateType>()) {}
 
-    ~WindowSliceStore() { NES_DEBUG("~WindowSliceStore()"); }
+    ~WindowSliceStore() { NES_TRACE("~WindowSliceStore()"); }
 
     /**
     * @brief Get the corresponding slide index for a particular timestamp ts.
@@ -48,6 +48,8 @@ class WindowSliceStore {
         }
         NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << ts);
         NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
+        //TODO: change this back once we have the vector clocks
+        return 0;
     }
 
     /**
@@ -55,7 +57,7 @@ class WindowSliceStore {
      * @param slice
      */
     inline void appendSlice(SliceMetaData slice) {
-        NES_TRACE("appendSlice "
+        NES_DEBUG("appendSlice "
                   << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);

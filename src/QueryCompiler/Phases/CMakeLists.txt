@@ -13,8 +13,12 @@
 # limitations under the License.
 
 add_source_nes(
-        TranslateToPhysicalOperators.cpp
-        PhysicalOperatorProvider.cpp
-        DefaultPhysicalOperatorProvider.cpp
+        AddScanAndEmitPhase.cpp
+        PhaseFactory.cpp
+        DefaultPhaseFactory.cpp
+        CodeGenerationPhase.cpp
 )
+
+add_subdirectory(Pipelining)
+add_subdirectory(Translations)
 

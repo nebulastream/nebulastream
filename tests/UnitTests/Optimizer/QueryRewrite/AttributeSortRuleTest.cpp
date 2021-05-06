@@ -58,7 +58,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator1) {
     Query query = Query::from("src").map(Attribute("b") = Attribute("b") + Attribute("a")).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
@@ -82,7 +82,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator2) {
         Query::from("src").map(Attribute("b") = Attribute("c") + Attribute("b") + Attribute("a")).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
@@ -108,7 +108,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator3) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
@@ -134,7 +134,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator4) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
@@ -159,7 +159,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator5) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
@@ -184,7 +184,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator6) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
@@ -210,7 +210,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator7) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
 
     attributeSortRule->apply(queryPlan);
 
@@ -237,7 +237,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator8) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -263,7 +263,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator9) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -289,7 +289,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator10) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -315,7 +315,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator11) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -341,7 +341,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator12) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -367,7 +367,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator13) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -393,7 +393,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator14) {
             .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -416,7 +416,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator15) {
     Query query = Query::from("src").map(Attribute("b") = 10 + Attribute("a")).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -440,7 +440,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator16) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -464,7 +464,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForMapOperator17) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -489,7 +489,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleFilterOperator1) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -514,7 +514,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator2) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -539,7 +539,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator3) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -564,7 +564,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator4) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -589,7 +589,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator5) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =
@@ -614,7 +614,7 @@ TEST_F(AttributeSortRuleTest, testAttributeSortRuleForFilterOperator6) {
                       .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    auto attributeSortRule = AttributeSortRule::create();
+    auto attributeSortRule = Optimizer::AttributeSortRule::create();
     attributeSortRule->apply(queryPlan);
 
     auto signatureInferencePhase =

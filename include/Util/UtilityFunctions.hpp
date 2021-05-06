@@ -57,7 +57,16 @@ typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
 
 class UtilityFunctions {
   public:
-    // removes leading and trailing whitespaces
+    /**
+     * @brief escapes all non text characters in a input string, such that the string could be processed as json.
+     * @param s input string.
+     * @return result sing.
+     */
+    static std::string escapeJson(const std::string& s);
+
+    /**
+     * @brief removes leading and trailing whitespaces
+     */
     static std::string trim(std::string s);
 
     /**
@@ -174,6 +183,12 @@ class UtilityFunctions {
     static OperatorId getNextOperatorId();
 
     /**
+   * @brief Returns the next free pipeline id
+   * @return node id
+   */
+    static uint64_t getNextPipelineId();
+
+    /**
      * @brief Returns the next free node id
      * @return node id
      */
@@ -190,6 +205,16 @@ class UtilityFunctions {
      * @return node id
      */
     static uint64_t getNextTaskId();
+
+    /**
+     *
+     * @brief This function replaces the first occurrence of search term in a string with the replace term.
+     * @param origin - The original string that is to be manipulated
+     * @param search - The substring/term which we want to have replaced
+     * @param replace - The string that is replacing the search term.
+     * @return
+     */
+    static const std::string replaceFirst(std::string origin, std::string search, std::string replace);
 
     /**
      *

@@ -19,8 +19,6 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-#include <memory>
-
 namespace NES {
 class QueryPlan;
 typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
@@ -28,15 +26,18 @@ typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
-class DistributeJoinRule;
-typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
-
 class WindowOperatorNode;
 typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
 
+}// namespace NES
+
+namespace NES::Optimizer {
+
+class DistributeJoinRule;
+typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
+
 /**
  * @brief This rule currently only set the right number of join input edges
-
  */
 class DistributeJoinRule : public BaseRewriteRule {
   public:
@@ -52,5 +53,5 @@ class DistributeJoinRule : public BaseRewriteRule {
   private:
     explicit DistributeJoinRule();
 };
-}// namespace NES
+}// namespace NES::Optimizer
 #endif//NES_DistributeJoinRule_HPP

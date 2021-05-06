@@ -23,11 +23,11 @@
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
-#include <Phases/QueryRewritePhase.hpp>
-#include <Phases/TopologySpecificQueryRewritePhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -103,9 +103,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     setupTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy =
-        PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology,
+                                                                              typeInferencePhase, streamCatalog);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
@@ -113,11 +113,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    auto queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -161,9 +161,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     setupTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy =
-        PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology,
+                                                                              typeInferencePhase, streamCatalog);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
@@ -171,11 +171,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    auto queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -220,9 +220,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     setupTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy =
-        PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology,
+                                                                              typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -243,11 +243,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    auto queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -298,9 +298,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     setupTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy =
-        PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology,
+                                                                              typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -318,11 +318,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    auto queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -373,9 +373,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     setupTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy =
-        PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology,
+                                                                              typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -396,11 +396,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    auto queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
@@ -450,9 +450,9 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     setupTopologyAndStreamCatalog();
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-    TypeInferencePhasePtr typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy =
-        PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology,
+                                                                              typeInferencePhase, streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -470,11 +470,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    auto queryReWritePhase = QueryRewritePhase::create(false);
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
     queryPlan = queryReWritePhase->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 
-    auto topologySpecificQueryRewrite = TopologySpecificQueryRewritePhase::create(streamCatalog);
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalog);
     topologySpecificQueryRewrite->execute(queryPlan);
     typeInferencePhase->execute(queryPlan);
 

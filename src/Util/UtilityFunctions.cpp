@@ -43,15 +43,29 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
-#include <boost/algorithm/string/replace.hpp>
+#include <iomanip>
+#include <iostream>
 #include <random>
+#include <sstream>
+#include <unistd.h>
 
 using Clock = std::chrono::high_resolution_clock;
 
 
 namespace NES {
 
-// removes leading and trailing whitespaces
+std::string UtilityFunctions::escapeJson(const std::string& s) {
+    std::ostringstream o;
+    for (auto c = s.cbegin(); c != s.cend(); c++) {
+        if (*c == '"' || *c == '\\' || ('\x00' <= *c && *c <= '\x1f')) {
+            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) *c;
+        } else {
+            o << *c;
+        }
+    }
+    return o.str();
+}
+
 std::string UtilityFunctions::trim(std::string s) {
     auto not_space = [](char c) {
         return isspace(c) == 0;
@@ -110,9 +124,9 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         // add return statement in front of input query/pattern
         //if pattern
         if (pattern) {
-            boost::replace_all(newQuery, "Pattern::from", "return Pattern::from");
+            findAndReplaceAll(newQuery, "Pattern::from", "return Pattern::from");
         } else {// if Query
-            boost::replace_first(newQuery, "Query::from", "return Query::from");
+            newQuery = replaceFirst(newQuery, "Query::from", "return Query::from");
         }
 
         NES_DEBUG("UtilityFunctions: parsed query = " << newQuery);
@@ -354,6 +368,13 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
     }
 }
 
+const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace) {
+    if (origin.find(search) != std::string::npos) {
+        return origin.replace(origin.find(search), search.size(), replace);
+    } else
+        return origin;
+}
+
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {
     std::stringstream ss;
     for (auto& f : schema->fields) {
@@ -379,6 +400,11 @@ bool UtilityFunctions::startsWith(const std::string& fullString, const std::stri
 }
 
 OperatorId UtilityFunctions::getNextOperatorId() {
+    static std::atomic_uint64_t id = 0;
+    return ++id;
+}
+
+uint64_t UtilityFunctions::getNextPipelineId() {
     static std::atomic_uint64_t id = 0;
     return ++id;
 }

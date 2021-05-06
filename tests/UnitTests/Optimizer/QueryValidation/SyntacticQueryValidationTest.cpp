@@ -34,8 +34,8 @@ class SyntacticQueryValidationTest : public testing::Test {
 
     void TestForException(std::string queryString) {
         PrintQString(queryString);
-        SyntacticQueryValidation syntacticQueryValidation;
-        EXPECT_THROW(syntacticQueryValidation.checkValidity(queryString), InvalidQueryException);
+        auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
+        EXPECT_THROW(syntacticQueryValidation->checkValidity(queryString), InvalidQueryException);
     }
 };
 
@@ -43,11 +43,11 @@ class SyntacticQueryValidationTest : public testing::Test {
 TEST_F(SyntacticQueryValidationTest, validQueryTest) {
     NES_INFO("Valid Query test");
 
-    SyntacticQueryValidation syntacticQueryValidation;
+    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
 
     std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); ";
 
-    syntacticQueryValidation.checkValidity(queryString);
+    syntacticQueryValidation->checkValidity(queryString);
 }
 
 // Test a query with missing ; at line end

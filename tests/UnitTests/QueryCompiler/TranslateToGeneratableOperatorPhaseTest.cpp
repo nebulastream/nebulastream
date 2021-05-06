@@ -36,9 +36,9 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
@@ -64,7 +64,7 @@ class TranslateToGeneratableOperatorPhaseTest : public testing::Test {
 
     void SetUp() {
         dumpContext = DumpContext::create();
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
+        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
@@ -141,7 +141,7 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateFilterQuery) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = this->nodeEngine;
-    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
+    ConsoleDumpHandler::create(std::cout)->dump(sinkOperator);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableSinkOperator = translatePhase->transform(sinkOperator->as<OperatorNode>());
@@ -172,12 +172,12 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto engine = this->nodeEngine;
-    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
+    ConsoleDumpHandler::create(std::cout)->dump(sinkOperator);
     // we pass null as the buffer manager as we just want to check if the topology is correct.
 
-    auto typeInferencePhase = TypeInferencePhase::create(std::make_shared<StreamCatalog>());
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(std::make_shared<StreamCatalog>());
     auto queryPlan = typeInferencePhase->execute(QueryPlan::create(sinkOperator));
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    auto distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
 
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();

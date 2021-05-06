@@ -23,26 +23,42 @@ namespace NES {
 
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
-
 /**
- * @brief Convert a compiler node to a human readable string and print it to the console.
+ * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
  */
 class ConsoleDumpHandler : public DumpHandler {
 
   public:
-    static DebugDumpHandlerPtr create();
-    ConsoleDumpHandler();
+    static std::shared_ptr<ConsoleDumpHandler> create(std::ostream& out);
+    ConsoleDumpHandler(std::ostream& out);
     /**
     * Dump the specific node and its children.
     */
-    void dump(const NodePtr node, std::ostream& out) override;
+    void dump(const NodePtr node) override;
 
     /**
     * Dump the specific node and its children with details in multiple lines.
     */
-    void multilineDump(const NodePtr node, std::ostream& out);
+    void multilineDump(const NodePtr node);
+
+    /**
+     * @brief Dump a query plan with a specific context and scope.
+     * @param context the context
+     * @param scope the scope
+     * @param plan the query plan
+     */
+    void dump(std::string context, std::string scope, QueryPlanPtr plan) override;
+
+    /**
+     * @brief Dump a pipeline query plan with a specific context and scope.
+     * @param context the context
+     * @param scope the scope
+     * @param plan the query plan
+     */
+    void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) override;
 
   private:
+    std::ostream& out;
     void dumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const;
     void multilineDumpHelper(const NodePtr op, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };

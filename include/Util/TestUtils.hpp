@@ -421,7 +421,6 @@ class TestUtils {
             NES_DEBUG("checkOutputOrTimeout: check content for file " << outputFilePath);
             std::ifstream ifs(outputFilePath);
             if (ifs.good() && ifs.is_open()) {
-                NES_DEBUG("checkoutputortimeout: file " << outputFilePath << " open and good");
                 std::vector<std::string> expectedlines = UtilityFunctions::split(expectedContent, '\n');
                 std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
                 count = std::count(content.begin(), content.end(), '\n');
@@ -453,6 +452,45 @@ class TestUtils {
         }
         NES_ERROR("checkOutputOrTimeout: expected (" << count << ") result not reached (" << found
                                                      << ") within set timeout content");
+        return false;
+    }
+
+    /**
+   * @brief Check if any query result was produced
+   * @param outputFilePath
+   * @return true if successful
+   */
+    static bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, string outputFilePath, uint64_t customTimeout = 0) {
+        std::chrono::seconds timeoutInSec;
+        if (customTimeout == 0) {
+            timeoutInSec = std::chrono::seconds(timeout);
+        } else {
+            timeoutInSec = std::chrono::seconds(customTimeout);
+        }
+
+        NES_DEBUG("using timeout=" << timeoutInSec.count());
+        auto start_timestamp = std::chrono::system_clock::now();
+        uint64_t count = 0;
+        while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+            sleep(1);
+            count = 0;
+            NES_DEBUG("checkIfOutputFileIsNotEmtpy: check content for file " << outputFilePath);
+            std::ifstream ifs(outputFilePath);
+            if (ifs.good() && ifs.is_open()) {
+                std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+                count = std::count(content.begin(), content.end(), '\n');
+                if (count < minNumberOfLines) {
+                    NES_DEBUG("checkIfOutputFileIsNotEmtpy: number of min lines " << minNumberOfLines << " not reached yet with "
+                                                                                  << count << " lines content=" << content);
+                    continue;
+                } else {
+                    NES_DEBUG("at least" << minNumberOfLines << " are found in content=" << content);
+                    return true;
+                }
+            }
+        }
+        NES_ERROR("checkIfOutputFileIsNotEmtpy: expected (" << count << ") result not reached (" << minNumberOfLines
+                                                            << ") within set timeout content");
         return false;
     }
 

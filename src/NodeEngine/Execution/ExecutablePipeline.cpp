@@ -40,17 +40,15 @@ ExecutablePipeline::ExecutablePipeline(uint32_t pipelineStageId, QuerySubPlanId 
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
 }
 
-bool ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
+ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineStageId);
     if (!isRunning) {
         NES_DEBUG("Cannot execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage="
                                                            << pipelineStageId << " as pipeline is not running anymore");
-        return true;
+        return ExecutionResult::Ok;
     }
-
-    uint32_t ret = !executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
-    return ret;
+    return executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
 }
 
 bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {

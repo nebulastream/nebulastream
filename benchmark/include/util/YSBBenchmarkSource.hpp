@@ -99,15 +99,12 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
         rec.userId = 1;
         rec.pageId = 0;
         rec.adType = 0;
-
         rec.campaignId = rand() % 10000;
-
         rec.eventType = eventType;
-
         rec.currentMs = ts;
-
         rec.ip = 0x01020304;
     }
+
     std::optional<NodeEngine::TupleBuffer> receiveData() override {
         NES_DEBUG("YSBSource:" << this << " requesting buffer");
         auto buf = this->bufferManager->getBufferBlocking();

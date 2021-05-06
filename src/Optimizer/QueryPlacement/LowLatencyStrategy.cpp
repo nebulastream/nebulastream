@@ -22,10 +22,10 @@
 #include <Operators/Operator.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/NESTopologyPlan.hpp>

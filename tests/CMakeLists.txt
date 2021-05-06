@@ -96,15 +96,35 @@ add_executable(translate-physical-operator-tests "UnitTests/QueryCompiler/Transl
 target_link_libraries(translate-physical-operator-tests nes ${GTEST_LIBRARIES})
 add_test(NAME translate-physical-operator-tests COMMAND translate-physical-operator-tests)
 
+### AddScanAndEmitPhase Test ###
+add_executable(add-scan-and-emit-phase-tests "UnitTests/QueryCompiler/AddScanAndEmitPhaseTest.cpp")
+target_link_libraries(add-scan-and-emit-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME add-scan-and-emit-phase-tests COMMAND add-scan-and-emit-phase-tests)
+
+### Pipelining Tests ###
+add_executable(pipelining-phase-tests "UnitTests/QueryCompiler/PipeliningPhaseTest.cpp")
+target_link_libraries(pipelining-phase-tests nes ${GTEST_LIBRARIES})
+add_test(NAME pipelining-phase-tests COMMAND pipelining-phase-tests)
+
 ### Operator Code Generation Tests ###
 add_executable(operator-code-generation-tests "UnitTests/CodeGenerator/OperatorCodeGenerationTest.cpp")
 target_link_libraries(operator-code-generation-tests nes ${GTEST_LIBRARIES})
 add_test(NAME operator-code-generation-tests COMMAND operator-code-generation-tests)
 
+### Query Compiler Tests ###
+add_executable(query-compiler-tests "UnitTests/QueryCompiler/QueryCompilerTest.cpp")
+target_link_libraries(query-compiler-tests  nes ${GTEST_LIBRARIES})
+add_test(NAME query-compiler-tests  COMMAND query-compiler-tests )
+
 ### NES Topology Tests ###
 add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
+
+### NES Topology Tests ###
+add_executable(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
+target_link_libraries(topology-property-tests nes ${GTEST_LIBRARIES})
+add_test(NAME topology-property-tests COMMAND topology-property-tests)
 
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
@@ -184,6 +204,11 @@ add_executable(query-catalog-tests "UnitTests/CoordinatorEngine/QueryCatalogTest
 target_link_libraries(query-catalog-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
+### LogicalExpressionTest ###
+add_executable(logical-expression-test "UnitTests/Query/LogicalExpressionTest.cpp")
+target_link_libraries(logical-expression-test nes ${GTEST_LIBRARIES})
+add_test(NAME logical-expression-test COMMAND query-execution-test)
+
 ### QueryExecutionTest ###
 add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
 target_link_libraries(query-execution-test nes ${GTEST_LIBRARIES})
@@ -240,7 +265,7 @@ target_link_libraries(convert-logical-to-physical-source-tests nes ${GTEST_LIBRA
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
 # Type inference test
-add_executable(type-inference-tests "UnitTests/Phases/TypeInferencePhaseTest.cpp")
+add_executable(type-inference-tests "UnitTests/Optimizer/Phases/TypeInferencePhaseTest.cpp")
 target_link_libraries(type-inference-tests nes ${GTEST_LIBRARIES})
 add_test(NAME type-inference-tests COMMAND type-inference-tests)
 
@@ -295,7 +320,7 @@ target_link_libraries(global-query-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-tests COMMAND global-query-plan-tests)
 
 ### Query Merger Phase Tests ###
-add_executable(global-query-plan-update-phase-tests "UnitTests/Phases/GlobalQueryPlanUpdatePhaseTest.cpp")
+add_executable(global-query-plan-update-phase-tests "UnitTests/Optimizer/Phases/GlobalQueryPlanUpdatePhaseTest.cpp")
 target_link_libraries(global-query-plan-update-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-query-plan-update-phase-tests COMMAND global-query-plan-update-phase-tests)
 
@@ -323,6 +348,11 @@ add_test(NAME thread-naming-tests COMMAND thread-naming-tests)
 add_executable(global-execution-plan-tests "UnitTests/Plans/Global/Execution/GlobalExecutionPlanTest.cpp")
 target_link_libraries(global-execution-plan-tests nes ${GTEST_LIBRARIES})
 add_test(NAME global-execution-plan-tests COMMAND global-execution-plan-tests)
+
+### Util Function Test ###
+add_executable(util-function-tests "UnitTests/Util/UtilFunctionTest.cpp")
+target_link_libraries(util-function-tests nes ${GTEST_LIBRARIES})
+add_test(NAME util-function-tests COMMAND util-function-tests)
 
 ### Z3 Validation Test ###
 add_executable(z3-validation-tests "UnitTests/Z3ValidationTest.cpp")
@@ -518,6 +548,11 @@ add_test(NAME memory-source-integration-test COMMAND memory-source-integration-t
 add_executable(test-harness-util-test "Integration/TestHarnessUtilTest.cpp")
 target_link_libraries(test-harness-util-test nes ${GTEST_LIBRARIES})
 add_test(NAME test-harness-util-test COMMAND test-harness-util-test)
+
+### StringQueryTest ###
+add_executable(string-query-test "Integration/StringQueryTest.cpp")
+target_link_libraries(string-query-test nes ${GTEST_LIBRARIES})
+add_test(NAME string-query-test COMMAND string-query-test)
 
 #------------------------------- # E2E Test Suite --------------------------------
 ### E2E Tests ###

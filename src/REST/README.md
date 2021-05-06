@@ -4,7 +4,7 @@ Below we describe the REST APIs available for user to interact with system.
 The NebulaStream REST API is versioned, with specific versions being queryable by prefixing the url with the version prefix. 
 Prefixes are always of the form v[version_number]. For example, to access version 1 of /foo/bar one would query /v1/foo/bar.
 
-Querying unsupported/non-existing versions will return a 404 error.
+Querying unsupported/non-existing versions will return a 404 exception.
 
 There exist several async operations among these APIs, e.g. submit a job. These async calls will return a triggerid to 
 identify the operation you just POST and then you need to use that triggerid to query for the status of the operation.

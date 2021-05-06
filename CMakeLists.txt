@@ -15,6 +15,10 @@
 cmake_minimum_required(VERSION 3.16.0)
 project(NES CXX)
 
+option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
+option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
+option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" OFF)
+
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
 endif ()
@@ -40,6 +44,19 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(NES_SPECIFIC_FLAGS)
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
     set(NES_SPECIFIC_FLAGS "-DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
+endif ()
+
+if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_DEBUG_TUPLE_BUFFER_LEAKS=1")
+endif ()
+
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
+endif ()
+
+# enables tracing of stack traces if operator / expression nodes are created
+if (CMAKE_NES_TRACE_NODE_CREATION)
+    set(NES_SPECIFIC_FLAGS "-DNES_TRACE_NODE_CREATION=1")
 endif ()
 
 # Set NES_LOGGING_LEVEL Flag
@@ -98,9 +115,22 @@ endif ()
 # lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
+# AVX detection
 find_package(AVX)
 message("AVX found=" ${AVX_FOUND})
 message("AVX2 found=" ${AVX2_FOUND})
+
+# folly
+if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
+find_package(Folly)
+if (FOLLY_FOUND)
+    message(STATUS "Found folly: ${FOLLY_INCLUDE_DIR}")
+    include_directories(${FOLLY_INCLUDE_DIR})
+    set(LIBRARIES ${LIBRARIES} ${FOLLY_LIBRARIES})
+else(FOLLY_FOUND)
+    message(FATAL_ERROR "Cannot find folly")
+endif(FOLLY_FOUND)
+endif()
 
 # LLVM
 find_package(LLVM 3 REQUIRED)

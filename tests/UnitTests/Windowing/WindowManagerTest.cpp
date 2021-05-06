@@ -79,8 +79,8 @@ class MockedExecutablePipelineStage : public NodeEngine::Execution::ExecutablePi
         return std::make_shared<MockedExecutablePipelineStage>();
     }
 
-    uint32_t execute(TupleBuffer&, NodeEngine::Execution::PipelineExecutionContext&, NodeEngine::WorkerContext&) override {
-        return 0;
+    ExecutionResult execute(TupleBuffer&, NodeEngine::Execution::PipelineExecutionContext&, NodeEngine::WorkerContext&) override {
+        return ExecutionResult::Ok;
     }
 };
 

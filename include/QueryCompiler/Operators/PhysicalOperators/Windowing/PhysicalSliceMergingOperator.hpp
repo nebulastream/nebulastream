@@ -15,7 +15,7 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEMERGINGOPERATOR_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEMERGINGOPERATOR_HPP_
-
+#include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
 namespace NES {
@@ -26,7 +26,7 @@ namespace PhysicalOperators {
  * @brief Physical operator for slice merging.
  * This operator receives pre-aggregated slices, e.g., from the slice merger, and merges them in its local operator state.
  */
-class PhysicalSliceMergingOperator : public PhysicalWindowOperator {
+class PhysicalSliceMergingOperator : public PhysicalWindowOperator, AbstractEmitOperator {
   public:
     PhysicalSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
                                  Windowing::WindowOperatorHandlerPtr handler);

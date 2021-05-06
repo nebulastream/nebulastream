@@ -16,15 +16,10 @@
 
 #include <Catalogs/StreamCatalog.hpp>
 #include <Exceptions/QueryPlacementException.hpp>
-#include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/UnionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Windowing/CentralWindowOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/SliceMergingOperator.hpp>
-#include <Operators/LogicalOperators/Windowing/WindowComputationOperator.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -32,7 +27,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
@@ -284,4 +279,4 @@ std::vector<TopologyNodePtr> BottomUpStrategy::getTopologyNodesForChildrenOperat
     return childTopologyNodes;
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

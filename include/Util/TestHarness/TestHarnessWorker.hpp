@@ -19,6 +19,7 @@
 
 #include <API/Schema.hpp>
 #include <Catalogs/MemorySourceStreamConfig.hpp>
+#include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>

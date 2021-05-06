@@ -190,7 +190,7 @@ void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder& bu
             stageId, builder.getQuerySubPlanId(), holder.executablePipelineStage, executionContext, numOfProducers,
             pipelines[*holder.consumers.begin()], holder.inputSchema, holder.outputSchema);
 
-        NES_DEBUG("pipeline code=" << pipeline->getCodeAsString());
+        NES_DEBUG("pipeline code for id=" << pipeline->getPipeStageId() << "=" << pipeline->getCodeAsString());
         builder.addPipeline(pipeline);
         pipelines[stageId] = pipeline;
     }

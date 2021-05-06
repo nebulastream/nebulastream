@@ -43,7 +43,7 @@ class E2EBase {
      * WindowMode = generate increasing time stamps in different buffers (each buffer will have time(0) time stamps
      * JoinMode = generate two sources with increasing timestamp
      */
-    enum class InputOutputMode { FileMode, CacheMode, MemMode, WindowMode, JoinMode, Auto, UndefinedInputMode };
+    enum class InputOutputMode { FileMode, MemoryMode, LambdaMode, WindowMode, YSBMode, JoinMode, Auto, UndefinedInputMode };
 
     /**
      * @brief Method to perform the benchmark
@@ -69,7 +69,7 @@ class E2EBase {
      * @brief run the query and start the measurement
      * @param query to be run
      */
-    void runQuery();
+    bool runQuery();
 
     /**
      * @brief setup one coordinator and one worker
@@ -122,7 +122,7 @@ class E2EBase {
     NES::QueryServicePtr queryService;
     QueryId queryId;
     NES::QueryCatalogPtr queryCatalog;
-    NES::SchemaPtr schema;
+    NES::SchemaPtr defaultSchema;
 
     std::vector<uint8_t*> memoryAreas;
     E2EBenchmarkConfigPtr config;

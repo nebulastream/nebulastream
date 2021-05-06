@@ -19,6 +19,7 @@
 
 #include <QueryCompiler/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
 
@@ -39,6 +40,13 @@ class CCodeGenerator : public CodeGenerator {
      * @return flag if the generation was successful.
      */
     bool generateCodeForScan(SchemaPtr inputSchema, SchemaPtr outputSchema, PipelineContextPtr context) override;
+
+    /**
+     * @brief Code generation for a setup of a scan, which depends on a particular input schema.
+     * @param context The context of the current pipeline.
+     * @return flag if the generation was successful.
+     */
+    bool generateCodeForScanSetup(PipelineContextPtr context) override;
 
     /**
      * @brief Code generation for a projection, which depends on a particular input schema.
@@ -88,7 +96,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return the operator id
     */
     uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                 PipelineContextPtr context, uint64_t id) override;
+                                 PipelineContextPtr context, uint64_t id,
+                                 Windowing::WindowOperatorHandlerPtr windowOperatorHandler) override;
 
     /**
     * @brief Code generation for a central window operator, which depends on a particular window definition.
@@ -135,6 +144,15 @@ class CCodeGenerator : public CodeGenerator {
     uint64_t generateJoinSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id) override;
 
     /**
+    * @brief Code generation the setup method for join operators, which depends on a particular join definition.
+    * @param join The join definition, which contains all properties of the window.
+    * @param context The context of the current pipeline.
+    * @return the operator id
+    */
+    uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id,
+                                          Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
+
+    /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
     * @param The join definition, which contains all properties of the join.
     * @param context The context of the current pipeline.
@@ -143,6 +161,18 @@ class CCodeGenerator : public CodeGenerator {
     */
     bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
                              uint64_t operatorHandlerIndex) override;
+
+    /**
+    * @brief Code generation for a join operator, which depends on a particular join definition
+    * @param window The join definition, which contains all properties of the join.
+    * @param context The context of the current pipeline.
+    * @param operatorHandlerIndex index for the operator handler.
+    * todo refactor parameter
+    * @return flag if the generation was successful.
+    */
+    virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+                                          Join::JoinOperatorHandlerPtr joinOperatorHandler,
+                                          QueryCompilation::JoinBuildSide buildSide);
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.
@@ -183,7 +213,8 @@ class CCodeGenerator : public CodeGenerator {
                                                         DataTypePtr inputType, DataTypePtr partialAggregateType,
                                                         DataTypePtr finalAggregateType);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType);
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType,
+                                                 std::string leftType, std::string rightType);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 

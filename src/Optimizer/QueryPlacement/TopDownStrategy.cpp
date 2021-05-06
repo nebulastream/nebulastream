@@ -19,9 +19,8 @@
 #include <Exceptions/QueryPlacementException.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -29,7 +28,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
                                                          TypeInferencePhasePtr typeInferencePhase,
@@ -306,4 +305,4 @@ std::vector<TopologyNodePtr> TopDownStrategy::getTopologyNodesForSourceOperators
     return childNodes;
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

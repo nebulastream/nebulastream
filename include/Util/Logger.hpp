@@ -33,13 +33,17 @@ using namespace log4cxx::helpers;
 
 namespace NES {
 
-enum LogLevel { LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
+enum DebugLevel { LOG_NONE, LOG_ERROR, LOG_FATAL, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
-static std::string getLogLevelAsString(LogLevel level) {
+static std::string getDebugLevelAsString(DebugLevel level) {
     if (level == LOG_NONE) {
         return "LOG_NONE";
     } else if (level == LOG_WARNING) {
         return "LOG_WARNING";
+    } else if (level == LOG_ERROR) {
+        return "LOG_ERROR";
+    } else if (level == LOG_FATAL) {
+        return "LOG_FATAL";
     } else if (level == LOG_DEBUG) {
         return "LOG_DEBUG";
     } else if (level == LOG_INFO) {
@@ -51,13 +55,17 @@ static std::string getLogLevelAsString(LogLevel level) {
     }
 }
 
-//DISABLE_WARNING_PUSH
-//DISABLE_WARNING_UNREFERENCED_FUNCTION
-static LogLevel getStringAsLogLevel(std::string level) {
+DISABLE_WARNING_PUSH
+DISABLE_WARNING_UNREFERENCED_FUNCTION
+static DebugLevel getDebugLevelFromString(std::string level) {
     if (level == "LOG_NONE") {
         return LOG_NONE;
     } else if (level == "LOG_WARNING") {
         return LOG_WARNING;
+    } else if (level == "LOG_ERROR") {
+        return LOG_ERROR;
+    } else if (level == "LOG_FATAL") {
+        return LOG_FATAL;
     } else if (level == "LOG_DEBUG") {
         return LOG_DEBUG;
     } else if (level == "LOG_INFO") {
@@ -68,7 +76,7 @@ static LogLevel getStringAsLogLevel(std::string level) {
         throw std::runtime_error("Logger: Debug level unknown: " + level);
     }
 }
-//DISABLE_WARNING_POP
+DISABLE_WARNING_POP
 
 static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 }// namespace NES
@@ -339,7 +347,7 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
     } while (0)
 
 namespace NES {
-static void setLogLevel(LogLevel level) {
+static void setLogLevel(DebugLevel level) {
     // set log level
 #ifdef NES_LOGGING_NO_LEVEL
     NESLogger->setLevel(log4cxx::Level::getOff());
@@ -348,6 +356,14 @@ static void setLogLevel(LogLevel level) {
     switch (level) {
         case LOG_NONE: {
             NESLogger->setLevel(log4cxx::Level::getOff());
+            break;
+        }
+        case LOG_ERROR: {
+            NESLogger->setLevel(log4cxx::Level::getError());
+            break;
+        }
+        case LOG_FATAL: {
+            NESLogger->setLevel(log4cxx::Level::getFatal());
             break;
         }
         case LOG_WARNING: {
@@ -367,14 +383,14 @@ static void setLogLevel(LogLevel level) {
             break;
         }
         default: {
-            NES_FATAL_ERROR("setupLogging: log level not supported " << getLogLevelAsString(level));
+            NES_FATAL_ERROR("setupLogging: log level not supported " << getDebugLevelAsString(level));
         }
     }
 #endif
 }
-//DISABLE_WARNING_PUSH
-//DISABLE_WARNING_UNREFERENCED_FUNCTION
-static void setupLogging(std::string logFileName, LogLevel level) {
+DISABLE_WARNING_PUSH
+DISABLE_WARNING_UNREFERENCED_FUNCTION
+static void setupLogging(std::string logFileName, DebugLevel level) {
     std::cout << "Logger: SETUP_LOGGING" << std::endl;
     // create PatternLayout
     log4cxx::LayoutPtr layoutPtr(
@@ -390,7 +406,7 @@ static void setupLogging(std::string logFileName, LogLevel level) {
     NESLogger->addAppender(file);
     NESLogger->addAppender(console);
 }
-//DISABLE_WARNING_UNREFERENCED_FUNCTION
+DISABLE_WARNING_UNREFERENCED_FUNCTION
 
 #define NES_NOT_IMPLEMENTED()                                                                                                    \
     do {                                                                                                                         \

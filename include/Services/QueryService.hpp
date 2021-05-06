@@ -21,6 +21,14 @@
 #include <Plans/Query/QueryId.hpp>
 #include <cpprest/json.h>
 
+namespace NES::Optimizer {
+class SyntacticQueryValidation;
+typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
+
+class SemanticQueryValidation;
+typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
+}// namespace NES::Optimizer
+
 namespace NES {
 
 class QueryService;
@@ -64,6 +72,14 @@ class QueryService {
     uint64_t addQueryRequest(std::string queryString, QueryPtr queryPtr, std::string placementStrategyName);
 
     /**
+     * @brief This method calls addQueryRequest with an empty string.
+     * @param queryPtr : Query Object
+     * @param placementStrategyName : Name of the placement strategy
+     * @return query id
+     */
+    uint64_t addQueryRequest(QueryPtr queryPtr, std::string placementStrategyName);
+
+    /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryId : query id of the query to be stopped.
      * @returns: true if successful
@@ -75,7 +91,8 @@ class QueryService {
   private:
     QueryCatalogPtr queryCatalog;
     NESRequestQueuePtr queryRequestQueue;
-    StreamCatalogPtr streamCatalog;
+    Optimizer::SemanticQueryValidationPtr semanticQueryValidation;
+    Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
     bool enableSemanticQueryValidation;
 };
 

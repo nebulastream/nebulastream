@@ -54,7 +54,7 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
     using namespace std::chrono_literals;
 
-    auto buffer = this->bufferManager->getBufferTimeout(1s);
+    auto buffer = this->bufferManager->getBufferTimeout(NES::NodeEngine::DEFAULT_BUFFER_TIMEOUT);
     if (!buffer) {
         NES_ERROR("Buffer invalid after waiting on timeout");
         return std::nullopt;
@@ -69,7 +69,10 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
 
     NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer->getNumberOfTuples()
                                                                      << " outOrgID=" << buffer->getOriginId());
+    NES_DEBUG("bufferContent before write=" << UtilityFunctions::prettyPrintTupleBuffer(buffer.value(), schema) << '\n');
+
     if (buffer->getNumberOfTuples() == 0) {
+        NES_ASSERT(false, "this should not happen");
         return std::nullopt;
     } else {
         return buffer;

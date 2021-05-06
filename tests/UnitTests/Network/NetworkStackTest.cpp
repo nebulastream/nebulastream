@@ -33,7 +33,7 @@
 #include "../../util/TestQuery.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <Phases/TypeInferencePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
@@ -803,7 +803,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
 
     auto query = TestQuery::from(schema).sink(DummySink::create());
 
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);

@@ -282,7 +282,7 @@ TEST_F(QueryTest, testQueryExpression) {
     EXPECT_TRUE(equals->instanceOf<EqualsExpressionNode>());
 
     auto assignmentExpression = Attribute("f1") = --Attribute("f1")++ + 10;
-    ConsoleDumpHandler::create()->dump(assignmentExpression, std::cout);
+    ConsoleDumpHandler::create(std::cout)->dump(assignmentExpression);
     EXPECT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
 }
 

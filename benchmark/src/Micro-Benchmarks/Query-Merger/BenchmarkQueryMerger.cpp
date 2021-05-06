@@ -103,7 +103,7 @@ void loadConfigFromYAMLFile(const std::string& filePath) {
                 }
             }
 
-            NES::setLogLevel(NES::getStringAsLogLevel(config["logLevel"].As<std::string>()));
+            NES::setLogLevel(NES::getDebugLevelFromString(config["logLevel"].As<std::string>()));
         } catch (std::exception& e) {
             NES_ERROR("NesE2EBenchmarkConfig: Error while initializing configuration parameters from YAML file." << e.what());
         }

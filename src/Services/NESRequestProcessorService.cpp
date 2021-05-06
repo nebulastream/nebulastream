@@ -24,13 +24,13 @@
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/TypeInferenceException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/GlobalQueryPlanUpdatePhase.hpp>
+#include <Optimizer/Phases/QueryPlacementPhase.hpp>
+#include <Optimizer/Phases/QueryPlacementRefinementPhase.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/QueryDeploymentPhase.hpp>
-#include <Phases/QueryPlacementPhase.hpp>
-#include <Phases/QueryPlacementRefinementPhase.hpp>
-#include <Phases/QueryRewritePhase.hpp>
 #include <Phases/QueryUndeploymentPhase.hpp>
-#include <Phases/TypeInferencePhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Global/Query/SharedQueryMetaData.hpp>
@@ -54,13 +54,14 @@ NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr gl
       globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
-    typeInferencePhase = TypeInferencePhase::create(streamCatalog);
-    queryPlacementPhase = QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
+    typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    queryPlacementPhase =
+        Optimizer::QueryPlacementPhase::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3Context = std::make_shared<z3::context>();
-    globalQueryPlanUpdatePhase = GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan, z3Context,
-                                                                    enableQueryMerging, queryMergerRule);
+    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan,
+                                                                               z3Context, enableQueryMerging, queryMergerRule);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }
@@ -80,13 +81,13 @@ void NESRequestProcessorService::start() {
             if (nesRequests[0]->instanceOf<RunQueryRequest>()) {
                 placementStrategy = nesRequests[0]->as<RunQueryRequest>()->getQueryPlacementStrategy();
             }
+
             try {
                 NES_INFO("QueryProcessingService: Calling GlobalQueryPlanUpdatePhase");
                 globalQueryPlanUpdatePhase->execute(nesRequests);
 
                 auto sharedQueryMetaDataToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
                 for (auto sharedQueryMetaData : sharedQueryMetaDataToDeploy) {
-
                     SharedQueryId sharedQueryId = sharedQueryMetaData->getSharedQueryId();
                     NES_DEBUG("QueryProcessingService: Updating Query Plan with global query id : " << sharedQueryId);
 
@@ -99,9 +100,7 @@ void NESRequestProcessorService::start() {
                     }
 
                     if (!sharedQueryMetaData->isEmpty()) {
-
                         auto queryPlan = sharedQueryMetaData->getQueryPlan();
-
                         NES_DEBUG("QueryProcessingService: Performing Query Operator placement for query with shared query id : "
                                   << sharedQueryId);
 
@@ -121,7 +120,6 @@ void NESRequestProcessorService::start() {
                                     + std::to_string(sharedQueryId));
                         }
                     }
-
                     //Mark the meta data as deployed
                     sharedQueryMetaData->markAsDeployed();
                     sharedQueryMetaData->setAsOld();
@@ -139,6 +137,7 @@ void NESRequestProcessorService::start() {
                 //FIXME: Proper error handling #1585
             } catch (QueryPlacementException& ex) {
                 NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
+                NES_ERROR("QueryRequestProcessingService QueryPlacementException: " << ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId);
                 auto sharedQueryMetaData = globalQueryPlan->getSharedQueryMetaData(sharedQueryId);
@@ -146,6 +145,7 @@ void NESRequestProcessorService::start() {
                     queryCatalog->markQueryAs(queryId, QueryStatus::Failed);
                 }
             } catch (QueryDeploymentException& ex) {
+                NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
                 NES_ERROR("QueryRequestProcessingService QueryDeploymentException: " << ex.what());
                 auto sharedQueryId = ex.getSharedQueryId();
                 queryUndeploymentPhase->execute(sharedQueryId);

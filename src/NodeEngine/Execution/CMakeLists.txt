@@ -13,6 +13,8 @@
 # limitations under the License.
 
 add_source_nes(
+        NewExecutableQueryPlan.cpp
+        NewExecutablePipeline.cpp
         ExecutablePipelineStage.cpp
         PipelineExecutionContext.cpp
         ExecutablePipeline.cpp

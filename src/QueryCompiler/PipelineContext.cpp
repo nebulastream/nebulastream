@@ -55,6 +55,14 @@ int64_t PipelineContext::registerOperatorHandler(NodeEngine::Execution::Operator
     return operatorHandlers.size() - 1;
 }
 
+const uint64_t PipelineContext::getHandlerIndex(NodeEngine::Execution::OperatorHandlerPtr operatorHandler) {
+    for (auto i = 0; i < operatorHandlers.size(); i++) {
+        if (operatorHandlers[i] == operatorHandler)
+            return i;
+    }
+    return -1;
+}
+
 const std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
     return this->operatorHandlers;
 }

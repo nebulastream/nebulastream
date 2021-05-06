@@ -18,16 +18,16 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/Query.hpp>
-#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
-#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
-#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
-#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
+#include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/RenameStreamOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Optimizer/QueryRewrite/RenameStreamToProjectOperatorRule.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Phases/TypeInferencePhase.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
 
@@ -76,10 +76,10 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingSingleStreamRenameOperat
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
     EXPECT_TRUE(!renameStreamOperators.empty());
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
 
-    auto renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
+    auto renameStreamToProjectOperatorRule = Optimizer::RenameStreamToProjectOperatorRule::create();
     auto updatedQueryPlan = renameStreamToProjectOperatorRule->apply(queryPlan);
 
     typeInferencePhase->execute(updatedQueryPlan);
@@ -104,10 +104,10 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingMultipleStreamRenameOper
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
     EXPECT_TRUE(!renameStreamOperators.empty());
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
 
-    auto renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
+    auto renameStreamToProjectOperatorRule = Optimizer::RenameStreamToProjectOperatorRule::create();
     auto updatedQueryPlan = renameStreamToProjectOperatorRule->apply(queryPlan);
 
     typeInferencePhase->execute(updatedQueryPlan);
@@ -135,10 +135,10 @@ TEST_F(RenameStreamToProjectOperatorRuleTest, testAddingStreamRenameOperatorWith
     auto renameStreamOperators = queryPlan->getOperatorByType<RenameStreamOperatorNode>();
     EXPECT_TRUE(!renameStreamOperators.empty());
 
-    auto typeInferencePhase = TypeInferencePhase::create(streamCatalog);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     typeInferencePhase->execute(queryPlan);
 
-    auto renameStreamToProjectOperatorRule = RenameStreamToProjectOperatorRule::create();
+    auto renameStreamToProjectOperatorRule = Optimizer::RenameStreamToProjectOperatorRule::create();
     auto updatedQueryPlan = renameStreamToProjectOperatorRule->apply(queryPlan);
 
     typeInferencePhase->execute(updatedQueryPlan);

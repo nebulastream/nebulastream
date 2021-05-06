@@ -25,7 +25,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 
-namespace NES {
+namespace NES::Optimizer {
 
 LogicalSourceExpansionRule::LogicalSourceExpansionRule(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {}
 
@@ -135,4 +135,4 @@ LogicalSourceExpansionRule::getLogicalGraphToDuplicate(OperatorNodePtr operatorN
     return std::make_tuple(copyOfOperator, originalRootOperator);
 }
 
-}// namespace NES
+}// namespace NES::Optimizer

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Common/ValueTypes/BasicValue.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -38,7 +39,7 @@
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES::Optimizer {
 
 AttributeSortRulePtr AttributeSortRule::create() { return std::make_shared<AttributeSortRule>(); }
 
@@ -62,19 +63,20 @@ QueryPlanPtr AttributeSortRule::apply(NES::QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(ExpressionNodePtr expression) {
+NES::ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(NES::ExpressionNodePtr expression) {
     NES_DEBUG("Sorting attributed for input expression " << expression->toString());
-    if (expression->instanceOf<LogicalExpressionNode>()) {
+    if (expression->instanceOf<NES::LogicalExpressionNode>()) {
         return sortAttributesInLogicalExpressions(expression);
-    } else if (expression->instanceOf<ArithmeticalExpressionNode>()) {
+    } else if (expression->instanceOf<NES::ArithmeticalExpressionNode>()) {
         return sortAttributesInArithmeticalExpressions(expression);
-    } else if (expression->instanceOf<FieldAssignmentExpressionNode>()) {
-        auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
-        ExpressionNodePtr assignment = fieldAssignmentExpressionNode->getAssignment();
-        ExpressionNodePtr updatedAssignment = sortAttributesInExpression(assignment);
+    } else if (expression->instanceOf<NES::FieldAssignmentExpressionNode>()) {
+        auto fieldAssignmentExpressionNode = expression->as<NES::FieldAssignmentExpressionNode>();
+        auto assignment = fieldAssignmentExpressionNode->getAssignment();
+        auto updatedAssignment = sortAttributesInExpression(assignment);
         auto field = fieldAssignmentExpressionNode->getField();
-        return FieldAssignmentExpressionNode::create(field, updatedAssignment);
-    } else if (expression->instanceOf<ConstantValueExpressionNode>() || expression->instanceOf<FieldAccessExpressionNode>()) {
+        return NES::FieldAssignmentExpressionNode::create(field, updatedAssignment);
+    } else if (expression->instanceOf<NES::ConstantValueExpressionNode>()
+               || expression->instanceOf<NES::FieldAccessExpressionNode>()) {
         return expression;
     }
     NES_THROW_RUNTIME_ERROR("No conversion to Z3 expression implemented for the expression: " + expression->toString());
@@ -83,14 +85,14 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInExpression(ExpressionNodePt
 
 ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(ExpressionNodePtr expression) {
     NES_DEBUG("Create Z3 expression for arithmetical expression " << expression->toString());
-    if (expression->instanceOf<AddExpressionNode>()) {
-        auto addExpressionNode = expression->as<AddExpressionNode>();
+    if (expression->instanceOf<NES::AddExpressionNode>()) {
+        auto addExpressionNode = expression->as<NES::AddExpressionNode>();
 
         auto sortedLeft = sortAttributesInExpression(addExpressionNode->getLeft());
         auto sortedRight = sortAttributesInExpression(addExpressionNode->getRight());
 
-        auto leftCommutativeFields = fetchCommutativeFields<AddExpressionNode>(sortedLeft);
-        auto rightCommutativeFields = fetchCommutativeFields<AddExpressionNode>(sortedRight);
+        auto leftCommutativeFields = fetchCommutativeFields<NES::AddExpressionNode>(sortedLeft);
+        auto rightCommutativeFields = fetchCommutativeFields<NES::AddExpressionNode>(sortedRight);
 
         std::vector<ExpressionNodePtr> allCommutativeFields;
         allCommutativeFields.insert(allCommutativeFields.end(), leftCommutativeFields.begin(), leftCommutativeFields.end());
@@ -102,16 +104,16 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
         }
 
         std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
-                  [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
+                  [](NES::ExpressionNodePtr lhsField, NES::ExpressionNodePtr rhsField) {
                       std::string leftValue;
                       std::string rightValue;
 
-                      if (lhsField->instanceOf<ConstantValueExpressionNode>()) {
-                          auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
+                      if (lhsField->instanceOf<NES::ConstantValueExpressionNode>()) {
+                          auto constantValue = lhsField->as<NES::ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                           leftValue = basicValueType->getValue();
                       } else {
-                          leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                          leftValue = lhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
                       }
 
                       if (rhsField->instanceOf<ConstantValueExpressionNode>()) {
@@ -119,7 +121,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
                           rightValue = basicValueType->getValue();
                       } else {
-                          rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
+                          rightValue = rhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
                       }
                       return leftValue.compare(rightValue) < 0;
                   });
@@ -539,4 +541,4 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(ExpressionN
     }
 }
 
-}// namespace NES
+}// namespace NES::Optimizer
