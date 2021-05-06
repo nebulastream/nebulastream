@@ -47,9 +47,9 @@ class NodeLocation {
     }
 
   private:
-    const NodeId nodeId;
-    const std::string hostname;
-    const uint32_t port;
+     NodeId nodeId;
+     std::string hostname;
+     uint32_t port;
 };
 }// namespace Network
 }// namespace NES
