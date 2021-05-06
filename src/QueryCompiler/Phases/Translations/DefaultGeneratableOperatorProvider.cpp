@@ -28,6 +28,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -38,7 +39,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultGeneratableOperatorProvider.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -77,6 +80,10 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerSlicePreAggregation(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>()) {
         lowerWindowSink(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSliceSinkOperator>()) {
+        lowerSliceSink(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()) {
+        lowerSliceMerging(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalJoinBuildOperator>()) {
         lowerJoinBuild(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalJoinSinkOperator>()) {
@@ -177,9 +184,28 @@ void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr q
     queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
 }
 
+void DefaultGeneratableOperatorProvider::lowerSliceMerging(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode){
+    auto sliceMergingOperator = operatorNode->as<PhysicalOperators::PhysicalSliceMergingOperator>();
+
+    auto windowAggregationDescriptor =
+        sliceMergingOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
+    auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
+
+    auto generatableOperator = GeneratableOperators::GeneratableSliceMergingOperator::create(
+        sliceMergingOperator->getInputSchema(), sliceMergingOperator->getOutputSchema(),
+        sliceMergingOperator->getOperatorHandler(), generatableWindowAggregation);
+    queryPlan->replaceOperator(sliceMergingOperator, generatableOperator);
+}
+
+
 void DefaultGeneratableOperatorProvider::lowerWindowSink(QueryPlanPtr queryPlan,
                                                          PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a window sink is lowered to a standard scan operator
+    lowerScan(queryPlan, operatorNode);
+}
+
+void DefaultGeneratableOperatorProvider::lowerSliceSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    // a slice sink is lowered to a standard scan operator
     lowerScan(queryPlan, operatorNode);
 }
 

@@ -16,38 +16,42 @@
 
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 GeneratableOperatorPtr GeneratableSliceMergingOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                               Windowing::WindowOperatorHandlerPtr operatorHandler) {
+                                                               Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation) {
     return std::make_shared<GeneratableSliceMergingOperator>(
-        GeneratableSliceMergingOperator(id, inputSchema, outputSchema, operatorHandler));
+        GeneratableSliceMergingOperator(id, inputSchema, outputSchema, operatorHandler, windowAggregation));
 }
 
 GeneratableOperatorPtr GeneratableSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                               Windowing::WindowOperatorHandlerPtr operatorHandler) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
+                                                               Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
 
 GeneratableSliceMergingOperator::GeneratableSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                                 Windowing::WindowOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler) {}
+                                                                 Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation)
+    : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler), windowAggregation(windowAggregation) {}
 
-void GeneratableSliceMergingOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {
-    // todo remove operator id from all runtime classes.
-    // auto registerID = codegen->generateWindowSetup(windowDefinition, outputSchema, context, operatorID);
+void GeneratableSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    auto windowDefinition = operatorHandler->getWindowDefinition();
+    codegen->generateWindowSetup(windowDefinition, outputSchema, context, id, operatorHandler);
 }
 
-void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr, PipelineContextPtr) {
-    //codegen->generateCodeForCombiningWindow(windowDefinition, generatableWindowAggregation, context, windowOperatorIndex);
+void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
+    auto handler = context->getHandlerIndex(operatorHandler);
+    auto windowDefinition = operatorHandler->getWindowDefinition();
+    codegen->generateCodeForCombiningWindow(windowDefinition, windowAggregation, context, handler);
 }
 
 const std::string GeneratableSliceMergingOperator::toString() const { return "GeneratableSliceMergingOperator"; }
 
-OperatorNodePtr GeneratableSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
+OperatorNodePtr GeneratableSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation); }
 
 }// namespace GeneratableOperators
 }// namespace QueryCompilation

@@ -93,6 +93,20 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
     void lowerWindowSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
 
     /**
+     * @brief Lowers a slice sink operator.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    void lowerSliceSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
+    * @brief Lowers a slice sink operator.
+    * @param queryPlan the query plan
+    * @param operatorNode the current operator node.
+    */
+    void lowerSliceMerging(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
      * @brief Lowers a slice pre aggregation.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
