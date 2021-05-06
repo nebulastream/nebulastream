@@ -46,7 +46,7 @@ typedef std::shared_ptr<NodeStats> NodeStatsPtr;
  */
 class TestUtils {
   public:
-    static constexpr uint64_t timeout = 280;
+    static constexpr uint64_t timeout = 60;
 
     /**
      * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
