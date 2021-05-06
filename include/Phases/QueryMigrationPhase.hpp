@@ -23,6 +23,7 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Services/StrategyType.hpp>
 #include <Topology/TopologyNodeId.hpp>
+#include <Network/NodeLocation.hpp>
 #include <memory>
 #include <vector>
 
@@ -92,12 +93,7 @@ class QueryMigrationPhase{
 
   private:
 
-    static constexpr auto NSINK_RETRIES = 3;
-    static constexpr auto NSINK_RETRY_WAIT = std::chrono::seconds(5);
-
     explicit QueryMigrationPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology, WorkerRPCClientPtr workerRpcClient);
-
-    bool migrateSubqueries(std::vector<TopologyNodePtr> candidateTopologyNodes, std::vector<QueryPlanPtr> queryPlans);
 
 /**
     * @brief method send query to nodes
@@ -113,6 +109,15 @@ class QueryMigrationPhase{
      * @return bool indicating success
      */
     bool startQuery(QueryId queryId, std::vector<ExecutionNodePtr> executionNodes);
+
+    /**
+     * Finds all QSP that have NetworkSinks that point to the node makred for maintenance. These are the QSPs that hold the network sinks that require
+     * reconfiguration. This map is passed over GRPC to NesWorker.
+     * @param queryId
+     * @param childExecutionNode
+     * @return map of QSPs that hold Network Sinks that need reconfiguartion
+     */
+    std::map<QuerySubPlanId , std::vector<OperatorId >> querySubPlansAndNetworkSinksToReconfigure(QueryId queryId, const ExecutionNodePtr& childExecutionNode, const Network::NodeLocation& markedNodeLocation);
 
     ExecutionNodePtr getExecutionNode(TopologyNodeId nodeId);
 

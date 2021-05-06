@@ -18,7 +18,7 @@
 //
 #include <Exceptions/QueryMigrationException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Network/NodeLocation.hpp>
+#include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
@@ -48,19 +48,56 @@ QueryMigrationPhasePtr QueryMigrationPhase::create(GlobalExecutionPlanPtr global
 
 bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
     auto queryId = req->getQueryId();
-    auto topNode = req->getTopologyNode();
-    auto childNodes = findChildExecutionNodesAsTopologyNodes(queryId,topNode);
-    auto parentNodes = findParentExecutionNodesAsTopologyNodes(queryId,topNode);
+    auto markedTopNodeId = req->getTopologyNode();
+    auto childNodes = findChildExecutionNodesAsTopologyNodes(queryId,markedTopNodeId);
+    if(childNodes.size()>1){
+        throw QueryMigrationException(queryId, "Currently migration is only supported for cases in which there is only a single CHILD node");
+    }
+    auto parentNodes = findParentExecutionNodesAsTopologyNodes(queryId,markedTopNodeId);
+    if(childNodes.size()>1){
+        throw QueryMigrationException(queryId, "Currently migration is only supported for cases in which there is only a single PARENT node");
+    }
     auto path = topology->findPathBetween(childNodes,parentNodes);
-    auto subqueries = globalExecutionPlan->getExecutionNodeByNodeId(topNode)->getQuerySubPlans(queryId);
+    auto subqueries = globalExecutionPlan->getExecutionNodeByNodeId(markedTopNodeId)->getQuerySubPlans(queryId);
 
     NES_DEBUG(req->toString());
     if(path.size() == 0){
         NES_INFO("QueryMigrationPhase: no path found between child and parent nodes. No path to migrate subqueries to");
         return false;
     }
-    bool successful = migrateSubqueries(path,subqueries);
-    return successful;
+
+
+    //TODO: update path selection
+    auto candidateTopologyNode = path.at(0)->getParents().at(0)->as<TopologyNode>();
+    auto exNode = getExecutionNode(candidateTopologyNode->getId());
+    for (auto& queryPlan : subqueries){
+        exNode->addNewQuerySubPlan(queryPlan->getQueryId(),queryPlan);
+    }
+
+    //where to send GRPC message to
+    auto childOfNodeMarkedForMaintenance = path.at(0);
+    auto ipAddress =  childOfNodeMarkedForMaintenance->getIpAddress();
+    auto grpcPort =  childOfNodeMarkedForMaintenance->getGrpcPort();
+    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
+    //What to send over GRPC
+
+    Network::NodeLocation markedNodeLocation(markedTopNodeId, topology->findNodeWithId(markedTopNodeId)->getIpAddress(),
+        topology->findNodeWithId(markedTopNodeId)->getDataPort());
+    auto map = querySubPlansAndNetworkSinksToReconfigure(queryId,globalExecutionPlan->getExecutionNodeByNodeId(childOfNodeMarkedForMaintenance->getId()),markedNodeLocation);
+
+
+        //info to build new NodeLocation Object
+    uint64_t newNodeId = candidateTopologyNode->getId();
+    std::string newHostname = candidateTopologyNode->getIpAddress();
+    uint32_t newPort = candidateTopologyNode->getDataPort();
+    workerRPCClient->updateNetworkSinks(rpcAddress,newNodeId,newHostname,newPort,map);
+
+    //for every QuerySubPlan, change the networkSink to point to new node
+//    auto deploySuccess = deployQuery(queryPlans.at(0)->getQueryId(), {exNode});
+//    auto startSuccess =  startQuery(queryPlans.at(0)->getQueryId(),{exNode});
+
+    return false;
+
 }
 
 std::vector<TopologyNodePtr> QueryMigrationPhase::findChildExecutionNodesAsTopologyNodes(QueryId queryId,TopologyNodeId topologyNodeId) {
@@ -93,52 +130,6 @@ std::vector<TopologyNodePtr> QueryMigrationPhase::findParentExecutionNodesAsTopo
     return parentNodes;
 }
 
-bool QueryMigrationPhase::migrateSubqueries(std::vector<TopologyNodePtr> candidateTopologyNodes,
-                                            std::vector<QueryPlanPtr> queryPlans) {
-    //TODO: calculate resource usage of subqueries
-    auto queryId = queryPlans[0]->getQueryId();
-    auto childOfNodeMarkedForMaintenance = candidateTopologyNodes.at(0);
-    auto candidateTopologyNode = candidateTopologyNodes.at(0)->getParents().at(0)->as<TopologyNode>();
-    auto exNode = getExecutionNode(candidateTopologyNode->getId());
-
-    uint64_t nodeId = candidateTopologyNode->getId();
-    std::string hostname = candidateTopologyNode->getIpAddress();
-    uint32_t port = candidateTopologyNode->getDataPort();
-    //auto map = buildNetworkSinks(queryPlans,queryId,candidateTopologyNode);
-    auto ipAddress =  childOfNodeMarkedForMaintenance->getIpAddress();
-    auto grpcPort =  childOfNodeMarkedForMaintenance->getGrpcPort();
-    std::string rpcAddress = ipAddress + ":" + std::to_string(grpcPort);
-    std::vector<OperatorId> destinationOperators;
-    std::vector<QuerySubPlanId> querySubPlanIds;
-    for (auto& queryPlan : queryPlans){
-        querySubPlanIds.push_back(queryPlan->getQueryId());
-        std::vector<SinkLogicalOperatorNodePtr> sinkOperators = queryPlan->getSinkOperators();
-        if(sinkOperators.size()< 1){
-            throw QueryMigrationException(queryId, "QuerySubPlan " + std::to_string(queryPlan->getQueryId()) + "has more than one Sink! Currently not supported" );
-        }
-        exNode->addNewQuerySubPlan(queryPlan->getQueryId(),queryPlan);
-        OperatorId destinationOperator = sinkOperators.at(0)->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNesPartition().getOperatorId();
-        destinationOperators.push_back(destinationOperator);
-    }
-
-
-
-
-
-
-    workerRPCClient->updateNetworkSinks(rpcAddress, queryId,querySubPlanIds,nodeId,hostname,port,destinationOperators);
-
-    //for every QuerySubPlan, change the networkSink to point to new node
-    auto deploySuccess = deployQuery(queryPlans.at(0)->getQueryId(), {exNode});
-    auto startSuccess =  startQuery(queryPlans.at(0)->getQueryId(),{exNode});
-    if(deploySuccess&&startSuccess){
-        return true;
-    }
-    return false;
-
-}
-
-
 ExecutionNodePtr QueryMigrationPhase::getExecutionNode(TopologyNodeId nodeId) {
     ExecutionNodePtr candidateExecutionNode;
     if (globalExecutionPlan->checkIfExecutionNodeExists(nodeId)) {
@@ -152,7 +143,27 @@ ExecutionNodePtr QueryMigrationPhase::getExecutionNode(TopologyNodeId nodeId) {
     return candidateExecutionNode;
 }
 
+std::map<QuerySubPlanId, std::vector<OperatorId>> QueryMigrationPhase::querySubPlansAndNetworkSinksToReconfigure(QueryId queryId, const ExecutionNodePtr& childExecutionNode, const Network::NodeLocation& markedNodeLocation) {
+    std::map<QuerySubPlanId, std::vector<OperatorId>> querySubPlansToNetworkSinksMap;
+    std::vector<QueryPlanPtr> candidateSubQueryPlans = childExecutionNode->getQuerySubPlans(queryId);
+    for(auto& queryPlan : candidateSubQueryPlans){
+       bool created = false;
+        for(auto& logicalSink : queryPlan->getSinkOperators()){
+            if(logicalSink->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()){
+                if((logicalSink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getNodeLocation()) == markedNodeLocation ){
+                    if(!created){
+                        querySubPlansToNetworkSinksMap.insert(std::pair<uint64_t, std::vector<uint64_t>> (queryPlan->getQuerySubPlanId(), {}));
+                        created = true;
+                    }
+                    querySubPlansToNetworkSinksMap[queryPlan->getQuerySubPlanId()].push_back(logicalSink->getId());
+                }
+            }
+        }
+        created = false;
+    }
 
+    return querySubPlansToNetworkSinksMap;
+}
 
 
 
@@ -290,5 +301,6 @@ bool QueryMigrationPhase::startQuery(QueryId queryId, std::vector<ExecutionNodeP
     NES_DEBUG("QueryDeploymentPhase: Finished starting execution plan for query with Id " << queryId << " success=" << result);
     return result;
 }
+
 
 }//namespace NES
