@@ -71,7 +71,7 @@ class ExecutablePipeline : public Reconfigurable {
     bool setup(QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
 
     /**
-     * @brief Starts a pipeline stage
+     * @brief Starts a pipeline stage and passes statemanager further to the operator handler
      * @return boolean if successful
      */
     bool start(StateManagerPtr stateManager);

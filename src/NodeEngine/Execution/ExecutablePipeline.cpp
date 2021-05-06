@@ -56,6 +56,10 @@ bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
     return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }
 
+/**
+ * @brief Starts a pipeline stage and passes statemanager further to the operator handler
+ * @return boolean if successful
+ */
 bool ExecutablePipeline::start(StateManagerPtr stateManager) {
     auto expected = false;
     if (isRunning.compare_exchange_strong(expected, true)) {
@@ -68,6 +72,10 @@ bool ExecutablePipeline::start(StateManagerPtr stateManager) {
     return false;
 }
 
+/**
+ * @brief Stops pipeline stage
+ * @return
+ */
 bool ExecutablePipeline::stop() {
     auto expected = true;
     if (isRunning.compare_exchange_strong(expected, false)) {
