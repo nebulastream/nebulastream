@@ -64,9 +64,9 @@ class ExecutableCompleteAggregationTriggerAction
 
     bool doAction(StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable, uint64_t currentWatermark,
                   uint64_t lastWatermark) {
-        NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
+       /* NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
                   << id << " " << this->windowDefinition->getDistributionType()->toString()
-                  << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
+                  << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);*/
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -82,9 +82,9 @@ class ExecutableCompleteAggregationTriggerAction
             // write all window aggregates to the tuple buffer
             aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark,
                              lastWatermark);//put key into this
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
+           /* NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
-                                                                     << "nextEdge=" << it.second->nextEdge << " id=" << id);
+                                                                     << "nextEdge=" << it.second->nextEdge << " id=" << id);*/
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
@@ -115,7 +115,7 @@ class ExecutableCompleteAggregationTriggerAction
     void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
                           NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark) {
 
-        NES_DEBUG("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
+//        NES_DEBUG("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
         // create result vector of windows
@@ -144,13 +144,13 @@ class ExecutableCompleteAggregationTriggerAction
         }
 
         if (currentWatermark > lastWatermark) {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
+            /*NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
                       << id << ": aggregateWindows trigger because currentWatermark=" << currentWatermark
                       << " > lastWatermark=" << lastWatermark);
             windowDefinition->getWindowType()->triggerWindows(windows, lastWatermark, currentWatermark);//watermark
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
                       << id << " (" << this->windowDefinition->getDistributionType()->toString()
-                      << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
+                      << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());*/
         } else {
             NES_TRACE("ExecutableCompleteAggregationTriggerAction "
                       << id << ": aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
@@ -264,9 +264,9 @@ class ExecutableCompleteAggregationTriggerAction
 
             tupleBuffer.setNumberOfTuples(currentNumberOfTuples);
         } else {
-            NES_DEBUG("ExecutableCompleteAggregationTriggerAction " << id << ": ("
+           /* NES_DEBUG("ExecutableCompleteAggregationTriggerAction " << id << ": ("
                                                                     << this->windowDefinition->getDistributionType()->toString()
-                                                                    << "): aggregate: no window qualifies");
+                                                                    << "): aggregate: no window qualifies");*/
         }
     }
 

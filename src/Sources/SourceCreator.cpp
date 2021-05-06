@@ -121,7 +121,7 @@ const DataSourcePtr createNettyFileSource(SchemaPtr schema, NodeEngine::BufferMa
                                           OperatorId operatorId, const std::string& address, size_t numSourceLocalBuffers) {
     return std::make_shared<NettySource>(schema, bufferManager, queryManager, pathToFile, delimiter,
                                          numberOfTuplesToProducePerBuffer, numbersOfBufferToProduce, frequency,
-                                         skipHeader, operatorId,address,numSourceLocalBuffers);
+                                         skipHeader, operatorId,address,numSourceLocalBuffers,DataSource::FREQUENCY_MODE);
 }
 const DataSourcePtr createNetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                                         NodeEngine::QueryManagerPtr queryManager, Network::NetworkManagerPtr networkManager,

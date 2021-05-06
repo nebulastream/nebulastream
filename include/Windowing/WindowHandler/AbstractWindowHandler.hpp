@@ -142,8 +142,8 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
             for (auto& entry : originIdToMaxTsMap) {
                 ss << " id=" << entry.first << " max=" << entry.second;
             }
-            NES_DEBUG("map=" << ss.str());
-            NES_DEBUG("getMinWatermark() return min=" << min->second);
+//            NES_DEBUG("map=" << ss.str());
+      //      NES_DEBUG("getMinWatermark() return min=" << min->second);
             return min->second;
         } else {
             NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings="
@@ -158,14 +158,14 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      * @param originId
      */
     virtual void updateMaxTs(uint64_t ts, uint64_t originId) {
-        NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
-                                 << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
+        /*NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
+                                 << " new val=" << std::max(originIdToMaxTsMap[originId], ts));*/
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
             auto beforeMin = getMinWatermark();
             originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
             auto afterMin = getMinWatermark();
             if (beforeMin < afterMin) {
-                NES_DEBUG("AbstractWindowHandler trigger for before=" << beforeMin << " afterMin=" << afterMin);
+              //  NES_DEBUG("AbstractWindowHandler trigger for before=" << beforeMin << " afterMin=" << afterMin);
                 trigger();
             }
         } else {

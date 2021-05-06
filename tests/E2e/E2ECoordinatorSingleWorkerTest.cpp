@@ -516,7 +516,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     ss << "\"Query::from(\\\"window\\\")"
           ".window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
           ".byKey(Attribute(\\\"id\\\"))"
-          ".apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
+          ".apply(Max(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
     ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
     ss << "));\",\"strategyName\" : \"BottomUp\"}";
@@ -617,6 +617,95 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
     coordinatorProc.terminate();
 }
+
+
+
+
+
+TEST_F(E2ECoordinatorSingleWorkerTest, tesInput) {
+    NES_INFO(" start coordinator");
+    std::string outputFilePath = "OutputTestResult.txt";
+    remove(outputFilePath.c_str());
+
+    string coordinatorRPCPort = std::to_string(rpcPort);
+    string cmdCoord = "../nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
+    bp::child coordinatorProc(cmdCoord.c_str());
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 0));
+    NES_INFO("started coordinator with pid = " << coordinatorProc.id());
+
+    std::stringstream schema;
+/*
+    schema << "{\"streamName\" : \"window\",\"schema\" "
+              ":\"Schema::create()->addField(createField(\\\"value\\\",UINT64))->addField(createField(\\\"id\\\",UINT64))->"
+              "addField(createField(\\\"timestamp\\\",UINT64));\"}";
+*/
+
+    schema << "{\"streamName\" : \"window\",\"schema\" : \"Schema::create()->"
+              "addField(\\\"auctionId\\\", UINT32)->"
+              "addField(createField(\\\"eventTime\\\", UINT64))->"
+              "addField(\\\"personId\\\", UINT32)->"
+              "addField(\\\"bidId\\\", UINT32)->"
+              "addField(createField(\\\"bidPrice\\\", UINT32));\"}";
+
+
+    schema << endl;
+    NES_INFO("schema submit=" << schema.str());
+    EXPECT_TRUE(TestUtils::addLogicalStream(schema.str(), std::to_string(restPort)));
+
+    string worker1RPCPort = std::to_string(rpcPort + 3);
+    string worker1DataPort = std::to_string(dataPort);
+    string path2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --dataPort=" + worker1DataPort
+                   + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
+                     "--sourceConfig=../tests/test_data/inputfile.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 "
+                     "--numberOfTuplesToProducePerBuffer=28";
+    bp::child workerProc(path2.c_str());
+    NES_INFO("started worker with pid = " << workerProc.id());
+    uint64_t workerPid = workerProc.id();
+    EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
+
+    std::stringstream ss;
+    ss << "{\"userQuery\" : ";
+    ss << "\"Query::from(\\\"window\\\")"
+  /*        ".window(SlidingWindow::of(EventTime(Attribute(\\\"eventTime\\\")), Seconds(10), Seconds(5)))"
+          ".byKey(Attribute(\\\"auctionId\\\"))"
+          ".apply(Sum(Attribute(\\\"bidPrice\\\")))"*/
+          ".sink(FileSinkDescriptor::create(\\\"";
+    ss << outputFilePath;
+    ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
+    ss << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss << endl;
+
+    NES_INFO("query string submit=" << ss.str());
+    web::json::value json_return = TestUtils::startQueryViaRest(ss.str(), std::to_string(restPort));
+
+    NES_INFO("try to acc return");
+    QueryId queryId = json_return.at("queryId").as_integer();
+    NES_INFO("Query ID: " << queryId);
+    EXPECT_NE(queryId, INVALID_QUERY_ID);
+
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
+
+    string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
+                             "0,10000,1,51\n"
+                             "0,10000,4,1\n"
+                             "0,10000,11,5\n"
+                             "0,10000,12,1\n"
+                             "0,10000,16,2\n"
+                             "5000,15000,1,95\n"
+                             "10000,20000,1,145\n";
+
+    EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
+
+    NES_INFO("Killing worker process->PID: " << workerPid);
+    workerProc.terminate();
+    NES_INFO("Killing coordinator process->PID: " << coordinatorProc.id());
+    coordinatorProc.terminate();
+}
+
+
+
+
 
 TEST_F(E2ECoordinatorSingleWorkerTest, testRating) {
     NES_INFO(" start coordinator");

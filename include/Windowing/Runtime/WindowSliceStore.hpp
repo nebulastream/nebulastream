@@ -42,7 +42,7 @@ class WindowSliceStore {
         for (uint64_t i = 0; i < sliceMetaData.size(); i++) {
             auto slice = sliceMetaData[i];
             if (slice.getStartTs() <= ts && slice.getEndTs() > ts) {
-                NES_DEBUG("getSliceIndexByTs for ts=" << ts << " return index=" << i);
+             //   NES_DEBUG("getSliceIndexByTs for ts=" << ts << " return index=" << i);
                 return i;
             }
         }

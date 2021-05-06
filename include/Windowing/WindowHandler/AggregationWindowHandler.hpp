@@ -158,10 +158,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      */
     void trigger(bool forceFlush = false) override {
         std::unique_lock lock(windowMutex);
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window action "
+      /*  NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run window action "
                                               << executableWindowAction->toString()
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString()
-                                              << " forceFlush=" << forceFlush);
+                                              << " forceFlush=" << forceFlush);*/
 
         if (originIdToMaxTsMap.size() != numberOfInputEdges) {
             NES_DEBUG("AggregationWindowHandler("
@@ -222,12 +222,12 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             }
         }
 
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run doing with watermark=" << watermark
-                                              << " lastWatermark=" << lastWatermark);
+      /*  NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  run doing with watermark=" << watermark
+                                              << " lastWatermark=" << lastWatermark);*/
 
         executableWindowAction->doAction(getTypedWindowState(), watermark, lastWatermark);
-        NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id
-                                              << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));
+    /*    NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id
+                                              << "):  set lastWatermark to=" << std::max(watermark, lastWatermark));*/
         lastWatermark = std::max(watermark, lastWatermark);
 
         if (forceFlush) {
