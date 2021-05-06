@@ -99,13 +99,16 @@ message MonitoringDataRequest {
 message MonitoringDataReply {
   bytes buffer = 1;
 }
+message NetworkSinks{
+  repeated uint64 networkSinkId = 1;
+}
 message UpdateNetworkSinksRequest{
-  uint64 queryId = 1;
-  repeated uint64 querySubPlanId = 2;
-  uint64 nodeId = 3;
-  string hostname = 4;
-  uint32  port = 5;
-  repeated uint64 destinationOperatorId = 6;
+  uint64 newNodeId = 1;
+  string newHostname = 2;
+  uint32 newPort = 3;
+  repeated uint64 querySubPlanIds = 4;
+  repeated NetworkSinks networkSinkIds = 5;
+
 }
 
 message UpdateNetworkSinksReply{
