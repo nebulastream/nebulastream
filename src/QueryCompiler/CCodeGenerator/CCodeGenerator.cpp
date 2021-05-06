@@ -1469,7 +1469,8 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                                   << " with code=" << context->code);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
-    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, buildSide == QueryCompilation::JoinBuildSide::Right);
+    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, buildSide == QueryCompilation::JoinBuildSide::Left);
+
     return true;
 }
 
