@@ -140,19 +140,24 @@ Status WorkerRPCServer::BeginBuffer(ServerContext*, const BufferRequest* request
 }
 Status WorkerRPCServer::UpdateNetworkSinks(ServerContext*, const UpdateNetworkSinksRequest* request,
                                            UpdateNetworkSinksReply* reply) {
-    NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: got request for " << request->queryid());
-    auto queryId = request->queryid();
-    uint64_t nodeId = request->nodeid();
-    std::string hostname = request->hostname();
-    uint32_t port = request->port();
-    std::map<QuerySubPlanId ,OperatorId> queryIdToOperatorIdMap;
-    for(uint32_t i=0; i<request->destinationoperatorid_size(); i++){
-        queryIdToOperatorIdMap[request->querysubplanid(i)] = request->destinationoperatorid(i);
+    auto querySubPlanNumber = request->querysubplanids_size();
+    auto networkSinkIdMessageNumber = request->networksinkids_size();
+    NES_ASSERT(querySubPlanNumber == networkSinkIdMessageNumber, "NodeEngine: UpdateNetworkSinks: Different amount of entries QSP and network Ids ");
+    std::map<QuerySubPlanId , std::vector<uint64_t>> queryToSinkIdsMap;
+    for(uint32_t i = 0; i<querySubPlanNumber; i++){
+        queryToSinkIdsMap.insert(std::pair<uint64_t, std::vector<uint64_t>> (request->querysubplanids(i), {}));
+        for(uint32_t j = 0; j<networkSinkIdMessageNumber; j++){
+            if(!(queryToSinkIdsMap.find(request->querysubplanids(i)) == queryToSinkIdsMap.end())){
+                queryToSinkIdsMap[request->querysubplanids(i)].push_back(request->networksinkids(i).networksinkid(j));
+            }
+        }
     }
 
+    uint64_t newNodeId = request->newnodeid();
+    std::string newHostname = request->newhostname();
+    uint32_t newPort = request->newport();
 
-
-    bool success = nodeEngine->updateNetworkSinks(queryId,nodeId,hostname,port, queryIdToOperatorIdMap);
+    bool success = nodeEngine->updateNetworkSinks(newNodeId,newHostname,newPort,queryToSinkIdsMap);
     if (success) {
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);

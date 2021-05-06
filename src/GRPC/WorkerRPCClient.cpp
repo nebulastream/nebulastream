@@ -385,20 +385,24 @@ bool WorkerRPCClient::bufferData(std::string address, QueryId queryId) {
         throw Exception("Error while WorkerRPCClient::stopQuery");
     }
 }
-bool WorkerRPCClient::updateNetworkSinks(const std::string& address, QueryId queryId,std::vector<QuerySubPlanId> querySubPlans,
-                                         uint64_t nodeId,const std::string& hostname,
-                                         uint32_t port, std::vector<OperatorId> destinationOperators)
+bool WorkerRPCClient::updateNetworkSinks(const std::string& address,
+                                         uint64_t newNodeId,const std::string& newHostname,
+                                         uint32_t newPort,std::map<QuerySubPlanId, std::vector<uint64_t>> querySubPlanIdToNetworkSinksMap)
 {
     UpdateNetworkSinksRequest request;
-    request.set_queryid(queryId);
-    request.set_nodeid(nodeId);
-    request.set_hostname(hostname);
-    request.set_port(port);
-
-    for(uint8_t i = 0; i<querySubPlans.size(); i++){
-        request.add_querysubplanid(querySubPlans.at(i));
-        request.add_destinationoperatorid(destinationOperators.at(i));
+    request.set_newnodeid(newNodeId);
+    request.set_newhostname(newHostname);
+    request.set_newport(newPort);
+    for(auto& pair: querySubPlanIdToNetworkSinksMap){
+        request.add_querysubplanids(pair.first);
+        auto networkSinkMessage = request.add_networksinkids();
+        for(auto& id : pair.second){
+            networkSinkMessage->add_networksinkid(id);
+        }
     }
+
+
+
 
 
     UpdateNetworkSinksReply reply;
