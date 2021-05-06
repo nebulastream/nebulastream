@@ -37,12 +37,12 @@ CoordinatorConfig::CoordinatorConfig() {
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
     numberOfBuffersInGlobalBufferManager =
-        ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Number buffers in global buffer pool.");
+        ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 16384, "Number buffers in global buffer pool.");
     numberOfBuffersPerPipeline =
-        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Number buffers in task local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 64,
+        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 1024, "Number buffers in task local buffer pool.");
+    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 1024,
                                                                             "Number buffers in source local buffer pool.");
-    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
+    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 262144, "BufferSizeInBytes.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
 

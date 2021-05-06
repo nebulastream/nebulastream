@@ -481,7 +481,9 @@ class TestUtils {
                 count = std::count(content.begin(), content.end(), '\n');
                 if (count < minNumberOfLines) {
                     NES_DEBUG("checkIfOutputFileIsNotEmtpy: number of min lines " << minNumberOfLines << " not reached yet with "
-                                                                                  << count << " lines content=" << content);
+                                                                                  << count
+//                                                                                  << " lines content=" << content
+                              );
                     continue;
                 } else {
                     NES_DEBUG("at least" << minNumberOfLines << " are found in content=" << content);

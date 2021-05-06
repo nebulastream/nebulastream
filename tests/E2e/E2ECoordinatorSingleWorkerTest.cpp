@@ -618,10 +618,6 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     coordinatorProc.terminate();
 }
 
-
-
-
-
 TEST_F(E2ECoordinatorSingleWorkerTest, tesInput) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "OutputTestResult.txt";

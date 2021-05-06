@@ -41,12 +41,12 @@ WorkerConfig::WorkerConfig() {
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
 
     numberOfBuffersInGlobalBufferManager =
-        ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Number buffers in global buffer pool.");
+        ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 16384, "Number buffers in global buffer pool.");
     numberOfBuffersPerPipeline =
-        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Number buffers in task local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 64,
+        ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 1024, "Number buffers in task local buffer pool.");
+    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 1024,
                                                                             "Number buffers in source local buffer pool.");
-    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
+    bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 262144, "BufferSizeInBytes.");
     parentId = ConfigOption<std::string>::create("parentId", "-1", "Parent ID of this node.");
     logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
@@ -87,7 +87,6 @@ void WorkerConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
 
 void WorkerConfig::overwriteConfigWithCommandLineInput(const std::map<std::string, std::string>& inputParams) {
     try {
-
         for (auto it = inputParams.begin(); it != inputParams.end(); ++it) {
             if (it->first == "--localWorkerIp") {
                 setLocalWorkerIp(it->second);
