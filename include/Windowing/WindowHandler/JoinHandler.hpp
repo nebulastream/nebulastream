@@ -240,6 +240,22 @@ class JoinHandler : public AbstractJoinHandler {
     Windowing::WindowManagerPtr getWindowManager() override { return this->windowManager; }
 
     /**
+     * @brief Returns left join state.
+     * @return leftJoinState.
+     */
+    auto getLeftJoinState() {
+        return leftJoinState;
+    }
+
+    /**
+     * @brief Returns right join state.
+     * @return rightJoinState.
+     */
+    auto getRightJoinState() {
+        return rightJoinState;
+    }
+
+    /**
      * @brief reconfigure machinery for the join handler: do not nothing (for now)
      * @param message
      * @param context
@@ -310,13 +326,7 @@ class JoinHandler : public AbstractJoinHandler {
         }
     }
 
-    auto getLeftJoinState() {
-        return leftJoinState;
-    }
 
-    auto getRightJoinState() {
-        return rightJoinState;
-    }
 
   private:
     std::recursive_mutex mutex;

@@ -72,8 +72,14 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
             windowHandler);
     }
 
+    /**
+    * @brief Starts window handler
+    */
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, NodeEngine::StateManagerPtr stateManager) override;
 
+    /**
+    * @brief Stops window handler
+    */
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     ~WindowOperatorHandler() override { NES_DEBUG("~WindowOperatorHandler()" + std::to_string(windowHandler.use_count())); }

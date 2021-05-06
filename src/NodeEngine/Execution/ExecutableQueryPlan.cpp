@@ -93,6 +93,10 @@ bool ExecutableQueryPlan::setup() {
     return true;
 }
 
+/**
+ * @brief Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
+ * @return boolean if the query plan started
+ */
 bool ExecutableQueryPlan::start(StateManagerPtr stateManager) {
     NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
     auto expected = Deployed;
@@ -132,6 +136,10 @@ void ExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContex
     }
 }
 
+/**
+ * @brief Stop the query plan and free all associated resources.
+ * @return boolean if the query plan started
+ */
 bool ExecutableQueryPlan::stop() {
     bool allStagesStopped = true;
     auto expected = Running;

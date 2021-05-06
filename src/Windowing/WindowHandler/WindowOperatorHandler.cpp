@@ -39,6 +39,8 @@ LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() { return
 void WindowOperatorHandler::setWindowHandler(AbstractWindowHandlerPtr windowHandler) { this->windowHandler = windowHandler; }
 
 SchemaPtr WindowOperatorHandler::getResultSchema() { return resultSchema; }
+
+
 void WindowOperatorHandler::start(NodeEngine::Execution::PipelineExecutionContextPtr, NodeEngine::StateManagerPtr stateManager) {
     windowHandler->start(stateManager);
 }
