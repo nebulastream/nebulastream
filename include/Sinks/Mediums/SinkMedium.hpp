@@ -83,6 +83,10 @@ class SinkMedium : public Runtime::Reconfigurable {
     virtual std::string toString() const = 0;
 
     /**
+     *
+     */
+    virtual uint64_t getOperatorId();
+    /**
    * @brief method to return the current schema of the sink
    * @return schema description of the sink
    */
