@@ -105,6 +105,7 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     } else {
         generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
     }
+    NES_DEBUG("CSVSource::fillBuffer: buf.getBufferSize()= " << buf.getBufferSize());
     NES_DEBUG("CSVSource::fillBuffer: fill buffer with #tuples=" << generated_tuples_this_pass << " of size=" << tupleSize);
     NES_ASSERT(generated_tuples_this_pass * tupleSize < buf.getBufferSize(),
                "Error in CSV reading, the required amount of tuples do not fit into one buffer");

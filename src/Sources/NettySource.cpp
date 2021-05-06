@@ -92,7 +92,13 @@ std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
     auto buf = bufferManager->getBufferBlocking();
 
     uint64_t tupCnt = 0;
-
+    uint64_t generated_tuples_this_pass;
+    //fill buffer maximally
+    if (numberOfTuplesToProducePerBuffer == 0) {
+        generated_tuples_this_pass = buf.getBufferSize() / tupleSize;
+    } else {
+        generated_tuples_this_pass = numberOfTuplesToProducePerBuffer;
+    }
     //NES_DEBUG("NettySource::inside Fill Socket");
     std::vector<PhysicalTypePtr> physicalTypes;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -105,12 +111,15 @@ std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
     std::regex validity("^[a-zA-Z0-9,]+$");
 
 
-    while(tupCnt * schema->getSchemaSizeInBytes() + schema->getSchemaSizeInBytes() <= buf.getBufferSize()) {
-
+    while(tupCnt < generated_tuples_this_pass) {
+        int valread = 0;
         if (parsed.empty()) {
             char buffer[4096] = {0};
             bzero(buffer, BUFFER_SIZE);
-            int valread = read(sock, buffer, BUFFER_SIZE-1);
+
+            valread = read(sock, buffer, BUFFER_SIZE-1);
+
+
             NES_DEBUG("NettySource:: Read Buffer: " << valread);
             buffer[valread] = '\0';
 
@@ -118,7 +127,7 @@ std::optional<NodeEngine::TupleBuffer> NettySource::receiveData() {
                 NES_DEBUG("NettySource:: Data Finished");
                 NES_TRACE("NettySource::fillBuffer: read produced buffer= "
                               << UtilityFunctions::printTupleBufferAsCSV(buf, schema));
-
+                NES_DEBUG("NettySource::last buffer with tuples=" << buf.getNumberOfTuples());
                 if (buf.getNumberOfTuples() == 0) {
                     return std::nullopt;
                 } else {

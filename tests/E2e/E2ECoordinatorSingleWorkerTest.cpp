@@ -656,8 +656,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, tesInput) {
     string worker1DataPort = std::to_string(dataPort);
     string path2 = "../nesWorker --coordinatorPort=" + coordinatorRPCPort + " --dataPort=" + worker1DataPort
                    + " --logicalStreamName=window --physicalStreamName=test_stream --sourceType=CSVSource "
-                     "--sourceConfig=../tests/test_data/inputfile.csv --numberOfBuffersToProduce=100 --sourceFrequency=1 "
-                     "--numberOfTuplesToProducePerBuffer=28";
+                     "--sourceConfig=../tests/test_data/inputfile.csv --numberOfBuffersToProduce=1000000 --sourceFrequency=1 ";
     bp::child workerProc(path2.c_str());
     NES_INFO("started worker with pid = " << workerProc.id());
     uint64_t workerPid = workerProc.id();
@@ -683,7 +682,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, tesInput) {
     NES_INFO("Query ID: " << queryId);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
 
-    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
+    EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1000, std::to_string(restPort)));
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
     string expectedContent = "window$start:INTEGER,window$end:INTEGER,window$id:INTEGER,window$value:INTEGER\n"
