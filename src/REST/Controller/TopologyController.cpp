@@ -16,7 +16,6 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/TopologyController.hpp>
-#include <REST/std_service.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
