@@ -37,6 +37,7 @@ class NetworkSink : public SinkMedium {
      * @param nesPartition
      */
     explicit NetworkSink(const SchemaPtr& schema,
+                         OperatorId operatorId,
                          QuerySubPlanId parentPlanId,
                          NetworkManagerPtr networkManager,
                          NodeLocation const& nodeLocation,
@@ -87,7 +88,12 @@ class NetworkSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
+    NodeLocation getNodeLocation();
+
+    OperatorId getOperatorId() override;
+
   private:
+    OperatorId operatorId;
     NetworkManagerPtr networkManager;
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferStoragePtr bufferStorage;

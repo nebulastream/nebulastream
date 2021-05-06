@@ -15,6 +15,7 @@
 */
 
 #include <Network/NetworkSink.hpp>
+#include <Network/NodeLocationPOD.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <utility>
@@ -22,6 +23,7 @@
 namespace NES::Network {
 
 NetworkSink::NetworkSink(const SchemaPtr& schema,
+                         OperatorId operatorId,
                          QuerySubPlanId parentPlanId,
                          NetworkManagerPtr networkManager,
                          const NodeLocation& nodeLocation,
@@ -31,7 +33,7 @@ NetworkSink::NetworkSink(const SchemaPtr& schema,
                          Runtime::BufferStoragePtr bufferStorage,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)
-    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
+    : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), operatorId (operatorId) ,networkManager(std::move(networkManager)),
       queryManager(std::move(queryManager)), bufferStorage(std::move(bufferStorage)), nodeLocation(nodeLocation),
       nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
@@ -84,6 +86,16 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                                                                         << Runtime::NesThread::getId());
             break;
         }
+        case NodeEngine::UpdateSinks: {
+
+                NodeLocationPOD pod = task.getUserData<NodeLocationPOD>();
+                Network::NodeLocation updatedNodeLocation(pod.nodeId, pod.hostname, pod.port);
+
+                auto updatedChannel =
+                        networkManager->registerSubpartitionProducer(updatedNodeLocation, nesPartition, waitTime, retryTimes);
+                workerContext.updateChannel(nesPartition.getOperatorId(), std::move(updatedChannel));
+                break;
+        }
         default: {
             break;
         }
@@ -100,9 +112,23 @@ void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& t
             queryManager->addReconfigurationMessage(parentPlanId, newReconf, false);
             break;
         }
+        case NodeEngine::UpdateSinks:{
+            NodeLocationPOD pod = task.getUserData<NodeLocationPOD>();
+            Network::NodeLocation updatedNodeLocation(pod.nodeId, pod.hostname, pod.port);
+            nodeLocation = updatedNodeLocation;
+            //queryManager->getrunningQEPs()[]
+
+            break;
+
+        }
         default: {
             break;
         }
     }
+}
+NodeLocation NetworkSink::getNodeLocation() {
+    return nodeLocation; }
+OperatorId NetworkSink::getOperatorId() {
+    return operatorId;
 }
 }// namespace NES::Network
