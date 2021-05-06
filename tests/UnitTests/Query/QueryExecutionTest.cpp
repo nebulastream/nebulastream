@@ -75,9 +75,9 @@ class QueryExecutionTest : public testing::Test {
     void SetUp() {
         // create test input buffer
         windowSchema = Schema::create()
-            ->addField("test$key", BasicType::INT64)
-            ->addField("test$value", BasicType::INT64)
-            ->addField("test$ts", BasicType::UINT64);
+                           ->addField("test$key", BasicType::INT64)
+                           ->addField("test$value", BasicType::INT64)
+                           ->addField("test$ts", BasicType::UINT64);
         testSchema = Schema::create()
                          ->addField("test$id", BasicType::INT64)
                          ->addField("test$one", BasicType::INT64)
@@ -186,9 +186,10 @@ class WindowSource : public NES::DefaultSource {
         return buffer;
     };
 
-    static DataSourcePtr create(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                const uint64_t numbersOfBufferToProduce, uint64_t frequency, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors, const bool varyWatermark = false,
-                                bool decreaseTime = false, int64_t timestamp = 5) {
+    static DataSourcePtr create(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
+                                NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce,
+                                uint64_t frequency, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors,
+                                const bool varyWatermark = false, bool decreaseTime = false, int64_t timestamp = 5) {
 
         return std::make_shared<WindowSource>(schema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
                                               varyWatermark, decreaseTime, timestamp, successors);
@@ -281,23 +282,19 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 TEST_F(QueryExecutionTest, filterQuery) {
     // creating query plan
 
-    auto testSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
-                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                                                                 nodeEngine->getQueryManager(), id,
-                                                                                                                 numSourceLocalBuffers, successors);
-                                                          });
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+        });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .filter(Attribute("id") < 5)
-                     .sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).filter(Attribute("id") < 5).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -338,22 +335,19 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
-                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                                                                 nodeEngine->getQueryManager(), id,
-                                                                                                                 numSourceLocalBuffers, successors);
-                                                          });
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+        });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
-    auto query = TestQuery::from(testSourceDescriptor)
-                     .project(Attribute("id"))
-                     .sink(testSinkDescriptor);
+    auto query = TestQuery::from(testSourceDescriptor).project(Attribute("id")).sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -400,16 +394,16 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     uint64_t millisecondOfallowedLateness = 2; /*milliseconds of allowedLateness*/
 
-
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(windowSchema,
-                                                          [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
-                                                                /*frequency*/ 1000, successors, /*varyWatermark*/ true);
-                                                          });
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 1000, successors, /*varyWatermark*/ true);
+        });
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. add window operator:
@@ -437,7 +431,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -469,13 +463,14 @@ Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeW
 TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(windowSchema,
-                                                          [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
-                                                                /*frequency*/ 1000, successors);
-                                                          });
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 1000, successors);
+        });
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -496,10 +491,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-
-    auto typeInferencePhase = TypeInferencePhase::create(nullptr);
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-    DistributeWindowRulePtr distributeWindowRule = DistributeWindowRule::create();
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -545,13 +539,14 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
 
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(windowSchema,
-                                                          [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
-                                                                /*frequency*/ 1000, successors, /*varyWatermark*/ true, true, 30);
-                                                          });
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 1000, successors, /*varyWatermark*/ true, true, 30);
+        });
     auto query = TestQuery::from(windowSourceDescriptor);
     // 2. dd window operator:
     // 2.1 add Tumbling window of size 10s and a sum aggregation on the value.
@@ -571,10 +566,9 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -612,13 +606,14 @@ Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeW
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(windowSchema,
-                                                          [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 2,
-                                                                /*frequency*/ 1000, successors);
-                                                          });
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 1000, successors);
+        });
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -640,10 +635,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -678,13 +672,14 @@ Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeW
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(windowSchema,
-                                                          [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), /*bufferCnt*/ 3,
-                                                                /*frequency*/ 0, successors);
-                                                          });
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 3,
+                                        /*frequency*/ 0, successors);
+        });
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -706,10 +701,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -756,14 +750,14 @@ Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeW
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     // Create Operator Tree
     // 1. add window source and create two buffers each second one.
-    auto windowSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(windowSchema,
-                                                          [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                                                          /*bufferCnt*/ 2,
-                                                                /*frequency*/ 0, successors);
-                                                          });
+    auto windowSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        windowSchema,
+        [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return WindowSource::create(windowSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                        /*bufferCnt*/ 2,
+                                        /*frequency*/ 0, successors);
+        });
     auto query = TestQuery::from(windowSourceDescriptor);
 
     // 2. dd window operator:
@@ -785,10 +779,9 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
     query.sink(testSinkDescriptor);
 
-
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
-Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
+    Optimizer::DistributeWindowRulePtr distributeWindowRule = Optimizer::DistributeWindowRule::create();
     queryPlan = distributeWindowRule->apply(queryPlan);
     queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     std::cout << " plan=" << queryPlan->toString() << std::endl;
@@ -837,7 +830,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
-   // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+    // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
     //                                                                 nodeEngine->getQueryManager(), 1, 12);
     auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
 
@@ -850,22 +843,22 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-   // auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-   // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    // auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
-                   //    .setCompiler(nodeEngine->getCompiler())
-                       .addOperatorQueryPlan(generatableOperators)
+                       //    .setCompiler(nodeEngine->getCompiler())
+                       //  .addOperatorQueryPlan(generatableOperators)
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
-                      // .addSource(testSource1)
-                      // .addSource(testSource2)
+                       // .addSource(testSource1)
+                       // .addSource(testSource2)
                        .addSink(testSink);
 
     auto plan = builder.build();
-    nodeEngine->getQueryManager()->registerQuery(plan);
+   // nodeEngine->getQueryManager()->registerQuery(plan);
 
     // The plan should have three pipeline
     EXPECT_EQ(plan->getNumberOfPipelines(), 3);
@@ -907,7 +900,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     }
 
     testSink->shutdown();
-  //  testSource1->stop(false);
-  //  testSource2->stop(false);
+    //  testSource1->stop(false);
+    //  testSource2->stop(false);
     testSink->cleanupBuffers();
 }
