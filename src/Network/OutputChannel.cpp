@@ -163,5 +163,14 @@ void OutputChannel::close() {
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;
 }
+void OutputChannel::shutdownZMQSocket() {
+    if (isClosed) {
+        return;
+    }
+    zmqSocket.close();
+    NES_DEBUG("OutputChannel: Socket closed for " << channelId);
+    isClosed = true;
+}
+
 
 }// namespace NES::Network
