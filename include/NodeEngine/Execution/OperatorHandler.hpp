@@ -18,8 +18,8 @@
 #define NES_INCLUDE_NODEENGINE_EXECUTION_OPERATORHANDLER_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
-#include <Util/Logger.hpp>
 #include <State/StateManager.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 namespace NodeEngine {

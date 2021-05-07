@@ -40,8 +40,7 @@ class JoinHandler : public AbstractJoinHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
-                         uint64_t id)
+                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction, uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
           executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2), isRunning(false) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
@@ -72,10 +71,10 @@ class JoinHandler : public AbstractJoinHandler {
 
         //Defines a callback to execute every time a new key-value pair is created
         auto leftDefaultCallback = [](const KeyType&) {
-          return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
+            return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
         };
         auto rightDefaultCallback = [](const KeyType&) {
-          return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>();
+            return new Windowing::WindowedJoinSliceListStore<ValueTypeRight>();
         };
         this->leftJoinState =
             stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
@@ -326,8 +325,6 @@ class JoinHandler : public AbstractJoinHandler {
             }
         }
     }
-
-
 
   private:
     std::recursive_mutex mutex;

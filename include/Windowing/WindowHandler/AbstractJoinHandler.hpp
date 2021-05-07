@@ -19,6 +19,7 @@
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
+#include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
@@ -27,7 +28,6 @@
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
-#include <State/StateManager.hpp>
 #include <algorithm>
 #include <atomic>
 #include <iostream>

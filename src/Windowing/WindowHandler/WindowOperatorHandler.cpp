@@ -13,9 +13,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <State/StateManager.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
-#include <State/StateManager.hpp>
 namespace NES::Windowing {
 
 WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,

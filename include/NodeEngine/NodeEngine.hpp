@@ -85,8 +85,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&,
                         std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&,
-                        QueryCompilerPtr&&, StateManagerPtr&&, uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
-                        uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline);
+                        QueryCompilerPtr&&, StateManagerPtr&&, uint64_t nodeEngineId,
+                        uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool,
+                        uint64_t numberOfBuffersPerPipeline);
 
     virtual ~NodeEngine();
 
