@@ -19,7 +19,9 @@
 
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkManager.hpp>
+#include <NodeEngine/Execution/DataEmitter.hpp>
 #include <Sources/DataSource.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES {
 namespace Network {
@@ -31,7 +33,9 @@ class NetworkSource : public DataSource {
 
   public:
     NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                  NetworkManagerPtr networkManager, NesPartition nesPartition, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors = std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+                  NetworkManagerPtr networkManager, NesPartition nesPartition, size_t numSourceLocalBuffers,
+                  std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors =
+                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
 
     ~NetworkSource();
 
@@ -73,11 +77,18 @@ class NetworkSource : public DataSource {
      */
     void runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr);
 
+    /**
+     * @brief
+     * @param buffer
+     */
+    void emitWork(NodeEngine::TupleBuffer& buffer) override;
+
   private:
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;
 };
 typedef std::shared_ptr<NetworkSource> NetworkSourcePtr;
+
 }// namespace Network
 }// namespace NES
 

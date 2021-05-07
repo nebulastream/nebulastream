@@ -49,9 +49,10 @@ bool NetworkManager::isPartitionRegistered(NesPartition nesPartition) const {
     return exchangeProtocol.getPartitionManager()->isRegistered(nesPartition);
 }
 
-bool NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition) {
+bool NetworkManager::registerSubpartitionConsumer(NesPartition nesPartition, std::shared_ptr<DataEmitter> emitter) {
     NES_DEBUG("NetworkManager: Registering SubpartitionConsumer: " << nesPartition.toString());
-    return exchangeProtocol.getPartitionManager()->registerSubpartition(nesPartition);
+    NES_ASSERT2_FMT(emitter, "invalid network source " << nesPartition.toString());
+    return exchangeProtocol.getPartitionManager()->registerSubpartition(nesPartition, emitter);
 }
 
 bool NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) {

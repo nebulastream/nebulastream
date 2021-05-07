@@ -181,9 +181,13 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         auto nesPartition = NesPartition(0, 0, 0, 0);
 
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
+
         std::thread t([&netManager, &completed, &nesPartition] {
             // register the incoming channel
-            auto cnt = netManager->registerSubpartitionConsumer(nesPartition);
+            auto cnt = netManager->registerSubpartitionConsumer(nesPartition, std::make_shared<DataEmitterImpl>());
             NES_INFO("NetworkStackTest: SubpartitionConsumer registered with cnt" << cnt);
             auto v = completed.get_future().get();
             ASSERT_EQ(v, true);
@@ -236,10 +240,13 @@ TEST_F(NetworkStackTest, testSendData) {
             "127.0.0.1", 31337, ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
             buffMgr);
 
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
         std::thread t([&netManager, &nesPartition, &completedProm, &completed] {
             // register the incoming channel
             sleep(3);// intended stalling to simulate latency
-            netManager->registerSubpartitionConsumer(nesPartition);
+            netManager->registerSubpartitionConsumer(nesPartition, std::make_shared<DataEmitterImpl>());
             auto future = completedProm.get_future();
             if (future.wait_for(std::chrono::seconds(5)) == std::future_status::ready) {
                 completed = future.get();
@@ -310,9 +317,12 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             "127.0.0.1", 31337, ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
             buffMgr);
 
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
         std::thread t([&netManager, &nesPartition, &completedProm, totalNumBuffer] {
             // register the incoming channel
-            netManager->registerSubpartitionConsumer(nesPartition);
+            netManager->registerSubpartitionConsumer(nesPartition, std::make_shared<DataEmitterImpl>());
             auto startTime = std::chrono::steady_clock::now().time_since_epoch();
             EXPECT_TRUE(completedProm.get_future().get());
             auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
@@ -350,9 +360,12 @@ TEST_F(NetworkStackTest, testPartitionManager) {
     auto partition1 = NesPartition(1, 2, 3, 4);
     auto partition1Copy = NesPartition(1, 2, 3, 4);
     auto partitionManager = std::make_shared<PartitionManager>();
-    partitionManager->registerSubpartition(partition1);
+    struct DataEmitterImpl : public DataEmitter {
+        void emitWork(TupleBuffer&) override {}
+    };
+    partitionManager->registerSubpartition(partition1, std::make_shared<DataEmitterImpl>());
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 0);
-    partitionManager->registerSubpartition(partition1);
+    partitionManager->registerSubpartition(partition1, std::make_shared<DataEmitterImpl>());
     ASSERT_EQ(partitionManager->getSubpartitionCounter(partition1Copy), 1);
 
     partitionManager->unregisterSubpartition(partition1Copy);
@@ -468,12 +481,15 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             "127.0.0.1", 31337,
             ExchangeProtocol(partMgr, std::make_shared<ExchangeListenerImpl>(bufferCounter, completedPromises)), buffMgr);
 
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
         std::thread receivingThread([&netManager, &nesPartitions, &completedPromises] {
             // register the incoming channel
             for (NesPartition p : nesPartitions) {
                 //add random latency
                 sleep(rand() % 3);
-                netManager->registerSubpartitionConsumer(p);
+                netManager->registerSubpartitionConsumer(p, std::make_shared<DataEmitterImpl>());
             }
 
             for (std::promise<bool>& p : completedPromises) {
@@ -578,10 +594,13 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             "127.0.0.1", 31337,
             ExchangeProtocol(pManager, std::make_shared<ExchangeListener>(completed, nesPartition, bufferCnt)), bMgr);
 
+        struct DataEmitterImpl : public DataEmitter {
+            void emitWork(TupleBuffer&) override {}
+        };
         std::thread receivingThread([this, &pManager, &netManager, &nesPartition, &completed] {
             // register the incoming channel
             //add latency
-            netManager->registerSubpartitionConsumer(nesPartition);
+            netManager->registerSubpartitionConsumer(nesPartition, std::make_shared<DataEmitterImpl>());
             EXPECT_TRUE(completed.get_future().get());
             //            pManager->unregisterSubpartition(nesPartition);
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
@@ -633,7 +652,7 @@ TEST_F(NetworkStackTest, testNetworkSource) {
     NesPartition nesPartition{1, 22, 33, 44};
 
     auto schema = Schema::create()->addField("id", DataTypeFactory::createInt64());
-    auto networkSource = std::make_unique<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+    auto networkSource = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                                          netManager, nesPartition, 64);
     EXPECT_TRUE(networkSource->start());
 
@@ -751,12 +770,12 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         std::thread receivingThread([&]() {
             // register the incoming channel
-            NetworkSource source(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition,
+            auto source = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition,
                                  64);
-            EXPECT_TRUE(source.start());
+            EXPECT_TRUE(source->start());
             EXPECT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
             completed.get_future().get();
-            EXPECT_TRUE(source.stop());
+            EXPECT_TRUE(source->stop());
         });
 
         auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition,

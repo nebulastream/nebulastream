@@ -15,6 +15,7 @@
 */
 
 #include <Network/ExchangeProtocol.hpp>
+#include <Network/NetworkSource.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <utility>
 
@@ -32,9 +33,7 @@ ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionMa
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
 }
 
-ExchangeProtocol::~ExchangeProtocol() {
-    //    NES_ASSERT(protocolListener.use_count() == 1, "the protocolListener pointer was leaked");
-}
+ExchangeProtocol::~ExchangeProtocol() {}
 
 Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     // check if the partition is registered via the partition manager or wait until this is not done
@@ -45,7 +44,7 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
     // check if identity is registered
     if (partitionManager->isRegistered(nesPartition)) {
         // increment the counter
-        partitionManager->registerSubpartition(nesPartition);
+        partitionManager->pinSubpartition(nesPartition);
         NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for " << msg.getChannelId().toString() << " REGISTERED");
         // send response back to the client based on the identity
         return Messages::ServerReadyMessage(msg.getChannelId());
@@ -57,7 +56,14 @@ Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::Cl
 }
 
 void ExchangeProtocol::onBuffer(NesPartition nesPartition, NodeEngine::TupleBuffer& buffer) {
-    protocolListener->onDataBuffer(nesPartition, buffer);
+    if (partitionManager->isRegistered(nesPartition)) {
+        protocolListener->onDataBuffer(nesPartition, buffer);
+        partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
+    } else {
+        NES_ERROR("DataBuffer for " + nesPartition.toString() + " is not registered and was discarded!");
+        buffer.release();
+    }
+
 }
 
 void ExchangeProtocol::onServerError(const Messages::ErrorMessage error) { protocolListener->onServerError(error); }

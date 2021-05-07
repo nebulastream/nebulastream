@@ -59,7 +59,7 @@ DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr buf
     : queryManager(queryManager), globalBufferManager(bufferManager), executableSuccessors(executableSuccessors),
       operatorId(operatorId), schema(pSchema), generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringInterval(0), gatheringMode(gatheringMode),
-      wasGracefullyStopped(true), running(false), thread(nullptr) {
+      wasGracefullyStopped(true), running(false), thread(nullptr), NodeEngine::Reconfigurable(), DataEmitter() {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");

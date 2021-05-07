@@ -43,7 +43,8 @@ const std::string NetworkSource::toString() const { return "NetworkSource: " + n
 
 bool NetworkSource::start() {
     NES_DEBUG("NetworkSource: start called on " << nesPartition);
-    return networkManager->registerSubpartitionConsumer(nesPartition);
+    auto emitter = shared_from_base<DataEmitter>();
+    return networkManager->registerSubpartitionConsumer(nesPartition, emitter);
 }
 
 bool NetworkSource::stop() {
@@ -53,6 +54,10 @@ bool NetworkSource::stop() {
 
 void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr) {
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
+}
+
+void NetworkSource::emitWork(NodeEngine::TupleBuffer& buffer) {
+    DataSource::emitWork(buffer);
 }
 
 }// namespace Network

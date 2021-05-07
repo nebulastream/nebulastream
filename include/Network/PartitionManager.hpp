@@ -22,9 +22,33 @@
 #include <shared_mutex>
 #include <unordered_map>
 
-namespace NES::Network {
+namespace NES {
+class DataEmitter;
+typedef std::shared_ptr<DataEmitter> DataEmitterPtr;
+
+namespace Network {
+class NetworkSource;
+typedef std::shared_ptr<NetworkSource> NetworkSourcePtr;
 
 class PartitionManager {
+  public:
+    class PartitionManagerEntry {
+      public:
+        explicit PartitionManagerEntry(DataEmitterPtr sourcePtr = nullptr);
+
+        uint64_t count() const;
+
+        void pin();
+
+        void unpin();
+
+        DataEmitterPtr getEmitter();
+
+      private:
+        uint64_t partitionCounter;
+        DataEmitterPtr emitter;
+    };
+
   public:
     PartitionManager() = default;
 
@@ -32,9 +56,16 @@ class PartitionManager {
      * @brief Registers a subpartition in the PartitionManager. If the subpartition does not exist a new entry is
      * added in the partition table, otherwise the counter is incremented.
      * @param the partition
+     * @emitter
      * @return true if this is  the first time the partition was registered, false otherwise
      */
-    bool registerSubpartition(NesPartition partition);
+    bool registerSubpartition(NesPartition partition, DataEmitterPtr emitter);
+
+    /**
+     * @brief Increment the subpartition counter
+     * @param partition the partition
+     */
+    void pinSubpartition(NesPartition partition);
 
     /**
      * @brief Unregisters a subpartition in the PartitionManager. If the subpartition does not exist or the current
@@ -59,17 +90,19 @@ class PartitionManager {
      */
     bool isRegistered(NesPartition partition) const;
 
+    DataEmitterPtr getDataEmitter(NesPartition partition);
+
     /**
      * @brief clears all registered partitions
      */
     void clear();
 
   private:
-    std::unordered_map<NesPartition, uint64_t> partitionCounter;
-    mutable std::shared_mutex partitionCounterMutex;
+    std::unordered_map<NesPartition, PartitionManagerEntry> partitions;
+    mutable std::shared_mutex mutex;
 };
 typedef std::shared_ptr<PartitionManager> PartitionManagerPtr;
-
-}// namespace NES::Network
+}// namespace Network
+}// namespace NES
 
 #endif//NES_PARTITIONMANAGER_HPP

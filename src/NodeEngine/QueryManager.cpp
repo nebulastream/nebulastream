@@ -461,67 +461,6 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
     } else {
         NES_ERROR("Source with id: " << sourceId << " is not registered.");
     }
-
-#ifdef EXTENDEDDEBUGGING
-    std::stringstream ss;
-    ss << " sourceid=" << operatorId << "map at operatorIdToQueryMap ";
-    for (std::map<uint64_t, std::unordered_set<QueryExecutionPlanPtr>>::const_iterator it = operatorIdToQueryMap.begin();
-         it != operatorIdToQueryMap.end(); ++it) {
-        ss << " operatorId=" << it->first;
-        for (auto& a : it->second) {
-            ss << " \t qepID=" << a->getQueryId() << " subqep=" << a->getQuerySubPlanId() << " pipelines=" << a->getStageSize();
-        }
-    }
-
-    std::stringstream ss2;
-    ss2 << " sourceid=" << operatorId << "map at operatorIdToPipelineStage ";
-    for (std::map<uint64_t, uint64_t>::const_iterator it = operatorIdToPipelineStage.begin();
-         it != operatorIdToPipelineStage.end(); ++it) {
-        ss2 << " operatorId=" << it->first << " pipeStage=" << it->second;
-    }
-
-    std::stringstream ss3;
-    ss3 << " sourceid=" << operatorId << "map at queryMapToOperatorId ";
-    for (std::map<uint64_t, std::vector<uint64_t>>::const_iterator it = queryMapToOperatorId.begin();
-         it != queryMapToOperatorId.end(); ++it) {
-        ss3 << " queryID=" << it->first;
-        for (auto& a : it->second) {
-            ss3 << "operatorId=" << a;
-        }
-    }
-
-    NES_TRACE(ss.str());
-    NES_TRACE(ss2.str());
-    NES_TRACE(ss3.str());
-#endif
-    /**
-    NES_VERIFY(operatorIdToQueryMap[operatorId].size() > 0, "Operator id to query map for operator is empty");
-    for (const auto& qep : operatorIdToQueryMap[operatorId]) {
-        // for each respective source, create new task and put it into queue
-        // TODO: change that in the future that stageId is used properly with #1354
-        if (operatorIdToPipelineStage.find(operatorId) == operatorIdToPipelineStage.end()) {
-            NES_THROW_RUNTIME_ERROR("Operator ID=" << operatorId << " not found in mapping table");
-        }
-
-        NES_DEBUG("run task for operatorID=" << operatorId << " with pipeline=" << operatorIdToPipelineStage[operatorId]);
-#ifdef QUERY_PROCESSING_WITH_SLOWDOWN//the following code is the old break that we had, we leave it in to maybe activate it again later
-        auto tryCnt = 0;
-        //TODO: this very simple rule ensures that sources can only get buffer if more than 10% of the overall buffer exists
-        uint64_t upperBound = threadPool->getNumberOfThreads() * 10000;
-        while (bufferManager->getAvailableBuffers() < bufferManager->getNumOfPooledBuffers() * 0.1
-               || taskQueue.size() > upperBound) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            waitCounter++;
-            NES_DEBUG("Waiting");
-            //TODO: we have to do this because it could be that a source is stuck here and then the shutdown crashes, so basically we test 100x for 100ms
-            // and then release the break
-            if (tryCnt++ == 100) {
-                break;
-            }
-        }
-#endif
-    }
-    **/
 }
 
 bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage message, bool blocking) {

@@ -399,22 +399,8 @@ Execution::ExecutableQueryPlanStatus NodeEngine::getQueryStatus(QueryId queryId)
     return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
-void NodeEngine::onDataBuffer(Network::NesPartition nesPartition, TupleBuffer& buffer) {
-    // TODO analyze performance penalty here because of double lock
-    if (partitionManager->isRegistered(nesPartition)) {
-        // create a string for logging of the identity which corresponds to the
-        // queryId::operatorId::partitionId::subpartitionId
-        //TODO: dont use strings for lookups
-        NES_DEBUG("NodeEngine::onDataBuffer addWork operator=" << nesPartition.getOperatorId() << " buffer=" << buffer
-                                                               << " numberOfTuples=" << buffer.getNumberOfTuples()
-                                                               << " orid=" << buffer.getOriginId());
-        queryManager->addWork(nesPartition.getOperatorId(), buffer);
-    } else {
-        // partition is not registered, discard the buffer
-        buffer.release();
-        NES_ERROR("DataBuffer for " + nesPartition.toString() + " is not registered and was discarded!");
-        //        NES_THROW_RUNTIME_ERROR("NES Network Error: unhandled message");
-    }
+void NodeEngine::onDataBuffer(Network::NesPartition, TupleBuffer&) {
+    // nop :: kept as legacy
 }
 
 void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
