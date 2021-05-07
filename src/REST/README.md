@@ -29,6 +29,22 @@ Submitting user query for execution.
 **Response**:
 {"queryId": "system_generate_uuid"}
 
+
+*Submitting user query as a protobuf Object:*
+
+**API**: /query/execute-query-ex \
+**Verb**: POST \
+**Response Code**: 200 OK
+**_Example_**:
+
+**Request**:
+A Protobuf encoded QueryPlan.
+
+**Response**:
+{"queryId": "system_generate_uuid"}
+
+
+
 ### Getting Execution Plan
 
 Getting the execution plan for the user query.

@@ -82,6 +82,14 @@ class QueryService {
     uint64_t addQueryRequest(QueryPtr queryPtr, std::string placementStrategyName);
 
     /**
+     * @brief This method is used for submitting the queries directly to the system.
+     * @param queryPlan : Query Plan Pointer Object
+     * @param placementStrategyName : Name of the placement strategy
+     * @return query id
+     */
+    uint64_t addQueryRequest(QueryPlanPtr queryPlan, std::string placementStrategyName);
+
+    /**
      * Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
      * @param queryId : query id of the query to be stopped.
      * @returns: true if successful
