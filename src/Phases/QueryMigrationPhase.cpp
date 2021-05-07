@@ -73,6 +73,8 @@ bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
     for (auto& queryPlan : subqueries){
         exNode->addNewQuerySubPlan(queryPlan->getQueryId(),queryPlan);
     }
+    //addExecutionNode updates mapping of executionNodes to QueryIds, which checks for querySubPlans in a map which is updated by the above code
+    globalExecutionPlan->addExecutionNode(exNode);
 
     //where to send GRPC message to
     auto childOfNodeMarkedForMaintenance = path.at(0);
@@ -87,15 +89,21 @@ bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
 
 
         //info to build new NodeLocation Object
+    auto deploySuccess = deployQuery(queryId, {exNode});
+    auto startSuccess =  startQuery(queryId,{exNode});
     uint64_t newNodeId = candidateTopologyNode->getId();
     std::string newHostname = candidateTopologyNode->getIpAddress();
     uint32_t newPort = candidateTopologyNode->getDataPort();
     workerRPCClient->updateNetworkSinks(rpcAddress,newNodeId,newHostname,newPort,map);
 
-    //for every QuerySubPlan, change the networkSink to point to new node
-//    auto deploySuccess = deployQuery(queryPlans.at(0)->getQueryId(), {exNode});
-//    auto startSuccess =  startQuery(queryPlans.at(0)->getQueryId(),{exNode});
 
+
+    if(deploySuccess && startSuccess){
+        return true;
+    }
+    else{
+        return false;
+    }
     return false;
 
 }
@@ -138,7 +146,7 @@ ExecutionNodePtr QueryMigrationPhase::getExecutionNode(TopologyNodeId nodeId) {
     } else {
         NES_TRACE("QueryMigrationPhase: create new execution node with id: " << nodeId);
         candidateExecutionNode = ExecutionNode::createExecutionNode(topology->findNodeWithId(nodeId));
-        globalExecutionPlan->addExecutionNode(candidateExecutionNode);
+
     }
     return candidateExecutionNode;
 }
