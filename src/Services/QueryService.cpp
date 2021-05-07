@@ -129,4 +129,15 @@ uint64_t QueryService::addQueryRequest(QueryPtr query, std::string placementStra
     return addQueryRequest("", query, placementStrategyName);
 }
 
+uint64_t QueryService::addQueryRequest(QueryPlanPtr queryPlan, std::string placementStrategyName) {
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery("", queryPlan, placementStrategyName);
+    if (entry) {
+        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
+        queryRequestQueue->add(request);
+        return queryPlan->getQueryId();
+    } else {
+        throw Exception("QueryService: unable to create query catalog entry");
+    }
+}
+
 }// namespace NES

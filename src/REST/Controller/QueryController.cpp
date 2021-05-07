@@ -20,6 +20,7 @@
 #include <Exceptions/InvalidQueryException.hpp>
 #include <Exceptions/InvalidQueryStatusException.hpp>
 #include <Exceptions/QueryNotFoundException.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Utils/PlanJsonGenerator.hpp>
 #include <REST/Controller/QueryController.hpp>
@@ -163,10 +164,41 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                 }
             })
             .wait();
+    } else if (path[1] == "execute-query-ex") {
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << body);
+                    // 1.  decode string into protobuf message
+                    std::shared_ptr<SerializableQueryPlan> protobufMessage = std::make_shared<SerializableQueryPlan>();
+                    protobufMessage->ParseFromArray(body.data(), body.size());
+
+                    // 2. decode protobuf message into c++ obj repr
+                    std::shared_ptr<QueryPlan> queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(protobufMessage.get()));
+                    QueryId queryId = queryService->addQueryRequest(queryPlan, "");
+
+                    //Prepare the response
+
+                    json::value restResponse{};
+                    restResponse["queryId"] = json::value::number(queryId);
+                    successMessageImpl(message, restResponse);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for "
+                              "user request:"
+                              << exc.what());
+                    handleException(message, exc);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
+            })
+            .wait();
     } else {
         resourceNotFoundImpl(message);
     }
-}
+}// namespace NES
 
 void QueryController::handleDelete(std::vector<utility::string_t> path, http_request request) {
 
