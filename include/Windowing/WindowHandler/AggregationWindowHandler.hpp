@@ -63,13 +63,15 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
     /**
-   * @brief Starts thread to check if the window should be triggered.
+   * @brief Starts thread to check if the window should be triggered
    * @return boolean if the window thread is started
    */
     bool start(NodeEngine::StateManagerPtr stateManager) override {
         std::unique_lock lock(windowMutex);
         this->stateManager = stateManager;
         auto expected = false;
+
+        //Defines a callback to execute every time a new key-value pair is created
         auto defaultCallback = [](const KeyType&) {
           return new Windowing::WindowSliceStore<PartialAggregateType>(0);
         };
@@ -87,7 +89,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
      * @return
      */
     bool stop() override {
-//        std::unique_lock lock(windowMutex);
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop called");
         auto expected = true;
         bool result = false;

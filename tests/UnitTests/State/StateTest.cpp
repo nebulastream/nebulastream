@@ -195,7 +195,6 @@ struct window_metadata {
 };
 
 TEST_F(StateTest, testStruct) {
-    //StateManager stateManager = new StateManager();
     StateManager stateManager;
     StateVariable<uint32_t, window_metadata*> var = *stateManager.registerState<uint32_t, window_metadata*>("window-content-5");
 

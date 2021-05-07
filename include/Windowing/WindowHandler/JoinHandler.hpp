@@ -69,7 +69,8 @@ class JoinHandler : public AbstractJoinHandler {
         this->stateManager = stateManager;
         NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
-        // Initialize StateVariable
+
+        //Defines a callback to execute every time a new key-value pair is created
         auto leftDefaultCallback = [](const KeyType&) {
           return new Windowing::WindowedJoinSliceListStore<ValueTypeLeft>();
         };
@@ -91,7 +92,7 @@ class JoinHandler : public AbstractJoinHandler {
 
     /**
      * @brief Stops the window thread.
-     * @return
+     * @return Boolean if successful
      */
     bool stop() override {
         std::unique_lock lock(mutex);
@@ -243,7 +244,7 @@ class JoinHandler : public AbstractJoinHandler {
      * @brief Returns left join state.
      * @return leftJoinState.
      */
-    auto getLeftJoinState() {
+    NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>* getLeftJoinState() {
         return leftJoinState;
     }
 
@@ -251,7 +252,7 @@ class JoinHandler : public AbstractJoinHandler {
      * @brief Returns right join state.
      * @return rightJoinState.
      */
-    auto getRightJoinState() {
+    NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>* getRightJoinState() {
         return rightJoinState;
     }
 

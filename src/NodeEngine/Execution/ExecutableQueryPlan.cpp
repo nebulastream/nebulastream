@@ -95,6 +95,7 @@ bool ExecutableQueryPlan::setup() {
 
 /**
  * @brief Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
+ * @param stateManager pointer to the current state manager
  * @return boolean if the query plan started
  */
 bool ExecutableQueryPlan::start(StateManagerPtr stateManager) {
@@ -138,7 +139,7 @@ void ExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContex
 
 /**
  * @brief Stop the query plan and free all associated resources.
- * @return boolean if the query plan started
+ * @return Success if the query plan stopped
  */
 bool ExecutableQueryPlan::stop() {
     bool allStagesStopped = true;
