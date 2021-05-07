@@ -438,6 +438,7 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
         auto executablePipelines = sourceIdToSuccessorMap[sourceId];
         // iterate over all executable pipelines
         for (auto executablePipeline : executablePipelines) {
+            NES_DEBUG("Add Work for executable from network source " << sourceId << " origin id: " << buf.getOriginId() );
             // create task
             auto task = Task(executablePipeline, buf);
             // dispatch task to task queue.
@@ -804,6 +805,8 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 
 void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable) {
     //std::unique_lock lock(queryMutex);// we need this mutex because runningQEPs can be concurrently modified
+
+    NES_DEBUG("Add Work for executable");
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock2(workMutex);
     // dispatch buffer as task
