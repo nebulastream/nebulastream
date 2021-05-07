@@ -318,6 +318,7 @@ message SerializableOperator{
     TriggerPolicy triggerPolicy = 6;
     TriggerAction action = 7;
     uint64 allowedLateness = 8;
+    uint64 origin = 9;
   }
 
   /**
