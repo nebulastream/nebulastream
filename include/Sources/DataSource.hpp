@@ -180,14 +180,32 @@ class DataSource : public NodeEngine::Reconfigurable {
      */
     uint64_t getGatheringIntervalCount() const;
 
+    /**
+     * @brief Gets the operator id for the data source
+     * @return OperatorId
+     */
     OperatorId getOperatorId();
+
+    /**
+     * @brief Set the operator id for the data source
+     * @param operatorId
+     */
     void setOperatorId(OperatorId operatorId);
 
     static GatheringMode getGatheringModeFromString(std::string mode);
 
+    /**
+     * @brief Returns the list of successor pipelines.
+     * @return  std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>
+     */
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
 
   protected:
+    NodeEngine::QueryManagerPtr queryManager;
+    NodeEngine::BufferManagerPtr globalBufferManager;
+    NodeEngine::FixedSizeBufferPoolPtr bufferManager;
+    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
+    OperatorId operatorId;
     SchemaPtr schema;
     uint64_t generatedTuples;
     uint64_t generatedBuffers;
@@ -195,13 +213,15 @@ class DataSource : public NodeEngine::Reconfigurable {
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate;
     std::chrono::milliseconds gatheringInterval;
-    OperatorId operatorId;
+    GatheringMode gatheringMode;
     SourceType type;
-    NodeEngine::BufferManagerPtr globalBufferManager;
-    NodeEngine::FixedSizeBufferPoolPtr bufferManager;
-    NodeEngine::QueryManagerPtr queryManager;
-    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
-    void emitWork(NodeEngine::TupleBuffer buffer);
+    std::atomic<bool> wasGracefullyStopped;
+
+    /**
+     * @brief Emits a tuple buffer to the successors.
+     * @param buffer
+     */
+    void emitWork(NodeEngine::TupleBuffer& buffer);
 
   private:
     //bool indicating if the source is currently running'
@@ -219,9 +239,6 @@ class DataSource : public NodeEngine::Reconfigurable {
     */
     void runningRoutineWithIngestionRate();
 
-  protected:
-    std::atomic<bool> wasGracefullyStopped;
-    GatheringMode gatheringMode;
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;

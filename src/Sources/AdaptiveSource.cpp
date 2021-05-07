@@ -77,7 +77,7 @@ void AdaptiveSource::runningRoutine() {
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                 << " iteration=" << cnt);
 
-                    queryManager->addWork(this->operatorId, buf);
+                    emitWork(buf);
                     cnt++;
                 }
             }

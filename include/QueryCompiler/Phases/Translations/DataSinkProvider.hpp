@@ -22,19 +22,23 @@
 #include <Plans/Query/QuerySubPlanId.hpp>
 namespace NES {
 namespace QueryCompilation {
+/**
+ * @brief Provider to transform a sink descriptor to executable DataSink
+ */
 class DataSinkProvider {
   public:
     static DataSinkProviderPtr create();
+
     /**
-     * @brief Lower a
-     * @param operatorId
-     * @param sinkDescriptor
-     * @param schema
-     * @param nodeEngine
+     * @brief Lowers a sink descriptor to a executable data sink.
+     * @param operatorId id of this sink
+     * @param sinkDescriptor the sink descriptor
+     * @param schema the schema of the sink
+     * @param nodeEngine the node engine
      * @param querySubPlanId
-     * @return
+     * @return DataSinkPtr
      */
-    virtual DataSinkPtr lower(OperatorId operatorId, SinkDescriptorPtr sinkDescriptor,
+    virtual DataSinkPtr lower(OperatorId sinkId, SinkDescriptorPtr sinkDescriptor,
                       SchemaPtr schema, NodeEngine::NodeEnginePtr nodeEngine,
                       QuerySubPlanId querySubPlanId);
 };

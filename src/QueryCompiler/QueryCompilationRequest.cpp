@@ -18,32 +18,18 @@
 namespace NES {
 namespace QueryCompilation {
 
-QueryCompilationRequest::Builder::Builder(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine)
-    : request(QueryCompilationRequest::create(queryPlan, nodeEngine)) {}
-
-QueryCompilationRequest::Builder& QueryCompilationRequest::Builder::debug() {
-    request->debug = true;
-    return *this;
-}
-
-QueryCompilationRequest::Builder& QueryCompilationRequest::Builder::optimze() {
-    request->debug = true;
-    return *this;
-}
-
-QueryCompilationRequest::Builder& QueryCompilationRequest::Builder::dump() {
-    request->dumpQueryPlans = true;
-    return *this;
-}
-
-QueryCompilationRequestPtr QueryCompilationRequest::Builder::build() { return request; }
-
 QueryCompilationRequestPtr QueryCompilationRequest::create(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine) {
     return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(queryPlan, nodeEngine));
 }
 
 QueryCompilationRequest::QueryCompilationRequest(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine)
     : queryPlan(queryPlan), nodeEngine(nodeEngine), debug(false), optimize(false), dumpQueryPlans(false) {}
+
+void QueryCompilationRequest::enableDump() { this->dumpQueryPlans = true; }
+
+void QueryCompilationRequest::enableDebugging() { this->debug = true; }
+
+void QueryCompilationRequest::enableOptimizations() { this->optimize = true; }
 
 bool QueryCompilationRequest::isDebugEnabled() { return debug; }
 

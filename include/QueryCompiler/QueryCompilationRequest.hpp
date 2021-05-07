@@ -27,38 +27,13 @@ namespace QueryCompilation {
  */
 class QueryCompilationRequest {
   public:
-    class Builder {
-      public:
-        Builder(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine);
 
-        /**
-         * @brief Enables debugging flag for this query
-         * @return Builder
-         */
-        Builder& debug();
-
-        /**
-         * @brief Enables optimization flags for this request.
-         * @return Builder
-         */
-        Builder& optimze();
-
-        /**
-         * @brief Enables dumping of intermediate query plans in the nes format.
-         * @return Builder
-         */
-        Builder& dump();
-
-        /**
-         * @brief Creates the QueryCompilationRequestPtr based on the parameters.
-         * @return QueryCompilationRequestPtr
-         */
-        QueryCompilationRequestPtr build();
-
-      private:
-        QueryCompilationRequestPtr request;
-    };
     static QueryCompilationRequestPtr create(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine);
+
+    /**
+     * @brief Enable debugging for this query.
+     */
+    void enableDebugging();
 
     /**
      * @brief Checks if debugging is enabled
@@ -67,10 +42,20 @@ class QueryCompilationRequest {
     bool isDebugEnabled();
 
     /**
+    * @brief Checks if optimizations for this query
+    */
+    void enableOptimizations();
+
+    /**
      * @brief Checks if optimization flags is enabled
      * @return bool
      */
     bool isOptimizeEnabled();
+
+    /**
+    * @brief Enable debugging for this query.
+    */
+    void enableDump();
 
     /**
      * @brief Checks if dumping to nesviz is enabled
