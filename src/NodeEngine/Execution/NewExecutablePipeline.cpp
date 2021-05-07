@@ -54,11 +54,11 @@ bool NewExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
     return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }
 
-bool NewExecutablePipeline::start() {
+bool NewExecutablePipeline::start(StateManagerPtr stateManager) {
     auto expected = false;
     if (isRunning.compare_exchange_strong(expected, true)) {
         for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
-            operatorHandler->start(pipelineContext);
+            operatorHandler->start(pipelineContext, stateManager);
         }
         executablePipelineStage->start(*pipelineContext.get());
         return true;
