@@ -57,9 +57,10 @@ class NetworkManager {
      * @brief This method is called on the receiver side to register a SubpartitionConsumer, i.e. indicate that the
      * server is ready to receive particular subpartitions.
      * @param the nesPartition
+     * @param the underlying network source
      * @return true if the partition was registered for the first time, false otherwise
      */
-    bool registerSubpartitionConsumer(NesPartition nesPartition);
+    bool registerSubpartitionConsumer(NesPartition nesPartition, std::shared_ptr<DataEmitter> emitter);
 
     /**
      * @brief This method is called on the receiver side to remove a SubpartitionConsumer.

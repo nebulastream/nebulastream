@@ -15,62 +15,101 @@
 */
 
 #include <Network/PartitionManager.hpp>
+#include <NodeEngine/Execution/DataEmitter.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES::Network {
 
-bool PartitionManager::registerSubpartition(NesPartition partition) {
-    std::unique_lock lock(partitionCounterMutex);
-    //check if partition is present
-    if (partitionCounter.find(partition) != partitionCounter.end()) {
-        // partition is contained
-        partitionCounter[partition] = partitionCounter[partition] + 1;
-    } else {
-        partitionCounter[partition] = 0;
+
+PartitionManager::PartitionManagerEntry::PartitionManagerEntry(DataEmitterPtr emitter) : partitionCounter(0), emitter(emitter) {
+    // nop
+}
+
+uint64_t PartitionManager::PartitionManagerEntry::count() const {
+    return partitionCounter;
+}
+
+void PartitionManager::PartitionManagerEntry::pin() {
+    partitionCounter++;
+}
+
+void PartitionManager::PartitionManagerEntry::unpin() {
+    partitionCounter--;
+}
+
+DataEmitterPtr PartitionManager::PartitionManagerEntry::getEmitter() {
+    return emitter;
+}
+
+void PartitionManager::pinSubpartition(NesPartition partition) {
+    std::unique_lock lock(mutex);
+    auto it = partitions.find(partition);
+    if (it != partitions.end()) {
+        it->second.pin();
+        return;
     }
-    NES_DEBUG("PartitionManager: Registering " << partition.toString() << "=" << partitionCounter[partition]);
-    return partitionCounter[partition] == 0;
+    NES_ASSERT2_FMT(false, "Cannot increment partition counter as partition does not exists " << partition);
+}
+
+bool PartitionManager::registerSubpartition(NesPartition partition, DataEmitterPtr emitterPtr) {
+    std::unique_lock lock(mutex);
+    //check if partition is present
+    auto it = partitions.find(partition);
+    if (it != partitions.end()) {
+        // partition is contained
+        it->second.pin();
+    } else {
+        partitions[partition] = PartitionManagerEntry(emitterPtr);
+    }
+    NES_DEBUG("PartitionManager: Registering " << partition.toString() << "=" << partitions[partition].count());
+    return partitions[partition].count() == 0;
 }
 
 bool PartitionManager::unregisterSubpartition(NesPartition partition) {
-    std::unique_lock lock(partitionCounterMutex);
+    std::unique_lock lock(mutex);
 
-    NES_ASSERT2_FMT(partitionCounter.find(partition) != partitionCounter.end(),
+    auto it = partitions.find(partition);
+    NES_ASSERT2_FMT(it != partitions.end(),
                     "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
 
     // safeguard
-    if (partitionCounter[partition] == 0) {
+    if (it->second.count() == 0) {
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
-        partitionCounter.erase(partition);
+        partitions.erase(it);
         return true;
     }
 
-    partitionCounter[partition]--;
-    NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << partitionCounter[partition] << ")");
-    if (partitionCounter[partition] == 0) {
+    it->second.unpin();
+    NES_INFO("PartitionManager: Unregistering " << partition.toString() << "; newCnt(" << it->second.count() << ")");
+    if (it->second.count() == 0) {
         //if counter reaches 0, log error
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
-        partitionCounter.erase(partition);
+        partitions.erase(it);
         return true;
     }
     return false;
 }
 
 uint64_t PartitionManager::getSubpartitionCounter(NesPartition partition) {
-    std::shared_lock lock(partitionCounterMutex);
-    return partitionCounter.at(partition);
+    std::shared_lock lock(mutex);
+    return partitions[partition].count();
+}
+
+DataEmitterPtr PartitionManager::getDataEmitter(NesPartition partition) {
+    std::unique_lock lock(mutex);
+    return partitions[partition].getEmitter();
 }
 
 void PartitionManager::clear() {
-    std::unique_lock lock(partitionCounterMutex);
+    std::unique_lock lock(mutex);
     NES_INFO("PartitionManager: Clearing registered partitions");
-    partitionCounter.clear();
+    partitions.clear();
 }
 
 bool PartitionManager::isRegistered(NesPartition partition) const {
     //check if partition is present
-    std::shared_lock lock(partitionCounterMutex);
-    return partitionCounter.find(partition) != partitionCounter.end();
+    std::shared_lock lock(mutex);
+    return partitions.find(partition) != partitions.end();
 }
 
 }// namespace NES::Network

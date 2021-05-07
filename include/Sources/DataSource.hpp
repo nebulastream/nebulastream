@@ -21,6 +21,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Operators/OperatorId.hpp>
+#include <NodeEngine/Execution/DataEmitter.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -57,7 +58,7 @@ enum SourceType {
 *  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
 */
 
-class DataSource : public NodeEngine::Reconfigurable {
+class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
 
   public:
     enum GatheringMode { FREQUENCY_MODE, INGESTION_RATE_MODE };
@@ -200,6 +201,16 @@ class DataSource : public NodeEngine::Reconfigurable {
      */
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
 
+    /**
+ * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
+ * @tparam Derived the class type that we want to cast the shared ptr
+ * @return this instance casted to the desired shared_ptr<Derived> type
+ */
+    template<typename Derived>
+    std::shared_ptr<Derived> shared_from_base() {
+        return std::static_pointer_cast<Derived>(DataEmitter::shared_from_this());
+    }
+
   protected:
     NodeEngine::QueryManagerPtr queryManager;
     NodeEngine::BufferManagerPtr globalBufferManager;
@@ -221,7 +232,7 @@ class DataSource : public NodeEngine::Reconfigurable {
      * @brief Emits a tuple buffer to the successors.
      * @param buffer
      */
-    void emitWork(NodeEngine::TupleBuffer& buffer);
+    void emitWork(NodeEngine::TupleBuffer& buffer) override;
 
   private:
     //bool indicating if the source is currently running'
