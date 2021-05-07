@@ -713,4 +713,33 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateTwoSourceQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
 
+/**
+ * @brief Input Query Plan:
+ *
+ * --- Sink 1 --- Source 1
+ *
+ * Result Query plan:
+ *
+ * --- Physical Sink 1 --- Physical Source 1
+ *
+ */
+TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSinkSourceQuery) {
+    auto queryPlan = QueryPlan::create(sourceOp1);
+    queryPlan->appendOperatorAsNewRoot(sinkOp1);
+
+    NES_DEBUG(queryPlan->toString());
+    auto physicalOperatorProvider = QueryCompilation::DefaultPhysicalOperatorProvider::create();
+    auto phase = QueryCompilation::LowerLogicalToPhysicalOperators::create(physicalOperatorProvider);
+
+    phase->apply(queryPlan);
+    NES_DEBUG(queryPlan->toString());
+
+    auto iterator = QueryPlanIterator(queryPlan).begin();
+
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSinkOperator>());
+    ++iterator;
+    ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
+}
+
+
 }// namespace NES

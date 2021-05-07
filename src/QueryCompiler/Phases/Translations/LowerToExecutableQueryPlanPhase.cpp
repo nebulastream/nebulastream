@@ -97,7 +97,9 @@ void LowerToExecutableQueryPlanPhase::processSource(
     std::map<uint64_t, NodeEngine::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap) {
 
     if (!pipeline->isSourcePipeline()) {
-        NES_ERROR("This is not a source pipeline");
+        NES_ERROR("This is not a source pipeline.");
+        NES_ERROR(pipeline->getQueryPlan()->toString());
+        throw QueryCompilationException("This is not a source pipeline.");
     }
 
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
