@@ -102,9 +102,7 @@ class StateManager {
         }
     }
 
-    ~StateManager() {
-        destroy();
-    }
+    ~StateManager() { destroy(); }
 
     void destroy() {
         std::unique_lock<std::mutex> lock(mutex);

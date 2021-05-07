@@ -1526,9 +1526,10 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     context->code->currentCodeInsertionPoint->addStatement(minWatermarkHandlerVariableStatement.copy());
 
     //        NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>* state_variable = (NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) state_var;
-    auto stateVariableDeclaration = VariableDeclaration::create(
-        tf->createPointer(tf->createAnonymusDataType("NES::NodeEngine::StateVariable<int64_t, NES::Windowing::WindowSliceStore<int64_t>*>")),
-        "state_variable");
+    auto stateVariableDeclaration =
+        VariableDeclaration::create(tf->createPointer(tf->createAnonymusDataType(
+                                        "NES::NodeEngine::StateVariable<int64_t, NES::Windowing::WindowSliceStore<int64_t>*>")),
+                                    "state_variable");
 
     auto stateVarDeclarationStatement =
         VarDeclStatement(stateVariableDeclaration)

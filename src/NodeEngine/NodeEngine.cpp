@@ -28,10 +28,10 @@
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
-#include <State/StateManager.hpp>
 
 namespace NES::NodeEngine {
 
@@ -81,8 +81,8 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
                                                        engine->getBufferManager(), numThreads);
             },
-            std::move(partitionManager), std::move(compiler), std::move(stateManager), nodeEngineId, numberOfBuffersInGlobalBufferManager,
-            numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline);
+            std::move(partitionManager), std::move(compiler), std::move(stateManager), nodeEngineId,
+            numberOfBuffersInGlobalBufferManager, numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline);
         installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
@@ -95,9 +95,8 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
                        Network::PartitionManagerPtr&& partitionManager, QueryCompilerPtr&& queryCompiler,
-                       StateManagerPtr&& stateManager, uint64_t nodeEngineId,
-                       uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool,
-                       uint64_t numberOfBuffersPerPipeline)
+                       StateManagerPtr&& stateManager, uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
+                       uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
     : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),

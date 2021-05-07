@@ -18,20 +18,19 @@
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_AGGREGATIONWINDOWHANDLER_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
+#include <State/StateManager.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowActions/BaseExecutableWindowAction.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
-#include <State/StateManager.hpp>
 
 namespace NES::Windowing {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class AggregationWindowHandler : public AbstractWindowHandler {
   public:
-
     explicit AggregationWindowHandler(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
@@ -73,11 +72,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         //Defines a callback to execute every time a new key-value pair is created
         auto defaultCallback = [](const KeyType&) {
-          return new Windowing::WindowSliceStore<PartialAggregateType>(0);
+            return new Windowing::WindowSliceStore<PartialAggregateType>(0);
         };
         this->windowStateVariable =
-            stateManager->registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(toString(),
-                                                                                                     defaultCallback);
+            stateManager->registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(toString(), defaultCallback);
         if (isRunning.compare_exchange_strong(expected, true)) {
             return executablePolicyTrigger->start(this->AbstractWindowHandler::shared_from_base<AggregationWindowHandler>());
         }
