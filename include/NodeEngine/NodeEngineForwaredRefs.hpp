@@ -102,7 +102,6 @@ typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
 typedef std::variant<DataSinkPtr, NewExecutablePipelinePtr> SuccessorExecutablePipeline;
 typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<NewExecutablePipeline>> PredecessorExecutablePipeline;
 
-
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 

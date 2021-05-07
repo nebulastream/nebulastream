@@ -31,10 +31,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
-#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
-#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
+#include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <variant>
 
@@ -42,7 +42,7 @@ namespace NES {
 namespace QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
                                                                  DataSourceProviderPtr sourceProvider)
-    : sinkProvider(sinkProvider), sourceProvider(sourceProvider) {};
+    : sinkProvider(sinkProvider), sourceProvider(sourceProvider){};
 
 LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(DataSinkProviderPtr sinkProvider,
                                                                            DataSourceProviderPtr sourceProvider) {
@@ -116,8 +116,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    auto source = sourceProvider->lower(sourceOperator->getId(), sourceDescriptor, nodeEngine, 64,
-                                                                   executableSuccessorPipelines);
+    auto source = sourceProvider->lower(sourceOperator->getId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
     sources.emplace_back(source);
 }
 
@@ -128,8 +127,8 @@ LowerToExecutableQueryPlanPhase::processSink(OperatorPipelinePtr pipeline, std::
                                              NodeEngine::NodeEnginePtr nodeEngine, QueryId, QuerySubPlanId subQueryPlanId) {
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
-    auto sink = sinkProvider->lower(sinkOperator->getId(), sinkOperator->getSinkDescriptor(),
-                                    sinkOperator->getOutputSchema(), nodeEngine, subQueryPlanId);
+    auto sink = sinkProvider->lower(sinkOperator->getId(), sinkOperator->getSinkDescriptor(), sinkOperator->getOutputSchema(),
+                                    nodeEngine, subQueryPlanId);
     sinks.emplace_back(sink);
     return sink;
 }

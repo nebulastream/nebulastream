@@ -25,6 +25,15 @@ namespace QueryCompilation {
 class DataSinkProvider {
   public:
     static DataSinkProviderPtr create();
+    /**
+     * @brief Lower a
+     * @param operatorId
+     * @param sinkDescriptor
+     * @param schema
+     * @param nodeEngine
+     * @param querySubPlanId
+     * @return
+     */
     virtual DataSinkPtr lower(OperatorId operatorId, SinkDescriptorPtr sinkDescriptor,
                       SchemaPtr schema, NodeEngine::NodeEnginePtr nodeEngine,
                       QuerySubPlanId querySubPlanId);

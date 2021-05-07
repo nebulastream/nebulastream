@@ -22,11 +22,14 @@ namespace NES {
 namespace QueryCompilation {
 class DataSourceProvider {
   public:
-    static DataSourceProviderPtr create();
+    DataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
+    static DataSourceProviderPtr create(QueryCompilerOptionsPtr compilerOptions);
     virtual DataSourcePtr lower(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
                         NodeEngine::NodeEnginePtr nodeEngine,
-                        size_t numSourceLocalBuffers,
                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+
+  protected:
+    QueryCompilerOptionsPtr compilerOptions;
 };
 }// namespace QueryCompilation
 }// namespace NES

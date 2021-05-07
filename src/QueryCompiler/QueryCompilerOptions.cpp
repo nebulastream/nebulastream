@@ -31,6 +31,7 @@ uint64_t QueryCompilerOptions::getNumSourceLocalBuffers() { return numSourceLoca
 QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     auto options = QueryCompilerOptions();
     options.enableOperatorFusion();
+    options.setNumSourceLocalBuffers(64);
     return std::make_shared<QueryCompilerOptions>(options);
 }
 

@@ -15,17 +15,15 @@
 */
 #ifndef NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
 #define NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
-#include <QueryCompiler/QueryCompilationRequest.hpp>
-#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 namespace NES {
-
-
 
 namespace TestUtils {
 
@@ -34,7 +32,7 @@ class TestSourceDescriptor : public SourceDescriptor {
     TestSourceDescriptor(SchemaPtr schema,
                          std::function<DataSourcePtr(OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
                                                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>)>
-                         createSourceFunction)
+                             createSourceFunction)
         : SourceDescriptor(schema), createSourceFunction(createSourceFunction) {}
     DataSourcePtr create(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine,
                          size_t numSourceLocalBuffers,
@@ -51,7 +49,6 @@ class TestSourceDescriptor : public SourceDescriptor {
         createSourceFunction;
 };
 
-
 class TestSinkDescriptor : public SinkDescriptor {
   public:
     TestSinkDescriptor(DataSinkPtr dataSink) : sink(dataSink) {}
@@ -63,7 +60,6 @@ class TestSinkDescriptor : public SinkDescriptor {
   private:
     DataSinkPtr sink;
 };
-
 
 class TestSinkProvider : public QueryCompilation::DataSinkProvider {
   public:
@@ -80,14 +76,15 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
 
 class TestSourceProvider : public QueryCompilation::DataSourceProvider {
   public:
+    TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options) : QueryCompilation::DataSourceProvider(options){};
     DataSourcePtr lower(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine,
-                        size_t numSourceLocalBuffers,
                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) override {
         if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
             auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
-            return testSourceDescriptor->create(operatorId, sourceDescriptor, nodeEngine, numSourceLocalBuffers, successors);
+            return testSourceDescriptor->create(operatorId, sourceDescriptor, nodeEngine,
+                                                compilerOptions->getNumSourceLocalBuffers(), successors);
         } else {
-            return DataSourceProvider::lower(operatorId, sourceDescriptor, nodeEngine, numSourceLocalBuffers, successors);
+            return DataSourceProvider::lower(operatorId, sourceDescriptor, nodeEngine, successors);
         }
     }
 };
@@ -95,9 +92,9 @@ class TestSourceProvider : public QueryCompilation::DataSourceProvider {
 class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
   public:
     const QueryCompilation::LowerToExecutableQueryPlanPhasePtr
-    createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr) override {
+    createLowerToExecutableQueryPlanPhase(QueryCompilation::QueryCompilerOptionsPtr options) override {
         auto sinkProvider = std::make_shared<TestSinkProvider>();
-        auto sourceProvider = std::make_shared<TestSourceProvider>();
+        auto sourceProvider = std::make_shared<TestSourceProvider>(options);
         return QueryCompilation::LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
     }
 };
@@ -108,7 +105,7 @@ QueryCompilation::QueryCompilerPtr createTestQueryCompiler() {
     return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider);
 }
 
-}// namespace QueryCompilation
+}// namespace TestUtils
 }// namespace NES
 
 #endif//NES_TESTS_UTIL_TESTQUERYCOMPILER_HPP_
