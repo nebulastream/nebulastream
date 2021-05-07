@@ -91,7 +91,8 @@ TEST_F(QueryCompilerTest, filterQuery) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
+    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
     auto result = queryCompiler->compileQuery(request);
 
     ASSERT_FALSE(result->hasError());
@@ -125,7 +126,8 @@ TEST_F(QueryCompilerTest, windowQuery) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
+    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
 }
@@ -157,7 +159,8 @@ TEST_F(QueryCompilerTest, unionQuery) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
+    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
 }
@@ -194,7 +197,8 @@ TEST_F(QueryCompilerTest, joinQuery) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
     queryPlan = typeInferencePhase->execute(queryPlan);
 
-    auto request = QueryCompilationRequest::Builder(queryPlan, nodeEngine).dump().build();
+    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     ASSERT_FALSE(result->hasError());
 }

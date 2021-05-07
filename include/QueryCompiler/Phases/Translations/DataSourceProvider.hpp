@@ -20,11 +20,23 @@
 #include <Operators/OperatorId.hpp>
 namespace NES {
 namespace QueryCompilation {
+
+/**
+ * @brief Provider to transform a source descriptor to executable DataSource.
+ */
 class DataSourceProvider {
   public:
     DataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
     static DataSourceProviderPtr create(QueryCompilerOptionsPtr compilerOptions);
-    virtual DataSourcePtr lower(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
+    /**
+     * @brief Lowers a source descriptor to a executable data source.
+     * @param sourceId id of the data source
+     * @param sourceDescriptor
+     * @param nodeEngine
+     * @param successors
+     * @return DataSourcePtr
+     */
+    virtual DataSourcePtr lower(OperatorId sourceId, SourceDescriptorPtr sourceDescriptor,
                         NodeEngine::NodeEnginePtr nodeEngine,
                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 

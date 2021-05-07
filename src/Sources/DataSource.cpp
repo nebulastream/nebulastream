@@ -56,16 +56,17 @@ DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr buf
                        NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : running(false), thread(nullptr), schema(pSchema), globalBufferManager(bufferManager), queryManager(queryManager),
-      generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0), operatorId(operatorId),
-      numSourceLocalBuffers(numSourceLocalBuffers), wasGracefullyStopped(true), gatheringMode(gatheringMode), executableSuccessors(executableSuccessors) {
+    : queryManager(queryManager), globalBufferManager(bufferManager), executableSuccessors(executableSuccessors),
+      operatorId(operatorId), schema(pSchema), generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX),
+      numSourceLocalBuffers(numSourceLocalBuffers), gatheringInterval(0), gatheringMode(gatheringMode),
+      wasGracefullyStopped(true), running(false), thread(nullptr) {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
 }
 
-void DataSource::emitWork(NodeEngine::TupleBuffer buffer) {
-    for(auto successor: executableSuccessors){
+void DataSource::emitWork(NodeEngine::TupleBuffer& buffer) {
+    for (auto successor : executableSuccessors) {
         queryManager->addWorkForNextPipeline(buffer, successor);
     }
 }
