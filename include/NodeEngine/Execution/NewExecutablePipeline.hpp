@@ -38,7 +38,8 @@ class NewExecutablePipeline : public Reconfigurable {
                                    PipelineExecutionContextPtr pipelineExecutionContext,
                                    ExecutablePipelineStagePtr executablePipelineStage,
                                    uint32_t numOfProducingPipelines,
-                                   std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration);
+                                   std::vector<SuccessorExecutablePipeline> successorPipelines,
+                                   bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -135,6 +136,10 @@ class NewExecutablePipeline : public Reconfigurable {
      */
     void addSuccessor(SuccessorExecutablePipeline predecessorPipeline);
 
+    /**
+     * @brief Checks if this pipeline is running
+     * @return true if pipeline is running.
+     */
     bool isPipelineRunning();
 
   private:

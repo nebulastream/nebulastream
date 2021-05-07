@@ -16,19 +16,22 @@
 #include <Operators/OperatorId.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 
-DataSourceProviderPtr QueryCompilation::DataSourceProvider::create() {
-    return std::make_shared<DataSourceProvider>();
+DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions): compilerOptions(compilerOptions) {}
+
+DataSourceProviderPtr QueryCompilation::DataSourceProvider::create(QueryCompilerOptionsPtr compilerOptions) {
+    return std::make_shared<DataSourceProvider>(compilerOptions);
 }
 
 DataSourcePtr DataSourceProvider::lower(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
-                                        NodeEngine::NodeEnginePtr nodeEngine, size_t numSourceLocalBuffers,
+                                        NodeEngine::NodeEnginePtr nodeEngine,
                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
     return ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, nodeEngine,
-                                                                   numSourceLocalBuffers, successors);
+                                                                   compilerOptions->getNumSourceLocalBuffers(), successors);
 }
 
 }// namespace QueryCompilation

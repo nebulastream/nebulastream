@@ -77,6 +77,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
             throw Exception("Error while creating stateManager");
         }
          auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+        compilerOptions->setNumSourceLocalBuffers(numberOfBuffersInSourceLocalBufferPool);
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory);
         if (!compiler) {
