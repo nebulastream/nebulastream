@@ -74,11 +74,14 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
 
     /**
     * @brief Starts window handler
+     * @param pipelineExecutionContext pointer to the current pipeline execution context
+     * @param stateManager point to the current state manager
     */
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, NodeEngine::StateManagerPtr stateManager) override;
 
     /**
     * @brief Stops window handler
+     * @param pipelineExecutionContext pointer to the current pipeline execution context
     */
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 

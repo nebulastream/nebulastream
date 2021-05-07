@@ -102,11 +102,6 @@ class StateManager {
         }
     }
 
-    /**
-     * Singleton accessor to the state manager. As of now, there is one per process.
-     */
-    //static StateManager& instance();
-
     ~StateManager() {
         destroy();
     }

@@ -57,8 +57,9 @@ bool ExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
 }
 
 /**
- * @brief Starts a pipeline stage and passes statemanager further to the operator handler
- * @return boolean if successful
+ * @brief Starts a pipeline stage and passes state manager further to the operator handler
+ * @param stateManager pointer to the current state manager
+ * @return Boolean if successful
  */
 bool ExecutablePipeline::start(StateManagerPtr stateManager) {
     auto expected = false;
@@ -74,7 +75,7 @@ bool ExecutablePipeline::start(StateManagerPtr stateManager) {
 
 /**
  * @brief Stops pipeline stage
- * @return
+ * @return Boolean if successful
  */
 bool ExecutablePipeline::stop() {
     auto expected = true;
