@@ -60,9 +60,11 @@ class NewExecutableQueryPlan : public Reconfigurable {
     bool setup();
 
     /**
-     * @brief Start the query plan, e.g., start window thread.
+     * @brief Start the query plan, e.g., start window thread, passes stateManager further to the pipeline
+     * @param stateManager pointer to the current state manager
+     * @return Success if the query plan started
      */
-    bool start();
+    bool start(StateManagerPtr stateManager);
 
     /**
      * @brief Stop the query plan and free all associated resources.
