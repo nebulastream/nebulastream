@@ -212,7 +212,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedSourceDescriptor);
         // de-serialize source descriptor
         auto sourceDescriptor = deserializeSourceDescriptor(&serializedSourceDescriptor);
-        operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createSourceOperator(sourceDescriptor);
     } else if (details.Is<SerializableOperator_SinkDetails>()) {
         // de-serialize sink operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to SinkLogicalOperator");
@@ -220,7 +220,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedSinkDescriptor);
         // de-serialize sink descriptor
         auto sinkDescriptor = deserializeSinkDescriptor(&serializedSinkDescriptor);
-        operatorNode = LogicalOperatorFactory::createSinkOperator(sinkDescriptor, serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
     } else if (details.Is<SerializableOperator_FilterDetails>()) {
         // de-serialize filter operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to FilterLogicalOperator");
@@ -228,7 +228,7 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         details.UnpackTo(&serializedFilterOperator);
         // de-serialize filter expression
         auto filterExpression = ExpressionSerializationUtil::deserializeExpression(serializedFilterOperator.mutable_predicate());
-        operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression, serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createFilterOperator(filterExpression);
     } else if (details.Is<SerializableOperator_ProjectionDetails>()) {
         // de-serialize projection operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to ProjectionLogicalOperator");
@@ -241,20 +241,20 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             auto projectExpression = ExpressionSerializationUtil::deserializeExpression(&mutableExpression);
             exps.push_back(projectExpression);
         }
-        operatorNode = LogicalOperatorFactory::createProjectionOperator(exps, serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createProjectionOperator(exps);
     } else if (details.Is<SerializableOperator_UnionDetails>()) {
         // de-serialize union operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");
         auto serializedUnionDescriptor = SerializableOperator_UnionDetails();
         details.UnpackTo(&serializedUnionDescriptor);
-        operatorNode = LogicalOperatorFactory::createUnionOperator(serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createUnionOperator();
     } else if (details.Is<SerializableOperator_BroadcastDetails>()) {
         // de-serialize broadcast operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to BroadcastLogicalOperator");
         auto serializedBroadcastDescriptor = SerializableOperator_BroadcastDetails();
         details.UnpackTo(&serializedBroadcastDescriptor);
         // de-serialize broadcast descriptor
-        operatorNode = LogicalOperatorFactory::createBroadcastOperator(serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createBroadcastOperator();
     } else if (details.Is<SerializableOperator_MapDetails>()) {
         // de-serialize map operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to MapLogicalOperator");
@@ -263,28 +263,26 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         // de-serialize map expression
         auto fieldAssignmentExpression =
             ExpressionSerializationUtil::deserializeExpression(serializedMapOperator.mutable_expression());
-        operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>(),
-                                                                 serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createMapOperator(fieldAssignmentExpression->as<FieldAssignmentExpressionNode>());
     } else if (details.Is<SerializableOperator_WindowDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to WindowLogicalOperator");
         auto serializedWindowOperator = SerializableOperator_WindowDetails();
         details.UnpackTo(&serializedWindowOperator);
-        operatorNode = deserializeWindowOperator(&serializedWindowOperator, serializedOperator->operatorid());
+        operatorNode = deserializeWindowOperator(&serializedWindowOperator, UtilityFunctions::getNextOperatorId());
     } else if (details.Is<SerializableOperator_JoinDetails>()) {
         // de-serialize window operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to JoinLogicalOperator");
         auto serializedJoinOperator = SerializableOperator_JoinDetails();
         details.UnpackTo(&serializedJoinOperator);
-        operatorNode = deserializeJoinOperator(&serializedJoinOperator, serializedOperator->operatorid());
+        operatorNode = deserializeJoinOperator(&serializedJoinOperator, UtilityFunctions::getNextOperatorId());
     } else if (details.Is<SerializableOperator_WatermarkStrategyDetails>()) {
         // de-serialize watermark assigner operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to watermarkassigner operator");
         auto serializedWatermarkStrategyDetails = SerializableOperator_WatermarkStrategyDetails();
         details.UnpackTo(&serializedWatermarkStrategyDetails);
         auto watermarkStrategyDescriptor = deserializeWatermarkStrategyDescriptor(&serializedWatermarkStrategyDetails);
-        operatorNode = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor,
-                                                                               serializedOperator->operatorid());
+        operatorNode = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor);
     } else {
         NES_THROW_RUNTIME_ERROR("OperatorSerializationUtil: could not de-serialize this serialized operator: ");
     }
