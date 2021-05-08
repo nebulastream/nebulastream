@@ -209,6 +209,10 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
                     memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 }
             } else {
+                NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
+                                "Overflow detected: buffer size = " << buf.getBufferSize()
+                                                                    << " position = " << (offset + tupCnt * tupleSize)
+                                                                    << " field size " << fieldSize);
                 memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
             }
 
