@@ -38,6 +38,33 @@ namespace NES {
 static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
+struct __attribute__((packed)) ysbRecord {
+    char user_id[16];
+    char page_id[16];
+    char campaign_id[16];
+    char ad_type[9];
+    char event_type[9];
+    int64_t current_ms;
+    uint32_t ip;
+
+    ysbRecord() {
+        event_type[0] = '-';// invalid record
+        current_ms = 0;
+        ip = 0;
+    }
+
+    ysbRecord(const ysbRecord& rhs) {
+        memcpy(&user_id, &rhs.user_id, 16);
+        memcpy(&page_id, &rhs.page_id, 16);
+        memcpy(&campaign_id, &rhs.campaign_id, 16);
+        memcpy(&ad_type, &rhs.ad_type, 9);
+        memcpy(&event_type, &rhs.event_type, 9);
+        current_ms = rhs.current_ms;
+        ip = rhs.ip;
+    }
+};
+// size 78 bytes
+
 /**
  * This test set holds the corner cases for moving our sampling frequencies to
  * sub-second intervals. Before, NES was sampling every second and was checking
@@ -87,7 +114,7 @@ class MillisecondIntervalTest : public testing::Test {
 
 };// FractionedIntervalTest
 
-TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSecond) {
+TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
@@ -103,28 +130,32 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
                            ->addField("current_ms", UINT64)
                            ->addField("ip", INT32);
 
-    uint64_t numberOfBuffers = 5;
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    uint64_t numberOfBuffers = 1;
+    uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema,
-                                                     nodeEngine->getBufferManager(),
-                                                     nodeEngine->getQueryManager(),
-                                                     path_to_file,
-                                                     del,
-                                                     0,
-                                                     numberOfBuffers,
-                                                     frequency,
-                                                     false,
-                                                     1,
-                                                     12,
-                                                     {});
+    // TODO: mock querymanager and make sure addWork is overriden for the test
+    const DataSourcePtr source =
+            createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                 path_to_file, del, numberOfTuplesToProcess, numberOfBuffers, frequency, false, 1, 12, {});
+
     source->start();
-
-    for (uint64_t i = 0; i < numberOfBuffers; i++) {
+    while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
+        uint64_t i = 0;
+        while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
+            ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
+                      << std::endl;
+            EXPECT_STREQ(record.ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click")
+                         || !strcmp(record.event_type, "purchase")));
+            i++;
+        }
     }
 
-    uint64_t expectedNumberOfTuples = 260;
-    EXPECT_EQ(source->getNumberOfGeneratedTuples(), expectedNumberOfTuples);
+    EXPECT_EQ(source->getNumberOfGeneratedTuples(), numberOfTuplesToProcess);
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), numberOfBuffers);
     EXPECT_EQ(source->getGatheringIntervalCount(), frequency);
 }
