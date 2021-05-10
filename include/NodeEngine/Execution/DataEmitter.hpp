@@ -22,8 +22,15 @@ namespace NodeEngine {
 class TupleBuffer;
 }
 
+/**
+ * @brief Interface that classes have to adhere to emit data as tasks
+ */
 class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter> {
   public:
+    /**
+     * @brief create a task using the provided buffer and submit it to a task consumer, e.g., query manager
+     * @param buffer
+     */
     virtual void emitWork(NodeEngine::TupleBuffer& buffer) = 0;
 };
 }

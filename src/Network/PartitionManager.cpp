@@ -21,23 +21,23 @@
 namespace NES::Network {
 
 
-PartitionManager::PartitionManagerEntry::PartitionManagerEntry(DataEmitterPtr emitter) : partitionCounter(0), emitter(emitter) {
+PartitionManager::PartitionEntry::PartitionEntry(DataEmitterPtr emitter) : partitionCounter(0), emitter(emitter) {
     // nop
 }
 
-uint64_t PartitionManager::PartitionManagerEntry::count() const {
+uint64_t PartitionManager::PartitionEntry::count() const {
     return partitionCounter;
 }
 
-void PartitionManager::PartitionManagerEntry::pin() {
+void PartitionManager::PartitionEntry::pin() {
     partitionCounter++;
 }
 
-void PartitionManager::PartitionManagerEntry::unpin() {
+void PartitionManager::PartitionEntry::unpin() {
     partitionCounter--;
 }
 
-DataEmitterPtr PartitionManager::PartitionManagerEntry::getEmitter() {
+DataEmitterPtr PartitionManager::PartitionEntry::getEmitter() {
     return emitter;
 }
 
@@ -59,7 +59,7 @@ bool PartitionManager::registerSubpartition(NesPartition partition, DataEmitterP
         // partition is contained
         it->second.pin();
     } else {
-        partitions[partition] = PartitionManagerEntry(emitterPtr);
+        partitions[partition] = PartitionEntry(emitterPtr);
     }
     NES_DEBUG("PartitionManager: Registering " << partition.toString() << "=" << partitions[partition].count());
     return partitions[partition].count() == 0;
