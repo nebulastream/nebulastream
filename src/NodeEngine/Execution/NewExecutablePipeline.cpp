@@ -29,7 +29,7 @@ NewExecutablePipeline::NewExecutablePipeline(uint32_t pipelineId, QuerySubPlanId
                                              ExecutablePipelineStagePtr executablePipelineStage, uint32_t numOfProducingPipelines,
                                              std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration)
     : pipelineStageId(pipelineId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
-      pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration), isRunning(reconfiguration),
+      pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration), running(reconfiguration),
       activeProducers(numOfProducingPipelines), successorPipelines(successorPipelines) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext, "Wrong pipeline stage argument");
@@ -38,8 +38,8 @@ NewExecutablePipeline::NewExecutablePipeline(uint32_t pipelineId, QuerySubPlanId
 ExecutionResult NewExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
     NES_TRACE("Execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
                                                 << " stage=" << pipelineStageId);
-    if (!isRunning) {
-        NES_DEBUG("Cannot execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage="
+    if (!running) {
+        NES_ERROR("Cannot execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage="
                                                            << pipelineStageId << " as pipeline is not running anymore");
         return ExecutionResult::Error;
     }
@@ -53,7 +53,7 @@ bool NewExecutablePipeline::setup(QueryManagerPtr, BufferManagerPtr) {
 
 bool NewExecutablePipeline::start(StateManagerPtr stateManager) {
     auto expected = false;
-    if (isRunning.compare_exchange_strong(expected, true)) {
+    if (running.compare_exchange_strong(expected, true)) {
         for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->start(pipelineContext, stateManager);
         }
@@ -65,7 +65,7 @@ bool NewExecutablePipeline::start(StateManagerPtr stateManager) {
 
 bool NewExecutablePipeline::stop() {
     auto expected = true;
-    if (isRunning.compare_exchange_strong(expected, false)) {
+    if (running.compare_exchange_strong(expected, false)) {
         for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
             operatorHandler->stop(pipelineContext);
         }
@@ -73,6 +73,10 @@ bool NewExecutablePipeline::stop() {
         return ret;
     }
     return false;
+}
+
+bool NewExecutablePipeline::isRunning() const {
+    return running;
 }
 
 std::vector<SuccessorExecutablePipeline> NewExecutablePipeline::getSuccessors() { return successorPipelines; }
@@ -115,14 +119,12 @@ void NewExecutablePipeline::reconfigure(ReconfigurationMessage& task, WorkerCont
 }
 
 void NewExecutablePipeline::addSuccessor(SuccessorExecutablePipeline successorPipeline) {
-    if (!this->isRunning) {
+    if (running) {
         successorPipelines.emplace_back(successorPipeline);
     } else {
         NES_ERROR("It is not allowed to add pipelines during execution!");
     }
 }
-
-bool NewExecutablePipeline::isPipelineRunning() { return isRunning; }
 
 void NewExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& task) {
     NES_DEBUG("Going to execute postReconfigurationCallback on pipeline belonging to subplanId: " << qepId << " stage id: "

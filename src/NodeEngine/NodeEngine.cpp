@@ -51,9 +51,14 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
-NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads,
-                                 uint64_t bufferSize, uint64_t numberOfBuffersInGlobalBufferManager,
-                                 uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline) {
+NodeEnginePtr NodeEngine::create(const std::string& hostname,
+                                 uint16_t port,
+                                 PhysicalStreamConfigPtr config,
+                                 uint16_t numThreads,
+                                 uint64_t bufferSize,
+                                 uint64_t numberOfBuffersInGlobalBufferManager,
+                                 uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                 uint64_t numberOfBuffersPerPipeline) {
     try {
         auto nodeEngineId = UtilityFunctions::getNextNodeEngineId();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
@@ -85,14 +90,23 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
             throw Exception("Error while creating compiler");
         }
         auto engine = std::make_shared<NodeEngine>(
-            config, std::move(bufferManager), std::move(queryManager),
+            config,
+            std::move(bufferManager),
+            std::move(queryManager),
             [hostname, port, numThreads](std::shared_ptr<NodeEngine> engine) {
-                return Network::NetworkManager::create(hostname, port,
+                return Network::NetworkManager::create(hostname,
+                                                       port,
                                                        Network::ExchangeProtocol(engine->getPartitionManager(), engine),
-                                                       engine->getBufferManager(), numThreads);
+                                                       engine->getBufferManager(),
+                                                       numThreads);
             },
-            std::move(partitionManager), std::move(compiler), std::move(stateManager), nodeEngineId,
-            numberOfBuffersInGlobalBufferManager, numberOfBuffersInSourceLocalBufferPool, numberOfBuffersPerPipeline);
+            std::move(partitionManager),
+            std::move(compiler),
+            std::move(stateManager),
+            nodeEngineId,
+            numberOfBuffersInGlobalBufferManager,
+            numberOfBuffersInSourceLocalBufferPool,
+            numberOfBuffersPerPipeline);
         installGlobalErrorListener(engine);
         return engine;
     } catch (std::exception& err) {
@@ -102,11 +116,17 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
     return nullptr;
 }
 
-NodeEngine::NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& bufferManager, QueryManagerPtr&& queryManager,
+NodeEngine::NodeEngine(PhysicalStreamConfigPtr config,
+                       BufferManagerPtr&& bufferManager,
+                       QueryManagerPtr&& queryManager,
                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& networkManagerCreator,
-                       Network::PartitionManagerPtr&& partitionManager, QueryCompilation::QueryCompilerPtr&& queryCompiler,
-                       StateManagerPtr&& stateManager, uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
-                       uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
+                       Network::PartitionManagerPtr&& partitionManager,
+                       QueryCompilation::QueryCompilerPtr&& queryCompiler,
+                       StateManagerPtr&& stateManager,
+                       uint64_t nodeEngineId,
+                       uint64_t numberOfBuffersInGlobalBufferManager,
+                       uint64_t numberOfBuffersInSourceLocalBufferPool,
+                       uint64_t numberOfBuffersPerPipeline)
     : inherited0(), inherited1(), inherited2(), nodeEngineId(nodeEngineId),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
       numberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool),
