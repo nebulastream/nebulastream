@@ -619,8 +619,8 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::unique_lock lock(workMutex);
 #endif
     bool isSourcePipeline = sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end();
-    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator "
-                  << sourceId << " graceful=" << graceful << " end " << isSourcePipeline);
+    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful << " end "
+                                                                                << isSourcePipeline);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
     NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
     NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
@@ -754,12 +754,11 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
     std::unique_lock lock2(workMutex);
     // dispatch buffer as task
     if (auto nextPipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
-        if((*nextPipeline)->isRunning()) {
+        if ((*nextPipeline)->isRunning()) {
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipeStageId() << " inputBuffer "
                                                                     << buffer);
             taskQueue.emplace_back(executable, buffer);
-        }
-        else {
+        } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipeStageId());
         }
     } else {
