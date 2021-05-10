@@ -118,6 +118,7 @@ bool QueryManager::startThreadPool() {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     NES_ASSERT(threadPool == nullptr, "thread pool already running");
+    NES_ASSERT(!isDestroyed, "thread pool already destroyed");
     threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads);
     return threadPool->start();
 }
@@ -509,8 +510,6 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
 }
 
 bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
-    // we should have a mutex here on work
-    // TODO add check?
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
     // todo adopt this code for multiple source pipelines
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];
@@ -620,11 +619,12 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     std::unique_lock lock(workMutex);
 #endif
     bool isSourcePipeline = sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end();
-    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << graceful << " end "
-                                                                                << isSourcePipeline);
+    NES_DEBUG("QueryManager: QueryManager::addEndOfStream for source operator "
+                  << sourceId << " graceful=" << graceful << " end " << isSourcePipeline);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
-    NES_VERIFY(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
-               "Operator id to query map for operator is empty");
+    NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
+    NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
+                    "Operator id to query map for operator is empty");
     if (graceful) {
         addSoftEndOfStream(sourceId);
     } else {
@@ -635,6 +635,7 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
 #endif
     return true;
 }
+
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 ExecutionResult QueryManager::processNextTask(std::atomic<bool>& running, WorkerContext& workerContext) {
 #else
@@ -753,7 +754,7 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
     std::unique_lock lock2(workMutex);
     // dispatch buffer as task
     if (auto nextPipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
-        iif(nextPipeline->isRunning()) {
+        if((*nextPipeline)->isRunning()) {
             NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipeStageId() << " inputBuffer "
                                                                     << buffer);
             taskQueue.emplace_back(executable, buffer);
