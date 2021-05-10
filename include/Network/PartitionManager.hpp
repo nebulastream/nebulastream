@@ -30,18 +30,42 @@ namespace Network {
 class NetworkSource;
 typedef std::shared_ptr<NetworkSource> NetworkSourcePtr;
 
+/**
+ * @brief this class keeps track of all ready partitions (and their subpartitions)
+ * It keeps track of the ref cnt for each partition and associated data emitter
+ * A data emitter is notified once there is data for its partition
+ */
 class PartitionManager {
-  public:
-    class PartitionManagerEntry {
+  private:
+    /**
+     * @brief Helper class to store a partition's ref cnt and data emitter
+     */
+    class PartitionEntry {
       public:
-        explicit PartitionManagerEntry(DataEmitterPtr sourcePtr = nullptr);
+        /**
+         * @brief Creates a new partition entry info with ref cnt = 0
+         * @param emitter the data emitter that must be notified upon arrival of new data
+         */
+        explicit PartitionEntry(DataEmitterPtr emitter = nullptr);
 
+        /**
+         * @return the refcnt of the partition
+         */
         uint64_t count() const;
 
+        /**
+         * @brief increment ref cnt by 1
+         */
         void pin();
 
+        /**
+         * @brief decrement ref cnt by 1
+         */
         void unpin();
 
+        /**
+         * @return the data emitter
+         */
         DataEmitterPtr getEmitter();
 
       private:
@@ -90,6 +114,11 @@ class PartitionManager {
      */
     bool isRegistered(NesPartition partition) const;
 
+    /**
+     * @brief Returns the data emitter of a partition
+     * @param partition
+     * @return the data emitter of a partition
+     */
     DataEmitterPtr getDataEmitter(NesPartition partition);
 
     /**
@@ -98,7 +127,7 @@ class PartitionManager {
     void clear();
 
   private:
-    std::unordered_map<NesPartition, PartitionManagerEntry> partitions;
+    std::unordered_map<NesPartition, PartitionEntry> partitions;
     mutable std::shared_mutex mutex;
 };
 typedef std::shared_ptr<PartitionManager> PartitionManagerPtr;
