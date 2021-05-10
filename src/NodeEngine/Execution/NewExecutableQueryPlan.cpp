@@ -38,8 +38,8 @@ NewExecutableQueryPlanPtr NewExecutableQueryPlan::create(QueryId queryId, QueryS
                                                          std::vector<DataSourcePtr> sources, std::vector<DataSinkPtr> sinks,
                                                          std::vector<NewExecutablePipelinePtr> pipelines,
                                                          QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
-    return std::make_shared<NewExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks), std::move(pipelines), std::move(queryManager),
-                                                    std::move(bufferManager));
+    return std::make_shared<NewExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks),
+                                                    std::move(pipelines), std::move(queryManager), std::move(bufferManager));
 }
 
 void NewExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }

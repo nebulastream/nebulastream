@@ -17,8 +17,8 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
-#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/NewExecutablePipeline.hpp>
+#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
@@ -29,13 +29,13 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
-#include <State/StateManager.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <QueryCompiler/DefaultQueryCompiler.hpp>
+#include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <string>
@@ -76,7 +76,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname, uint16_t port, Phy
             NES_ERROR("NodeEngine: error while creating stateManager");
             throw Exception("Error while creating stateManager");
         }
-         auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
+        auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         compilerOptions->setNumSourceLocalBuffers(numberOfBuffersInSourceLocalBufferPool);
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto compiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory);

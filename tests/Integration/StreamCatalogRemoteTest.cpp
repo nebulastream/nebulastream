@@ -22,8 +22,8 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
-#include <gtest/gtest.h>
 #include <fstream>
+#include <gtest/gtest.h>
 
 using namespace std;
 namespace NES {

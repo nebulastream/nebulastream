@@ -21,7 +21,7 @@
 namespace NES {
 namespace QueryCompilation {
 
-DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions): compilerOptions(compilerOptions) {}
+DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(compilerOptions) {}
 
 DataSourceProviderPtr QueryCompilation::DataSourceProvider::create(QueryCompilerOptionsPtr compilerOptions) {
     return std::make_shared<DataSourceProvider>(compilerOptions);
@@ -31,7 +31,7 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId, SourceDescriptorP
                                         NodeEngine::NodeEnginePtr nodeEngine,
                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
     return ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, nodeEngine,
-                                                                   compilerOptions->getNumSourceLocalBuffers(), successors);
+                                                            compilerOptions->getNumSourceLocalBuffers(), successors);
 }
 
 }// namespace QueryCompilation

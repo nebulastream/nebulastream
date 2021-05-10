@@ -120,9 +120,8 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
     }
 }
 }// namespace detail
-void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder&, CodeGeneratorPtr,
-                                          PipelineContextPtr) {
-/**
+void QueryCompiler::compilePipelineStages(GeneratedQueryExecutionPlanBuilder&, CodeGeneratorPtr, PipelineContextPtr) {
+    /**
     std::map<uint32_t, detail::PipelineStageHolder, std::greater<>> executableStages;
     detail::generateExecutablePipelines(builder.getQueryId(), builder.getQuerySubPlanId(), std::move(codeGenerator),
                                         builder.getBufferManager(), builder.getQueryManager(), std::move(context),

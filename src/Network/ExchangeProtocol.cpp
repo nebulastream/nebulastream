@@ -15,8 +15,8 @@
 */
 
 #include <Network/ExchangeProtocol.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
+#include <Network/NetworkSource.hpp>
 #include <utility>
 
 namespace NES {
@@ -63,7 +63,6 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, NodeEngine::TupleBuff
         NES_ERROR("DataBuffer for " + nesPartition.toString() + " is not registered and was discarded!");
         buffer.release();
     }
-
 }
 
 void ExchangeProtocol::onServerError(const Messages::ErrorMessage error) { protocolListener->onServerError(error); }

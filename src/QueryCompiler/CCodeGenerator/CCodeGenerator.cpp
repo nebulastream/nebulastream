@@ -1286,7 +1286,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     auto windowManagerVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowManager");
     auto windowStateVarDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowStateVar");
     auto windowJoinVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "joinHandler");
-    auto operatorHandlerIndex =  context->registerOperatorHandler(joinOperatorHandler);
+    auto operatorHandlerIndex = context->registerOperatorHandler(joinOperatorHandler);
 
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
@@ -1469,7 +1469,8 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                                   << " with code=" << context->code);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
-    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration, buildSide == QueryCompilation::JoinBuildSide::Left);
+    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration,
+                                        buildSide == QueryCompilation::JoinBuildSide::Left);
 
     return true;
 }

@@ -770,8 +770,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         std::thread receivingThread([&]() {
             // register the incoming channel
-            auto source = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), netManager, nesPartition,
-                                 64);
+            auto source = std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                          netManager, nesPartition, 64);
             EXPECT_TRUE(source->start());
             EXPECT_TRUE(nodeEngine->getPartitionManager()->isRegistered(nesPartition));
             completed.get_future().get();
@@ -832,13 +832,12 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         schema,
         [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-          return std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                 netManager, nesPartition, numSourceLocalBuffers, successors);
+            return std::make_shared<NetworkSource>(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
+                                                   netManager, nesPartition, numSourceLocalBuffers, successors);
         });
 
     auto testSink = std::make_shared<TestSink>(schema, nodeEngine->getBufferManager());
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
-
 
     auto query = TestQuery::from(networkSourceDescriptor1).sink(testSinkDescriptor);
 
@@ -856,8 +855,8 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
         schema,
         [&](OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-          return createDefaultDataSourceWithSchemaForOneBuffer(schema, nodeEngine->getBufferManager(),
-                                                               nodeEngine->getQueryManager(), 1, numSourceLocalBuffers, successors);
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), 1, numSourceLocalBuffers, successors);
         });
 
     auto networkSink = std::make_shared<NetworkSink>(schema, 1, netManager, nodeLocation, nesPartition,

@@ -24,9 +24,9 @@
 #include <gtest/gtest.h>
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <fstream>
 #include <sstream>
 #include <string>
-#include <fstream>
 
 namespace NES {
 using NodeEngine::TupleBuffer;

@@ -741,5 +741,4 @@ TEST_F(TranslateToPhysicalOperatorPhaseTest, translateSinkSourceQuery) {
     ASSERT_TRUE((*iterator)->instanceOf<QueryCompilation::PhysicalOperators::PhysicalSourceOperator>());
 }
 
-
 }// namespace NES

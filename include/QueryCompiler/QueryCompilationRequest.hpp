@@ -27,7 +27,6 @@ namespace QueryCompilation {
  */
 class QueryCompilationRequest {
   public:
-
     static QueryCompilationRequestPtr create(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine);
 
     /**

@@ -36,7 +36,8 @@ class GeneratableSliceMergingOperator : public GeneratableWindowOperator {
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
+                                         Windowing::WindowOperatorHandlerPtr operatorHandler,
+                                         GeneratableWindowAggregationPtr windowAggregation);
 
     /**
      * @brief Creates a new generatable slice merging operator, which consumes slices and merges them in the operator state.
@@ -47,7 +48,8 @@ class GeneratableSliceMergingOperator : public GeneratableWindowOperator {
      * @return GeneratableOperatorPtr
      */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Windowing::WindowOperatorHandlerPtr operatorHandler, GeneratableWindowAggregationPtr windowAggregation);
+                                         Windowing::WindowOperatorHandlerPtr operatorHandler,
+                                         GeneratableWindowAggregationPtr windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
