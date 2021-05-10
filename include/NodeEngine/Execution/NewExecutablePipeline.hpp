@@ -40,6 +40,11 @@ class NewExecutablePipeline : public Reconfigurable {
                                    std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration);
 
     /**
+     * @brief Destructor of an ExecutablePipeline
+     */
+    ~NewExecutablePipeline();
+
+    /**
      * @brief Factory method to create a new executable pipeline.
      * @param pipelineId The Id of this pipeline
      * @param querySubPlanId the id of the query sub plan
@@ -95,9 +100,10 @@ class NewExecutablePipeline : public Reconfigurable {
     QuerySubPlanId getQepParentId() const;
 
     /**
-     * @brief Destructor of an ExecutablePipeline
+     * @brief Checks if this pipeline is running
+     * @return true if pipeline is running.
      */
-    ~NewExecutablePipeline();
+    bool isRunning() const;
 
     /**
     * @return returns true if the pipeline contains a function pointer for a reconfiguration task
@@ -134,11 +140,6 @@ class NewExecutablePipeline : public Reconfigurable {
      */
     void addSuccessor(SuccessorExecutablePipeline predecessorPipeline);
 
-    /**
-     * @brief Checks if this pipeline is running
-     * @return true if pipeline is running.
-     */
-    bool isPipelineRunning();
 
   private:
     uint32_t pipelineStageId;
@@ -146,7 +147,7 @@ class NewExecutablePipeline : public Reconfigurable {
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
-    std::atomic<bool> isRunning;
+    std::atomic<bool> running;
     std::atomic<uint32_t> activeProducers;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
