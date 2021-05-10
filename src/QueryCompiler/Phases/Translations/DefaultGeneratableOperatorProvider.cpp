@@ -27,8 +27,8 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinSinkOperator.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
@@ -184,11 +184,11 @@ void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr q
     queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
 }
 
-void DefaultGeneratableOperatorProvider::lowerSliceMerging(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode){
+void DefaultGeneratableOperatorProvider::lowerSliceMerging(QueryPlanPtr queryPlan,
+                                                           PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto sliceMergingOperator = operatorNode->as<PhysicalOperators::PhysicalSliceMergingOperator>();
 
-    auto windowAggregationDescriptor =
-        sliceMergingOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
+    auto windowAggregationDescriptor = sliceMergingOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
     auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
 
     auto generatableOperator = GeneratableOperators::GeneratableSliceMergingOperator::create(
@@ -197,14 +197,14 @@ void DefaultGeneratableOperatorProvider::lowerSliceMerging(QueryPlanPtr queryPla
     queryPlan->replaceOperator(sliceMergingOperator, generatableOperator);
 }
 
-
 void DefaultGeneratableOperatorProvider::lowerWindowSink(QueryPlanPtr queryPlan,
                                                          PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a window sink is lowered to a standard scan operator
     lowerScan(queryPlan, operatorNode);
 }
 
-void DefaultGeneratableOperatorProvider::lowerSliceSink(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+void DefaultGeneratableOperatorProvider::lowerSliceSink(QueryPlanPtr queryPlan,
+                                                        PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     // a slice sink is lowered to a standard scan operator
     lowerScan(queryPlan, operatorNode);
 }

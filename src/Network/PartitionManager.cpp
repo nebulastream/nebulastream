@@ -20,26 +20,17 @@
 
 namespace NES::Network {
 
-
 PartitionManager::PartitionEntry::PartitionEntry(DataEmitterPtr emitter) : partitionCounter(0), emitter(emitter) {
     // nop
 }
 
-uint64_t PartitionManager::PartitionEntry::count() const {
-    return partitionCounter;
-}
+uint64_t PartitionManager::PartitionEntry::count() const { return partitionCounter; }
 
-void PartitionManager::PartitionEntry::pin() {
-    partitionCounter++;
-}
+void PartitionManager::PartitionEntry::pin() { partitionCounter++; }
 
-void PartitionManager::PartitionEntry::unpin() {
-    partitionCounter--;
-}
+void PartitionManager::PartitionEntry::unpin() { partitionCounter--; }
 
-DataEmitterPtr PartitionManager::PartitionEntry::getEmitter() {
-    return emitter;
-}
+DataEmitterPtr PartitionManager::PartitionEntry::getEmitter() { return emitter; }
 
 void PartitionManager::pinSubpartition(NesPartition partition) {
     std::unique_lock lock(mutex);

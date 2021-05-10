@@ -33,5 +33,5 @@ class DataEmitter : public detail::virtual_enable_shared_from_this<DataEmitter> 
      */
     virtual void emitWork(NodeEngine::TupleBuffer& buffer) = 0;
 };
-}
+}// namespace NES
 #endif//NES_INCLUDE_NODEENGINE_EXECUTION_DATAEMITTER_HPP_

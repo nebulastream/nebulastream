@@ -23,7 +23,8 @@ namespace Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
                              NodeEngine::QueryManagerPtr queryManager, NetworkManagerPtr networkManager,
-                             NesPartition nesPartition, size_t numSourceLocalBuffers, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+                             NesPartition nesPartition, size_t numSourceLocalBuffers,
+                             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId(), numSourceLocalBuffers,
                  DataSource::FREQUENCY_MODE, successors),
       networkManager(networkManager), nesPartition(nesPartition) {
@@ -56,9 +57,7 @@ void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::Que
     NES_THROW_RUNTIME_ERROR("NetworkSource: runningRoutine() called, but method is invalid and should not be used.");
 }
 
-void NetworkSource::emitWork(NodeEngine::TupleBuffer& buffer) {
-    DataSource::emitWork(buffer);
-}
+void NetworkSource::emitWork(NodeEngine::TupleBuffer& buffer) { DataSource::emitWork(buffer); }
 
 }// namespace Network
 }// namespace NES

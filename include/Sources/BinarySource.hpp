@@ -34,7 +34,8 @@ class BinarySource : public DataSource {
      */
     explicit BinarySource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
                           const std::string& file_path, OperatorId operatorId, size_t numSourceLocalBuffers,
-                          GatheringMode gatheringMode, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+                          GatheringMode gatheringMode,
+                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief override the receiveData method for the binary source

@@ -25,10 +25,10 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <cpprest/filestream.h>
 #include <cpprest/http_client.h>
-#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <memory>
 

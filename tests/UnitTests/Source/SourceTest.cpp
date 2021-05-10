@@ -100,7 +100,8 @@ typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr, NodeEngine::Bu
 
 typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
                                                         NodeEngine::QueryManagerPtr queryManager, const std::string&, uint64_t,
-                                                        uint64_t, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>);
+                                                        uint64_t,
+                                                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>);
 
 typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
                                                       NodeEngine::QueryManagerPtr queryManager, const std::string&,
@@ -489,7 +490,7 @@ TEST_F(SourceTest, DISABLED_testSenseSource) {
     ASSERT_GT(buffer_size, 0);
 
     const DataSourcePtr source =
-        (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1, 12,{});
+        (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS, 1, 12, {});
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;
@@ -736,8 +737,9 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
         }
     };
 
-    DataSourcePtr lambdaSource = createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                    numBuffers, 1, func, 1, 12, DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    DataSourcePtr lambdaSource =
+        createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 1, func, 1, 12,
+                           DataSource::GatheringMode::INGESTION_RATE_MODE, {});
     lambdaSource->open();
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();

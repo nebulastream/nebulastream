@@ -15,9 +15,9 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASOURCEPROVIDER_HPP_
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
 namespace QueryCompilation {
 
@@ -36,9 +36,8 @@ class DataSourceProvider {
      * @param successors
      * @return DataSourcePtr
      */
-    virtual DataSourcePtr lower(OperatorId sourceId, SourceDescriptorPtr sourceDescriptor,
-                        NodeEngine::NodeEnginePtr nodeEngine,
-                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
+    virtual DataSourcePtr lower(OperatorId sourceId, SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine,
+                                std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
   protected:
     QueryCompilerOptionsPtr compilerOptions;

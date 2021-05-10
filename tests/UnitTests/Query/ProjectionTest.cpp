@@ -284,14 +284,13 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
-                             [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
-                                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                 return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                                      nodeEngine->getQueryManager(), id,
-                                                                                      numSourceLocalBuffers, successors);
-                             });
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+        });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
@@ -342,14 +341,13 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
-                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                                                                 nodeEngine->getQueryManager(), id,
-                                                                                                                 numSourceLocalBuffers, successors);
-                                                          });
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+        });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
@@ -399,14 +397,13 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
-                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                                                                 nodeEngine->getQueryManager(), id,
-                                                                                                                 numSourceLocalBuffers, successors);
-                                                          });
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+        });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
@@ -457,14 +454,13 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     auto streamConf = PhysicalStreamConfig::createEmpty();
 
     // creating query plan
-    auto testSourceDescriptor =
-        std::make_shared<TestUtils::TestSourceDescriptor>(testSchema,
-                                                          [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
-                                                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-                                                            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-                                                                                                                 nodeEngine->getQueryManager(), id,
-                                                                                                                 numSourceLocalBuffers, successors);
-                                                          });
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+            return createDefaultDataSourceWithSchemaForOneBuffer(
+                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+        });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
     auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
@@ -541,7 +537,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
-                 //      .setCompiler(nodeEngine->getCompiler())
+                       //      .setCompiler(nodeEngine->getCompiler())
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
                        .addSource(windowSource)
@@ -549,7 +545,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
                        .addOperatorQueryPlan(generatableOperators);
 
     auto plan = builder.build();
-  //  nodeEngine->registerQueryInNodeEngine(plan);
+    //  nodeEngine->registerQueryInNodeEngine(plan);
     nodeEngine->startQuery(1);
 
     // wait till all buffers have been produced
@@ -624,7 +620,7 @@ TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
 
             PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
-           // auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+            // auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
             //                                                                 nodeEngine->getQueryManager(), 1, 12);
 
             auto query1 = TestQuery::from(testSchema);
@@ -632,8 +628,8 @@ TEST_F(ProjectionTest, DISABLED_mergeQueryWithWrongProjection) {
             query1 = query1.filter(Attribute("id") < 5);
 
             // creating P2
-           // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-           //                                                                  nodeEngine->getQueryManager(), 1, 12);
+            // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+            //                                                                  nodeEngine->getQueryManager(), 1, 12);
             auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5).project(Attribute("id"));
 
             // creating P3
@@ -660,16 +656,16 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
 
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
-  //  auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-     //                                                                nodeEngine->getQueryManager(), 1, 12);
+    //  auto testSource1 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+    //                                                                nodeEngine->getQueryManager(), 1, 12);
 
     auto query1 = TestQuery::from(testSchema);
 
     query1 = query1.filter(Attribute("id") < 5);
 
     // creating P2
-   // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
-     //                                                                nodeEngine->getQueryManager(), 1, 12);
+    // auto testSource2 = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(),
+    //                                                                nodeEngine->getQueryManager(), 1, 12);
     auto query2 = TestQuery::from(testSchema).filter(Attribute("id") <= 5);
 
     // creating P3
@@ -692,8 +688,8 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
                        .addOperatorQueryPlan(generatableOperators)
                        .setQueryId(1)
                        .setQuerySubPlanId(1)
-                      // .addSource(testSource1)
-                      // .addSource(testSource2)
+                       // .addSource(testSource1)
+                       // .addSource(testSource2)
                        .addSink(testSink);
 
     auto plan = builder.build();
@@ -741,6 +737,6 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     }
 
     testSink->shutdown();
-   // testSource1->stop(false);
-  //  testSource2->stop(false);
+    // testSource1->stop(false);
+    //  testSource2->stop(false);
 }

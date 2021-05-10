@@ -438,7 +438,7 @@ void QueryManager::addWork(const OperatorId sourceId, TupleBuffer& buf) {
         auto executablePipelines = sourceIdToSuccessorMap[sourceId];
         // iterate over all executable pipelines
         for (auto executablePipeline : executablePipelines) {
-            NES_DEBUG("Add Work for executable from network source " << sourceId << " origin id: " << buf.getOriginId() );
+            NES_DEBUG("Add Work for executable from network source " << sourceId << " origin id: " << buf.getOriginId());
             // create task
             auto task = Task(executablePipeline, buf);
             // dispatch task to task queue.
@@ -510,7 +510,6 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
     // we should have a mutex here on work
     // TODO add check?
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
-
 
     // todo adopt this code for multiple source pipelines
     auto pipelineSuccessors = sourceIdToSuccessorMap[sourceId];

@@ -18,10 +18,10 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
+#include <NodeEngine/Execution/DataEmitter.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <Operators/OperatorId.hpp>
-#include <NodeEngine/Execution/DataEmitter.hpp>
 #include <atomic>
 #include <chrono>
 #include <mutex>
@@ -69,13 +69,10 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema,
-                        NodeEngine::BufferManagerPtr bufferManager,
-                        NodeEngine::QueryManagerPtr queryManager,
-                        OperatorId operatorId,
-                        size_t numSourceLocalBuffers,
-                        GatheringMode gatheringMode,
-                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors = std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
+    explicit DataSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
+                        OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode,
+                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors =
+                            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
 
     DataSource() = delete;
 
@@ -249,7 +246,6 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     * @brief running routine with a fix ingestion rate
     */
     void runningRoutineWithIngestionRate();
-
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;

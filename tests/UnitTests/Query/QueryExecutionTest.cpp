@@ -858,7 +858,7 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
                        .addSink(testSink);
 
     auto plan = builder.build();
-   // nodeEngine->getQueryManager()->registerQuery(plan);
+    // nodeEngine->getQueryManager()->registerQuery(plan);
 
     // The plan should have three pipeline
     EXPECT_EQ(plan->getNumberOfPipelines(), 3);

@@ -36,10 +36,8 @@ class NewExecutablePipeline : public Reconfigurable {
   public:
     explicit NewExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId,
                                    PipelineExecutionContextPtr pipelineExecutionContext,
-                                   ExecutablePipelineStagePtr executablePipelineStage,
-                                   uint32_t numOfProducingPipelines,
-                                   std::vector<SuccessorExecutablePipeline> successorPipelines,
-                                   bool reconfiguration);
+                                   ExecutablePipelineStagePtr executablePipelineStage, uint32_t numOfProducingPipelines,
+                                   std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration);
 
     /**
      * @brief Factory method to create a new executable pipeline.
@@ -53,9 +51,9 @@ class NewExecutablePipeline : public Reconfigurable {
      */
     static NewExecutablePipelinePtr create(uint32_t pipelineId, QuerySubPlanId qepId,
                                            PipelineExecutionContextPtr pipelineExecutionContext,
-                                           ExecutablePipelineStagePtr executablePipelineStage,
-                                           uint32_t numOfProducingPipelines,
-                                           std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration = false);
+                                           ExecutablePipelineStagePtr executablePipelineStage, uint32_t numOfProducingPipelines,
+                                           std::vector<SuccessorExecutablePipeline> successorPipelines,
+                                           bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage

@@ -130,10 +130,10 @@ typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
 
 }// namespace NodeEngine
 
-namespace QueryCompilation{
+namespace QueryCompilation {
 class QueryCompiler;
 typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
-}
+}// namespace QueryCompilation
 
 }// namespace NES
 

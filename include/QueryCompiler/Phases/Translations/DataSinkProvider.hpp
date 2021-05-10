@@ -16,10 +16,10 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Operators/OperatorId.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
 namespace QueryCompilation {
 /**
@@ -38,9 +38,8 @@ class DataSinkProvider {
      * @param querySubPlanId
      * @return DataSinkPtr
      */
-    virtual DataSinkPtr lower(OperatorId sinkId, SinkDescriptorPtr sinkDescriptor,
-                      SchemaPtr schema, NodeEngine::NodeEnginePtr nodeEngine,
-                      QuerySubPlanId querySubPlanId);
+    virtual DataSinkPtr lower(OperatorId sinkId, SinkDescriptorPtr sinkDescriptor, SchemaPtr schema,
+                              NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId);
 };
 }// namespace QueryCompilation
 }// namespace NES
