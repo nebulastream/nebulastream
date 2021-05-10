@@ -88,7 +88,7 @@ void AdaptiveSource::runningRoutine() {
             continue;
         }
     }
-    queryManager->addEndOfStream(operatorId, true);
+    queryManager->addEndOfStream(shared_from_base<DataSource>(), true);
     NES_DEBUG("AdaptiveSource " << this->operatorId << ": end running");
 }
 }// namespace NES

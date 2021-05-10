@@ -194,11 +194,21 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source
+     * @param source the actual source
+     * @param graceful hard or soft termination
+     * @return true if it went through
+     */
+    bool addEndOfStream(DataSourcePtr source, bool graceful = true) {
+        return addEndOfStream(source->getOperatorId(), graceful);
+    }
+
+    /**
+     * @brief introduces end of stream to all QEPs connected to this source
      * @param sourceId the id of the source
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(OperatorId sourceId, bool graceful = true);
+    bool addEndOfStream(OperatorId operatorId, bool graceful = true);
 
     /**
      * @return true if thread pool is running
@@ -235,19 +245,20 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool addSoftEndOfStream(OperatorId sourceId);
     bool addHardEndOfStream(OperatorId sourceId);
 
-    ThreadPoolPtr threadPool;
+    ThreadPoolPtr threadPool{nullptr};
 
+    // TODO remove these unnecessary structures
     std::map<OperatorId, Execution::NewExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
     std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
-
-    std::map<OperatorId, uint64_t> operatorIdToPipelineStage;
 
     std::unordered_map<QuerySubPlanId, Execution::NewExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
     cuckoohash_map<QuerySubPlanId, QueryStatisticsPtr> queryToStatisticsMap;
+
+    uint16_t numThreads;
 
     std::shared_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
@@ -261,8 +272,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     Execution::ExecutablePipelineStagePtr reconfigurationExecutable;
 
     uint64_t nodeEngineId;
-
-    uint16_t numThreads;
 
     std::atomic<bool> isDestroyed;
 };

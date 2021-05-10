@@ -253,7 +253,7 @@ void DataSource::runningRoutineWithIngestionRate() {
     }
 
     // inject reconfiguration task containing end of stream
-    queryManager->addEndOfStream(operatorId, wasGracefullyStopped);//
+    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");
@@ -347,7 +347,7 @@ void DataSource::runningRoutineWithFrequency() {
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
     // inject reconfiguration task containing end of stream
-    queryManager->addEndOfStream(operatorId, wasGracefullyStopped);//
+    queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();
     NES_DEBUG("DataSource " << operatorId << " end running");
