@@ -87,11 +87,12 @@ TupleBuffer& TupleBuffer::retain() {
 }
 
 void TupleBuffer::release() {
-    if (controlBlock && controlBlock->release()) {
-        controlBlock = nullptr;
-        ptr = nullptr;
-        size = 0;
+    if (controlBlock) {
+        controlBlock->release();
     }
+    controlBlock = nullptr;
+    ptr = nullptr;
+    size = 0;
 }
 
 uint64_t TupleBuffer::getBufferSize() const { return size; }
