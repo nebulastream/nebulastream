@@ -106,7 +106,7 @@ createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::N
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
 
-const DataSinkPtr createNullOutputSink() { return std::make_shared<NullOutputSink>(); }
+const DataSinkPtr createNullOutputSink(QuerySubPlanId parentPlanId) { return std::make_shared<NullOutputSink>(parentPlanId); }
 
 const DataSinkPtr
 createCSVPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::NodeEnginePtr nodeEngine, std::ostream& out) {

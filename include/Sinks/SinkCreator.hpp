@@ -174,7 +174,7 @@ createTextPrintSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NodeEngine::N
  * @brief create a print that does not output something
  * @return a data sink pointer
  */
-const DataSinkPtr createNullOutputSink();
+const DataSinkPtr createNullOutputSink(QuerySubPlanId parentPlanId);
 
 /**
  * @brief create a print test sink with a schema
