@@ -22,7 +22,7 @@
 #include <string>
 
 namespace NES {
-NullOutputSink::NullOutputSink() : SinkMedium(nullptr, parentPlanId) {}
+NullOutputSink::NullOutputSink(QuerySubPlanId parentPlanId) : SinkMedium(nullptr, parentPlanId) {}
 
 NullOutputSink::~NullOutputSink() {}
 
