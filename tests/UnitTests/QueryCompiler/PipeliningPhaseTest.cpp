@@ -83,7 +83,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
 
     auto source = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto filter = PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
     auto queryPlan = QueryPlan::create(source);
     queryPlan->appendOperatorAsNewRoot(filter);
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -118,7 +118,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
     auto source = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto filter = PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
     auto map = PhysicalMapOperator::create(SchemaPtr(), SchemaPtr(), FieldAssignmentExpressionNodePtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
     auto queryPlan = QueryPlan::create(source);
     queryPlan->appendOperatorAsNewRoot(filter);
     queryPlan->appendOperatorAsNewRoot(map);
@@ -156,7 +156,7 @@ TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
     auto source1 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
 
     auto queryPlan = QueryPlan::create(source1);
     queryPlan->appendOperatorAsNewRoot(multiplex);
@@ -198,7 +198,7 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
     auto source2 = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalMultiplexOperator::create(SchemaPtr());
     auto filter = PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
 
     auto queryPlan = QueryPlan::create(source1);
     queryPlan->appendOperatorAsNewRoot(multiplex);
@@ -247,7 +247,7 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
     auto joinBuildRight =
         PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
     auto joinSink = PhysicalJoinSinkOperator::create(SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
 
     auto queryPlan = QueryPlan::create(source1);
     queryPlan->appendOperatorAsNewRoot(joinBuildLeft);
@@ -299,7 +299,7 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
     auto joinBuildRight =
         PhysicalJoinBuildOperator::create(SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::Right);
     auto joinSink = PhysicalJoinSinkOperator::create(SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
 
     auto queryPlan = QueryPlan::create(source1);
     queryPlan->appendOperatorAsNewRoot(joinBuildLeft);
@@ -355,7 +355,7 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
         PhysicalWatermarkAssignmentOperator::create(SchemaPtr(), SchemaPtr(), WatermarkStrategyDescriptorPtr());
     auto slicePreAggregation = PhysicalSlicePreAggregationOperator::create(SchemaPtr(), SchemaPtr(), WindowOperatorHandlerPtr());
     auto windowSink = PhysicalWindowSinkOperator::create(SchemaPtr(), SchemaPtr(), WindowOperatorHandlerPtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
 
     auto queryPlan = QueryPlan::create(source1);
     queryPlan->appendOperatorAsNewRoot(windowAssignment);
@@ -398,7 +398,7 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
     auto project = PhysicalProjectOperator::create(SchemaPtr(), SchemaPtr(), std::vector<ExpressionNodePtr>());
     auto filter = PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
     auto map = PhysicalMapOperator::create(SchemaPtr(), SchemaPtr(), FieldAssignmentExpressionNodePtr());
-    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
 
     auto queryPlan = QueryPlan::create(source);
     queryPlan->appendOperatorAsNewRoot(project);
@@ -444,8 +444,8 @@ TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
     auto source = PhysicalSourceOperator::create(SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto filter = PhysicalFilterOperator::create(SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
     auto demultiplex = PhysicalDemultiplexOperator::create(SchemaPtr());
-    auto sink1 = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
-    auto sink2 = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink1 = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
+    auto sink2 = PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
 
     auto queryPlan = QueryPlan::create(source);
     queryPlan->appendOperatorAsNewRoot(filter);
