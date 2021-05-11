@@ -26,9 +26,6 @@ class CombinedWatermarkManager{
     void updateWatermark(TransactionId& transactionId, OriginId originId, WatermarkTs watermarkTs) {
         NES_ASSERT2_FMT(originId < numberOfOrigins, "OriginId: " << originId << " was not valid ");
         localWatermarkManagers[originId]->updateWatermark(transactionId, watermarkTs);
-        for (auto watermarkManager : localWatermarkManagers) {
-            watermarkManager->update(transactionId);
-        }
     };
 
     WatermarkTs getCurrentWatermark(TransactionId& transactionId) {

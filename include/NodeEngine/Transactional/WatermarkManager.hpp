@@ -27,7 +27,6 @@ typedef std::shared_ptr<WatermarkManager> WatermarkManagerPtr;
 class WatermarkManager {
   public:
     virtual void updateWatermark(TransactionId& transactionId, WatermarkTs watermarkTs) = 0;
-    virtual void update(TransactionId& transactionId) = 0;
     virtual WatermarkTs getCurrentWatermark(TransactionId& transactionId) = 0;
 
 };

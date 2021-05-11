@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LATCHWATERMARKMANAGER_HPP_
-#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LATCHWATERMARKMANAGER_HPP_
+#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_COMBINEDLATCHWATERMARKMANAGER_HPP_
+#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_COMBINEDLATCHWATERMARKMANAGER_HPP_
 
 #include <NodeEngine/Transactional/WatermarkManager.hpp>
 #include <queue>
@@ -26,10 +26,10 @@ namespace NES::NodeEngine::Transactional {
  * @assumptions This watermark manager assumes strictly monotonic transaction ids.
  * To handle out of order processing, it maintains a priority queue.
  */
-class LatchWatermarkManager : public WatermarkManager {
+class CombinedLatchWatermarkManager: public WatermarkManager {
   public:
-    LatchWatermarkManager();
-    static WatermarkManagerPtr create();
+    CombinedLatchWatermarkManager(uint64_t numberOfOrigins);
+    static WatermarkManagerPtr create(uint64_t numberOfOrigins);
 
     /**
      * @brief In this implementation, update watermark adds the watermark ts and transaction as an update to the update queue.
@@ -61,11 +61,11 @@ class LatchWatermarkManager : public WatermarkManager {
         }
     };
     std::mutex watermarkLatch;
-    WatermarkTs currentWatermark;
-    TransactionId currentTransactionId;
+    uint64_t numberOfOrigins;
+    std::vector<std::tuple<WatermarkTs, TransactionId>> watermarkOridgends;
     std::priority_queue<Update, std::vector<Update>, CompareUpdates> updateLog;
 };
 
 }// namespace NES::NodeEngine::Transactional
 
-#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LATCHWATERMARKMANAGER_HPP_
+#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_COMBINEDLATCHWATERMARKMANAGER_HPP_
