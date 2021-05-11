@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 namespace NES {
 
 class Node;
