@@ -17,6 +17,7 @@ add_source_nes(
         FilterLogicalOperatorNode.cpp
         ProjectionLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
+        IterationLogicalOperatorNode.cpp
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp
@@ -27,6 +28,7 @@ add_source_nes(
         LogicalUnaryOperatorNode.cpp
 )
 
+add_subdirectory(CEP)
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Windowing)
