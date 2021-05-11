@@ -13,17 +13,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Transactional/LatchWatermarkManager.hpp>
+#include <NodeEngine/Transactional/CombinedLatchWatermarkManager.hpp>
 namespace NES::NodeEngine::Transactional {
 
-LatchWatermarkManager::LatchWatermarkManager() : currentWatermark(0), currentTransactionId(0) {}
+CombinedLatchWatermarkManager::CombinedLatchWatermarkManager(uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {}
 
-WatermarkManagerPtr LatchWatermarkManager::create() { return std::make_shared<LatchWatermarkManager>(); }
+WatermarkManagerPtr CombinedLatchWatermarkManager::create(uint64_t numberOfOrigins) {
+    return std::make_shared<CombinedLatchWatermarkManager>(numberOfOrigins);
+}
 
-LatchWatermarkManager::Update::Update(TransactionId transactionId, WatermarkTs watermark)
+CombinedLatchWatermarkManager::Update::Update(TransactionId transactionId, WatermarkTs watermark)
     : transactionId(transactionId), watermark(watermark) {}
 
-void LatchWatermarkManager::updateWatermark(TransactionId& transactionId, WatermarkTs watermarkTs) {
+void CombinedLatchWatermarkManager::updateWatermark(TransactionId& transactionId, WatermarkTs watermarkTs) {
     std::scoped_lock lock(watermarkLatch);
 
     // emplace current watermark and transaction im queue of outstanding updates
@@ -44,7 +46,7 @@ void LatchWatermarkManager::updateWatermark(TransactionId& transactionId, Waterm
     }
 }
 
-WatermarkTs LatchWatermarkManager::getCurrentWatermark(TransactionId&) {
+WatermarkTs CombinedLatchWatermarkManager::getCurrentWatermark(TransactionId&) {
     std::scoped_lock lock(watermarkLatch);
     return currentWatermark;
 }

@@ -15,6 +15,7 @@
 add_source_nes(
         TransactionId.cpp
         WatermarkManager.cpp
+        CombinedLatchWatermarkManager.cpp
         LatchVectorWatermarkManager.cpp
         AtomicWatermarkManager.cpp
         LatchWatermarkManager.cpp
