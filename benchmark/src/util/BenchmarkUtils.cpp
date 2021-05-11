@@ -132,30 +132,32 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
     auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     auto generateableOperators = translatePhase->transform(query.getQueryPlan()->getRootOperators()[0]);
-
-    auto builder = GeneratedQueryExecutionPlanBuilder::create()
-                       .setQueryManager(nodeEngine->getQueryManager())
-                       .setBufferManager(nodeEngine->getBufferManager())
-                       .setCompiler(nodeEngine->getCompiler())
-                       .setQueryId(1)
-                       .setQuerySubPlanId(1)
-                       .addSink(benchmarkSink)
-                       .addOperatorQueryPlan(generateableOperators);
-
-    for (auto src : benchmarkSource) {
-        builder.addSource(src);
-    }
-    auto plan = builder.build();
-    nodeEngine->registerQueryInNodeEngine(plan);
-    NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in NodeEngine. Starting query now...");
-
-    NES_INFO("BenchmarkUtils: Starting query...");
-    nodeEngine->startQuery(1);
-    recordStatistics(statisticsVec, nodeEngine);
-
-    NES_WARNING("BenchmarkUtils: Stopping query...");
-    nodeEngine->stopQuery(1, false);
-    NES_WARNING("Query was stopped!");
+    NES_DEBUG("dump output=" << &statisticsVec << &benchmarkSource << &benchmarkSink << &nodeEngine);
+    NES_NOT_IMPLEMENTED();
+//
+//    auto builder = GeneratedQueryExecutionPlanBuilder::create()
+//                       .setQueryManager(nodeEngine->getQueryManager())
+//                       .setBufferManager(nodeEngine->getBufferManager())
+//                       .setCompiler(nodeEngine->getCompiler())
+//                       .setQueryId(1)
+//                       .setQuerySubPlanId(1)
+//                       .addSink(benchmarkSink)
+//                       .addOperatorQueryPlan(generateableOperators);
+//
+//    for (auto src : benchmarkSource) {
+//        builder.addSource(src);
+//    }
+//    auto plan = builder.build();
+//    nodeEngine->registerQueryInNodeEngine(plan);
+//    NES_INFO("BenchmarkUtils: QEP for " << queryPlan->toString() << " was registered in NodeEngine. Starting query now...");
+//
+//    NES_INFO("BenchmarkUtils: Starting query...");
+//    nodeEngine->startQuery(1);
+//    recordStatistics(statisticsVec, nodeEngine);
+//
+//    NES_WARNING("BenchmarkUtils: Stopping query...");
+//    nodeEngine->stopQuery(1, false);
+//    NES_WARNING("Query was stopped!");
 
     /* This is not necessary anymore as we do not want to have the differences anymore. We are only interested in the total
      * number of tuples, buffers, tasks. Via the total number and runSingleExperimentSeconds we can calculate the throughput

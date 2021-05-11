@@ -65,9 +65,9 @@ if (NES_BUILD_BENCHMARKS)
     #-------------------------------# Micro Benchmark Suite#-----------------------------
 
     ### Statemanager Benchmark ###
-    add_executable(statemanager-benchmark "src/Micro-Benchmarks/StatemanagerBenchmark.cpp")
-    target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
-    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
+#    add_executable(statemanager-benchmark "src/Micro-Benchmarks/StatemanagerBenchmark.cpp")
+#    target_link_libraries(statemanager-benchmark nes ${GBENCHMARK_LIBRARIES})
+#    add_test(NAME statemanager-benchmark COMMAND statemanager-benchmark --benchmark_out=statemanager-benchmark.log --benchmark_out_format=json)
 
     ### Benchmark Uniform Data Benchmark ###
     add_executable(uniformdata-benchmark "src/Micro-Benchmarks/BenchmarkCreateUniformData.cpp")

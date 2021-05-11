@@ -25,8 +25,8 @@ using NodeEngine::StateVariable;
  * @brief benchmarks how many updates per second on a single key can be done
  */
 static void BM_Statemanager_SingleKey_Updates(benchmark::State& state) {
-    StateManager& stateManager = StateManager::instance();
-    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>("window-content-0");
+    auto stateManager = std::make_shared<StateManager>();
+    StateVariable<uint32_t, uint32_t> var = stateManager->registerState<uint32_t, uint32_t>("window-content-0");
 
     int64_t numberOfUpdates = state.range(0);
 
