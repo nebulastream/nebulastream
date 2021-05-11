@@ -13,21 +13,10 @@
 # limitations under the License.
 
 add_source_nes(
-        NodeEngine.cpp
-        NodeStatsProvider.cpp
-        QueryManager.cpp
-        ReconfigurationMessage.cpp
-        BufferManager.cpp
-        FixedSizeBufferPool.cpp
-        ThreadPool.cpp
-        Task.cpp
-        TupleBuffer.cpp
-        QueryStatistics.cpp
-        NesThread.cpp
-        WorkerContext.cpp
-        LocalBufferPool.cpp
+        TransactionId.cpp
+        WatermarkManager.cpp
+        LatchVectorWatermarkManager.cpp
+        AtomicWatermarkManager.cpp
+        LatchWatermarkManager.cpp
+        CombinedWatermarkManager.cpp
 )
-add_subdirectory(MemoryLayout)
-add_subdirectory(Execution)
-add_subdirectory(detail)
-add_subdirectory(Transactional)

@@ -86,6 +86,10 @@ add_executable(node-engine-test "UnitTests/NodeEngine/NodeEngineTest.cpp")
 target_link_libraries(node-engine-test nes ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
+add_executable(watermark-manager-test "UnitTests/NodeEngine/WatermarkManagerTest.cpp")
+target_link_libraries(watermark-manager-test nes ${GTEST_LIBRARIES})
+add_test(NAME watermark-manager-test COMMAND watermark-manager-test)
+
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerator/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests nes ${GTEST_LIBRARIES})
