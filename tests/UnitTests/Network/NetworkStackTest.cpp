@@ -640,7 +640,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             ASSERT_FALSE(pManager->isRegistered(nesPartition));
         });
 
-        auto networkSink = std::make_shared<NetworkSink>(schema, 0, netManager, nodeLocation, nesPartition, bMgr, nullptr, bSt);
+        auto networkSink = std::make_shared<NetworkSink>(schema, 0,0, netManager, nodeLocation, nesPartition, bMgr, nullptr, bSt);
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto nodeEngine =
             Runtime::NodeEngineFactory::createNodeEngine("127.0.0.1", 31337, streamConf, 1, bufferSize, buffersManaged, 64, 64);
@@ -723,7 +723,7 @@ TEST_F(NetworkStackTest, testStartStopNetworkSrcSink) {
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
                                                      0,
-                                                     nodeEngine->getNetworkManager(),
+                                                    0, nodeEngine->getNetworkManager(),
                                                      nodeLocation,
                                                      nesPartition,
                                                      nodeEngine->getBufferManager(),
@@ -872,7 +872,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
 
         auto networkSink = std::make_shared<NetworkSink>(schema,
                                                          0,
-                                                         netManager,
+                                                        0, netManager,
                                                          nodeLocation,
                                                          nesPartition,
                                                          nodeEngine->getBufferManager(),
@@ -984,7 +984,7 @@ TEST_F(NetworkStackTest, testQEPNetworkSinkSource) {
 
     auto networkSink = std::make_shared<NetworkSink>(schema,
                                                      1,
-                                                     netManager,
+                                                    0, netManager,
                                                      nodeLocation,
                                                      nesPartition,
                                                      nodeEngine->getBufferManager(),

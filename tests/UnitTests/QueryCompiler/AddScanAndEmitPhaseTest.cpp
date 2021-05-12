@@ -92,7 +92,7 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
  */
 TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
     auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    auto sink = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
+    auto sink = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(SchemaPtr(), SchemaPtr(), SinkDescriptorPtr(),0);
     operatorPlan->prependOperator(sink);
 
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
