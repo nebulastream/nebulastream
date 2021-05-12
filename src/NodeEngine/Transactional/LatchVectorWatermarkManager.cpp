@@ -38,8 +38,6 @@ WatermarkTs LatchVectorWatermarkManager::getCurrentWatermark(TransactionId&) {
     }
     return maxWatermarkTs;
 }
-void LatchVectorWatermarkManager::update(TransactionId&) {
 
-}
 
 }// namespace NES::NodeEngine::Transactional
