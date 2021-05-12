@@ -35,7 +35,8 @@ GeneratableWatermarkAssignerOperator::create(WatermarkAssignerLogicalOperatorNod
 }
 
 GeneratableWatermarkAssignerOperator::GeneratableWatermarkAssignerOperator(
-    const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id)
+    const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
+    OperatorId id)
     : OperatorNode(id), WatermarkAssignerLogicalOperatorNode(watermarkStrategyDescriptor, id) {}
 
 void GeneratableWatermarkAssignerOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context) {
@@ -50,9 +51,10 @@ void GeneratableWatermarkAssignerOperator::consume(CodeGeneratorPtr codegen, Pip
                       + keyExpression->toString());
         }
         auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-        auto watermarkStrategy = Windowing::EventTimeWatermarkStrategy::create(
-            fieldAccess, eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime(),
-            eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
+        auto watermarkStrategy =
+            Windowing::EventTimeWatermarkStrategy::create(fieldAccess,
+                                                          eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime(),
+                                                          eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
     } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(getWatermarkStrategyDescriptor())) {
         auto watermarkStrategy = Windowing::IngestionTimeWatermarkStrategy::create();

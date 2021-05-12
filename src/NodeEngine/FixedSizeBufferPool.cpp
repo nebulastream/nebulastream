@@ -22,7 +22,8 @@
 
 namespace NES::NodeEngine {
 
-FixedSizeBufferPool::FixedSizeBufferPool(BufferManagerPtr bufferManager, std::deque<detail::MemorySegment*>&& buffers,
+FixedSizeBufferPool::FixedSizeBufferPool(BufferManagerPtr bufferManager,
+                                         std::deque<detail::MemorySegment*>&& buffers,
                                          size_t numberOfReservedBuffers)
     : bufferManager(bufferManager), exclusiveBuffers(), numberOfReservedBuffers(numberOfReservedBuffers), isDestroyed(false) {
 

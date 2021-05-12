@@ -98,17 +98,21 @@ class CodeGenerationTest : public testing::Test {
 
 class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    TestPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager,
+    TestPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
+                                 NodeEngine::BufferManagerPtr bufferManager,
                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
         : PipelineExecutionContext(
-            0, queryManager, std::move(bufferManager),
+            0,
+            queryManager,
+            std::move(bufferManager),
             [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             [this](TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            std::move(operatorHandlers), 12){
+            std::move(operatorHandlers),
+            12){
             // nop
         };
 
@@ -120,14 +124,18 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
  */
 TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     auto tf = CompilerTypesFactory();
-    auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "i",
+    auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                                "i",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
-    auto varDeclJ = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "j",
+    auto varDeclJ = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                                "j",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5"));
-    auto varDeclK = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "k",
+    auto varDeclK = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                                "k",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "7"));
 
-    auto varDeclL = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "l",
+    auto varDeclL = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                                "l",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "2"));
 
     {
@@ -140,19 +148,22 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     {
         // Generate Array Operation
         std::vector<std::string> vals = {"a", "b", "c"};
-        auto varDeclM = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)), "m",
+        auto varDeclM = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)),
+                                                    "m",
                                                     DataTypeFactory::createFixedCharValue(vals));
         // declaration of m
         EXPECT_EQ(VarRefStatement(varDeclM).getCode()->code_, "m");
 
         // Char Array initialization
-        auto varDeclN = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)), "n",
+        auto varDeclN = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)),
+                                                    "n",
                                                     DataTypeFactory::createFixedCharValue(vals));
         EXPECT_EQ(varDeclN.getCode(), "char n[12] = {'a', 'b', 'c'}");
 
         // Int Array initialization
         auto varDeclO =
-            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())), "o",
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),
+                                        "o",
                                         DataTypeFactory::createArrayValue(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
         EXPECT_EQ(varDeclO.getCode(), "uint8_t o[4] = {2, 3, 4}");
 
@@ -199,9 +210,10 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(comparision.getCode()->code_, "i>=j[j]");
 
         // Negation
-        auto negate = ((~VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ)
-                            << ConstantExpressionStatement(tf.createValueType(DataTypeFactory::createBasicValue(
-                                   DataTypeFactory::createInt32(), "0"))))[VarRefStatement(varDeclJ)]);
+        auto negate =
+            ((~VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ)
+                  << ConstantExpressionStatement(tf.createValueType(
+                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))))[VarRefStatement(varDeclJ)]);
         EXPECT_EQ(negate.getCode()->code_, "~i>=j<<0[j]");
 
         auto addition = VarRefStatement(varDeclI).assign(VarRefStatement(varDeclI) + VarRefStatement(varDeclJ));
@@ -228,7 +240,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
     {
         auto compareAssign = BinaryOperatorStatement(
-            VarRefStatement(varDeclK), ASSIGNMENT_OP,
+            VarRefStatement(varDeclK),
+            ASSIGNMENT_OP,
             BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP, VarRefStatement(varDeclI)));
         EXPECT_EQ(compareAssign.getCode()->code_, "k=j>i");
     }
@@ -236,7 +249,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
     {
         // check declaration types
         auto variableDeclaration =
-            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                        "num_tuples",
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
         EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), ADDRESS_OF_OP).getCode()->code_, "&num_tuples");
@@ -259,13 +273,16 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
     {
         // check code generation for loops
-        auto varDeclQ = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "q",
+        auto varDeclQ = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                                    "q",
                                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
         auto varDeclNumTuple =
-            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "num_tuples",
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                        "num_tuples",
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
-        auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "sum",
+        auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                                      "sum",
                                                       DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
 
         ForLoopStatement loopStmt(
@@ -274,7 +291,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy());
 
         loopStmt.addStatement(
-            BinaryOperatorStatement(VarRefStatement(varDeclSum), ASSIGNMENT_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclSum),
+                                    ASSIGNMENT_OP,
                                     BinaryOperatorStatement(VarRefStatement(varDeclSum), PLUS_OP, VarRefStatement(varDeclQ)))
                 .copy());
 
@@ -288,8 +306,10 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(forLoop.getCode()->code_, "for(int32_t q = 0;q<num_tuples;++q){\n\n}\n");
 
         auto compareAssignment = BinaryOperatorStatement(
-            VarRefStatement(varDeclK), ASSIGNMENT_OP,
-            BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THAN_OP,
+            VarRefStatement(varDeclK),
+            ASSIGNMENT_OP,
+            BinaryOperatorStatement(VarRefStatement(varDeclJ),
+                                    GREATER_THAN_OP,
                                     ConstantExpressionStatement(tf.createValueType(
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "5")))));
 
@@ -301,7 +321,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto val = tf.createPointer(tf.createDataType(DataTypeFactory::createInt32()));
         assert(val != nullptr);
         auto variableDeclarationI =
-            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()), "i",
+            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
+                                        "i",
                                         DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
         auto variableDeclarationP = VariableDeclaration::create(val, "array");
         EXPECT_EQ(variableDeclarationP.getCode(), "int32_t* array");
@@ -317,7 +338,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
    */
         auto tupleBufferStructDecl =
             StructDeclaration::create("TupleBuffer", "buffer")
-                .addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createUInt64()), "num_tuples",
+                .addField(VariableDeclaration::create(tf.createDataType(DataTypeFactory::createUInt64()),
+                                                      "num_tuples",
                                                       DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0")))
                 .addField(variableDeclarationP);
 
@@ -384,14 +406,17 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* variable declarations */
 
     /* uint64_t id = 0; */
-    auto varDeclId = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createUInt64()), "id",
+    auto varDeclId = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createUInt64()),
+                                                 "id",
                                                  DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "0"));
     /* ExecutionResult ret = Ok; */
     auto varDeclReturn =
-        VariableDeclaration::create(tf.createAnonymusDataType("ExecutionResult"), "ret",
+        VariableDeclaration::create(tf.createAnonymusDataType("ExecutionResult"),
+                                    "ret",
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"));
     /* int32_t sum = 0;*/
-    auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()), "sum",
+    auto varDeclSum = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt64()),
+                                                  "sum",
                                                   DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"));
 
     /* init statements before for loop */
@@ -414,7 +439,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                              tf.createPointer(tf.createUserDefinedType(structDeclResultTuple)))));
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
-    FOR loopStmt(varDeclId.copy(), (VarRef(varDeclId) < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer))).copy(),
+    FOR loopStmt(varDeclId.copy(),
+                 (VarRef(varDeclId) < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer))).copy(),
                  (++VarRef(varDeclId)).copy());
 
     /* sum = sum + tuples[id].campaign_id; */
@@ -429,31 +455,32 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
     emitTupleBuffer.addParameter(VarRef(varDeclWorkerContext));
-    auto mainFunction = FunctionDefinition::create("execute")
-                            //                            ->returns(tf.createDataType(DataTypeFactory::createUInt32()))
-                            ->returns(tf.createAnonymusDataType("ExecutionResult"))
-                            ->addParameter(varDeclTupleBuffers)
-                            ->addParameter(varDeclPipelineExecutionContext)
-                            ->addParameter(varDeclWorkerContext)
-                            ->addVariableDeclaration(varDeclReturn)
-                            ->addVariableDeclaration(varDeclTuple)
-                            ->addVariableDeclaration(varDeclResultTuple)
-                            ->addVariableDeclaration(varDeclSum)
-                            ->addStatement(initTuplePtr.copy())
-                            ->addStatement(initResultTupleBufferPtr.copy())
-                            ->addStatement(initResultTuplePtr.copy())
-                            ->addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
-                            ->addStatement(
-                                /*   result_tuples[0].sum = sum; */
-                                VarRef(varDeclResultTuple)[Constant(tf.createValueType(DataTypeFactory::createBasicValue(
-                                                               DataTypeFactory::createInt32(), "0")))]
-                                    .accessRef(VarRef(varDeclFieldResultTupleSum))
-                                    .assign(VarRef(varDeclSum))
-                                    .copy())
-                            ->addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
-                            /* return ret; */
+    auto mainFunction =
+        FunctionDefinition::create("execute")
+            //                            ->returns(tf.createDataType(DataTypeFactory::createUInt32()))
+            ->returns(tf.createAnonymusDataType("ExecutionResult"))
+            ->addParameter(varDeclTupleBuffers)
+            ->addParameter(varDeclPipelineExecutionContext)
+            ->addParameter(varDeclWorkerContext)
+            ->addVariableDeclaration(varDeclReturn)
+            ->addVariableDeclaration(varDeclTuple)
+            ->addVariableDeclaration(varDeclResultTuple)
+            ->addVariableDeclaration(varDeclSum)
+            ->addStatement(initTuplePtr.copy())
+            ->addStatement(initResultTupleBufferPtr.copy())
+            ->addStatement(initResultTuplePtr.copy())
+            ->addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
+            ->addStatement(
+                /*   result_tuples[0].sum = sum; */
+                VarRef(varDeclResultTuple)[Constant(tf.createValueType(
+                                               DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0")))]
+                    .accessRef(VarRef(varDeclFieldResultTupleSum))
+                    .assign(VarRef(varDeclSum))
+                    .copy())
+            ->addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
+            /* return ret; */
 
-                            ->addStatement(ReturnStatement::create(VarRefStatement(varDeclReturn).createCopy()));
+            ->addStatement(ReturnStatement::create(VarRefStatement(varDeclReturn).createCopy()));
     auto fileB = FileBuilder::create("query.cpp");
 
     fileB.addDeclaration(structDeclTuple.copy());
@@ -491,7 +518,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* execute code */
     auto wctx = NodeEngine::WorkerContext{0};
-    auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(),
+    auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                  nodeEngine->getBufferManager(),
                                                                   std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     stage->setup(*context.get());
     stage->start(*context.get());

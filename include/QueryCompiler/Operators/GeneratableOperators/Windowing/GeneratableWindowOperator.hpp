@@ -27,7 +27,9 @@ namespace GeneratableOperators {
  */
 class GeneratableWindowOperator : public GeneratableOperator {
   protected:
-    GeneratableWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    GeneratableWindowOperator(OperatorId id,
+                              SchemaPtr inputSchema,
+                              SchemaPtr outputSchema,
                               Windowing::WindowOperatorHandlerPtr operatorHandler);
     Windowing::WindowOperatorHandlerPtr operatorHandler;
 };

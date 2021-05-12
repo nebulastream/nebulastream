@@ -827,7 +827,10 @@ class ReaderLine {
         * @breif Constructor.
         *
         */
-    ReaderLine(const std::string& data = "", const size_t no = 0, const size_t offset = 0, const Node::eType type = Node::None,
+    ReaderLine(const std::string& data = "",
+               const size_t no = 0,
+               const size_t offset = 0,
+               const Node::eType type = Node::None,
                const unsigned char flags = 0)
         : Data(data), No(no), Offset(offset), Type(type), Flags(flags), NextLine(nullptr) {}
 
@@ -1628,7 +1631,9 @@ void Parse(Node& root, const char* buffer, const size_t size) {
 }
 
 // Serialize configuration structure.
-SerializeConfig::SerializeConfig(const size_t spaceIndentation, const size_t scalarMaxLength, const bool sequenceMapNewline,
+SerializeConfig::SerializeConfig(const size_t spaceIndentation,
+                                 const size_t scalarMaxLength,
+                                 const bool sequenceMapNewline,
                                  const bool mapScalarNewline)
     : SpaceIndentation(spaceIndentation), ScalarMaxLength(scalarMaxLength), SequenceMapNewline(sequenceMapNewline),
       MapScalarNewline(mapScalarNewline) {}
@@ -1680,8 +1685,8 @@ size_t LineFolding(const std::string& input, std::vector<std::string>& folded, c
     return folded.size();
 }
 
-static void SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size_t level,
-                          const SerializeConfig& config) {
+static void
+SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size_t level, const SerializeConfig& config) {
     const size_t indention = config.SpaceIndentation;
 
     switch (node.Type()) {

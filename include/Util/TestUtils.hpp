@@ -251,7 +251,8 @@ class TestUtils {
      * @param timeoutInSec: time to wait before stop checking
      * @return true if query gets into running status else false
      */
-    static bool waitForQueryToStart(QueryId queryId, QueryCatalogPtr queryCatalog,
+    static bool waitForQueryToStart(QueryId queryId,
+                                    QueryCatalogPtr queryCatalog,
                                     std::chrono::seconds timeoutInSec = std::chrono::seconds(timeout)) {
         NES_DEBUG("TestUtils: wait till the query " << queryId << " gets into Running status.");
         auto start_timestamp = std::chrono::system_clock::now();
@@ -284,8 +285,8 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<uint64_t>>
-    static bool checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
-                                       uint64_t expectedResult) {
+    static bool
+    checkCompleteOrTimeout(NesWorkerPtr nesWorker, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan, uint64_t expectedResult) {
 
         SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
@@ -333,7 +334,9 @@ class TestUtils {
      * @return bool indicating if the expected results are matched
      */
     template<typename Predicate = std::equal_to<uint64_t>>
-    static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator, QueryId queryId, GlobalQueryPlanPtr globalQueryPlan,
+    static bool checkCompleteOrTimeout(NesCoordinatorPtr nesCoordinator,
+                                       QueryId queryId,
+                                       GlobalQueryPlanPtr globalQueryPlan,
                                        uint64_t expectedResult) {
         SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryIdForQuery(queryId);
         if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
@@ -502,7 +505,8 @@ class TestUtils {
   * @return true if successful
   */
     template<typename T>
-    static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent, string outputFilePath,
+    static bool checkBinaryOutputContentLengthOrTimeout(uint64_t expectedNumberOfContent,
+                                                        string outputFilePath,
                                                         uint64_t testTimeout = timeout) {
         auto timeoutInSec = std::chrono::seconds(testTimeout);
         auto start_timestamp = std::chrono::system_clock::now();
@@ -569,8 +573,13 @@ class TestUtils {
         return false;
     }
 
-    static TopologyNodePtr registerTestNode(uint64_t id, std::string address, int cpu, NodeStats nodeProperties,
-                                            PhysicalStreamConfigPtr streamConf, NodeType type, StreamCatalogPtr streamCatalog,
+    static TopologyNodePtr registerTestNode(uint64_t id,
+                                            std::string address,
+                                            int cpu,
+                                            NodeStats nodeProperties,
+                                            PhysicalStreamConfigPtr streamConf,
+                                            NodeType type,
+                                            StreamCatalogPtr streamCatalog,
                                             TopologyPtr topology) {
         TopologyNodePtr nodePtr;
         if (type == NodeType::Sensor) {

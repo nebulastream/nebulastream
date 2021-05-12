@@ -141,7 +141,8 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
         if (side == leftSide) {
             if (originIdToMaxTsMapLeft.size() == numberOfInputEdgesLeft) {
                 std::map<uint64_t, uint64_t>::iterator min =
-                    std::min_element(originIdToMaxTsMapLeft.begin(), originIdToMaxTsMapLeft.end(),
+                    std::min_element(originIdToMaxTsMapLeft.begin(),
+                                     originIdToMaxTsMapLeft.end(),
                                      [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
                                          return a.second < b.second;
                                      });
@@ -156,7 +157,8 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
         } else if (side == rightSide) {
             if (originIdToMaxTsMapRight.size() == numberOfInputEdgesRight) {
                 std::map<uint64_t, uint64_t>::iterator min =
-                    std::min_element(originIdToMaxTsMapRight.begin(), originIdToMaxTsMapRight.end(),
+                    std::min_element(originIdToMaxTsMapRight.begin(),
+                                     originIdToMaxTsMapRight.end(),
                                      [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
                                          return a.second < b.second;
                                      });

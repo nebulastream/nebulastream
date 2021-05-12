@@ -38,13 +38,15 @@ void GeneratableCombiningWindowOperator::consume(CodeGeneratorPtr codegen, Pipel
 
 GeneratableDistributedlWindowCombinerOperatorPtr
 GeneratableCombiningWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                           GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+                                           GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                           OperatorId id) {
     return std::make_shared<GeneratableCombiningWindowOperator>(
         GeneratableCombiningWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
 }
 
 GeneratableCombiningWindowOperator::GeneratableCombiningWindowOperator(
-    Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation,
+    Windowing::LogicalWindowDefinitionPtr windowDefinition,
+    GeneratableWindowAggregationPtr generatableWindowAggregation,
     OperatorId id)
     : OperatorNode(id), GeneratableWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id) {}
 

@@ -1403,8 +1403,11 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libbfd> : public TraceResolverL
 
     static void find_in_section_trampoline(bfd*, asection* section, void* data) {
         find_sym_context* context = static_cast<find_sym_context*>(data);
-        context->self->find_in_section(reinterpret_cast<bfd_vma>(context->addr), reinterpret_cast<bfd_vma>(context->base_addr),
-                                       *context->fobj, section, context->result);
+        context->self->find_in_section(reinterpret_cast<bfd_vma>(context->addr),
+                                       reinterpret_cast<bfd_vma>(context->base_addr),
+                                       *context->fobj,
+                                       section,
+                                       context->result);
     }
 
     void find_in_section(bfd_vma addr, bfd_vma base_addr, bfd_fileobject& fobj, asection* section, find_sym_result& result) {
@@ -1442,13 +1445,23 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libbfd> : public TraceResolverL
 #pragma clang diagnostic ignored "-Wzero-as-null-pointer-constant"
 #endif
         if (!result.found && fobj.symtab) {
-            result.found = bfd_find_nearest_line(fobj.handle.get(), section, fobj.symtab.get(), addr - sec_addr, &result.filename,
-                                                 &result.funcname, &result.line);
+            result.found = bfd_find_nearest_line(fobj.handle.get(),
+                                                 section,
+                                                 fobj.symtab.get(),
+                                                 addr - sec_addr,
+                                                 &result.filename,
+                                                 &result.funcname,
+                                                 &result.line);
         }
 
         if (!result.found && fobj.dynamic_symtab) {
-            result.found = bfd_find_nearest_line(fobj.handle.get(), section, fobj.dynamic_symtab.get(), addr - sec_addr,
-                                                 &result.filename, &result.funcname, &result.line);
+            result.found = bfd_find_nearest_line(fobj.handle.get(),
+                                                 section,
+                                                 fobj.dynamic_symtab.get(),
+                                                 addr - sec_addr,
+                                                 &result.filename,
+                                                 &result.funcname,
+                                                 &result.line);
         }
 #if defined(__clang__)
 #pragma clang diagnostic pop
@@ -2624,8 +2637,8 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf> : public TraceResolve
     }
 
     // Resolve the function return type and parameters
-    static void set_function_parameters(std::string& function_name, std::vector<std::string>& ns, dwarf_fileobject& fobj,
-                                        Dwarf_Die die) {
+    static void
+    set_function_parameters(std::string& function_name, std::vector<std::string>& ns, dwarf_fileobject& fobj, Dwarf_Die die) {
         Dwarf_Debug dwarf = fobj.dwarf_handle.get();
         Dwarf_Error error = DW_DLE_NE;
         Dwarf_Die current_die = 0;
@@ -2882,8 +2895,8 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf> : public TraceResolve
     }
 
     template<typename CB>
-    static bool deep_first_search_by_pc(dwarf_fileobject& fobj, Dwarf_Die parent_die, Dwarf_Addr pc, std::vector<std::string>& ns,
-                                        CB cb) {
+    static bool
+    deep_first_search_by_pc(dwarf_fileobject& fobj, Dwarf_Die parent_die, Dwarf_Addr pc, std::vector<std::string>& ns, CB cb) {
         Dwarf_Die current_die = 0;
         Dwarf_Debug dwarf = fobj.dwarf_handle.get();
         Dwarf_Error error = DW_DLE_NE;
@@ -3277,8 +3290,13 @@ class TraceResolverImpl<system_tag::windows_tag> {
             LPTSTR lpMsgBuf;
             DWORD dw = GetLastError();
 
-            FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, dw,
-                          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) &lpMsgBuf, 0, NULL);
+            FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                          NULL,
+                          dw,
+                          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                          (LPTSTR) &lpMsgBuf,
+                          0,
+                          NULL);
 
             printf(lpMsgBuf);
 
@@ -3458,7 +3476,10 @@ class SnippetFactory {
         return src_file.get_lines(start, context_size);
     }
 
-    lines_t get_combined_snippet(const std::string& filename_a, unsigned line_a, const std::string& filename_b, unsigned line_b,
+    lines_t get_combined_snippet(const std::string& filename_a,
+                                 unsigned line_a,
+                                 const std::string& filename_b,
+                                 unsigned line_b,
                                  unsigned context_size) {
         SourceFile& src_file_a = get_src_file(filename_a);
         SourceFile& src_file_b = get_src_file(filename_b);
@@ -3704,8 +3725,12 @@ class Printer {
         }
     }
 
-    void print_snippet(std::ostream& os, const char* indent, const ResolvedTrace::SourceLoc& source_loc, Colorize& colorize,
-                       Color::type color_code, int context_size) {
+    void print_snippet(std::ostream& os,
+                       const char* indent,
+                       const ResolvedTrace::SourceLoc& source_loc,
+                       Colorize& colorize,
+                       Color::type color_code,
+                       int context_size) {
         using namespace std;
         typedef SnippetFactory::lines_t lines_t;
 
@@ -3725,8 +3750,8 @@ class Printer {
         }
     }
 
-    void print_source_loc(std::ostream& os, const char* indent, const ResolvedTrace::SourceLoc& source_loc,
-                          void* addr = nullptr) {
+    void
+    print_source_loc(std::ostream& os, const char* indent, const ResolvedTrace::SourceLoc& source_loc, void* addr = nullptr) {
         os << indent << "Source \"" << source_loc.filename << "\", line " << source_loc.line << ", in " << source_loc.function;
 
         if (address && addr != nullptr) {
@@ -3981,7 +4006,10 @@ class SignalHandling {
         abort();
     }
 
-    static inline void __cdecl invalid_parameter_handler(const wchar_t*, const wchar_t*, const wchar_t*, unsigned int,
+    static inline void __cdecl invalid_parameter_handler(const wchar_t*,
+                                                         const wchar_t*,
+                                                         const wchar_t*,
+                                                         unsigned int,
                                                          uintptr_t) {
         crash_handler(signal_skip_recs);
         abort();
@@ -4001,7 +4029,12 @@ class SignalHandling {
         } else {
             memcpy(ctx(), ct, sizeof(CONTEXT));
         }
-        DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &thread_handle(), 0, FALSE,
+        DuplicateHandle(GetCurrentProcess(),
+                        GetCurrentThread(),
+                        GetCurrentProcess(),
+                        &thread_handle(),
+                        0,
+                        FALSE,
                         DUPLICATE_SAME_ACCESS);
 
         skip_recs() = skip;

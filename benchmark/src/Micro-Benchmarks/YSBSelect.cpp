@@ -121,10 +121,16 @@ int main() {
 #endif
 
     //    for (auto selectivity : allSelectivities) {
-    BM_AddBenchmark("BM_YSB_QUERY", TestQuery::from(thisSchema).filter(Attribute("event_type") < 1).sink(DummySink::create()),
-                    YSBBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                               ingestionRate, 1),
-                    SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",X", ",ysb")
+    BM_AddBenchmark("BM_YSB_QUERY",
+                    TestQuery::from(thisSchema).filter(Attribute("event_type") < 1).sink(DummySink::create()),
+                    YSBBenchmarkSource::create(nodeEngine->getBufferManager(),
+                                               nodeEngine->getQueryManager(),
+                                               benchmarkSchema,
+                                               ingestionRate,
+                                               1),
+                    SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
+                    ",X",
+                    ",ysb")
         //    }
 
         //-----------------------------------------End of BM_SimpleFilterQuery-----------------------------------------------------------------------------------------------

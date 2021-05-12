@@ -37,7 +37,9 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
      * @param windowAggregation generator for the window aggregation
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    static GeneratableOperatorPtr create(OperatorId id,
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
                                          Windowing::WindowOperatorHandlerPtr operatorHandler,
                                          GeneratableWindowAggregationPtr windowAggregation);
 
@@ -49,7 +51,8 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
      * @param windowAggregation generator for the window aggregation
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
                                          Windowing::WindowOperatorHandlerPtr operatorHandler,
                                          GeneratableWindowAggregationPtr windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
@@ -58,7 +61,9 @@ class GeneratableSlicePreAggregationOperator : public GeneratableWindowOperator 
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableSlicePreAggregationOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    GeneratableSlicePreAggregationOperator(OperatorId id,
+                                           SchemaPtr inputSchema,
+                                           SchemaPtr outputSchema,
                                            Windowing::WindowOperatorHandlerPtr operatorHandler,
                                            GeneratableWindowAggregationPtr windowAggregation);
     GeneratableWindowAggregationPtr windowAggregation;

@@ -38,8 +38,11 @@ class DataSinkProvider {
      * @param querySubPlanId
      * @return DataSinkPtr
      */
-    virtual DataSinkPtr lower(OperatorId sinkId, SinkDescriptorPtr sinkDescriptor, SchemaPtr schema,
-                              NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId);
+    virtual DataSinkPtr lower(OperatorId sinkId,
+                              SinkDescriptorPtr sinkDescriptor,
+                              SchemaPtr schema,
+                              NodeEngine::NodeEnginePtr nodeEngine,
+                              QuerySubPlanId querySubPlanId);
 };
 }// namespace QueryCompilation
 }// namespace NES

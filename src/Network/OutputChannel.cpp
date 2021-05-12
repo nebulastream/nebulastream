@@ -31,9 +31,12 @@ OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelI
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 
-std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> zmqContext, const std::string socketAddr,
-                                                     NesPartition nesPartition, ExchangeProtocol& protocol,
-                                                     std::chrono::seconds waitTime, uint8_t retryTimes) {
+std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> zmqContext,
+                                                     const std::string socketAddr,
+                                                     NesPartition nesPartition,
+                                                     ExchangeProtocol& protocol,
+                                                     std::chrono::seconds waitTime,
+                                                     uint8_t retryTimes) {
     int linger = -1;
     std::chrono::seconds backOffTime = waitTime;
     try {
@@ -127,7 +130,11 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     if (payloadSize == 0) {
         return true;
     }
-    sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket, payloadSize, numOfTuples, originId, watermark,
+    sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket,
+                                                           payloadSize,
+                                                           numOfTuples,
+                                                           originId,
+                                                           watermark,
                                                            creationTimestamp);
     inputBuffer.retain();
     auto sentBytesOpt =

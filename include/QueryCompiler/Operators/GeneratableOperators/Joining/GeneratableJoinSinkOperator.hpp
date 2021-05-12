@@ -35,8 +35,8 @@ class GeneratableJoinSinkOperator : public GeneratableJoinOperator {
      * @param operatorHandler join operator handler
      * @return generatable join sink.
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Join::JoinOperatorHandlerPtr operatorHandler);
+    static GeneratableOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
     /**
      * @brief Creates a new generatable join sink operator
      * @param id operator id
@@ -45,15 +45,17 @@ class GeneratableJoinSinkOperator : public GeneratableJoinOperator {
      * @param operatorHandler join operator handler
      * @return generatable join sink
      */
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Join::JoinOperatorHandlerPtr operatorHandler);
+    static GeneratableOperatorPtr
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   protected:
-    GeneratableJoinSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    GeneratableJoinSinkOperator(OperatorId id,
+                                SchemaPtr inputSchema,
+                                SchemaPtr outputSchema,
                                 Join::JoinOperatorHandlerPtr operatorHandler);
 };
 }// namespace GeneratableOperators

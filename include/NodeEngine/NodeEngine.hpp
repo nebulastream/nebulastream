@@ -76,17 +76,28 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return
      */
 
-    static NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config, uint16_t numThreads,
-                                uint64_t bufferSize, uint64_t numberOfBuffersInGlobalBufferManager,
-                                uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline);
+    static NodeEnginePtr create(const std::string& hostname,
+                                uint16_t port,
+                                PhysicalStreamConfigPtr config,
+                                uint16_t numThreads,
+                                uint64_t bufferSize,
+                                uint64_t numberOfBuffersInGlobalBufferManager,
+                                uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                uint64_t numberOfBuffersPerPipeline);
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&&, QueryManagerPtr&&,
-                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&, Network::PartitionManagerPtr&&,
-                        QueryCompilation::QueryCompilerPtr&&, StateManagerPtr&&, uint64_t nodeEngineId,
-                        uint64_t numberOfBuffersInGlobalBufferManager, uint64_t numberOfBuffersInSourceLocalBufferPool,
+    explicit NodeEngine(PhysicalStreamConfigPtr config,
+                        BufferManagerPtr&&,
+                        QueryManagerPtr&&,
+                        std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&&,
+                        Network::PartitionManagerPtr&&,
+                        QueryCompilation::QueryCompilerPtr&&,
+                        StateManagerPtr&&,
+                        uint64_t nodeEngineId,
+                        uint64_t numberOfBuffersInGlobalBufferManager,
+                        uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerPipeline);
 
     virtual ~NodeEngine();

@@ -29,8 +29,8 @@ class DefaultSourceDescriptor : public SourceDescriptor {
 
   public:
     static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency);
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                      uint64_t frequency);
+    static SourceDescriptorPtr
+    create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce, uint64_t frequency);
 
     /**
      * @brief Get number of buffers to be produced
@@ -52,7 +52,9 @@ class DefaultSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency);
-    explicit DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
+    explicit DefaultSourceDescriptor(SchemaPtr schema,
+                                     std::string streamName,
+                                     uint64_t numbersOfBufferToProduce,
                                      uint64_t frequency);
     const uint64_t numbersOfBufferToProduce;
     const std::chrono::milliseconds frequency;

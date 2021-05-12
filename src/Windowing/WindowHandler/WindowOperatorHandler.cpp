@@ -18,7 +18,8 @@
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 namespace NES::Windowing {
 
-WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition,
+                                                       SchemaPtr resultSchema,
                                                        AbstractWindowHandlerPtr windowHandler) {
     return std::make_shared<WindowOperatorHandler>(windowDefinition, resultSchema, windowHandler);
 }
@@ -30,7 +31,8 @@ WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPt
 WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema)
     : windowDefinition(windowDefinition), resultSchema(resultSchema) {}
 
-WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition,
+                                             SchemaPtr resultSchema,
                                              AbstractWindowHandlerPtr windowHandler)
     : windowDefinition(windowDefinition), windowHandler(windowHandler), resultSchema(resultSchema) {}
 

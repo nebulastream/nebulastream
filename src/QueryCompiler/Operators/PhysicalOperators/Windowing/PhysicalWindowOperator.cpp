@@ -19,7 +19,9 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
+                                               SchemaPtr inputSchema,
+                                               SchemaPtr outputSchema,
                                                Windowing::WindowOperatorHandlerPtr handler)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), operatorHandler(handler){};
 

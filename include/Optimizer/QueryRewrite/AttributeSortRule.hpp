@@ -112,7 +112,8 @@ class AttributeSortRule : public BaseRewriteRule {
      * @param originalExpression: the original expression
      * @param updatedExpression: the updated expression
      */
-    bool replaceCommutativeExpressions(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
+    bool replaceCommutativeExpressions(ExpressionNodePtr parentExpression,
+                                       ExpressionNodePtr originalExpression,
                                        ExpressionNodePtr updatedExpression);
 
     /**

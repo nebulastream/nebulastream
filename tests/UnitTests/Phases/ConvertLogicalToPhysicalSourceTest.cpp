@@ -77,8 +77,12 @@ TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogicalToPhysicalSou
 TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = KafkaSourceDescriptor::create(
-        schema, "localhost:9092", "topic", /**group Id**/ "groupId", /**auto commit*/ true, /**timeout*/ 1000);
+    SourceDescriptorPtr sourceDescriptor = KafkaSourceDescriptor::create(schema,
+                                                                         "localhost:9092",
+                                                                         "topic",
+                                                                         /**group Id**/ "groupId",
+                                                                         /**auto commit*/ true,
+                                                                         /**timeout*/ 1000);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(csvFileSource->getType(), KAFKA_SOURCE);
 }

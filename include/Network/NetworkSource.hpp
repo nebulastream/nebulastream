@@ -32,8 +32,12 @@ namespace Network {
 class NetworkSource : public DataSource {
 
   public:
-    NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                  NetworkManagerPtr networkManager, NesPartition nesPartition, size_t numSourceLocalBuffers,
+    NetworkSource(SchemaPtr schema,
+                  NodeEngine::BufferManagerPtr bufferManager,
+                  NodeEngine::QueryManagerPtr queryManager,
+                  NetworkManagerPtr networkManager,
+                  NesPartition nesPartition,
+                  size_t numSourceLocalBuffers,
                   std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors =
                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
 

@@ -31,7 +31,8 @@ GeneratableSumAggregation::create(Windowing::WindowAggregationDescriptorPtr aggr
     return std::make_shared<GeneratableSumAggregation>(aggregationDescriptor);
 }
 
-void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
+void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
+                                                   BinaryOperatorStatement partialRef,
                                                    RecordHandlerPtr recordHandler) {
 
     auto fieldReference =

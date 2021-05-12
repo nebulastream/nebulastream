@@ -30,14 +30,18 @@ const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 
 class BinaryOperatorStatement : public ExpressionStatment {
   public:
-    BinaryOperatorStatement(ExpressionStatmentPtr lhs, const BinaryOperatorType& op, ExpressionStatmentPtr rhs,
+    BinaryOperatorStatement(ExpressionStatmentPtr lhs,
+                            const BinaryOperatorType& op,
+                            ExpressionStatmentPtr rhs,
                             BracketMode bracket_mode = NO_BRACKETS);
 
-    BinaryOperatorStatement(const ExpressionStatment& lhs, const BinaryOperatorType& op, const ExpressionStatment& rhs,
+    BinaryOperatorStatement(const ExpressionStatment& lhs,
+                            const BinaryOperatorType& op,
+                            const ExpressionStatment& rhs,
                             BracketMode bracket_mode = NO_BRACKETS);
 
-    BinaryOperatorStatement addRight(const BinaryOperatorType& op, const VarRefStatement& rhs,
-                                     BracketMode bracket_mode = NO_BRACKETS);
+    BinaryOperatorStatement
+    addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode = NO_BRACKETS);
 
     StatementPtr assignToVariable(const VarRefStatement& lhs);
 

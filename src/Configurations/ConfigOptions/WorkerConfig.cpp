@@ -29,10 +29,12 @@ WorkerConfigPtr WorkerConfig::create() { return std::make_shared<WorkerConfig>(W
 WorkerConfig::WorkerConfig() {
     NES_INFO("Generated new Worker Config object. Configurations initialized with default values.");
     localWorkerIp = ConfigOption<std::string>::create("localWorkerIp", "127.0.0.1", "Worker IP.");
-    coordinatorIp = ConfigOption<std::string>::create("coordinatorIp", "127.0.0.1",
+    coordinatorIp = ConfigOption<std::string>::create("coordinatorIp",
+                                                      "127.0.0.1",
                                                       "Server IP of the NES Coordinator to which the NES Worker should connect.");
     coordinatorPort = ConfigOption<uint32_t>::create(
-        "coordinatorPort", 4000,
+        "coordinatorPort",
+        4000,
         "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
         "to be the same as rpcPort in Coordinator.");
     rpcPort = ConfigOption<uint32_t>::create("rpcPort", 4000, "RPC server port of the NES Worker.");
@@ -44,11 +46,13 @@ WorkerConfig::WorkerConfig() {
         ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Number buffers in global buffer pool.");
     numberOfBuffersPerPipeline =
         ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Number buffers in task local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 64,
+    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool",
+                                                                            64,
                                                                             "Number buffers in source local buffer pool.");
     bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     parentId = ConfigOption<std::string>::create("parentId", "-1", "Parent ID of this node.");
-    logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
+    logLevel = ConfigOption<std::string>::create("logLevel",
+                                                 "LOG_DEBUG",
                                                  "Log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
 }
 

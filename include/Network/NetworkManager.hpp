@@ -48,7 +48,8 @@ class NetworkManager {
      * @param numServerThread
      * @return the shared_ptr object
      */
-    static std::shared_ptr<NetworkManager> create(const std::string& hostname, uint16_t port,
+    static std::shared_ptr<NetworkManager> create(const std::string& hostname,
+                                                  uint16_t port,
                                                   Network::ExchangeProtocol&& exchangeProtocol,
                                                   NodeEngine::BufferManagerPtr bufferManager,
                                                   uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
@@ -85,8 +86,10 @@ class NetworkManager {
      * @param retryTimes times to retry a connection
      * @return
      */
-    OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
-                                                  std::chrono::seconds waitTime, uint8_t retryTimes);
+    OutputChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
+                                                  NesPartition nesPartition,
+                                                  std::chrono::seconds waitTime,
+                                                  uint8_t retryTimes);
 
     /**
      * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol
@@ -96,8 +99,11 @@ class NetworkManager {
      * @param bufferManager
      * @param numServerThread
      */
-    explicit NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol,
-                            NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+    explicit NetworkManager(const std::string& hostname,
+                            uint16_t port,
+                            ExchangeProtocol&& exchangeProtocol,
+                            NodeEngine::BufferManagerPtr bufferManager,
+                            uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     /**
      * @brief Destroy the network manager calling destroy()

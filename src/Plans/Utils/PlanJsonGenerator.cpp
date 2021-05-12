@@ -177,7 +177,8 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(QueryPlanPtr queryPlan) {
     return result;
 }
 
-void PlanJsonGenerator::getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
+void PlanJsonGenerator::getChildren(const OperatorNodePtr root,
+                                    std::vector<web::json::value>& nodes,
                                     std::vector<web::json::value>& edges) {
 
     std::vector<web::json::value> childrenNode;

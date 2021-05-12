@@ -19,19 +19,23 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalMapOperator::PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalMapOperator::PhysicalMapOperator(OperatorId id,
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
                                          FieldAssignmentExpressionNodePtr mapExpression)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), mapExpression(mapExpression) {}
 
 FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() { return mapExpression; }
 
-PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id,
+                                                SchemaPtr inputSchema,
+                                                SchemaPtr outputSchema,
                                                 FieldAssignmentExpressionNodePtr mapExpression) {
     return std::make_shared<PhysicalMapOperator>(id, inputSchema, outputSchema, mapExpression);
 }
 
-PhysicalOperatorPtr PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                FieldAssignmentExpressionNodePtr mapExpression) {
+PhysicalOperatorPtr
+PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, mapExpression);
 }
 

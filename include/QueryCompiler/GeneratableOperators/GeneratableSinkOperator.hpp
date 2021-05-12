@@ -30,7 +30,8 @@ class GeneratableSinkOperator : public SinkLogicalOperatorNode, public Generatab
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableSinkOperator
      */
-    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr sinkLogicalOperator, SchemaPtr outputSchema,
+    static GeneratableSinkOperatorPtr create(SinkLogicalOperatorNodePtr sinkLogicalOperator,
+                                             SchemaPtr outputSchema,
                                              OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**

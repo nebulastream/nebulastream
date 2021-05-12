@@ -44,8 +44,8 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     * @param resultSchema window result schema
     * @return JoinOperatorHandlerPtr
     */
-    static JoinOperatorHandlerPtr create(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema,
-                                         AbstractJoinHandlerPtr joinHandler);
+    static JoinOperatorHandlerPtr
+    create(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr joinHandler);
     /**
      * @brief Sets the join handler
      * @param joinHandler AbstractJoinHandlerPtr

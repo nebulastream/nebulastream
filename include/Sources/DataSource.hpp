@@ -69,8 +69,12 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    explicit DataSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                        OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode,
+    explicit DataSource(SchemaPtr schema,
+                        NodeEngine::BufferManagerPtr bufferManager,
+                        NodeEngine::QueryManagerPtr queryManager,
+                        OperatorId operatorId,
+                        size_t numSourceLocalBuffers,
+                        GatheringMode gatheringMode,
                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors =
                             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
 

@@ -31,7 +31,8 @@ class GeneratableSlicingWindowOperator : public GeneratableWindowOperator {
      * @return instance of GeneratableSlicingWindowOperator
      */
     static GeneratableDistributedlWindowSliceCreationOperatorPtr
-    create(Windowing::LogicalWindowDefinitionPtr windowDefinition, GeneratableWindowAggregationPtr generatableWindowAggregation,
+    create(Windowing::LogicalWindowDefinitionPtr windowDefinition,
+           GeneratableWindowAggregationPtr generatableWindowAggregation,
            OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
@@ -56,7 +57,8 @@ class GeneratableSlicingWindowOperator : public GeneratableWindowOperator {
 
   private:
     explicit GeneratableSlicingWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                              GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
+                                              GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                              OperatorId id);
 };
 
 }// namespace NES

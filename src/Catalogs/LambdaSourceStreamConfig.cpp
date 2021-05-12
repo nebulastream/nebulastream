@@ -22,9 +22,13 @@ namespace NES {
 namespace detail {}// namespace detail
 
 LambdaSourceStreamConfig::LambdaSourceStreamConfig(
-    std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+    std::string sourceType,
+    std::string physicalStreamName,
+    std::string logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode)
+    uint64_t numBuffersToProcess,
+    uint64_t gatheringValue,
+    std::string gatheringMode)
     : PhysicalStreamConfig(SourceConfig::create()), sourceType(sourceType), generationFunction(std::move(generationFunction)) {
     // nop
     this->physicalStreamName = physicalStreamName;
@@ -43,16 +47,27 @@ const std::string LambdaSourceStreamConfig::getPhysicalStreamName() { return phy
 const std::string LambdaSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
-    return std::make_shared<LambdaSourceDescriptor>(schema, std::move(generationFunction), this->numberOfBuffersToProduce,
-                                                    this->gatheringValue, this->gatheringMode);
+    return std::make_shared<LambdaSourceDescriptor>(schema,
+                                                    std::move(generationFunction),
+                                                    this->numberOfBuffersToProduce,
+                                                    this->gatheringValue,
+                                                    this->gatheringMode);
 }
 
 AbstractPhysicalStreamConfigPtr LambdaSourceStreamConfig::create(
-    std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+    std::string sourceType,
+    std::string physicalStreamName,
+    std::string logicalStreamName,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode) {
-    return std::make_shared<LambdaSourceStreamConfig>(sourceType, physicalStreamName, logicalStreamName,
-                                                      std::move(generationFunction), numBuffersToProcess, gatheringValue,
+    uint64_t numBuffersToProcess,
+    uint64_t gatheringValue,
+    std::string gatheringMode) {
+    return std::make_shared<LambdaSourceStreamConfig>(sourceType,
+                                                      physicalStreamName,
+                                                      logicalStreamName,
+                                                      std::move(generationFunction),
+                                                      numBuffersToProcess,
+                                                      gatheringValue,
                                                       gatheringMode);
 }
 

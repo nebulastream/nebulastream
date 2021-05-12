@@ -103,7 +103,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
-        std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
+        std::sort(sortedCommutativeFields.begin(),
+                  sortedCommutativeFields.end(),
                   [](NES::ExpressionNodePtr lhsField, NES::ExpressionNodePtr rhsField) {
                       std::string leftValue;
                       std::string rightValue;
@@ -188,7 +189,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
-        std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
+        std::sort(sortedCommutativeFields.begin(),
+                  sortedCommutativeFields.end(),
                   [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
                       std::string leftValue;
                       std::string rightValue;
@@ -280,7 +282,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
-        std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
+        std::sort(sortedCommutativeFields.begin(),
+                  sortedCommutativeFields.end(),
                   [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
                       std::string leftValue;
                       std::string rightValue;
@@ -356,7 +359,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
             sortedCommutativeFields.push_back(commutativeField->copy());
         }
 
-        std::sort(sortedCommutativeFields.begin(), sortedCommutativeFields.end(),
+        std::sort(sortedCommutativeFields.begin(),
+                  sortedCommutativeFields.end(),
                   [](ExpressionNodePtr lhsField, ExpressionNodePtr rhsField) {
                       std::string leftValue;
                       std::string rightValue;
@@ -498,7 +502,8 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
     return nullptr;
 }
 
-bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentExpression, ExpressionNodePtr originalExpression,
+bool AttributeSortRule::replaceCommutativeExpressions(ExpressionNodePtr parentExpression,
+                                                      ExpressionNodePtr originalExpression,
                                                       ExpressionNodePtr updatedExpression) {
 
     auto binaryExpression = parentExpression->as<BinaryExpressionNode>();

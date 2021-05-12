@@ -76,9 +76,12 @@ class GlobalQueryPlanUpdatePhase {
      * @param queryMergerRule: Rule to be used fro performing query merging if merging enabled
      * @return Shared pointer for the GlobalQueryPlanUpdatePhase
      */
-    static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
-                                                bool enableQueryMerging, Optimizer::QueryMergerRule queryMergerRule);
+    static GlobalQueryPlanUpdatePhasePtr create(QueryCatalogPtr queryCatalog,
+                                                StreamCatalogPtr streamCatalog,
+                                                GlobalQueryPlanPtr globalQueryPlan,
+                                                z3::ContextPtr z3Context,
+                                                bool enableQueryMerging,
+                                                Optimizer::QueryMergerRule queryMergerRule);
 
     /**
      * @brief This method executes the Global Query Plan Update Phase on a batch of query requests
@@ -88,8 +91,11 @@ class GlobalQueryPlanUpdatePhase {
     GlobalQueryPlanPtr execute(const std::vector<NESRequestPtr>& queryRequests);
 
   private:
-    explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                        GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context, bool enableQueryMerging,
+    explicit GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
+                                        StreamCatalogPtr streamCatalog,
+                                        GlobalQueryPlanPtr globalQueryPlan,
+                                        z3::ContextPtr z3Context,
+                                        bool enableQueryMerging,
                                         Optimizer::QueryMergerRule queryMergerRule);
 
     bool enableQueryMerging;

@@ -46,7 +46,9 @@ typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
 class QueryService {
 
   public:
-    explicit QueryService(QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
+    explicit QueryService(QueryCatalogPtr queryCatalog,
+                          NESRequestQueuePtr queryRequestQueue,
+                          StreamCatalogPtr streamCatalog,
                           bool enableSemanticQueryValidation);
 
     ~QueryService();

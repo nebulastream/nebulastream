@@ -27,10 +27,12 @@ namespace PhysicalOperators {
  */
 class PhysicalProjectOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalProjectOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    PhysicalProjectOperator(OperatorId id,
+                            SchemaPtr inputSchema,
+                            SchemaPtr outputSchema,
                             std::vector<ExpressionNodePtr> expressions);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      std::vector<ExpressionNodePtr> expressions);
+    static PhysicalOperatorPtr
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
     /**
      * @brief returns the list of fields that remain in the output schema.

@@ -19,18 +19,26 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                                     SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr joinOperatorHandler) {
+PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema,
+                                                     SchemaPtr rightInputSchema,
+                                                     SchemaPtr outputSchema,
+                                                     Join::JoinOperatorHandlerPtr joinOperatorHandler) {
     return create(UtilityFunctions::getNextOperatorId(), leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
-PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                                     SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr joinOperatorHandler) {
+PhysicalOperatorPtr PhysicalJoinSinkOperator::create(OperatorId id,
+                                                     SchemaPtr leftInputSchema,
+                                                     SchemaPtr rightInputSchema,
+                                                     SchemaPtr outputSchema,
+                                                     Join::JoinOperatorHandlerPtr joinOperatorHandler) {
     return std::make_shared<PhysicalJoinSinkOperator>(id, leftInputSchema, rightInputSchema, outputSchema, joinOperatorHandler);
 }
 
-PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                                   SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr joinOperatorHandler)
+PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(OperatorId id,
+                                                   SchemaPtr leftInputSchema,
+                                                   SchemaPtr rightInputSchema,
+                                                   SchemaPtr outputSchema,
+                                                   Join::JoinOperatorHandlerPtr joinOperatorHandler)
     : OperatorNode(id), PhysicalJoinOperator(joinOperatorHandler),
       PhysicalBinaryOperator(id, leftInputSchema, rightInputSchema, outputSchema){};
 

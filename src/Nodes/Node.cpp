@@ -563,7 +563,9 @@ std::vector<NodePtr> Node::getAndFlattenAllChildren(bool withDuplicateChildren) 
     return allChildren;
 }
 
-void Node::getAndFlattenAllChildrenHelper(const NodePtr node, std::vector<NodePtr>& allChildren, const NodePtr excludedNode,
+void Node::getAndFlattenAllChildrenHelper(const NodePtr node,
+                                          std::vector<NodePtr>& allChildren,
+                                          const NodePtr excludedNode,
                                           bool allowDuplicate) {
 
     // todo this implementation may be slow

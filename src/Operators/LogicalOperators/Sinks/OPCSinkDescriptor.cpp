@@ -51,7 +51,8 @@ bool OPCSinkDescriptor::equal(SinkDescriptorPtr other) {
     memcpy(newIdent, nodeId.identifier.string.data, nodeId.identifier.string.length);
     newIdent[nodeId.identifier.string.length] = '\0';
     char* otherSinkIdent = (char*) UA_malloc(sizeof(char) * otherSinkDescriptor->getNodeId().identifier.string.length + 1);
-    memcpy(otherSinkIdent, otherSinkDescriptor->getNodeId().identifier.string.data,
+    memcpy(otherSinkIdent,
+           otherSinkDescriptor->getNodeId().identifier.string.data,
            otherSinkDescriptor->getNodeId().identifier.string.length);
     otherSinkIdent[otherSinkDescriptor->getNodeId().identifier.string.length] = '\0';
     return url == otherSinkDescriptor->getUrl() && !strcmp(newIdent, otherSinkIdent)

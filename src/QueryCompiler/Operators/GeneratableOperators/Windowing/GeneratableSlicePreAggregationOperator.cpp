@@ -23,7 +23,8 @@
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
-GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId id, SchemaPtr inputSchema,
+GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId id,
+                                                                      SchemaPtr inputSchema,
                                                                       SchemaPtr outputSchema,
                                                                       Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                       GeneratableWindowAggregationPtr windowAggregation) {
@@ -31,14 +32,18 @@ GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId
         GeneratableSlicePreAggregationOperator(id, inputSchema, outputSchema, operatorHandler, windowAggregation));
 }
 
-GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(SchemaPtr inputSchema,
+                                                                      SchemaPtr outputSchema,
                                                                       Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                       GeneratableWindowAggregationPtr windowAggregation) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
 
 GeneratableSlicePreAggregationOperator::GeneratableSlicePreAggregationOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr operatorHandler,
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::WindowOperatorHandlerPtr operatorHandler,
     GeneratableWindowAggregationPtr windowAggregation)
     : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler),
       windowAggregation(windowAggregation) {}

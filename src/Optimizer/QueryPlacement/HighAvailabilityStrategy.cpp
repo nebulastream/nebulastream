@@ -32,7 +32,8 @@ namespace NES {
 
 HighAvailabilityStrategy::HighAvailabilityStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
 
-NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan,
+NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
+                                                                      NESTopologyPlanPtr nesTopologyPlan,
                                                                       StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -67,8 +68,10 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(QueryPlanP
     return nesExecutionPlanPtr;
 }
 
-void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                                              LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr,
+                                              NESTopologyGraphPtr nesTopologyGraphPtr,
+                                              LogicalOperatorNodePtr sourceOperator,
+                                              vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
@@ -200,8 +203,10 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                     NES_DEBUG("HighThroughput: Create new execution node.");
                     stringstream operatorName;
                     operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
-                    const ExecutionNodePtr newExecutionNode = nesExecutionPlanPtr->createExecutionNode(
-                        operatorName.str(), to_string(node->getId()), node, legacyOperator->copy());
+                    const ExecutionNodePtr newExecutionNode = nesExecutionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                                       to_string(node->getId()),
+                                                                                                       node,
+                                                                                                       legacyOperator->copy());
                     newExecutionNode->addOperatorId(targetOperator->getId());
                 } else {
 
@@ -281,7 +286,9 @@ void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> p
 
                 NES_DEBUG("HighAvailabilityStrategy: Add FWD operator on the node where no query operator has been placed");
                 if (node->getCpuCapacity() == node->getRemainingCpuCapacity()) {
-                    nesExecutionPlanPtr->createExecutionNode("FWD", to_string(node->getId()), node,
+                    nesExecutionPlanPtr->createExecutionNode("FWD",
+                                                             to_string(node->getId()),
+                                                             node,
                                                              /**executableOperator**/ nullptr);
                     node->reduceCpuCapacity(1);
                 }

@@ -23,18 +23,22 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableJoinSinkOperator::GeneratableJoinSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableJoinSinkOperator::GeneratableJoinSinkOperator(OperatorId id,
+                                                         SchemaPtr inputSchema,
+                                                         SchemaPtr outputSchema,
                                                          Join::JoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableJoinOperator(id, inputSchema, outputSchema, operatorHandler) {}
 
-GeneratableOperatorPtr GeneratableJoinSinkOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableJoinSinkOperator::create(OperatorId id,
+                                                           SchemaPtr inputSchema,
+                                                           SchemaPtr outputSchema,
                                                            Join::JoinOperatorHandlerPtr operatorHandler) {
     return std::make_shared<GeneratableJoinSinkOperator>(
         GeneratableJoinSinkOperator(id, inputSchema, outputSchema, operatorHandler));
 }
 
-GeneratableOperatorPtr GeneratableJoinSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                           Join::JoinOperatorHandlerPtr operatorHandler) {
+GeneratableOperatorPtr
+GeneratableJoinSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler);
 }
 

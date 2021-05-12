@@ -44,9 +44,12 @@ class SimpleBenchmarkSource : public DataSource {
   public:
     uint64_t numberOfTuplesPerBuffer;
 
-    SimpleBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager,
-                          const NodeEngine::QueryManagerPtr& queryManager, uint64_t ingestionRate,
-                          uint64_t numberOfTuplesPerBuffer, uint64_t operatorId)
+    SimpleBenchmarkSource(const SchemaPtr& schema,
+                          const NodeEngine::BufferManagerPtr& bufferManager,
+                          const NodeEngine::QueryManagerPtr& queryManager,
+                          uint64_t ingestionRate,
+                          uint64_t numberOfTuplesPerBuffer,
+                          uint64_t operatorId)
 
         : DataSource(schema, bufferManager, queryManager, operatorId, 12, DataSource::GatheringMode::FREQUENCY_MODE) {
         NES_DEBUG("SimpleBenchmarkSource: " << this << " created!");
@@ -209,8 +212,10 @@ class SimpleBenchmarkSource : public DataSource {
     virtual ~SimpleBenchmarkSource() = default;
 
     static std::shared_ptr<SimpleBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
-                                                         NodeEngine::QueryManagerPtr queryManager, SchemaPtr& benchmarkSchema,
-                                                         uint64_t ingestionRate, uint64_t operatorId,
+                                                         NodeEngine::QueryManagerPtr queryManager,
+                                                         SchemaPtr& benchmarkSchema,
+                                                         uint64_t ingestionRate,
+                                                         uint64_t operatorId,
                                                          bool roundingNearestThousand = false) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
@@ -225,8 +230,12 @@ class SimpleBenchmarkSource : public DataSource {
         if (maxTuplesPerBuffer == 0)
             throw RuntimeException("maxTuplesPerBuffer == 0");
 
-        return std::make_shared<SimpleBenchmarkSource>(benchmarkSchema, bufferManager, queryManager, ingestionRate,
-                                                       maxTuplesPerBuffer, operatorId);
+        return std::make_shared<SimpleBenchmarkSource>(benchmarkSchema,
+                                                       bufferManager,
+                                                       queryManager,
+                                                       ingestionRate,
+                                                       maxTuplesPerBuffer,
+                                                       operatorId);
     }
 
   private:

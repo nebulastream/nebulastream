@@ -106,11 +106,23 @@ class WindowSource : public NES::DefaultSource {
     int64_t timestamp;
     bool varyWatermark;
     bool decreaseTime;
-    WindowSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                 const uint64_t numbersOfBufferToProduce, uint64_t frequency, bool varyWatermark, bool decreaseTime,
-                 int64_t timestamp, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-        : DefaultSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, frequency,
-                        1, 12, successors),
+    WindowSource(SchemaPtr schema,
+                 NodeEngine::BufferManagerPtr bufferManager,
+                 NodeEngine::QueryManagerPtr queryManager,
+                 const uint64_t numbersOfBufferToProduce,
+                 uint64_t frequency,
+                 bool varyWatermark,
+                 bool decreaseTime,
+                 int64_t timestamp,
+                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+        : DefaultSource(std::move(schema),
+                        std::move(bufferManager),
+                        std::move(queryManager),
+                        numbersOfBufferToProduce,
+                        frequency,
+                        1,
+                        12,
+                        successors),
           varyWatermark(varyWatermark), decreaseTime(decreaseTime), timestamp(timestamp) {}
 
     std::optional<TupleBuffer> receiveData() override {
@@ -180,16 +192,26 @@ class WindowSource : public NES::DefaultSource {
         return buffer;
     };
 
-    static DataSourcePtr create(NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                                const uint64_t numbersOfBufferToProduce, uint64_t frequency, const bool varyWatermark = false,
-                                bool decreaseTime = false, int64_t timestamp = 5) {
+    static DataSourcePtr create(NodeEngine::BufferManagerPtr bufferManager,
+                                NodeEngine::QueryManagerPtr queryManager,
+                                const uint64_t numbersOfBufferToProduce,
+                                uint64_t frequency,
+                                const bool varyWatermark = false,
+                                bool decreaseTime = false,
+                                int64_t timestamp = 5) {
         auto windowSchema = Schema::create()
                                 ->addField("test$key", BasicType::INT64)
                                 ->addField("test$value", BasicType::INT64)
                                 ->addField("test$ts", BasicType::UINT64)
                                 ->addField("test$empty", BasicType::UINT64);
-        return std::make_shared<WindowSource>(windowSchema, bufferManager, queryManager, numbersOfBufferToProduce, frequency,
-                                              varyWatermark, decreaseTime, timestamp,
+        return std::make_shared<WindowSource>(windowSchema,
+                                              bufferManager,
+                                              queryManager,
+                                              numbersOfBufferToProduce,
+                                              frequency,
+                                              varyWatermark,
+                                              decreaseTime,
+                                              timestamp,
                                               std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
     }
 };
@@ -201,8 +223,8 @@ class TestSink : public SinkMedium {
     TestSink(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0), expectedBuffer(expectedBuffer){};
 
-    static std::shared_ptr<TestSink> create(uint64_t expectedBuffer, SchemaPtr schema,
-                                            NodeEngine::BufferManagerPtr bufferManager) {
+    static std::shared_ptr<TestSink>
+    create(uint64_t expectedBuffer, SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager) {
         return std::make_shared<TestSink>(expectedBuffer, schema, bufferManager);
     }
 
@@ -286,10 +308,17 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+        [&](OperatorId id,
+            SourceDescriptorPtr,
+            NodeEngine::NodeEnginePtr,
+            size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(
-                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 successors);
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -343,10 +372,17 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+        [&](OperatorId id,
+            SourceDescriptorPtr,
+            NodeEngine::NodeEnginePtr,
+            size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(
-                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 successors);
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -399,10 +435,17 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+        [&](OperatorId id,
+            SourceDescriptorPtr,
+            NodeEngine::NodeEnginePtr,
+            size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(
-                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 successors);
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64)->addField("value", BasicType::INT64);
@@ -456,10 +499,17 @@ TEST_F(ProjectionTest, projectOneExistingOneNotExistingField) {
     // creating query plan
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+        [&](OperatorId id,
+            SourceDescriptorPtr,
+            NodeEngine::NodeEnginePtr,
+            size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-            return createDefaultDataSourceWithSchemaForOneBuffer(
-                testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 successors);
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);

@@ -42,9 +42,12 @@ class ExecutableSliceAggregationTriggerAction
     create(LogicalWindowDefinitionPtr windowDefinition,
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
                executableWindowAggregation,
-           SchemaPtr outputSchema, uint64_t id) {
-        return std::make_shared<ExecutableSliceAggregationTriggerAction>(windowDefinition, executableWindowAggregation,
-                                                                         outputSchema, id);
+           SchemaPtr outputSchema,
+           uint64_t id) {
+        return std::make_shared<ExecutableSliceAggregationTriggerAction>(windowDefinition,
+                                                                         executableWindowAggregation,
+                                                                         outputSchema,
+                                                                         id);
     }
 
     virtual ~ExecutableSliceAggregationTriggerAction() {
@@ -55,7 +58,8 @@ class ExecutableSliceAggregationTriggerAction
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
             executableWindowAggregation,
-        SchemaPtr outputSchema, uint64_t id)
+        SchemaPtr outputSchema,
+        uint64_t id)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id) {
 
         this->windowSchema = outputSchema;
@@ -64,7 +68,8 @@ class ExecutableSliceAggregationTriggerAction
     }
 
     bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
-                  uint64_t currentWatermark, uint64_t lastWatermark) {
+                  uint64_t currentWatermark,
+                  uint64_t lastWatermark) {
         NES_DEBUG("ExecutableSliceAggregationTriggerAction " << id << ": doAction for currentWatermark=" << currentWatermark
                                                              << " lastWatermark=" << lastWatermark);
 
@@ -107,8 +112,11 @@ class ExecutableSliceAggregationTriggerAction
   * @param store
   * @param tupleBuffer
   */
-    void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, NodeEngine::TupleBuffer& tupleBuffer,
-                          uint64_t currentWatermark, uint64_t lastWatermark) {
+    void aggregateWindows(KeyType key,
+                          WindowSliceStore<PartialAggregateType>* store,
+                          NodeEngine::TupleBuffer& tupleBuffer,
+                          uint64_t currentWatermark,
+                          uint64_t lastWatermark) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -163,8 +171,12 @@ class ExecutableSliceAggregationTriggerAction
                     currentNumberOfTuples = 0;
                 }
                 //TODO: we only need to send slides that are not empty
-                writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, slices[sliceId].getStartTs(),
-                                                        slices[sliceId].getEndTs(), key, partialAggregates[sliceId],
+                writeResultRecord<PartialAggregateType>(tupleBuffer,
+                                                        currentNumberOfTuples,
+                                                        slices[sliceId].getStartTs(),
+                                                        slices[sliceId].getEndTs(),
+                                                        key,
+                                                        partialAggregates[sliceId],
                                                         slices[sliceId].getRecordsPerSlice());
                 currentNumberOfTuples++;
                 maxSliceEnd = std::max(maxSliceEnd, slices[sliceId].getEndTs());
@@ -193,8 +205,13 @@ class ExecutableSliceAggregationTriggerAction
     * @param value value
     */
     template<typename ValueType>
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
-                           ValueType value, uint64_t cnt) {
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+                           uint64_t index,
+                           uint64_t startTs,
+                           uint64_t endTs,
+                           KeyType key,
+                           ValueType value,
+                           uint64_t cnt) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
         windowTupleLayout->getValueField<uint64_t>(index, 2)->write(tupleBuffer, cnt);

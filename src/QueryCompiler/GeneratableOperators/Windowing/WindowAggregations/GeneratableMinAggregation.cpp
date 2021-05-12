@@ -31,7 +31,8 @@ GeneratableMinAggregation::create(Windowing::WindowAggregationDescriptorPtr aggr
     return std::make_shared<GeneratableMinAggregation>(aggregationDescriptor);
 }
 
-void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
+void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
+                                                   BinaryOperatorStatement partialRef,
                                                    RecordHandlerPtr recordHandler) {
     auto fieldReference =
         recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());

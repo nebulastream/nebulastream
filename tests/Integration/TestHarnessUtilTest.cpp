@@ -272,8 +272,15 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     };
 
     std::vector<Output> expectedOutput = {
-        {1000, 2000, 1, 2},  {2000, 3000, 1, 0},  {3000, 4000, 1, 4},  {4000, 5000, 1, 0},  {1000, 2000, 4, 2},
-        {2000, 3000, 11, 4}, {3000, 4000, 11, 0}, {1000, 2000, 12, 2}, {2000, 3000, 16, 4},
+        {1000, 2000, 1, 2},
+        {2000, 3000, 1, 0},
+        {3000, 4000, 1, 4},
+        {4000, 5000, 1, 0},
+        {1000, 2000, 4, 2},
+        {2000, 3000, 11, 4},
+        {3000, 4000, 11, 0},
+        {1000, 2000, 12, 2},
+        {2000, 3000, 16, 4},
     };
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 

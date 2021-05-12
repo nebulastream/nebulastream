@@ -23,9 +23,12 @@
 
 namespace NES::NodeEngine::Execution {
 
-NewExecutableQueryPlan::NewExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId,
-                                               std::vector<DataSourcePtr>&& sources, std::vector<DataSinkPtr>&& sinks,
-                                               std::vector<NewExecutablePipelinePtr>&& pipelines, QueryManagerPtr&& queryManager,
+NewExecutableQueryPlan::NewExecutableQueryPlan(QueryId queryId,
+                                               QuerySubPlanId querySubPlanId,
+                                               std::vector<DataSourcePtr>&& sources,
+                                               std::vector<DataSinkPtr>&& sinks,
+                                               std::vector<NewExecutablePipelinePtr>&& pipelines,
+                                               QueryManagerPtr&& queryManager,
                                                BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
@@ -34,12 +37,20 @@ NewExecutableQueryPlan::NewExecutableQueryPlan(QueryId queryId, QuerySubPlanId q
     // nop
 }
 
-NewExecutableQueryPlanPtr NewExecutableQueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId,
-                                                         std::vector<DataSourcePtr> sources, std::vector<DataSinkPtr> sinks,
+NewExecutableQueryPlanPtr NewExecutableQueryPlan::create(QueryId queryId,
+                                                         QuerySubPlanId querySubPlanId,
+                                                         std::vector<DataSourcePtr> sources,
+                                                         std::vector<DataSinkPtr> sinks,
                                                          std::vector<NewExecutablePipelinePtr> pipelines,
-                                                         QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
-    return std::make_shared<NewExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources), std::move(sinks),
-                                                    std::move(pipelines), std::move(queryManager), std::move(bufferManager));
+                                                         QueryManagerPtr queryManager,
+                                                         BufferManagerPtr bufferManager) {
+    return std::make_shared<NewExecutableQueryPlan>(queryId,
+                                                    querySubPlanId,
+                                                    std::move(sources),
+                                                    std::move(sinks),
+                                                    std::move(pipelines),
+                                                    std::move(queryManager),
+                                                    std::move(bufferManager));
 }
 
 void NewExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }

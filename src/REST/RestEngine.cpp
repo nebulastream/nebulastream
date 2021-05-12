@@ -26,9 +26,14 @@
 
 namespace NES {
 
-RestEngine::RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
-                       TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService,
-                       MonitoringServicePtr monitoringService, GlobalQueryPlanPtr globalQueryPlan) {
+RestEngine::RestEngine(StreamCatalogPtr streamCatalog,
+                       NesCoordinatorWeakPtr coordinator,
+                       QueryCatalogPtr queryCatalog,
+                       TopologyPtr topology,
+                       GlobalExecutionPlanPtr globalExecutionPlan,
+                       QueryServicePtr queryService,
+                       MonitoringServicePtr monitoringService,
+                       GlobalQueryPlanPtr globalQueryPlan) {
     streamCatalogController = std::make_shared<StreamCatalogController>(streamCatalog);
     queryCatalogController = std::make_shared<QueryCatalogController>(queryCatalog, coordinator, globalQueryPlan);
     queryController = std::make_shared<QueryController>(queryService, queryCatalog, topology, globalExecutionPlan);

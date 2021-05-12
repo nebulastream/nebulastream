@@ -72,9 +72,13 @@ NodeEngine::Execution::ExecutableQueryPlanPtr GeneratedQueryExecutionPlanBuilder
         std::reverse(pipelines.begin(), pipelines.end());// this is necessary, check plan generator documentation
     }
 
-    return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(queryId, querySubPlanId, std::move(sources),
-                                                                        std::move(sinks), std::move(pipelines),
-                                                                        std::move(queryManager), std::move(bufferManager));
+    return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(queryId,
+                                                                        querySubPlanId,
+                                                                        std::move(sources),
+                                                                        std::move(sinks),
+                                                                        std::move(pipelines),
+                                                                        std::move(queryManager),
+                                                                        std::move(bufferManager));
 }
 
 std::vector<DataSinkPtr>& GeneratedQueryExecutionPlanBuilder::getSinks() { return sinks; }

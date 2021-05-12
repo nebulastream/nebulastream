@@ -92,8 +92,12 @@ std::string E2EBase::runExperiment() {
     }
 }
 
-E2EBase::E2EBase(uint64_t threadCntWorker, uint64_t sourceCnt, uint64_t numberOfBuffersInGlobalBufferManager,
-                 uint64_t numberOfBuffersPerPipeline, uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t bufferSizeInBytes,
+E2EBase::E2EBase(uint64_t threadCntWorker,
+                 uint64_t sourceCnt,
+                 uint64_t numberOfBuffersInGlobalBufferManager,
+                 uint64_t numberOfBuffersPerPipeline,
+                 uint64_t numberOfBuffersInSourceLocalBufferPool,
+                 uint64_t bufferSizeInBytes,
                  E2EBenchmarkConfigPtr config)
     : numberOfWorkerThreads(threadCntWorker), sourceCnt(sourceCnt),
       numberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager),
@@ -282,14 +286,22 @@ void E2EBase::setupSources() {
             }
 
             NES::AbstractPhysicalStreamConfigPtr conf =
-                NES::MemorySourceStreamConfig::create("MemorySource", "test_stream", "input", memArea, bufferSizeInBytes,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+                NES::MemorySourceStreamConfig::create("MemorySource",
+                                                      "test_stream",
+                                                      "input",
+                                                      memArea,
+                                                      bufferSizeInBytes,
+                                                      config->getNumberOfBuffersToProduce()->getValue(),
+                                                      0,
+                                                      "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "MemorySource",
-                                                                    "test_stream" + std::to_string(i), "input");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(),
+                                                                    "MemorySource",
+                                                                    "test_stream" + std::to_string(i),
+                                                                    "input");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
@@ -315,14 +327,21 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+                NES::LambdaSourceStreamConfig::create("LambdaSource",
+                                                      "test_stream" + std::to_string(i),
+                                                      "input",
+                                                      func,
+                                                      config->getNumberOfBuffersToProduce()->getValue(),
+                                                      0,
+                                                      "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "test_stream" + std::to_string(i), "input");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(),
+                                                                    "LambdaSource",
+                                                                    "test_stream" + std::to_string(i),
+                                                                    "input");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
@@ -351,14 +370,21 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "test_stream" + std::to_string(i), "input", func,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+                NES::LambdaSourceStreamConfig::create("LambdaSource",
+                                                      "test_stream" + std::to_string(i),
+                                                      "input",
+                                                      func,
+                                                      config->getNumberOfBuffersToProduce()->getValue(),
+                                                      0,
+                                                      "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "test_stream" + std::to_string(i), "input");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(),
+                                                                    "LambdaSource",
+                                                                    "test_stream" + std::to_string(i),
+                                                                    "input");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
@@ -390,8 +416,13 @@ void E2EBase::setupSources() {
             auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
                 struct __attribute__((packed)) YsbRecord {
                     YsbRecord() = default;
-                    YsbRecord(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType,
-                              uint64_t currentMs, uint64_t ip)
+                    YsbRecord(uint64_t userId,
+                              uint64_t pageId,
+                              uint64_t campaignId,
+                              uint64_t adType,
+                              uint64_t eventType,
+                              uint64_t currentMs,
+                              uint64_t ip)
                         : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
                           currentMs(currentMs), ip(ip) {}
 
@@ -446,14 +477,21 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "YSB_phy_" + std::to_string(i), "ysb", func,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+                NES::LambdaSourceStreamConfig::create("LambdaSource",
+                                                      "YSB_phy_" + std::to_string(i),
+                                                      "ysb",
+                                                      func,
+                                                      config->getNumberOfBuffersToProduce()->getValue(),
+                                                      0,
+                                                      "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 wrk->registerPhysicalStream(conf);
             } else {
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "YSB_phy_" + std::to_string(i), "ysb");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(),
+                                                                    "LambdaSource",
+                                                                    "YSB_phy_" + std::to_string(i),
+                                                                    "ysb");
                 crd->getNodeEngine()->setConfig(conf);
             }
         }
@@ -504,12 +542,22 @@ void E2EBase::setupSources() {
             };
 
             NES::AbstractPhysicalStreamConfigPtr conf1 =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "phy_input_1", "input1", func1,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+                NES::LambdaSourceStreamConfig::create("LambdaSource",
+                                                      "phy_input_1",
+                                                      "input1",
+                                                      func1,
+                                                      config->getNumberOfBuffersToProduce()->getValue(),
+                                                      0,
+                                                      "frequency");
 
             NES::AbstractPhysicalStreamConfigPtr conf2 =
-                NES::LambdaSourceStreamConfig::create("LambdaSource", "phy_input_2", "input2", func2,
-                                                      config->getNumberOfBuffersToProduce()->getValue(), 0, "frequency");
+                NES::LambdaSourceStreamConfig::create("LambdaSource",
+                                                      "phy_input_2",
+                                                      "input2",
+                                                      func2,
+                                                      config->getNumberOfBuffersToProduce()->getValue(),
+                                                      0,
+                                                      "frequency");
 
             if (config->getScalability()->getValue() == "scale-out") {
                 NES_NOT_IMPLEMENTED();
@@ -521,12 +569,16 @@ void E2EBase::setupSources() {
             } else {
                 crd->getNesWorker()->registerLogicalStream("input1", testSchemaFileName);
                 crd->getNesWorker()->registerLogicalStream("input2", testSchemaFileName);
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "phy_input_1" + std::to_string(i), "input1");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(),
+                                                                    "LambdaSource",
+                                                                    "phy_input_1" + std::to_string(i),
+                                                                    "input1");
                 crd->getNodeEngine()->setConfig(conf1);
 
-                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(), "LambdaSource",
-                                                                    "phy_input_2" + std::to_string(i), "input2");
+                crd->getCoordinatorEngine()->registerPhysicalStream(crd->getNesWorker()->getWorkerId(),
+                                                                    "LambdaSource",
+                                                                    "phy_input_2" + std::to_string(i),
+                                                                    "input2");
                 crd->getNodeEngine()->setConfig(conf2);
             }
         }

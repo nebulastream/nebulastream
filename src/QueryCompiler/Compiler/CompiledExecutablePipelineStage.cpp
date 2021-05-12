@@ -28,7 +28,8 @@ static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
 
 typedef NodeEngine::Execution::ExecutablePipelineStagePtr (*CreateFunctionPtr)();
 
-CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity,
+CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr compiledCode,
+                                                                 PipelineStageArity arity,
                                                                  std::string sourceCode)
     : base(arity), compiledCode(compiledCode), currentExecutionStage(NotInitialized), sourceCode(sourceCode) {
     auto createFunction = compiledCode->getFunctionPointer<CreateFunctionPtr>(MANGELED_ENTRY_POINT);

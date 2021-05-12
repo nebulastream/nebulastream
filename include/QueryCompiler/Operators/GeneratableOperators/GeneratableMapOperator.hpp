@@ -34,8 +34,8 @@ class GeneratableMapOperator : public GeneratableOperator {
      * @param mapExpression the map expression
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         FieldAssignmentExpressionNodePtr mapExpression);
+    static GeneratableOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
 
     /**
      * @brief Creates a new generatable map operator, which applies a map expression on a specific input record.
@@ -45,14 +45,16 @@ class GeneratableMapOperator : public GeneratableOperator {
      * @param mapExpression the map expression
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         FieldAssignmentExpressionNodePtr mapExpression);
+    static GeneratableOperatorPtr
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    GeneratableMapOperator(OperatorId id,
+                           SchemaPtr inputSchema,
+                           SchemaPtr outputSchema,
                            FieldAssignmentExpressionNodePtr mapExpression);
     const FieldAssignmentExpressionNodePtr mapExpression;
 };

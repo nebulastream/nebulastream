@@ -38,8 +38,10 @@ class HighThroughputStrategy : public BasePlacementStrategy {
   private:
     explicit HighThroughputStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        LogicalOperatorNodePtr operatorPtr, std::vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr,
+                        NESTopologyGraphPtr nesTopologyGraphPtr,
+                        LogicalOperatorNodePtr operatorPtr,
+                        std::vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator

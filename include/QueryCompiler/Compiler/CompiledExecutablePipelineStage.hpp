@@ -40,14 +40,15 @@ class CompiledExecutablePipelineStage : public NodeEngine::Execution::Executable
      * @param sourceCode as string
      */
     explicit CompiledExecutablePipelineStage(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string sourceCode);
-    static NodeEngine::Execution::ExecutablePipelineStagePtr create(CompiledCodePtr compiledCode, PipelineStageArity arity,
-                                                                    std::string src = "");
+    static NodeEngine::Execution::ExecutablePipelineStagePtr
+    create(CompiledCodePtr compiledCode, PipelineStageArity arity, std::string src = "");
     ~CompiledExecutablePipelineStage();
 
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
-    ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
+    ExecutionResult execute(TupleBuffer& inputTupleBuffer,
+                            PipelineExecutionContext& pipelineExecutionContext,
                             NodeEngine::WorkerContext& workerContext) override;
 
     std::string getCodeAsString() override;

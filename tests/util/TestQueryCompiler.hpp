@@ -29,12 +29,17 @@ namespace TestUtils {
 
 class TestSourceDescriptor : public SourceDescriptor {
   public:
-    TestSourceDescriptor(SchemaPtr schema,
-                         std::function<DataSourcePtr(OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
-                                                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>)>
-                             createSourceFunction)
+    TestSourceDescriptor(
+        SchemaPtr schema,
+        std::function<DataSourcePtr(OperatorId,
+                                    SourceDescriptorPtr,
+                                    NodeEngine::NodeEnginePtr,
+                                    size_t,
+                                    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
         : SourceDescriptor(schema), createSourceFunction(createSourceFunction) {}
-    DataSourcePtr create(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine,
+    DataSourcePtr create(OperatorId operatorId,
+                         SourceDescriptorPtr sourceDescriptor,
+                         NodeEngine::NodeEnginePtr nodeEngine,
                          size_t numSourceLocalBuffers,
                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
         return createSourceFunction(operatorId, sourceDescriptor, nodeEngine, numSourceLocalBuffers, successors);
@@ -44,7 +49,10 @@ class TestSourceDescriptor : public SourceDescriptor {
     bool equal(SourceDescriptorPtr) override { return false; }
 
   private:
-    std::function<DataSourcePtr(OperatorId, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t,
+    std::function<DataSourcePtr(OperatorId,
+                                SourceDescriptorPtr,
+                                NodeEngine::NodeEnginePtr,
+                                size_t,
                                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>)>
         createSourceFunction;
 };
@@ -63,8 +71,11 @@ class TestSinkDescriptor : public SinkDescriptor {
 
 class TestSinkProvider : public QueryCompilation::DataSinkProvider {
   public:
-    DataSinkPtr lower(OperatorId operatorId, SinkDescriptorPtr sinkDescriptor, SchemaPtr schema,
-                      NodeEngine::NodeEnginePtr nodeEngine, QuerySubPlanId querySubPlanId) override {
+    DataSinkPtr lower(OperatorId operatorId,
+                      SinkDescriptorPtr sinkDescriptor,
+                      SchemaPtr schema,
+                      NodeEngine::NodeEnginePtr nodeEngine,
+                      QuerySubPlanId querySubPlanId) override {
         if (sinkDescriptor->instanceOf<TestSinkDescriptor>()) {
             auto testSinkDescriptor = sinkDescriptor->as<TestSinkDescriptor>();
             return testSinkDescriptor->getSink();
@@ -77,12 +88,17 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
 class TestSourceProvider : public QueryCompilation::DataSourceProvider {
   public:
     TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options) : QueryCompilation::DataSourceProvider(options){};
-    DataSourcePtr lower(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine,
+    DataSourcePtr lower(OperatorId operatorId,
+                        SourceDescriptorPtr sourceDescriptor,
+                        NodeEngine::NodeEnginePtr nodeEngine,
                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) override {
         if (sourceDescriptor->instanceOf<TestSourceDescriptor>()) {
             auto testSourceDescriptor = sourceDescriptor->as<TestSourceDescriptor>();
-            return testSourceDescriptor->create(operatorId, sourceDescriptor, nodeEngine,
-                                                compilerOptions->getNumSourceLocalBuffers(), successors);
+            return testSourceDescriptor->create(operatorId,
+                                                sourceDescriptor,
+                                                nodeEngine,
+                                                compilerOptions->getNumSourceLocalBuffers(),
+                                                successors);
         } else {
             return DataSourceProvider::lower(operatorId, sourceDescriptor, nodeEngine, successors);
         }

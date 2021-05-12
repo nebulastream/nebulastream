@@ -75,7 +75,8 @@ class PlacementStrategyFactory {
      * @return instance of type BaseOptimizer
      */
     static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string strategyName,
-                                                              GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+                                                              GlobalExecutionPlanPtr globalExecutionPlan,
+                                                              TopologyPtr topology,
                                                               TypeInferencePhasePtr typeInferencePhase,
                                                               StreamCatalogPtr streamCatalog);
 };

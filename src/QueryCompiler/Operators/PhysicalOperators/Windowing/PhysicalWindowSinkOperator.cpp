@@ -19,17 +19,21 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalWindowSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                       Windowing::WindowOperatorHandlerPtr handler) {
+PhysicalOperatorPtr
+PhysicalWindowSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, handler);
 }
 
-PhysicalOperatorPtr PhysicalWindowSinkOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalOperatorPtr PhysicalWindowSinkOperator::create(OperatorId id,
+                                                       SchemaPtr inputSchema,
+                                                       SchemaPtr outputSchema,
                                                        Windowing::WindowOperatorHandlerPtr handler) {
     return std::make_shared<PhysicalWindowSinkOperator>(id, inputSchema, outputSchema, handler);
 }
 
-PhysicalWindowSinkOperator::PhysicalWindowSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalWindowSinkOperator::PhysicalWindowSinkOperator(OperatorId id,
+                                                       SchemaPtr inputSchema,
+                                                       SchemaPtr outputSchema,
                                                        Windowing::WindowOperatorHandlerPtr handler)
     : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, handler){};
 

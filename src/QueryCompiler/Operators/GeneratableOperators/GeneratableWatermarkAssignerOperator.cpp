@@ -28,20 +28,25 @@ namespace QueryCompilation {
 namespace GeneratableOperators {
 
 GeneratableOperatorPtr
-GeneratableWatermarkAssignmentOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
+                                               SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
 
 GeneratableOperatorPtr
-GeneratableWatermarkAssignmentOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableWatermarkAssignmentOperator::create(OperatorId id,
+                                               SchemaPtr inputSchema,
+                                               SchemaPtr outputSchema,
                                                Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     return std::make_shared<GeneratableWatermarkAssignmentOperator>(
         GeneratableWatermarkAssignmentOperator(id, inputSchema, outputSchema, watermarkStrategyDescriptor));
 }
 
 GeneratableWatermarkAssignmentOperator::GeneratableWatermarkAssignmentOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema),
       watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
@@ -55,9 +60,10 @@ void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr co
                       + keyExpression->toString());
         }
         auto fieldAccess = keyExpression->as<FieldAccessExpressionNode>();
-        auto watermarkStrategy = Windowing::EventTimeWatermarkStrategy::create(
-            fieldAccess, eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime(),
-            eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
+        auto watermarkStrategy =
+            Windowing::EventTimeWatermarkStrategy::create(fieldAccess,
+                                                          eventTimeWatermarkStrategyDescriptor->getAllowedLateness().getTime(),
+                                                          eventTimeWatermarkStrategyDescriptor->getTimeUnit().getMultiplier());
         codegen->generateCodeForWatermarkAssigner(watermarkStrategy, context);
     } else if (std::dynamic_pointer_cast<Windowing::IngestionTimeWatermarkStrategyDescriptor>(watermarkStrategyDescriptor)) {
         auto watermarkStrategy = Windowing::IngestionTimeWatermarkStrategy::create();

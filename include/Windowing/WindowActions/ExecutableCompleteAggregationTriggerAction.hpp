@@ -44,16 +44,21 @@ class ExecutableCompleteAggregationTriggerAction
     create(LogicalWindowDefinitionPtr windowDefinition,
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
                executableWindowAggregation,
-           SchemaPtr outputSchema, uint64_t id) {
+           SchemaPtr outputSchema,
+           uint64_t id) {
         return std::make_shared<
             ExecutableCompleteAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
-            windowDefinition, executableWindowAggregation, outputSchema, id);
+            windowDefinition,
+            executableWindowAggregation,
+            outputSchema,
+            id);
     }
     explicit ExecutableCompleteAggregationTriggerAction(
         LogicalWindowDefinitionPtr windowDefinition,
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>>
             executableWindowAggregation,
-        SchemaPtr outputSchema, uint64_t id)
+        SchemaPtr outputSchema,
+        uint64_t id)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id) {
 
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
@@ -63,7 +68,8 @@ class ExecutableCompleteAggregationTriggerAction
     }
 
     bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
-                  uint64_t currentWatermark, uint64_t lastWatermark) {
+                  uint64_t currentWatermark,
+                  uint64_t lastWatermark) {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
                   << id << " " << this->windowDefinition->getDistributionType()->toString()
                   << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
@@ -80,7 +86,11 @@ class ExecutableCompleteAggregationTriggerAction
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
-            aggregateWindows(it.first, it.second, this->windowDefinition, tupleBuffer, currentWatermark,
+            aggregateWindows(it.first,
+                             it.second,
+                             this->windowDefinition,
+                             tupleBuffer,
+                             currentWatermark,
                              lastWatermark);//put key into this
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction (" << this->windowDefinition->getDistributionType()->toString()
                                                                      << "): " << toString() << " check key=" << it.first
@@ -112,8 +122,12 @@ class ExecutableCompleteAggregationTriggerAction
   * @param windowDefinition
   * @param tupleBuffer
   */
-    void aggregateWindows(KeyType key, WindowSliceStore<PartialAggregateType>* store, LogicalWindowDefinitionPtr windowDefinition,
-                          NodeEngine::TupleBuffer& tupleBuffer, uint64_t currentWatermark, uint64_t lastWatermark) {
+    void aggregateWindows(KeyType key,
+                          WindowSliceStore<PartialAggregateType>* store,
+                          LogicalWindowDefinitionPtr windowDefinition,
+                          NodeEngine::TupleBuffer& tupleBuffer,
+                          uint64_t currentWatermark,
+                          uint64_t lastWatermark) {
 
         NES_DEBUG("AggregateWindows for ExecutableCompleteAggregationTriggerAction id=" << id);
         // For event time we use the maximal records ts as watermark.
@@ -244,11 +258,20 @@ class ExecutableCompleteAggregationTriggerAction
 
                 if (recordsPerWindow[i] != 0) {
                     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
-                                                                window.getEndTs(), key, value, recordsPerWindow[i]);
+                        writeResultRecord<PartialAggregateType>(tupleBuffer,
+                                                                currentNumberOfTuples,
+                                                                window.getStartTs(),
+                                                                window.getEndTs(),
+                                                                key,
+                                                                value,
+                                                                recordsPerWindow[i]);
                     } else {
-                        writeResultRecord<PartialAggregateType>(tupleBuffer, currentNumberOfTuples, window.getStartTs(),
-                                                                window.getEndTs(), key, value);
+                        writeResultRecord<PartialAggregateType>(tupleBuffer,
+                                                                currentNumberOfTuples,
+                                                                window.getStartTs(),
+                                                                window.getEndTs(),
+                                                                key,
+                                                                value);
                     }
 
                     currentNumberOfTuples++;
@@ -282,8 +305,13 @@ class ExecutableCompleteAggregationTriggerAction
     * @param value value
     */
     template<typename ValueType>
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
-                           ValueType value, uint64_t cnt) {
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+                           uint64_t index,
+                           uint64_t startTs,
+                           uint64_t endTs,
+                           KeyType key,
+                           ValueType value,
+                           uint64_t cnt) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);
         windowTupleLayout->getValueField<uint64_t>(index, 2)->write(tupleBuffer, cnt);
@@ -296,7 +324,11 @@ class ExecutableCompleteAggregationTriggerAction
     }
 
     template<typename ValueType>
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+                           uint64_t index,
+                           uint64_t startTs,
+                           uint64_t endTs,
+                           KeyType key,
                            ValueType value) {
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
         windowTupleLayout->getValueField<uint64_t>(index, 1)->write(tupleBuffer, endTs);

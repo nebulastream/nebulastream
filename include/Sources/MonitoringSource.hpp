@@ -33,9 +33,14 @@ typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 
 class MonitoringSource : public DefaultSource {
   public:
-    MonitoringSource(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr metricCatalog, NodeEngine::BufferManagerPtr bufferManager,
-                     NodeEngine::QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce, uint64_t frequency,
-                     OperatorId operatorId, size_t numSourceLocalBuffers,
+    MonitoringSource(MonitoringPlanPtr monitoringPlan,
+                     MetricCatalogPtr metricCatalog,
+                     NodeEngine::BufferManagerPtr bufferManager,
+                     NodeEngine::QueryManagerPtr queryManager,
+                     const uint64_t numbersOfBufferToProduce,
+                     uint64_t frequency,
+                     OperatorId operatorId,
+                     size_t numSourceLocalBuffers,
                      std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors = {});
 
     SourceType getType() const override;

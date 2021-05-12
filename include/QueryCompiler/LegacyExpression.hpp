@@ -62,9 +62,14 @@ class LegacyExpression {
 
 class Predicate : public LegacyExpression {
   public:
-    Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
-              const std::string& functionCallOverload, bool bracket = true);
-    Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
+    Predicate(const BinaryOperatorType& op,
+              const UserAPIExpressionPtr left,
+              const UserAPIExpressionPtr right,
+              const std::string& functionCallOverload,
+              bool bracket = true);
+    Predicate(const BinaryOperatorType& op,
+              const UserAPIExpressionPtr left,
+              const UserAPIExpressionPtr right,
               bool bracket = true);
 
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const override;

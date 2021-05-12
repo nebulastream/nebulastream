@@ -1674,8 +1674,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithDiffer
     queryPlan1->setQueryId(queryId1);
 
     Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                           Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()))
+                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                                NES::API::Milliseconds(10),
+                                                                                                NES::API::Milliseconds()))
                        .map(Attribute("value") = 40)
                        .filter(Attribute("type") < 40)
                        .project(Attribute("value"), Attribute("type"))
@@ -1842,8 +1843,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
        testMergingEqualQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-        Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    Query subQuery1 =
+        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                                     NES::API::Milliseconds(10),
+                                                                                                     NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .unionWith(&subQuery1)
@@ -1855,8 +1858,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
     QueryId queryId1 = PlanIdGenerator::getNextQueryId();
     queryPlan1->setQueryId(queryId1);
 
-    Query subQuery2 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-        Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    Query subQuery2 =
+        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                                     NES::API::Milliseconds(10),
+                                                                                                     NES::API::Milliseconds()));
     Query query2 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .unionWith(&subQuery2)
@@ -1934,8 +1939,10 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
        testMergingDistinctQueriesWithUnionOperatorsAndMultipleDistinctWatermarkAssigner) {
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query subQuery1 = Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-        Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    Query subQuery1 =
+        Query::from("truck").assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                                     NES::API::Milliseconds(10),
+                                                                                                     NES::API::Milliseconds()));
     Query query1 = Query::from("car")
                        .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                        .unionWith(&subQuery1)
@@ -1947,8 +1954,9 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest,
 
     Query subQuery2 = Query::from("truck").assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
     Query query2 = Query::from("car")
-                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-                           Attribute("ts"), NES::API::Milliseconds(10), NES::API::Milliseconds()))
+                       .assignWatermark(Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("ts"),
+                                                                                                NES::API::Milliseconds(10),
+                                                                                                NES::API::Milliseconds()))
                        .unionWith(&subQuery2)
                        .sink(printSinkDescriptor);
     QueryPlanPtr queryPlan2 = query2.getQueryPlan();

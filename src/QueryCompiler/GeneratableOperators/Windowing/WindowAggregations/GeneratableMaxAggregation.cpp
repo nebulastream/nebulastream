@@ -32,7 +32,8 @@ GeneratableMaxAggregation::create(Windowing::WindowAggregationDescriptorPtr aggr
     return std::make_shared<GeneratableMaxAggregation>(aggregationDescriptor);
 }
 
-void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
+void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
+                                                   BinaryOperatorStatement partialRef,
                                                    RecordHandlerPtr recordHandler) {
     auto fieldReference =
         recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());

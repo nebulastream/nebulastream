@@ -28,7 +28,9 @@ namespace PhysicalOperators {
  */
 class PhysicalWindowOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    PhysicalWindowOperator(OperatorId id,
+                           SchemaPtr inputSchema,
+                           SchemaPtr outputSchema,
                            Windowing::WindowOperatorHandlerPtr operatorHandler);
 
     /**

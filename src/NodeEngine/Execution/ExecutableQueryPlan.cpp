@@ -23,9 +23,13 @@
 
 namespace NES::NodeEngine::Execution {
 
-ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
-                                         std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& pipelines,
-                                         QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager)
+ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
+                                         QuerySubPlanId querySubPlanId,
+                                         std::vector<DataSourcePtr>&& sources,
+                                         std::vector<DataSinkPtr>&& sinks,
+                                         std::vector<ExecutablePipelinePtr>&& pipelines,
+                                         QueryManagerPtr&& queryManager,
+                                         BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Created), numOfProducers(this->sources.size()), qepTerminationStatusPromise(),

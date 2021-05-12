@@ -36,7 +36,8 @@ void GeneratableCompleteWindowOperator::consume(CodeGeneratorPtr codegen, Pipeli
 }
 GeneratableWindowOperatorPtr
 GeneratableCompleteWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                          GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+                                          GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                          OperatorId id) {
     return std::make_shared<GeneratableCompleteWindowOperator>(
         GeneratableCompleteWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
 }

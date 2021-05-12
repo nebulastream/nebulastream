@@ -92,8 +92,10 @@ HighThroughputStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NE
     return candidateNodes;
 }
 
-void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                                            LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
+                                            NESTopologyGraphPtr nesTopologyGraphPtr,
+                                            LogicalOperatorNodePtr sourceOperator,
+                                            vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
@@ -116,8 +118,10 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                     NES_DEBUG("HighThroughput: Create new execution node.");
                     stringstream operatorName;
                     operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
-                    const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(
-                        operatorName.str(), to_string(node->getId()), node, legacyOperator->copy());
+                    const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                                    to_string(node->getId()),
+                                                                                                    node,
+                                                                                                    legacyOperator->copy());
                     newExecutionNode->addOperatorId(targetOperator->getId());
                 } else {
 

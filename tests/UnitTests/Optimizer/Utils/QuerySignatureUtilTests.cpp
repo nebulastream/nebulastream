@@ -597,12 +597,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
-    auto watermarkOperator2 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("id"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
+    auto watermarkOperator2 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("id"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
@@ -661,9 +663,10 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("id"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
     auto watermarkOperator2 =
         LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
 
@@ -693,12 +696,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
-    auto watermarkOperator2 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute("id"), NES::API::Milliseconds(9), NES::API::Milliseconds()));
+    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("id"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
+    auto watermarkOperator2 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("id"),
+                                                                NES::API::Milliseconds(9),
+                                                                NES::API::Milliseconds()));
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
@@ -726,12 +731,14 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
-    auto watermarkOperator2 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
-            Attribute("value"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("id"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
+    auto watermarkOperator2 = LogicalOperatorFactory::createWatermarkAssignerOperator(
+        Windowing::EventTimeWatermarkStrategyDescriptor::create(Attribute("value"),
+                                                                NES::API::Milliseconds(10),
+                                                                NES::API::Milliseconds()));
 
     LogicalOperatorNodePtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);

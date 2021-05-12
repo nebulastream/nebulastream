@@ -197,8 +197,8 @@ class Topology {
      * @param searchedNodes: the searched node
      * @return the node where the searched node is found
      */
-    TopologyNodePtr find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes,
-                         std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
+    TopologyNodePtr
+    find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes, std::map<uint64_t, TopologyNodePtr>& uniqueNodes);
 
     //TODO: At present we assume that we have only one root node
     TopologyNodePtr rootNode;

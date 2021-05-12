@@ -31,7 +31,8 @@ uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fi
     NES_DEBUG("DynamicColumnLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }
-DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity,
+DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer,
+                                                     uint64_t capacity,
                                                      std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                                                      std::vector<COL_OFFSET_SIZE> columnOffsets)
     : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(dynamicColLayout) {

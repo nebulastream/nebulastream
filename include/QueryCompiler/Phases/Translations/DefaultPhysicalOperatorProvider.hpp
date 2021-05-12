@@ -107,8 +107,8 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
     * @param queryPlan current plan
     * @param operatorNode current operator
     */
-    OperatorNodePtr getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, SchemaPtr schema,
-                                              std::vector<OperatorNodePtr> children);
+    OperatorNodePtr
+    getJoinBuildInputOperator(JoinLogicalOperatorNodePtr joinOperator, SchemaPtr schema, std::vector<OperatorNodePtr> children);
 };
 
 }// namespace QueryCompilation

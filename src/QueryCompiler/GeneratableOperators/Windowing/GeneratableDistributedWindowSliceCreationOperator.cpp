@@ -37,7 +37,8 @@ void GeneratableSlicingWindowOperator::consume(CodeGeneratorPtr codegen, Pipelin
 }
 GeneratableDistributedlWindowSliceCreationOperatorPtr
 GeneratableSlicingWindowOperator::create(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                         GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id) {
+                                         GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                         OperatorId id) {
     return std::make_shared<GeneratableSlicingWindowOperator>(
         GeneratableSlicingWindowOperator(std::move(windowDefinition), std::move(generatableWindowAggregation), id));
 }

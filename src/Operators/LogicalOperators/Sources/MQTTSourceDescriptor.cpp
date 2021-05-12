@@ -22,24 +22,38 @@
 
 namespace NES {
 
-SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, std::string serverAddress, std::string clientId,
-                                                 std::string user, std::string topic) {
+SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
+                                                 std::string serverAddress,
+                                                 std::string clientId,
+                                                 std::string user,
+                                                 std::string topic) {
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(schema, serverAddress, clientId, user, topic));
 }
 
-SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, std::string logicalStreamName, std::string serverAddress,
-                                                 std::string clientId, std::string user, std::string topic) {
+SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema,
+                                                 std::string logicalStreamName,
+                                                 std::string serverAddress,
+                                                 std::string clientId,
+                                                 std::string user,
+                                                 std::string topic) {
     return std::make_shared<MQTTSourceDescriptor>(
         MQTTSourceDescriptor(schema, logicalStreamName, serverAddress, clientId, user, topic));
 }
 
-MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, std::string serverAddress, std::string clientId, std::string user,
+MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
+                                           std::string serverAddress,
+                                           std::string clientId,
+                                           std::string user,
                                            std::string topic)
     : SourceDescriptor(std::move(schema)), serverAddress(std::move(serverAddress)), clientId(std::move(clientId)),
       user(std::move(user)), topic(std::move(topic)) {}
 
-MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, std::string logicalStreamName, std::string serverAddress,
-                                           std::string clientId, std::string user, std::string topic)
+MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema,
+                                           std::string logicalStreamName,
+                                           std::string serverAddress,
+                                           std::string clientId,
+                                           std::string user,
+                                           std::string topic)
     : SourceDescriptor(std::move(schema), std::move(logicalStreamName)), serverAddress(std::move(serverAddress)),
       clientId(std::move(clientId)), user(std::move(user)), topic(std::move(topic)) {}
 

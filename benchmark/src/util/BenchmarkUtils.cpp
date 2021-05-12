@@ -125,7 +125,8 @@ void BenchmarkUtils::printOutConsole(NodeEngine::QueryStatistics* statistic, Sch
 void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& statisticsVec,
                                   std::vector<DataSourcePtr> benchmarkSource,
                                   std::shared_ptr<Benchmarking::SimpleBenchmarkSink> benchmarkSink,
-                                  NodeEngine::NodeEnginePtr nodeEngine, Query query) {
+                                  NodeEngine::NodeEnginePtr nodeEngine,
+                                  Query query) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());

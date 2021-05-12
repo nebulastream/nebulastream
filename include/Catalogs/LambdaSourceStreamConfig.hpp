@@ -36,9 +36,13 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      */
     explicit LambdaSourceStreamConfig(
-        std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+        std::string sourceType,
+        std::string physicalStreamName,
+        std::string logicalStreamName,
         std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-        uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode);
+        uint64_t numBuffersToProcess,
+        uint64_t gatheringValue,
+        std::string gatheringMode);
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -80,9 +84,13 @@ class LambdaSourceStreamConfig : public PhysicalStreamConfig {
      * @return a constructed LambdaSourceStreamConfig
      */
     static AbstractPhysicalStreamConfigPtr
-    create(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+    create(std::string sourceType,
+           std::string physicalStreamName,
+           std::string logicalStreamName,
            std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-           uint64_t numBuffersToProcess, uint64_t gatheringValue, std::string gatheringMode);
+           uint64_t numBuffersToProcess,
+           uint64_t gatheringValue,
+           std::string gatheringMode);
 
   private:
     std::string sourceType;

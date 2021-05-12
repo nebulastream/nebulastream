@@ -36,7 +36,9 @@ class DataSourceProvider {
      * @param successors
      * @return DataSourcePtr
      */
-    virtual DataSourcePtr lower(OperatorId sourceId, SourceDescriptorPtr sourceDescriptor, NodeEngine::NodeEnginePtr nodeEngine,
+    virtual DataSourcePtr lower(OperatorId sourceId,
+                                SourceDescriptorPtr sourceDescriptor,
+                                NodeEngine::NodeEnginePtr nodeEngine,
                                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
   protected:

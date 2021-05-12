@@ -33,14 +33,19 @@ namespace NES::Benchmarking {
  */
 class YSBBenchmarkSource : public SimpleBenchmarkSource {
   public:
-    YSBBenchmarkSource(const SchemaPtr& schema, const NodeEngine::BufferManagerPtr& bufferManager,
-                       const NodeEngine::QueryManagerPtr& queryManager, uint64_t ingestionRate, uint64_t numberOfTuplesPerBuffer,
+    YSBBenchmarkSource(const SchemaPtr& schema,
+                       const NodeEngine::BufferManagerPtr& bufferManager,
+                       const NodeEngine::QueryManagerPtr& queryManager,
+                       uint64_t ingestionRate,
+                       uint64_t numberOfTuplesPerBuffer,
                        uint64_t operatorId)
         : SimpleBenchmarkSource(schema, bufferManager, queryManager, ingestionRate, numberOfTuplesPerBuffer, operatorId) {}
 
     static std::shared_ptr<YSBBenchmarkSource> create(NodeEngine::BufferManagerPtr bufferManager,
-                                                      NodeEngine::QueryManagerPtr queryManager, SchemaPtr& benchmarkSchema,
-                                                      uint64_t ingestionRate, uint64_t operatorId) {
+                                                      NodeEngine::QueryManagerPtr queryManager,
+                                                      SchemaPtr& benchmarkSchema,
+                                                      uint64_t ingestionRate,
+                                                      uint64_t operatorId) {
 
         auto maxTuplesPerBuffer = bufferManager->getBufferSize() / benchmarkSchema->getSchemaSizeInBytes();
         //        maxTuplesPerBuffer = maxTuplesPerBuffer % 1000 >= 500 ? (maxTuplesPerBuffer + 1000 - maxTuplesPerBuffer % 1000)
@@ -52,13 +57,22 @@ class YSBBenchmarkSource : public SimpleBenchmarkSource {
             throw RuntimeException("maxTuplesPerBuffer == 0");
         }
 
-        return std::make_shared<YSBBenchmarkSource>(benchmarkSchema, bufferManager, queryManager, ingestionRate,
-                                                    maxTuplesPerBuffer, operatorId);
+        return std::make_shared<YSBBenchmarkSource>(benchmarkSchema,
+                                                    bufferManager,
+                                                    queryManager,
+                                                    ingestionRate,
+                                                    maxTuplesPerBuffer,
+                                                    operatorId);
     }
 
     struct __attribute__((packed)) YsbRecord {
         YsbRecord() = default;
-        YsbRecord(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+        YsbRecord(uint64_t userId,
+                  uint64_t pageId,
+                  uint64_t campaignId,
+                  uint64_t adType,
+                  uint64_t eventType,
+                  uint64_t currentMs,
                   uint64_t ip)
             : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
               ip(ip) {}

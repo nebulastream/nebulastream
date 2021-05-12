@@ -264,7 +264,9 @@ class Query {
      * @param windowType Window definition.
      * @return the query
      */
-    Query& joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+    Query& joinWith(const Query& subQueryRhs,
+                    ExpressionItem onLeftKey,
+                    ExpressionItem onRightKey,
                     const Windowing::WindowTypePtr windowType);
 
     /**
@@ -282,7 +284,8 @@ class Query {
       * @param aggregation Window aggregation function.
       * @return query.
       */
-    Query& windowByKey(const ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
+    Query& windowByKey(const ExpressionItem onKey,
+                       const Windowing::WindowTypePtr windowType,
                        const Windowing::WindowAggregationPtr aggregation);
 };
 

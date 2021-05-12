@@ -31,7 +31,8 @@ GeneratedCode::GeneratedCode()
       tupleBufferGetNumberOfTupleCall(FunctionCallStatement("getNumberOfTuples")),
       varDeclarationInputTuples(VariableDeclaration::create(DataTypeFactory::createInt32(), "inputTuples")),
       varDeclarationNumberOfResultTuples(
-          VariableDeclaration::create(DataTypeFactory::createInt64(), "numberOfResultTuples",
+          VariableDeclaration::create(DataTypeFactory::createInt64(),
+                                      "numberOfResultTuples",
                                       DataTypeFactory::createBasicValue(DataTypeFactory::createInt64(), "0"))),
       typeDeclarations() {
     // nop

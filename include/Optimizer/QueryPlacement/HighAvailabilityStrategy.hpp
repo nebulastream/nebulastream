@@ -46,8 +46,10 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
      *
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        LogicalOperatorNodePtr sourceOperator, std::vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr,
+                        NESTopologyGraphPtr nesTopologyGraphPtr,
+                        LogicalOperatorNodePtr sourceOperator,
+                        std::vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
      * @brief Add forward operators between source and sink nodes.

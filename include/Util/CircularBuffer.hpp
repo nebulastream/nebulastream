@@ -98,7 +98,8 @@ class CircularBufferIterator {
  *
  * @tparam T - type of the value in the buffer slots.
  */
-template<class T, typename Allocator = std::allocator<T>,
+template<class T,
+         typename Allocator = std::allocator<T>,
          std::enable_if_t<std::is_integral<T>::value || std::is_pointer<T>::value, int> = 0>
 class CircularBuffer {
   public:

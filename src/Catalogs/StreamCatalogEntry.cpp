@@ -20,7 +20,9 @@
 
 namespace NES {
 
-StreamCatalogEntry::StreamCatalogEntry(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
+StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
+                                       std::string physicalStreamName,
+                                       std::string logicalStreamName,
                                        TopologyNodePtr node)
     : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), node(node) {}
 
@@ -30,8 +32,10 @@ StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, T
     // nop
 }
 
-StreamCatalogEntryPtr StreamCatalogEntry::create(std::string sourceType, std::string physicalStreamName,
-                                                 std::string logicalStreamName, TopologyNodePtr node) {
+StreamCatalogEntryPtr StreamCatalogEntry::create(std::string sourceType,
+                                                 std::string physicalStreamName,
+                                                 std::string logicalStreamName,
+                                                 TopologyNodePtr node) {
     return std::make_shared<StreamCatalogEntry>(sourceType, physicalStreamName, logicalStreamName, node);
 }
 

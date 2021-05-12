@@ -61,8 +61,8 @@ class PlanJsonGenerator {
      * @param nodes JSON array to store the traversed node
      * @param edges JSON array to store the traversed edge
      */
-    static void getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes,
-                            std::vector<web::json::value>& edges);
+    static void
+    getChildren(const OperatorNodePtr root, std::vector<web::json::value>& nodes, std::vector<web::json::value>& edges);
 
     /**
      * @param an operator node

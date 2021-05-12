@@ -19,17 +19,21 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
+                                               SchemaPtr inputSchema,
+                                               SchemaPtr outputSchema,
                                                SourceDescriptorPtr sourceDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), sourceDescriptor(sourceDescriptor) {}
 
-PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
+                                                   SchemaPtr inputSchema,
+                                                   SchemaPtr outputSchema,
                                                    SourceDescriptorPtr sourceDescriptor) {
     return std::make_shared<PhysicalSourceOperator>(id, inputSchema, outputSchema, sourceDescriptor);
 }
 
-PhysicalOperatorPtr PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                   SourceDescriptorPtr sourceDescriptor) {
+PhysicalOperatorPtr
+PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, sourceDescriptor);
 }
 

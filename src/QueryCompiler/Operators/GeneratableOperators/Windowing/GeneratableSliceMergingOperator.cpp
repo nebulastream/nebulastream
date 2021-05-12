@@ -23,20 +23,25 @@
 namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
-GeneratableOperatorPtr GeneratableSliceMergingOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableSliceMergingOperator::create(OperatorId id,
+                                                               SchemaPtr inputSchema,
+                                                               SchemaPtr outputSchema,
                                                                Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                GeneratableWindowAggregationPtr windowAggregation) {
     return std::make_shared<GeneratableSliceMergingOperator>(
         GeneratableSliceMergingOperator(id, inputSchema, outputSchema, operatorHandler, windowAggregation));
 }
 
-GeneratableOperatorPtr GeneratableSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableSliceMergingOperator::create(SchemaPtr inputSchema,
+                                                               SchemaPtr outputSchema,
                                                                Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                GeneratableWindowAggregationPtr windowAggregation) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
 
-GeneratableSliceMergingOperator::GeneratableSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableSliceMergingOperator::GeneratableSliceMergingOperator(OperatorId id,
+                                                                 SchemaPtr inputSchema,
+                                                                 SchemaPtr outputSchema,
                                                                  Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                  GeneratableWindowAggregationPtr windowAggregation)
     : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler),

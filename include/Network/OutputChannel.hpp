@@ -60,8 +60,11 @@ class OutputChannel {
      * @param retryTimes the number of retries before the methods will raise error
      * @return
      */
-    static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext, const std::string address,
-                                   NesPartition nesPartition, ExchangeProtocol& protocol, std::chrono::seconds waitTime,
+    static OutputChannelPtr create(std::shared_ptr<zmq::context_t> zmqContext,
+                                   const std::string address,
+                                   NesPartition nesPartition,
+                                   ExchangeProtocol& protocol,
+                                   std::chrono::seconds waitTime,
                                    uint8_t retryTimes);
 
     /**

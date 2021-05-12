@@ -59,7 +59,8 @@ std::map<uint64_t, std::string> QueryCatalog::getAllQueries() {
     return result;
 }
 
-QueryCatalogEntryPtr QueryCatalog::addNewQuery(const std::string& queryString, const QueryPlanPtr queryPlan,
+QueryCatalogEntryPtr QueryCatalog::addNewQuery(const std::string& queryString,
+                                               const QueryPlanPtr queryPlan,
                                                const std::string& optimizationStrategyName) {
     std::unique_lock lock(catalogMutex);
     QueryId queryId = queryPlan->getQueryId();
@@ -70,8 +71,10 @@ QueryCatalogEntryPtr QueryCatalog::addNewQuery(const std::string& queryString, c
     return queryCatalogEntry;
 }
 
-QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& queryString, const QueryId queryId,
-                                                      const QueryPlanPtr queryPlan, const std::string& placementStrategyName) {
+QueryCatalogEntryPtr QueryCatalog::recordInvalidQuery(const std::string& queryString,
+                                                      const QueryId queryId,
+                                                      const QueryPlanPtr queryPlan,
+                                                      const std::string& placementStrategyName) {
     std::unique_lock lock(catalogMutex);
     NES_INFO("QueryCatalog: Creating query catalog entry for invalid query with id " << queryId);
     QueryCatalogEntryPtr queryCatalogEntry =

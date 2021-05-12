@@ -19,12 +19,14 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
+                                               SchemaPtr inputSchema,
+                                               SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(predicate) {}
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                   ExpressionNodePtr expression) {
+PhysicalOperatorPtr
+PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
     return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
 }
 

@@ -49,8 +49,10 @@ class LowLatencyStrategy : public BasePlacementStrategy {
   private:
     LowLatencyStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        LogicalOperatorNodePtr operatorPtr, std::vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr,
+                        NESTopologyGraphPtr nesTopologyGraphPtr,
+                        LogicalOperatorNodePtr operatorPtr,
+                        std::vector<NESTopologyEntryPtr> sourceNodes);
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator
      * @param sourceNodes

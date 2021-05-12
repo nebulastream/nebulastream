@@ -68,9 +68,14 @@ int main() {
         BM_AddBenchmark(
             "BM_SimpleMapQuery",
             TestQuery::from(thisSchema).map(Attribute("value") = Attribute("key") + Attribute("value")).sink(DummySink::create()),
-            SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), benchmarkSchema,
-                                          ingestionRate, 1, 12),
-            SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()), ",BufferSize,SchemaSize",
+            SimpleBenchmarkSource::create(nodeEngine->getBufferManager(),
+                                          nodeEngine->getQueryManager(),
+                                          benchmarkSchema,
+                                          ingestionRate,
+                                          1,
+                                          12),
+            SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
+            ",BufferSize,SchemaSize",
             "," + std::to_string(bufferSize) + "," + std::to_string(benchmarkSchema->getSchemaSizeInBytes()));
     }
     //-----------------------------------------End of BM_SimpleMapQuery-----------------------------------------------------------------------------------------------
@@ -82,8 +87,11 @@ int main() {
         for (auto selectivity : allSelectivities) {
             BM_AddBenchmark("BM_SimpleFilterQuery",
                             TestQuery::from(thisSchema).filter(Attribute("key") < selectivity).sink(DummySink::create()),
-                            SimpleBenchmarkSource::create(nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                          benchmarkSchema, ingestionRate, 1),
+                            SimpleBenchmarkSource::create(nodeEngine->getBufferManager(),
+                                                          nodeEngine->getQueryManager(),
+                                                          benchmarkSchema,
+                                                          ingestionRate,
+                                                          1),
                             SimpleBenchmarkSink::create(benchmarkSchema, nodeEngine->getBufferManager()),
                             ",Selectivity,BufferSize,SchemaSize",
                             "," + std::to_string(selectivity) + "," + std::to_string(bufferSize) + ","

@@ -20,9 +20,11 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BasePlacementStrategy>
-PlacementStrategyFactory::getStrategy(std::string strategyName, GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                      TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog) {
+std::unique_ptr<BasePlacementStrategy> PlacementStrategyFactory::getStrategy(std::string strategyName,
+                                                                             GlobalExecutionPlanPtr globalExecutionPlan,
+                                                                             TopologyPtr topology,
+                                                                             TypeInferencePhasePtr typeInferencePhase,
+                                                                             StreamCatalogPtr streamCatalog) {
     switch (stringToPlacementStrategyType[strategyName]) {
         case BottomUp: return BottomUpStrategy::create(globalExecutionPlan, topology, typeInferencePhase, streamCatalog);
         case TopDown:

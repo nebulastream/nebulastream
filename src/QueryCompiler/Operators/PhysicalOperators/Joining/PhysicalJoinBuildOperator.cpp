@@ -19,18 +19,26 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                      Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide) {
+PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema,
+                                                      SchemaPtr outputSchema,
+                                                      Join::JoinOperatorHandlerPtr operatorHandler,
+                                                      JoinBuildSide buildSide) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
-PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                      Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide) {
+PhysicalOperatorPtr PhysicalJoinBuildOperator::create(OperatorId id,
+                                                      SchemaPtr inputSchema,
+                                                      SchemaPtr outputSchema,
+                                                      Join::JoinOperatorHandlerPtr operatorHandler,
+                                                      JoinBuildSide buildSide) {
     return std::make_shared<PhysicalJoinBuildOperator>(id, inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
-PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                     Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide)
+PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(OperatorId id,
+                                                     SchemaPtr inputSchema,
+                                                     SchemaPtr outputSchema,
+                                                     Join::JoinOperatorHandlerPtr operatorHandler,
+                                                     JoinBuildSide buildSide)
     : OperatorNode(id), PhysicalJoinOperator(operatorHandler), PhysicalUnaryOperator(id, inputSchema, outputSchema),
       joinBuildSide(buildSide){};
 

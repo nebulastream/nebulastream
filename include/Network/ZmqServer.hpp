@@ -45,7 +45,10 @@ class ZmqServer : public boost::noncopyable {
      * @param numNetworkThreads
      * @param exchangeProtocol
      */
-    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol,
+    explicit ZmqServer(const std::string& hostname,
+                       uint16_t port,
+                       uint16_t numNetworkThreads,
+                       ExchangeProtocol& exchangeProtocol,
                        NodeEngine::BufferManagerPtr bufferManager);
 
     ~ZmqServer();

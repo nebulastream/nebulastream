@@ -103,8 +103,14 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-        "MemorySource", "memory_stream_0", "memory_stream", memArea, memAreaSize, buffersToExpect, 0, "frequency");
+    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource",
+                                                                            "memory_stream_0",
+                                                                            "memory_stream",
+                                                                            memArea,
+                                                                            memAreaSize,
+                                                                            buffersToExpect,
+                                                                            0,
+                                                                            "frequency");
     wrk1->registerPhysicalStream(conf);
 
     // local fs
@@ -207,8 +213,14 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource", "memory_stream_0", "memory_stream",
-                                                                            memArea, memAreaSize, 1, 0, "frequency");
+    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource",
+                                                                            "memory_stream_0",
+                                                                            "memory_stream",
+                                                                            memArea,
+                                                                            memAreaSize,
+                                                                            1,
+                                                                            0,
+                                                                            "frequency");
     wrk1->registerPhysicalStream(conf);
 
     // local fs
@@ -313,8 +325,14 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceHalfFullBuffer) {
         records[i].timestamp = i;
     }
 
-    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-        "MemorySource", "memory_stream_0", "memory_stream", memArea, memAreaSize, buffersToExpect + 1, 0, "frequency");
+    AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create("MemorySource",
+                                                                            "memory_stream_0",
+                                                                            "memory_stream",
+                                                                            memArea,
+                                                                            memAreaSize,
+                                                                            buffersToExpect + 1,
+                                                                            0,
+                                                                            "frequency");
     wrk1->registerPhysicalStream(conf);
 
     // local fs

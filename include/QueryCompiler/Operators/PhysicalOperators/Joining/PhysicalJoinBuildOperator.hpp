@@ -29,12 +29,18 @@ namespace PhysicalOperators {
  */
 class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUnaryOperator, public AbstractEmitOperator {
   public:
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler,
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
+                                      Join::JoinOperatorHandlerPtr operatorHandler,
                                       JoinBuildSide buildSide);
-    PhysicalJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                              Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+    static PhysicalOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide);
+    PhysicalJoinBuildOperator(OperatorId id,
+                              SchemaPtr inputSchema,
+                              SchemaPtr outputSchema,
+                              Join::JoinOperatorHandlerPtr operatorHandler,
+                              JoinBuildSide buildSide);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

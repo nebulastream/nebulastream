@@ -27,12 +27,16 @@ namespace PhysicalOperators {
  */
 class PhysicalWatermarkAssignmentOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalWatermarkAssignmentOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    PhysicalWatermarkAssignmentOperator(OperatorId id,
+                                        SchemaPtr inputSchema,
+                                        SchemaPtr outputSchema,
                                         const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      SchemaPtr inputSchema,
+                                      SchemaPtr outputSchema,
                                       const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    static PhysicalOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

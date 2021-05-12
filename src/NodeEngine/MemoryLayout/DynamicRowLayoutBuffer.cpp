@@ -30,7 +30,8 @@ uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t field
     NES_DEBUG("DynamicRowLayoutBuffer.calcOffset: offSet = " << offSet);
     return offSet;
 }
-DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity,
+DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer tupleBuffer,
+                                               uint64_t capacity,
                                                std::shared_ptr<DynamicRowLayout> dynamicRowLayout)
     : DynamicLayoutBuffer(tupleBuffer, capacity), dynamicRowLayout(dynamicRowLayout) {
     this->basePointer = tupleBuffer.getBufferAs<uint8_t>();

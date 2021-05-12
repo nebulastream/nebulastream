@@ -88,7 +88,9 @@ void DefaultPipeliningPhase::processDemultiplex(PipelineQueryPlanPtr pipelinePla
         auto newPipeline = OperatorPipeline::create();
         pipelinePlan->addPipeline(newPipeline);
         newPipeline->addSuccessor(currentPipeline);
-        process(pipelinePlan, pipelineOperatorMap, newPipeline,
+        process(pipelinePlan,
+                pipelineOperatorMap,
+                newPipeline,
                 currentOperator->getChildren()[0]->as<PhysicalOperators::PhysicalOperator>());
         pipelineOperatorMap[currentOperator] = newPipeline;
     }
@@ -131,7 +133,8 @@ void DefaultPipeliningPhase::processSink(PipelineQueryPlanPtr pipelinePlan,
     }
 }
 
-void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline, std::map<OperatorNodePtr, OperatorPipelinePtr>&,
+void DefaultPipeliningPhase::processSource(PipelineQueryPlanPtr pipeline,
+                                           std::map<OperatorNodePtr, OperatorPipelinePtr>&,
                                            OperatorPipelinePtr currentPipeline,
                                            PhysicalOperators::PhysicalOperatorPtr sourceOperator) {
     // Source operators will always be part of their own pipeline.

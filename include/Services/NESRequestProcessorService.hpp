@@ -73,10 +73,14 @@ typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
  */
 class NESRequestProcessorService {
   public:
-    explicit NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                        QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
-                                        StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                        NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+    explicit NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan,
+                                        TopologyPtr topology,
+                                        QueryCatalogPtr queryCatalog,
+                                        GlobalQueryPlanPtr globalQueryPlan,
+                                        StreamCatalogPtr streamCatalog,
+                                        WorkerRPCClientPtr workerRpcClient,
+                                        NESRequestQueuePtr queryRequestQueue,
+                                        bool enableQueryMerging,
                                         Optimizer::QueryMergerRule queryMergerRule);
 
     ~NESRequestProcessorService();

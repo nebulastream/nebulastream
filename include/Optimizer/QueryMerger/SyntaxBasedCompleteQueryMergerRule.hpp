@@ -99,10 +99,12 @@ class SyntaxBasedCompleteQueryMergerRule : public BaseQueryMergerRule {
      * @param targetHostOperatorMap: map passed as reference to record the matching pair of target and address operators
      * @return true if the query plans are equal
      */
-    bool areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
+    bool areQueryPlansEqual(QueryPlanPtr targetQueryPlan,
+                            QueryPlanPtr hostQueryPlan,
                             std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 
-    bool areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
+    bool areOperatorEqual(OperatorNodePtr targetOperator,
+                          OperatorNodePtr hostOperator,
                           std::map<uint64_t, uint64_t>& targetHostOperatorMap);
 };
 }// namespace NES::Optimizer

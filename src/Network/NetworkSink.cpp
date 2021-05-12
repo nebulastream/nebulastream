@@ -23,9 +23,15 @@ namespace NES {
 
 namespace Network {
 
-NetworkSink::NetworkSink(SchemaPtr schema, QuerySubPlanId parentPlanId, NetworkManagerPtr networkManager,
-                         const NodeLocation nodeLocation, NesPartition nesPartition, NodeEngine::BufferManagerPtr bufferManager,
-                         NodeEngine::QueryManagerPtr queryManager, std::chrono::seconds waitTime, uint8_t retryTimes)
+NetworkSink::NetworkSink(SchemaPtr schema,
+                         QuerySubPlanId parentPlanId,
+                         NetworkManagerPtr networkManager,
+                         const NodeLocation nodeLocation,
+                         NesPartition nesPartition,
+                         NodeEngine::BufferManagerPtr bufferManager,
+                         NodeEngine::QueryManagerPtr queryManager,
+                         std::chrono::seconds waitTime,
+                         uint8_t retryTimes)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
       nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(queryManager), waitTime(waitTime),
       retryTimes(retryTimes) {
@@ -49,7 +55,9 @@ bool NetworkSink::writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::Wo
 void NetworkSink::setup() {
     NES_DEBUG("NetworkSink: method setup() called " << nesPartition.toString() << " qep " << parentPlanId);
     queryManager->addReconfigurationMessage(
-        parentPlanId, NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Initialize, shared_from_this()), false);
+        parentPlanId,
+        NodeEngine::ReconfigurationMessage(parentPlanId, NodeEngine::Initialize, shared_from_this()),
+        false);
 }
 
 void NetworkSink::shutdown() {

@@ -26,19 +26,23 @@ E2EBenchmarkConfigPtr E2EBenchmarkConfig::create() { return std::make_shared<E2E
 E2EBenchmarkConfig::E2EBenchmarkConfig() {
     NES_INFO("Generated new Benchmark Config object. Configurations initialized with default values.");
 
-    numberOfWorkerThreads = ConfigOption<std::string>::create(
-        "numberOfWorkerThreads", "1", "Comma separated list of number of worker threads in the NES Worker.");
+    numberOfWorkerThreads =
+        ConfigOption<std::string>::create("numberOfWorkerThreads",
+                                          "1",
+                                          "Comma separated list of number of worker threads in the NES Worker.");
     numberOfSources = ConfigOption<std::string>::create("numberOfSources", "1", "Comma separated list of number of sources.");
 
     numberOfBuffersToProduce =
         ConfigOption<uint32_t>::create("numberOfBuffersToProduce", 5000000, "Number of buffers to produce.");
 
     bufferSizeInBytes = ConfigOption<std::string>::create("bufferSizeInBytes", "1024", "buffer size in bytes.");
-    numberOfBuffersInGlobalBufferManager = ConfigOption<std::string>::create("numberOfBuffersInGlobalBufferManager", "10000",
+    numberOfBuffersInGlobalBufferManager = ConfigOption<std::string>::create("numberOfBuffersInGlobalBufferManager",
+                                                                             "10000",
                                                                              "Number buffers in global buffer pool.");
     numberOfBuffersPerPipeline =
         ConfigOption<std::string>::create("numberOfBuffersPerPipeline", "1024", "Number buffers in pipeline local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigOption<std::string>::create("numberOfBuffersInSourceLocalBufferPool", "1024",
+    numberOfBuffersInSourceLocalBufferPool = ConfigOption<std::string>::create("numberOfBuffersInSourceLocalBufferPool",
+                                                                               "1024",
                                                                                "Number buffers in source local buffer pool.");
 
     query = ConfigOption<std::string>::create("query", "", "Query to be processed");
@@ -47,11 +51,14 @@ E2EBenchmarkConfig::E2EBenchmarkConfig() {
     benchmarkName = ConfigOption<std::string>::create("benchmarkName", "E2ERunner", "benchmark output file");
     scalability = ConfigOption<std::string>::create("scalability", "scale-up", "scale-out or scale-up");
     logLevel = ConfigOption<std::string>::create(
-        "logLevel", "LOG_NONE", "Log level (LOG_NONE, LOG_FATAL, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
+        "logLevel",
+        "LOG_NONE",
+        "Log level (LOG_NONE, LOG_FATAL, LOG_ERROR, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE) ");
 
     experimentMeasureIntervalInSeconds =
         ConfigOption<uint32_t>::create("experimentMeasureIntervalInSeconds", 1, "measuring duration of one sample");
-    startupSleepIntervalInSeconds = ConfigOption<uint32_t>::create("startupSleepIntervalInSeconds", 3,
+    startupSleepIntervalInSeconds = ConfigOption<uint32_t>::create("startupSleepIntervalInSeconds",
+                                                                   3,
                                                                    "Sleep until the benchmark starts after query submission");
     numberOfMeasurementsToCollect =
         ConfigOption<uint32_t>::create("numberOfMeasurementsToCollect", 5, "Number of measurements taken before terminate");

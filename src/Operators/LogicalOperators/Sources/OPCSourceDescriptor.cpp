@@ -24,25 +24,40 @@
 
 namespace NES {
 
-SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user,
-                                                std::string password) {
+SourceDescriptorPtr
+OPCSourceDescriptor::create(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user, std::string password) {
     return std::make_shared<OPCSourceDescriptor>(
         OPCSourceDescriptor(std::move(schema), std::move(url), std::move(nodeId), std::move(user), std::move(password)));
 }
 
-SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId,
-                                                std::string user, std::string password) {
-    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema), std::move(streamName), std::move(url),
-                                                                     std::move(nodeId), std::move(user), std::move(password)));
+SourceDescriptorPtr OPCSourceDescriptor::create(SchemaPtr schema,
+                                                std::string streamName,
+                                                std::string url,
+                                                UA_NodeId nodeId,
+                                                std::string user,
+                                                std::string password) {
+    return std::make_shared<OPCSourceDescriptor>(OPCSourceDescriptor(std::move(schema),
+                                                                     std::move(streamName),
+                                                                     std::move(url),
+                                                                     std::move(nodeId),
+                                                                     std::move(user),
+                                                                     std::move(password)));
 }
 
-OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, std::string url, UA_NodeId nodeId, std::string user,
+OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema,
+                                         std::string url,
+                                         UA_NodeId nodeId,
+                                         std::string user,
                                          std::string password)
     : SourceDescriptor(std::move(schema)), url(std::move(url)), nodeId(std::move(nodeId)), user(std::move(user)),
       password(std::move(password)) {}
 
-OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema, std::string streamName, std::string url, UA_NodeId nodeId,
-                                         std::string user, std::string password)
+OPCSourceDescriptor::OPCSourceDescriptor(SchemaPtr schema,
+                                         std::string streamName,
+                                         std::string url,
+                                         UA_NodeId nodeId,
+                                         std::string user,
+                                         std::string password)
     : SourceDescriptor(std::move(schema), std::move(streamName)), url(std::move(url)), nodeId(std::move(nodeId)),
       user(std::move(user)), password(std::move(password)) {}
 
@@ -61,7 +76,8 @@ bool OPCSourceDescriptor::equal(SourceDescriptorPtr other) {
     auto otherOPCSource = other->as<OPCSourceDescriptor>();
     NES_DEBUG("URL= " << url << " == " << otherOPCSource->getUrl());
     char* otherOperatorIdent = (char*) UA_malloc(sizeof(char) * otherOPCSource->getNodeId().identifier.string.length + 1);
-    memcpy(otherOperatorIdent, otherOPCSource->getNodeId().identifier.string.data,
+    memcpy(otherOperatorIdent,
+           otherOPCSource->getNodeId().identifier.string.data,
            otherOPCSource->getNodeId().identifier.string.length);
     otherOperatorIdent[otherOPCSource->getNodeId().identifier.string.length] = '\0';
     char* ident = (char*) UA_malloc(sizeof(char) * nodeId.identifier.string.length + 1);

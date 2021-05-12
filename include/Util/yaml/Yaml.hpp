@@ -546,7 +546,9 @@ struct SerializeConfig {
         * @param mapScalarNewline       Put scalars on a new line if parent node is a map.
         *
         */
-    SerializeConfig(const size_t spaceIndentation = 2, const size_t scalarMaxLength = 64, const bool sequenceMapNewline = false,
+    SerializeConfig(const size_t spaceIndentation = 2,
+                    const size_t scalarMaxLength = 64,
+                    const bool sequenceMapNewline = false,
                     const bool mapScalarNewline = false);
 
     size_t SpaceIndentation;///< Number of spaces per indentation.

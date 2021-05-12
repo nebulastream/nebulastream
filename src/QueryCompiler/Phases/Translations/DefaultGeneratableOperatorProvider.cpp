@@ -118,24 +118,27 @@ void DefaultGeneratableOperatorProvider::lowerEmit(QueryPlanPtr queryPlan, Physi
 void DefaultGeneratableOperatorProvider::lowerProjection(QueryPlanPtr queryPlan,
                                                          PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalProjectionOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
-    auto generatableProjectOperator = GeneratableOperators::GeneratableProjectionOperator::create(
-        physicalProjectionOperator->getInputSchema(), physicalProjectionOperator->getOutputSchema(),
-        physicalProjectionOperator->getExpressions());
+    auto generatableProjectOperator =
+        GeneratableOperators::GeneratableProjectionOperator::create(physicalProjectionOperator->getInputSchema(),
+                                                                    physicalProjectionOperator->getOutputSchema(),
+                                                                    physicalProjectionOperator->getExpressions());
     queryPlan->replaceOperator(physicalProjectionOperator, generatableProjectOperator);
 }
 
 void DefaultGeneratableOperatorProvider::lowerFilter(QueryPlanPtr queryPlan,
                                                      PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalFilterOperator = operatorNode->as<PhysicalOperators::PhysicalFilterOperator>();
-    auto generatableFilterOperator = GeneratableOperators::GeneratableFilterOperator::create(
-        physicalFilterOperator->getInputSchema(), physicalFilterOperator->getPredicate());
+    auto generatableFilterOperator =
+        GeneratableOperators::GeneratableFilterOperator::create(physicalFilterOperator->getInputSchema(),
+                                                                physicalFilterOperator->getPredicate());
     queryPlan->replaceOperator(physicalFilterOperator, generatableFilterOperator);
 }
 
 void DefaultGeneratableOperatorProvider::lowerMap(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalMapOperator = operatorNode->as<PhysicalOperators::PhysicalMapOperator>();
-    auto generatableMapOperator = GeneratableOperators::GeneratableMapOperator::create(
-        physicalMapOperator->getInputSchema(), physicalMapOperator->getOutputSchema(), physicalMapOperator->getMapExpression());
+    auto generatableMapOperator = GeneratableOperators::GeneratableMapOperator::create(physicalMapOperator->getInputSchema(),
+                                                                                       physicalMapOperator->getOutputSchema(),
+                                                                                       physicalMapOperator->getMapExpression());
     queryPlan->replaceOperator(physicalMapOperator, generatableMapOperator);
 }
 
@@ -143,7 +146,8 @@ void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr q
                                                                   PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalWatermarkAssignmentOperator = operatorNode->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
     auto generatableWatermarkAssignmentOperator = GeneratableOperators::GeneratableWatermarkAssignmentOperator::create(
-        physicalWatermarkAssignmentOperator->getInputSchema(), physicalWatermarkAssignmentOperator->getOutputSchema(),
+        physicalWatermarkAssignmentOperator->getInputSchema(),
+        physicalWatermarkAssignmentOperator->getOutputSchema(),
         physicalWatermarkAssignmentOperator->getWatermarkStrategyDescriptor());
     queryPlan->replaceOperator(physicalWatermarkAssignmentOperator, generatableWatermarkAssignmentOperator);
 }
@@ -178,9 +182,11 @@ void DefaultGeneratableOperatorProvider::lowerSlicePreAggregation(QueryPlanPtr q
         slicePreAggregationOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
     auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
 
-    auto generatableOperator = GeneratableOperators::GeneratableSlicePreAggregationOperator::create(
-        slicePreAggregationOperator->getInputSchema(), slicePreAggregationOperator->getOutputSchema(),
-        slicePreAggregationOperator->getOperatorHandler(), generatableWindowAggregation);
+    auto generatableOperator =
+        GeneratableOperators::GeneratableSlicePreAggregationOperator::create(slicePreAggregationOperator->getInputSchema(),
+                                                                             slicePreAggregationOperator->getOutputSchema(),
+                                                                             slicePreAggregationOperator->getOperatorHandler(),
+                                                                             generatableWindowAggregation);
     queryPlan->replaceOperator(slicePreAggregationOperator, generatableOperator);
 }
 
@@ -191,9 +197,11 @@ void DefaultGeneratableOperatorProvider::lowerSliceMerging(QueryPlanPtr queryPla
     auto windowAggregationDescriptor = sliceMergingOperator->getOperatorHandler()->getWindowDefinition()->getWindowAggregation();
     auto generatableWindowAggregation = lowerWindowAggregation(windowAggregationDescriptor);
 
-    auto generatableOperator = GeneratableOperators::GeneratableSliceMergingOperator::create(
-        sliceMergingOperator->getInputSchema(), sliceMergingOperator->getOutputSchema(),
-        sliceMergingOperator->getOperatorHandler(), generatableWindowAggregation);
+    auto generatableOperator =
+        GeneratableOperators::GeneratableSliceMergingOperator::create(sliceMergingOperator->getInputSchema(),
+                                                                      sliceMergingOperator->getOutputSchema(),
+                                                                      sliceMergingOperator->getOperatorHandler(),
+                                                                      generatableWindowAggregation);
     queryPlan->replaceOperator(sliceMergingOperator, generatableOperator);
 }
 
@@ -212,17 +220,20 @@ void DefaultGeneratableOperatorProvider::lowerSliceSink(QueryPlanPtr queryPlan,
 void DefaultGeneratableOperatorProvider::lowerJoinBuild(QueryPlanPtr queryPlan,
                                                         PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalJoinBuild = operatorNode->as<PhysicalOperators::PhysicalJoinBuildOperator>();
-    auto generatableJoinOperator = GeneratableOperators::GeneratableJoinBuildOperator::create(
-        physicalJoinBuild->getInputSchema(), physicalJoinBuild->getOutputSchema(), physicalJoinBuild->getJoinHandler(),
-        physicalJoinBuild->getBuildSide());
+    auto generatableJoinOperator =
+        GeneratableOperators::GeneratableJoinBuildOperator::create(physicalJoinBuild->getInputSchema(),
+                                                                   physicalJoinBuild->getOutputSchema(),
+                                                                   physicalJoinBuild->getJoinHandler(),
+                                                                   physicalJoinBuild->getBuildSide());
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
 }
 
 void DefaultGeneratableOperatorProvider::lowerJoinSink(QueryPlanPtr queryPlan,
                                                        PhysicalOperators::PhysicalOperatorPtr operatorNode) {
     auto physicalJoinSink = operatorNode->as<PhysicalOperators::PhysicalJoinSinkOperator>();
-    auto generatableJoinOperator = GeneratableOperators::GeneratableJoinSinkOperator::create(
-        physicalJoinSink->getOutputSchema(), physicalJoinSink->getOutputSchema(), physicalJoinSink->getJoinHandler());
+    auto generatableJoinOperator = GeneratableOperators::GeneratableJoinSinkOperator::create(physicalJoinSink->getOutputSchema(),
+                                                                                             physicalJoinSink->getOutputSchema(),
+                                                                                             physicalJoinSink->getJoinHandler());
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
 }
 

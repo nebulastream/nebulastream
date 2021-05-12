@@ -16,7 +16,9 @@
 
 #include <NodeEngine/Execution/DiscardingExecutablePipelineStage.hpp>
 
-NES::ExecutionResult NES::NodeEngine::Execution::DiscardingExecutablePipelineStage::execute(
-    NES::NodeEngine::TupleBuffer&, NES::NodeEngine::Execution::PipelineExecutionContext&, NES::NodeEngine::WorkerContext&) {
+NES::ExecutionResult
+NES::NodeEngine::Execution::DiscardingExecutablePipelineStage::execute(NES::NodeEngine::TupleBuffer&,
+                                                                       NES::NodeEngine::Execution::PipelineExecutionContext&,
+                                                                       NES::NodeEngine::WorkerContext&) {
     return ExecutionResult::Ok;
 }

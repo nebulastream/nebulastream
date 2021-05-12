@@ -104,8 +104,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithBottomUpStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology,
-                                                                              typeInferencePhase, streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
@@ -162,8 +165,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithTopDownStrategy) {
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology,
-                                                                              typeInferencePhase, streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
 
     Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
 
@@ -221,8 +227,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology,
-                                                                              typeInferencePhase, streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -265,7 +274,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithBottomUp
                 ASSERT_EQ(actualRootOperators.size(), 1);
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                auto found = std::find_if(expectedRootOperators.begin(),
+                                          expectedRootOperators.end(),
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });
@@ -299,8 +309,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp", globalExecutionPlan, topology,
-                                                                              typeInferencePhase, streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("BottomUp",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -340,7 +353,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                 ASSERT_EQ(actualRootOperators.size(), 1);
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                auto found = std::find_if(expectedRootOperators.begin(),
+                                          expectedRootOperators.end(),
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });
@@ -374,8 +388,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology,
-                                                                              typeInferencePhase, streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -417,7 +434,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkOperatorsWithTopDownS
             ASSERT_EQ(actualRootOperators.size(), 2);
             for (auto actualRootOperator : actualRootOperators) {
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                auto found = std::find_if(expectedRootOperators.begin(),
+                                          expectedRootOperators.end(),
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });
@@ -451,8 +469,11 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
 
     GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
-    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown", globalExecutionPlan, topology,
-                                                                              typeInferencePhase, streamCatalog);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("TopDown",
+                                                                              globalExecutionPlan,
+                                                                              topology,
+                                                                              typeInferencePhase,
+                                                                              streamCatalog);
 
     auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalStreamSourceDescriptor::create("car"));
 
@@ -492,7 +513,8 @@ TEST_F(QueryPlacementTest, testPlacingQueryWithMultipleSinkAndOnlySourceOperator
                 ASSERT_EQ(actualRootOperators.size(), 1);
                 OperatorNodePtr actualRootOperator = actualRootOperators[0];
                 auto expectedRootOperators = queryPlan->getRootOperators();
-                auto found = std::find_if(expectedRootOperators.begin(), expectedRootOperators.end(),
+                auto found = std::find_if(expectedRootOperators.begin(),
+                                          expectedRootOperators.end(),
                                           [&](OperatorNodePtr expectedRootOperator) {
                                               return expectedRootOperator->getId() == actualRootOperator->getId();
                                           });

@@ -37,7 +37,8 @@ class BaseExecutableWindowAction {
      * @return bool indicating success
      */
     virtual bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
-                          uint64_t currentWatermark, uint64_t lastWatermark) = 0;
+                          uint64_t currentWatermark,
+                          uint64_t lastWatermark) = 0;
 
     virtual std::string toString() = 0;
 

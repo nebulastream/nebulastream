@@ -36,7 +36,9 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     explicit LambdaSourceDescriptor(
         SchemaPtr schema,
         std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-        uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode);
+        uint64_t numBuffersToProcess,
+        uint64_t gatheringValue,
+        DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Factory method to create a LambdaSourceDescriptor object
@@ -49,7 +51,9 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     static std::shared_ptr<LambdaSourceDescriptor>
     create(SchemaPtr schema,
            std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-           uint64_t numBuffersToProcess, uint64_t gatheringValue, DataSource::GatheringMode gatheringMode);
+           uint64_t numBuffersToProcess,
+           uint64_t gatheringValue,
+           DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Provides the string representation of the memory source

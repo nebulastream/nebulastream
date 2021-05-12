@@ -58,7 +58,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status RegisterPhysicalStream(ServerContext* context, const RegisterPhysicalStreamRequest* request,
+    Status RegisterPhysicalStream(ServerContext* context,
+                                  const RegisterPhysicalStreamRequest* request,
                                   RegisterPhysicalStreamReply* reply) override;
 
     /**
@@ -68,7 +69,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status UnregisterPhysicalStream(ServerContext* context, const UnregisterPhysicalStreamRequest* request,
+    Status UnregisterPhysicalStream(ServerContext* context,
+                                    const UnregisterPhysicalStreamRequest* request,
                                     UnregisterPhysicalStreamReply* reply) override;
 
     /**
@@ -78,7 +80,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status RegisterLogicalStream(ServerContext* context, const RegisterLogicalStreamRequest* request,
+    Status RegisterLogicalStream(ServerContext* context,
+                                 const RegisterLogicalStreamRequest* request,
                                  RegisterLogicalStreamReply* reply) override;
 
     /**
@@ -88,7 +91,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply
      * @return success
      */
-    Status UnregisterLogicalStream(ServerContext* context, const UnregisterLogicalStreamRequest* request,
+    Status UnregisterLogicalStream(ServerContext* context,
+                                   const UnregisterLogicalStreamRequest* request,
                                    UnregisterLogicalStreamReply* reply) override;
 
     /**

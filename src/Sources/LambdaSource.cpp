@@ -29,13 +29,24 @@
 namespace NES {
 
 LambdaSource::LambdaSource(
-    SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-    uint64_t numbersOfBufferToProduce, uint64_t gatheringValue,
+    SchemaPtr schema,
+    NodeEngine::BufferManagerPtr bufferManager,
+    NodeEngine::QueryManagerPtr queryManager,
+    uint64_t numbersOfBufferToProduce,
+    uint64_t gatheringValue,
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-    OperatorId operatorId, size_t numSourceLocalBuffers, GatheringMode gatheringMode,
+    OperatorId operatorId,
+    size_t numSourceLocalBuffers,
+    GatheringMode gatheringMode,
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : GeneratorSource(std::move(schema), std::move(bufferManager), std::move(queryManager), numbersOfBufferToProduce, operatorId,
-                      numSourceLocalBuffers, gatheringMode, successors),
+    : GeneratorSource(std::move(schema),
+                      std::move(bufferManager),
+                      std::move(queryManager),
+                      numbersOfBufferToProduce,
+                      operatorId,
+                      numSourceLocalBuffers,
+                      gatheringMode,
+                      successors),
       generationFunction(std::move(generationFunction)) {
 
     NES_DEBUG("Create LambdaSource with id=" << operatorId << "func is " << (generationFunction ? "callable" : "not callable"));

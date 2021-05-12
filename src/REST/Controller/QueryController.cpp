@@ -33,7 +33,9 @@ using namespace std;
 
 namespace NES {
 
-QueryController::QueryController(QueryServicePtr queryService, QueryCatalogPtr queryCatalog, TopologyPtr topology,
+QueryController::QueryController(QueryServicePtr queryService,
+                                 QueryCatalogPtr queryCatalog,
+                                 TopologyPtr topology,
                                  GlobalExecutionPlanPtr globalExecutionPlan)
     : topology(topology), queryService(queryService), queryCatalog(queryCatalog), globalExecutionPlan(globalExecutionPlan) {}
 
