@@ -321,12 +321,12 @@ class ExecutableCompleteAggregationTriggerAction
         cntFields[index] = cnt;
 
         if (windowDefinition->isKeyed()) {
-            auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
-            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
+            auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<KeyType, true>::create(3, bindedRowLayout);
+            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<ValueType, true>::create(4, bindedRowLayout);
             keyFields[index] = key;
             valueFields[index] = value;
         } else {
-            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<ValueType, true>::create(3, bindedRowLayout);
             valueFields[index] = value;
         }
     }
@@ -346,12 +346,12 @@ class ExecutableCompleteAggregationTriggerAction
         endTsFields[index] = endTs;
 
         if (windowDefinition->isKeyed()) {
-            auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
-            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
+            auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<KeyType, true>::create(2, bindedRowLayout);
+            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<ValueType, true>::create(3, bindedRowLayout);
             keyFields[index] = key;
             valueFields[index] = value;
         } else {
-            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
+            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<ValueType, true>::create(2, bindedRowLayout);
             valueFields[index] = value;
         }
     }
