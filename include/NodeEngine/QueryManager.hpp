@@ -204,7 +204,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source
-     * @param sourceId the id of the source
+     * @param operatorId the id of the source
      * @param graceful hard or soft termination
      * @return true if it went through
      */
