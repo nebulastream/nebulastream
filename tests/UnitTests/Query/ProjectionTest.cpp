@@ -375,6 +375,7 @@ TEST_F(ProjectionTest, projectionQueryCorrectField) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
 
+    testSink->shutdown();
     buffer.release();
     plan->stop();
 }
@@ -441,6 +442,7 @@ TEST_F(ProjectionTest, projectionQueryWrongField) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], 8);
     }
 
+    testSink->shutdown();
     plan->stop();
 }
 
@@ -509,6 +511,7 @@ TEST_F(ProjectionTest, projectionQueryTwoCorrectField) {
         EXPECT_EQ(resultFields01[recordIndex], 8);
     }
 
+    testSink->shutdown();
     plan->stop();
 }
 
