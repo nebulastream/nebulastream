@@ -17,7 +17,6 @@ add_source_nes(
         FilterLogicalOperatorNode.cpp
         ProjectionLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
-        IterationLogicalOperatorNode.cpp
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp

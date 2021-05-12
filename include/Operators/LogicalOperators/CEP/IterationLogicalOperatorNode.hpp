@@ -23,19 +23,25 @@
 namespace NES {
 
 /**
- * @brief iteration operator, which contains /TODO: the number of expected iterations (minimal,maximal)
+ * @brief iteration operator, which contains the number of expected iterations (minimal,maximal)
+ * all possible cases: (n) = exactly, (n,0) min n, (0,m) = max and (n,m) = min to max
  */
 class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    explicit IterationLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, OperatorId id);
+    explicit IterationLogicalOperatorNode(std::uint64_t minIterations, std::uint64_t maxIterations, OperatorId id);
     ~IterationLogicalOperatorNode() = default;
 
-    //TODO 1 operator specific function ?
     /**
-    * @brief returns the number of iterations //TODO (n) = exactly, (n,0) min n, (0,m) = max and (n,m) = min to max
-    * @return  std::vector<ExpressionNodePtr>
+    * @brief returns the minimal amount of iterations
+    * @return amount of iterations
+    */
+    std::uint64_t getMinIterations();
+
+    /**
+   * @brief returns the maximal amount of iterations
+   * @return amount of iterations
    */
-    std::vector<ExpressionNodePtr> getNumberOfIterations();
+    std::uint64_t getMaxIterations();
 
     /**
      * @brief check if two operators have the same output schema
@@ -55,8 +61,10 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
     OperatorNodePtr copy() override;
 
   private:
-    std::vector<ExpressionNodePtr> iterations;
+    std::uint64_t minIterations;
+    std::uint64_t maxIterations;
 };
 
 }// namespace NES
 #endif//ITERATION_LOGICAL_OPERATOR_NODE_HPP
+
