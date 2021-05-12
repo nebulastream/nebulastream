@@ -815,7 +815,9 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     if (task.isReconfiguration()) {
         return;
     }
-
+#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
+    std::unique_lock lock(workMutex);
+#endif
     // todo also support data sinks
     uint64_t qepId = 0;
     auto executable = task.getExecutable();
