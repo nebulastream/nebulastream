@@ -163,6 +163,20 @@ class LogicalOperatorFactory {
      * @return BroadcastLogicalOperatorNodePtr
      */
     static BroadcastLogicalOperatorNodePtr createBroadcastOperator(OperatorId id = UtilityFunctions::getNextOperatorId());
+
+    /**
+     * CEP Operators
+     */
+
+    /**
+    * @brief Create a new logical iteration operator.
+    * @param minIterations  the minimal expected number of iterations
+    * @param maxIterations  the maximal expected number of iterations, if 0 unlimited
+    * @param id: the id of the operator if not defined then next free operator id is used.
+    * @return LogicalOperatorNodePtr
+    */
+    static LogicalUnaryOperatorNodePtr createIterationOperator(std::uint64_t minIterations, std::uint64_t maxIterations,
+                                                               OperatorId id = UtilityFunctions::getNextOperatorId());
 };
 
 }// namespace NES

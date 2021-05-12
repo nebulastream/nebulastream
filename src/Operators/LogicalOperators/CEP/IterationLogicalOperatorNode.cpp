@@ -18,21 +18,25 @@
 #include <Exceptions/TypeInferenceException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/LogicalOperators/IterationLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-IterationLogicalOperatorNode::IterationLogicalOperatorNode(std::vector<ExpressionNodePtr> iterations, uint64_t id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), expressions(expressions) {}
+IterationLogicalOperatorNode::IterationLogicalOperatorNode(std::uint64_t minIterations, std::uint64_t maxIterations, uint64_t id)
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), minIterations(minIterations), maxIterations(maxIterations) {}
 
-std::vector<ExpressionNodePtr> IterationLogicalOperatorNode::getNumberOfIterations { return iterations; }
+//min max mit 2 functionen
+std::uint64_t IterationLogicalOperatorNode::getMinIterations() { return minIterations; };
+
+std::uint64_t IterationLogicalOperatorNode::getMaxIterations() {return maxIterations;};
 
 bool IterationLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<IterationLogicalOperatorNode>()->getId() == id;
 }
 
+//iterations number check
 bool IterationLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<IterationLogicalOperatorNode>()) {
         auto iteration = rhs->as<IterationLogicalOperatorNode>();
@@ -43,11 +47,11 @@ bool IterationLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string IterationLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "Iteration(" << id << ", iterations=" << iterations->toString() << ")";
+    ss << "Iteration(" << id << ", minimum iteration=" << minIterations << ", maximum iteration=" << maxIterations << ")";
     return ss.str();
 }
 
-bool MapLogicalOperatorNode::inferSchema() {
+bool IterationLogicalOperatorNode::inferSchema() {
     // infer the default input and output schema
     if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
@@ -56,7 +60,7 @@ bool MapLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr IterationLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createIterationOperator(iterations, id);
+    auto copy = LogicalOperatorFactory::createIterationOperator(minIterations, maxIterations, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;
@@ -73,7 +77,7 @@ void IterationLogicalOperatorNode::inferStringSignature() {
     }
 
     std::stringstream signatureStream;
-    signatureStream << "Iteration(" + iterations->toString() + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    signatureStream << "Iteration(" << minIterations << ", " << maxIterations << ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
     setStringSignature(signatureStream.str());
 
     }
