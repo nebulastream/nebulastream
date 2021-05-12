@@ -57,10 +57,17 @@ class MaintenanceService {
         QueryId queryId;
         bool success;
         std::string info;
+        bool operator == (const QueryMigrationMessage& lhs){
+            if(this->queryId == lhs.queryId && this->success == lhs.success && this->info == lhs.info){
+                return true;
+            }
+            else
+                return false;
+        };
     };
 
     MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
-                       GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRPCClient);
+                       GlobalExecutionPlanPtr globalExecutionPlan);
     ~MaintenanceService();
     /**
      * submit a request to take a node offline for maintenance
@@ -69,15 +76,6 @@ class MaintenanceService {
      * @param strategy
      */
    std::vector<MaintenanceService::QueryMigrationMessage> submitMaintenanceRequest(TopologyNodeId nodeId, StrategyType strategy);
-
-    /**
-    * places subqueries onto a different executionNode
-    * @param topNodeId
-    * @param querySubPlan
-    */
-    void migrateSubqueries(uint64_t topNodeId, QueryId queryId, std::vector<queryPlanPtr> querySubPlans, uint32_t resourceUsage);
-
-    std::optional<TopologyNodePtr> findValidTopologyNode(uint32_t resourceUsage, std::vector<TopologyNodePtr> candidateNodes);
 
     /**
      * retunrs either an exisiting execution node or a new execution node

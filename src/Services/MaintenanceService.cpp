@@ -34,9 +34,9 @@
 
 namespace NES {
 MaintenanceService::MaintenanceService(TopologyPtr topology, QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue,
-                                       GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRPCClient):
+                                       GlobalExecutionPlanPtr globalExecutionPlan):
                                        topology{topology}, queryCatalog{queryCatalog},
-                                       queryRequestQueue{queryRequestQueue}, globalExecutionPlan{globalExecutionPlan}, workerRPCClient{workerRPCClient}
+                                       queryRequestQueue{queryRequestQueue}, globalExecutionPlan{globalExecutionPlan}
 {
     NES_DEBUG("MaintenanceService: Initializing");
 };
