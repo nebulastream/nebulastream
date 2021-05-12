@@ -32,8 +32,11 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryArea a non-null pointer to the area of memory to use in the source
      * @param memoryAreaSize the size of the area of memory
      */
-    explicit MemorySourceDescriptor(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
-                                    uint64_t numBuffersToProcess, uint64_t gatheringValue,
+    explicit MemorySourceDescriptor(SchemaPtr schema,
+                                    std::shared_ptr<uint8_t> memoryArea,
+                                    size_t memoryAreaSize,
+                                    uint64_t numBuffersToProcess,
+                                    uint64_t gatheringValue,
                                     DataSource::GatheringMode gatheringMode);
 
     /**
@@ -43,9 +46,12 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryAreaSize the size of the area of memory
      * @return a correctly initialized shared ptr to MemorySourceDescriptor
      */
-    static std::shared_ptr<MemorySourceDescriptor> create(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea,
-                                                          size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                                          uint64_t gatheringValue, DataSource::GatheringMode gatheringMode);
+    static std::shared_ptr<MemorySourceDescriptor> create(SchemaPtr schema,
+                                                          std::shared_ptr<uint8_t> memoryArea,
+                                                          size_t memoryAreaSize,
+                                                          uint64_t numBuffersToProcess,
+                                                          uint64_t gatheringValue,
+                                                          DataSource::GatheringMode gatheringMode);
 
     /**
      * @brief Provides the string representation of the memory source

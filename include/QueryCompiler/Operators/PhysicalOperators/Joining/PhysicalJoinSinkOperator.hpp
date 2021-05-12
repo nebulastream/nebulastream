@@ -28,11 +28,19 @@ namespace PhysicalOperators {
  */
 class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBinaryOperator, public AbstractScanOperator {
   public:
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema,
-                                      SchemaPtr outputSchema, Join::JoinOperatorHandlerPtr operatorHandler);
-    static PhysicalOperatorPtr create(SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema,
+    static PhysicalOperatorPtr create(OperatorId id,
+                                      SchemaPtr leftInputSchema,
+                                      SchemaPtr rightInputSchema,
+                                      SchemaPtr outputSchema,
                                       Join::JoinOperatorHandlerPtr operatorHandler);
-    PhysicalJoinSinkOperator(OperatorId id, SchemaPtr leftInputSchema, SchemaPtr rightInputSchema, SchemaPtr outputSchema,
+    static PhysicalOperatorPtr create(SchemaPtr leftInputSchema,
+                                      SchemaPtr rightInputSchema,
+                                      SchemaPtr outputSchema,
+                                      Join::JoinOperatorHandlerPtr operatorHandler);
+    PhysicalJoinSinkOperator(OperatorId id,
+                             SchemaPtr leftInputSchema,
+                             SchemaPtr rightInputSchema,
+                             SchemaPtr outputSchema,
                              Join::JoinOperatorHandlerPtr operatorHandler);
     const std::string toString() const override;
     OperatorNodePtr copy() override;

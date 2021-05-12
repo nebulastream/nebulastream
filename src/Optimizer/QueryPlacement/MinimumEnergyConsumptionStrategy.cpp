@@ -226,8 +226,10 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
                 operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
 
                 // Create a new execution node
-                const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(
-                    operatorName.str(), to_string(node->getId()), node, legacyOperator->copy());
+                const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                                to_string(node->getId()),
+                                                                                                node,
+                                                                                                legacyOperator->copy());
                 newExecutionNode->addOperatorId(targetOperator->getId());
             }
 

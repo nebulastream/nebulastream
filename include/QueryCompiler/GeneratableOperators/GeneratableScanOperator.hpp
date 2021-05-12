@@ -31,8 +31,8 @@ class GeneratableScanOperator : public UnaryOperatorNode, public GeneratableOper
      * @param id: the operator id if not provided then next available operator id is used.
      * @return instance of GeneratableScanOperator
      */
-    static GeneratableScanOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                             OperatorId id = UtilityFunctions::getNextOperatorId());
+    static GeneratableScanOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, OperatorId id = UtilityFunctions::getNextOperatorId());
 
     /**
     * @brief Produce function, which calls the child produce function and brakes pipelines if necessary.

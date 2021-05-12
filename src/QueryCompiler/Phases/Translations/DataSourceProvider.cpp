@@ -27,11 +27,15 @@ DataSourceProviderPtr QueryCompilation::DataSourceProvider::create(QueryCompiler
     return std::make_shared<DataSourceProvider>(compilerOptions);
 }
 
-DataSourcePtr DataSourceProvider::lower(OperatorId operatorId, SourceDescriptorPtr sourceDescriptor,
+DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
+                                        SourceDescriptorPtr sourceDescriptor,
                                         NodeEngine::NodeEnginePtr nodeEngine,
                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) {
-    return ConvertLogicalToPhysicalSource::createDataSource(operatorId, sourceDescriptor, nodeEngine,
-                                                            compilerOptions->getNumSourceLocalBuffers(), successors);
+    return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
+                                                            sourceDescriptor,
+                                                            nodeEngine,
+                                                            compilerOptions->getNumSourceLocalBuffers(),
+                                                            successors);
 }
 
 }// namespace QueryCompilation

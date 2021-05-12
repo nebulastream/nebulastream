@@ -29,8 +29,8 @@ void GeneratableSinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextP
     codegen->generateCodeForEmit(outputSchema, context);
 }
 
-GeneratableSinkOperatorPtr GeneratableSinkOperator::create(SinkLogicalOperatorNodePtr sinkLogicalOperator, SchemaPtr outputSchema,
-                                                           OperatorId id) {
+GeneratableSinkOperatorPtr
+GeneratableSinkOperator::create(SinkLogicalOperatorNodePtr sinkLogicalOperator, SchemaPtr outputSchema, OperatorId id) {
     return std::make_shared<GeneratableSinkOperator>(
         GeneratableSinkOperator(sinkLogicalOperator->getSinkDescriptor(), outputSchema, id));
 }

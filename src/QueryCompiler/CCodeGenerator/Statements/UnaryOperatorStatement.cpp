@@ -24,9 +24,15 @@
 namespace NES {
 
 const std::string toString(const UnaryOperatorType& type) {
-    const char* const names[] = {"ADDRESS_OF_OP",         "DEREFERENCE_POINTER_OP", "PREFIX_INCREMENT_OP",
-                                 "PREFIX_DECREMENT_OP",   "POSTFIX_INCREMENT_OP",   "POSTFIX_DECREMENT_OP",
-                                 "BITWISE_COMPLEMENT_OP", "LOGICAL_NOT_OP",         "SIZE_OF_TYPE_OP"};
+    const char* const names[] = {"ADDRESS_OF_OP",
+                                 "DEREFERENCE_POINTER_OP",
+                                 "PREFIX_INCREMENT_OP",
+                                 "PREFIX_DECREMENT_OP",
+                                 "POSTFIX_INCREMENT_OP",
+                                 "POSTFIX_DECREMENT_OP",
+                                 "BITWISE_COMPLEMENT_OP",
+                                 "LOGICAL_NOT_OP",
+                                 "SIZE_OF_TYPE_OP"};
     return std::string(names[type]);
 }
 
@@ -35,7 +41,8 @@ const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
     return std::make_shared<CodeExpression>(names[type]);
 }
 
-UnaryOperatorStatement::UnaryOperatorStatement(const ExpressionStatment& expr, const UnaryOperatorType& op,
+UnaryOperatorStatement::UnaryOperatorStatement(const ExpressionStatment& expr,
+                                               const UnaryOperatorType& op,
                                                BracketMode bracket_mode)
     : expr_(expr.copy()), op_(op), bracket_mode_(bracket_mode) {}
 

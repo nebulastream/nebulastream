@@ -72,14 +72,23 @@ NesCoordinator::NesCoordinator(CoordinatorConfigPtr coordinatorConfig)
     auto found = Optimizer::stringToMergerRuleEnum.find(queryMergerRuleName);
 
     if (found != Optimizer::stringToMergerRuleEnum.end()) {
-        queryRequestProcessorService = std::make_shared<NESRequestProcessorService>(
-            globalExecutionPlan, topology, queryCatalog, globalQueryPlan, streamCatalog, workerRpcClient, queryRequestQueue,
-            coordinatorConfig->getEnableQueryMerging()->getValue(), found->second);
+        queryRequestProcessorService =
+            std::make_shared<NESRequestProcessorService>(globalExecutionPlan,
+                                                         topology,
+                                                         queryCatalog,
+                                                         globalQueryPlan,
+                                                         streamCatalog,
+                                                         workerRpcClient,
+                                                         queryRequestQueue,
+                                                         coordinatorConfig->getEnableQueryMerging()->getValue(),
+                                                         found->second);
     } else {
         NES_FATAL_ERROR("Unrecognized Query Merger Rule Detected " << queryMergerRuleName);
     }
 
-    queryService = std::make_shared<QueryService>(queryCatalog, queryRequestQueue, streamCatalog,
+    queryService = std::make_shared<QueryService>(queryCatalog,
+                                                  queryRequestQueue,
+                                                  streamCatalog,
                                                   coordinatorConfig->getEnableSemanticQueryValidation()->getValue());
 }
 
@@ -187,8 +196,16 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
 
     //Start rest that accepts queries form the outsides
     NES_DEBUG("NesCoordinator starting rest server");
-    restServer = std::make_shared<RestServer>(restIp, restPort, this->inherited0::weak_from_this(), queryCatalog, streamCatalog,
-                                              topology, globalExecutionPlan, queryService, monitoringService, globalQueryPlan);
+    restServer = std::make_shared<RestServer>(restIp,
+                                              restPort,
+                                              this->inherited0::weak_from_this(),
+                                              queryCatalog,
+                                              streamCatalog,
+                                              topology,
+                                              globalExecutionPlan,
+                                              queryService,
+                                              monitoringService,
+                                              globalQueryPlan);
     restThread = std::make_shared<std::thread>(([&]() {
         setThreadName("nesREST");
         restServer->start();//this call is blocking

@@ -20,14 +20,18 @@
 
 namespace NES::Optimizer {
 
-QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+QuerySignaturePtr QuerySignature::create(z3::ExprPtr&& conditions,
+                                         std::vector<std::string>&& columns,
                                          std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                                          std::map<std::string, z3::ExprPtr>&& windowsExpressions) {
-    return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions), std::move(columns),
-                                                           std::move(schemaFieldToExprMaps), std::move(windowsExpressions)));
+    return std::make_shared<QuerySignature>(QuerySignature(std::move(conditions),
+                                                           std::move(columns),
+                                                           std::move(schemaFieldToExprMaps),
+                                                           std::move(windowsExpressions)));
 }
 
-QuerySignature::QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+QuerySignature::QuerySignature(z3::ExprPtr&& conditions,
+                               std::vector<std::string>&& columns,
                                std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                                std::map<std::string, z3::ExprPtr>&& windowsExpressions)
     : conditions(std::move(conditions)), columns(std::move(columns)), schemaFieldToExprMaps(std::move(schemaFieldToExprMaps)),

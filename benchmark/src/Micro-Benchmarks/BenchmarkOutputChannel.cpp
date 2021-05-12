@@ -34,8 +34,13 @@ namespace NES::Benchmarking {
 /**
  * This benchmark measures the performance of the output channel. This is done by spawning a zmq server. 
  */
-static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged, uint64_t numSenderThreads,
-                                    uint64_t numServerThreads, uint64_t dataSize, uint32_t port, uint32_t rep) {
+static double BM_TestMassiveSending(uint64_t bufferSize,
+                                    uint64_t buffersManaged,
+                                    uint64_t numSenderThreads,
+                                    uint64_t numServerThreads,
+                                    uint64_t dataSize,
+                                    uint32_t port,
+                                    uint32_t rep) {
     std::promise<bool> completedProm;
     std::promise<uint64_t> bytesSent;
     std::promise<double> elapsedSeconds;
@@ -69,14 +74,23 @@ static double BM_TestMassiveSending(uint64_t bufferSize, uint64_t buffersManaged
         auto buffMgr = std::make_shared<NodeEngine::BufferManager>(bufferSize, buffersManaged);
 
         auto netManager = Network::NetworkManager::create(
-            "127.0.0.1", port,
-            Network::ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)), buffMgr,
+            "127.0.0.1",
+            port,
+            Network::ExchangeProtocol(partMgr, std::make_shared<ExchangeListener>(bufferReceived, completedProm)),
+            buffMgr,
             numServerThreads);
 
         auto firstBarrier = std::make_shared<NES::ThreadBarrier>(2);
         std::vector<std::thread> allThreads;
-        allThreads.emplace_back([&netManager, &nesPartition, totalNumBuffer, bufferSize, &bytesSent, &elapsedSeconds,
-                                 &completedProm, firstBarrier, numSenderThreads] {
+        allThreads.emplace_back([&netManager,
+                                 &nesPartition,
+                                 totalNumBuffer,
+                                 bufferSize,
+                                 &bytesSent,
+                                 &elapsedSeconds,
+                                 &completedProm,
+                                 firstBarrier,
+                                 numSenderThreads] {
             // register the incoming channel
             netManager->registerSubpartitionConsumer(nesPartition);
             firstBarrier->wait();
@@ -148,7 +162,8 @@ int main(int argc, char** argv) {
     NES::Benchmarking::BenchmarkUtils::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 4 * 1024, 1 * 1024 * 1024);
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allSenderThreads, 1, 6, 1);
     NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allServerThreads, 3, 6, 1);
-    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent, (uint64_t) 1 * 1024 * 1024 * 1024,
+    NES::Benchmarking::BenchmarkUtils::createRangeVector<uint64_t>(allDataSizesToBeSent,
+                                                                   (uint64_t) 1 * 1024 * 1024 * 1024,
                                                                    (uint64_t) 11 * 1024 * 1024 * 1024,
                                                                    (uint64_t) 1 * 1024 * 1024 * 1024);
 
@@ -181,8 +196,13 @@ int main(int argc, char** argv) {
                     throughputVec.clear();
                     int32_t port = startPort;// + curComb;
                     for (uint64_t i = 0; i < NUM_REPS; ++i) {
-                        double throughput = NES::Benchmarking::BM_TestMassiveSending(bufferSize, buffersManaged, numSenderThreads,
-                                                                                     numServerThreads, dataSize, port, curComb);
+                        double throughput = NES::Benchmarking::BM_TestMassiveSending(bufferSize,
+                                                                                     buffersManaged,
+                                                                                     numSenderThreads,
+                                                                                     numServerThreads,
+                                                                                     dataSize,
+                                                                                     port,
+                                                                                     curComb);
                         throughputVec.emplace_back(throughput);
                     }
                     // Writing whole throughput vector to csv to csv file

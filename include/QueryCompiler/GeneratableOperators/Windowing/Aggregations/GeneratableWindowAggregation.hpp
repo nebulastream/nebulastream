@@ -41,7 +41,8 @@ class GeneratableWindowAggregation {
      * @param inputStruct input struct
      * @param inputRef input value reference
      */
-    virtual void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialValueRef,
+    virtual void compileLiftCombine(CompoundStatementPtr currentCode,
+                                    BinaryOperatorStatement partialValueRef,
                                     RecordHandlerPtr recordHandler) = 0;
 
   protected:

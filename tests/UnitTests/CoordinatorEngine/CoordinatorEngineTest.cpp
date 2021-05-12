@@ -131,13 +131,17 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
     EXPECT_TRUE(successRegisterLogicalStream);
 
     // common case
-    bool successRegisterPhysicalStream = coordinatorEngine->registerPhysicalStream(
-        nodeId, conf->getSourceType(), conf->getPhysicalStreamName(), conf->getLogicalStreamName());
+    bool successRegisterPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
+                                                                                   conf->getSourceType(),
+                                                                                   conf->getPhysicalStreamName(),
+                                                                                   conf->getLogicalStreamName());
     EXPECT_TRUE(successRegisterPhysicalStream);
 
     //test register existing stream
-    bool successRegisterExistingPhysicalStream = coordinatorEngine->registerPhysicalStream(
-        nodeId, conf->getSourceType(), conf->getPhysicalStreamName(), conf->getLogicalStreamName());
+    bool successRegisterExistingPhysicalStream = coordinatorEngine->registerPhysicalStream(nodeId,
+                                                                                           conf->getSourceType(),
+                                                                                           conf->getPhysicalStreamName(),
+                                                                                           conf->getLogicalStreamName());
     EXPECT_TRUE(!successRegisterExistingPhysicalStream);
 
     //test unregister not existing physical stream

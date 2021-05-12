@@ -31,8 +31,10 @@
 
 namespace NES::Optimizer {
 
-BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topologyPtr,
-                                             TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
+BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
+                                             TopologyPtr topologyPtr,
+                                             TypeInferencePhasePtr typeInferencePhase,
+                                             StreamCatalogPtr streamCatalog)
     : globalExecutionPlan(globalExecutionPlan), topology(topologyPtr), typeInferencePhase(typeInferencePhase),
       streamCatalog(streamCatalog), pinnedOperatorLocationMap(), operatorToExecutionNodeMap() {}
 
@@ -105,7 +107,8 @@ void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
             "BasePlacementStrategy: Taking nodes from the merged sub graphs and replacing the initial source topology nodes.");
         std::vector<TopologyNodePtr> sourceNodes;
         for (auto sourceNode : entry.second) {
-            auto found = std::find_if(mergedGraphSourceNodes.begin(), mergedGraphSourceNodes.end(),
+            auto found = std::find_if(mergedGraphSourceNodes.begin(),
+                                      mergedGraphSourceNodes.end(),
                                       [&](const TopologyNodePtr& sourceNodeToUse) {
                                           return sourceNode->getId() == sourceNodeToUse->getId();
                                       });
@@ -174,11 +177,13 @@ TopologyNodePtr BasePlacementStrategy::getTopologyNodeForPinnedOperator(uint64_t
     return candidateTopologyNode;
 }
 
-OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId, uint64_t sourceOperatorId,
+OperatorNodePtr BasePlacementStrategy::createNetworkSinkOperator(QueryId queryId,
+                                                                 uint64_t sourceOperatorId,
                                                                  const TopologyNodePtr& sourceTopologyNode) {
 
     NES_DEBUG("BasePlacementStrategy: create Network Sink operator");
-    Network::NodeLocation nodeLocation(sourceTopologyNode->getId(), sourceTopologyNode->getIpAddress(),
+    Network::NodeLocation nodeLocation(sourceTopologyNode->getId(),
+                                       sourceTopologyNode->getIpAddress(),
                                        sourceTopologyNode->getDataPort());
     Network::NesPartition nesPartition(queryId, sourceOperatorId, 0, 0);
     return LogicalOperatorFactory::createSinkOperator(

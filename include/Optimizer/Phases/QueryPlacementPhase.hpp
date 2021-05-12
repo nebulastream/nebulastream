@@ -46,8 +46,10 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
  */
 class QueryPlacementPhase {
   public:
-    static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                         TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
+    static QueryPlacementPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                         TopologyPtr topology,
+                                         TypeInferencePhasePtr typeInferencePhase,
+                                         StreamCatalogPtr streamCatalog);
 
     /**
      * @brief Method takes input as a placement strategy name and input query plan and performs query operator placement based on the
@@ -61,8 +63,10 @@ class QueryPlacementPhase {
     ~QueryPlacementPhase();
 
   private:
-    explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                 TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog);
+    explicit QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionPlan,
+                                 TopologyPtr topology,
+                                 TypeInferencePhasePtr typeInferencePhase,
+                                 StreamCatalogPtr streamCatalog);
     GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
     TypeInferencePhasePtr typeInferencePhase;

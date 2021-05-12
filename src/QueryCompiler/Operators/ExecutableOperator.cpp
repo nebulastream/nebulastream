@@ -19,7 +19,8 @@
 namespace NES {
 namespace QueryCompilation {
 
-ExecutableOperator::ExecutableOperator(OperatorId id, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+ExecutableOperator::ExecutableOperator(OperatorId id,
+                                       NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
     : OperatorNode(id), UnaryOperatorNode(id), executablePipelineStage(executablePipelineStage),
       operatorHandlers(operatorHandlers) {}

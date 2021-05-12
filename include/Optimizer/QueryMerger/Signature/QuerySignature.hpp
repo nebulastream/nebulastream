@@ -69,7 +69,8 @@ class QuerySignature {
      * @param windowsExpressions: the map containing window expressions
      * @return Shared instance of the query plan signature.
      */
-    static QuerySignaturePtr create(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+    static QuerySignaturePtr create(z3::ExprPtr&& conditions,
+                                    std::vector<std::string>&& columns,
                                     std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                                     std::map<std::string, z3::ExprPtr>&& windowsExpressions);
 
@@ -98,7 +99,8 @@ class QuerySignature {
     const std::map<std::string, z3::ExprPtr>& getWindowsExpressions();
 
   private:
-    QuerySignature(z3::ExprPtr&& conditions, std::vector<std::string>&& columns,
+    QuerySignature(z3::ExprPtr&& conditions,
+                   std::vector<std::string>&& columns,
                    std::vector<std::map<std::string, z3::ExprPtr>>&& schemaFieldToExprMaps,
                    std::map<std::string, z3::ExprPtr>&& windowsExpressions);
 

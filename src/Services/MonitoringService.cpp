@@ -31,7 +31,8 @@
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology,
+MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
+                                     TopologyPtr topology,
                                      NodeEngine::BufferManagerPtr bufferManager)
     : workerClient(workerClient), topology(topology), bufferManager(bufferManager) {
     NES_DEBUG("MonitoringService: Initializing");
@@ -43,7 +44,9 @@ MonitoringService::~MonitoringService() {
     topology.reset();
 }
 
-void MonitoringService::requestMonitoringData(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan,
+void MonitoringService::requestMonitoringData(const std::string& ipAddress,
+                                              int64_t grpcPort,
+                                              MonitoringPlanPtr plan,
                                               NodeEngine::TupleBuffer tupleBuffer) {
     if (!plan) {
         auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
@@ -54,8 +57,8 @@ void MonitoringService::requestMonitoringData(const std::string& ipAddress, int6
     workerClient->requestMonitoringData(destAddress, plan, tupleBuffer);
 }
 
-web::json::value MonitoringService::requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort,
-                                                                MonitoringPlanPtr plan) {
+web::json::value
+MonitoringService::requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
     auto tupleBuffer = bufferManager->getBufferBlocking();
     requestMonitoringData(ipAddress, grpcPort, plan, tupleBuffer);
     auto schema = plan->createSchema();

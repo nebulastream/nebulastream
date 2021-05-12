@@ -42,9 +42,13 @@ enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
 class ExecutableQueryPlan : public Reconfigurable {
 
   public:
-    explicit ExecutableQueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<DataSourcePtr>&& sources,
-                                 std::vector<DataSinkPtr>&& sinks, std::vector<ExecutablePipelinePtr>&& pipelines,
-                                 QueryManagerPtr&& queryManager, BufferManagerPtr&& bufferManager);
+    explicit ExecutableQueryPlan(QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 std::vector<DataSourcePtr>&& sources,
+                                 std::vector<DataSinkPtr>&& sinks,
+                                 std::vector<ExecutablePipelinePtr>&& pipelines,
+                                 QueryManagerPtr&& queryManager,
+                                 BufferManagerPtr&& bufferManager);
 
     ~ExecutableQueryPlan();
 

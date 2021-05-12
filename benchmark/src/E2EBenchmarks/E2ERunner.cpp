@@ -150,7 +150,8 @@ int main(int argc, const char* argv[]) {
         getParameterFromString(benchmarkConfig->getBufferSizeInBytes()->getValue());
 
     std::map<std::string, std::vector<uint64_t>>::iterator maxIter =
-        std::max_element(parameterNameToValueVectorMap.begin(), parameterNameToValueVectorMap.end(),
+        std::max_element(parameterNameToValueVectorMap.begin(),
+                         parameterNameToValueVectorMap.end(),
                          [](const std::pair<std::string, std::vector<uint64_t>>& a,
                             const std::pair<std::string, std::vector<uint64_t>>& b) -> bool {
                              return a.second.size() < b.second.size();
@@ -162,12 +163,14 @@ int main(int argc, const char* argv[]) {
 
     for (size_t i = 0; i < maxParamCnt; i++) {
         //print resultPrefix
-        std::shared_ptr<E2EBase> testRun = std::make_shared<E2EBase>(
-            parameterNameToValueVectorMap["workerThreads"].at(i), parameterNameToValueVectorMap["sources"].at(i),
-            parameterNameToValueVectorMap["numberOfBuffersInGlobalBufferManagers"].at(i),
-            parameterNameToValueVectorMap["numberOfBuffersPerPipelines"].at(i),
-            parameterNameToValueVectorMap["numberOfBuffersInSourceLocalBufferPools"].at(i),
-            parameterNameToValueVectorMap["bufferSizeInBytes"].at(i), benchmarkConfig);
+        std::shared_ptr<E2EBase> testRun =
+            std::make_shared<E2EBase>(parameterNameToValueVectorMap["workerThreads"].at(i),
+                                      parameterNameToValueVectorMap["sources"].at(i),
+                                      parameterNameToValueVectorMap["numberOfBuffersInGlobalBufferManagers"].at(i),
+                                      parameterNameToValueVectorMap["numberOfBuffersPerPipelines"].at(i),
+                                      parameterNameToValueVectorMap["numberOfBuffersInSourceLocalBufferPools"].at(i),
+                                      parameterNameToValueVectorMap["bufferSizeInBytes"].at(i),
+                                      benchmarkConfig);
 
         ss << testRun->getTsInRfc3339() << "," << benchmarkName << "," << nesVersion;
         ss << "," << parameterNameToValueVectorMap["workerThreads"].at(i) << "," << parameterNameToValueVectorMap["sources"].at(i)

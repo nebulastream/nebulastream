@@ -25,16 +25,20 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableMapOperator::GeneratableMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableMapOperator::GeneratableMapOperator(OperatorId id,
+                                               SchemaPtr inputSchema,
+                                               SchemaPtr outputSchema,
                                                FieldAssignmentExpressionNodePtr mapExpression)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), mapExpression(mapExpression) {}
 
-GeneratableOperatorPtr GeneratableMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                      FieldAssignmentExpressionNodePtr mapExpression) {
+GeneratableOperatorPtr
+GeneratableMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, mapExpression);
 }
 
-GeneratableOperatorPtr GeneratableMapOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableMapOperator::create(OperatorId id,
+                                                      SchemaPtr inputSchema,
+                                                      SchemaPtr outputSchema,
                                                       FieldAssignmentExpressionNodePtr mapExpression) {
     return std::make_shared<GeneratableMapOperator>(GeneratableMapOperator(id, inputSchema, outputSchema, mapExpression));
 }

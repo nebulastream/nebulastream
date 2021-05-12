@@ -43,7 +43,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     static ExecutableNestedLoopJoinTriggerActionPtr<KeyType, InputTypeLeft, InputTypeRight>
     create(LogicalJoinDefinitionPtr joinDefintion, uint64_t id) {
         return std::make_shared<Join::ExecutableNestedLoopJoinTriggerAction<KeyType, InputTypeLeft, InputTypeRight>>(
-            joinDefintion, id);
+            joinDefintion,
+            id);
     }
 
     explicit ExecutableNestedLoopJoinTriggerAction(LogicalJoinDefinitionPtr joinDefinition, uint64_t id)
@@ -57,7 +58,8 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
     bool doAction(NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeLeft>*>* leftJoinState,
                   NodeEngine::StateVariable<KeyType, Windowing::WindowedJoinSliceListStore<InputTypeRight>*>* rightJoinSate,
-                  uint64_t currentWatermark, uint64_t lastWatermark) override {
+                  uint64_t currentWatermark,
+                  uint64_t lastWatermark) override {
 
         // get the reference to the shared ptr.
         if (this->weakExecutionContext.expired()) {
@@ -83,8 +85,12 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
 
                         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":: found join pair for key "
                                                                            << leftHashTable.first);
-                        numberOfFlushedRecords += joinWindows(leftHashTable.first, leftHashTable.second, rightHashTable.second,
-                                                              tupleBuffer, currentWatermark, lastWatermark);
+                        numberOfFlushedRecords += joinWindows(leftHashTable.first,
+                                                              leftHashTable.second,
+                                                              rightHashTable.second,
+                                                              tupleBuffer,
+                                                              currentWatermark,
+                                                              lastWatermark);
                     }
                 }
             }
@@ -122,9 +128,12 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
      * @param currentWatermark current watermark on the left side and right side
      * @param lastWatermark last watermark on the left side and right side
      */
-    size_t joinWindows(KeyType key, Windowing::WindowedJoinSliceListStore<InputTypeLeft>* leftStore,
-                       Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore, NodeEngine::TupleBuffer& tupleBuffer,
-                       uint64_t currentWatermark, uint64_t lastWatermark) {
+    size_t joinWindows(KeyType key,
+                       Windowing::WindowedJoinSliceListStore<InputTypeLeft>* leftStore,
+                       Windowing::WindowedJoinSliceListStore<InputTypeRight>* rightStore,
+                       NodeEngine::TupleBuffer& tupleBuffer,
+                       uint64_t currentWatermark,
+                       uint64_t lastWatermark) {
         NES_TRACE("ExecutableNestedLoopJoinTriggerAction " << id << ":::joinWindows:leftStore currentWatermark is="
                                                            << currentWatermark << " lastWatermark=" << lastWatermark);
         size_t numberOfFlushedRecords = 0;
@@ -213,8 +222,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                     numberOfFlushedRecords += currentNumberOfTuples;
                                     currentNumberOfTuples = 0;
                                 }
-                                writeResultRecord(tupleBuffer, currentNumberOfTuples, window.getStartTs(), window.getEndTs(), key,
-                                                  left, right);
+                                writeResultRecord(tupleBuffer,
+                                                  currentNumberOfTuples,
+                                                  window.getStartTs(),
+                                                  window.getEndTs(),
+                                                  key,
+                                                  left,
+                                                  right);
                                 currentNumberOfTuples++;
                             }
                         }
@@ -246,8 +260,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
     * @param key key of the value
     * @param value value
     */
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
-                           InputTypeLeft& leftValue, InputTypeRight& rightValue) {
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+                           uint64_t index,
+                           uint64_t startTs,
+                           uint64_t endTs,
+                           KeyType key,
+                           InputTypeLeft& leftValue,
+                           InputTypeRight& rightValue) {
         NES_TRACE("write sizes left=" << sizeof(leftValue) << " right=" << sizeof(rightValue)
                                       << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
         windowTupleLayout->getValueField<uint64_t>(index, 0)->write(tupleBuffer, startTs);
@@ -256,11 +275,13 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         constexpr auto headerSize = sizeof(uint64_t) + sizeof(uint64_t) + sizeof(KeyType);
         // copy the left record at position at the index-th row with offset=headerSize
         memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize,
-               &leftValue, sizeof(InputTypeLeft));
+               &leftValue,
+               sizeof(InputTypeLeft));
         // copy the right record at position at the index-th row with offset=headerSize+sizeof(InputTypeLeft)
         memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize
                    + sizeof(InputTypeLeft),
-               &rightValue, sizeof(InputTypeRight));
+               &rightValue,
+               sizeof(InputTypeRight));
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }

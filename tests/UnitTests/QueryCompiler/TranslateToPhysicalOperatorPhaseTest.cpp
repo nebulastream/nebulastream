@@ -100,7 +100,11 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
                 Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
-                distrType, triggerPolicy, triggerAction, 1, 1);
+                distrType,
+                triggerPolicy,
+                triggerAction,
+                1,
+                1);
 
             joinOp1 = LogicalOperatorFactory::createJoinOperator(joinDef)->as<JoinLogicalOperatorNode>();
         }
@@ -109,9 +113,13 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
         auto windowType = TumblingWindow::of(EventTime(Attribute("test")), Seconds(10));
         auto triggerPolicy = Windowing::OnWatermarkChangeTriggerPolicyDescription::create();
         auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
-        auto windowDefinition = LogicalWindowDefinition::create(Sum(Attribute("test")), windowType,
+        auto windowDefinition = LogicalWindowDefinition::create(Sum(Attribute("test")),
+                                                                windowType,
                                                                 Windowing::DistributionCharacteristic::createCompleteWindowType(),
-                                                                1, triggerPolicy, triggerAction, 0);
+                                                                1,
+                                                                triggerPolicy,
+                                                                triggerAction,
+                                                                0);
 
         watermarkAssigner1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
             Windowing::IngestionTimeWatermarkStrategyDescriptor::create());

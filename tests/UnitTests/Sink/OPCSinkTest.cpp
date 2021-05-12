@@ -83,8 +83,15 @@ class OPCSinkTest : public testing::Test {
         UA_QualifiedName myIntegerName = UA_QUALIFIEDNAME(1, "the answer");
         UA_NodeId parentNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_OBJECTSFOLDER);
         UA_NodeId parentReferenceNodeId = UA_NODEID_NUMERIC(0, UA_NS0ID_ORGANIZES);
-        UA_Server_addVariableNode(server, myIntegerNodeId, parentNodeId, parentReferenceNodeId, myIntegerName,
-                                  UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE), attr, NULL, NULL);
+        UA_Server_addVariableNode(server,
+                                  myIntegerNodeId,
+                                  parentNodeId,
+                                  parentReferenceNodeId,
+                                  myIntegerName,
+                                  UA_NODEID_NUMERIC(0, UA_NS0ID_BASEDATAVARIABLETYPE),
+                                  attr,
+                                  NULL,
+                                  NULL);
     }
 
     static void writeVariable(UA_Server* server) {
@@ -182,8 +189,16 @@ TEST_F(OPCSinkTest, OPCSourceValue) {
     write_buffer.release();
 
     auto nodeEngine1 = NodeEngine::create("127.0.0.1", 31338, PhysicalStreamConfig::createEmpty());
-    auto opcSource = createOPCSource(test_schema, nodeEngine1->getBufferManager(), nodeEngine1->getQueryManager(), url, nodeId,
-                                     user, password, 1, 12, {});
+    auto opcSource = createOPCSource(test_schema,
+                                     nodeEngine1->getBufferManager(),
+                                     nodeEngine1->getQueryManager(),
+                                     url,
+                                     nodeId,
+                                     user,
+                                     password,
+                                     1,
+                                     12,
+                                     {});
     opcSource->open();
     auto tuple_buffer = opcSource->receiveData();
     uint64_t value = 0;

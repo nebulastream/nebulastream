@@ -28,11 +28,21 @@ namespace NES {
 class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string filePath, std::string delimiter, uint64_t numBuffersToProcess,
-                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t frequency, bool skipHeader);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      std::string filePath,
+                                      std::string delimiter,
+                                      uint64_t numBuffersToProcess,
+                                      uint64_t numberOfTuplesToProducePerBuffer,
+                                      uint64_t frequency,
+                                      bool skipHeader);
 
-    static SourceDescriptorPtr create(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
-                                      uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      std::string streamName,
+                                      std::string filePath,
+                                      std::string delimiter,
+                                      uint64_t numberOfTuplesToProducePerBuffer,
+                                      uint64_t numBuffersToProcess,
+                                      uint64_t frequency,
                                       bool skipHeader);
 
     /**
@@ -74,12 +84,21 @@ class CsvSourceDescriptor : public SourceDescriptor {
     std::string toString() override;
 
   private:
-    explicit CsvSourceDescriptor(SchemaPtr schema, std::string filePath, std::string delimiter,
-                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
+    explicit CsvSourceDescriptor(SchemaPtr schema,
+                                 std::string filePath,
+                                 std::string delimiter,
+                                 uint64_t numberOfTuplesToProducePerBuffer,
+                                 uint64_t numBuffersToProcess,
+                                 uint64_t frequency,
                                  bool skipHeader);
 
-    explicit CsvSourceDescriptor(SchemaPtr schema, std::string streamName, std::string filePath, std::string delimiter,
-                                 uint64_t numberOfTuplesToProducePerBuffer, uint64_t numBuffersToProcess, uint64_t frequency,
+    explicit CsvSourceDescriptor(SchemaPtr schema,
+                                 std::string streamName,
+                                 std::string filePath,
+                                 std::string delimiter,
+                                 uint64_t numberOfTuplesToProducePerBuffer,
+                                 uint64_t numBuffersToProcess,
+                                 uint64_t frequency,
                                  bool skipHeader);
 
     std::string filePath;

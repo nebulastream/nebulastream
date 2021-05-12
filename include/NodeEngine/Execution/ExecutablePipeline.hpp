@@ -35,9 +35,14 @@ namespace NES::NodeEngine::Execution {
  */
 class ExecutablePipeline : public Reconfigurable {
   public:
-    explicit ExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId, ExecutablePipelineStagePtr executablePipelineStage,
-                                PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines,
-                                ExecutablePipelinePtr nextPipeline, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    explicit ExecutablePipeline(uint32_t pipelineId,
+                                QuerySubPlanId qepId,
+                                ExecutablePipelineStagePtr executablePipelineStage,
+                                PipelineExecutionContextPtr pipelineContext,
+                                uint32_t numOfProducingPipelines,
+                                ExecutablePipelinePtr nextPipeline,
+                                SchemaPtr inputSchema,
+                                SchemaPtr outputSchema,
                                 bool reconfiguration);
 
     /**
@@ -50,11 +55,15 @@ class ExecutablePipeline : public Reconfigurable {
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    static ExecutablePipelinePtr create(uint32_t pipelineId, const QuerySubPlanId querySubPlanId,
+    static ExecutablePipelinePtr create(uint32_t pipelineId,
+                                        const QuerySubPlanId querySubPlanId,
                                         ExecutablePipelineStagePtr executablePipelineStage,
-                                        PipelineExecutionContextPtr pipelineContext, uint32_t numOfProducingPipelines,
-                                        const ExecutablePipelinePtr nextPipelineStage, SchemaPtr inputSchema,
-                                        SchemaPtr outputSchema, bool reconfiguration = false);
+                                        PipelineExecutionContextPtr pipelineContext,
+                                        uint32_t numOfProducingPipelines,
+                                        const ExecutablePipelinePtr nextPipelineStage,
+                                        SchemaPtr inputSchema,
+                                        SchemaPtr outputSchema,
+                                        bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage

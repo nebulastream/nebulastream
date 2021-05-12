@@ -28,7 +28,10 @@
 namespace NES {
 namespace Network {
 
-ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol,
+ZmqServer::ZmqServer(const std::string& hostname,
+                     uint16_t port,
+                     uint16_t numNetworkThreads,
+                     ExchangeProtocol& exchangeProtocol,
                      NodeEngine::BufferManagerPtr bufferManager)
     : hostname(hostname), port(port), numNetworkThreads(std::max(DEFAULT_NUM_SERVER_THREADS, numNetworkThreads)),
       isRunning(false), keepRunning(true), exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
@@ -201,7 +204,8 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     // react after announcement is received
                     auto returnMessage = exchangeProtocol.onClientAnnouncement(receivedMsg);
                     if (returnMessage.isOk() || returnMessage.isPartitionNotFound()) {
-                        sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope,
+                        sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket,
+                                                                              outIdentityEnvelope,
                                                                               returnMessage);
                         break;
                     }
@@ -225,8 +229,9 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
 
                     // receive buffer content
                     auto buffer = bufferManager->getBufferBlocking();
-                    auto optRetSize = dispatcherSocket.recv(
-                        zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->getPayloadSize()), kZmqRecvDefault);
+                    auto optRetSize =
+                        dispatcherSocket.recv(zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->getPayloadSize()),
+                                              kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     NES_ASSERT2_FMT(optRetSize.value().size == bufferHeader->getPayloadSize(),
                                     "Recv not matching sizes " << optRetSize.value().size

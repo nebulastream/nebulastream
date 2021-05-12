@@ -30,14 +30,17 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+std::unique_ptr<TopDownStrategy> TopDownStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                         TopologyPtr topology,
                                                          TypeInferencePhasePtr typeInferencePhase,
                                                          StreamCatalogPtr streamCatalog) {
     return std::make_unique<TopDownStrategy>(TopDownStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
 }
 
-TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                 TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
+TopDownStrategy::TopDownStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
+                                 TopologyPtr topology,
+                                 TypeInferencePhasePtr typeInferencePhase,
+                                 StreamCatalogPtr streamCatalog)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
 
 bool TopDownStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
@@ -199,7 +202,8 @@ void TopDownStrategy::placeOperator(QueryId queryId, OperatorNodePtr operatorNod
     }
 }
 
-QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId, OperatorNodePtr candidateOperator,
+QueryPlanPtr TopDownStrategy::addOperatorToCandidateQueryPlan(QueryId queryId,
+                                                              OperatorNodePtr candidateOperator,
                                                               ExecutionNodePtr executionNode) {
 
     OperatorNodePtr candidateOperatorCopy = candidateOperator->copy();

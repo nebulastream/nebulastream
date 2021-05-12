@@ -45,10 +45,14 @@
 
 namespace NES {
 
-NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                                       QueryCatalogPtr queryCatalog, GlobalQueryPlanPtr globalQueryPlan,
-                                                       StreamCatalogPtr streamCatalog, WorkerRPCClientPtr workerRpcClient,
-                                                       NESRequestQueuePtr queryRequestQueue, bool enableQueryMerging,
+NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                       TopologyPtr topology,
+                                                       QueryCatalogPtr queryCatalog,
+                                                       GlobalQueryPlanPtr globalQueryPlan,
+                                                       StreamCatalogPtr streamCatalog,
+                                                       WorkerRPCClientPtr workerRpcClient,
+                                                       NESRequestQueuePtr queryRequestQueue,
+                                                       bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
     : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       globalQueryPlan(globalQueryPlan) {
@@ -60,8 +64,12 @@ NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr gl
     queryDeploymentPhase = QueryDeploymentPhase::create(globalExecutionPlan, workerRpcClient);
     queryUndeploymentPhase = QueryUndeploymentPhase::create(topology, globalExecutionPlan, workerRpcClient);
     z3Context = std::make_shared<z3::context>();
-    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog, streamCatalog, globalQueryPlan,
-                                                                               z3Context, enableQueryMerging, queryMergerRule);
+    globalQueryPlanUpdatePhase = Optimizer::GlobalQueryPlanUpdatePhase::create(queryCatalog,
+                                                                               streamCatalog,
+                                                                               globalQueryPlan,
+                                                                               z3Context,
+                                                                               enableQueryMerging,
+                                                                               queryMergerRule);
 }
 
 NESRequestProcessorService::~NESRequestProcessorService() { NES_DEBUG("~QueryRequestProcessorService()"); }

@@ -40,10 +40,16 @@ class MemorySource : public DataSource, public NodeEngine::BufferRecycler {
      * @param
      * @param operatorId the valid id of the source
      */
-    explicit MemorySource(SchemaPtr schema, std::shared_ptr<uint8_t> memoryArea, size_t memoryAreaSize,
-                          NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                          uint64_t numBuffersToProcess, uint64_t gatheringValue, OperatorId operatorId,
-                          size_t numSourceLocalBuffers, GatheringMode gatheringMode,
+    explicit MemorySource(SchemaPtr schema,
+                          std::shared_ptr<uint8_t> memoryArea,
+                          size_t memoryAreaSize,
+                          NodeEngine::BufferManagerPtr bufferManager,
+                          NodeEngine::QueryManagerPtr queryManager,
+                          uint64_t numBuffersToProcess,
+                          uint64_t gatheringValue,
+                          OperatorId operatorId,
+                          size_t numSourceLocalBuffers,
+                          GatheringMode gatheringMode,
                           std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
     /**
      * @brief This method is implemented only to comply with the API: it will crash the system if called.

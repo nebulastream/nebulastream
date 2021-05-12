@@ -29,10 +29,12 @@ namespace PhysicalOperators {
  */
 class PhysicalWindowSinkOperator : public PhysicalWindowOperator, public AbstractScanOperator {
   public:
-    PhysicalWindowSinkOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    PhysicalWindowSinkOperator(OperatorId id,
+                               SchemaPtr inputSchema,
+                               SchemaPtr outputSchema,
                                Windowing::WindowOperatorHandlerPtr handler);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      Windowing::WindowOperatorHandlerPtr handler);
+    static PhysicalOperatorPtr
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
     const std::string toString() const override;
     OperatorNodePtr copy() override;

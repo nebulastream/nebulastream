@@ -34,19 +34,22 @@ CoordinatorConfig::CoordinatorConfig() {
     dataPort = ConfigOption<uint32_t>::create("dataPort", 3001, "NES data server port");
     numberOfSlots = ConfigOption<uint32_t>::create("numberOfSlots", UINT16_MAX, "Number of computing slots for NES Coordinator");
     enableQueryMerging = ConfigOption<bool>::create("enableQueryMerging", false, "Enable Query Merging Feature");
-    logLevel = ConfigOption<std::string>::create("logLevel", "LOG_DEBUG",
+    logLevel = ConfigOption<std::string>::create("logLevel",
+                                                 "LOG_DEBUG",
                                                  "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)");
     numberOfBuffersInGlobalBufferManager =
         ConfigOption<uint32_t>::create("numberOfBuffersInGlobalBufferManager", 1024, "Number buffers in global buffer pool.");
     numberOfBuffersPerPipeline =
         ConfigOption<uint32_t>::create("numberOfBuffersPerPipeline", 128, "Number buffers in task local buffer pool.");
-    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool", 64,
+    numberOfBuffersInSourceLocalBufferPool = ConfigOption<uint32_t>::create("numberOfBuffersInSourceLocalBufferPool",
+                                                                            64,
                                                                             "Number buffers in source local buffer pool.");
     bufferSizeInBytes = ConfigOption<uint32_t>::create("bufferSizeInBytes", 4096, "BufferSizeInBytes.");
     numWorkerThreads = ConfigOption<uint32_t>::create("numWorkerThreads", 1, "Number of worker threads.");
     queryBatchSize = ConfigOption<uint32_t>::create("queryBatchSize", 1, "The number of queries to be processed together");
 
-    queryMergerRule = ConfigOption<std::string>::create("queryMergerRule", "SyntaxBasedCompleteQueryMergerRule",
+    queryMergerRule = ConfigOption<std::string>::create("queryMergerRule",
+                                                        "SyntaxBasedCompleteQueryMergerRule",
                                                         "The rule to be used for performing query merging");
 
     enableSemanticQueryValidation =

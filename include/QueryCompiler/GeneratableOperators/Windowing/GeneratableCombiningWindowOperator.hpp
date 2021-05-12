@@ -55,7 +55,8 @@ class GeneratableCombiningWindowOperator : public GeneratableWindowOperator {
 
   private:
     explicit GeneratableCombiningWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                                GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
+                                                GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                                OperatorId id);
 };
 
 }// namespace NES

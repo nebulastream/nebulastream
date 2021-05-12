@@ -20,12 +20,16 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
-    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    OperatorId id,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
       watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
 PhysicalOperatorPtr
-PhysicalWatermarkAssignmentOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalWatermarkAssignmentOperator::create(OperatorId id,
+                                            SchemaPtr inputSchema,
+                                            SchemaPtr outputSchema,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     return std::make_shared<PhysicalWatermarkAssignmentOperator>(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
@@ -35,7 +39,8 @@ Windowing::WatermarkStrategyDescriptorPtr PhysicalWatermarkAssignmentOperator::g
 }
 
 PhysicalOperatorPtr
-PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
+                                            SchemaPtr outputSchema,
                                             Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, watermarkStrategyDescriptor);
 }

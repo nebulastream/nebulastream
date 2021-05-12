@@ -23,21 +23,27 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableOperatorPtr GeneratableJoinBuildOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableJoinBuildOperator::create(OperatorId id,
+                                                            SchemaPtr inputSchema,
+                                                            SchemaPtr outputSchema,
                                                             Join::JoinOperatorHandlerPtr operatorHandler,
                                                             JoinBuildSide buildSide) {
     return std::make_shared<GeneratableJoinBuildOperator>(
         GeneratableJoinBuildOperator(id, inputSchema, outputSchema, operatorHandler, buildSide));
 }
 
-GeneratableOperatorPtr GeneratableJoinBuildOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableJoinBuildOperator::create(SchemaPtr inputSchema,
+                                                            SchemaPtr outputSchema,
                                                             Join::JoinOperatorHandlerPtr operatorHandler,
                                                             JoinBuildSide buildSide) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, operatorHandler, buildSide);
 }
 
-GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                           Join::JoinOperatorHandlerPtr operatorHandler, JoinBuildSide buildSide)
+GeneratableJoinBuildOperator::GeneratableJoinBuildOperator(OperatorId id,
+                                                           SchemaPtr inputSchema,
+                                                           SchemaPtr outputSchema,
+                                                           Join::JoinOperatorHandlerPtr operatorHandler,
+                                                           JoinBuildSide buildSide)
     : OperatorNode(id), GeneratableJoinOperator(id, inputSchema, outputSchema, operatorHandler), buildSide(buildSide) {}
 
 void GeneratableJoinBuildOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {

@@ -112,24 +112,33 @@ namespace NodeEngine {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener);
 }
 template<typename MockedNodeEngine>
-std::shared_ptr<MockedNodeEngine> createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192,
-                                                     uint64_t numBuffers = 1024) {
+std::shared_ptr<MockedNodeEngine>
+createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSize = 8192, uint64_t numBuffers = 1024) {
     try {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<NodeEngine::BufferManager>(bufferSize, numBuffers);
         auto queryManager = std::make_shared<NodeEngine::QueryManager>(bufferManager, 0, 1);
         auto networkManagerCreator = [=](NodeEngine::NodeEnginePtr engine) {
-            return Network::NetworkManager::create(hostname, port, Network::ExchangeProtocol(partitionManager, engine),
+            return Network::NetworkManager::create(hostname,
+                                                   port,
+                                                   Network::ExchangeProtocol(partitionManager, engine),
                                                    bufferManager);
         };
         auto compilerOptions = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
         auto phaseFactory = QueryCompilation::Phases::DefaultPhaseFactory::create();
         auto queryCompiler = QueryCompilation::DefaultQueryCompiler::create(compilerOptions, phaseFactory);
 
-        auto mockEngine = std::make_shared<MockedNodeEngine>(
-            std::move(streamConf), std::move(bufferManager), std::move(queryManager), std::move(networkManagerCreator),
-            std::move(partitionManager), std::move(queryCompiler), 0, 1024, 12, 12);
+        auto mockEngine = std::make_shared<MockedNodeEngine>(std::move(streamConf),
+                                                             std::move(bufferManager),
+                                                             std::move(queryManager),
+                                                             std::move(networkManagerCreator),
+                                                             std::move(partitionManager),
+                                                             std::move(queryCompiler),
+                                                             0,
+                                                             1024,
+                                                             12,
+                                                             12);
         NES::NodeEngine::installGlobalErrorListener(mockEngine);
         return mockEngine;
     } catch (std::exception& err) {
@@ -145,8 +154,8 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
     std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
 
-    ExecutionResult execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext,
-                            WorkerContext& wctx) override {
+    ExecutionResult
+    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
         auto tuples = inputTupleBuffer.getBufferAs<uint64_t>();
 
         NES_INFO("Test: Start execution");
@@ -246,16 +255,20 @@ void testOutput(std::string path, std::string expectedOutput) {
 
 class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
   public:
-    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager, NodeEngine::BufferManagerPtr bufferManager,
+    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
+                                   NodeEngine::BufferManagerPtr bufferManager,
                                    DataSinkPtr sink)
         : PipelineExecutionContext(
-            0, std::move(queryManager), std::move(bufferManager),
+            0,
+            std::move(queryManager),
+            std::move(bufferManager),
             [sink](TupleBuffer& buffer, NodeEngine::WorkerContextRef worker) {
                 sink->writeData(buffer, worker);
             },
             [sink](TupleBuffer&) {
             },
-            std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>()), 12){
+            std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>()),
+            12){
             // nop
         };
 };
@@ -269,7 +282,12 @@ auto setupQEP(NodeEnginePtr engine, QueryId queryId) {
     auto pipeline = NewExecutablePipeline::create(0, queryId, context, executable, 1, {sink});
     auto source =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline});
-    auto executionPlan = NewExecutableQueryPlan::create(queryId, queryId, {source}, {sink}, {pipeline}, engine->getQueryManager(),
+    auto executionPlan = NewExecutableQueryPlan::create(queryId,
+                                                        queryId,
+                                                        {source},
+                                                        {sink},
+                                                        {pipeline},
+                                                        engine->getQueryManager(),
                                                         engine->getBufferManager());
 
     return std::make_tuple(executionPlan, executable);
@@ -347,7 +365,12 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     auto pipeline1 = NewExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
     auto source1 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline1});
-    auto executionPlan = NewExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(),
+    auto executionPlan = NewExecutableQueryPlan::create(1,
+                                                        1,
+                                                        {source1},
+                                                        {sink1},
+                                                        {pipeline1},
+                                                        engine->getQueryManager(),
                                                         engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -358,7 +381,12 @@ TEST_F(EngineTest, testParallelDifferentSource) {
     auto pipeline2 = NewExecutablePipeline::create(0, 2, context2, executable2, 1, {sink2});
     auto source2 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12, {pipeline2});
-    auto executionPlan2 = NewExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(),
+    auto executionPlan2 = NewExecutableQueryPlan::create(2,
+                                                         2,
+                                                         {source2},
+                                                         {sink2},
+                                                         {pipeline2},
+                                                         engine->getQueryManager(),
                                                          engine->getBufferManager());
 
     EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
@@ -401,7 +429,12 @@ TEST_F(EngineTest, testParallelSameSource) {
     auto pipeline1 = NewExecutablePipeline::create(0, 1, context1, executable1, 1, {sink1});
     auto source1 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline1});
-    auto executionPlan = NewExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(),
+    auto executionPlan = NewExecutableQueryPlan::create(1,
+                                                        1,
+                                                        {source1},
+                                                        {sink1},
+                                                        {pipeline1},
+                                                        engine->getQueryManager(),
                                                         engine->getBufferManager());
 
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -413,7 +446,12 @@ TEST_F(EngineTest, testParallelSameSource) {
     auto pipeline2 = NewExecutablePipeline::create(1, 2, context2, executable2, 1, {sink2});
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12, {pipeline2});
-    auto executionPlan2 = NewExecutableQueryPlan::create(2, 2, {source2}, {sink2}, {pipeline2}, engine->getQueryManager(),
+    auto executionPlan2 = NewExecutableQueryPlan::create(2,
+                                                         2,
+                                                         {source2},
+                                                         {sink2},
+                                                         {pipeline2},
+                                                         engine->getQueryManager(),
                                                          engine->getBufferManager());
 
     EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
@@ -449,7 +487,12 @@ TEST_F(EngineTest, testParallelSameSink) {
     auto pipeline1 = NewExecutablePipeline::create(1, 1, context1, executable1, 1, {sharedSink});
     auto source1 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12, {pipeline1});
-    auto executionPlan = NewExecutableQueryPlan::create(1, 1, {source1}, {sharedSink}, {pipeline1}, engine->getQueryManager(),
+    auto executionPlan = NewExecutableQueryPlan::create(1,
+                                                        1,
+                                                        {source1},
+                                                        {sharedSink},
+                                                        {pipeline1},
+                                                        engine->getQueryManager(),
                                                         engine->getBufferManager());
 
     auto context2 =
@@ -460,7 +503,12 @@ TEST_F(EngineTest, testParallelSameSink) {
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 2, 12, {pipeline2});
 
-    auto executionPlan2 = NewExecutableQueryPlan::create(2, 2, {source2}, {sharedSink}, {pipeline2}, engine->getQueryManager(),
+    auto executionPlan2 = NewExecutableQueryPlan::create(2,
+                                                         2,
+                                                         {source2},
+                                                         {sharedSink},
+                                                         {pipeline2},
+                                                         engine->getQueryManager(),
                                                          engine->getBufferManager());
 
     EXPECT_TRUE(engine->registerQueryInNodeEngine(executionPlan));
@@ -495,12 +543,25 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
         std::make_shared<MockedPipelineExecutionContext>(engine->getQueryManager(), engine->getBufferManager(), sink1);
     auto executable2 = std::make_shared<TextExecutablePipeline>();
     auto pipeline2 = NewExecutablePipeline::create(1, 2, context2, executable2, 1, {sink1});
-    auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(), engine->getQueryManager(), 1, 12,
+    auto source1 = createDefaultSourceWithoutSchemaForOneBuffer(engine->getBufferManager(),
+                                                                engine->getQueryManager(),
+                                                                1,
+                                                                12,
                                                                 {pipeline1, pipeline2});
-    auto executionPlan = NewExecutableQueryPlan::create(1, 1, {source1}, {sink1}, {pipeline1}, engine->getQueryManager(),
+    auto executionPlan = NewExecutableQueryPlan::create(1,
+                                                        1,
+                                                        {source1},
+                                                        {sink1},
+                                                        {pipeline1},
+                                                        engine->getQueryManager(),
                                                         engine->getBufferManager());
 
-    auto executionPlan2 = NewExecutableQueryPlan::create(2, 2, {source1}, {sink1}, {pipeline2}, engine->getQueryManager(),
+    auto executionPlan2 = NewExecutableQueryPlan::create(2,
+                                                         2,
+                                                         {source1},
+                                                         {sink1},
+                                                         {pipeline2},
+                                                         engine->getQueryManager(),
                                                          engine->getBufferManager());
 
     GeneratedQueryExecutionPlanBuilder builder1 = GeneratedQueryExecutionPlanBuilder::create();
@@ -587,14 +648,26 @@ void assertKiller() {
       public:
         using NodeEngine::NodeEngine;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr config,
+                                  BufferManagerPtr&& buffMgr,
+                                  QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
-                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilation::QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
-                                  uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(config, std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit), std::move(partitionManager),
-                         std::move(compiler), std::make_shared<NES::NodeEngine::StateManager>(), nodeEngineId,
-                         numberOfBuffersInGlobalBufferManager, numberOfBuffersInSourceLocalBufferPool,
+                                  Network::PartitionManagerPtr&& partitionManager,
+                                  QueryCompilation::QueryCompilerPtr&& compiler,
+                                  uint64_t nodeEngineId,
+                                  uint64_t numberOfBuffersInGlobalBufferManager,
+                                  uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                  uint64_t numberOfBuffersPerPipeline)
+            : NodeEngine(config,
+                         std::move(buffMgr),
+                         std::move(queryMgr),
+                         std::move(netFuncInit),
+                         std::move(partitionManager),
+                         std::move(compiler),
+                         std::make_shared<NES::NodeEngine::StateManager>(),
+                         nodeEngineId,
+                         numberOfBuffersInGlobalBufferManager,
+                         numberOfBuffersInSourceLocalBufferPool,
                          numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string callstack) override {
@@ -616,14 +689,26 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     class MockedNodeEngine : public NodeEngine::NodeEngine {
       public:
         std::promise<bool> completedPromise;
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config,
+                                  BufferManagerPtr&& buffMgr,
+                                  QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
-                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilation::QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
-                                  uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
-                         std::move(partitionManager), std::move(compiler), std::make_shared<NES::NodeEngine::StateManager>(),
-                         nodeEngineId, numberOfBuffersInGlobalBufferManager, numberOfBuffersInSourceLocalBufferPool,
+                                  Network::PartitionManagerPtr&& partitionManager,
+                                  QueryCompilation::QueryCompilerPtr&& compiler,
+                                  uint64_t nodeEngineId,
+                                  uint64_t numberOfBuffersInGlobalBufferManager,
+                                  uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                  uint64_t numberOfBuffersPerPipeline)
+            : NodeEngine(std::move(config),
+                         std::move(buffMgr),
+                         std::move(queryMgr),
+                         std::move(netFuncInit),
+                         std::move(partitionManager),
+                         std::move(compiler),
+                         std::make_shared<NES::NodeEngine::StateManager>(),
+                         nodeEngineId,
+                         numberOfBuffersInGlobalBufferManager,
+                         numberOfBuffersInSourceLocalBufferPool,
                          numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {
@@ -673,14 +758,26 @@ TEST_F(EngineTest, DISABLED_testFullyUnhandledExceptionCrash) {
       public:
         std::promise<bool> completedPromise;
 
-        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config, BufferManagerPtr&& buffMgr, QueryManagerPtr&& queryMgr,
+        explicit MockedNodeEngine(PhysicalStreamConfigPtr&& config,
+                                  BufferManagerPtr&& buffMgr,
+                                  QueryManagerPtr&& queryMgr,
                                   std::function<Network::NetworkManagerPtr(std::shared_ptr<NodeEngine>)>&& netFuncInit,
-                                  Network::PartitionManagerPtr&& partitionManager, QueryCompilation::QueryCompilerPtr&& compiler,
-                                  uint64_t nodeEngineId, uint64_t numberOfBuffersInGlobalBufferManager,
-                                  uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t numberOfBuffersPerPipeline)
-            : NodeEngine(std::move(config), std::move(buffMgr), std::move(queryMgr), std::move(netFuncInit),
-                         std::move(partitionManager), std::move(compiler), std::make_shared<NES::NodeEngine::StateManager>(),
-                         nodeEngineId, numberOfBuffersInGlobalBufferManager, numberOfBuffersInSourceLocalBufferPool,
+                                  Network::PartitionManagerPtr&& partitionManager,
+                                  QueryCompilation::QueryCompilerPtr&& compiler,
+                                  uint64_t nodeEngineId,
+                                  uint64_t numberOfBuffersInGlobalBufferManager,
+                                  uint64_t numberOfBuffersInSourceLocalBufferPool,
+                                  uint64_t numberOfBuffersPerPipeline)
+            : NodeEngine(std::move(config),
+                         std::move(buffMgr),
+                         std::move(queryMgr),
+                         std::move(netFuncInit),
+                         std::move(partitionManager),
+                         std::move(compiler),
+                         std::make_shared<NES::NodeEngine::StateManager>(),
+                         nodeEngineId,
+                         numberOfBuffersInGlobalBufferManager,
+                         numberOfBuffersInSourceLocalBufferPool,
                          numberOfBuffersPerPipeline) {}
 
         void onFatalException(const std::shared_ptr<std::exception> exception, std::string) override {

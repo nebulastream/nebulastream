@@ -20,12 +20,13 @@
 
 namespace NES::Windowing {
 
-EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField, TimeMeasure allowedLateness,
+EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField,
+                                                                           TimeMeasure allowedLateness,
                                                                            TimeUnit unit)
     : onField(onField), allowedLateness(allowedLateness), unit(unit) {}
 
-WatermarkStrategyDescriptorPtr EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure allowedLateness,
-                                                                            TimeUnit unit) {
+WatermarkStrategyDescriptorPtr
+EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit) {
     return std::make_shared<EventTimeWatermarkStrategyDescriptor>(
         Windowing::EventTimeWatermarkStrategyDescriptor(onField, allowedLateness, unit));
 }

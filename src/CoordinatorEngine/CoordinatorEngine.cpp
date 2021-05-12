@@ -32,8 +32,12 @@ CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr
 }
 CoordinatorEngine::~CoordinatorEngine() { NES_DEBUG("~CoordinatorEngine()"); };
 
-uint64_t CoordinatorEngine::registerNode(std::string address, int64_t grpcPort, int64_t dataPort, uint16_t numberOfSlots,
-                                         NodeStats nodeStats, NodeType type) {
+uint64_t CoordinatorEngine::registerNode(std::string address,
+                                         int64_t grpcPort,
+                                         int64_t dataPort,
+                                         uint16_t numberOfSlots,
+                                         NodeStats nodeStats,
+                                         NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
                                                           << " nodeProperties=" << nodeStats.DebugString() << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
@@ -141,7 +145,9 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     return successCatalog && successTopology;
 }
 
-bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId, std::string sourceType, std::string physicalStreamName,
+bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
+                                               std::string sourceType,
+                                               std::string physicalStreamName,
                                                std::string logicalStreamName) {
     NES_DEBUG("CoordinatorEngine::RegisterPhysicalStream: try to register physical node id "
               << nodeId << " physical stream=" << physicalStreamName << " logical stream=" << logicalStreamName);

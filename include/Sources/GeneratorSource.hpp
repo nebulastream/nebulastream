@@ -37,9 +37,14 @@ class GeneratorSource : public DataSource {
    * @param number of buffer that should be processed
    * @param via template, the functor that determines what to do
    */
-    GeneratorSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                    const uint64_t numbersOfBufferToProduce, OperatorId operatorId, size_t numSourceLocalBuffers,
-                    GatheringMode gatheringMode, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
+    GeneratorSource(SchemaPtr schema,
+                    NodeEngine::BufferManagerPtr bufferManager,
+                    NodeEngine::QueryManagerPtr queryManager,
+                    const uint64_t numbersOfBufferToProduce,
+                    OperatorId operatorId,
+                    size_t numSourceLocalBuffers,
+                    GatheringMode gatheringMode,
+                    std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
         : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors) {
         this->numBuffersToProcess = numbersOfBufferToProduce;
     }

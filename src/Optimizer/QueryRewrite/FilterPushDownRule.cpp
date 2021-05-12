@@ -47,7 +47,8 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
         filterOperators.insert(filterOperators.end(), filters.begin(), filters.end());
     }
     NES_DEBUG("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id");
-    std::sort(filterOperators.begin(), filterOperators.end(),
+    std::sort(filterOperators.begin(),
+              filterOperators.end(),
               [](FilterLogicalOperatorNodePtr lhs, FilterLogicalOperatorNodePtr rhs) {
                   return lhs->getId() < rhs->getId();
               });

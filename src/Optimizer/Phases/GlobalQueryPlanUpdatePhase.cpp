@@ -32,9 +32,12 @@
 
 namespace NES::Optimizer {
 
-GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                       GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
-                                                       bool enableQueryMerging, Optimizer::QueryMergerRule queryMergerRule)
+GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCatalog,
+                                                       StreamCatalogPtr streamCatalog,
+                                                       GlobalQueryPlanPtr globalQueryPlan,
+                                                       z3::ContextPtr z3Context,
+                                                       bool enableQueryMerging,
+                                                       Optimizer::QueryMergerRule queryMergerRule)
     : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
@@ -57,8 +60,10 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
     signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, computeStringSignature);
 }
 
-GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog, StreamCatalogPtr streamCatalog,
-                                                                 GlobalQueryPlanPtr globalQueryPlan, z3::ContextPtr z3Context,
+GlobalQueryPlanUpdatePhasePtr GlobalQueryPlanUpdatePhase::create(QueryCatalogPtr queryCatalog,
+                                                                 StreamCatalogPtr streamCatalog,
+                                                                 GlobalQueryPlanPtr globalQueryPlan,
+                                                                 z3::ContextPtr z3Context,
                                                                  bool enableQueryMerging,
                                                                  Optimizer::QueryMergerRule queryMergerRule) {
     return std::make_shared<GlobalQueryPlanUpdatePhase>(

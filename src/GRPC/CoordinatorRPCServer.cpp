@@ -23,9 +23,12 @@ CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngin
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     NES_DEBUG("CoordinatorEngine::RegisterNode: request =" << request);
-    uint64_t id =
-        coordinatorEngine->registerNode(request->address(), request->grpcport(), request->dataport(), request->numberofslots(),
-                                        request->nodeproperties(), (NodeType) request->type());
+    uint64_t id = coordinatorEngine->registerNode(request->address(),
+                                                  request->grpcport(),
+                                                  request->dataport(),
+                                                  request->numberofslots(),
+                                                  request->nodeproperties(),
+                                                  (NodeType) request->type());
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);
         reply->set_id(id);
@@ -52,11 +55,14 @@ Status CoordinatorRPCServer::UnregisterNode(ServerContext*, const UnregisterNode
     }
 }
 
-Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*, const RegisterPhysicalStreamRequest* request,
+Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
+                                                    const RegisterPhysicalStreamRequest* request,
                                                     RegisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
 
-    bool success = coordinatorEngine->registerPhysicalStream(request->id(), request->sourcetype(), request->physicalstreamname(),
+    bool success = coordinatorEngine->registerPhysicalStream(request->id(),
+                                                             request->sourcetype(),
+                                                             request->physicalstreamname(),
                                                              request->logicalstreamname());
 
     if (success) {
@@ -70,7 +76,8 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*, const Regist
     }
 }
 
-Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*, const UnregisterPhysicalStreamRequest* request,
+Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*,
+                                                      const UnregisterPhysicalStreamRequest* request,
                                                       UnregisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterPhysicalStream: request =" << request);
 
@@ -88,7 +95,8 @@ Status CoordinatorRPCServer::UnregisterPhysicalStream(ServerContext*, const Unre
     }
 }
 
-Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*, const RegisterLogicalStreamRequest* request,
+Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*,
+                                                   const RegisterLogicalStreamRequest* request,
                                                    RegisterLogicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterLogicalStream: request =" << request);
 
@@ -105,7 +113,8 @@ Status CoordinatorRPCServer::RegisterLogicalStream(ServerContext*, const Registe
     }
 }
 
-Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*, const UnregisterLogicalStreamRequest* request,
+Status CoordinatorRPCServer::UnregisterLogicalStream(ServerContext*,
+                                                     const UnregisterLogicalStreamRequest* request,
                                                      UnregisterLogicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::UnregisterLogicalStream: request =" << request);
 

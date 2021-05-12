@@ -21,7 +21,9 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableWindowOperator::GeneratableWindowOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableWindowOperator::GeneratableWindowOperator(OperatorId id,
+                                                     SchemaPtr inputSchema,
+                                                     SchemaPtr outputSchema,
                                                      Windowing::WindowOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(operatorHandler) {}
 

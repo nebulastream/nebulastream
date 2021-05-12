@@ -34,8 +34,8 @@ class GeneratableProjectionOperator : public GeneratableOperator {
      * @param expressions the projections
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         std::vector<ExpressionNodePtr> expressions);
+    static GeneratableOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
 
     /**
      * @brief Creates a new generatable projection operator, which projects the set of input fields.
@@ -45,14 +45,16 @@ class GeneratableProjectionOperator : public GeneratableOperator {
      * @param expressions the projections
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         std::vector<ExpressionNodePtr> expressions);
+    static GeneratableOperatorPtr
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableProjectionOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    GeneratableProjectionOperator(OperatorId id,
+                                  SchemaPtr inputSchema,
+                                  SchemaPtr outputSchema,
                                   std::vector<ExpressionNodePtr> expressions);
     std::vector<ExpressionNodePtr> expressions;
 };

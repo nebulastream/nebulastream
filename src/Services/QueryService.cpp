@@ -33,7 +33,9 @@
 
 namespace NES {
 
-QueryService::QueryService(QueryCatalogPtr queryCatalog, NESRequestQueuePtr queryRequestQueue, StreamCatalogPtr streamCatalog,
+QueryService::QueryService(QueryCatalogPtr queryCatalog,
+                           NESRequestQueuePtr queryRequestQueue,
+                           StreamCatalogPtr streamCatalog,
                            bool enableSemanticQueryValidation)
     : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
       enableSemanticQueryValidation(enableSemanticQueryValidation) {

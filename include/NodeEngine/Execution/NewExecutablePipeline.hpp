@@ -34,10 +34,13 @@ namespace NES::NodeEngine::Execution {
  */
 class NewExecutablePipeline : public Reconfigurable {
   public:
-    explicit NewExecutablePipeline(uint32_t pipelineId, QuerySubPlanId qepId,
+    explicit NewExecutablePipeline(uint32_t pipelineId,
+                                   QuerySubPlanId qepId,
                                    PipelineExecutionContextPtr pipelineExecutionContext,
-                                   ExecutablePipelineStagePtr executablePipelineStage, uint32_t numOfProducingPipelines,
-                                   std::vector<SuccessorExecutablePipeline> successorPipelines, bool reconfiguration);
+                                   ExecutablePipelineStagePtr executablePipelineStage,
+                                   uint32_t numOfProducingPipelines,
+                                   std::vector<SuccessorExecutablePipeline> successorPipelines,
+                                   bool reconfiguration);
 
     /**
      * @brief Destructor of an ExecutablePipeline
@@ -54,9 +57,11 @@ class NewExecutablePipeline : public Reconfigurable {
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    static NewExecutablePipelinePtr create(uint32_t pipelineId, QuerySubPlanId qepId,
+    static NewExecutablePipelinePtr create(uint32_t pipelineId,
+                                           QuerySubPlanId qepId,
                                            PipelineExecutionContextPtr pipelineExecutionContext,
-                                           ExecutablePipelineStagePtr executablePipelineStage, uint32_t numOfProducingPipelines,
+                                           ExecutablePipelineStagePtr executablePipelineStage,
+                                           uint32_t numOfProducingPipelines,
                                            std::vector<SuccessorExecutablePipeline> successorPipelines,
                                            bool reconfiguration = false);
 
@@ -139,7 +144,6 @@ class NewExecutablePipeline : public Reconfigurable {
      * @param predecessorPipeline
      */
     void addSuccessor(SuccessorExecutablePipeline predecessorPipeline);
-
 
   private:
     uint32_t pipelineStageId;

@@ -29,9 +29,16 @@ namespace NES {
 class KafkaSource : public DataSource {
 
   public:
-    KafkaSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                std::string brokers, std::string topic, std::string groupId, bool autoCommit, uint64_t kafkaConsumerTimeout,
-                OperatorId operatorId, size_t numSourceLocalBuffers);
+    KafkaSource(SchemaPtr schema,
+                NodeEngine::BufferManagerPtr bufferManager,
+                NodeEngine::QueryManagerPtr queryManager,
+                std::string brokers,
+                std::string topic,
+                std::string groupId,
+                bool autoCommit,
+                uint64_t kafkaConsumerTimeout,
+                OperatorId operatorId,
+                size_t numSourceLocalBuffers);
 
     /**
      * @brief Get source type

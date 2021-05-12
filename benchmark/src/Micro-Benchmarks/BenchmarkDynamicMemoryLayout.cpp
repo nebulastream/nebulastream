@@ -62,8 +62,22 @@ static void BM_WriteRecordsRowLayoutNewLayout(benchmark::State& state) {
         DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
         DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
         state.ResumeTiming();
-        std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                   int32_t, int32_t, int32_t, int32_t>
+        std::tuple<int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             bindedRowLayout->pushRecord<false>(writeRecord);
@@ -82,8 +96,22 @@ static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         bindedRowLayout->pushRecord<false>(writeRecord);
@@ -91,12 +119,39 @@ static void BM_ReadRecordsRowLayoutNewLayout(benchmark::State& state) {
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                       int32_t, int32_t, int32_t, int32_t>
-                readRecord =
-                    bindedRowLayout->readRecord<false, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                                                int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t>(
-                        recordIndex);
+            std::tuple<int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t>
+                readRecord = bindedRowLayout->readRecord<false,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t,
+                                                         int32_t>(recordIndex);
             ((void) readRecord);
         }
     }
@@ -116,8 +171,22 @@ static void BM_WriteRecordsColumnLayoutNewLayout(benchmark::State& state) {
         DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
         DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
         state.ResumeTiming();
-        std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                   int32_t, int32_t, int32_t, int32_t>
+        std::tuple<int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
             bindedColumnLayout->pushRecord<false>(writeRecord);
@@ -137,20 +206,61 @@ static void BM_ReadRecordsColumnLayoutNewLayout(benchmark::State& state) {
     DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                   int32_t, int32_t, int32_t, int32_t>
+        std::tuple<int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         bindedColumnLayout->pushRecord<false>(writeRecord);
     }
 
     for (auto singleState : state) {
         for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-            std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                       int32_t, int32_t, int32_t, int32_t>
-                readRecord =
-                    bindedColumnLayout->readRecord<false, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                                                   int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t>(
-                        recordIndex);
+            std::tuple<int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t,
+                       int32_t>
+                readRecord = bindedColumnLayout->readRecord<false,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t,
+                                                            int32_t>(recordIndex);
             ((void) readRecord);
         }
     }
@@ -168,8 +278,22 @@ static void BM_ReadFieldRowLayoutNewLayout(benchmark::State& state) {
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
-        std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-                   int32_t, int32_t, int32_t, int32_t>
+        std::tuple<int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t,
+                   int32_t>
             writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
         bindedRowLayout->pushRecord<false>(writeRecord);
     }
@@ -195,8 +319,22 @@ static void BM_ReadFieldColumnLayoutNewLayout(benchmark::State& state) {
     DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
     DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         bindedColumnLayout->pushRecord<false>(writeRecord);
@@ -374,8 +512,22 @@ static void BM_ReadWholeRecordWithFieldColumnLayoutNewLayout(benchmark::State& s
     DynamicColumnLayoutPtr columnLayout = DynamicColumnLayout::create(schema, false);
     DynamicColumnLayoutBufferPtr bindedColumnLayout = columnLayout->bind(tupleBuffer);
 
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         bindedColumnLayout->pushRecord<false>(writeRecord);
@@ -481,8 +633,22 @@ static void BM_ReadWholeRecordWithFieldRowLayoutNewLayout(benchmark::State& stat
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
 
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         bindedRowLayout->pushRecord<false>(writeRecord);
@@ -590,8 +756,22 @@ static void BM_ReadingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     size_t NUM_TUPLES = (tupleBuffer.getBufferSize() / schema->getSchemaSizeInBytes());
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         bindedRowLayout->pushRecord<false>(writeRecord);
@@ -1303,8 +1483,22 @@ static void BM_ReadingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);
     DynamicColumnLayoutBufferPtr bindedColumnLayout = colLayout->bind(tupleBuffer);
     state.ResumeTiming();
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         bindedColumnLayout->pushRecord<false>(writeRecord);
@@ -2016,8 +2210,22 @@ static void BM_WritingNumberOfFieldsRowLayoutNewLayout(benchmark::State& state) 
     DynamicRowLayoutPtr rowLayout = DynamicRowLayout::create(schema, false);
     DynamicRowLayoutBufferPtr bindedRowLayout = rowLayout->bind(tupleBuffer);
     state.ResumeTiming();
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         bindedRowLayout->pushRecord<false>(writeRecord);
@@ -2307,8 +2515,22 @@ static void BM_WritingNumberOfFieldsColLayoutNewLayout(benchmark::State& state) 
     DynamicColumnLayoutPtr colLayout = DynamicColumnLayout::create(schema, false);
     DynamicColumnLayoutBufferPtr mappedColumnLayout = colLayout->bind(tupleBuffer);
     state.ResumeTiming();
-    std::tuple<int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t, int32_t,
-               int32_t, int32_t, int32_t, int32_t>
+    std::tuple<int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t,
+               int32_t>
         writeRecord(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1);
     for (size_t recordIndex = 0; recordIndex < NUM_TUPLES; ++recordIndex) {
         mappedColumnLayout->pushRecord<false>(writeRecord);

@@ -33,8 +33,11 @@ class PipelineQueryPlanIterator {
   public:
     explicit PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan);
 
-    class iterator : public std::iterator<std::forward_iterator_tag, OperatorPipelinePtr, OperatorPipelinePtr,
-                                          OperatorPipelinePtr*, OperatorPipelinePtr&> {
+    class iterator : public std::iterator<std::forward_iterator_tag,
+                                          OperatorPipelinePtr,
+                                          OperatorPipelinePtr,
+                                          OperatorPipelinePtr*,
+                                          OperatorPipelinePtr&> {
         // use PipelineQueryPlanIterator as a fiend to access its state
         friend class PipelineQueryPlanIterator;
 

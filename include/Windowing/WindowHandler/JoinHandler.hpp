@@ -40,7 +40,8 @@ class JoinHandler : public AbstractJoinHandler {
   public:
     explicit JoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
                          Windowing::BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
-                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction, uint64_t id)
+                         BaseExecutableJoinActionPtr<KeyType, ValueTypeLeft, ValueTypeRight> executableJoinAction,
+                         uint64_t id)
         : AbstractJoinHandler(std::move(joinDefinition), std::move(executablePolicyTrigger)),
           executableJoinAction(std::move(executableJoinAction)), id(id), refCnt(2), isRunning(false) {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
@@ -78,10 +79,12 @@ class JoinHandler : public AbstractJoinHandler {
         };
         this->leftJoinState =
             stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
-                "leftSide" + toString(), leftDefaultCallback);
+                "leftSide" + toString(),
+                leftDefaultCallback);
         this->rightJoinState =
             stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
-                "rightSide" + toString(), rightDefaultCallback);
+                "rightSide" + toString(),
+                rightDefaultCallback);
 
         if (isRunning.compare_exchange_strong(expected, true)) {
             return executablePolicyTrigger->start(this->shared_from_base<AbstractJoinHandler>());

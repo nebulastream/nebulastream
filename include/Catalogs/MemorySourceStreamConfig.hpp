@@ -34,9 +34,14 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryArea the pointer to the memory area
      * @param memoryAreaSize the size of the memory area
      */
-    explicit MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName, std::string logicalStreamName,
-                                      uint8_t* memoryArea, size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                      uint64_t gatheringValue, std::string gatheringMode);
+    explicit MemorySourceStreamConfig(std::string sourceType,
+                                      std::string physicalStreamName,
+                                      std::string logicalStreamName,
+                                      uint8_t* memoryArea,
+                                      size_t memoryAreaSize,
+                                      uint64_t numBuffersToProcess,
+                                      uint64_t gatheringValue,
+                                      std::string gatheringMode);
 
     /**
      * @brief Creates the source descriptor for the underlying source
@@ -78,9 +83,13 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @param memoryAreaSize the size of the memory area
      * @return a constructed MemorySourceStreamConfig
      */
-    static AbstractPhysicalStreamConfigPtr create(std::string sourceType, std::string physicalStreamName,
-                                                  std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize,
-                                                  uint64_t numBuffersToProcess, uint64_t gatheringValue,
+    static AbstractPhysicalStreamConfigPtr create(std::string sourceType,
+                                                  std::string physicalStreamName,
+                                                  std::string logicalStreamName,
+                                                  uint8_t* memoryArea,
+                                                  size_t memoryAreaSize,
+                                                  uint64_t numBuffersToProcess,
+                                                  uint64_t gatheringValue,
                                                   std::string gatheringMode);
 
   private:

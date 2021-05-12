@@ -189,7 +189,9 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     if (ptr == nullptr) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
-    auto memSegment = std::make_unique<detail::MemorySegment>(ptr, bufferSize, this,
+    auto memSegment = std::make_unique<detail::MemorySegment>(ptr,
+                                                              bufferSize,
+                                                              this,
                                                               [](detail::MemorySegment* segment, BufferRecycler* recycler) {
                                                                   recycler->recycleUnpooledBuffer(segment);
                                                               });

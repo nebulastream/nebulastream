@@ -54,7 +54,8 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Default source");
             const DefaultSourcePtr defaultSourcePtr = std::dynamic_pointer_cast<DefaultSource>(dataSource);
             const SourceDescriptorPtr defaultSourceDescriptor =
-                DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(), defaultSourcePtr->getNumBuffersToProcess(),
+                DefaultSourceDescriptor::create(defaultSourcePtr->getSchema(),
+                                                defaultSourcePtr->getNumBuffersToProcess(),
                                                 defaultSourcePtr->getGatheringIntervalCount());
             return defaultSourceDescriptor;
         }
@@ -68,19 +69,27 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
         case CSV_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating CSV File source");
             const CSVSourcePtr csvSourcePtr = std::dynamic_pointer_cast<CSVSource>(dataSource);
-            const SourceDescriptorPtr csvSourceDescriptor = CsvSourceDescriptor::create(
-                csvSourcePtr->getSchema(), csvSourcePtr->getFilePath(), csvSourcePtr->getDelimiter(),
-                csvSourcePtr->getNumberOfTuplesToProducePerBuffer(), csvSourcePtr->getNumBuffersToProcess(),
-                csvSourcePtr->getGatheringIntervalCount(), csvSourcePtr->getSkipHeader());
+            const SourceDescriptorPtr csvSourceDescriptor =
+                CsvSourceDescriptor::create(csvSourcePtr->getSchema(),
+                                            csvSourcePtr->getFilePath(),
+                                            csvSourcePtr->getDelimiter(),
+                                            csvSourcePtr->getNumberOfTuplesToProducePerBuffer(),
+                                            csvSourcePtr->getNumBuffersToProcess(),
+                                            csvSourcePtr->getGatheringIntervalCount(),
+                                            csvSourcePtr->getSkipHeader());
             return csvSourceDescriptor;
         }
 #ifdef ENABLE_KAFKA_BUILD
         case KAFKA_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating Kafka source");
             const KafkaSourcePtr kafkaSourcePtr = std::dynamic_pointer_cast<KafkaSource>(dataSource);
-            const SourceDescriptorPtr kafkaSourceDescriptor = KafkaSourceDescriptor::create(
-                kafkaSourcePtr->getSchema(), kafkaSourcePtr->getBrokers(), kafkaSourcePtr->getTopic(),
-                kafkaSourcePtr->getGroupId(), kafkaSourcePtr->isAutoCommit(), kafkaSourcePtr->getKafkaConsumerTimeout().count());
+            const SourceDescriptorPtr kafkaSourceDescriptor =
+                KafkaSourceDescriptor::create(kafkaSourcePtr->getSchema(),
+                                              kafkaSourcePtr->getBrokers(),
+                                              kafkaSourcePtr->getTopic(),
+                                              kafkaSourcePtr->getGroupId(),
+                                              kafkaSourcePtr->isAutoCommit(),
+                                              kafkaSourcePtr->getKafkaConsumerTimeout().count());
             return kafkaSourceDescriptor;
         }
 #endif
@@ -88,9 +97,11 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
         case MQTT_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating MQTT source");
             const MQTTSourcePtr mqttSourcePtr = std::dynamic_pointer_cast<MQTTSource>(dataSource);
-            const SourceDescriptorPtr mqttSourceDescriptor =
-                MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(), mqttSourcePtr->getServerAddress(),
-                                             mqttSourcePtr->getClientId(), mqttSourcePtr->getUser(), mqttSourcePtr->getTopic());
+            const SourceDescriptorPtr mqttSourceDescriptor = MQTTSourceDescriptor::create(mqttSourcePtr->getSchema(),
+                                                                                          mqttSourcePtr->getServerAddress(),
+                                                                                          mqttSourcePtr->getClientId(),
+                                                                                          mqttSourcePtr->getUser(),
+                                                                                          mqttSourcePtr->getTopic());
             return mqttSourceDescriptor;
         }
 #endif
@@ -98,9 +109,11 @@ SourceDescriptorPtr ConvertPhysicalToLogicalSource::createSourceDescriptor(DataS
         case OPC_SOURCE: {
             NES_INFO("ConvertPhysicalToLogicalSource: Creating OPC source");
             const OPCSourcePtr opcSourcePtr = std::dynamic_pointer_cast<OPCSource>(dataSource);
-            const SourceDescriptorPtr opcSourceDescriptor =
-                OPCSourceDescriptor::create(opcSourcePtr->getSchema(), opcSourcePtr->getUrl(), opcSourcePtr->getNodeId(),
-                                            opcSourcePtr->getUser(), opcSourcePtr->getPassword());
+            const SourceDescriptorPtr opcSourceDescriptor = OPCSourceDescriptor::create(opcSourcePtr->getSchema(),
+                                                                                        opcSourcePtr->getUrl(),
+                                                                                        opcSourcePtr->getNodeId(),
+                                                                                        opcSourcePtr->getUser(),
+                                                                                        opcSourcePtr->getPassword());
             return opcSourceDescriptor;
         }
 #endif

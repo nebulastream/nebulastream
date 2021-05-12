@@ -52,8 +52,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
            BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
            BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,
            uint64_t id) {
-        return std::make_shared<AggregationWindowHandler>(windowDefinition, windowAggregation, executablePolicyTrigger,
-                                                          executableWindowAction, id);
+        return std::make_shared<AggregationWindowHandler>(windowDefinition,
+                                                          windowAggregation,
+                                                          executablePolicyTrigger,
+                                                          executableWindowAction,
+                                                          id);
     }
 
     ~AggregationWindowHandler() {
@@ -184,7 +187,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             watermark = getMinWatermark();
         } else {
             std::map<uint64_t, uint64_t>::iterator max =
-                std::max_element(originIdToMaxTsMap.begin(), originIdToMaxTsMap.end(),
+                std::max_element(originIdToMaxTsMap.begin(),
+                                 originIdToMaxTsMap.end(),
                                  [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
                                      return a.second < b.second;
                                  });

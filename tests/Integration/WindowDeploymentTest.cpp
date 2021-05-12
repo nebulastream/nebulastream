@@ -193,8 +193,13 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
         struct __attribute__((packed)) YsbRecord {
             YsbRecord() = default;
-            YsbRecord(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType,
-                      uint64_t currentMs, uint64_t ip)
+            YsbRecord(uint64_t userId,
+                      uint64_t pageId,
+                      uint64_t campaignId,
+                      uint64_t adType,
+                      uint64_t eventType,
+                      uint64_t currentMs,
+                      uint64_t ip)
                 : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
                   currentMs(currentMs), ip(ip) {}
 
@@ -2038,8 +2043,8 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
         }
     };
 
-    std::vector<Output> expectedOutput = {{0, 10000, 1, 9},  {10000, 20000, 1, 19}, {0, 10000, 4, 1},
-                                          {0, 10000, 11, 3}, {0, 10000, 12, 1},     {0, 10000, 16, 2}};
+    std::vector<Output> expectedOutput =
+        {{0, 10000, 1, 9}, {10000, 20000, 1, 19}, {0, 10000, 4, 1}, {0, 10000, 11, 3}, {0, 10000, 12, 1}, {0, 10000, 16, 2}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());

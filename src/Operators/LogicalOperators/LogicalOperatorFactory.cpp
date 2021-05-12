@@ -106,7 +106,8 @@ LogicalOperatorFactory::createSliceMergingSpecializedOperator(const Windowing::L
 }
 
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOperator(
-    const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor, OperatorId id) {
+    const Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor,
+    OperatorId id) {
     return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategyDescriptor, id);
 }
 

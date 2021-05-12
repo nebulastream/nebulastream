@@ -35,8 +35,8 @@ class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
      * @param watermarkStrategyDescriptor the watermark strategy
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                         Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
+    static GeneratableOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     /**
      * @brief Creates a new generatable watermark assignment operator, which computes a watermark ts an set it to the current buffer.
      * @param id operator id
@@ -45,14 +45,18 @@ class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
      * @param watermarkStrategyDescriptor the watermark strategy
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    static GeneratableOperatorPtr create(OperatorId id,
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
                                          Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableWatermarkAssignmentOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    GeneratableWatermarkAssignmentOperator(OperatorId id,
+                                           SchemaPtr inputSchema,
+                                           SchemaPtr outputSchema,
                                            Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };

@@ -19,12 +19,16 @@
 namespace NES {
 namespace Network {
 
-NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::seconds waitTime,
+NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
+                                             NesPartition nesPartition,
+                                             std::chrono::seconds waitTime,
                                              uint32_t retryTimes)
     : nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes) {}
 
-SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation, NesPartition nesPartition,
-                                                std::chrono::seconds waitTime, uint32_t retryTimes) {
+SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
+                                                NesPartition nesPartition,
+                                                std::chrono::seconds waitTime,
+                                                uint32_t retryTimes) {
     return std::make_shared<NetworkSinkDescriptor>(NetworkSinkDescriptor(nodeLocation, nesPartition, waitTime, retryTimes));
 }
 

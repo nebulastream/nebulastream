@@ -45,10 +45,17 @@ class MQTTSink : public SinkMedium {
      * @return MQTT sink
      */
     // TODO change MSGS to Messages
-    MQTTSink(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId, const std::string address, const std::string clientId,
-             const std::string topic, const std::string user, uint64_t maxBufferedMSGs,
-             const MQTTSinkDescriptor::TimeUnits timeUnit, uint64_t messageDelay,
-             const MQTTSinkDescriptor::ServiceQualities qualityOfService, bool asynchronousClient);
+    MQTTSink(SinkFormatPtr sinkFormat,
+             QuerySubPlanId parentPlanId,
+             const std::string address,
+             const std::string clientId,
+             const std::string topic,
+             const std::string user,
+             uint64_t maxBufferedMSGs,
+             const MQTTSinkDescriptor::TimeUnits timeUnit,
+             uint64_t messageDelay,
+             const MQTTSinkDescriptor::ServiceQualities qualityOfService,
+             bool asynchronousClient);
     ~MQTTSink();
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;

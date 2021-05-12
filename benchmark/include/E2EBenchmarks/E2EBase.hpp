@@ -56,8 +56,12 @@ class E2EBase {
      */
     std::string runExperiment();
 
-    E2EBase(uint64_t threadCntWorker, uint64_t sourceCnt, uint64_t numberOfBuffersInGlobalBufferManager,
-            uint64_t numberOfBuffersPerPipeline, uint64_t numberOfBuffersInSourceLocalBufferPool, uint64_t bufferSizeInBytes,
+    E2EBase(uint64_t threadCntWorker,
+            uint64_t sourceCnt,
+            uint64_t numberOfBuffersInGlobalBufferManager,
+            uint64_t numberOfBuffersPerPipeline,
+            uint64_t numberOfBuffersInSourceLocalBufferPool,
+            uint64_t bufferSizeInBytes,
             E2EBenchmarkConfigPtr config);
     ~E2EBase();
     static std::string getInputOutputModeAsString(E2EBase::InputOutputMode mode);

@@ -189,7 +189,8 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId, ReconfigurationMessage reconfigurationMessage,
+    bool addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId,
+                                   ReconfigurationMessage reconfigurationMessage,
                                    bool blocking = false);
 
     /**
@@ -198,9 +199,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(DataSourcePtr source, bool graceful = true) {
-        return addEndOfStream(source->getOperatorId(), graceful);
-    }
+    bool addEndOfStream(DataSourcePtr source, bool graceful = true) { return addEndOfStream(source->getOperatorId(), graceful); }
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source

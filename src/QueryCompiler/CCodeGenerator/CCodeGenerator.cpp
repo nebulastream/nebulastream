@@ -175,18 +175,21 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     /* declaration of record index; */
     code->varDeclarationRecordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
-        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()), "recordIndex",
+        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createUInt64()),
+                                    "recordIndex",
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"))
             .copy());
     /* ExecutionResult ret = Ok; */
     // TODO probably it's not safe that we can mix enum values with int32 but it is a good hack for me :P
     code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
-        VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"), "ret",
+        VariableDeclaration::create(tf->createAnonymusDataType("ExecutionResult"),
+                                    "ret",
                                     DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "ExecutionResult::Ok"))
             .copy());
 
-    code->varDeclarationInputTuples = VariableDeclaration::create(
-        tf->createPointer(tf->createUserDefinedType(code->structDeclaratonInputTuples[0])), "inputTuples");
+    code->varDeclarationInputTuples =
+        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclaratonInputTuples[0])),
+                                    "inputTuples");
 
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
@@ -508,7 +511,8 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(PipelineContextPtr cont
     context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
 }
 
-void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context, VariableDeclaration varDeclResultTuple,
+void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
+                                                   VariableDeclaration varDeclResultTuple,
                                                    StructDeclaration structDeclarationResultTuple) {
     NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check");
 
@@ -570,15 +574,18 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context, V
  */
 bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                    GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                   PipelineContextPtr context, uint64_t windowOperatorIndex) {
+                                                   PipelineContextPtr context,
+                                                   uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
     auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
-    auto getWindowHandlerStatement = getAggregationWindowHandler(
-        windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation()->getInputStamp(),
-        window->getWindowAggregation()->getPartialAggregateStamp(), window->getWindowAggregation()->getFinalAggregateStamp());
+    auto getWindowHandlerStatement = getAggregationWindowHandler(windowOperatorHandlerDeclaration,
+                                                                 keyStamp,
+                                                                 window->getWindowAggregation()->getInputStamp(),
+                                                                 window->getWindowAggregation()->getPartialAggregateStamp(),
+                                                                 window->getWindowAggregation()->getFinalAggregateStamp());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
 
@@ -764,7 +771,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     // update partial aggregate
     auto partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
     NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid number of input tuples");
-    generatableWindowAggregation->compileLiftCombine(context->code->currentCodeInsertionPoint, partialRef,
+    generatableWindowAggregation->compileLiftCombine(context->code->currentCodeInsertionPoint,
+                                                     partialRef,
                                                      context->getRecordHandler());
 
     // get the slice metadata aggregates
@@ -806,7 +814,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
 
 bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                   GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                  PipelineContextPtr context, uint64_t windowOperatorId) {
+                                                  PipelineContextPtr context,
+                                                  uint64_t windowOperatorId) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
@@ -928,8 +937,10 @@ uint64_t CCodeGenerator::generateJoinSetup(Join::LogicalJoinDefinitionPtr join, 
     return joinOperatorHandlerIndex;
 }
 
-uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context,
-                                                      uint64_t id, Join::JoinOperatorHandlerPtr joinOperatorHandler) {
+uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join,
+                                                      PipelineContextPtr context,
+                                                      uint64_t id,
+                                                      Join::JoinOperatorHandlerPtr joinOperatorHandler) {
     auto tf = getTypeFactory();
     NES_ASSERT(join, "invalid join definition");
     NES_ASSERT(!join->getLeftJoinKey()->getStamp()->isUndefined(), "left join key is undefined");
@@ -1045,7 +1056,8 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
     return joinOperatorHandlerIndex;
 }
 
-bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
+                                         PipelineContextPtr context,
                                          uint64_t operatorHandlerIndex) {
     NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << context->arity
                             << " out=" << joinDef->getOutputSchema()->toString());
@@ -1080,8 +1092,10 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     auto windowOperatorHandlerDeclaration =
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
-    auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(),
-                                                        "InputTupleLeft", "InputTupleRight");
+    auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration,
+                                                        joinDef->getLeftJoinKey()->getStamp(),
+                                                        "InputTupleLeft",
+                                                        "InputTupleRight");
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
 
@@ -1173,8 +1187,9 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
             //Extract the schema of the right side
             auto rightSchema = joinDef->getRightStreamType();
             //Extract the field name without attribute name resolution
-            auto trimmedWindowFieldName = windowTimeStampFieldName.substr(
-                windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR), windowTimeStampFieldName.length());
+            auto trimmedWindowFieldName =
+                windowTimeStampFieldName.substr(windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR),
+                                                windowTimeStampFieldName.length());
             //Extract the first field from right schema and trim it to find the schema qualifier for the right side
             //TODO: I know I know this is really not nice but we will fix in with the other issue above
             bool found = false;
@@ -1255,7 +1270,8 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
     return true;
 }
 
-bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef,
+                                              PipelineContextPtr context,
                                               Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                               QueryCompilation::JoinBuildSide buildSide) {
     NES_DEBUG("join input=" << context->inputSchema->toString() << " aritiy=" << buildSide
@@ -1292,13 +1308,17 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
         getJoinOperatorHandler(context, context->code->varDeclarationExecutionContext, operatorHandlerIndex);
 
     if (buildSide == QueryCompilation::Left) {
-        auto getJoinHandlerStatement = getJoinWindowHandler(
-            windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(), "InputTuple", "InputTupleRight");
+        auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration,
+                                                            joinDef->getLeftJoinKey()->getStamp(),
+                                                            "InputTuple",
+                                                            "InputTupleRight");
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
     } else {
-        auto getJoinHandlerStatement = getJoinWindowHandler(
-            windowOperatorHandlerDeclaration, joinDef->getLeftJoinKey()->getStamp(), "InputTupleLeft", "InputTuple");
+        auto getJoinHandlerStatement = getJoinWindowHandler(windowOperatorHandlerDeclaration,
+                                                            joinDef->getLeftJoinKey()->getStamp(),
+                                                            "InputTupleLeft",
+                                                            "InputTuple");
         context->code->variableInitStmts.emplace_back(
             VarDeclStatement(windowJoinVariableDeclration).assign(getJoinHandlerStatement).copy());
     }
@@ -1391,8 +1411,9 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
             //Extract the schema of the right side
             auto rightSchema = joinDef->getRightStreamType();
             //Extract the field name without attribute name resolution
-            auto trimmedWindowFieldName = windowTimeStampFieldName.substr(
-                windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR), windowTimeStampFieldName.length());
+            auto trimmedWindowFieldName =
+                windowTimeStampFieldName.substr(windowTimeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR),
+                                                windowTimeStampFieldName.length());
             //Extract the first field from right schema and trim it to find the schema qualifier for the right side
             //TODO: I know I know this is really not nice but we will fix in with the other issue above
             bool found = false;
@@ -1469,7 +1490,8 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
                                                   << " with code=" << context->code);
     // Generate code for watermark updater
     // i.e., calling updateAllMaxTs
-    generateCodeForWatermarkUpdaterJoin(context, windowJoinVariableDeclration,
+    generateCodeForWatermarkUpdaterJoin(context,
+                                        windowJoinVariableDeclration,
                                         buildSide == QueryCompilation::JoinBuildSide::Left);
 
     return true;
@@ -1477,7 +1499,8 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
                                                     GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                    PipelineContextPtr context, uint64_t windowOperatorIndex) {
+                                                    PipelineContextPtr context,
+                                                    uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
     auto code = context->code;
@@ -1502,9 +1525,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 
     auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
 
-    auto getWindowHandlerStatement = getAggregationWindowHandler(
-        windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation()->getInputStamp(),
-        window->getWindowAggregation()->getPartialAggregateStamp(), window->getWindowAggregation()->getFinalAggregateStamp());
+    auto getWindowHandlerStatement = getAggregationWindowHandler(windowOperatorHandlerDeclaration,
+                                                                 keyStamp,
+                                                                 window->getWindowAggregation()->getInputStamp(),
+                                                                 window->getWindowAggregation()->getPartialAggregateStamp(),
+                                                                 window->getWindowAggregation()->getFinalAggregateStamp());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
 
@@ -1648,7 +1673,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
 
     // update partial aggregate
     const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    generatableWindowAggregation->compileLiftCombine(context->code->currentCodeInsertionPoint, partialRef,
+    generatableWindowAggregation->compileLiftCombine(context->code->currentCodeInsertionPoint,
+                                                     partialRef,
                                                      context->getRecordHandler());
 
     // get the slice metadata aggregates
@@ -1693,8 +1719,11 @@ bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefi
     return true;
 }
 
-uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr, PipelineContextPtr context,
-                                             uint64_t id, Windowing::WindowOperatorHandlerPtr windowOperatorHandler) {
+uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                             SchemaPtr,
+                                             PipelineContextPtr context,
+                                             uint64_t id,
+                                             Windowing::WindowOperatorHandlerPtr windowOperatorHandler) {
     auto tf = getTypeFactory();
     auto idParam = VariableDeclaration::create(tf->createAnonymusDataType("auto"), std::to_string(id));
 
@@ -2016,7 +2045,8 @@ BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBuf
 #define TO_CODE(type) tf->createDataType(type)->getCode()->code_
 
 BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
-                                                                    DataTypePtr keyType, DataTypePtr inputType,
+                                                                    DataTypePtr keyType,
+                                                                    DataTypePtr inputType,
                                                                     DataTypePtr partialAggregateType,
                                                                     DataTypePtr finalAggregateType) {
     auto tf = getTypeFactory();
@@ -2026,8 +2056,10 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(VariableDecl
     return VarRef(pipelineContextVariable).accessPtr(call);
 }
 
-BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType,
-                                                             std::string leftType, std::string rightType) {
+BinaryOperatorStatement CCodeGenerator::getJoinWindowHandler(VariableDeclaration pipelineContextVariable,
+                                                             DataTypePtr keyType,
+                                                             std::string leftType,
+                                                             std::string rightType) {
 
     auto tf = getTypeFactory();
     auto call = FunctionCallStatement(std::string("getJoinHandler<NES::Join::JoinHandler, ") + TO_CODE(keyType) + "," + leftType
@@ -2060,7 +2092,8 @@ TypeCastExprStatement CCodeGenerator::getTypedBuffer(VariableDeclaration tupleBu
     auto tf = getTypeFactory();
     return TypeCast(getBuffer(tupleBufferVariable), tf->createPointer(tf->createUserDefinedType(structDeclaraton)));
 }
-VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
+VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr context,
+                                                             VariableDeclaration tupleBufferVariable,
                                                              uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto executionContextRef = VarRefStatement(tupleBufferVariable);
@@ -2076,7 +2109,8 @@ VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr 
     return windowOperatorHandlerDeclaration;
 }
 
-VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
+VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr context,
+                                                           VariableDeclaration tupleBufferVariable,
                                                            uint64_t joinOperatorIndex) {
     auto tf = getTypeFactory();
     auto executionContextRef = VarRefStatement(tupleBufferVariable);

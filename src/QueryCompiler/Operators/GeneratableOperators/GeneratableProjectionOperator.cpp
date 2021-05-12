@@ -22,18 +22,22 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-GeneratableProjectionOperator::GeneratableProjectionOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableProjectionOperator::GeneratableProjectionOperator(OperatorId id,
+                                                             SchemaPtr inputSchema,
+                                                             SchemaPtr outputSchema,
                                                              std::vector<ExpressionNodePtr> expressions)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), expressions(expressions) {}
 
-GeneratableOperatorPtr GeneratableProjectionOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+GeneratableOperatorPtr GeneratableProjectionOperator::create(OperatorId id,
+                                                             SchemaPtr inputSchema,
+                                                             SchemaPtr outputSchema,
                                                              std::vector<ExpressionNodePtr> expressions) {
     return std::make_shared<GeneratableProjectionOperator>(
         GeneratableProjectionOperator(id, inputSchema, outputSchema, expressions));
 }
 
-GeneratableOperatorPtr GeneratableProjectionOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                             std::vector<ExpressionNodePtr> expressions) {
+GeneratableOperatorPtr
+GeneratableProjectionOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expressions);
 }
 

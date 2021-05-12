@@ -23,7 +23,9 @@ namespace NES {
 DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint64_t frequency)
     : SourceDescriptor(std::move(schema)), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
 
-DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
+DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema,
+                                                 std::string streamName,
+                                                 uint64_t numbersOfBufferToProduce,
                                                  uint64_t frequency)
     : SourceDescriptor(std::move(schema), std::move(streamName)), numbersOfBufferToProduce(numbersOfBufferToProduce),
       frequency(frequency) {}
@@ -38,8 +40,8 @@ SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, uint64_t n
         DefaultSourceDescriptor(std::move(schema), numbersOfBufferToProduce, frequency));
 }
 
-SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce,
-                                                    uint64_t frequency) {
+SourceDescriptorPtr
+DefaultSourceDescriptor::create(SchemaPtr schema, std::string streamName, uint64_t numbersOfBufferToProduce, uint64_t frequency) {
     return std::make_shared<DefaultSourceDescriptor>(
         DefaultSourceDescriptor(std::move(schema), std::move(streamName), numbersOfBufferToProduce, frequency));
 }

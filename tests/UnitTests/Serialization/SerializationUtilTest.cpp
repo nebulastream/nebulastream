@@ -156,8 +156,9 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     EXPECT_TRUE(DataTypeFactory::createDouble()->isEquals(deserializedFloat64));
 
     // serialize and deserialize float64
-    auto serializedArray = DataTypeSerializationUtil::serializeDataType(
-        DataTypeFactory::createArray(42, DataTypeFactory::createInt8()), new SerializableDataType());
+    auto serializedArray =
+        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createArray(42, DataTypeFactory::createInt8()),
+                                                     new SerializableDataType());
     auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(serializedArray);
     EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->isEquals(deserializedArray));
 
@@ -481,8 +482,12 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         Join::LogicalJoinDefinitionPtr joinDef = Join::LogicalJoinDefinition::create(
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
             FieldAccessExpressionNode::create(DataTypeFactory::createInt64(), "key")->as<FieldAccessExpressionNode>(),
-            Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)), distrType,
-            triggerPolicy, triggerAction, 1, 1);
+            Windowing::TumblingWindow::of(Windowing::TimeCharacteristic::createIngestionTime(), API::Milliseconds(10)),
+            distrType,
+            triggerPolicy,
+            triggerAction,
+            1,
+            1);
 
         auto join = LogicalOperatorFactory::createJoinOperator(joinDef);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(join, new SerializableOperator());

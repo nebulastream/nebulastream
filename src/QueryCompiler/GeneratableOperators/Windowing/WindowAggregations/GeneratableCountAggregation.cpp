@@ -31,7 +31,8 @@ GeneratableCountAggregation::create(Windowing::WindowAggregationDescriptorPtr ag
     return std::make_shared<GeneratableCountAggregation>(aggregationDescriptor);
 }
 
-void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement partialRef,
+void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
+                                                     BinaryOperatorStatement partialRef,
                                                      RecordHandlerPtr) {
     auto increment = ++partialRef;
     auto updatedPartial = partialRef.assign(increment);

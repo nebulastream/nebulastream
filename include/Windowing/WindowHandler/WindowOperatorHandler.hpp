@@ -29,7 +29,8 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
   public:
     WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema);
 
-    WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+    WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition,
+                          SchemaPtr resultSchema,
                           AbstractWindowHandlerPtr windowHandler);
 
     /**
@@ -47,8 +48,8 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     * @param windowHandler pre initialized window handler
     * @return WindowOperatorHandlerPtr
     */
-    static WindowOperatorHandlerPtr create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
-                                           AbstractWindowHandlerPtr windowHandler);
+    static WindowOperatorHandlerPtr
+    create(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema, AbstractWindowHandlerPtr windowHandler);
 
     /**
      * @brief Sets the window handler
@@ -65,8 +66,11 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
      * @tparam FinalAggregateType
      * @return WindowHandlerType
      */
-    template<template<class, class, class, class> class WindowHandlerType, class KeyType, class InputType,
-             class PartialAggregateType, class FinalAggregateType>
+    template<template<class, class, class, class> class WindowHandlerType,
+             class KeyType,
+             class InputType,
+             class PartialAggregateType,
+             class FinalAggregateType>
     auto getWindowHandler() {
         return std::static_pointer_cast<WindowHandlerType<KeyType, InputType, PartialAggregateType, FinalAggregateType>>(
             windowHandler);

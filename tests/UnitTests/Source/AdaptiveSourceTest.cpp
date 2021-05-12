@@ -50,9 +50,18 @@ struct __attribute__((packed)) inputRow {
 
 class MockCSVAdaptiveSource : public AdaptiveSource {
   public:
-    MockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager, NodeEngine::QueryManagerPtr queryManager,
-                          uint64_t initialGatheringInterval, std::string filePath, uint64_t intervalIncrease)
-        : AdaptiveSource(schema, bufferManager, queryManager, initialGatheringInterval, 1, 12,
+    MockCSVAdaptiveSource(SchemaPtr schema,
+                          NodeEngine::BufferManagerPtr bufferManager,
+                          NodeEngine::QueryManagerPtr queryManager,
+                          uint64_t initialGatheringInterval,
+                          std::string filePath,
+                          uint64_t intervalIncrease)
+        : AdaptiveSource(schema,
+                         bufferManager,
+                         queryManager,
+                         initialGatheringInterval,
+                         1,
+                         12,
                          DataSource::GatheringMode::FREQUENCY_MODE),
           filePath(filePath) {
         this->intervalIncrease = std::chrono::milliseconds(intervalIncrease);
@@ -106,10 +115,17 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
     };
 };
 
-const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                                                NodeEngine::QueryManagerPtr queryManager, uint64_t initialGatheringInterval,
-                                                std::string filePath, uint64_t intervalIncrease) {
-    return std::make_shared<MockCSVAdaptiveSource>(schema, bufferManager, queryManager, initialGatheringInterval, filePath,
+const DataSourcePtr createMockCSVAdaptiveSource(SchemaPtr schema,
+                                                NodeEngine::BufferManagerPtr bufferManager,
+                                                NodeEngine::QueryManagerPtr queryManager,
+                                                uint64_t initialGatheringInterval,
+                                                std::string filePath,
+                                                uint64_t intervalIncrease) {
+    return std::make_shared<MockCSVAdaptiveSource>(schema,
+                                                   bufferManager,
+                                                   queryManager,
+                                                   initialGatheringInterval,
+                                                   filePath,
                                                    intervalIncrease);
 }
 
@@ -129,8 +145,12 @@ TEST_F(AdaptiveSourceTest, testSamplingChange) {
     uint64_t num_of_buffers = 1;
     uint64_t initialGatheringInterval = 4000;
 
-    const DataSourcePtr source = createMockCSVAdaptiveSource(
-        schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), initialGatheringInterval, path_to_file, 1000);
+    const DataSourcePtr source = createMockCSVAdaptiveSource(schema,
+                                                             nodeEngine->getBufferManager(),
+                                                             nodeEngine->getQueryManager(),
+                                                             initialGatheringInterval,
+                                                             path_to_file,
+                                                             1000);
     source->open();
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -158,9 +178,12 @@ TEST_F(AdaptiveSourceTest, testSamplingChangeSubSecond) {
     uint64_t initialGatheringInterval = 350;
     uint64_t intervalIncrease = 100;
 
-    const DataSourcePtr source =
-        createMockCSVAdaptiveSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                    initialGatheringInterval, path_to_file, intervalIncrease);
+    const DataSourcePtr source = createMockCSVAdaptiveSource(schema,
+                                                             nodeEngine->getBufferManager(),
+                                                             nodeEngine->getQueryManager(),
+                                                             initialGatheringInterval,
+                                                             path_to_file,
+                                                             intervalIncrease);
 
     source->open();
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {

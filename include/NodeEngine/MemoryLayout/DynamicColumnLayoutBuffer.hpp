@@ -34,7 +34,9 @@ typedef uint64_t COL_OFFSET_SIZE;
 class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
   public:
-    DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity, std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
+    DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer,
+                              uint64_t capacity,
+                              std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                               std::vector<COL_OFFSET_SIZE> columnOffsets);
 
     /**
@@ -93,11 +95,13 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      */
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type
-    copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint64_t recordIndex,
+    copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup,
+                              uint64_t recordIndex,
                               const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<(I < sizeof...(Ts)), void>::type
-    copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint64_t recordIndex,
+    copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup,
+                              uint64_t recordIndex,
                               const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
 
     const std::vector<COL_OFFSET_SIZE> columnOffsets;
@@ -107,7 +111,8 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
 template<size_t I, typename... Ts>
 typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
-    std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+    std::tuple<Ts...> tup,
+    const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
     // Iterated through tuple, so simply return
     ((void) tup);
     ((void) fieldSizes);
@@ -116,7 +121,8 @@ typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffe
 
 template<size_t I, typename... Ts>
 typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
-    std::tuple<Ts...> tup, const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+    std::tuple<Ts...> tup,
+    const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
     // Get current type of tuple and cast address to this type pointer
     auto address = basePointer + columnOffsets[I] + fieldSizes[I] * numberOfRecords;
     *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address)) = std::get<I>(tup);
@@ -127,7 +133,8 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuff
 
 template<size_t I, typename... Ts>
 typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsFromBuffer(
-    std::tuple<Ts...>& tup, uint64_t recordIndex,
+    std::tuple<Ts...>& tup,
+    uint64_t recordIndex,
     const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
     // Iterated through tuple, so simply return
     ((void) tup);
@@ -138,7 +145,8 @@ typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffe
 
 template<size_t I, typename... Ts>
 typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsFromBuffer(
-    std::tuple<Ts...>& tup, uint64_t recordIndex,
+    std::tuple<Ts...>& tup,
+    uint64_t recordIndex,
     const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
     // Get current type of tuple and cast address to this type pointer
     auto address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;

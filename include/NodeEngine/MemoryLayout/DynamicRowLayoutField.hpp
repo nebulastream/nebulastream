@@ -56,8 +56,10 @@ class DynamicRowLayoutField {
     inline T& operator[](size_t recordIndex);
 
   private:
-    DynamicRowLayoutField(std::shared_ptr<DynamicRowLayoutBuffer> dynamicRowLayoutBuffer, uint8_t* basePointer,
-                          FIELD_SIZE fieldIndex, FIELD_SIZE recordSize)
+    DynamicRowLayoutField(std::shared_ptr<DynamicRowLayoutBuffer> dynamicRowLayoutBuffer,
+                          uint8_t* basePointer,
+                          FIELD_SIZE fieldIndex,
+                          FIELD_SIZE recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer),
           dynamicRowLayoutBuffer(dynamicRowLayoutBuffer){};
 

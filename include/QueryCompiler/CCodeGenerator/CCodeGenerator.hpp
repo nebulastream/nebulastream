@@ -95,8 +95,10 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window, SchemaPtr windowOutputSchema,
-                                 PipelineContextPtr context, uint64_t id,
+    uint64_t generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,
+                                 SchemaPtr windowOutputSchema,
+                                 PipelineContextPtr context,
+                                 uint64_t id,
                                  Windowing::WindowOperatorHandlerPtr windowOperatorHandler) override;
 
     /**
@@ -108,7 +110,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                       GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
+                                       GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                       PipelineContextPtr context,
                                        uint64_t operatorHandlerIndex) override;
 
     /**
@@ -120,7 +123,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                      GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
+                                      GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                      PipelineContextPtr context,
                                       uint64_t windowOperatorIndex) override;
 
     /**
@@ -132,7 +136,8 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                        GeneratableWindowAggregationPtr generatableWindowAggregation, PipelineContextPtr context,
+                                        GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                        PipelineContextPtr context,
                                         uint64_t windowOperatorIndex) override;
 
     /**
@@ -149,7 +154,9 @@ class CCodeGenerator : public CodeGenerator {
     * @param context The context of the current pipeline.
     * @return the operator id
     */
-    uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join, PipelineContextPtr context, uint64_t id,
+    uint64_t generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitionPtr join,
+                                          PipelineContextPtr context,
+                                          uint64_t id,
                                           Join::JoinOperatorHandlerPtr joinOperatorHandler) override;
 
     /**
@@ -159,7 +166,8 @@ class CCodeGenerator : public CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+    bool generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
+                             PipelineContextPtr context,
                              uint64_t operatorHandlerIndex) override;
 
     /**
@@ -170,7 +178,8 @@ class CCodeGenerator : public CodeGenerator {
     * todo refactor parameter
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef, PipelineContextPtr context,
+    virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef,
+                                          PipelineContextPtr context,
                                           Join::JoinOperatorHandlerPtr joinOperatorHandler,
                                           QueryCompilation::JoinBuildSide buildSide);
 
@@ -190,8 +199,8 @@ class CCodeGenerator : public CodeGenerator {
 
   private:
     BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
-    VariableDeclaration getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
-                                                 uint64_t index);
+    VariableDeclaration
+    getWindowOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t index);
     BinaryOperatorStatement getWatermark(VariableDeclaration tupleBufferVariable);
     BinaryOperatorStatement getOriginId(VariableDeclaration tupleBufferVariable);
 
@@ -202,19 +211,25 @@ class CCodeGenerator : public CodeGenerator {
     BinaryOperatorStatement setOriginId(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
 
     BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
-    BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext, VariableDeclaration tupleBufferVariable,
+    BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
+                                            VariableDeclaration tupleBufferVariable,
                                             VariableDeclaration workerContextVariable);
-    void generateTupleBufferSpaceCheck(PipelineContextPtr context, VariableDeclaration varDeclResultTuple,
+    void generateTupleBufferSpaceCheck(PipelineContextPtr context,
+                                       VariableDeclaration varDeclResultTuple,
                                        StructDeclaration structDeclarationResultTuple);
 
     StructDeclaration getStructDeclarationFromSchema(std::string structName, SchemaPtr schema);
 
-    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr keyType,
-                                                        DataTypePtr inputType, DataTypePtr partialAggregateType,
+    BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
+                                                        DataTypePtr keyType,
+                                                        DataTypePtr inputType,
+                                                        DataTypePtr partialAggregateType,
                                                         DataTypePtr finalAggregateType);
 
-    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable, DataTypePtr KeyType,
-                                                 std::string leftType, std::string rightType);
+    BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable,
+                                                 DataTypePtr KeyType,
+                                                 std::string leftType,
+                                                 std::string rightType);
 
     BinaryOperatorStatement getStateVariable(VariableDeclaration);
 
@@ -228,8 +243,8 @@ class CCodeGenerator : public CodeGenerator {
 
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
 
-    VariableDeclaration getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable,
-                                               uint64_t joinOperatorIndex);
+    VariableDeclaration
+    getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t joinOperatorIndex);
 };
 
 }// namespace NES

@@ -73,7 +73,10 @@ class TestHarness {
          * @param restPort port for the rest service
          * @param rpcPort for for the grpc
          */
-    TestHarness(std::string queryWithoutSink, uint16_t restPort = 8081, uint16_t rpcPort = 4000, uint64_t memSrcFrequency = 0,
+    TestHarness(std::string queryWithoutSink,
+                uint16_t restPort = 8081,
+                uint16_t rpcPort = 4000,
+                uint64_t memSrcFrequency = 0,
                 uint64_t memSrcNumBuffToProcess = 1)
         : ipAddress("127.0.0.1"), queryWithoutSink(queryWithoutSink), bufferSize(4096), memSrcFrequency(memSrcFrequency),
           memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
@@ -293,9 +296,15 @@ class TestHarness {
                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
                 }
 
-                AbstractPhysicalStreamConfigPtr conf = MemorySourceStreamConfig::create(
-                    "MemorySource", worker.physicalStreamName, worker.logicalStreamName, memArea, memAreaSize,
-                    /** numberOfBuffers*/ memSrcNumBuffToProcess, /** frequency*/ memSrcFrequency, "frequency");
+                AbstractPhysicalStreamConfigPtr conf =
+                    MemorySourceStreamConfig::create("MemorySource",
+                                                     worker.physicalStreamName,
+                                                     worker.logicalStreamName,
+                                                     memArea,
+                                                     memAreaSize,
+                                                     /** numberOfBuffers*/ memSrcNumBuffToProcess,
+                                                     /** frequency*/ memSrcFrequency,
+                                                     "frequency");
                 worker.wrk->registerPhysicalStream(conf);
             }
         }

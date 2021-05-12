@@ -24,8 +24,11 @@ namespace NES {
 
 namespace Network {
 
-NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, ExchangeProtocol&& exchangeProtocol,
-                               NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread)
+NetworkManager::NetworkManager(const std::string& hostname,
+                               uint16_t port,
+                               ExchangeProtocol&& exchangeProtocol,
+                               NodeEngine::BufferManagerPtr bufferManager,
+                               uint16_t numServerThread)
     : exchangeProtocol(std::move(exchangeProtocol)),
       server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)) {
     bool success = server->start();
@@ -38,8 +41,11 @@ NetworkManager::NetworkManager(const std::string& hostname, uint16_t port, Excha
 
 NetworkManager::~NetworkManager() { destroy(); }
 
-NetworkManagerPtr NetworkManager::create(const std::string& hostname, uint16_t port, Network::ExchangeProtocol&& exchangeProtocol,
-                                         NodeEngine::BufferManagerPtr bufferManager, uint16_t numServerThread) {
+NetworkManagerPtr NetworkManager::create(const std::string& hostname,
+                                         uint16_t port,
+                                         Network::ExchangeProtocol&& exchangeProtocol,
+                                         NodeEngine::BufferManagerPtr bufferManager,
+                                         uint16_t numServerThread) {
     return std::make_shared<NetworkManager>(hostname, port, std::move(exchangeProtocol), bufferManager, numServerThread);
 }
 
@@ -60,11 +66,17 @@ bool NetworkManager::unregisterSubpartitionConsumer(NesPartition nesPartition) {
     return exchangeProtocol.getPartitionManager()->unregisterSubpartition(nesPartition);
 }
 
-OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation, NesPartition nesPartition,
-                                                              std::chrono::seconds waitTime, uint8_t retryTimes) {
+OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation& nodeLocation,
+                                                              NesPartition nesPartition,
+                                                              std::chrono::seconds waitTime,
+                                                              uint8_t retryTimes) {
     NES_INFO("NetworkManager: Registering SubpartitionProducer: " << nesPartition.toString());
     // method needs to return a pointer so that it can be passed to boost::thread_specific_ptr
-    return OutputChannel::create(server->getContext(), nodeLocation.createZmqURI(), nesPartition, exchangeProtocol, waitTime,
+    return OutputChannel::create(server->getContext(),
+                                 nodeLocation.createZmqURI(),
+                                 nesPartition,
+                                 exchangeProtocol,
+                                 waitTime,
                                  retryTimes);
 }
 

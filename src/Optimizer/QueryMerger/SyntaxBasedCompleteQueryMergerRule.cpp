@@ -66,7 +66,8 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
                 for (auto& targetSinkOperator : targetSharedQueryMetaData->getSinkOperators()) {
                     uint64_t hostSinkOperatorId = targetToHostSinkOperatorMap[targetSinkOperator->getId()];
 
-                    auto hostSinkOperator = std::find_if(hostSinkOperators.begin(), hostSinkOperators.end(),
+                    auto hostSinkOperator = std::find_if(hostSinkOperators.begin(),
+                                                         hostSinkOperators.end(),
                                                          [hostSinkOperatorId](OperatorNodePtr hostOperator) {
                                                              return hostOperator->getId() == hostSinkOperatorId;
                                                          });
@@ -109,7 +110,8 @@ bool SyntaxBasedCompleteQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPla
     return true;
 }
 
-bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan, QueryPlanPtr hostQueryPlan,
+bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQueryPlan,
+                                                            QueryPlanPtr hostQueryPlan,
                                                             std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     NES_DEBUG("SyntaxBasedCompleteQueryMergerRule: check if the target and address query plans are syntactically equal or not");
@@ -133,7 +135,8 @@ bool SyntaxBasedCompleteQueryMergerRule::areQueryPlansEqual(QueryPlanPtr targetQ
     return false;
 }
 
-bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator, OperatorNodePtr hostOperator,
+bool SyntaxBasedCompleteQueryMergerRule::areOperatorEqual(OperatorNodePtr targetOperator,
+                                                          OperatorNodePtr hostOperator,
                                                           std::map<uint64_t, uint64_t>& targetHostOperatorMap) {
 
     NES_TRACE("SyntaxBasedCompleteQueryMergerRule: Check if the target and address operator are syntactically equal or not.");

@@ -161,7 +161,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionL
 
     auto conditions = childQuerySignature->getConditions();
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
-    return QuerySignature::create(std::move(conditions), std::move(updatedColumns), std::move(updatedSchemas),
+    return QuerySignature::create(std::move(conditions),
+                                  std::move(updatedColumns),
+                                  std::move(updatedSchemas),
                                   std::move(windowExpressions));
 }
 
@@ -217,7 +219,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForMap(z3::ContextPtr 
 
     auto conditions = childQuerySignature->getConditions();
     auto windowsExpressions = childQuerySignature->getWindowsExpressions();
-    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(updatedSchemas),
+    return QuerySignature::create(std::move(conditions),
+                                  std::move(columns),
+                                  std::move(updatedSchemas),
                                   std::move(windowsExpressions));
 }
 
@@ -333,7 +337,9 @@ QuerySignatureUtil::createQuerySignatureForWatermark(z3::ContextPtr context,
     auto columns = childQuerySignature->getColumns();
     auto operatorTupleSchemaMap = childQuerySignature->getSchemaFieldToExprMaps();
 
-    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(operatorTupleSchemaMap),
+    return QuerySignature::create(std::move(conditions),
+                                  std::move(columns),
+                                  std::move(operatorTupleSchemaMap),
                                   std::move(windowExpressions));
 }
 
@@ -388,7 +394,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForUnion(z3::ContextPt
 
     //Create a CNF using all conditions from children signatures
     z3::ExprPtr conditions = std::make_shared<z3::expr>(z3::mk_and(allConditions));
-    return QuerySignature::create(std::move(conditions), std::move(leftColumns), std::move(schemas),
+    return QuerySignature::create(std::move(conditions),
+                                  std::move(leftColumns),
+                                  std::move(schemas),
                                   std::move(windowExpressions));
 }
 
@@ -591,7 +599,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
     //    auto windowCountSizeVar = context->int_const("window-count-size");
 
     //Compute the CNF based on the window-key, window-time-key, window-size, and window-slide
-    Z3_ast expressionArray[] = {windowKeyExpression, windowTimeKeyExpression, windowTimeSlideExpression,
+    Z3_ast expressionArray[] = {windowKeyExpression,
+                                windowTimeKeyExpression,
+                                windowTimeSlideExpression,
                                 windowTimeSizeExpression};
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     if (windowExpressions.find(windowKey) == windowExpressions.end()) {

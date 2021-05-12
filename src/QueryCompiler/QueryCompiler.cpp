@@ -66,8 +66,10 @@ class PipelineStageHolder {
   public:
     PipelineStageHolder() = default;
 
-    PipelineStageHolder(uint32_t currentStageId, NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                        const std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers, SchemaPtr inputSchema,
+    PipelineStageHolder(uint32_t currentStageId,
+                        NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+                        const std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers,
+                        SchemaPtr inputSchema,
                         SchemaPtr outputSchema)
         : currentStageId(currentStageId), executablePipelineStage(std::move(executablePipelineStage)),
           operatorHandlers(std::move(operatorHandlers)), inputSchema(inputSchema), outputSchema(outputSchema) {
@@ -75,8 +77,12 @@ class PipelineStageHolder {
     }
 };
 
-void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId, CodeGeneratorPtr codeGenerator,
-                                 NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, PipelineContextPtr context,
+void generateExecutablePipelines(QueryId queryId,
+                                 QuerySubPlanId querySubPlanId,
+                                 CodeGeneratorPtr codeGenerator,
+                                 NodeEngine::BufferManagerPtr,
+                                 NodeEngine::QueryManagerPtr,
+                                 PipelineContextPtr context,
                                  std::map<uint32_t, PipelineStageHolder, std::greater<>>& accumulator) {
     // BFS visit to figure out producer-consumer relations among pipelines
     std::deque<std::tuple<int32_t, int32_t, PipelineContextPtr, int32_t>> queue;
@@ -101,8 +107,11 @@ void generateExecutablePipelines(QueryId queryId, QuerySubPlanId querySubPlanId,
             auto inputSchema = currContext->inputSchema;
             auto resultSchema = currContext->resultSchema;
 
-            accumulator[currentPipelineStateId] = PipelineStageHolder(
-                currentPipelineStateId, executablePipelineStage, currContext->getOperatorHandlers(), inputSchema, resultSchema);
+            accumulator[currentPipelineStateId] = PipelineStageHolder(currentPipelineStateId,
+                                                                      executablePipelineStage,
+                                                                      currContext->getOperatorHandlers(),
+                                                                      inputSchema,
+                                                                      resultSchema);
             if (consumerPipelineStateId >= 0) {
                 accumulator[currentPipelineStateId].consumers.emplace(consumerPipelineStateId);
             }

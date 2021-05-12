@@ -38,8 +38,10 @@ class MinimumEnergyConsumptionStrategy : public BasePlacementStrategy {
   private:
     MinimumEnergyConsumptionStrategy(NESTopologyPlanPtr nesTopologyPlan);
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        LogicalOperatorNodePtr sourceOperator, std::vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr,
+                        NESTopologyGraphPtr nesTopologyGraphPtr,
+                        LogicalOperatorNodePtr sourceOperator,
+                        std::vector<NESTopologyEntryPtr> sourceNodes);
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator
      * @param sourceNodes

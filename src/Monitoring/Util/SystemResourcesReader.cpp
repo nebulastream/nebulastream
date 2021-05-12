@@ -94,8 +94,24 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
 
     uint64_t i = 0;
     while (fgets(buf, 200, fp)) {
-        sscanf(buf, "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu", ifname, &rBytes, &rPackets, &rErrs,
-               &rDrop, &rFifo, &rFrame, &rCompressed, &rMulticast, &tBytes, &tPackets, &tErrs, &tDrop, &tFifo, &tColls, &tCarrier,
+        sscanf(buf,
+               "%[^:]: %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu %lu",
+               ifname,
+               &rBytes,
+               &rPackets,
+               &rErrs,
+               &rDrop,
+               &rFifo,
+               &rFrame,
+               &rCompressed,
+               &rMulticast,
+               &tBytes,
+               &tPackets,
+               &tErrs,
+               &tDrop,
+               &tFifo,
+               &tColls,
+               &tCarrier,
                &tCompressed);
         auto outputValue = NetworkValues();
         // the name of the network interface

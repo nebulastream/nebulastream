@@ -217,7 +217,8 @@ std::optional<TopologyNodePtr> Topology::findAllPathBetween(TopologyNodePtr star
     return result;
 }
 
-TopologyNodePtr Topology::find(TopologyNodePtr testNode, std::vector<TopologyNodePtr> searchedNodes,
+TopologyNodePtr Topology::find(TopologyNodePtr testNode,
+                               std::vector<TopologyNodePtr> searchedNodes,
                                std::map<uint64_t, TopologyNodePtr>& uniqueNodes) {
 
     NES_TRACE("Topology: check if test node is one of the searched node");

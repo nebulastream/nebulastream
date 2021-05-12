@@ -35,8 +35,12 @@ class MQTTClientWrapper {
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
      * @return MQTTClientWrapper
      */
-    MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId, uint64_t maxBufferedMSGs,
-                      const std::string topic, int qualityOfService);
+    MQTTClientWrapper(bool useAsyncClient,
+                      const std::string address,
+                      const std::string clientId,
+                      uint64_t maxBufferedMSGs,
+                      const std::string topic,
+                      int qualityOfService);
 
     /**
      * @brief get a pointer to the MQTT asynchronous client ONLY IF 'useAsyncClient' = true

@@ -42,8 +42,9 @@ bool QueryDeploymentPhase::execute(QueryId queryId) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
     if (executionNodes.empty()) {
         NES_ERROR("QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query " << queryId);
-        throw QueryDeploymentException(
-            queryId, "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query " + std::to_string(queryId));
+        throw QueryDeploymentException(queryId,
+                                       "QueryDeploymentPhase: Unable to find ExecutionNodes to be deploy the query "
+                                           + std::to_string(queryId));
     }
 
     bool successDeploy = deployQuery(queryId, executionNodes);

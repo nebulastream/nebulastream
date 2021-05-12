@@ -20,8 +20,12 @@
 
 namespace NES {
 const std::chrono::duration<int64_t> MAX_WAIT_FOR_BROKER_CONNECT = std::chrono::seconds(20);
-MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient, const std::string address, const std::string clientId,
-                                     uint64_t maxBufferedMSGs, std::string topic, int qualityOfService) {
+MQTTClientWrapper::MQTTClientWrapper(bool useAsyncClient,
+                                     const std::string address,
+                                     const std::string clientId,
+                                     uint64_t maxBufferedMSGs,
+                                     std::string topic,
+                                     int qualityOfService) {
     this->useAsyncClient = useAsyncClient;
     this->topic = topic;
     this->qualityOfService = qualityOfService;

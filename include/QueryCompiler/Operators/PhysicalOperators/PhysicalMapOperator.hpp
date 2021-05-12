@@ -27,12 +27,14 @@ namespace PhysicalOperators {
  */
 class PhysicalMapOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    PhysicalMapOperator(OperatorId id,
+                        SchemaPtr inputSchema,
+                        SchemaPtr outputSchema,
                         FieldAssignmentExpressionNodePtr mapExpression);
-    static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      FieldAssignmentExpressionNodePtr mapExpression);
-    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                      FieldAssignmentExpressionNodePtr mapExpression);
+    static PhysicalOperatorPtr
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
+    static PhysicalOperatorPtr
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 

@@ -72,9 +72,14 @@ typedef std::shared_ptr<Topology> TopologyPtr;
 class RestEngine : public BaseController {
 
   public:
-    RestEngine(StreamCatalogPtr streamCatalog, NesCoordinatorWeakPtr coordinator, QueryCatalogPtr queryCatalog,
-               TopologyPtr topology, GlobalExecutionPlanPtr globalExecutionPlan, QueryServicePtr queryService,
-               MonitoringServicePtr monitoringService, GlobalQueryPlanPtr globalQueryPlan);
+    RestEngine(StreamCatalogPtr streamCatalog,
+               NesCoordinatorWeakPtr coordinator,
+               QueryCatalogPtr queryCatalog,
+               TopologyPtr topology,
+               GlobalExecutionPlanPtr globalExecutionPlan,
+               QueryServicePtr queryService,
+               MonitoringServicePtr monitoringService,
+               GlobalQueryPlanPtr globalQueryPlan);
 
     ~RestEngine();
 

@@ -29,14 +29,17 @@
 
 namespace NES::Optimizer {
 
-std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
+std::unique_ptr<BottomUpStrategy> BottomUpStrategy::create(GlobalExecutionPlanPtr globalExecutionPlan,
+                                                           TopologyPtr topology,
                                                            TypeInferencePhasePtr typeInferencePhase,
                                                            StreamCatalogPtr streamCatalog) {
     return std::make_unique<BottomUpStrategy>(BottomUpStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog));
 }
 
-BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan, TopologyPtr topology,
-                                   TypeInferencePhasePtr typeInferencePhase, StreamCatalogPtr streamCatalog)
+BottomUpStrategy::BottomUpStrategy(GlobalExecutionPlanPtr globalExecutionPlan,
+                                   TopologyPtr topology,
+                                   TypeInferencePhasePtr typeInferencePhase,
+                                   StreamCatalogPtr streamCatalog)
     : BasePlacementStrategy(globalExecutionPlan, topology, typeInferencePhase, streamCatalog) {}
 
 bool BottomUpStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan) {
@@ -99,7 +102,8 @@ void BottomUpStrategy::placeQueryPlanOnTopology(QueryPlanPtr queryPlan) {
     NES_DEBUG("BottomUpStrategy: Finished placing query operators into the global execution plan");
 }
 
-void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNodePtr operatorNode,
+void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId,
+                                                   OperatorNodePtr operatorNode,
                                                    TopologyNodePtr candidateTopologyNode) {
 
     NES_DEBUG("BottomUpStrategy: Place " << operatorNode);
@@ -199,8 +203,8 @@ void BottomUpStrategy::placeOperatorOnTopologyNode(QueryId queryId, OperatorNode
     }
 }
 
-QueryPlanPtr BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operatorNode,
-                                                     ExecutionNodePtr executionNode) {
+QueryPlanPtr
+BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operatorNode, ExecutionNodePtr executionNode) {
 
     NES_DEBUG("BottomUpStrategy: Get candidate query plan for the operator " << operatorNode << " on execution node with id "
                                                                              << executionNode->getId());

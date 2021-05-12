@@ -30,11 +30,16 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
-                     const std::string& functionCallOverload, bool bracket)
+Predicate::Predicate(const BinaryOperatorType& op,
+                     const UserAPIExpressionPtr left,
+                     const UserAPIExpressionPtr right,
+                     const std::string& functionCallOverload,
+                     bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload(functionCallOverload) {}
 
-Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right,
+Predicate::Predicate(const BinaryOperatorType& op,
+                     const UserAPIExpressionPtr left,
+                     const UserAPIExpressionPtr right,
                      bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload("") {}
 
@@ -43,10 +48,13 @@ UserAPIExpressionPtr Predicate::copy() const { return std::make_shared<Predicate
 const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const {
     if (functionCallOverload.empty()) {
         if (bracket)
-            return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op,
-                                           *(right->generateCode(code, recordHandler)), BRACKETS)
+            return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
+                                           op,
+                                           *(right->generateCode(code, recordHandler)),
+                                           BRACKETS)
                 .copy();
-        return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)), op,
+        return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
+                                       op,
                                        *(right->generateCode(code, recordHandler)))
             .copy();
     } else {
@@ -55,12 +63,14 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES:
         expr.addParameter(right->generateCode(code, recordHandler));
         auto tf = CompilerTypesFactory();
         if (bracket)
-            return BinaryOperatorStatement(expr, op,
+            return BinaryOperatorStatement(expr,
+                                           op,
                                            (ConstantExpressionStatement(tf.createValueType(
                                                DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))),
                                            BRACKETS)
                 .copy();
-        return BinaryOperatorStatement(expr, op,
+        return BinaryOperatorStatement(expr,
+                                       op,
                                        (ConstantExpressionStatement(tf.createValueType(
                                            DataTypeFactory::createBasicValue(DataTypeFactory::createUInt8(), "0")))))
             .copy();

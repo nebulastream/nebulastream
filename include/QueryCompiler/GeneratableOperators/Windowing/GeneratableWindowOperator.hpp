@@ -53,7 +53,8 @@ class GeneratableWindowOperator : public WindowLogicalOperatorNode, public Gener
 
   protected:
     explicit GeneratableWindowOperator(Windowing::LogicalWindowDefinitionPtr windowDefinition,
-                                       GeneratableWindowAggregationPtr generatableWindowAggregation, OperatorId id);
+                                       GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                       OperatorId id);
     GeneratableWindowAggregationPtr generatableWindowAggregation;
 };
 

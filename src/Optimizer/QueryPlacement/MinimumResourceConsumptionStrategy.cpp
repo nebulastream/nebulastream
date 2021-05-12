@@ -148,8 +148,10 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
         stringstream operatorName;
         operatorName << sourceOperator->toString() << "(OP-" << std::to_string(sourceOperator->getId()) << ")";
 
-        const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(
-            operatorName.str(), to_string(sourceNode->getId()), sourceNode, legacySourceOperator->copy());
+        const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                        to_string(sourceNode->getId()),
+                                                                                        sourceNode,
+                                                                                        legacySourceOperator->copy());
         newExecutionNode->addOperatorId(sourceOperator->getId());
         sourceNode->reduceCpuCapacity(1);
     }
@@ -236,8 +238,10 @@ void MinimumResourceConsumptionStrategy::placeOperators(NESExecutionPlanPtr exec
             operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
 
             // Create a new execution node
-            const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(
-                operatorName.str(), to_string(sinkNode->getId()), sinkNode, legacyOperator->copy());
+            const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                            to_string(sinkNode->getId()),
+                                                                                            sinkNode,
+                                                                                            legacyOperator->copy());
             newExecutionNode->addOperatorId(targetOperator->getId());
         }
         sinkNode->reduceCpuCapacity(1);

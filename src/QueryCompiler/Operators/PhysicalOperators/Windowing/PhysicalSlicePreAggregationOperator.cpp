@@ -19,17 +19,21 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(SchemaPtr inputSchema,
+                                                                SchemaPtr outputSchema,
                                                                 Windowing::WindowOperatorHandlerPtr handler) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, handler);
 }
 
-PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(OperatorId id,
+                                                                SchemaPtr inputSchema,
+                                                                SchemaPtr outputSchema,
                                                                 Windowing::WindowOperatorHandlerPtr handler) {
     return std::make_shared<PhysicalSlicePreAggregationOperator>(id, inputSchema, outputSchema, handler);
 }
 
-PhysicalSlicePreAggregationOperator::PhysicalSlicePreAggregationOperator(OperatorId id, SchemaPtr inputSchema,
+PhysicalSlicePreAggregationOperator::PhysicalSlicePreAggregationOperator(OperatorId id,
+                                                                         SchemaPtr inputSchema,
                                                                          SchemaPtr outputSchema,
                                                                          Windowing::WindowOperatorHandlerPtr handler)
     : OperatorNode(id), PhysicalWindowOperator(id, inputSchema, outputSchema, handler){};

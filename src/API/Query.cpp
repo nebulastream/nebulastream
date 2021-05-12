@@ -94,7 +94,9 @@ Query& Query::unionWith(Query* subQuery) {
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, ExpressionItem onRightKey,
+Query& Query::joinWith(const Query& subQueryRhs,
+                       ExpressionItem onLeftKey,
+                       ExpressionItem onRightKey,
                        const Windowing::WindowTypePtr windowType) {
     NES_DEBUG("Query: joinWith the subQuery to current query");
 
@@ -137,7 +139,8 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                    Milliseconds(0),
                     windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     }
@@ -148,7 +151,8 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
             rightQueryPlan->appendOperatorAsNewRoot(op);
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             auto op = LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
-                Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                Milliseconds(0),
                 windowType->getTimeCharacteristic()->getTimeUnit()));
             rightQueryPlan->appendOperatorAsNewRoot(op);
         }
@@ -156,8 +160,14 @@ Query& Query::joinWith(const Query& subQueryRhs, ExpressionItem onLeftKey, Expre
 
     //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
     //TODO(Ventura?>Steffen) can we know this at this query submission time?
-    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess, rightKeyFieldAccess, windowType, distrType,
-                                                              triggerPolicy, triggerAction, 1, 1);
+    auto joinDefinition = Join::LogicalJoinDefinition::create(leftKeyFieldAccess,
+                                                              rightKeyFieldAccess,
+                                                              windowType,
+                                                              distrType,
+                                                              triggerPolicy,
+                                                              triggerAction,
+                                                              1,
+                                                              1);
 
     auto op = LogicalOperatorFactory::createJoinOperator(joinDefinition);
     queryPlan->addRootOperator(rightQueryPlan->getRootOperators()[0]);

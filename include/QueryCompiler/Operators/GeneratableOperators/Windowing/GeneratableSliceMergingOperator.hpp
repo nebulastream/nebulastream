@@ -35,7 +35,8 @@ class GeneratableSliceMergingOperator : public GeneratableWindowOperator {
      * @param operatorHandler handler of the operator state
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema,
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
                                          Windowing::WindowOperatorHandlerPtr operatorHandler,
                                          GeneratableWindowAggregationPtr windowAggregation);
 
@@ -47,7 +48,9 @@ class GeneratableSliceMergingOperator : public GeneratableWindowOperator {
      * @param operatorHandler handler of the operator state
      * @return GeneratableOperatorPtr
      */
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    static GeneratableOperatorPtr create(OperatorId id,
+                                         SchemaPtr inputSchema,
+                                         SchemaPtr outputSchema,
                                          Windowing::WindowOperatorHandlerPtr operatorHandler,
                                          GeneratableWindowAggregationPtr windowAggregation);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
@@ -56,7 +59,9 @@ class GeneratableSliceMergingOperator : public GeneratableWindowOperator {
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableSliceMergingOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+    GeneratableSliceMergingOperator(OperatorId id,
+                                    SchemaPtr inputSchema,
+                                    SchemaPtr outputSchema,
                                     Windowing::WindowOperatorHandlerPtr operatorHandler,
                                     GeneratableWindowAggregationPtr windowAggregation);
 

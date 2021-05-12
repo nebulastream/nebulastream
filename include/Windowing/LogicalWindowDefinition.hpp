@@ -33,9 +33,12 @@ class LogicalWindowDefinition {
      * @param window action
      * @param allowedLateness
      */
-    explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
-                                     DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
-                                     WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr windowAction,
+    explicit LogicalWindowDefinition(WindowAggregationPtr windowAggregation,
+                                     WindowTypePtr windowType,
+                                     DistributionCharacteristicPtr distChar,
+                                     uint64_t numberOfInputEdges,
+                                     WindowTriggerPolicyPtr triggerPolicy,
+                                     WindowActionDescriptorPtr windowAction,
                                      uint64_t allowedLateness);
 
     /**
@@ -49,10 +52,14 @@ class LogicalWindowDefinition {
      * @param window action
      * @param allowedLateness
      */
-    explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation,
-                                     WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
-                                     uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                     WindowActionDescriptorPtr windowAction, uint64_t allowedLateness);
+    explicit LogicalWindowDefinition(FieldAccessExpressionNodePtr onKey,
+                                     WindowAggregationPtr windowAggregation,
+                                     WindowTypePtr windowType,
+                                     DistributionCharacteristicPtr distChar,
+                                     uint64_t numberOfInputEdges,
+                                     WindowTriggerPolicyPtr triggerPolicy,
+                                     WindowActionDescriptorPtr windowAction,
+                                     uint64_t allowedLateness);
 
     /**
      * @brief Create a new window definition for a global window
@@ -64,9 +71,12 @@ class LogicalWindowDefinition {
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation, WindowTypePtr windowType,
-                                             DistributionCharacteristicPtr distChar, uint64_t numberOfInputEdges,
-                                             WindowTriggerPolicyPtr triggerPolicy, WindowActionDescriptorPtr windowAction,
+    static LogicalWindowDefinitionPtr create(WindowAggregationPtr windowAggregation,
+                                             WindowTypePtr windowType,
+                                             DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges,
+                                             WindowTriggerPolicyPtr triggerPolicy,
+                                             WindowActionDescriptorPtr windowAction,
                                              uint64_t allowedLateness);
 
     /**
@@ -78,10 +88,14 @@ class LogicalWindowDefinition {
      * @param allowedLateness
      * @return Window Definition
      */
-    static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey, WindowAggregationPtr windowAggregation,
-                                             WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
-                                             uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction, uint64_t allowedLateness);
+    static LogicalWindowDefinitionPtr create(FieldAccessExpressionNodePtr onKey,
+                                             WindowAggregationPtr windowAggregation,
+                                             WindowTypePtr windowType,
+                                             DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges,
+                                             WindowTriggerPolicyPtr triggerPolicy,
+                                             WindowActionDescriptorPtr windowAction,
+                                             uint64_t allowedLateness);
 
     /**
     * @brief Create a new window definition for a keyed window
@@ -92,10 +106,14 @@ class LogicalWindowDefinition {
      * @param allowedLateness
     * @return Window Definition
     */
-    static LogicalWindowDefinitionPtr create(ExpressionItem onKey, WindowAggregationPtr windowAggregation,
-                                             WindowTypePtr windowType, DistributionCharacteristicPtr distChar,
-                                             uint64_t numberOfInputEdges, WindowTriggerPolicyPtr triggerPolicy,
-                                             WindowActionDescriptorPtr windowAction, uint64_t allowedLateness);
+    static LogicalWindowDefinitionPtr create(ExpressionItem onKey,
+                                             WindowAggregationPtr windowAggregation,
+                                             WindowTypePtr windowType,
+                                             DistributionCharacteristicPtr distChar,
+                                             uint64_t numberOfInputEdges,
+                                             WindowTriggerPolicyPtr triggerPolicy,
+                                             WindowActionDescriptorPtr windowAction,
+                                             uint64_t allowedLateness);
 
     /**
      * @brief getter and setter for the distribution type (centralized or distributed)

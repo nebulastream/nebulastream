@@ -19,10 +19,12 @@
 namespace NES::Join {
 
 LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJoinKeyType,
-                                             FieldAccessExpressionNodePtr rightJoinKeyType, Windowing::WindowTypePtr windowType,
+                                             FieldAccessExpressionNodePtr rightJoinKeyType,
+                                             Windowing::WindowTypePtr windowType,
                                              Windowing::DistributionCharacteristicPtr distributionType,
                                              Windowing::WindowTriggerPolicyPtr triggerPolicy,
-                                             BaseJoinActionDescriptorPtr triggerAction, uint64_t numberOfInputEdgesLeft,
+                                             BaseJoinActionDescriptorPtr triggerAction,
+                                             uint64_t numberOfInputEdgesLeft,
                                              uint64_t numberOfInputEdgesRight)
     : leftJoinKeyType(leftJoinKeyType), rightJoinKeyType(rightJoinKeyType), leftStreamType(nullptr), rightStreamType(nullptr),
       windowType(windowType), distributionType(distributionType), triggerPolicy(triggerPolicy), triggerAction(triggerAction),
@@ -38,13 +40,21 @@ LogicalJoinDefinition::LogicalJoinDefinition(FieldAccessExpressionNodePtr leftJo
     NES_ASSERT(this->numberOfInputEdgesRight > 0, "Invalid number of right edges");
 }
 
-LogicalJoinDefinitionPtr
-LogicalJoinDefinition::create(FieldAccessExpressionNodePtr leftJoinKeyType, FieldAccessExpressionNodePtr rightJoinKeyType,
-                              Windowing::WindowTypePtr windowType, Windowing::DistributionCharacteristicPtr distributionType,
-                              Windowing::WindowTriggerPolicyPtr triggerPolicy, BaseJoinActionDescriptorPtr triggerAction,
-                              uint64_t numberOfInputEdgesLeft, uint64_t numberOfInputEdgesRight) {
-    return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType, rightJoinKeyType, windowType, distributionType,
-                                                         triggerPolicy, triggerAction, numberOfInputEdgesLeft,
+LogicalJoinDefinitionPtr LogicalJoinDefinition::create(FieldAccessExpressionNodePtr leftJoinKeyType,
+                                                       FieldAccessExpressionNodePtr rightJoinKeyType,
+                                                       Windowing::WindowTypePtr windowType,
+                                                       Windowing::DistributionCharacteristicPtr distributionType,
+                                                       Windowing::WindowTriggerPolicyPtr triggerPolicy,
+                                                       BaseJoinActionDescriptorPtr triggerAction,
+                                                       uint64_t numberOfInputEdgesLeft,
+                                                       uint64_t numberOfInputEdgesRight) {
+    return std::make_shared<Join::LogicalJoinDefinition>(leftJoinKeyType,
+                                                         rightJoinKeyType,
+                                                         windowType,
+                                                         distributionType,
+                                                         triggerPolicy,
+                                                         triggerAction,
+                                                         numberOfInputEdgesLeft,
                                                          numberOfInputEdgesRight);
 }
 

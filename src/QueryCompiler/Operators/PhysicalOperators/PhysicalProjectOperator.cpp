@@ -18,17 +18,21 @@ namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id,
+                                                 SchemaPtr inputSchema,
+                                                 SchemaPtr outputSchema,
                                                  std::vector<ExpressionNodePtr> expressions)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), expressions(expressions) {}
 
-PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id,
+                                                    SchemaPtr inputSchema,
+                                                    SchemaPtr outputSchema,
                                                     std::vector<ExpressionNodePtr> expressions) {
     return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, expressions);
 }
 
-PhysicalOperatorPtr PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema,
-                                                    std::vector<ExpressionNodePtr> expressions) {
+PhysicalOperatorPtr
+PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expressions);
 }
 

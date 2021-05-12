@@ -32,7 +32,9 @@ class KafkaSink : public SinkMedium {
 
   public:
     KafkaSink();
-    KafkaSink(SchemaPtr schema, const std::string& brokers, const std::string& topic,
+    KafkaSink(SchemaPtr schema,
+              const std::string& brokers,
+              const std::string& topic,
               const uint64_t kafkaProducerTimeout = 10 * 1000);
 
     ~KafkaSink() override;

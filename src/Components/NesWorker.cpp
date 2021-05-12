@@ -124,8 +124,13 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     }
 
     try {
-        nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp, localWorkerZmqPort, conf, numWorkerThreads, bufferSizeInBytes,
-                                                    numberOfBuffersInGlobalBufferManager, numberOfBuffersInSourceLocalBufferPool,
+        nodeEngine = NodeEngine::NodeEngine::create(localWorkerIp,
+                                                    localWorkerZmqPort,
+                                                    conf,
+                                                    numWorkerThreads,
+                                                    bufferSizeInBytes,
+                                                    numberOfBuffersInGlobalBufferManager,
+                                                    numberOfBuffersInSourceLocalBufferPool,
                                                     numberOfBuffersPerPipeline);
         NES_DEBUG("NesWorker: Node engine started successfully");
     } catch (std::exception& err) {

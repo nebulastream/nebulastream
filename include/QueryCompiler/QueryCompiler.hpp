@@ -54,7 +54,8 @@ class QueryCompiler {
     void compile(GeneratedQueryExecutionPlanBuilder&, OperatorNodePtr queryPlan);
 
   private:
-    void compilePipelineStages(GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder, CodeGeneratorPtr codeGenerator,
+    void compilePipelineStages(GeneratedQueryExecutionPlanBuilder& queryExecutionPlanBuilder,
+                               CodeGeneratorPtr codeGenerator,
                                PipelineContextPtr context);
 
     uint64_t numberOfBuffersPerPipeline;

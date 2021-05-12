@@ -164,9 +164,15 @@ TEST_F(TranslateToGeneratableOperatorPhaseTest, translateWindowQuery) {
     WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
     auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
 
-    auto windowOperator = LogicalOperatorFactory::createWindowOperator(LogicalWindowDefinition::create(
-        Attribute("id"), Sum(Attribute("value")), TumblingWindow::of(IngestionTime(), Seconds(10)),
-        DistributionCharacteristic::createCompleteWindowType(), 0, trigger, triggerAction, 0));
+    auto windowOperator = LogicalOperatorFactory::createWindowOperator(
+        LogicalWindowDefinition::create(Attribute("id"),
+                                        Sum(Attribute("value")),
+                                        TumblingWindow::of(IngestionTime(), Seconds(10)),
+                                        DistributionCharacteristic::createCompleteWindowType(),
+                                        0,
+                                        trigger,
+                                        triggerAction,
+                                        0));
     sinkOperator->addChild(windowOperator);
     windowOperator->addChild(sourceOp);
 

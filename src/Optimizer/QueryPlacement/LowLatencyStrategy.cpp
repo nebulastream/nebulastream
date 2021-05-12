@@ -35,7 +35,8 @@ namespace NES {
 
 LowLatencyStrategy::LowLatencyStrategy(NESTopologyPlanPtr nesTopologyPlan) : BasePlacementStrategy(nesTopologyPlan) {}
 
-NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan, NESTopologyPlanPtr nesTopologyPlan,
+NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPlanPtr queryPlan,
+                                                                NESTopologyPlanPtr nesTopologyPlan,
                                                                 StreamCatalogPtr streamCatalog) {
     this->nesTopologyPlan = nesTopologyPlan;
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
@@ -92,8 +93,10 @@ LowLatencyStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<NESTop
     return candidateNodes;
 }
 
-void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                                        LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
+                                        NESTopologyGraphPtr nesTopologyGraphPtr,
+                                        LogicalOperatorNodePtr sourceOperator,
+                                        vector<NESTopologyEntryPtr> sourceNodes) {
 
     TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
 
@@ -117,8 +120,10 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                     NES_DEBUG("LowLatency: Create new execution node.");
                     stringstream operatorName;
                     operatorName << targetOperator->toString() << "(OP-" << std::to_string(targetOperator->getId()) << ")";
-                    const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(
-                        operatorName.str(), to_string(node->getId()), node, legacyOperator->copy());
+                    const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                                    to_string(node->getId()),
+                                                                                                    node,
+                                                                                                    legacyOperator->copy());
                     newExecutionNode->addOperatorId(legacyOperator->getOperatorId());
                 } else {
 

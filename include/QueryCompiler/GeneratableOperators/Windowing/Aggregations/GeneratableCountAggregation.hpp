@@ -36,7 +36,8 @@ class GeneratableCountAggregation : public GeneratableWindowAggregation {
      * @param inputStruct input struct
      * @param inputRef input value reference
      */
-    void compileLiftCombine(CompoundStatementPtr currentCode, BinaryOperatorStatement expressionStatement,
+    void compileLiftCombine(CompoundStatementPtr currentCode,
+                            BinaryOperatorStatement expressionStatement,
                             RecordHandlerPtr recordHandler) override;
 };
 

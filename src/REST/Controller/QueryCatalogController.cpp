@@ -25,7 +25,8 @@
 
 namespace NES {
 
-QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog, NesCoordinatorWeakPtr coordinator,
+QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog,
+                                               NesCoordinatorWeakPtr coordinator,
                                                GlobalQueryPlanPtr globalQueryPlan)
     : queryCatalog(queryCatalog), coordinator(coordinator), globalQueryPlan(globalQueryPlan) {
     NES_DEBUG("QueryCatalogController()");

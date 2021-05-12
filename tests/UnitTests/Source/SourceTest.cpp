@@ -95,17 +95,26 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
     bool truthy_entry;
 };
 
-typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
-                                                       NodeEngine::QueryManagerPtr queryManager, const std::string&);
+typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr,
+                                                       NodeEngine::BufferManagerPtr bufferManager,
+                                                       NodeEngine::QueryManagerPtr queryManager,
+                                                       const std::string&);
 
-typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
-                                                        NodeEngine::QueryManagerPtr queryManager, const std::string&, uint64_t,
+typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr,
+                                                        NodeEngine::BufferManagerPtr bufferManager,
+                                                        NodeEngine::QueryManagerPtr queryManager,
+                                                        const std::string&,
+                                                        uint64_t,
                                                         uint64_t,
                                                         std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>);
 
-typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr, NodeEngine::BufferManagerPtr bufferManager,
-                                                      NodeEngine::QueryManagerPtr queryManager, const std::string&,
-                                                      const std::string&, uint64_t, uint64_t);
+typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr,
+                                                      NodeEngine::BufferManagerPtr bufferManager,
+                                                      NodeEngine::QueryManagerPtr queryManager,
+                                                      const std::string&,
+                                                      const std::string&,
+                                                      uint64_t,
+                                                      uint64_t);
 
 class SourceTest : public testing::Test {
   public:
@@ -188,8 +197,18 @@ TEST_F(SourceTest, DISABLED_testCSVSourceOnePassOverFile) {
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, 0, frequency, false, 1, 12, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     path_to_file,
+                                                     del,
+                                                     0,
+                                                     0,
+                                                     frequency,
+                                                     false,
+                                                     1,
+                                                     12,
+                                                     {});
     source->open();
     source->start();
 
@@ -245,8 +264,18 @@ TEST_F(SourceTest, DISABLED_testCSVSourceWithLoopOverFile) {
 
     uint64_t numberOfBuffers = 5;
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     path_to_file,
+                                                     del,
+                                                     0,
+                                                     numberOfBuffers,
+                                                     frequency,
+                                                     false,
+                                                     1,
+                                                     12,
+                                                     {});
     source->open();
     source->start();
 
@@ -281,8 +310,18 @@ TEST_F(SourceTest, DISABLED_testCSVSourceWatermark) {
     uint64_t numberOfBuffers = 10;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     path_to_file,
+                                                     del,
+                                                     0,
+                                                     numberOfBuffers,
+                                                     frequency,
+                                                     false,
+                                                     1,
+                                                     12,
+                                                     {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -325,8 +364,18 @@ TEST_F(SourceTest, DISABLED_testCSVSourceIntTypes) {
     uint64_t numberOfBuffers = 2;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     path_to_file,
+                                                     del,
+                                                     0,
+                                                     numberOfBuffers,
+                                                     frequency,
+                                                     false,
+                                                     1,
+                                                     12,
+                                                     {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -398,8 +447,18 @@ TEST_F(SourceTest, DISABLED_testCSVSourceFloatTypes) {
     uint64_t numberOfBuffers = 2;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     path_to_file,
+                                                     del,
+                                                     0,
+                                                     numberOfBuffers,
+                                                     frequency,
+                                                     false,
+                                                     1,
+                                                     12,
+                                                     {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -443,8 +502,18 @@ TEST_F(SourceTest, DISABLED_testCSVSourceBooleanTypes) {
     uint64_t numberOfBuffers = 2;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source = createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                     path_to_file, del, 0, numberOfBuffers, frequency, false, 1, 12, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     path_to_file,
+                                                     del,
+                                                     0,
+                                                     numberOfBuffers,
+                                                     frequency,
+                                                     false,
+                                                     1,
+                                                     12,
+                                                     {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
@@ -502,7 +571,12 @@ TEST_F(SourceTest, testLambdaSource) {
 
     struct __attribute__((packed)) Record {
         //          Record() = default;
-        Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+        Record(uint64_t userId,
+               uint64_t pageId,
+               uint64_t campaignId,
+               uint64_t adType,
+               uint64_t eventType,
+               uint64_t currentMs,
                uint64_t ip)
             : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
               ip(ip) {}
@@ -557,7 +631,12 @@ TEST_F(SourceTest, testLambdaSource) {
         uint64_t currentEventType = 0;
         struct __attribute__((packed)) Record {
             //          Record() = default;
-            Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+            Record(uint64_t userId,
+                   uint64_t pageId,
+                   uint64_t campaignId,
+                   uint64_t adType,
+                   uint64_t eventType,
+                   uint64_t currentMs,
                    uint64_t ip)
                 : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
                   currentMs(currentMs), ip(ip) {}
@@ -607,8 +686,16 @@ TEST_F(SourceTest, testLambdaSource) {
         }
     };
 
-    DataSourcePtr lambdaSource = createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                                    numBuffers, 0, func, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {});
+    DataSourcePtr lambdaSource = createLambdaSource(schema,
+                                                    nodeEngine->getBufferManager(),
+                                                    nodeEngine->getQueryManager(),
+                                                    numBuffers,
+                                                    0,
+                                                    func,
+                                                    1,
+                                                    12,
+                                                    DataSource::GatheringMode::FREQUENCY_MODE,
+                                                    {});
     lambdaSource->open();
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
@@ -632,7 +719,12 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
 
     struct __attribute__((packed)) Record {
         //          Record() = default;
-        Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+        Record(uint64_t userId,
+               uint64_t pageId,
+               uint64_t campaignId,
+               uint64_t adType,
+               uint64_t eventType,
+               uint64_t currentMs,
                uint64_t ip)
             : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs),
               ip(ip) {}
@@ -687,7 +779,12 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
         uint64_t currentEventType = 0;
         struct __attribute__((packed)) Record {
             //          Record() = default;
-            Record(uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs,
+            Record(uint64_t userId,
+                   uint64_t pageId,
+                   uint64_t campaignId,
+                   uint64_t adType,
+                   uint64_t eventType,
+                   uint64_t currentMs,
                    uint64_t ip)
                 : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
                   currentMs(currentMs), ip(ip) {}
@@ -737,9 +834,16 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
         }
     };
 
-    DataSourcePtr lambdaSource =
-        createLambdaSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), numBuffers, 1, func, 1, 12,
-                           DataSource::GatheringMode::INGESTION_RATE_MODE, {});
+    DataSourcePtr lambdaSource = createLambdaSource(schema,
+                                                    nodeEngine->getBufferManager(),
+                                                    nodeEngine->getQueryManager(),
+                                                    numBuffers,
+                                                    1,
+                                                    func,
+                                                    1,
+                                                    12,
+                                                    DataSource::GatheringMode::INGESTION_RATE_MODE,
+                                                    {});
     lambdaSource->open();
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
@@ -869,8 +973,14 @@ TEST_F(SourceTest, DISABLED_testMonitoringSource) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 
-    auto source = std::make_shared<MonitoringSource>(plan, MetricCatalog::NesMetrics(), nodeEngine->getBufferManager(),
-                                                     nodeEngine->getQueryManager(), numBuffers, 1, 1, 12);
+    auto source = std::make_shared<MonitoringSource>(plan,
+                                                     MetricCatalog::NesMetrics(),
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     numBuffers,
+                                                     1,
+                                                     1,
+                                                     12);
 
     SchemaPtr schema = source->getSchema();
 
@@ -1033,8 +1143,13 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
             return;
         };
 
-        NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create(
-            "LambdaSource", "test_stream" + std::to_string(i), "input", std::move(func1), 3000000, 0, "frequency");
+        NES::AbstractPhysicalStreamConfigPtr conf1 = NES::LambdaSourceStreamConfig::create("LambdaSource",
+                                                                                           "test_stream" + std::to_string(i),
+                                                                                           "input",
+                                                                                           std::move(func1),
+                                                                                           3000000,
+                                                                                           0,
+                                                                                           "frequency");
         crd->getNesWorker()->registerPhysicalStream(conf1);
     }
 

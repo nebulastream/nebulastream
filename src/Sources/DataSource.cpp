@@ -52,8 +52,11 @@ DataSource::GatheringMode DataSource::getGatheringModeFromString(std::string mod
     }
 }
 
-DataSource::DataSource(const SchemaPtr pSchema, NodeEngine::BufferManagerPtr bufferManager,
-                       NodeEngine::QueryManagerPtr queryManager, OperatorId operatorId, size_t numSourceLocalBuffers,
+DataSource::DataSource(const SchemaPtr pSchema,
+                       NodeEngine::BufferManagerPtr bufferManager,
+                       NodeEngine::QueryManagerPtr queryManager,
+                       OperatorId operatorId,
+                       size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(queryManager), globalBufferManager(bufferManager), executableSuccessors(executableSuccessors),

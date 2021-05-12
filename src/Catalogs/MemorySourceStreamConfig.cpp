@@ -27,9 +27,13 @@ struct MemoryAreaDeleter {
 
 }// namespace detail
 
-MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType, std::string physicalStreamName,
-                                                   std::string logicalStreamName, uint8_t* memoryArea, size_t memoryAreaSize,
-                                                   uint64_t numBuffersToProcess, uint64_t gatheringValue,
+MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
+                                                   std::string physicalStreamName,
+                                                   std::string logicalStreamName,
+                                                   uint8_t* memoryArea,
+                                                   size_t memoryAreaSize,
+                                                   uint64_t numBuffersToProcess,
+                                                   uint64_t gatheringValue,
                                                    std::string gatheringMode)
     : PhysicalStreamConfig(SourceConfig::create()), sourceType(sourceType), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
       memoryAreaSize(memoryAreaSize) {
@@ -50,17 +54,31 @@ const std::string MemorySourceStreamConfig::getPhysicalStreamName() { return phy
 const std::string MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr) {
-    return std::make_shared<MemorySourceDescriptor>(ptr, memoryArea, memoryAreaSize, this->numberOfBuffersToProduce,
-                                                    this->gatheringValue, this->gatheringMode);
+    return std::make_shared<MemorySourceDescriptor>(ptr,
+                                                    memoryArea,
+                                                    memoryAreaSize,
+                                                    this->numberOfBuffersToProduce,
+                                                    this->gatheringValue,
+                                                    this->gatheringMode);
 }
 
-AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(std::string sourceType, std::string physicalStreamName,
-                                                                 std::string logicalStreamName, uint8_t* memoryArea,
-                                                                 size_t memoryAreaSize, uint64_t numBuffersToProcess,
-                                                                 uint64_t gatheringValue, std::string gatheringMode) {
+AbstractPhysicalStreamConfigPtr MemorySourceStreamConfig::create(std::string sourceType,
+                                                                 std::string physicalStreamName,
+                                                                 std::string logicalStreamName,
+                                                                 uint8_t* memoryArea,
+                                                                 size_t memoryAreaSize,
+                                                                 uint64_t numBuffersToProcess,
+                                                                 uint64_t gatheringValue,
+                                                                 std::string gatheringMode) {
     NES_ASSERT(memoryArea, "invalid memory area");
-    return std::make_shared<MemorySourceStreamConfig>(sourceType, physicalStreamName, logicalStreamName, memoryArea,
-                                                      memoryAreaSize, numBuffersToProcess, gatheringValue, gatheringMode);
+    return std::make_shared<MemorySourceStreamConfig>(sourceType,
+                                                      physicalStreamName,
+                                                      logicalStreamName,
+                                                      memoryArea,
+                                                      memoryAreaSize,
+                                                      numBuffersToProcess,
+                                                      gatheringValue,
+                                                      gatheringMode);
 }
 
 }// namespace NES

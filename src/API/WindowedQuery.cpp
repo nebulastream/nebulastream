@@ -87,7 +87,8 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                    Milliseconds(0),
                     windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
@@ -108,16 +109,21 @@ Query& Query::window(const Windowing::WindowTypePtr windowType, const Windowing:
 
     auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
-    auto windowDefinition =
-        LogicalWindowDefinition::create(aggregation, windowType, DistributionCharacteristic::createCompleteWindowType(), 1,
-                                        triggerPolicy, triggerAction, allowedLateness);
+    auto windowDefinition = LogicalWindowDefinition::create(aggregation,
+                                                            windowType,
+                                                            DistributionCharacteristic::createCompleteWindowType(),
+                                                            1,
+                                                            triggerPolicy,
+                                                            triggerAction,
+                                                            allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);
     return *this;
 }
 
-Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr windowType,
+Query& Query::windowByKey(ExpressionItem onKey,
+                          const Windowing::WindowTypePtr windowType,
                           const Windowing::WindowAggregationPtr aggregation) {
     NES_DEBUG("Query: add keyed window operator");
     auto keyExpression = onKey.getExpressionNode();
@@ -142,7 +148,8 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
         } else if (windowType->getTimeCharacteristic()->getType() == TimeCharacteristic::EventTime) {
             queryPlan->appendOperatorAsNewRoot(
                 LogicalOperatorFactory::createWatermarkAssignerOperator(EventTimeWatermarkStrategyDescriptor::create(
-                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()), Milliseconds(0),
+                    Attribute(windowType->getTimeCharacteristic()->getField()->getName()),
+                    Milliseconds(0),
                     windowType->getTimeCharacteristic()->getTimeUnit())));
         }
     } else {
@@ -163,9 +170,15 @@ Query& Query::windowByKey(ExpressionItem onKey, const Windowing::WindowTypePtr w
 
     auto inputSchema = getQueryPlan()->getRootOperators()[0]->getOutputSchema();
 
-    auto windowDefinition = Windowing::LogicalWindowDefinition::create(
-        fieldAccess, aggregation, windowType, Windowing::DistributionCharacteristic::createCompleteWindowType(), 1, triggerPolicy,
-        triggerAction, allowedLateness);
+    auto windowDefinition =
+        Windowing::LogicalWindowDefinition::create(fieldAccess,
+                                                   aggregation,
+                                                   windowType,
+                                                   Windowing::DistributionCharacteristic::createCompleteWindowType(),
+                                                   1,
+                                                   triggerPolicy,
+                                                   triggerAction,
+                                                   allowedLateness);
     auto windowOperator = LogicalOperatorFactory::createWindowOperator(windowDefinition);
 
     queryPlan->appendOperatorAsNewRoot(windowOperator);

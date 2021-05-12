@@ -21,12 +21,20 @@
 namespace NES {
 namespace Network {
 
-NetworkSource::NetworkSource(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager,
-                             NodeEngine::QueryManagerPtr queryManager, NetworkManagerPtr networkManager,
-                             NesPartition nesPartition, size_t numSourceLocalBuffers,
+NetworkSource::NetworkSource(SchemaPtr schema,
+                             NodeEngine::BufferManagerPtr bufferManager,
+                             NodeEngine::QueryManagerPtr queryManager,
+                             NetworkManagerPtr networkManager,
+                             NesPartition nesPartition,
+                             size_t numSourceLocalBuffers,
                              std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(schema, bufferManager, queryManager, nesPartition.getOperatorId(), numSourceLocalBuffers,
-                 DataSource::FREQUENCY_MODE, successors),
+    : DataSource(schema,
+                 bufferManager,
+                 queryManager,
+                 nesPartition.getOperatorId(),
+                 numSourceLocalBuffers,
+                 DataSource::FREQUENCY_MODE,
+                 successors),
       networkManager(networkManager), nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
     NES_ASSERT(this->networkManager, "Invalid network manager");
