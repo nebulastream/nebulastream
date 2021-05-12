@@ -95,7 +95,7 @@ static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
     : sourceIdToExecutableQueryPlanMap(), queryMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId),
-      numThreads(numThreads), isDestroyed(false)
+      numThreads(numThreads), isDestroyed(false), threadPool(nullptr)
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
       ,
       workMutex()
@@ -360,8 +360,8 @@ void QueryManager::unblockThreads() {
     auto buffer = optBuffer.value();
 
     auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(-1, inherited0::shared_from_this());
-    auto pipeline = Execution::NewExecutablePipeline::create(-1,
-                                                             -1,
+    auto pipeline = Execution::NewExecutablePipeline::create(-1, // any query plan
+                                                             -1, // any sub query plan
                                                              pipelineContext,
                                                              std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
                                                              1,
@@ -474,7 +474,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
-    auto pipeline = Execution::NewExecutablePipeline::create(-1,
+    auto pipeline = Execution::NewExecutablePipeline::create(-1, // any query plan
                                                              queryExecutionPlanId,
                                                              pipelineContext,
                                                              reconfigurationExecutable,
@@ -538,7 +538,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         auto pipelineContext =
             std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                               inherited0::shared_from_this());
-        auto pipeline = Execution::NewExecutablePipeline::create(-1,
+        auto pipeline = Execution::NewExecutablePipeline::create(-1, // any query plan
                                                                  executableQueryPlan->getQuerySubPlanId(),
                                                                  pipelineContext,
                                                                  reconfigurationExecutable,
@@ -576,7 +576,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                           inherited0::shared_from_this());
-    auto pipeline = Execution::NewExecutablePipeline::create(-1,
+    auto pipeline = Execution::NewExecutablePipeline::create(-1, // any query plan
                                                              executableQueryPlan->getQuerySubPlanId(),
                                                              pipelineContext,
                                                              reconfigurationExecutable,
