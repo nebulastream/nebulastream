@@ -424,6 +424,73 @@ TEST_F(QueryExecutionTest, projectionQuery) {
     buffer.release();
 }
 
+TEST_F(QueryExecutionTest, powerOperatorQuery) {
+    // creating query plan
+
+    auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
+        testSchema,
+        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
+          return createDefaultDataSourceWithSchemaForOneBuffer(
+              testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+        });
+
+    auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
+    auto testSink = std::make_shared<TestSink>(10, outputSchema, nodeEngine->getBufferManager());
+    auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
+
+    auto query = TestQuery::from(testSourceDescriptor)
+        .filter(Attribute("id") < 3)
+        .map(Attribute("value") = POWER(2, Attribute("one") + Attribute("id")))
+        .map(Attribute("value2") = POWER(2.0, Attribute("one") + Attribute("id")))
+        .sink(DummySink::create());
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
+    auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
+
+    auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, nodeEngine);
+    auto queryCompiler = TestUtils::createTestQueryCompiler();
+    auto result = queryCompiler->compileQuery(request);
+    auto plan = result->getExecutableQueryPlan();
+    // The plan should have one pipeline
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
+    EXPECT_EQ(plan->getPipelines().size(), 1);
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
+    fillBuffer(buffer, memoryLayout);
+    plan->setup();
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
+    plan->start(nodeEngine->getStateManager());
+    ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Running);
+    NodeEngine::WorkerContext workerContext{1};
+    plan->getPipelines()[0]->execute(buffer, workerContext);
+
+    // This plan should produce one output buffer
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
+
+    SchemaPtr resultSchema = Schema::create()
+        ->addField("test$id", BasicType::INT64)
+        ->addField("test$one", BasicType::INT64)
+        ->addField("test$value", BasicType::UINT32) // pow(some int, some int) should result in UINT32
+        ->addField("test$value2", BasicType::FLOAT64); // pow(some float, some int) should result in Double
+
+    std::string expectedContent = "+----------------------------------------------------+\n"
+                                  "|test$id:INT64|test$one:INT64|test$value:UINT32|test$value2:FLOAT64|\n"
+                                  "+----------------------------------------------------+\n"
+                                  "|0|1|2|2.000000|\n" // shows, that both Int & Double gets returned correctly, and can be written to existing & new fields
+                                  "|1|1|4|4.000000|\n"
+                                  "|2|1|8|8.000000|\n"
+                                  "+----------------------------------------------------+";
+
+    auto& resultBuffer = testSink->get(0);
+
+    EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, resultSchema));
+
+    buffer.release();
+    testSink->cleanupBuffers();
+    plan->stop();
+}
+
 /**
  * @brief This test verify that the watermark assigned correctly.
  * WindowSource -> WatermarkAssignerOperator -> TestSink
