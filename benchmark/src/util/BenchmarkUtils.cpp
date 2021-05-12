@@ -17,9 +17,13 @@
 #include <util/BenchmarkUtils.hpp>
 
 #include "../../../tests/util/DummySink.hpp"
+#include "../../../tests/util/TestQueryCompiler.hpp"
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
+#include <QueryCompiler/GeneratedQueryExecutionPlanBuilder.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Version/version.hpp>
 #include <cstdint>
@@ -158,7 +162,6 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     //    NES_WARNING("BenchmarkUtils: Stopping query...");
     //    nodeEngine->stopQuery(1, false);
     //    NES_WARNING("Query was stopped!");
-
     /* This is not necessary anymore as we do not want to have the differences anymore. We are only interested in the total
      * number of tuples, buffers, tasks. Via the total number and runSingleExperimentSeconds we can calculate the throughput
      *
