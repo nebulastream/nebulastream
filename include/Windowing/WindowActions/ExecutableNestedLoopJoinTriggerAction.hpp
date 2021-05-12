@@ -272,20 +272,28 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         NES_TRACE("write sizes left=" << sizeof(leftValue) << " right=" << sizeof(rightValue)
                                       << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
 
+// I find this looking more nicely but this throws an error that it can not convert InputTypeRight to const InputTypeRight (same for InputTypeLeft)
+//        std::tuple<uint64_t, uint64_t, KeyType, InputTypeRight, InputTypeLeft> newTuple(startTs, endTs, key, leftValue, rightValue);
+//        bindedRowLayout->pushRecord<true>(newTuple, index);
 
         auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
 
         auto startTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
         auto endTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
         auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<KeyType, true>::create(2, bindedRowLayout);
-        auto leftValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<InputTypeLeft, true>::create(3, bindedRowLayout);
-        auto rightValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<InputTypeRight, true>::create(4, bindedRowLayout);
 
         startTsFields[index] = startTs;
         endTsFields[index] = endTs;
         keyFields[index] = key;
-        leftValueFields[index] = leftValue;
-        rightValueFields[index] = rightValue;
+
+        constexpr auto headerSize = sizeof(uint64_t) + sizeof(uint64_t) + sizeof(KeyType);
+        // copy the left record at position at the index-th row with offset=headerSize
+        memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize,
+               &leftValue, sizeof(InputTypeLeft));
+        // copy the right record at position at the index-th row with offset=headerSize+sizeof(InputTypeLeft)
+        memcpy(tupleBuffer.getBuffer() + index * (headerSize + sizeof(InputTypeLeft) + sizeof(InputTypeRight)) + headerSize
+               + sizeof(InputTypeLeft),
+               &rightValue, sizeof(InputTypeRight));
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }

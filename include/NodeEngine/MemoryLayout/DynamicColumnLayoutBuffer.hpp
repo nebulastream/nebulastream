@@ -71,11 +71,21 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 
     /**
      * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
-     * @tparam Types
      * @param record
+     * @return success
      */
     template<bool boundaryChecks, typename... Types>
     bool pushRecord(std::tuple<Types...> record);
+
+    /**
+     * @brief This function will write/overwrite a tuple at recordIndex position in the buffer
+     * @param boundaryChecks
+     * @param record
+     * @param recordIndex
+     * @return success
+     */
+    template<bool boundaryChecks, typename... Types>
+    bool pushRecord(std::tuple<Types...> record, uint64_t recordIndex);
 
   private:
     /**
@@ -84,11 +94,11 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type
     copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
-                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
+                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes, uint64_t recordIndex);
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<(I < sizeof...(Ts)), void>::type
     copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
-                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
+                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes, uint64_t recordIndex);
 
     /**
      * Copies fields of tuple sequentially from address
@@ -110,25 +120,26 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 };
 
 template<size_t I, typename... Ts>
-typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
-    std::tuple<Ts...> tup,
-    const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                                                                                                           const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
+                                                                                                           uint64_t recordIndex) {
     // Iterated through tuple, so simply return
     ((void) tup);
     ((void) fieldSizes);
+    ((void) recordIndex);
     return;
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(
-    std::tuple<Ts...> tup,
-    const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
+typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+                                                                                                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
+                                                                                                            uint64_t recordIndex) {
     // Get current type of tuple and cast address to this type pointer
-    auto address = basePointer + columnOffsets[I] + fieldSizes[I] * numberOfRecords;
+    auto address = basePointer + columnOffsets[I] + fieldSizes[I] * recordIndex;
     *((typename std::tuple_element<I, std::tuple<Ts...>>::type*) (address)) = std::get<I>(tup);
 
     // Go to the next field of tuple
-    copyTupleFieldsToBuffer<I + 1>(tup, fieldSizes);
+    copyTupleFieldsToBuffer<I + 1>(tup, fieldSizes, recordIndex);
 }
 
 template<size_t I, typename... Ts>
@@ -158,17 +169,28 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuff
 
 template<bool boundaryChecks, typename... Types>
 bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
-    if (boundaryChecks && numberOfRecords >= capacity) {
-        NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is full and thus no tuple can be added!");
+    return pushRecord<boundaryChecks>(record, numberOfRecords);
+}
+
+template<bool boundaryChecks, typename... Types>
+bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record, uint64_t recordIndex) {
+    if (boundaryChecks && recordIndex >= capacity) {
+        NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is too small to write to position "
+                    << recordIndex << " and thus no write can happen!");
         return false;
     }
 
-    copyTupleFieldsToBuffer(record, this->getFieldSizes());
-    ++numberOfRecords;
+    copyTupleFieldsToBuffer(record, this->getFieldSizes(), recordIndex);
+
+    if (recordIndex + 1 > numberOfRecords) {
+        numberOfRecords = recordIndex + 1;
+    }
 
     tupleBuffer.setNumberOfTuples(numberOfRecords);
     return true;
 }
+
+
 
 template<bool boundaryChecks, typename... Types>
 std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex) {

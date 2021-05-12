@@ -73,6 +73,16 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     bool pushRecord(std::tuple<Types...> record);
 
     /**
+     * @brief This function will write/overwrite a tuple at recordIndex position in the buffer
+     * @param boundaryChecks
+     * @param record
+     * @param recordIndex
+     * @return success
+     */
+    template<bool boundaryChecks, typename... Types>
+    bool pushRecord(std::tuple<Types...> record, uint64_t recordIndex);
+
+    /**
      * @brief Constructor for DynamicRowLayoutBuffer
      * @param tupleBuffer
      * @param capacity
@@ -141,20 +151,25 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicRowLayoutBuffer:
 
 template<bool boundaryChecks, typename... Types>
 bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
-    if (boundaryChecks && numberOfRecords >= capacity) {
-        NES_WARNING("TupleBuffer is full and thus no tuple can be added!");
+    return pushRecord<boundaryChecks>(record, numberOfRecords);
+}
+
+template<bool boundaryChecks, typename... Types>
+bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record, uint64_t recordIndex) {
+    if (boundaryChecks && recordIndex >= capacity) {
+        NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is too small to write to position " << recordIndex << " and thus no write can happen!");
         return false;
     }
-
-    uint64_t offSet = (numberOfRecords * this->getRecordSize());
+    uint64_t offSet = (recordIndex * this->getRecordSize());
     uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
-    ++numberOfRecords;
 
     copyTupleFieldsToBuffer(record, address);
 
-    tupleBuffer.setNumberOfTuples(numberOfRecords);
-    NES_DEBUG("DynamicRowLayoutBuffer: numberOfRecords = " << numberOfRecords);
+    if (recordIndex + 1 > numberOfRecords) {
+        numberOfRecords = recordIndex + 1;
+    }
 
+    tupleBuffer.setNumberOfTuples(numberOfRecords);
     return true;
 }
 
