@@ -40,7 +40,7 @@ bool IterationLogicalOperatorNode::isIdentical(NodePtr rhs) const {
 bool IterationLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<IterationLogicalOperatorNode>()) {
         auto iteration = rhs->as<IterationLogicalOperatorNode>();
-        return outputSchema->equals(iteration->outputSchema);
+        return (minIterations==iteration->minIterations && maxIterations==iteration->maxIterations);
     }
     return false;
 };
