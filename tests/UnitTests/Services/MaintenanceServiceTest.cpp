@@ -16,30 +16,94 @@
 //
 // Created by balint on 10.03.21.
 //
+
+#include <Catalogs/QueryCatalog.hpp>
+#include <Services/MaintenanceService.hpp>
+#include <WorkQueues/NESRequestQueue.hpp>
+
+#include <API/Query.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Catalogs/StreamCatalogEntry.hpp>
+#include <Configurations/ConfigOptions/SourceConfig.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Optimizer/Phases/QueryRewritePhase.hpp>
+#include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
+#include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
+#include <Plans/Global/Execution/ExecutionNode.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
-
-#include <Catalogs/QueryCatalog.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
-#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
-#include <Services/MaintenanceService.hpp>
-#include <WorkQueues/NESRequestQueue.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <gtest/gtest.h>
 namespace NES{
 class MaintenanceServiceTest : public ::testing::Test {
   public:
-    void SetUp(){
-        NES::setupLogging("SerializationUtilTest.log", NES::LOG_DEBUG);
-        NES_INFO("Setup SerializationUtilTest test case.");
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() { std::cout << "Setup QueryPlacementTest test class." << std::endl; }
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
+        NES::setupLogging("QueryPlacementTest.log", NES::LOG_DEBUG);
+        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+        std::cout << "Setup QueryPlacementTest test case." << std::endl;
     }
-    void TearDown(){}
 
+    /* Will be called before a test is executed. */
+    void TearDown() { std::cout << "Setup QueryPlacementTest test case." << std::endl; }
 
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
 
+    void setupTopologyAndStreamCatalog() {
 
+        topology = Topology::create();
 
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+        topology->setAsRoot(rootNode);
+
+        TopologyNodePtr node1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+        topology->addNewPhysicalNodeAsChild(rootNode, node1);
+
+        TopologyNodePtr node2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+        topology->addNewPhysicalNodeAsChild(rootNode, node2);
+
+        TopologyNodePtr node3 = TopologyNode::create(4, "localhost", 123, 124, 4);
+        topology->addNewPhysicalNodeAsChild(rootNode, node3);
+
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string streamName = "car";
+
+        streamCatalog = std::make_shared<StreamCatalog>();
+        streamCatalog->addLogicalStream(streamName, schema);
+
+        SourceConfigPtr sourceConfig = SourceConfig::create();
+        sourceConfig->setSourceFrequency(0);
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setPhysicalStreamName("test2");
+        sourceConfig->setLogicalStreamName("car");
+
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node3);
+
+        streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
+
+    }
+
+    StreamCatalogPtr streamCatalog;
+    TopologyPtr topology;
 };
+
 TEST_F(MaintenanceServiceTest, DISABLED_findPathBetweenIgnoresNodesMakredForMaintenanceTest) {
     TopologyPtr topology = Topology::create();
 
@@ -163,19 +227,55 @@ TEST_F(MaintenanceServiceTest, DISABLED_findPathBetweenIgnoresNodesMakredForMain
     TopologyNodePtr mThirdStartNodeParent4 = mThirdStartNodeParent3->getParents()[0]->as<TopologyNode>();
     EXPECT_TRUE(mThirdStartNodeParent4->getId() == topologyNodes[0]->getId());
 }
-TEST_F(MaintenanceServiceTest, sampleTest){
 
+/**
+ * Tests for response in case TopologyNode, Strategy or ExecutionNode doesnt exist
+ */
+TEST_F(MaintenanceServiceTest, InvalidTopologyNodeOrStrategyOrExecutionNodeTest){
+
+    setupTopologyAndStreamCatalog();
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+    NESRequestQueuePtr queryRequestQueue = std::make_shared<NESRequestQueue>(1);
+    MaintenanceServicePtr maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
+    MaintenanceService::QueryMigrationMessage invalidTopologyNodeMessage {0,false,"Topology with supplied ID doesnt exist"};
+    MaintenanceService::QueryMigrationMessage invalidStrategyMessage {0,false,"Not a valid strategy"};
+    MaintenanceService::QueryMigrationMessage noExecutionNodeMessage {0,true,"No queries deployed on Topology Node. Node can be taken down immediately"};
+    auto response = maintenanceService->submitMaintenanceRequest(5,1).at(0);
+    ASSERT_TRUE(response == invalidTopologyNodeMessage);
+    response = maintenanceService->submitMaintenanceRequest(5,5).at(0);
+    ASSERT_TRUE(response == invalidStrategyMessage);
+    response = maintenanceService->submitMaintenanceRequest(1,1).at(0);
+    ASSERT_TRUE(response == noExecutionNodeMessage);
+    ASSERT_TRUE(topology->findNodeWithId(1)->getMaintenanceFlag() == true);
 }
+/**
+ * Checks if a NESRequest for all Query Ids on node marked for maintenance is built.
+ */
+TEST_F(MaintenanceServiceTest, MaintenanceRequestAmountTest){
+
+//    setupTopologyAndStreamCatalog();
+//    //Add several queries to ExecutionNode
+//    //check if the queries are there
 //
-TEST_F(MaintenanceServiceTest, PassingInvalidNodeIdTest){
-    auto workerRPCClient = std::make_shared<WorkerRPCClient>();
-    auto topology = Topology::create();
-    auto globalExecutionPlan = GlobalExecutionPlan::create();
-    auto queryCatalog = std::make_shared<QueryCatalog>();
-    auto queryRequestQueue = std::make_shared<NESRequestQueue>(1);
-    auto maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan,workerRPCClient);
-
-    ASSERT_TRUE(true);
+//    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+//    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
+//    NESRequestQueuePtr queryRequestQueue = std::make_shared<NESRequestQueue>(1);
+//    MaintenanceServicePtr maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
+//
+//    auto pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
+//    auto filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
+//    ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topology->findNodeWithId(2),1,filterOp1);
+//    executionNode->addNewQuerySubPlan(2,QueryPlan::create());
+//    executionNode->addNewQuerySubPlan(3,QueryPlan::create());
+//
+//    globalExecutionPlan->addExecutionNode(executionNode);
+//
+//    ASSERT_TRUE(globalExecutionPlan->getExecutionNodesByQueryId(1).size() == 1);
+//    auto responses = maintenanceService->submitMaintenanceRequest(2,2);
+//    ASSERT_TRUE(responses.size() == 2);
+//    for(auto &response  : responses){
+//        ASSERT_TRUE(response.info =="Strat2");
+//    }
 }
-
 }//namespace NES
