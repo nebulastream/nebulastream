@@ -33,7 +33,7 @@ void LatchWatermarkManager::updateWatermark(TransactionId& transactionId, Waterm
         auto nextUpdate = updateLog.top();
         // outstanding updates is sorted by the transaction id.
         // Thus, we only check if the next update is the one, which we expect.
-        if (currentTransactionId.counter + 1 != nextUpdate.transactionId.counter) {
+        if (currentTransactionId.id + 1 != nextUpdate.transactionId.id) {
             // It is not the correct update, so we terminate here and can't further apply the next transaction.
             break;
         }

@@ -9,7 +9,7 @@ class TransactionId {
     TransactionId(uint64_t counter, uint64_t originId, uint64_t threadId);
     bool operator <(const TransactionId &other) const;
     bool operator >(const TransactionId &other) const;
-    uint64_t counter;
+    uint64_t id;
     uint64_t originId;
     uint64_t threadId;
 

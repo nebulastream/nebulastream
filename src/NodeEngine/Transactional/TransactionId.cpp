@@ -17,11 +17,11 @@
 #include <NodeEngine/Transactional/TransactionId.hpp>
 namespace NES::NodeEngine::Transactional {
 
-TransactionId::TransactionId(uint64_t counter): counter(counter) {}
-TransactionId::TransactionId(uint64_t counter, uint64_t originId, uint64_t threadId): counter(counter), originId(originId), threadId(threadId) {}
+TransactionId::TransactionId(uint64_t counter): id(counter) {}
+TransactionId::TransactionId(uint64_t counter, uint64_t originId, uint64_t threadId): id(counter), originId(originId), threadId(threadId) {}
 
-bool TransactionId::operator<(const TransactionId& other) const { return this->counter < other.counter; }
+bool TransactionId::operator<(const TransactionId& other) const { return this->id < other.id; }
 
-bool TransactionId::operator>(const TransactionId& other) const { return this->counter > other.counter; }
+bool TransactionId::operator>(const TransactionId& other) const { return this->id > other.id; }
 
 }// namespace NES::NodeEngine::Transactional

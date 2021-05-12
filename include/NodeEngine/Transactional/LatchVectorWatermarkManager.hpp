@@ -44,7 +44,6 @@ class LatchVectorWatermarkManager : public WatermarkManager {
      * @return WatermarkTs
      */
     WatermarkTs getCurrentWatermark(TransactionId& transactionId) override;
-    void update(TransactionId& transactionId) override;
 
   private:
     std::mutex watermarkLatch;

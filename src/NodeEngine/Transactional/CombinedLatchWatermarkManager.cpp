@@ -16,7 +16,13 @@
 #include <NodeEngine/Transactional/CombinedLatchWatermarkManager.hpp>
 namespace NES::NodeEngine::Transactional {
 
-CombinedLatchWatermarkManager::CombinedLatchWatermarkManager(uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {}
+CombinedLatchWatermarkManager::CombinedLatchWatermarkManager(uint64_t numberOfOrigins)
+    : numberOfOrigins(numberOfOrigins), lastTransactionId(0), origins(numberOfOrigins) {
+    for (auto i = 0; i < numberOfOrigins; i++) {
+        origins[i] = std::make_tuple(0, 0);
+    }
+    lastTransactionId = 0;
+}
 
 WatermarkManagerPtr CombinedLatchWatermarkManager::create(uint64_t numberOfOrigins) {
     return std::make_shared<CombinedLatchWatermarkManager>(numberOfOrigins);
@@ -35,20 +41,25 @@ void CombinedLatchWatermarkManager::updateWatermark(TransactionId& transactionId
         auto nextUpdate = updateLog.top();
         // outstanding updates is sorted by the transaction id.
         // Thus, we only check if the next update is the one, which we expect.
-        if (currentTransactionId.counter + 1 != nextUpdate.transactionId.counter) {
+        if (lastTransactionId + 1 != nextUpdate.transactionId.id) {
             // It is not the correct update, so we terminate here and can't further apply the next transaction.
             break;
         }
         // apply the current update
-        this->currentTransactionId = nextUpdate.transactionId;
-        this->currentWatermark = nextUpdate.watermark;
+        auto originId = nextUpdate.transactionId.originId;
+        this->origins[originId] = std::make_tuple(nextUpdate.watermark, nextUpdate.transactionId.id);
+        this->lastTransactionId = nextUpdate.transactionId.id;
         updateLog.pop();
     }
 }
 
 WatermarkTs CombinedLatchWatermarkManager::getCurrentWatermark(TransactionId&) {
     std::scoped_lock lock(watermarkLatch);
-    return currentWatermark;
+    WatermarkTs maxWatermarkTs = UINT64_MAX;
+    for (auto origin : origins) {
+        maxWatermarkTs = std::min(maxWatermarkTs, std::get<0>(origin));
+    }
+    return maxWatermarkTs;
 }
 
 }// namespace NES::NodeEngine::Transactional

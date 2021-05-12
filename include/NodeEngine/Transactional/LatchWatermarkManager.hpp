@@ -57,7 +57,7 @@ class LatchWatermarkManager : public WatermarkManager {
     struct CompareUpdates {
         bool operator()(Update const& p1, Update const& p2) {
             // return "true" if "p1" is ordered before "p2", for example:
-            return p1.transactionId.counter > p2.transactionId.counter;
+            return p1.transactionId.id > p2.transactionId.id;
         }
     };
     std::mutex watermarkLatch;

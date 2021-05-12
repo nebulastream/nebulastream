@@ -13,6 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <NodeEngine/Transactional/CombinedLatchWatermarkManager.hpp>
 #include <NodeEngine/Transactional/CombinedWatermarkManager.hpp>
 #include <NodeEngine/Transactional/LatchVectorWatermarkManager.hpp>
 #include <NodeEngine/Transactional/LatchWatermarkManager.hpp>
@@ -93,7 +94,7 @@ TEST_F(WatermarkManagerTest, concurrentLatchBasedWatermarkTest) {
         threads.emplace_back(thread([updates, &watermarkManager, &watermarks, &transactionIdOracle]() {
             for (auto i = 0; i < updates; i++) {
                 auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
-                auto currentWatermark = watermarks[currentTransaction.counter - 1];
+                auto currentWatermark = watermarks[currentTransaction.id - 1];
                 auto oldWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
                 // check if the watermark manager dose not return a watermark higher then the current one
                 ASSERT_LT(oldWatermark, currentWatermark);
@@ -146,70 +147,13 @@ TEST_F(WatermarkManagerTest, concurrentThreadVectorLatchBasedWatermarkTest) {
     std::vector<std::thread> threads;
     for (int threadId = 0; threadId < threadsCount; threadId++) {
         threads.emplace_back(thread([threadId, updates, &watermarkManager, &watermarks, &transactionIdOracle]() {
-          for (auto i = 0; i < updates; i++) {
-              auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle, 0, threadId);
-              auto currentWatermark = watermarks[currentTransaction.counter - 1];
-              auto oldWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
-              // check if the watermark manager dose not return a watermark higher then the current one
-              ASSERT_LT(oldWatermark, currentWatermark);
-              watermarkManager->updateWatermark(currentTransaction, currentWatermark);
-              // check that the watermark manager returns a watermark that is <= to the max watermark
-              auto globalCurrentWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
-              auto maxCurrentWatermark = watermarks[transactionIdOracle - 1];
-              ASSERT_LE(globalCurrentWatermark, maxCurrentWatermark);
-          }
-        }));
-    }
-
-    for (auto& thread : threads) {
-        thread.join();
-    }
-
-    auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
-    ASSERT_EQ(watermarkManager->getCurrentWatermark(currentTransaction), watermarks.back());
-}
-
-TEST_F(WatermarkManagerTest, combinedWatermarkManagerTest) {
-    auto updates = 10000;
-    uint64_t transactionIdOracle = 0;
-    uint64_t watermarkOracle = 10;
-    auto watermarkManager =
-        NodeEngine::Transactional::CombinedWatermarkManager<NodeEngine::Transactional::LatchWatermarkManager, 1>::create();
-    for (auto i = 1; i < updates; i++) {
-        auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
-        auto currentWatermark = (++watermarkOracle) / 10;
-        auto oldWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
-        ASSERT_TRUE(oldWatermark <= currentWatermark);
-        watermarkManager->updateWatermark(currentTransaction, 0, currentWatermark);
-        ASSERT_TRUE(watermarkManager->getCurrentWatermark(currentTransaction) <= currentWatermark);
-    }
-    auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
-    ASSERT_TRUE(watermarkManager->getCurrentWatermark(currentTransaction) == (watermarkOracle) / 10);
-}
-
-TEST_F(WatermarkManagerTest, concurrentCombinedWatermarkTest) {
-    auto updates = 1000;
-    const auto threadsCount = 2;
-    auto watermarkManager = NodeEngine::Transactional::CombinedWatermarkManager<NodeEngine::Transactional::LatchWatermarkManager,
-                                                                                threadsCount>::create();
-    std::atomic<uint64_t> transactionIdOracle = 0;
-
-    // preallocate watermarks for each transaction
-    std::vector<NodeEngine::Transactional::WatermarkTs> watermarks;
-    for (int i = 1; i <= updates * threadsCount; i++) {
-        watermarks.emplace_back(i);
-    }
-
-    std::vector<std::thread> threads;
-    for (int threadId = 0; threadId < threadsCount; threadId++) {
-        threads.emplace_back(thread([threadId, updates, &watermarkManager, &watermarks, &transactionIdOracle]() {
             for (auto i = 0; i < updates; i++) {
-                auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
-                auto currentWatermark = watermarks[currentTransaction.counter - 1];
+                auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle, 0, threadId);
+                auto currentWatermark = watermarks[currentTransaction.id - 1];
                 auto oldWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
                 // check if the watermark manager dose not return a watermark higher then the current one
                 ASSERT_LT(oldWatermark, currentWatermark);
-                watermarkManager->updateWatermark(currentTransaction, threadId, currentWatermark);
+                watermarkManager->updateWatermark(currentTransaction, currentWatermark);
                 // check that the watermark manager returns a watermark that is <= to the max watermark
                 auto globalCurrentWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
                 auto maxCurrentWatermark = watermarks[transactionIdOracle - 1];
@@ -224,6 +168,67 @@ TEST_F(WatermarkManagerTest, concurrentCombinedWatermarkTest) {
 
     auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
     ASSERT_EQ(watermarkManager->getCurrentWatermark(currentTransaction), watermarks.back());
+}
+
+TEST_F(WatermarkManagerTest, combinedWatermarkManagerTest) {
+    auto updates = 10000;
+    uint64_t transactionIdOracle = 0;
+    uint64_t watermarkOracle = 0;
+    auto watermarkManager = NodeEngine::Transactional::CombinedLatchWatermarkManager::create(2);
+    for (auto i = 1; i < updates; i++) {
+        auto nextTransactionId = ++transactionIdOracle;
+        auto nextOriginId = transactionIdOracle % 2;
+        auto threadId = 0;
+        auto currentTransaction = NodeEngine::Transactional::TransactionId(nextTransactionId, nextOriginId, threadId);
+        auto currentWatermark = ++watermarkOracle;
+        auto oldWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
+        ASSERT_TRUE(oldWatermark < currentWatermark);
+        watermarkManager->updateWatermark(currentTransaction, currentWatermark);
+        ASSERT_TRUE(watermarkManager->getCurrentWatermark(currentTransaction) <= currentWatermark);
+    }
+    auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
+    ASSERT_TRUE(watermarkManager->getCurrentWatermark(currentTransaction) == watermarkOracle - 1);
+}
+
+TEST_F(WatermarkManagerTest, concurrentCombinedWatermarkTest) {
+    auto updates = 10000;
+    const auto threadsCount = 10;
+    const auto originCount = 10;
+    auto watermarkManager = NodeEngine::Transactional::CombinedLatchWatermarkManager::create(originCount);
+    std::atomic<uint64_t> transactionIdOracle = 0;
+
+    // preallocate watermarks for each transaction
+    std::vector<NodeEngine::Transactional::WatermarkTs> watermarks;
+    for (int i = 1; i <= updates * threadsCount; i++) {
+        watermarks.emplace_back(i);
+    }
+
+    std::vector<std::thread> threads;
+    for (int threadId = 0; threadId < threadsCount; threadId++) {
+        threads.emplace_back(thread([threadId, updates, &watermarkManager, &watermarks, &transactionIdOracle]() {
+            for (auto i = 0; i < updates; i++) {
+                auto nextOriginId = transactionIdOracle % originCount;
+                auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle, nextOriginId, threadId);
+                auto currentWatermark = watermarks[currentTransaction.id - 1];
+                auto oldWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
+                // check if the watermark manager dose not return a watermark higher then the current one
+                ASSERT_LT(oldWatermark, currentWatermark);
+                watermarkManager->updateWatermark(currentTransaction, currentWatermark);
+
+                auto globalCurrentWatermark = watermarkManager->getCurrentWatermark(currentTransaction);
+                // check that the watermark manager returns a watermark that is <= to the max watermark
+                auto maxCurrentWatermark = watermarks[transactionIdOracle - 1];
+                ASSERT_LE(globalCurrentWatermark, maxCurrentWatermark);
+            }
+        }));
+    }
+
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    auto currentTransaction = NodeEngine::Transactional::TransactionId(++transactionIdOracle);
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(currentTransaction), watermarks.back() - originCount + 1);
 }
 
 }// namespace NES
