@@ -22,12 +22,29 @@ using WatermarkTs = uint64_t;
 using OriginId = uint64_t;
 using BarrierSequenceNumber = uint64_t;
 
+/**
+ * @brief A watermark barrier, which consists of the watermark timestamp, the sequence number, and the origin id.
+ */
 class WatermarkBarrier {
   public:
     WatermarkBarrier(WatermarkTs ts, BarrierSequenceNumber sequenceNumber, OriginId origin);
 
+    /**
+     * @brief Gets the watermark timestamp
+     * @return WatermarkTs
+     */
     WatermarkTs getTs() const;
+
+    /**
+     * @brief Gets the sequence number
+     * @return BarrierSequenceNumber
+     */
     BarrierSequenceNumber getSequenceNumber() const;
+
+    /**
+     * @brief Gets the origin id
+     * @return OriginId
+     */
     OriginId getOrigin() const;
 
   private:
