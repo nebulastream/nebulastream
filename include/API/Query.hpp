@@ -184,16 +184,13 @@ class Query {
      * @return the query
      */
     template<typename... Args>
-    Query& project(Args&&... args) {
-        std::vector<ExpressionNodePtr> expressions;
-        std::vector<ExpressionItem> expressionItems({std::forward<Args>(args)...});
-        for (ExpressionItem item : expressionItems) {
-            expressions.push_back(item.getExpressionNode());
-        }
+    auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<ExpressionItem, Args>...>, Query&> {
+        std::vector const expressions{ExpressionItem{std::forward<Args>(args)}.getExpressionNode()...};
         OperatorNodePtr op = LogicalOperatorFactory::createProjectionOperator(expressions);
         queryPlan->appendOperatorAsNewRoot(op);
         return *this;
     }
+
     /**
      * This looks ugly, but we can't reference to QueryPtr at this line.
      * @param new stream name
