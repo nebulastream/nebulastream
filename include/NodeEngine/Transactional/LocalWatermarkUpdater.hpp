@@ -14,11 +14,12 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_COMBINEDLATCHWATERMARKMANAGER_HPP_
-#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_COMBINEDLATCHWATERMARKMANAGER_HPP_
+#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKUPDATER_HPP_
+#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKUPDATER_HPP_
 
-#include <NodeEngine/Transactional/WatermarkManager.hpp>
+#include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 #include <queue>
+#include <mutex>
 namespace NES::NodeEngine::Transactional {
 
 /**
@@ -26,10 +27,9 @@ namespace NES::NodeEngine::Transactional {
  * @assumptions This watermark manager assumes strictly monotonic transaction ids.
  * To handle out of order processing, it maintains a priority queue.
  */
-class CombinedLatchWatermarkManager: public WatermarkManager {
+class LocalWatermarkUpdater {
   public:
-    CombinedLatchWatermarkManager(uint64_t numberOfOrigins);
-    static WatermarkManagerPtr create(uint64_t numberOfOrigins);
+    explicit LocalWatermarkUpdater();
 
     /**
      * @brief In this implementation, update watermark adds the watermark ts and transaction as an update to the update queue.
@@ -38,35 +38,27 @@ class CombinedLatchWatermarkManager: public WatermarkManager {
      * @param transactionId
      * @param watermarkTs
      */
-    void updateWatermark(TransactionId& transactionId, WatermarkTs watermarkTs) override;
+    void updateWatermark(WatermarkBarrier& watermarkBarrier);
 
     /**
      * @brief In this implementation, we just return the current watermark.
-     * @param transactionId
      * @return WatermarkTs
      */
-    WatermarkTs getCurrentWatermark(TransactionId& transactionId) override;
+    WatermarkTs getCurrentWatermark();
 
   private:
-    class Update {
-      public:
-        Update(TransactionId transactionId, WatermarkTs watermark);
-        TransactionId transactionId;
-        WatermarkTs watermark;
-    };
-    struct CompareUpdates {
-        bool operator()(Update const& p1, Update const& p2) {
+    struct WatermarkBarrierComparator{
+        bool operator()(WatermarkBarrier const& wb1, WatermarkBarrier const& wb2) {
             // return "true" if "p1" is ordered before "p2", for example:
-            return p1.transactionId.id > p2.transactionId.id;
+            return wb1.getSequenceNumber() > wb2.getSequenceNumber();
         }
     };
     std::mutex watermarkLatch;
-    uint64_t numberOfOrigins;
-    uint64_t lastTransactionId;
-    std::vector<std::tuple<WatermarkTs, uint64_t>> origins;
-    std::priority_queue<Update, std::vector<Update>, CompareUpdates> updateLog;
+    WatermarkTs currentWatermark;
+    BarrierSequenceNumber currentTransactionId;
+    std::priority_queue<WatermarkBarrier, std::vector<WatermarkBarrier>, WatermarkBarrierComparator> updateLog;
 };
 
 }// namespace NES::NodeEngine::Transactional
 
-#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_COMBINEDLATCHWATERMARKMANAGER_HPP_
+#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKUPDATER_HPP_

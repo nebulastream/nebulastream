@@ -13,38 +13,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Transactional/LatchWatermarkManager.hpp>
+#include <NodeEngine/Transactional/LocalWatermarkUpdater.hpp>
 namespace NES::NodeEngine::Transactional {
 
-LatchWatermarkManager::LatchWatermarkManager() : currentWatermark(0), currentTransactionId(0) {}
+LocalWatermarkUpdater::LocalWatermarkUpdater() : currentWatermark(0), currentTransactionId(0) {}
 
-WatermarkManagerPtr LatchWatermarkManager::create() { return std::make_shared<LatchWatermarkManager>(); }
-
-LatchWatermarkManager::Update::Update(TransactionId transactionId, WatermarkTs watermark)
-    : transactionId(transactionId), watermark(watermark) {}
-
-void LatchWatermarkManager::updateWatermark(TransactionId& transactionId, WatermarkTs watermarkTs) {
+void LocalWatermarkUpdater::updateWatermark(WatermarkBarrier& watermarkBarrier) {
     std::scoped_lock lock(watermarkLatch);
 
     // emplace current watermark and transaction im queue of outstanding updates
-    updateLog.emplace(transactionId, watermarkTs);
+    updateLog.emplace(watermarkBarrier);
     // pull all outstanding updates from the queue
     while (!updateLog.empty()) {
-        auto nextUpdate = updateLog.top();
+        auto nextWatermarkUpdate = updateLog.top();
         // outstanding updates is sorted by the transaction id.
         // Thus, we only check if the next update is the one, which we expect.
-        if (currentTransactionId.id + 1 != nextUpdate.transactionId.id) {
+        if (currentTransactionId + 1 != nextWatermarkUpdate.getSequenceNumber()) {
             // It is not the correct update, so we terminate here and can't further apply the next transaction.
             break;
         }
         // apply the current update
-        this->currentTransactionId = nextUpdate.transactionId;
-        this->currentWatermark = nextUpdate.watermark;
+        this->currentTransactionId = nextWatermarkUpdate.getSequenceNumber();
+        this->currentWatermark = nextWatermarkUpdate.getTs();
         updateLog.pop();
     }
 }
 
-WatermarkTs LatchWatermarkManager::getCurrentWatermark(TransactionId&) {
+WatermarkTs LocalWatermarkUpdater::getCurrentWatermark() {
     std::scoped_lock lock(watermarkLatch);
     return currentWatermark;
 }

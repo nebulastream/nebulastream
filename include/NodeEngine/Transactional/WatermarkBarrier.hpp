@@ -13,24 +13,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKMANAGER_HPP_
-#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKMANAGER_HPP_
-
-#include <NodeEngine/Transactional/TransactionId.hpp>
+#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKBARRIER_HPP_
+#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKBARRIER_HPP_
+#include <cstdint>
 namespace NES::NodeEngine::Transactional {
 
 using WatermarkTs = uint64_t;
-class WatermarkManager;
-typedef std::shared_ptr<WatermarkManager> WatermarkManagerPtr;
+using OriginId = uint64_t;
+using BarrierSequenceNumber = uint64_t;
 
-class WatermarkManager {
+class WatermarkBarrier {
   public:
-    virtual void updateWatermark(TransactionId& transactionId, WatermarkTs watermarkTs) = 0;
-    virtual WatermarkTs getCurrentWatermark(TransactionId& transactionId) = 0;
+    WatermarkBarrier(WatermarkTs ts, BarrierSequenceNumber sequenceNumber, OriginId origin);
 
+    WatermarkTs getTs() const;
+    BarrierSequenceNumber getSequenceNumber() const;
+    OriginId getOrigin() const;
+
+  private:
+    WatermarkTs ts;
+    BarrierSequenceNumber sequenceNumber;
+    OriginId origin;
 };
-
 }// namespace NES::NodeEngine::Transactional
 
-#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKMANAGER_HPP_
+#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKBARRIER_HPP_

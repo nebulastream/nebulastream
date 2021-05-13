@@ -13,7 +13,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Transactional/WatermarkManager.hpp>
+
+#include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 namespace NES::NodeEngine::Transactional {
 
-}
+WatermarkBarrier::WatermarkBarrier(WatermarkTs ts, BarrierSequenceNumber sequenceNumber, OriginId origin)
+    : ts(ts), sequenceNumber(sequenceNumber), origin(origin) {}
+
+WatermarkTs WatermarkBarrier::getTs() const { return ts; }
+
+BarrierSequenceNumber WatermarkBarrier::getSequenceNumber() const { return sequenceNumber; }
+
+OriginId WatermarkBarrier::getOrigin() const { return origin; }
+
+}// namespace NES::NodeEngine::Transactional
