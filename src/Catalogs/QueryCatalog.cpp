@@ -40,7 +40,7 @@ std::map<uint64_t, std::string> QueryCatalog::getQueriesWithStatus(std::string s
     QueryStatus queryStatus = stringToQueryStatusMap[status];
     std::map<uint64_t, QueryCatalogEntryPtr> queries = getQueries(queryStatus);
     std::map<uint64_t, std::string> result;
-    for (auto [key, value] : queries) {
+    for (auto const& [key, value] : queries) {
         result[key] = value->getQueryString();
     }
     NES_INFO("QueryCatalog : found " << result.size() << " all queries with status " << status);
@@ -151,13 +151,13 @@ bool QueryCatalog::queryExists(QueryId queryId) {
 std::map<uint64_t, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus requestedStatus) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("QueryCatalog: getQueriesWithStatus() registered queries=" << printQueries());
-    std::map<uint64_t, QueryCatalogEntryPtr> runningQueries;
-    for (auto q : queries) {
+    std::map<uint64_t, QueryCatalogEntryPtr> matchingQueries;
+    for (auto const& q : queries) {
         if (q.second->getQueryStatus() == requestedStatus) {
-            runningQueries.insert(q);
+            matchingQueries.insert(q);
         }
     }
-    return runningQueries;
+    return matchingQueries;
 }
 
 void QueryCatalog::clearQueries() {

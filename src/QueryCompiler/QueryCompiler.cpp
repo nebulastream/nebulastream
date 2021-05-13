@@ -47,7 +47,8 @@ QueryCompilerPtr QueryCompiler::create(uint64_t numberOfBuffersPerPipeline) {
 void QueryCompiler::compile(GeneratedQueryExecutionPlanBuilder& qepBuilder, OperatorNodePtr queryPlan) {
     auto codeGenerator = CCodeGenerator::create();
     auto context = PipelineContext::create();
-    queryPlan->as<GeneratableOperator>()->produce(codeGenerator, context);
+    auto const qp = queryPlan->as<GeneratableOperator>();
+    qp->produce(codeGenerator, context);
     compilePipelineStages(qepBuilder, codeGenerator, context);
 }
 

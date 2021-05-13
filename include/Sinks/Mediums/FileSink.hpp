@@ -60,7 +60,7 @@ class FileSink : public SinkMedium {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef);
+    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
 
     /**
      * @brief override the toString method for the file output sink
@@ -77,7 +77,7 @@ class FileSink : public SinkMedium {
     * @brief method to return the type of medium
     * @return type of medium
     */
-    SinkMediumTypes getSinkMediumType();
+    SinkMediumTypes getSinkMediumType() override;
 
   protected:
     std::string filePath;

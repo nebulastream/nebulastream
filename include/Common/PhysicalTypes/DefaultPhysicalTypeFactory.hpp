@@ -24,17 +24,14 @@ namespace NES {
 class Integer;
 typedef std::shared_ptr<Integer> IntegerPtr;
 
-class Array;
-typedef std::shared_ptr<Array> ArrayPtr;
+class ArrayType;
+typedef std::shared_ptr<ArrayType> ArrayPtr;
 
 class Float;
 typedef std::shared_ptr<Float> FloatPtr;
 
 class Char;
 typedef std::shared_ptr<Char> CharPtr;
-
-class FixedChar;
-typedef std::shared_ptr<FixedChar> FixedCharPtr;
 
 /**
  * @brief This is a default physical type factory, which maps nes types to common x86 types.
@@ -64,12 +61,6 @@ class DefaultPhysicalTypeFactory : public PhysicalTypeFactory {
     * @return PhysicalTypePtr
     */
     PhysicalTypePtr getPhysicalType(CharPtr charType);
-    /**
-    * @brief Translates a fixed char data type into a corresponding physical type.
-    * @param fixedCharType
-    * @return PhysicalTypePtr
-    */
-    PhysicalTypePtr getPhysicalType(FixedCharPtr fixedCharType);
 
     /**
     * @brief Translates a fixed char data type into a corresponding physical type.

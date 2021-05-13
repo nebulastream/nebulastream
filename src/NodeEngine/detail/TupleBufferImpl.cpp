@@ -196,13 +196,11 @@ void BufferControlBlock::dumpOwningThreadInfo() {
 }
 #endif
 
-int32_t BufferControlBlock::getReferenceCount() { return referenceCounter.load(); }
+int32_t BufferControlBlock::getReferenceCount() const noexcept { return referenceCounter.load(); }
 
 bool BufferControlBlock::release() {
-    uint32_t prevRefCnt;
-    if ((prevRefCnt = referenceCounter.fetch_sub(1)) == 1) {
+    if (uint32_t const prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1) {
         numberOfTuples = 0;
-        //        numberOfTuples = 0;
         recycleCallback(owner, owningBufferRecycler.load());
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         {
@@ -211,7 +209,7 @@ bool BufferControlBlock::release() {
         }
 #endif
         return true;
-    } else if (prevRefCnt <= 0) {
+    } else if (prevRefCnt == 0) {
         NES_THROW_RUNTIME_ERROR("BufferControlBlock: releasing an already released buffer");
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -226,19 +224,19 @@ bool BufferControlBlock::release() {
     return false;
 }
 
-uint64_t BufferControlBlock::getNumberOfTuples() const { return numberOfTuples; }
+uint64_t BufferControlBlock::getNumberOfTuples() const noexcept { return numberOfTuples; }
 
 void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
 
-uint64_t BufferControlBlock::getWatermark() const { return watermark; }
+uint64_t BufferControlBlock::getWatermark() const noexcept { return watermark; }
 
 void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = watermark; }
 
 void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
 
-const uint64_t BufferControlBlock::getCreationTimestamp() const { return creationTimestamp; }
+uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }
 
-const uint64_t BufferControlBlock::getOriginId() const { return originId; }
+uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
 void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = originId; }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

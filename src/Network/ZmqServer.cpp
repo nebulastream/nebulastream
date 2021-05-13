@@ -223,23 +223,21 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
                     auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
                     auto nesPartition = *identityEnvelope.data<NesPartition>();
 
-                    NES_TRACE("ZmqServer: DataBuffer received from origin=" << bufferHeader->getOriginId() << " and NesPartition="
+                    NES_TRACE("ZmqServer: DataBuffer received from origin=" << bufferHeader->originId << " and NesPartition="
                                                                             << nesPartition.toString() << " with payload size "
-                                                                            << bufferHeader->getPayloadSize());
+                                                                            << bufferHeader->payloadSize);
 
                     // receive buffer content
                     auto buffer = bufferManager->getBufferBlocking();
-                    auto optRetSize =
-                        dispatcherSocket.recv(zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->getPayloadSize()),
-                                              kZmqRecvDefault);
+                    auto optRetSize = dispatcherSocket.recv(zmq::mutable_buffer(buffer.getBuffer(), bufferHeader->payloadSize),
+                                                            kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
-                    NES_ASSERT2_FMT(optRetSize.value().size == bufferHeader->getPayloadSize(),
-                                    "Recv not matching sizes " << optRetSize.value().size
-                                                               << "!=" << bufferHeader->getPayloadSize());
-                    buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
-                    buffer.setOriginId(bufferHeader->getOriginId());
-                    buffer.setWatermark(bufferHeader->getWatermark());
-                    buffer.setCreationTimestamp(bufferHeader->getCreationTimestamp());
+                    NES_ASSERT2_FMT(optRetSize.value().size == bufferHeader->payloadSize,
+                                    "Recv not matching sizes " << optRetSize.value().size << "!=" << bufferHeader->payloadSize);
+                    buffer.setNumberOfTuples(bufferHeader->numOfRecords);
+                    buffer.setOriginId(bufferHeader->originId);
+                    buffer.setWatermark(bufferHeader->watermark);
+                    buffer.setCreationTimestamp(bufferHeader->creationTimestamp);
 
                     exchangeProtocol.onBuffer(nesPartition, buffer);
                     break;

@@ -74,7 +74,7 @@ class NullOutputSink : public SinkMedium {
     * @brief method to return the type of medium
     * @return type of medium
     */
-    SinkMediumTypes getSinkMediumType();
+    SinkMediumTypes getSinkMediumType() override;
 
   private:
 };

@@ -20,6 +20,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Util/Logger.hpp>
+
 namespace NES {
 
 const GeneratableDataTypePtr VariableDeclaration::getType() const { return type_; }
@@ -58,8 +59,9 @@ VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
     : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_) {}
 
 VariableDeclaration VariableDeclaration::create(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value) {
-    if (!type)
+    if (!type) {
         NES_ERROR("DataTypePtr type is nullptr!");
+    }
     return VariableDeclaration(type, identifier, value);
 }
 VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string& identifier, ValueTypePtr value) {

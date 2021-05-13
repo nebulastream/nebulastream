@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/Array.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Common/DataTypes/Float.hpp>
@@ -130,20 +130,20 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             // it is assumed that the input item is the first element!
             // so place to front
             // todo remove this assumtion
-            code->structDeclaratonInputTuples.insert(code->structDeclaratonInputTuples.begin(),
-                                                     getStructDeclarationFromSchema("InputTuple", inputSchema));
+            code->structDeclarationInputTuples.insert(code->structDeclarationInputTuples.begin(),
+                                                      getStructDeclarationFromSchema("InputTuple", inputSchema));
             NES_DEBUG("arity unary generate scan for input=" << inputSchema->toString()
                                                              << " output=" << outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryLeft: {
-            code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
+            code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleLeft", inputSchema));
             NES_DEBUG("arity binaryleft generate scan for input=" << inputSchema->toString()
                                                                   << " output=" << outputSchema->toString());
             break;
         }
         case PipelineContext::BinaryRight: {
-            code->structDeclaratonInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
+            code->structDeclarationInputTuples.emplace_back(getStructDeclarationFromSchema("InputTupleRight", inputSchema));
             NES_DEBUG("arity binaryright generate scan for input=" << inputSchema->toString()
                                                                    << " output=" << outputSchema->toString());
             break;
@@ -188,7 +188,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
             .copy());
 
     code->varDeclarationInputTuples =
-        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclaratonInputTuples[0])),
+        VariableDeclaration::create(tf->createPointer(tf->createUserDefinedType(code->structDeclarationInputTuples[0])),
                                     "inputTuples");
 
     code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
@@ -199,7 +199,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     code->variableInitStmts.push_back(
         VarDeclStatement(code->varDeclarationInputTuples)
-            .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclaratonInputTuples[0]))
+            .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclarationInputTuples[0]))
             .copy());
 
     /* for (uint64_t recordIndex = 0; recordIndex < tuple_buffer_1->num_tuples; ++id) */
@@ -216,7 +216,7 @@ bool CCodeGenerator::generateCodeForScan(SchemaPtr inputSchema, SchemaPtr output
 
     auto recordHandler = context->getRecordHandler();
     for (AttributeFieldPtr field : inputSchema->fields) {
-        auto variable = getVariableDeclarationForField(code->structDeclaratonInputTuples[0], field);
+        auto variable = getVariableDeclarationForField(code->structDeclarationInputTuples[0], field);
 
         auto fieldRefStatement =
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
@@ -345,30 +345,13 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
         // Get current field from record handler.
         auto currentFieldVariableReference = recordHandler->getAttribute(field->getName());
 
-        // assign current value to result record.
-        // extract code to assign expression.
-        auto fieldType = field->getDataType();
-        if (fieldType->isArray() || fieldType->isFixedChar()) {
-            // Use memcopy for arrays and fixed chars
-            auto length = fieldType->isArray() ? DataType::as<Array>(fieldType)->getLength()
-                                               : DataType::as<FixedChar>(fieldType)->getLength();
-            auto arrayType = DataType::as<ArrayPhysicalType>(field->getDataType());
-            auto functionCall = FunctionCallStatement("memcpy");
-            functionCall.addParameter(VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)].accessRef(
-                VarRef(resultRecordFieldVariableDeclaration)));
-            functionCall.addParameter(currentFieldVariableReference);
-            functionCall.addParameter(
-                ConstantExpressionStatement(tf->createValueType(DataTypeFactory::createBasicValue(length))));
+        // use regular assing for types which are not arrays, as fixed char arrays support
+        // assignment by operator.
+        auto const copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
+                                            .accessRef(VarRef(resultRecordFieldVariableDeclaration))
+                                            .assign(currentFieldVariableReference);
 
-            code->currentCodeInsertionPoint->addStatement(functionCall.copy());
-        } else {
-            // use regular assing
-            auto copyFieldStatement = VarRef(varDeclResultTuple)[VarRef(code->varDeclarationNumberOfResultTuples)]
-                                          .accessRef(VarRef(resultRecordFieldVariableDeclaration))
-                                          .assign(currentFieldVariableReference);
-
-            code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
-        }
+        code->currentCodeInsertionPoint->addStatement(copyFieldStatement.copy());
     }
 
     // increment number of tuples in buffer -> ++numberOfResultTuples;
@@ -418,13 +401,12 @@ bool CCodeGenerator::generateCodeForWatermarkAssigner(Windowing::WatermarkStrate
                 .assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) 0))));
         context->code->variableInitStmts.push_back(maxWatermarkInitStatement.copy());
 
-        NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid size of struct input tuples");
+        NES_ASSERT(context->code->structDeclarationInputTuples.size() >= 1, "invalid size of struct input tuples");
         // get the value for current watermark
         // uint64_t currentWatermark = record[index].ts;
         auto currentWatermarkVariableDeclaration =
             VariableDeclaration::create(tf->createAnonymusDataType("uint64_t"), "currentWatermark");
         auto tsVariableDeclaration = recordHandler->getAttribute(attribute->getName());
-        //     context->code->structDeclaratonInputTuples[0].getVariableDeclaration(attribute->name);
 
         auto calculateMaxTupleStatement = (*tsVariableDeclaration)
                 * Constant(tf->createValueType(DataTypeFactory::createBasicValue(eventTimeWatermarkStrategy->getMultiplier())))
@@ -659,20 +641,20 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         case Windowing::WindowAggregationDescriptor::Min: {
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
                 getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
-                    tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->getUpperBound())))));
+                    tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->upperBound)))));
             } else if (auto floatType = DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
-                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(
-                    DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getUpperBound())))));
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
+                    tf->createValueType(DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->upperBound)))));
             }
             break;
         }
         case Windowing::WindowAggregationDescriptor::Max: {
             if (auto intType = DataType::as<Integer>(window->getWindowAggregation()->getPartialAggregateStamp())) {
                 getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
-                    tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->getLowerBound())))));
+                    tf->createValueType(DataTypeFactory::createBasicValue(intType, std::to_string(intType->lowerBound)))));
             } else if (auto floatType = DataType::as<Float>(window->getWindowAggregation()->getPartialAggregateStamp())) {
-                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(tf->createValueType(
-                    DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->getLowerBound())))));
+                getValueFromKeyHandle.addParameter(ConstantExpressionStatement(
+                    tf->createValueType(DataTypeFactory::createBasicValue(floatType, std::to_string(floatType->lowerBound)))));
             }
             break;
         }
@@ -704,7 +686,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
         auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration).assign(getCurrentTs);
         context->code->currentCodeInsertionPoint->addStatement(getCurrentTsStatement.copy());
     } else {
-        NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid number of input tuples");
+        NES_ASSERT(context->code->structDeclarationInputTuples.size() >= 1, "invalid number of input tuples");
         auto timeCharacteristicField = window->getWindowType()->getTimeCharacteristic()->getField()->getName();
         auto tsVariableDeclaration = recordHandler->getAttribute(timeCharacteristicField);
 
@@ -770,7 +752,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
 
     // update partial aggregate
     auto partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
-    NES_ASSERT(context->code->structDeclaratonInputTuples.size() >= 1, "invalid number of input tuples");
+    NES_ASSERT(context->code->structDeclarationInputTuples.size() >= 1, "invalid number of input tuples");
     generatableWindowAggregation->compileLiftCombine(context->code->currentCodeInsertionPoint,
                                                      partialRef,
                                                      context->getRecordHandler());
@@ -952,9 +934,8 @@ uint64_t CCodeGenerator::generateCodeForJoinSinkSetup(Join::LogicalJoinDefinitio
                "right join type is undefined");
 
     auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", join->getRightStreamType());
-    //context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
     auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", join->getLeftStreamType());
-    context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
+    context->code->structDeclarationInputTuples.emplace_back(leftTypeStruct);
 
     auto pipelineExecutionContextType = tf->createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     VariableDeclaration varDeclarationPipelineExecutionContext =
@@ -1066,10 +1047,10 @@ bool CCodeGenerator::generateCodeForJoin(Join::LogicalJoinDefinitionPtr joinDef,
 
     if (context->arity == PipelineContext::BinaryLeft) {
         auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightStreamType());
-        context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
+        context->code->structDeclarationInputTuples.emplace_back(rightTypeStruct);
     } else {
         auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftStreamType());
-        context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
+        context->code->structDeclarationInputTuples.emplace_back(leftTypeStruct);
     }
 
     NES_ASSERT(joinDef, "invalid join definition");
@@ -1281,10 +1262,10 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 
     if (buildSide == QueryCompilation::JoinBuildSide::Left) {
         auto rightTypeStruct = getStructDeclarationFromSchema("InputTupleRight", joinDef->getRightStreamType());
-        context->code->structDeclaratonInputTuples.emplace_back(rightTypeStruct);
+        context->code->structDeclarationInputTuples.emplace_back(rightTypeStruct);
     } else {
         auto leftTypeStruct = getStructDeclarationFromSchema("InputTupleLeft", joinDef->getLeftStreamType());
-        context->code->structDeclaratonInputTuples.emplace_back(leftTypeStruct);
+        context->code->structDeclarationInputTuples.emplace_back(leftTypeStruct);
     }
 
     NES_ASSERT(joinDef, "invalid join definition");
@@ -1917,7 +1898,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 
     FileBuilder fileBuilder = FileBuilder::create("query.cpp");
     /* add core declarations */
-    for (auto& decl : code->structDeclaratonInputTuples) {
+    for (auto& decl : code->structDeclarationInputTuples) {
         fileBuilder.addDeclaration(decl.copy());
     }
 
@@ -2088,9 +2069,9 @@ BinaryOperatorStatement CCodeGenerator::getWindowManager(VariableDeclaration win
 }
 
 TypeCastExprStatement CCodeGenerator::getTypedBuffer(VariableDeclaration tupleBufferVariable,
-                                                     StructDeclaration structDeclaraton) {
+                                                     StructDeclaration structDeclaration) {
     auto tf = getTypeFactory();
-    return TypeCast(getBuffer(tupleBufferVariable), tf->createPointer(tf->createUserDefinedType(structDeclaraton)));
+    return TypeCast(getBuffer(tupleBufferVariable), tf->createPointer(tf->createUserDefinedType(structDeclaration)));
 }
 VariableDeclaration CCodeGenerator::getWindowOperatorHandler(PipelineContextPtr context,
                                                              VariableDeclaration tupleBufferVariable,

@@ -22,6 +22,7 @@
 #include <Util/TestHarness/TestHarnessWorker.hpp>
 #include <Util/TestUtils.hpp>
 
+#include <type_traits>
 #include <utility>
 
 /**
@@ -258,8 +259,8 @@ class TestHarness {
     /**
          * @brief execute the test based on the given operator, pushed elements, and number of workers,
          * then return the result of the query execution
-         * @param placementStrategyName: total number of tuple expected in the query result
-         * @param numberOfContentToExpect: placement strategy name
+         * @param placementStrategyName: placement strategy name
+         * @param numberOfContentToExpect: total number of tuple expected in the query result
          * @return output string
          */
     template<typename T>
@@ -292,7 +293,7 @@ class TestHarness {
                 auto* memArea = reinterpret_cast<uint8_t*>(malloc(memAreaSize));
 
                 auto currentRecords = worker.record;
-                for (int j = 0; j < currentSourceNumOfRecords; ++j) {
+                for (std::size_t j = 0; j < currentSourceNumOfRecords; ++j) {
                     memcpy(&memArea[tupleSize * j], currentRecords.at(j), tupleSize);
                 }
 

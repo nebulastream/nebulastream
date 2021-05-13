@@ -26,9 +26,9 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
     : queryId(queryId), queryString(queryString), queryPlacementStrategy(queryPlacementStrategy), queryPlanPtr(queryPlanPtr),
       queryStatus(queryStatus) {}
 
-QueryId QueryCatalogEntry::getQueryId() { return queryId; }
+QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
-std::string QueryCatalogEntry::getQueryString() { return queryString; }
+std::string QueryCatalogEntry::getQueryString() const { return queryString; }
 
 const QueryPlanPtr QueryCatalogEntry::getQueryPlan() const { return queryPlanPtr; }
 

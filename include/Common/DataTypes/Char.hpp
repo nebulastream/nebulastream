@@ -23,19 +23,19 @@ namespace NES {
 /**
  * @brief The char type represents a single character.
  */
-class Char : public DataType {
+class Char final : public DataType {
   public:
     /**
     * @brief Checks if this data type is Boolean.
     */
-    bool isChar() override;
+    bool isChar() const final { return true; }
 
     /**
      * @brief Checks if two data types are equal.
      * @param otherDataType
      * @return
      */
-    bool isEquals(DataTypePtr otherDataType) override;
+    bool isEquals(DataTypePtr otherDataType) final;
 
     /**
      * @brief Calculates the joined data type between this data type and the other.
@@ -43,13 +43,13 @@ class Char : public DataType {
      * @param other data type
      * @return DataTypePtr joined data type
      */
-    DataTypePtr join(DataTypePtr otherDataType) override;
+    DataTypePtr join(DataTypePtr otherDataType) final;
 
     /**
      * @brief Returns a string representation of the data type.
      * @return string
      */
-    std::string toString() override;
+    std::string toString() final;
 };
 
 }// namespace NES

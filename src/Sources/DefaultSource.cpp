@@ -65,27 +65,27 @@ std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
                     layout->getValueField<char>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
                     layout->getValueField<uint8_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
                     layout->getValueField<uint16_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
                     layout->getValueField<uint32_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
                     layout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
                     layout->getValueField<int8_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
                     layout->getValueField<int16_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
                     layout->getValueField<int32_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
                     layout->getValueField<int64_t>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
                     layout->getValueField<float>(recordIndex, fieldIndex)->write(buf, value);
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
                     layout->getValueField<double>(recordIndex, fieldIndex)->write(buf, value);
                 } else {
                     NES_DEBUG("This data source only generates data for numeric fields");

@@ -26,13 +26,12 @@ const CodeExpressionPtr AnonymousUserDefinedDataType::getTypeDefinitionCode() co
     return std::make_shared<CodeExpression>(name);
 }
 
-CodeExpressionPtr AnonymousUserDefinedDataType::getDeclarationCode(std::string identifier) {
+CodeExpressionPtr AnonymousUserDefinedDataType::getDeclarationCode(std::string identifier) const {
     std::stringstream str;
     str << " " << identifier;
     return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
 }
 
-AnonymousUserDefinedDataType::~AnonymousUserDefinedDataType() {}
 const CodeExpressionPtr AnonymousUserDefinedDataType::getCode() const { return std::make_shared<CodeExpression>(name); }
 
 }// namespace NES

@@ -82,7 +82,7 @@ class BufferControlBlock {
     /**
      * @return get the reference counter
      */
-    int32_t getReferenceCount();
+    int32_t getReferenceCount() const noexcept;
 
     /**
      * @brief Decrease the reference counter by one.
@@ -95,7 +95,7 @@ class BufferControlBlock {
     * Note that this is going to be deprecated in future NES versions
     * @return the tuple size stored in the companion buffer
     */
-    uint64_t getNumberOfTuples() const;
+    uint64_t getNumberOfTuples() const noexcept;
 
     /**
      * @brief set the tuple size stored in the companion buffer
@@ -106,7 +106,7 @@ class BufferControlBlock {
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
-    uint64_t getWatermark() const;
+    uint64_t getWatermark() const noexcept;
 
     /**
    * @brief method to set the watermark with a timestamp
@@ -118,7 +118,7 @@ class BufferControlBlock {
      * @brief get id where this buffer was created
      * @return origin id
      */
-    const uint64_t getOriginId() const;
+    uint64_t getOriginId() const noexcept;
 
     /**
      * @brief set originId
@@ -136,7 +136,7 @@ class BufferControlBlock {
      * @brief method to get the creation timestamp
      * @return ts
      */
-    const uint64_t getCreationTimestamp() const;
+    uint64_t getCreationTimestamp() const noexcept;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();

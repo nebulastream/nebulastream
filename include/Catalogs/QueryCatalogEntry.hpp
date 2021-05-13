@@ -81,13 +81,13 @@ class QueryCatalogEntry {
      * @brief method to get the id of the query
      * @return query id
      */
-    QueryId getQueryId();
+    QueryId getQueryId() const noexcept;
 
     /**
      * @brief method to get the string of the query
      * @return query string
      */
-    std::string getQueryString();
+    std::string getQueryString() const;
 
     /**
      * @brief method to get the query plan

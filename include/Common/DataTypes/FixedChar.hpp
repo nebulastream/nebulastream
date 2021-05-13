@@ -17,7 +17,9 @@
 #ifndef NES_INCLUDE_DATATYPES_FIXEDCHAR_HPP_
 #define NES_INCLUDE_DATATYPES_FIXEDCHAR_HPP_
 
+#include "Common/DataTypes/ArrayType.hpp"
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES {
 
 /**
@@ -25,47 +27,13 @@ namespace NES {
  * FixedChar can store strings up to n characters (not bytes) in length.
  * If the string to be stored is shorter than the declared length, values of type FixedChar will be space-padded.
  */
-class FixedChar : public DataType {
+class FixedChar final : public ArrayType {
   public:
     /**
      * @brief Constructs a new Char(n)
      * @param length length of the char
      */
-    explicit FixedChar(uint64_t length);
-
-    /**
-    * @brief Checks if this data type is Char.
-    */
-    bool isFixedChar() override;
-
-    /**
-    * @brief Checks if two data types are equal.
-    * @param otherDataType
-    * @return
-    */
-    bool isEquals(DataTypePtr otherDataType) override;
-
-    /**
-     * @brief Calculates the joined data type between this data type and the other.
-     * If they have no possible joined data type, the coined type is Undefined.
-     * @param other data type
-     * @return DataTypePtr joined data type
-     */
-    DataTypePtr join(DataTypePtr otherDataType) override;
-
-    /**
-    * @brief Returns the length of the char.
-    */
-    [[nodiscard]] uint64_t getLength() const;
-
-    /**
-    * @brief Returns a string representation of the data type.
-    * @return string
-    */
-    std::string toString() override;
-
-  private:
-    const uint64_t length;
+    explicit inline FixedChar(uint64_t length) noexcept : ArrayType(length, DataTypeFactory::createChar()) {}
 };
 
 }// namespace NES

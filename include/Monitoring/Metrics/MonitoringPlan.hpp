@@ -29,7 +29,7 @@ namespace NES {
 
 class MetricCatalog;
 class MetricGroup;
-class GroupedValues;
+struct GroupedValues;
 class SerializableMonitoringPlan;
 class MonitoringPlan;
 class MetricCatalog;

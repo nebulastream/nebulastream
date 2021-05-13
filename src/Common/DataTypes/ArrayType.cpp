@@ -14,17 +14,22 @@
     limitations under the License.
 */
 
-#include <Common/ValueTypes/ValueType.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <utility>
+
 namespace NES {
 
-ValueType::ValueType(DataTypePtr type) : dataType(type) {}
+bool ArrayType::isEquals(DataTypePtr otherDataType) {
+    if (otherDataType->isArray()) {
+        auto const otherArray = as<ArrayType>(otherDataType);
+        return length == otherArray->length && component->isEquals(otherArray->component);
+    }
+    return false;
+}
 
-bool ValueType::isArrayValue() { return false; }
+DataTypePtr ArrayType::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
 
-bool ValueType::isBasicValue() { return false; }
-
-bool ValueType::isCharValue() { return false; }
-
-DataTypePtr ValueType::getType() { return dataType; }
+std::string ArrayType::toString() { return "ArrayType"; }
 
 }// namespace NES

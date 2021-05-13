@@ -43,7 +43,7 @@ QueryPlan::QueryPlan(OperatorNodePtr rootOperator) : queryId(INVALID_QUERY_ID), 
 }
 
 QueryPlan::QueryPlan(QueryId queryId, QuerySubPlanId querySubPlanId, std::vector<OperatorNodePtr> rootOperators)
-    : queryId(queryId), querySubPlanId(querySubPlanId), rootOperators(std::move(rootOperators)) {}
+    : rootOperators(std::move(rootOperators)), queryId(queryId), querySubPlanId(querySubPlanId) {}
 
 std::vector<SourceLogicalOperatorNodePtr> QueryPlan::getSourceOperators() {
     NES_DEBUG("QueryPlan: Get all source operators by traversing all the root nodes.");
@@ -174,7 +174,7 @@ OperatorNodePtr QueryPlan::getOperatorWithId(uint64_t operatorId) {
     return nullptr;
 }
 
-const QueryId QueryPlan::getQueryId() const { return queryId; }
+QueryId QueryPlan::getQueryId() const { return queryId; }
 
 void QueryPlan::setQueryId(QueryId queryId) { QueryPlan::queryId = queryId; }
 

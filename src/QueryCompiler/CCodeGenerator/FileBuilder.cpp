@@ -23,38 +23,41 @@ namespace NES {
 
 FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
-    builder.declations << "#include <cstdint>" << std::endl;
-    builder.declations << "#include <string.h>" << std::endl;
-    builder.declations << "#include <State/StateVariable.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/LogicalWindowDefinition.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/Runtime/WindowManager.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/Runtime/WindowSliceStore.hpp>" << std::endl;
-    builder.declations << "#include <NodeEngine/TupleBuffer.hpp>" << std::endl;
-    builder.declations << "#include <NodeEngine/ExecutionResult.hpp>" << std::endl;
-    builder.declations << "#include <NodeEngine/WorkerContext.hpp>" << std::endl;
-    builder.declations << "#include <NodeEngine/Execution/PipelineExecutionContext.hpp>" << std::endl;
-    builder.declations << "#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowHandler/JoinHandler.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>" << std::endl;
-    builder.declations << "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>" << std::endl;
+    builder.declations << "#include <QueryCompiler/GeneratableTypes/Array.hpp>\n"
+                          "#include <cstdint>\n"
+                          "#include <string.h>\n"
+                          "#include <State/StateVariable.hpp>\n"
+                          "#include <Windowing/LogicalWindowDefinition.hpp>\n"
+                          "#include <Windowing/WindowHandler/AggregationWindowHandler.hpp>\n"
+                          "#include <Windowing/WindowHandler/WindowOperatorHandler.hpp>\n"
+                          "#include <Windowing/WindowActions/BaseExecutableJoinAction.hpp>\n"
+                          "#include <Windowing/Runtime/WindowManager.hpp>\n"
+                          "#include <Windowing/Runtime/WindowSliceStore.hpp>\n"
+                          "#include <NodeEngine/TupleBuffer.hpp>\n"
+                          "#include <NodeEngine/ExecutionResult.hpp>\n"
+                          "#include <NodeEngine/WorkerContext.hpp>\n"
+                          "#include <NodeEngine/Execution/PipelineExecutionContext.hpp>\n"
+                          "#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>\n"
+                          "#include <Windowing/WindowHandler/JoinOperatorHandler.hpp>\n"
+                          "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
+                          "#include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>\n"
+                          "#include <Windowing/WindowPolicies/ExecutableOnWatermarkChangeTriggerPolicy.hpp>\n"
+                          "#include <Windowing/WindowHandler/JoinHandler.hpp>\n"
+                          "#include <Windowing/WindowActions/ExecutableNestedLoopJoinTriggerAction.hpp>\n"
+                          "#include <Windowing/Runtime/WindowedJoinSliceListStore.hpp>\n"
+                          "#include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>\n"
+                          "#include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>\n"
+                          "#include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>\n"
+                          "#include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>\n"
+                          "#include <Windowing/WindowActions/ExecutableSliceAggregationTriggerAction.hpp>\n"
+                          "#include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>"
+                       << std::endl;
 
     return builder;
 }
 FileBuilder& FileBuilder::addDeclaration(DeclarationPtr declaration) {
-    declations << declaration->getCode() << ";";
+    auto const code = declaration->getCode();
+    declations << code << ";";
     return *this;
 }
 CodeFile FileBuilder::build() {

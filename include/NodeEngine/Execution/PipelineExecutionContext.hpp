@@ -98,7 +98,7 @@ class PipelineExecutionContext : public std::enable_shared_from_this<PipelineExe
      * @return
      */
     template<class OperatorHandlerType>
-    auto getOperatorHandler(int index) {
+    auto getOperatorHandler(std::size_t index) {
         auto size = operatorHandlers.size();
         if (index >= size) {
             NES_THROW_RUNTIME_ERROR("PipelineExecutionContext: operator handler at index " + std::to_string(index)

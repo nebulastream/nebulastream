@@ -70,7 +70,7 @@ class NetworkSink : public SinkMedium {
      */
     void reconfigure(NodeEngine::ReconfigurationMessage& task, NodeEngine::WorkerContext& workerContext) override;
 
-    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage&);
+    void postReconfigurationCallback(NodeEngine::ReconfigurationMessage&) override;
 
     /**
      * @brief setup method to configure the network sink via a reconfiguration
@@ -86,7 +86,7 @@ class NetworkSink : public SinkMedium {
     * @brief method to return the type of medium
     * @return type of medium
     */
-    SinkMediumTypes getSinkMediumType();
+    SinkMediumTypes getSinkMediumType() override;
 
   private:
     NetworkManagerPtr networkManager;

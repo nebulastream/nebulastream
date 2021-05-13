@@ -16,6 +16,8 @@
 
 #ifndef NES_INCLUDE_DATATYPES_VALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_VALUETYPE_HPP_
+
+#include <bitset>
 #include <memory>
 #include <string>
 
@@ -27,50 +29,23 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
-/**
- * @brief Represents a typed value in the NES type system.
- * This is is needed to represent constants in the type system.
- */
-class ValueType {
+/// @brief Representation of a user-defined constant in the NES type system.
+class [[nodiscard]] ValueType {
   public:
-    ValueType(DataTypePtr type);
+    [[nodiscard]] inline ValueType(DataTypePtr && type) : dataType(std::move(type)) {}
 
-    /**
-     * @brief Returns the nes data type for this value.
-     * @return
-     */
-    DataTypePtr getType();
+    /// @brief Checks if two values are equal
+    virtual bool isEquals(ValueTypePtr valueType) const noexcept = 0;
 
-    /**
-     * @brief Indicates if this value is a array.
-     */
-    virtual bool isArrayValue();
+    /// @brief Returns a string representation of this value
+    virtual std::string toString() const noexcept = 0;
 
-    /**
-     * @brief Indicates if this value is a basic value.
-     */
-    virtual bool isBasicValue();
+    template<class CheckedType>
+    auto as() {
+        return dynamic_cast<CheckedType*>(this);
+    }
 
-    /**
-     * @brief Indicates if this value is a char value.
-     */
-    virtual bool isCharValue();
-
-    /**
-     * @brief Checks if two values are equal
-     * @param valueType
-     * @return bool
-     */
-    virtual bool isEquals(ValueTypePtr valueType) = 0;
-
-    /**
-     * @brief Returns a string representation of this value
-     * @return string
-     */
-    virtual std::string toString() = 0;
-
-  private:
-    DataTypePtr dataType;
+    DataTypePtr const dataType;
 };
 
 }// namespace NES

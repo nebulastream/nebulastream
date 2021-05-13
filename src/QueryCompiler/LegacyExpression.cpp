@@ -176,12 +176,10 @@ const std::string PredicateItem::toString() const {
     return "";
 }
 
-bool PredicateItem::isStringType() const { return (getDataTypePtr()->isFixedChar()); }
-
 const DataTypePtr PredicateItem::getDataTypePtr() const {
     if (attribute)
         return attribute->getDataType();
-    return value->getType();
+    return value->dataType;
 };
 
 UserAPIExpressionPtr PredicateItem::copy() const { return std::make_shared<PredicateItem>(*this); }
@@ -398,14 +396,7 @@ Predicate operator>>(const PredicateItem& lhs, const LegacyExpression& rhs) {
  * @return
  */
 Predicate operator==(const PredicateItem& lhs, const PredicateItem& rhs) {
-    //possible use of memcmp when arraytypes equal with length is equal...
-    int checktype = lhs.isStringType();
-    checktype += rhs.isStringType();
-    if (checktype == 1)
-        NES_ERROR("NOT COMPARABLE TYPES");
-    if (checktype == 2)
-        return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy(), "strcmp", false);
-    return (dynamic_cast<const LegacyExpression&>(lhs) == dynamic_cast<const LegacyExpression&>(rhs));
+    return (dynamic_cast<LegacyExpression const&>(lhs) == dynamic_cast<LegacyExpression const&>(rhs));
 }
 Predicate operator!=(const PredicateItem& lhs, const PredicateItem& rhs) {
     return operator!=(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));

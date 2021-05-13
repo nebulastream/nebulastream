@@ -272,7 +272,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     uint64_t nodeEngineId;
 
-    std::atomic<bool> isDestroyed;
+    std::atomic<bool> isDestroyed = false;
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

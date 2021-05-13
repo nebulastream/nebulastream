@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/Array.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -37,9 +37,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
     } else if (dataType->isFloat()) {
         return getPhysicalType(DataType::as<Float>(dataType));
     } else if (dataType->isArray()) {
-        return getPhysicalType(DataType::as<Array>(dataType));
-    } else if (dataType->isFixedChar()) {
-        return getPhysicalType(DataType::as<FixedChar>(dataType));
+        return getPhysicalType(DataType::as<ArrayType>(dataType));
     } else if (dataType->isChar()) {
         return getPhysicalType(DataType::as<Char>(dataType));
     }
@@ -49,7 +47,7 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) {
-    if (integer->getLowerBound() >= 0) {
+    if (integer->lowerBound >= 0) {
         if (integer->getBits() <= 8) {
             return BasicPhysicalType::create(integer, BasicPhysicalType::UINT_8);
         } else if (integer->getBits() <= 16) {
@@ -75,11 +73,6 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(IntegerPtr integer) 
     return nullptr;
 }
 
-PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FixedCharPtr charType) {
-    auto componentType = getPhysicalType(DataTypeFactory::createChar());
-    return ArrayPhysicalType::create(charType, charType->getLength(), componentType);
-}
-
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) {
     if (floatType->getBits() <= 32) {
         return BasicPhysicalType::create(floatType, BasicPhysicalType::FLOAT);
@@ -92,8 +85,8 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(FloatPtr floatType) 
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(ArrayPtr arrayType) {
-    auto componentType = getPhysicalType(arrayType->getComponent());
-    return ArrayPhysicalType::create(arrayType, arrayType->getLength(), componentType);
+    auto const componentType = getPhysicalType(arrayType->component);
+    return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
 }
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(CharPtr charType) {

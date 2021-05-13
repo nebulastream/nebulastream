@@ -21,36 +21,18 @@
 
 namespace NES {
 
-class BasicValue : public ValueType {
+class [[nodiscard]] BasicValue final : public ValueType {
 
   public:
-    BasicValue(DataTypePtr type, std::string value);
+    [[nodiscard]] inline BasicValue(DataTypePtr && type, std::string && value) noexcept
+        : ValueType(std::move(type)), value(std::move(value)) {}
 
-    /**
-    * @brief Indicates if this value is a basic value.
-    */
-    bool isBasicValue() override;
+    /// @brief Returns a string representation of this value.
+    std::string toString() const noexcept final;
 
-    /**
-    * @brief Returns a string representation of this value
-    * @return string
-    */
-    std::string toString() override;
+    /// @brief Checks if two values are equal.
+    bool isEquals(ValueTypePtr valueType) const noexcept final;
 
-    /**
-     * @brief Get the value of this value type.
-     * @return string
-     */
-    std::string getValue();
-
-    /**
-     * @brief Checks if two values are equal
-     * @param valueType
-     * @return bool
-     */
-    bool isEquals(ValueTypePtr valueType) override;
-
-  private:
     std::string value;
 };
 

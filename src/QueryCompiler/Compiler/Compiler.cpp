@@ -118,13 +118,13 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
     flags->addFlag(filename);
 
     // call compiler to generate shared lib from source code
-    callSystemCompiler(flags);
+    callSystemCompiler(flags, filename);
     // load shared lib
     auto sharedLibrary = SharedLibrary::load("./" + libraryName);
     return SystemCompilerCompiledCode::create(sharedLibrary, basename);
 }
 
-void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
+void Compiler::callSystemCompiler(CompilerFlagsPtr flags, std::string const& filename) {
     std::stringstream compilerCall;
     compilerCall << CLANG_EXECUTABLE << " ";
 #if 0
@@ -235,7 +235,7 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags) {
 
     // If the compilation did't return with 0, we throw an exception containing the compiler output
     if (ret != 0) {
-        NES_ERROR("Compiler: compilation failed");
+        NES_ERROR("Compiler: compilation of " << filename << " failed.");
         throw std::runtime_error(strstream.str());
     }
 #endif

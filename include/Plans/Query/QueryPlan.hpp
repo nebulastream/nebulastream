@@ -199,7 +199,7 @@ class QueryPlan {
      * Get the queryId for the plan
      * @return query Id of the plan
      */
-    const QueryId getQueryId() const;
+    QueryId getQueryId() const;
 
     /**
      * @brief get query sub plan id
@@ -253,7 +253,7 @@ class QueryPlan {
      */
     bool removeOperatorFromPlan(OperatorNodePtr operatorToRemove);
 
-    std::vector<OperatorNodePtr> rootOperators;
+    std::vector<OperatorNodePtr> rootOperators{};
     QueryId queryId;
     QuerySubPlanId querySubPlanId;
 };

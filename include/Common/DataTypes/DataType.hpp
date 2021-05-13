@@ -33,42 +33,42 @@ class DataType {
     /**
      * @brief Checks if this data type is Undefined.
      */
-    virtual bool isUndefined();
+    virtual bool isUndefined() const;
 
     /**
    * @brief Checks if this data type is Boolean.
    */
-    virtual bool isBoolean();
+    virtual bool isBoolean() const;
 
     /**
     * @brief Checks if this data type is Numeric.
     */
-    virtual bool isNumeric();
+    virtual bool isNumeric() const;
 
     /**
     * @brief Checks if this data type is Integer.
     */
-    virtual bool isInteger();
+    virtual bool isInteger() const;
 
     /**
     * @brief Checks if this data type is Float.
     */
-    virtual bool isFloat();
+    virtual bool isFloat() const;
 
     /**
-    * @brief Checks if this data type is Array.
+    * @brief Checks if this data type is ArrayType.
     */
-    virtual bool isArray();
+    virtual bool isArray() const;
+
+    /**
+    * @brief Checks if this data type is ArrayType.
+    */
+    virtual bool isCharArray() const;
 
     /**
     * @brief Checks if this data type is Char.
     */
-    virtual bool isChar();
-
-    /**
-    * @brief Checks if this data type is Char.
-    */
-    virtual bool isFixedChar();
+    virtual bool isChar() const;
 
     template<class DataType>
     static std::shared_ptr<DataType> as(DataTypePtr ptr) {

@@ -113,7 +113,7 @@ void TupleBuffer::setWatermark(uint64_t value) { controlBlock->setWatermark(valu
 
 void TupleBuffer::setCreationTimestamp(uint64_t value) { controlBlock->setCreationTimestamp(value); }
 
-uint64_t TupleBuffer::getCreationTimestamp() { return controlBlock->getCreationTimestamp(); }
+uint64_t TupleBuffer::getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
     std::swap(lhs.ptr, rhs.ptr);

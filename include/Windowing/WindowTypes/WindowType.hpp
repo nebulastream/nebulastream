@@ -24,6 +24,8 @@ namespace NES::Windowing {
 class WindowType {
   public:
     explicit WindowType(TimeCharacteristicPtr timeCharacteristic);
+
+    virtual ~WindowType() = default;
     /**
       * Calculates the next window end based on a given timestamp
       * @param currentTs

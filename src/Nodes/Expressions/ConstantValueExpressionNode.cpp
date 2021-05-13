@@ -16,12 +16,13 @@
 
 #include <Common/ValueTypes/ValueType.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+
 namespace NES {
 ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr constantValue)
-    : ExpressionNode(constantValue->getType()), constantValue(constantValue){};
+    : ExpressionNode(constantValue->dataType), constantValue(constantValue){};
 
 ConstantValueExpressionNode::ConstantValueExpressionNode(ConstantValueExpressionNode* other)
-    : ExpressionNode(other->constantValue->getType()), constantValue(other->constantValue){};
+    : ExpressionNode(other->constantValue->dataType), constantValue(other->constantValue) {}
 
 bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<ConstantValueExpressionNode>()) {

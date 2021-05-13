@@ -20,23 +20,14 @@
 
 namespace NES {
 
-BasicValue::BasicValue(DataTypePtr type, std::string value) : ValueType(type), value(value) {}
-
-bool BasicValue::isBasicValue() { return true; }
-
-std::string BasicValue::toString() {
+std::string BasicValue::toString() const noexcept {
     std::stringstream ss;
     ss << "BasicValue(" << value << ")";
     return ss.str();
 }
 
-std::string BasicValue::getValue() { return value; }
-
-bool BasicValue::isEquals(ValueTypePtr valueType) {
-    if (!valueType->isBasicValue())
-        return false;
-    auto otherBasicValue = std::dynamic_pointer_cast<BasicValue>(valueType);
-    return otherBasicValue->getType()->isEquals(getType()) && value == otherBasicValue->value;
+bool BasicValue::isEquals(ValueTypePtr other) const noexcept {
+    return dataType->isEquals(other->dataType) && value == std::dynamic_pointer_cast<BasicValue>(other)->value;
 }
 
 }// namespace NES

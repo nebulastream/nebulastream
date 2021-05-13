@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
@@ -112,7 +113,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                       if (lhsField->instanceOf<NES::ConstantValueExpressionNode>()) {
                           auto constantValue = lhsField->as<NES::ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          leftValue = basicValueType->getValue();
+                          leftValue = basicValueType->value;
                       } else {
                           leftValue = lhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -120,7 +121,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                       if (rhsField->instanceOf<ConstantValueExpressionNode>()) {
                           auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          rightValue = basicValueType->getValue();
+                          rightValue = basicValueType->value;
                       } else {
                           rightValue = rhsField->as<NES::FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -198,7 +199,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                       if (lhsField->instanceOf<ConstantValueExpressionNode>()) {
                           auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          leftValue = basicValueType->getValue();
+                          leftValue = basicValueType->value;
                       } else {
                           leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -206,7 +207,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInArithmeticalExpressions(Exp
                       if (rhsField->instanceOf<ConstantValueExpressionNode>()) {
                           auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          rightValue = basicValueType->getValue();
+                          rightValue = basicValueType->value;
                       } else {
                           rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -291,7 +292,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
                       if (lhsField->instanceOf<ConstantValueExpressionNode>()) {
                           auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          leftValue = basicValueType->getValue();
+                          leftValue = basicValueType->value;
                       } else {
                           leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -299,7 +300,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
                       if (rhsField->instanceOf<ConstantValueExpressionNode>()) {
                           auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          rightValue = basicValueType->getValue();
+                          rightValue = basicValueType->value;
                       } else {
                           rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -368,7 +369,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
                       if (lhsField->instanceOf<ConstantValueExpressionNode>()) {
                           auto constantValue = lhsField->as<ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          leftValue = basicValueType->getValue();
+                          leftValue = basicValueType->value;
                       } else {
                           leftValue = lhsField->as<FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -376,7 +377,7 @@ ExpressionNodePtr AttributeSortRule::sortAttributesInLogicalExpressions(Expressi
                       if (rhsField->instanceOf<ConstantValueExpressionNode>()) {
                           auto constantValue = rhsField->as<ConstantValueExpressionNode>()->getConstantValue();
                           auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-                          rightValue = basicValueType->getValue();
+                          rightValue = basicValueType->value;
                       } else {
                           rightValue = rhsField->as<FieldAccessExpressionNode>()->getFieldName();
                       }
@@ -541,8 +542,15 @@ std::string AttributeSortRule::fetchLeftMostConstantValueOrFieldName(ExpressionN
         return startPoint->template as<FieldAccessExpressionNode>()->getFieldName();
     } else {
         const ValueTypePtr& constantValue = startPoint->as<ConstantValueExpressionNode>()->getConstantValue();
-        auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue);
-        return basicValueType->getValue();
+        if (auto basicValueType = std::dynamic_pointer_cast<BasicValue>(constantValue); basicValueType) {
+            return basicValueType->value;
+        }
+
+        if (auto arrayValueType = std::dynamic_pointer_cast<ArrayValue>(constantValue); arrayValueType) {
+            return std::accumulate(arrayValueType->values.begin(), arrayValueType->values.end(), std::string());
+        }
+
+        NES_THROW_RUNTIME_ERROR("AttributeSortRule not equipped for handling value type!");
     }
 }
 

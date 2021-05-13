@@ -178,10 +178,10 @@ class CCodeGenerator : public CodeGenerator {
     * todo refactor parameter
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef,
-                                          PipelineContextPtr context,
-                                          Join::JoinOperatorHandlerPtr joinOperatorHandler,
-                                          QueryCompilation::JoinBuildSide buildSide);
+    bool generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joinDef,
+                                  PipelineContextPtr context,
+                                  Join::JoinOperatorHandlerPtr joinOperatorHandler,
+                                  QueryCompilation::JoinBuildSide buildSide) override;
 
     /**
      * @brief Performs the actual compilation the generated code pipeline.

@@ -127,40 +127,40 @@ void MQTTSource::fillBuffer(NodeEngine::TupleBuffer& buf, std::string data) {
         /*
              * TODO: our types need their own sto/strto methods
              */
-        if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_64) {
+        if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
             uint64_t val = std::stoull(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_64) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_64) {
             int64_t val = std::stoll(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_32) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_32) {
             uint32_t val = std::stoul(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_32) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_32) {
             int32_t val = std::stol(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_16) {
             uint16_t val = std::stol(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_16) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_16) {
             int16_t val = std::stol(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_16) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_16) {
             uint8_t val = std::stoi(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::INT_8) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::INT_8) {
             int8_t val = std::stoi(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::UINT_8) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_8) {
             int8_t val = std::stoi(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::DOUBLE) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::DOUBLE) {
             double val = std::stod(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::FLOAT) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::FLOAT) {
             float val = std::stof(data.c_str());
             memcpy(buf.getBuffer(), &val, fieldSize);
-        } else if (basicPhysicalField->getNativeType() == BasicPhysicalType::BOOLEAN) {
+        } else if (basicPhysicalField->nativeType == BasicPhysicalType::BOOLEAN) {
             bool val = (strcasecmp(data.c_str(), "true") == 0 || atoi(data.c_str()) != 0);
             memcpy(buf.getBuffer(), &val, fieldSize);
         }

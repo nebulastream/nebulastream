@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_DATATYPES_PHYSICALTYPES_PHYSICALTYPES_HPP_
 #define NES_INCLUDE_DATATYPES_PHYSICALTYPES_PHYSICALTYPES_HPP_
+
 #include <memory>
 
 namespace NES {
@@ -31,19 +32,7 @@ typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
  */
 class PhysicalType {
   public:
-    PhysicalType(DataTypePtr type);
-
-    /**
-     * @brief Indicates if this is a basic data type.
-     * @return true if type is basic type
-     */
-    virtual bool isBasicType();
-
-    /**
-    * @brief Indicates if this is a array data type.
-    * @return true if type is array
-    */
-    virtual bool isArrayType();
+    inline PhysicalType(DataTypePtr type) noexcept : type(type) {}
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
@@ -56,22 +45,31 @@ class PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
      */
-    virtual std::string convertRawToString(void* rawData) = 0;
-
-    /**
-     * @brief Returns the underling nes data type, which is represented by this physical type.
-     * @return DataTypePtr
-     */
-    DataTypePtr getType();
+    virtual std::string convertRawToString(void const* rawData) const noexcept = 0;
 
     /**
      * @brief Returns the string representation of this physical data type.
      * @return string
      */
-    virtual std::string toString() = 0;
+    virtual std::string toString() const noexcept = 0;
 
-  protected:
-    const DataTypePtr type;
+    /**
+     * @brief Indicates if this is a basic data type.
+     * @return true if type is basic type
+     */
+    virtual bool isBasicType() const noexcept { return false; }
+
+    /**
+     * @brief Indicates if this is a array data type.
+     * @return true if type is array
+     */
+    virtual bool isArrayType() const noexcept { return false; };
+
+    /// @brief true only for arrays which contain chars as their immediate child type.
+    virtual bool isCharArrayType() const noexcept { return false; };
+
+    /// Type that is contained by this PhysicalType container
+    DataTypePtr const type;
 };
 
 }// namespace NES

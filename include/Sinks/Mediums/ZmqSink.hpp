@@ -52,11 +52,9 @@ class ZmqSink : public SinkMedium {
     * @brief method to return the type of medium
     * @return type of medium
     */
-    SinkMediumTypes getSinkMediumType();
+    SinkMediumTypes getSinkMediumType() override;
 
   private:
-    ZmqSink();
-
     std::string host;
     uint16_t port;
 

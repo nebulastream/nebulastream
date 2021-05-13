@@ -18,20 +18,20 @@
 
 namespace NES {
 
-bool DataType::isBoolean() { return false; }
+bool DataType::isBoolean() const { return false; }
 
-bool DataType::isUndefined() { return false; }
+bool DataType::isUndefined() const { return false; }
 
-bool DataType::isArray() { return false; }
+bool DataType::isArray() const { return false; }
 
-bool DataType::isFixedChar() { return false; }
+bool DataType::isCharArray() const { return false; }
 
-bool DataType::isFloat() { return false; }
+bool DataType::isFloat() const { return false; }
 
-bool DataType::isInteger() { return false; }
+bool DataType::isInteger() const { return false; }
 
-bool DataType::isNumeric() { return false; }
+bool DataType::isNumeric() const { return false; }
 
-bool DataType::isChar() { return false; }
+bool DataType::isChar() const { return false; }
 
 }// namespace NES

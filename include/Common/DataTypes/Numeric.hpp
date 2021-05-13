@@ -30,19 +30,13 @@ class Numeric : public DataType {
     * @brief Checks if this data type is Numeric.
     * @return bool
     */
-    bool isNumeric() override;
+    bool isNumeric() const final { return true; }
 
     /**
      * @brief Gets the bit size of this type.
      * @return int8_t
      */
     [[nodiscard]] int8_t getBits() const;
-
-    /**
-    * @brief Returns a string representation of the data type.
-    * @return string
-    */
-    virtual std::string toString() override = 0;
 
   protected:
     const int8_t bits;

@@ -20,7 +20,7 @@
 
 namespace NES::Optimizer {
 
-SyntacticQueryValidationPtr SyntacticQueryValidation::create() { return std::shared_ptr<SyntacticQueryValidation>(); }
+SyntacticQueryValidationPtr SyntacticQueryValidation::create() { return std::make_shared<SyntacticQueryValidation>(); }
 
 void SyntacticQueryValidation::checkValidity(std::string inputQuery) {
     try {

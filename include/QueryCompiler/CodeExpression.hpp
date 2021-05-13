@@ -26,9 +26,9 @@ typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
 class CodeExpression {
   public:
-    CodeExpression(const std::string& code);
-    // private:
-    std::string code_;
+    inline CodeExpression(std::string const& code) noexcept : code_(code) {}
+    inline CodeExpression(std::string&& code) noexcept : code_(std::move(code)) {}
+    std::string const code_;
 };
 
 const CodeExpressionPtr combine(const CodeExpressionPtr lhs, const CodeExpressionPtr rhs);

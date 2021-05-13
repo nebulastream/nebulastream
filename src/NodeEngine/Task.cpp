@@ -79,7 +79,7 @@ std::string Task::toString() {
     } else if (std::holds_alternative<DataSinkPtr>(pipeline)) {
         ss << " execute data sink";
     }
-    ss << " inputBuffer=" << buf.getBuffer() << " inputTuples=" << buf.getNumberOfTuples()
+    ss << " inputBuffer=" << reinterpret_cast<std::size_t>(buf.getBuffer()) << " inputTuples=" << buf.getNumberOfTuples()
        << " bufferSize=" << buf.getBufferSize() << " watermark=" << buf.getWatermark() << " originID=" << buf.getOriginId();
     return ss.str();
 }

@@ -21,57 +21,42 @@
 
 namespace NES {
 
-ArrayPhysicalType::ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr physicalComponentType)
-    : PhysicalType(type), length(length), physicalComponentType(physicalComponentType) {}
-
-PhysicalTypePtr ArrayPhysicalType::create(DataTypePtr type, uint64_t length, PhysicalTypePtr component) {
-    return std::make_shared<ArrayPhysicalType>(type, length, component);
-}
-
-bool ArrayPhysicalType::isArrayType() { return true; }
-
 uint64_t ArrayPhysicalType::size() const { return physicalComponentType->size() * length; }
-const PhysicalTypePtr ArrayPhysicalType::getPhysicalComponentType() const { return physicalComponentType; }
-const uint64_t ArrayPhysicalType::getLength() const { return length; }
-std::string ArrayPhysicalType::convertRawToString(void* data) {
-    std::stringstream str;
+
+bool ArrayPhysicalType::isCharArrayType() const noexcept { return type->isChar(); }
+
+std::string ArrayPhysicalType::convertRawToString(void const* data) const noexcept {
 
     // check if the pointer is valid
     if (!data) {
         return "";
     }
     // we print a fixed char directly because the last char terminated the output.
-    if (type->isFixedChar()) {
-        auto charData = static_cast<char*>(data);
+    if (physicalComponentType->type->isChar()) {
+        auto charData = static_cast<char const*>(data);
         // This char is fixed size, so we have to convert it to a fixed size string.
         // Otherwise we would copy all data till the termination character.
         return std::string(charData, size());
     }
 
-    char* pointer = static_cast<char*>(data);
-
-    if (!type->isFixedChar()) {
-        str << '[';
-    }
-    for (uint32_t dimension = 0; dimension < length; dimension++) {
-        if ((dimension != 0) && !type->isFixedChar())
+    auto const pointer = static_cast<char const*>(data);
+    std::stringstream str;
+    str << '[';
+    for (uint64_t dimension = 0; dimension < length; ++dimension) {
+        if (dimension) {
             str << ", ";
-        auto fieldOffset = physicalComponentType->size();
-        auto componentValue = &pointer[fieldOffset * dimension];
+        }
+        auto const fieldOffset = physicalComponentType->size();
+        auto const componentValue = &pointer[fieldOffset * dimension];
         str << physicalComponentType->convertRawToString(componentValue);
     }
-    if (!type->isFixedChar())
-        str << ']';
+    str << ']';
     return str.str();
 }
-std::string ArrayPhysicalType::toString() {
+
+std::string ArrayPhysicalType::toString() const noexcept {
     std::stringstream sstream;
-    if (type->isFixedChar()) {
-        sstream << physicalComponentType->toString();
-        return sstream.str();
-    } else {
-        sstream << physicalComponentType->toString() << "[" << length << "]";
-        return sstream.str();
-    }
+    sstream << physicalComponentType->toString() << '[' << length << ']';
+    return sstream.str();
 }
 }// namespace NES

@@ -26,8 +26,6 @@ PhysicalTypePtr BasicPhysicalType::create(DataTypePtr type, NativeType nativeTyp
     return std::make_shared<BasicPhysicalType>(type, nativeType);
 }
 
-bool BasicPhysicalType::isBasicType() { return true; }
-
 uint64_t BasicPhysicalType::size() const {
     switch (nativeType) {
         case INT_8: return sizeof(int8_t);
@@ -45,41 +43,33 @@ uint64_t BasicPhysicalType::size() const {
     }
     return -1;
 }
-std::string BasicPhysicalType::convertRawToString(void* data) {
+std::string BasicPhysicalType::convertRawToString(void const* data) const noexcept {
 
     if (!data) {
         return std::string();
     }
-    std::stringstream str;
     switch (nativeType) {
-        case INT_8: return std::to_string(*reinterpret_cast<int8_t*>(data));
-        case UINT_8: return std::to_string(*reinterpret_cast<uint8_t*>(data));
-        case INT_16: return std::to_string(*reinterpret_cast<int16_t*>(data));
-        case UINT_16: return std::to_string(*reinterpret_cast<uint16_t*>(data));
-        case INT_32: return std::to_string(*reinterpret_cast<int32_t*>(data));
-        case UINT_32: return std::to_string(*reinterpret_cast<uint32_t*>(data));
-        case INT_64: return std::to_string(*reinterpret_cast<int64_t*>(data));
-        case UINT_64: return std::to_string(*reinterpret_cast<uint64_t*>(data));
-        case FLOAT: return std::to_string(*reinterpret_cast<float*>(data));
-        case DOUBLE: return std::to_string(*reinterpret_cast<double*>(data));
-        case BOOLEAN: return std::to_string(*reinterpret_cast<bool*>(data));
+        case INT_8: return std::to_string(*reinterpret_cast<int8_t const*>(data));
+        case UINT_8: return std::to_string(*reinterpret_cast<uint8_t const*>(data));
+        case INT_16: return std::to_string(*reinterpret_cast<int16_t const*>(data));
+        case UINT_16: return std::to_string(*reinterpret_cast<uint16_t const*>(data));
+        case INT_32: return std::to_string(*reinterpret_cast<int32_t const*>(data));
+        case UINT_32: return std::to_string(*reinterpret_cast<uint32_t const*>(data));
+        case INT_64: return std::to_string(*reinterpret_cast<int64_t const*>(data));
+        case UINT_64: return std::to_string(*reinterpret_cast<uint64_t const*>(data));
+        case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
+        case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
+        case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
         case CHAR:
-            if (size() == 0) {
-                str << static_cast<char>(*static_cast<char*>(data));
-            } else {
-                auto charData = static_cast<char*>(data);
-                // This char is fixed size, so we have to convert it to a fixed size string.
-                // Otherwise we would copy all data till the termination character.
-                str << std::string(charData, size());
+            if (size() != 1) {
+                return "invalid char type";
             }
-            return str.str();
+            return std::string{*static_cast<char const*>(data)};
         default: return "invalid native type";
     }
-    return "invalid";
 }
 
-BasicPhysicalType::NativeType BasicPhysicalType::getNativeType() { return nativeType; }
-std::string BasicPhysicalType::toString() {
+std::string BasicPhysicalType::toString() const noexcept {
     switch (nativeType) {
         case INT_8: return "INT8";
         case UINT_8: return "UINT8";

@@ -27,6 +27,7 @@
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -145,9 +146,17 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(Exp
         auto legacyLeft = transformExpression(equalsExpressionNode->getLeft());
         auto legacyRight = transformExpression(equalsExpressionNode->getRight());
         return Predicate(BinaryOperatorType::EQUAL_OP, legacyLeft, legacyRight).copy();
+    } else if (expression->instanceOf<NegateExpressionNode>()) {
+        auto const equalsExpressionNode = expression->as<NegateExpressionNode>();
+        (void) equalsExpressionNode;
+        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expressions not supported in "
+                        "legacy expressions: "
+                        << expression->toString());
+        NES_NOT_IMPLEMENTED();
     }
-    NES_FATAL_ERROR(
-        "TranslateToLegacyPhase: No transformation implemented for this logical expression node: " << expression->toString());
+    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this "
+                    "logical expression node: "
+                    << expression->toString());
     NES_NOT_IMPLEMENTED();
     ;
 }

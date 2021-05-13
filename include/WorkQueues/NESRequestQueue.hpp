@@ -42,7 +42,6 @@ class NESRequestQueue {
      */
     NESRequestQueue(uint64_t batchSize);
 
-    //d-tor
     ~NESRequestQueue();
 
     /**
