@@ -139,8 +139,11 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     /**
      * @brief debug function for testing to test if source is running
      * @return bool indicating if source is running
+     * @dev    I made this function non-virtual. If implementations of this class should be able to override
+     *         this function, we have to ensure that `isRunning` and this class' private member `running` are
+     *         consistent or that this class does not evaluate `running` directly when checking if it is running.
      */
-    virtual bool isRunning();
+    bool isRunning() const noexcept;
 
     /**
      * @brief debug function for testing to get number of generated tuples
@@ -219,15 +222,15 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     SchemaPtr schema;
-    uint64_t generatedTuples;
-    uint64_t generatedBuffers;
+    uint64_t generatedTuples = 0;
+    uint64_t generatedBuffers = 0;
     uint64_t numBuffersToProcess;
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate;
     std::chrono::milliseconds gatheringInterval;
     GatheringMode gatheringMode;
     SourceType type;
-    std::atomic<bool> wasGracefullyStopped;
+    std::atomic<bool> wasGracefullyStopped = false;
 
     /**
      * @brief Emits a tuple buffer to the successors.
@@ -237,8 +240,8 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
 
   private:
     //bool indicating if the source is currently running'
-    std::mutex startStopMutex;
-    std::atomic_bool running;
+    mutable std::mutex startStopMutex;
+    std::atomic_bool running = false;
     std::shared_ptr<std::thread> thread;
 
     /**

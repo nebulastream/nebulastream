@@ -41,7 +41,7 @@ class ZmqSource : public DataSource {
                        NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager,
                        const std::string& host,
-                       const uint16_t port,
+                       uint16_t port,
                        OperatorId operatorId,
                        uint64_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
