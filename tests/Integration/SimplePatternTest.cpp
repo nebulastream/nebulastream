@@ -172,10 +172,10 @@ TEST_F(SimplePatternTest, testPatternWithTestStream) {
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     //TODO Patternname waiting for String support in map operator
-
+    /// XXX:
     string expectedContent =
         "+----------------------------------------------------+\n"
-        "|QnV$sensor_id:CHAR|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
+        "|QnV$sensor_id:CHAR[8]|QnV$timestamp:UINT64|QnV$velocity:FLOAT32|QnV$quantity:UINT64|QnV$PatternId:INT32|\n"
         "+----------------------------------------------------+\n"
         "|R2000073|1543624020000|102.629631|8|1|\n"
         "|R2000070|1543625280000|108.166664|5|1|\n"

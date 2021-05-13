@@ -78,8 +78,9 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
                       ->addField("i32", DataTypeFactory::createUInt32())
                       ->addField("s", DataTypeFactory::createFixedChar(5));
 
+    // XXX
     std::string reference = "+----------------------------------------------------+\n"
-                            "|i64:UINT64|f:FLOAT32|d:FLOAT64|i32:UINT32|s:CHAR|\n"
+                            "|i64:UINT64|f:FLOAT32|d:FLOAT64|i32:UINT32|s:CHAR[5]|\n"
                             "+----------------------------------------------------+\n"
                             "|0|0.000000|0.000000|0|1234 |\n"
                             "|1|0.500000|0.200000|2|1234 |\n"

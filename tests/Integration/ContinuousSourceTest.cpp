@@ -108,14 +108,17 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
     EXPECT_TRUE(queryService->validateAndQueueStopRequest(queryId));
     EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    string expectedContent =
-        "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:Char,exdra$metadata_id:Char,exdra$features_type:"
-        "Char,exdra$features_properties_"
+    // XXX;
+    string const expectedContent =
+        "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:ArrayType,exdra$metadata_id:ArrayType,exdra$"
+        "features_type:"
+        "ArrayType,exdra$features_properties_"
         "capacity:INTEGER,exdra$features_properties_efficiency:(Float),exdra$features_properties_mag:(Float),exdra$features_"
         "properties_time:"
-        "INTEGER,exdra$features_properties_updated:INTEGER,exdra$features_properties_type:Char,exdra$features_geometry_type:Char,"
+        "INTEGER,exdra$features_properties_updated:INTEGER,exdra$features_properties_type:ArrayType,exdra$features_geometry_type:"
+        "ArrayType,"
         "exdra$features_geometry_"
-        "coordinates_longitude:(Float),exdra$features_geometry_coordinates_latitude:(Float),exdra$features_eventId :Char\n"
+        "coordinates_longitude:(Float),exdra$features_geometry_coordinates_latitude:(Float),exdra$features_eventId :ArrayType\n"
         "1,1262343610000,Wind Turbine Data Generated for Nebula "
         "Stream,b94c4bbf-6bab-47e3-b0f6-92acac066416,Features,736,0.363738,112464.007812,1262300400000,0,electricityGeneration,"
         "Point,8.221581,52.322945,982050ee-a8cb-4a7a-904c-a4c45e0c9f10\n"
@@ -1308,14 +1311,16 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     EXPECT_TRUE(ifs.good());
     std::string content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-    string expectedContent =
-        "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:Char,exdra$metadata_id:Char,exdra$features_type:"
-        "Char,exdra$features_properties_"
+    string const expectedContent =// XXX
+        "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:ArrayType,exdra$metadata_id:ArrayType,exdra$"
+        "features_type:"
+        "ArrayType,exdra$features_properties_"
         "capacity:INTEGER,exdra$features_properties_efficiency:(Float),exdra$features_properties_mag:(Float),exdra$features_"
         "properties_time:"
-        "INTEGER,exdra$features_properties_updated:INTEGER,exdra$features_properties_type:Char,exdra$features_geometry_type:Char,"
+        "INTEGER,exdra$features_properties_updated:INTEGER,exdra$features_properties_type:ArrayType,exdra$features_geometry_type:"
+        "ArrayType,"
         "exdra$features_geometry_"
-        "coordinates_longitude:(Float),exdra$features_geometry_coordinates_latitude:(Float),exdra$features_eventId :Char\n"
+        "coordinates_longitude:(Float),exdra$features_geometry_coordinates_latitude:(Float),exdra$features_eventId :ArrayType\n"
         "1,1262343610000,Wind Turbine Data Generated for Nebula "
         "Stream,b94c4bbf-6bab-47e3-b0f6-92acac066416,Features,736,0.363738,112464.007812,1262300400000,0,electricityGeneration,"
         "Point,8.221581,52.322945,982050ee-a8cb-4a7a-904c-a4c45e0c9f10\n"
