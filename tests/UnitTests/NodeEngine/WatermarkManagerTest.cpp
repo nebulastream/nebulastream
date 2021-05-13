@@ -13,10 +13,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <atomic>
 #include <NodeEngine/Transactional/WatermarkEmitter.hpp>
-#include <NodeEngine/Transactional/WatermarkUpdater.hpp>
+#include <NodeEngine/Transactional/WatermarkProcessor.hpp>
 #include <Util/Logger.hpp>
+#include <atomic>
 #include <gtest/gtest.h>
 #include <iostream>
 #include <thread>
@@ -45,7 +45,7 @@ class WatermarkManagerTest : public testing::Test {
 
 TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterTest) {
     auto updates = 10000;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkUpdater::create(/*origins*/ 1);
+    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ 1);
     // preallocate watermarks for each transaction
     std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
@@ -67,7 +67,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterTest) {
 TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
     const auto updates = 100000;
     const auto threadsCount = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkUpdater::create(/*origins*/ 1);
+    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ 1);
 
     // preallocate watermarks for each transaction
     std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
@@ -105,7 +105,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
 TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
     auto updates = 10000;
     auto origins = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkUpdater::create(/*origins*/ origins);
+    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
     // preallocate watermarks for each transaction
     std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
@@ -131,7 +131,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
     const auto updates = 100000;
     const auto origins = 10;
     const auto threadsCount = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkUpdater::create(/*origins*/ origins);
+    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
 
     // preallocate watermarks for each transaction
 
@@ -172,7 +172,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
 TEST_F(WatermarkManagerTest, singleThreadWatermarkEmitterAndUpdaterTest) {
     auto updates = 10000;
     auto origins = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkUpdater::create(/*origins*/ origins);
+    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
 
     std::vector<std::shared_ptr<NodeEngine::Transactional::WatermarkEmitter>> emitters;
     for (int o = 0; o < origins; o++) {
