@@ -192,9 +192,9 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     try {
         auto executablePlan = result->getExecutableQueryPlan();
         return registerQueryInNodeEngine(executablePlan);
-    } catch (std::exception& error) {
-        NES_ERROR("Error while building query execution plan " << error.what());
-        NES_ASSERT(false, "Error while building query execution plan " << error.what());
+    } catch (std::exception const& error) {
+        NES_ERROR("Error while building query execution plan: " << error.what());
+        NES_ASSERT(false, "Error while building query execution plan: " << error.what());
         return false;
     }
 }
@@ -364,7 +364,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
                     withError = true;
                 }
             }
-        } catch (std::exception& err) {
+        } catch (std::exception const& err) {
             NES_ERROR("NodeEngine: stop of QEP " << querySubPlanId << " failed: " << err.what());
             withError = true;
         }
@@ -377,7 +377,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
                 withError = true;
                 ++it;
             }
-        } catch (std::exception& err) {
+        } catch (std::exception const& err) {
             NES_ERROR("NodeEngine: deregisterQuery of QEP " << querySubPlanId << " failed: " << err.what());
             withError = true;
             ++it;

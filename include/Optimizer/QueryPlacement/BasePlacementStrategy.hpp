@@ -84,6 +84,8 @@ class BasePlacementStrategy {
                                    TypeInferencePhasePtr typeInferencePhase,
                                    StreamCatalogPtr streamCatalog);
 
+    virtual ~BasePlacementStrategy() = default;
+
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
      * @param queryPlan: the query plan

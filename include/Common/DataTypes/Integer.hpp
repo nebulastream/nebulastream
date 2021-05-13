@@ -36,19 +36,20 @@ class Integer : public Numeric {
      * @param lowerBound the lower bound, which is contained in that integer.
      * @param upperBound the upper bound, which is contained in that integer.
      */
-    Integer(int8_t bits, int64_t lowerBound, int64_t upperBound);
+    inline Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) noexcept
+        : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
 
     /**
     * @brief Checks if this data type is Integer.
     */
-    bool isInteger() override;
+    bool isInteger() const final { return true; }
 
     /**
     * @brief Checks if two data types are equal.
     * @param otherDataType
     * @return
     */
-    bool isEquals(DataTypePtr otherDataType) override;
+    bool isEquals(DataTypePtr otherDataType) final;
 
     /**
     * @brief Calculates the joined data type between this data type and the other.
@@ -57,29 +58,17 @@ class Integer : public Numeric {
     * @param other data type
     * @return DataTypePtr joined data type
     */
-    DataTypePtr join(DataTypePtr otherDataType) override;
-
-    /**
-     * @brief Returns the lower bound of this integer.
-     * @return lowerBound
-     */
-    [[nodiscard]] int64_t getLowerBound() const;
-
-    /**
-     * @brief Returns the upper bound of this integer.
-     * @return upperBound
-     */
-    [[nodiscard]] int64_t getUpperBound() const;
+    DataTypePtr join(DataTypePtr otherDataType) final;
 
     /**
     * @brief Returns a string representation of the data type.
     * @return string
     */
-    std::string toString() override;
+    std::string toString() final;
 
-  private:
-    const int64_t lowerBound;
-    const int64_t upperBound;
+    int64_t const lowerBound;
+
+    int64_t const upperBound;
 };
 
 }// namespace NES

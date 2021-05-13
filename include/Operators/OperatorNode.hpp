@@ -33,6 +33,8 @@ class OperatorNode : public Node {
   public:
     OperatorNode(OperatorId id);
 
+    virtual ~OperatorNode() = default;
+
     /**
      * @brief gets the operator id.
      * Unique Identifier of the operator within a query.

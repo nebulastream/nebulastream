@@ -18,45 +18,40 @@
 #define NES_INCLUDE_DATATYPES_ARRAY_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES {
 
 /**
  * @brief Arrays con be constructed of any built-in type.
  * Arrays always have a fixed sized and can not be extended.
  */
-class Array : public DataType {
+class ArrayType : public DataType {
 
   public:
     /**
-     * @brief Constructs a new Array.
+     * @brief Constructs a new ArrayType.
      * @param length length of the array
      * @param component component type
      */
-    Array(uint64_t length, DataTypePtr component);
+    inline ArrayType(uint64_t length, DataTypePtr component) noexcept
+        : DataType(), length(length), component(std::move(component)) {}
 
     /**
-    * @brief Checks if this data type is an Array.
-    */
-    bool isArray() override;
-
-    /**
-     * @brief Gets the component type of this array.
-     * @return component
+     * @brief Checks if this data type is an ArrayType.
      */
-    DataTypePtr getComponent();
+    bool isArray() const final { return true; }
 
     /**
-     * @brief Gets the length of this array
-     * @return length
+     * @brief Checks if this data type is an ArrayType.
      */
-    [[nodiscard]] uint64_t getLength() const;
+    bool isCharArray() const final { return component->isChar(); }
 
     /**
-    * @brief Checks if two data types are equal.
-    * @param otherDataType
-    * @return
-    */
-    bool isEquals(DataTypePtr otherDataType) override;
+     * @brief Checks if two data types are equal.
+     * @param otherDataType
+     * @return
+     */
+    bool isEquals(DataTypePtr otherDataType) final;
 
     /**
      * @brief Calculates the joined data type between this data type and the other.
@@ -64,17 +59,16 @@ class Array : public DataType {
      * @param other data type
      * @return DataTypePtr joined data type
      */
-    DataTypePtr join(DataTypePtr otherDataType) override;
+    DataTypePtr join(DataTypePtr otherDataType) final;
 
     /**
     * @brief Returns a string representation of the data type.
     * @return string
     */
-    std::string toString() override;
+    std::string toString() final;
 
-  private:
-    const uint64_t length;
-    const DataTypePtr component;
+    uint64_t const length;
+    DataTypePtr const component;
 };
 
 }// namespace NES

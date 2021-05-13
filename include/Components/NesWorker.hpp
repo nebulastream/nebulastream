@@ -42,10 +42,8 @@ class NesWorker {
 
     /**
      * @brief start the worker using the default worker config
-     * @param bool indicating if the call is blocking
-     * @param bool indicating if connect
-     * @param port where to publish
-     * @param ip of the server
+     * @param blocking: bool indicating if the call is blocking
+     * @param withConnect: bool indicating if connect
      * @return bool indicating success
      */
     bool start(bool blocking, bool withConnect);
@@ -156,7 +154,7 @@ class NesWorker {
      * @brief Method to check if a worker is still running
      * @return running status of the worker
      */
-    bool isWorkerRunning();
+    bool isWorkerRunning() const noexcept;
 
     uint64_t getWorkerId();
 

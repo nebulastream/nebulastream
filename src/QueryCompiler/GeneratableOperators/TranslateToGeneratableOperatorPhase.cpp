@@ -56,10 +56,8 @@
 namespace NES {
 
 TranslateToGeneratableOperatorPhasePtr TranslateToGeneratableOperatorPhase::create() {
-    return std::shared_ptr<TranslateToGeneratableOperatorPhase>();
+    return std::make_shared<TranslateToGeneratableOperatorPhase>();
 }
-
-TranslateToGeneratableOperatorPhase::TranslateToGeneratableOperatorPhase() = default;
 
 OperatorNodePtr TranslateToGeneratableOperatorPhase::transformIndividualOperator(OperatorNodePtr operatorNode,
                                                                                  OperatorNodePtr generatableParentOperator) {

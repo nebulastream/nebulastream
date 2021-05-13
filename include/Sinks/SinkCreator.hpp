@@ -111,7 +111,7 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema,
                                     QuerySubPlanId parentPlanId,
                                     NodeEngine::NodeEnginePtr nodeEngine,
                                     const std::string& host,
-                                    const uint16_t port);
+                                    uint16_t port);
 #ifdef ENABLE_OPC_BUILD
 /**
  * @brief create a OPC test sink with a schema
@@ -143,7 +143,7 @@ const DataSinkPtr createCSVZmqSink(SchemaPtr schema,
                                    QuerySubPlanId parentPlanId,
                                    NodeEngine::NodeEnginePtr nodeEngine,
                                    const std::string& host,
-                                   const uint16_t port);
+                                   uint16_t port);
 
 /**
  * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
@@ -157,7 +157,7 @@ const DataSinkPtr createBinaryZmqSink(SchemaPtr schema,
                                       QuerySubPlanId parentPlanId,
                                       NodeEngine::NodeEnginePtr nodeEngine,
                                       const std::string& host,
-                                      const uint16_t port,
+                                      uint16_t port,
                                       bool internal);
 
 /**
@@ -214,10 +214,8 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema,
  * @param kafkaProducerTimeout: kafka producer timeout
  * @return a data sink pointer
  */
-const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema,
-                                            const std::string& brokers,
-                                            const std::string& topic,
-                                            const uint64_t kafkaProducerTimeout);
+const DataSinkPtr
+createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout);
 #endif
 
 #ifdef ENABLE_MQTT_BUILD

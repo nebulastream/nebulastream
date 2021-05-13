@@ -26,7 +26,7 @@ namespace NES {
  * Inexact means that some values cannot be converted exactly to the internal format and are stored as approximations,
  * so that storing and retrieving a value might show slight discrepancies.
  */
-class Float : public Numeric {
+class Float final : public Numeric {
 
   public:
     /**
@@ -35,31 +35,20 @@ class Float : public Numeric {
      * @param lowerBound the lower bound, which is contained in that float.
      * @param upperBound the upper bound, which is contained in that float.
      */
-    Float(int8_t bits, double lowerBound, double upperBound);
+    inline Float(int8_t bits, double lowerBound, double upperBound) noexcept
+        : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
 
     /**
     * @brief Checks if this data type is Float.
     */
-    bool isFloat() override;
-
-    /**
-     * @brief Returns the lower bound of this integer.
-     * @return lowerBound
-     */
-    [[nodiscard]] double getLowerBound() const;
-
-    /**
-     * @brief Returns the upper bound of this integer.
-     * @return lowerBound
-     */
-    [[nodiscard]] double getUpperBound() const;
+    bool isFloat() const final { return true; }
 
     /**
     * @brief Checks if two data types are equal.
     * @param otherDataType
     * @return
     */
-    bool isEquals(DataTypePtr otherDataType) override;
+    bool isEquals(DataTypePtr otherDataType) final;
 
     /**
     * @brief Calculates the joined data type between this data type and the other.
@@ -68,17 +57,16 @@ class Float : public Numeric {
     * @param other data type
     * @return DataTypePtr joined data type
     */
-    DataTypePtr join(DataTypePtr otherDataType) override;
+    DataTypePtr join(DataTypePtr otherDataType) final;
 
     /**
     * @brief Returns a string representation of the data type.
     * @return string
     */
-    std::string toString() override;
+    std::string toString() final;
 
-  private:
-    const double lowerBound;
-    const double upperBound;
+    double const lowerBound;
+    double const upperBound;
 };
 
 }// namespace NES

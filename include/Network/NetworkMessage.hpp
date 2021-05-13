@@ -150,50 +150,19 @@ class DataBufferMessage {
   public:
     static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
 
-    explicit DataBufferMessage(uint32_t payloadSize,
-                               uint32_t numOfRecords,
-                               uint64_t originId,
-                               uint64_t watermark,
-                               uint64_t creationTimestamp)
+    explicit inline DataBufferMessage(uint32_t payloadSize,
+                                      uint32_t numOfRecords,
+                                      uint64_t originId,
+                                      uint64_t watermark,
+                                      uint64_t creationTimestamp) noexcept
         : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
           creationTimestamp(creationTimestamp) {}
 
-    /**
-     * @brief get the payloadSize of the BufferMessage
-     * @return the payloadSize
-     */
-    const uint32_t getPayloadSize() const { return payloadSize; }
-
-    /**
-     * @brief get the number of records within the current BufferMessage
-     * @return the number of records
-     */
-    const uint32_t getNumOfRecords() const { return numOfRecords; }
-
-    /**
-      * @brief get the origin id within the current BufferMessage
-      * @return the origin id
-    */
-    const uint64_t getOriginId() const { return originId; }
-
-    /**
-     * @brief get the watermark of the current BufferMessage
-    * @return the watermark
-    */
-    const uint64_t getWatermark() const { return watermark; }
-
-    /**
-     * @brief get the createion ts of the current BufferMessage
-     * @return ts
-    */
-    const uint64_t getCreationTimestamp() const { return creationTimestamp; }
-
-  private:
-    const uint32_t payloadSize;
-    const uint32_t numOfRecords;
-    const uint64_t originId;
-    const uint64_t watermark;
-    const uint64_t creationTimestamp;
+    uint32_t const payloadSize;
+    uint32_t const numOfRecords;
+    uint64_t const originId;
+    uint64_t const watermark;
+    uint64_t const creationTimestamp;
 };
 
 class NesNetworkError : public std::runtime_error {

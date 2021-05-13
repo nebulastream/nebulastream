@@ -19,9 +19,16 @@
 
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
+
+/// Check: not zero and `v` has got no 1 in common with `v - 1`.
+/// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.
+/// TODO: switch to std::ispow2 when we use C++2a.
+template<std::size_t v>
+static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
 namespace NES::NodeEngine {
 
@@ -83,7 +90,7 @@ class TupleBuffer {
     * @return the content of the buffer as pointer to unsigned char
     */
     template<typename T = uint8_t>
-    T* getBuffer() {
+    inline T* getBuffer() noexcept {
         return reinterpret_cast<T*>(ptr);
     }
 
@@ -100,6 +107,8 @@ class TupleBuffer {
     */
     template<typename T>
     T* getBufferAs() {
+        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
+        static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
     }
 
@@ -151,7 +160,7 @@ class TupleBuffer {
      * @brief method to get the creation timestamp
      * @return ts
      */
-    uint64_t getCreationTimestamp();
+    uint64_t getCreationTimestamp() const noexcept;
 
     /**
      * @brief set the origin id for the buffer (the operator id that creates this buffer)

@@ -14,35 +14,55 @@
     limitations under the License.
 */
 
+#include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
+#include <algorithm>
 #include <sstream>
 
 namespace NES {
 
-GeneratableArrayValueType::GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string> values, bool isString)
-    : GeneratableValueType(), valueType(valueTypePtr), values(values), isString(isString) {}
+CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept {
+    bool const containsChars = valueType->dataType->isCharArray();
 
-CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() {
     std::stringstream str;
-    if (isString) {
-        str << "\"" << values.at(0) << "\"";
-        return std::make_shared<CodeExpression>(str.str());
+    str << "NES::Array {";
+    if (containsChars) {
+
+        bool nullTerminated = false;
+        for (std::size_t i = 0; i < values.size(); ++i) {
+            if (i)
+                str << ", ";
+
+            auto const v = values[i].size() > 0 ? values[i][0] : 0;
+            if (std::isprint(v)) {
+                str << '\'' << values[i] << '\'';
+            } else {
+                nullTerminated |= !v;
+                str << "static_cast<char>(" << static_cast<int>(v) << ')';
+            }
+        }
+
+        // if no null terminator is given, explicitly add it.
+        if (!nullTerminated) {
+            if (values.size()) {
+                str << ", \\0";
+            } else {
+                str << "\\0";
+            }
+        }
+    } else {
+
+        for (std::size_t i = 0; i < values.size(); ++i) {
+            if (i != 0)
+                str << ", ";
+            str << values.at(i);
+        }
     }
-    bool isCharArray = (valueType->isCharValue());
-    str << "{";
-    u_int32_t i;
-    for (i = 0; i < values.size(); i++) {
-        if (i != 0)
-            str << ", ";
-        if (isCharArray)
-            str << "\'";
-        str << values.at(i);
-        if (isCharArray)
-            str << "\'";
-    }
-    str << "}";
+
+    str << '}';
+
     return std::make_shared<CodeExpression>(str.str());
 }
 }// namespace NES

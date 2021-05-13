@@ -138,7 +138,7 @@ class QueryStatistics {
     std::atomic<uint64_t> processedTuple;
     std::atomic<uint64_t> processedBuffers;
     std::atomic<uint64_t> processedWatermarks;
-    std::atomic<uint64_t> latencySum;
+    std::atomic<uint64_t> latencySum = 0;
     std::atomic<uint64_t> queryId;
     std::atomic<uint64_t> subQueryId;
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;

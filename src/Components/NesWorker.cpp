@@ -192,7 +192,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
 
 NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
 
-bool NesWorker::isWorkerRunning() { return isRunning; }
+bool NesWorker::isWorkerRunning() const noexcept { return isRunning; }
 
 bool NesWorker::stop(bool) {
     NES_DEBUG("NesWorker: stop");

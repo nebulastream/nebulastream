@@ -27,7 +27,7 @@ class StructDeclaration;
 /**
  * @brief A basic generatable data type which generates code for all BasicPhysicalTypes.
  */
-class BasicGeneratableType : public GeneratableDataType {
+class BasicGeneratableType final : public GeneratableDataType {
   public:
     BasicGeneratableType(BasicPhysicalTypePtr type);
 
@@ -35,21 +35,21 @@ class BasicGeneratableType : public GeneratableDataType {
       * @brief Generated code for a type definition. This is mainly crucial for structures.
       * @return CodeExpressionPtr
       */
-    const CodeExpressionPtr getTypeDefinitionCode() const override;
+    const CodeExpressionPtr getTypeDefinitionCode() const final;
 
     /**
     * @brief Generates the code for the native type.
     * For instance int8_t, or uint32_t for BasicTypes or uint32_t[15] for an ArrayType.
     * @return CodeExpressionPtr
     */
-    const CodeExpressionPtr getCode() const override;
+    const CodeExpressionPtr getCode() const final;
 
     /**
     * @brief Generates the code for a type declaration with a specific identifier.
     * For instance "int8_t test", or "uint32_t test" for BasicTypes or "uint32_t test[15]" for an ArrayType.
     * @return CodeExpressionPtr
     */
-    CodeExpressionPtr getDeclarationCode(std::string identifier) override;
+    CodeExpressionPtr getDeclarationCode(std::string identifier) const final;
 
   private:
     BasicPhysicalTypePtr type;

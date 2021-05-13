@@ -13,8 +13,6 @@
 # limitations under the License.
 
 add_source_nes(
-        ValueType.cpp
         ArrayValue.cpp
         BasicValue.cpp
-        FixedCharValue.cpp
 )

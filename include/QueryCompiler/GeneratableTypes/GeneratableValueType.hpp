@@ -27,7 +27,7 @@ typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
 
 /**
  * @brief A generatable value type generates code for values.
- * For instance BasicValues, and Array Values.
+ * For instance BasicValues, and ArrayType Values.
  */
 class GeneratableValueType {
   public:
@@ -35,7 +35,7 @@ class GeneratableValueType {
      * @brief Generate the code expression for this value type.
      * @return CodeExpressionPtr
      */
-    virtual CodeExpressionPtr getCodeExpression() = 0;
+    virtual CodeExpressionPtr getCodeExpression() const noexcept = 0;
 };
 
 }// namespace NES

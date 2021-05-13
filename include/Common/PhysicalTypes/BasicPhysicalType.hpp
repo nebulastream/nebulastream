@@ -23,7 +23,7 @@ namespace NES {
 /**
  * @brief The BasicPhysicalType represents nes data types, which can be directly mapped to a native c++ type.
  */
-class BasicPhysicalType : public PhysicalType {
+class BasicPhysicalType final : public PhysicalType {
   public:
     enum NativeType { UINT_8, UINT_16, UINT_32, UINT_64, INT_8, INT_16, INT_32, INT_64, FLOAT, DOUBLE, CHAR, BOOLEAN };
 
@@ -43,16 +43,10 @@ class BasicPhysicalType : public PhysicalType {
     static PhysicalTypePtr create(DataTypePtr type, NativeType nativeType);
 
     /**
-     * @brief get the underling native data type for this physical data type.
-     * @return NativeType
-     */
-    NativeType getNativeType();
-
-    /**
      * @brief Indicates if this is a basic data type.
      * @return true
      */
-    bool isBasicType() override;
+    bool isBasicType() const noexcept final { return true; }
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
@@ -65,16 +59,15 @@ class BasicPhysicalType : public PhysicalType {
      * @param rawData a pointer to the raw value
      * @return string
      */
-    std::string convertRawToString(void* rawData) override;
+    std::string convertRawToString(void const* rawData) const noexcept final;
 
     /**
      * @brief Returns the string representation of this physical data type.
      * @return string
      */
-    std::string toString() override;
+    std::string toString() const noexcept final;
 
-  private:
-    const NativeType nativeType;
+    NativeType const nativeType;
 };
 
 typedef std::shared_ptr<BasicPhysicalType> BasicPhysicalTypePtr;

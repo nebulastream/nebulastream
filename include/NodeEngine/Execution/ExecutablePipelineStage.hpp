@@ -16,6 +16,7 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINESTAGE_HPP_
+
 #include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 

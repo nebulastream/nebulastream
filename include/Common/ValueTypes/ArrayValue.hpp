@@ -16,35 +16,25 @@
 
 #ifndef NES_INCLUDE_DATATYPES_VALUETYPES_ARRAYVALUETYPE_HPP_
 #define NES_INCLUDE_DATATYPES_VALUETYPES_ARRAYVALUETYPE_HPP_
+
 #include <Common/ValueTypes/ValueType.hpp>
+#include <type_traits>
 #include <vector>
+
 namespace NES {
 
-class ArrayValue : public ValueType {
+class [[nodiscard]] ArrayValue final : public ValueType {
   public:
-    ArrayValue(DataTypePtr type, std::vector<std::string> values);
-    std::vector<std::string> getValues();
+    inline ArrayValue(DataTypePtr && type, std::vector<std::string> && values) noexcept
+        : ValueType(std::move(type)), values(std::move(values)) {}
 
-    /**
-     * @brief Indicates if this value is a array.
-     */
-    bool isArrayValue() override;
+    /// @brief Returns a string representation of this value
+    std::string toString() const noexcept final { return "ArrayValue"; }
 
-    /**
-    * @brief Returns a string representation of this value
-    * @return string
-    */
-    std::string toString() override;
+    /// @brief Checks if two values are equal
+    bool isEquals(ValueTypePtr other) const noexcept final;
 
-    /**
-     * @brief Checks if two values are equal
-     * @param valueType
-     * @return bool
-     */
-    bool isEquals(ValueTypePtr valueType) override;
-
-  private:
-    std::vector<std::string> values;
+    std::vector<std::string> const values;
 };
 
 }// namespace NES

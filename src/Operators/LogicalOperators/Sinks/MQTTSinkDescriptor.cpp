@@ -34,9 +34,9 @@ const std::string MQTTSinkDescriptor::getClientId() const { return clientId; }
 const std::string MQTTSinkDescriptor::getTopic() const { return topic; }
 const std::string MQTTSinkDescriptor::getUser() const { return user; }
 uint64_t MQTTSinkDescriptor::getMaxBufferedMSGs() { return maxBufferedMSGs; }
-const MQTTSinkDescriptor::TimeUnits MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
+MQTTSinkDescriptor::TimeUnits MQTTSinkDescriptor::getTimeUnit() const { return timeUnit; }
 uint64_t MQTTSinkDescriptor::getMsgDelay() { return messageDelay; }
-const MQTTSinkDescriptor::ServiceQualities MQTTSinkDescriptor::getQualityOfService() const { return qualityOfService; }
+MQTTSinkDescriptor::ServiceQualities MQTTSinkDescriptor::getQualityOfService() const { return qualityOfService; }
 bool MQTTSinkDescriptor::getAsynchronousClient() { return asynchronousClient; }
 
 SinkDescriptorPtr MQTTSinkDescriptor::create(const std::string address,

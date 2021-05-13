@@ -21,10 +21,6 @@
 #include <cmath>
 namespace NES {
 
-Float::Float(int8_t bits, double lowerBound, double upperBound) : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
-
-bool Float::isFloat() { return true; }
-
 bool Float::isEquals(DataTypePtr otherDataType) {
     if (otherDataType->isFloat()) {
         auto otherFloat = as<Float>(otherDataType);
@@ -32,20 +28,18 @@ bool Float::isEquals(DataTypePtr otherDataType) {
     }
     return false;
 }
-double Float::getLowerBound() const { return lowerBound; }
-double Float::getUpperBound() const { return upperBound; }
 DataTypePtr Float::join(DataTypePtr otherDataType) {
     if (otherDataType->isFloat()) {
         auto otherFloat = as<Float>(otherDataType);
         auto newBits = std::max(bits, otherFloat->getBits());
-        auto newUpperBound = fmax(upperBound, otherFloat->getUpperBound());
-        auto newLowerBound = fmin(lowerBound, otherFloat->getLowerBound());
+        auto newUpperBound = fmax(upperBound, otherFloat->upperBound);
+        auto newLowerBound = fmin(lowerBound, otherFloat->lowerBound);
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     } else if (otherDataType->isInteger()) {
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());
-        auto newUpperBound = fmax(upperBound, (double) otherInteger->getUpperBound());
-        auto newLowerBound = fmin(lowerBound, (double) otherInteger->getLowerBound());
+        auto newUpperBound = fmax(upperBound, static_cast<double>(otherInteger->upperBound));
+        auto newLowerBound = fmin(lowerBound, static_cast<double>(otherInteger->lowerBound));
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     }
     return DataTypeFactory::createUndefined();

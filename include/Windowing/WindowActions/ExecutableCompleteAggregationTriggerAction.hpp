@@ -183,20 +183,20 @@ class ExecutableCompleteAggregationTriggerAction
         // if the aggregation function is Min,  we should initialize the partialFinalAggregates with the upper bound of the data type
         if (windowDefinition->getWindowAggregation()->getType() == WindowAggregationDescriptor::Min) {
             if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->getUpperBound());
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->upperBound);
             } else if (auto floatType =
                            DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->getUpperBound());
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->upperBound);
             }
         }
 
         // if the aggregation function is Max, we should initialize the partialFinalAggregates with the lower bound of the data type
         if (windowDefinition->getWindowAggregation()->getType() == WindowAggregationDescriptor::Max) {
             if (auto intType = DataType::as<Integer>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->getLowerBound());
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), intType->lowerBound);
             } else if (auto floatType =
                            DataType::as<Float>(windowDefinition->getWindowAggregation()->getPartialAggregateStamp())) {
-                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->getLowerBound());
+                partialFinalAggregates = std::vector<PartialAggregateType>(windows.size(), floatType->lowerBound);
             }
         }
 

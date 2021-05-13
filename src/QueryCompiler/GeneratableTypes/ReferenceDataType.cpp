@@ -25,7 +25,7 @@ const CodeExpressionPtr ReferenceDataType::getCode() const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "&");
 }
 
-CodeExpressionPtr ReferenceDataType::getDeclarationCode(std::string identifier) {
+CodeExpressionPtr ReferenceDataType::getDeclarationCode(std::string identifier) const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "& " + identifier);
 }
 const CodeExpressionPtr ReferenceDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }

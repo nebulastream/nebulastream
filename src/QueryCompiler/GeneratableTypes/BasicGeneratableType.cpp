@@ -31,7 +31,7 @@ const CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
 
 const CodeExpressionPtr BasicGeneratableType::getCode() const {
 
-    switch (type->getNativeType()) {
+    switch (type->nativeType) {
         case BasicPhysicalType::INT_8: return std::make_shared<CodeExpression>("int8_t");
         case BasicPhysicalType::UINT_8: return std::make_shared<CodeExpression>("uint8_t");
         case BasicPhysicalType::INT_16: return std::make_shared<CodeExpression>("int16_t");
@@ -49,7 +49,7 @@ const CodeExpressionPtr BasicGeneratableType::getCode() const {
     return nullptr;
 }
 
-CodeExpressionPtr BasicGeneratableType::getDeclarationCode(std::string identifier) {
+CodeExpressionPtr BasicGeneratableType::getDeclarationCode(std::string identifier) const {
     std::stringstream str;
     str << " " << identifier;
     return combine(getCode(), std::make_shared<CodeExpression>(str.str()));

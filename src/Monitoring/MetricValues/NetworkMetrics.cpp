@@ -30,7 +30,7 @@ NetworkMetrics::NetworkMetrics() : interfaceNum(0) {}
 
 NetworkValues NetworkMetrics::getNetworkValue(uint64_t interfaceNo) const {
     if (interfaceNo >= getInterfaceNum()) {
-        NES_THROW_RUNTIME_ERROR("CPU: Array index out of bound " + std::to_string(interfaceNo)
+        NES_THROW_RUNTIME_ERROR("CPU: ArrayType index out of bound " + std::to_string(interfaceNo)
                                 + ">=" + std::to_string(getInterfaceNum()));
     }
     return networkValues.at(interfaceNo);

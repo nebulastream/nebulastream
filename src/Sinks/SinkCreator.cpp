@@ -76,7 +76,7 @@ const DataSinkPtr createTextZmqSink(SchemaPtr schema,
                                     QuerySubPlanId parentPlanId,
                                     NodeEngine::NodeEnginePtr nodeEngine,
                                     const std::string& host,
-                                    const uint16_t port) {
+                                    uint16_t port) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format, host, port, false, parentPlanId);
 }
@@ -85,7 +85,7 @@ const DataSinkPtr createCSVZmqSink(SchemaPtr schema,
                                    QuerySubPlanId parentPlanId,
                                    NodeEngine::NodeEnginePtr nodeEngine,
                                    const std::string& host,
-                                   const uint16_t port) {
+                                   uint16_t port) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format, host, port, false, parentPlanId);
 }
@@ -94,7 +94,7 @@ const DataSinkPtr createBinaryZmqSink(SchemaPtr schema,
                                       QuerySubPlanId parentPlanId,
                                       NodeEngine::NodeEnginePtr nodeEngine,
                                       const std::string& host,
-                                      const uint16_t port,
+                                      uint16_t port,
                                       bool internal) {
     SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<ZmqSink>(format, host, port, internal, parentPlanId);
@@ -133,10 +133,8 @@ const DataSinkPtr createNetworkSink(SchemaPtr schema,
 }
 
 #ifdef ENABLE_KAFKA_BUILD
-const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema,
-                                            const std::string& brokers,
-                                            const std::string& topic,
-                                            const uint64_t kafkaProducerTimeout) {
+const DataSinkPtr
+createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout) {
     return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
 }
 #endif

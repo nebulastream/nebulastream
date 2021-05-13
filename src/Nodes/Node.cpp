@@ -31,8 +31,6 @@ Node::Node() : visited(false), recStack(false) {
 #endif
 }
 
-Node::~Node() {}
-
 bool Node::addChildWithEqual(const NodePtr newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Adding node to its self so skip add child with equal operation.");

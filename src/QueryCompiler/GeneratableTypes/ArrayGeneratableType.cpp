@@ -35,33 +35,17 @@ const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const { re
 
 const CodeExpressionPtr ArrayGeneratableType::getCode() const {
     std::stringstream str;
-    str << "[" << type->getLength() << "]";
-    return combine(component->getCode(), std::make_shared<CodeExpression>(str.str()));
+    str << "NES::Array<" << component->getCode()->code_ << ", " << type->length << "> ";
+    return std::make_shared<CodeExpression>(str.str());
 }
 
-CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifier) {
+CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifier) const {
     CodeExpressionPtr ptr;
     if (identifier != "") {
-        ptr = component->getCode();
-        ptr = combine(ptr, std::make_shared<CodeExpression>(" " + identifier));
-        ptr = combine(ptr, std::make_shared<CodeExpression>("["));
-        ptr = combine(ptr, std::make_shared<CodeExpression>(std::to_string(type->getLength())));
-        ptr = combine(ptr, std::make_shared<CodeExpression>("]"));
+        return combine(getCode(), std::make_shared<CodeExpression>(std::move(identifier)));
     } else {
         ptr = component->getCode();
     }
     return ptr;
 }
-StatementPtr ArrayGeneratableType::getStmtCopyAssignment(const AssignmentStatment& assignmentStatment) {
-    auto functionCall = FunctionCallStatement("memcpy");
-    functionCall.addParameter(VarRef(assignmentStatment.lhs_tuple_var)[VarRef(assignmentStatment.lhs_index_var)].accessRef(
-        VarRef(assignmentStatment.lhs_field_var)));
-    functionCall.addParameter(VarRef(assignmentStatment.rhs_tuple_var)[VarRef(assignmentStatment.rhs_index_var)].accessRef(
-        VarRef(assignmentStatment.rhs_field_var)));
-    auto tf = CompilerTypesFactory();
-    functionCall.addParameter(ConstantExpressionStatement(tf.createValueType(
-        DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(type->getLength())))));
-    return functionCall.copy();
-}
-
 }// namespace NES

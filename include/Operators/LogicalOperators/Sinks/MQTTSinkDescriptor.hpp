@@ -84,7 +84,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief get the user chosen time unit (default is milliseconds)
      * @return time unit chosen for the message delay
      */
-    const TimeUnits getTimeUnit() const;
+    TimeUnits getTimeUnit() const;
 
     /**
      * @brief get the user chosen delay between two sent messages (default is 500)
@@ -96,7 +96,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @brief get the value for the current quality of service
      * @return quality of service value
      */
-    const ServiceQualities getQualityOfService() const;
+    ServiceQualities getQualityOfService() const;
 
     /**
      * @brief get bool that indicates whether the client is asynchronous or synchronous (default is true)

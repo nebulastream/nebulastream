@@ -27,7 +27,7 @@ typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
-class AssignmentStatment;
+struct AssignmentStatment;
 class Statement;
 typedef std::shared_ptr<Statement> StatementPtr;
 
@@ -57,7 +57,7 @@ class GeneratableDataType {
     * For instance "int8_t test", or "uint32_t test" for BasicTypes or "uint32_t test[15]" for an ArrayType.
     * @return CodeExpressionPtr
     */
-    virtual CodeExpressionPtr getDeclarationCode(std::string identifier) = 0;
+    virtual CodeExpressionPtr getDeclarationCode(std::string identifier) const = 0;
 
     /**
     * @brief Create copy assignment between two types.

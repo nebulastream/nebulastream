@@ -30,7 +30,7 @@ typedef std::shared_ptr<Node> NodePtr;
 class Node : public std::enable_shared_from_this<Node> {
   public:
     Node();
-    ~Node();
+    ~Node() = default;
 
     /**
      * @brief adds a newNode as a child to the current newNode.

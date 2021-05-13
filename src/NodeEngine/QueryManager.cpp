@@ -533,8 +533,8 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
                                                             (executableQueryPlan),
                                                             std::move(weakQep));
         }
-        NES_FATAL_ERROR("QueryManager: QueryManager::addEndOfStream for source operator "
-                        << sourceId << " graceful=" << SoftEndOfStream << " tasks in queue=" << taskQueue.size());
+        NES_INFO("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << SoftEndOfStream
+                                                                                   << " tasks in queue=" << taskQueue.size());
         auto pipelineContext =
             std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                               inherited0::shared_from_this());
@@ -784,7 +784,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     std::unique_lock lock(workMutex);
 #endif
-    NES_FATAL_ERROR("QueryManager::completedWork: Work for task=" << task.toString());
+    NES_INFO("QueryManager::completedWork: Work for task=" << task.toString());
     auto executable = task.getExecutable();
 
     // todo also support data sinks

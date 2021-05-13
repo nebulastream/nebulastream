@@ -27,7 +27,7 @@ const CodeExpressionPtr PointerDataType::getCode() const {
 
 const CodeExpressionPtr PointerDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }
 
-CodeExpressionPtr PointerDataType::getDeclarationCode(std::string identifier) {
+CodeExpressionPtr PointerDataType::getDeclarationCode(std::string identifier) const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "* " + identifier);
 }
 

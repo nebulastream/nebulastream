@@ -23,6 +23,9 @@ namespace NES {
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+class ArrayType;
+typedef std::shared_ptr<ArrayType> ArrayPtr;
+
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
@@ -141,7 +144,7 @@ class DataTypeFactory {
     static DataTypePtr createUInt64();
 
     /**
-     * @brief Creates a new Array data type.
+     * @brief Creates a new ArrayType data type.
      * @param length length of the array
      * @param component component type of the array
      * @return DataTypePtr
@@ -193,26 +196,45 @@ class DataTypeFactory {
     static ValueTypePtr createBasicValue(int64_t value);
 
     /**
-     * @brief Create a array typed value. For instance a Array of Integers with values ["42", "9"].
+     * @brief Create an array value that is supposed to fit into a contained type.
+     *        Has only support for non-nested array types.
+     *
+     *        For instance: DataTypePtr: ArrayType with componentType int, values = {42, 21}.
+     *
      * @param type the data type as a DataTypePtr
      * @param values the value as a vector of strings, which represent the individual values.
      * @return ValueTypePtr
      */
-    static ValueTypePtr createArrayValue(DataTypePtr type, std::vector<std::string> values);
+    static ValueTypePtr createArrayValueWithContainedType(DataTypePtr&& type, std::vector<std::string>&& values) noexcept;
 
     /**
-    * @brief Create a fixed char typed value. For instance ['a', 'b'].
-    * @param values the value as a vector of strings, which represent the individual values.
-    * @return ValueTypePtr
-    */
-    static ValueTypePtr createFixedCharValue(std::vector<std::string> values);
+     * @brief Create an array value that is supposed to fit into the contained type passed as argument to this function.
+     *        Has only support for non-nested array types.
+     *
+     *        For instance: DataTypePtr: ArrayType with componentType int, values = {42, 21}.
+     *
+     * @param type: ArrayType type (not nested).
+     *
+     * @param values the value as a vector of strings, which represent the individual values.
+     */
+    static ValueTypePtr createArrayValueFromContainerType(std::shared_ptr<ArrayType>&& type,
+                                                          std::vector<std::string>&& values) noexcept;
 
     /**
      * @brief Create a fixed char typed value. For instance ['a', 'b'].
+     * @param values represents the fixed char as a vecotr of strings which should contain only one char each.
+     * @return ValueTypePtr
+     */
+    static ValueTypePtr createFixedCharValue(std::vector<std::string>&& vals) noexcept;
+
+    /**
+     * @brief Create a fixed char typed value from a null-terminated c-str.
      * @param values represents the fixed char as a single string.
      * @return ValueTypePtr
      */
-    static ValueTypePtr createFixedCharValue(const char* values);
+    static ValueTypePtr createFixedCharValue(char const* values) noexcept;
+    static ValueTypePtr createFixedCharValue(std::string&& values) noexcept;
+    static ValueTypePtr createFixedCharValue(std::string const& values) noexcept;
 
     /**
      * @brief Create a data type from a BasicType, this many is used to support the old type system API.

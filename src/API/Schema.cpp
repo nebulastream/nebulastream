@@ -43,7 +43,8 @@ uint64_t Schema::getSchemaSizeInBytes() const {
     // todo if we introduce a physical schema.
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : fields) {
-        size += physicalDataTypeFactory.getPhysicalType(field->getDataType())->size();
+        auto const type = physicalDataTypeFactory.getPhysicalType(field->getDataType());
+        size += type->size();
     }
     return size;
 }

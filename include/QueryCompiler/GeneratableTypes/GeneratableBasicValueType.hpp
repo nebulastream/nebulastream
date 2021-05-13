@@ -27,7 +27,7 @@ typedef std::shared_ptr<BasicValue> BasicValuePtr;
 /**
  * @brief Generates code for basic values.
  */
-class GeneratableBasicValueType : public GeneratableValueType {
+class GeneratableBasicValueType final : public GeneratableValueType {
   public:
     GeneratableBasicValueType(BasicValuePtr basicValue);
 
@@ -35,7 +35,7 @@ class GeneratableBasicValueType : public GeneratableValueType {
     * @brief Generate the code expression for this value type.
     * @return CodeExpressionPtr
     */
-    CodeExpressionPtr getCodeExpression() override;
+    CodeExpressionPtr getCodeExpression() const noexcept final;
 
   private:
     BasicValuePtr value;

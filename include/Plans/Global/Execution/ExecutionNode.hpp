@@ -114,7 +114,7 @@ class ExecutionNode : public Node {
 
     const std::string toString() const override;
 
-    const std::vector<std::string> toMultilineString();
+    const std::vector<std::string> toMultilineString() override;
 
   private:
     explicit ExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode);

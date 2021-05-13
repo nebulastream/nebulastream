@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/Array.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -32,7 +32,7 @@ class ArrayDataType;
 std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const PhysicalTypePtr physicalType, uint64_t bufferOffset) {
     if (physicalType->isBasicType()) {
         auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-        switch (basicPhysicalType->getNativeType()) {
+        switch (basicPhysicalType->nativeType) {
             case BasicPhysicalType::INT_8: return createBasicPhysicalField<int8_t>(bufferOffset);
             case BasicPhysicalType::INT_16: return createBasicPhysicalField<int16_t>(bufferOffset);
             case BasicPhysicalType::INT_32: return createBasicPhysicalField<int32_t>(bufferOffset);
@@ -48,7 +48,7 @@ std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const Phys
         }
     } else if (physicalType->isArrayType()) {
         auto arrayPhysicalType = std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType);
-        return createArrayPhysicalField(arrayPhysicalType->getPhysicalComponentType(), bufferOffset);
+        return createArrayPhysicalField(arrayPhysicalType->physicalComponentType, bufferOffset);
     } else {
         // TODO FIXME
         NES_FATAL_ERROR("No physical field mapping for test available");

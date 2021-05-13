@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/Array.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -24,7 +24,11 @@
 #include <Common/DataTypes/Undefined.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <Common/ValueTypes/FixedCharValue.hpp>
+#include <Exceptions/InvalidArgumentException.hpp>
+
+#include <algorithm>
+#include <cassert>
+#include <cstring>
 #include <limits>
 
 namespace NES {
@@ -77,7 +81,7 @@ DataTypePtr DataTypeFactory::createInt32() { return createInteger(32, INT32_MIN,
 DataTypePtr DataTypeFactory::createUInt32() { return createInteger(32, 0, UINT32_MAX); };
 
 DataTypePtr DataTypeFactory::createArray(uint64_t length, DataTypePtr component) {
-    return std::make_shared<Array>(length, component);
+    return std::make_shared<ArrayType>(length, component);
 }
 
 DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }
@@ -85,7 +89,7 @@ DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make
 DataTypePtr DataTypeFactory::createChar() { return std::make_shared<Char>(); }
 
 ValueTypePtr DataTypeFactory::createBasicValue(DataTypePtr type, std::string value) {
-    return std::make_shared<BasicValue>(type, value);
+    return std::make_shared<BasicValue>(std::move(type), std::move(value));
 }
 
 ValueTypePtr DataTypeFactory::createBasicValue(uint64_t value) { return createBasicValue(createUInt64(), std::to_string(value)); }
@@ -96,14 +100,38 @@ ValueTypePtr DataTypeFactory::createBasicValue(BasicType type, std::string value
     return createBasicValue(createType(type), value);
 }
 
-ValueTypePtr DataTypeFactory::createArrayValue(DataTypePtr type, std::vector<std::string> values) {
-    return std::make_shared<ArrayValue>(type, values);
+ValueTypePtr DataTypeFactory::createArrayValueFromContainerType(std::shared_ptr<ArrayType>&& type,
+                                                                std::vector<std::string>&& values) noexcept {
+
+    return std::make_shared<ArrayValue>(std::move(type), std::move(values));
 }
 
-ValueTypePtr DataTypeFactory::createFixedCharValue(std::vector<std::string> values) {
-    return std::make_shared<FixedCharValue>(values);
+ValueTypePtr DataTypeFactory::createArrayValueWithContainedType(DataTypePtr&& type, std::vector<std::string>&& values) noexcept {
+    auto const length = values.size();
+    return std::make_shared<ArrayValue>(createArray(length, std::move(type)), std::move(values));
 }
-ValueTypePtr DataTypeFactory::createFixedCharValue(const char* val) { return std::make_shared<FixedCharValue>(val); }
+
+ValueTypePtr DataTypeFactory::createFixedCharValue(std::string&& values) noexcept { return createFixedCharValue(values.c_str()); }
+
+ValueTypePtr DataTypeFactory::createFixedCharValue(std::string const& values) noexcept {
+    return createFixedCharValue(values.c_str());
+}
+
+ValueTypePtr DataTypeFactory::createFixedCharValue(std::vector<std::string>&& values) noexcept {
+    return createArrayValueWithContainedType(createChar(), std::move(values));
+}
+
+ValueTypePtr DataTypeFactory::createFixedCharValue(char const* values) noexcept {
+    std::vector<std::string> vec{};
+    auto const size = strlen(values) + 1;
+    vec.reserve(size);
+    // Copy string including string termination character ( which is legal this way :) ).
+    for (std::size_t s = 0; s < size; ++s) {
+        vec.push_back(std::string{values[s]});
+    }
+    assert(vec.size() == size);
+    return createFixedCharValue(std::move(vec));
+}
 
 DataTypePtr DataTypeFactory::createType(BasicType type) {
     switch (type) {

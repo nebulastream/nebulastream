@@ -31,6 +31,8 @@ class NESRequest : public std::enable_shared_from_this<NESRequest> {
   public:
     explicit NESRequest(QueryId queryId);
 
+    virtual ~NESRequest() = default;
+
     /**
      * @brief Get the query id to stop
      * @return query id to stop

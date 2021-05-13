@@ -84,7 +84,7 @@ class TranslateToGeneratableOperatorPhase {
     GeneratableWindowAggregationPtr
     transformWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 
-    TranslateToGeneratableOperatorPhase();
+    TranslateToGeneratableOperatorPhase() = default;
 };
 
 }// namespace NES
