@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKUPDATER_HPP_
-#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKUPDATER_HPP_
+#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKPROCESSOR_HPP_
+#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKPROCESSOR_HPP_
 
 #include <NodeEngine/Transactional/LocalWatermarkUpdater.hpp>
 #include <NodeEngine/Transactional/WatermarkBarrier.hpp>
@@ -23,20 +23,20 @@
 namespace NES::NodeEngine::Transactional {
 
 /**
- * @brief The watermark updater receives watermark barriers and provides the current watermark across multiple origins.
- * The watermark updater guarantees a strict serializable for watermark updates. Thus, a watermark update is only executed if all
+ * @brief The watermark processor receives watermark barriers and provides the current watermark across multiple origins.
+ * The watermark processor guarantees a strict serializable for watermark updates. Thus, a watermark processor is only executed if all
  * preceding updates have been processed.
- * Consequently, the watermark updater expects a exactly once delivery on the input channel.
+ * Consequently, the watermark processor expects a exactly once delivery on the input channel.
  */
-class WatermarkUpdater {
+class WatermarkProcessor {
   public:
     /**
      * @brief Creates a new watermark updater, with a specific origin id.
      * @param originId
      */
-    WatermarkUpdater(const uint64_t numberOfOrigins);
+    WatermarkProcessor(const uint64_t numberOfOrigins);
 
-    static std::shared_ptr<WatermarkUpdater> create(const uint64_t numberOfOrigins);
+    static std::shared_ptr<WatermarkProcessor> create(const uint64_t numberOfOrigins);
 
     /**
      * @brief Processes a watermark barrier

@@ -13,7 +13,7 @@
 # limitations under the License.
 
 add_source_nes(
-        WatermarkUpdater.cpp
+        WatermarkProcessor.cpp
         LocalWatermarkUpdater.cpp
         WatermarkBarrier.cpp
         WatermarkEmitter.cpp
