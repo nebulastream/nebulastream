@@ -55,6 +55,7 @@ class ExpressionItem {
     ExpressionItem(double value);
     ExpressionItem(bool value);
     ExpressionItem(const char* value);
+    ExpressionItem(std::string const& value);
     ExpressionItem(ValueTypePtr value);
     ExpressionItem(ExpressionNodePtr ref);
 

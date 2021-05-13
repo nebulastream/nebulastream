@@ -60,6 +60,8 @@ ExpressionItem::ExpressionItem(bool value)
 
 ExpressionItem::ExpressionItem(const char* value) : ExpressionItem(DataTypeFactory::createFixedCharValue(value)) {}
 
+ExpressionItem::ExpressionItem(std::string const& value) : ExpressionItem(DataTypeFactory::createFixedCharValue(value.c_str())) {}
+
 ExpressionItem::ExpressionItem(ValueTypePtr value) : ExpressionItem(ConstantValueExpressionNode::create(std::move(value))) {}
 
 ExpressionItem::ExpressionItem(ExpressionNodePtr exp) : expression(std::move(exp)) {}
