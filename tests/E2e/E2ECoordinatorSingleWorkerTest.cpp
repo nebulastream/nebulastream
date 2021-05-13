@@ -363,12 +363,16 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
+    // XXX:
     string expectedContent =
-        "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:Char,exdra$metadata_id:Char,exdra$features_type:"
-        "Char,exdra$features_properties_capacity:INTEGER,exdra$features_properties_efficiency:(Float),exdra$features_properties_"
+        "exdra$id:INTEGER,exdra$metadata_generated:INTEGER,exdra$metadata_title:ArrayType,exdra$metadata_id:ArrayType,exdra$"
+        "features_type:"
+        "ArrayType,exdra$features_properties_capacity:INTEGER,exdra$features_properties_efficiency:(Float),exdra$features_"
+        "properties_"
         "mag:(Float),exdra$features_properties_time:INTEGER,exdra$features_properties_updated:INTEGER,exdra$features_properties_"
-        "type:Char,exdra$features_geometry_type:Char,exdra$features_geometry_coordinates_longitude:(Float),exdra$features_"
-        "geometry_coordinates_latitude:(Float),exdra$features_eventId :Char\n"
+        "type:ArrayType,exdra$features_geometry_type:ArrayType,exdra$features_geometry_coordinates_longitude:(Float),exdra$"
+        "features_"
+        "geometry_coordinates_latitude:(Float),exdra$features_eventId :ArrayType\n"
         "1,1262343610000,Wind Turbine Data Generated for Nebula "
         "Stream,b94c4bbf-6bab-47e3-b0f6-92acac066416,Features,736,0.363738,112464.007812,1262300400000,0,electricityGeneration,"
         "Point,8.221581,52.322945,982050ee-a8cb-4a7a-904c-a4c45e0c9f10\n"
@@ -467,8 +471,9 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingSimplePattern) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(restPort)));
     EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(restPort)));
 
+    // XXX
     string expectedContent =
-        "QnV$sensor_id:Char,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
+        "QnV$sensor_id:ArrayType,QnV$timestamp:INTEGER,QnV$velocity:(Float),QnV$quantity:INTEGER,QnV$PatternId:INTEGER\n"
         "R2000073,1543624020000,102.629631,8,1\n"
         "R2000070,1543625280000,108.166664,5,1\n";
 
