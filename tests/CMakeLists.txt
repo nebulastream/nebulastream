@@ -101,6 +101,11 @@ add_executable(add-scan-and-emit-phase-tests "UnitTests/QueryCompiler/AddScanAnd
 target_link_libraries(add-scan-and-emit-phase-tests nes ${GTEST_LIBRARIES})
 add_test(NAME add-scan-and-emit-phase-tests COMMAND add-scan-and-emit-phase-tests)
 
+### ArrayType Test ###
+add_executable(array-type-tests "UnitTests/QueryCompiler/ArrayTypeTest.cpp")
+target_link_libraries(array-type-tests nes ${GTEST_LIBRARIES})
+add_test(NAME array-type-tests COMMAND array-type-tests)
+
 ### Pipelining Tests ###
 add_executable(pipelining-phase-tests "UnitTests/QueryCompiler/PipeliningPhaseTest.cpp")
 target_link_libraries(pipelining-phase-tests nes ${GTEST_LIBRARIES})
@@ -207,7 +212,7 @@ add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 ### LogicalExpressionTest ###
 add_executable(logical-expression-test "UnitTests/Query/LogicalExpressionTest.cpp")
 target_link_libraries(logical-expression-test nes ${GTEST_LIBRARIES})
-add_test(NAME logical-expression-test COMMAND query-execution-test)
+add_test(NAME logical-expression-test COMMAND logical-expression-test)
 
 ### QueryExecutionTest ###
 add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")
