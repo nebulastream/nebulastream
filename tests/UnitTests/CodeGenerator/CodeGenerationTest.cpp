@@ -65,6 +65,8 @@
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
+#include <Common/ValueTypes/ArrayValue.hpp>
+
 using std::cout;
 using std::endl;
 namespace NES {
@@ -146,8 +148,9 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         EXPECT_EQ(binOp2.getCode()->code_, "i+j-k");
     }
     {
-        // Generate Array Operation
-        std::vector<std::string> vals = {"a", "b", "c"};
+        // Generate ArrayType Operation
+        //std::vector<std::string> vals = {"a", "b", "c"};
+        std::string vals = "abc";
         auto varDeclM = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)),
                                                     "m",
                                                     DataTypeFactory::createFixedCharValue(vals));
@@ -158,14 +161,13 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto varDeclN = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)),
                                                     "n",
                                                     DataTypeFactory::createFixedCharValue(vals));
-        EXPECT_EQ(varDeclN.getCode(), "char n[12] = {'a', 'b', 'c'}");
-
-        // Int Array initialization
-        auto varDeclO =
-            VariableDeclaration::create(tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),
-                                        "o",
-                                        DataTypeFactory::createArrayValue(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
-        EXPECT_EQ(varDeclO.getCode(), "uint8_t o[4] = {2, 3, 4}");
+        EXPECT_EQ(varDeclN.getCode(), "NES::Array<char, 12> n = NES::Array {'a', 'b', 'c', static_cast<char>(0)}");
+        
+        auto varDeclO = VariableDeclaration::create(
+            tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),
+            "o",
+            DataTypeFactory::createArrayValueWithContainedType(DataTypeFactory::createUInt8(), {"2", "3", "4"}));
+        EXPECT_EQ(varDeclO.getCode(), "NES::Array<uint8_t, 4> o = NES::Array {2, 3, 4}");
 
         /**
          todo currently no support for strings

@@ -45,28 +45,6 @@ class LogicalExpressionTest : public testing::Test {
             {"1", R"(Attribute("value"))"},
             {"true", R"(Attribute("value"))"},
             {"false", R"(Attribute("value"))"},
-            {"static_cast<int8_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<uint8_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<uint16_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<int16_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<uint32_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<int32_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<uint64_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<int64_t>(0)", R"(Attribute("value"))"},
-            {"static_cast<float>(0)", R"(Attribute("value"))"},
-            {"static_cast<double>(0)", R"(Attribute("value"))"},
-            {"static_cast<bool>(0)", R"(Attribute("value"))"},
-            {"static_cast<int8_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<uint8_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<uint16_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<int16_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<uint32_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<int32_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<uint64_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<int64_t>(1)", R"(Attribute("value"))"},
-            {"static_cast<float>(1)", R"(Attribute("value"))"},
-            {"static_cast<double>(1)", R"(Attribute("value"))"},
-            {"static_cast<bool>(1)", R"(Attribute("value"))"},
             {R"("char const*")", R"(Attribute("value"))"},
             {R"(static_cast<char const*>("char const*"))", R"(Attribute("value"))"},
             {R"(Attribute("value"))", R"(Attribute("value"))"},
@@ -86,11 +64,7 @@ class LogicalExpressionTest : public testing::Test {
 /// ExpressionItem.
 template<template<typename, auto...> typename CompilesFromArgs, template<typename...> typename CompilesFromTypes>
 void checkBinary() {
-
-    bool compiles = CompilesFromArgs<ExpressionNodePtr, 0, 0>::value;
-    ASSERT_TRUE(compiles);
-
-    compiles = CompilesFromTypes<ExpressionNodePtr, ExpressionItem, int8_t>::value
+    bool compiles = CompilesFromTypes<ExpressionNodePtr, ExpressionItem, int8_t>::value
         && CompilesFromTypes<ExpressionNodePtr, int8_t, ExpressionItem>::value;
     ASSERT_TRUE(compiles);
 
@@ -158,42 +132,42 @@ SETUP_COMPILE_TIME_TESTS(gt, operator>);
 
 //TODO: re-enable tests when finishing #1170, #1781
 
-TEST_F(LogicalExpressionTest, DISABLED_testEqualityExpression) {
+TEST_F(LogicalExpressionTest, testEqualityExpression) {
     checkBinary<eqCompiles, eqCompilesFromType>();
     testBinaryOperator("==");
 }
 
-TEST_F(LogicalExpressionTest, DISABLED_testInequalityExpression) {
+TEST_F(LogicalExpressionTest, testInequalityExpression) {
     checkBinary<neqCompiles, neqCompilesFromType>();
     testBinaryOperator("!=");
 }
 
-TEST_F(LogicalExpressionTest, DISABLED_testAndCompile) {
+TEST_F(LogicalExpressionTest, testAndCompile) {
     checkBinary<landCompiles, landCompilesFromType>();
     testBinaryOperator("&&");
 }
 
-TEST_F(LogicalExpressionTest, DISABLED_testOrExpression) {
+TEST_F(LogicalExpressionTest, testOrExpression) {
     checkBinary<lorCompiles, lorCompilesFromType>();
     testBinaryOperator("||");
 }
 
-TEST_F(LogicalExpressionTest, DISABLED_testLeqExpression) {
+TEST_F(LogicalExpressionTest, testLeqExpression) {
     checkBinary<leqCompiles, leqCompilesFromType>();
     testBinaryOperator("<=");
 }
 
-TEST_F(LogicalExpressionTest, DISABLED_testGeqExpression) {
+TEST_F(LogicalExpressionTest, testGeqExpression) {
     checkBinary<geqCompiles, geqCompilesFromType>();
     testBinaryOperator(">=");
 }
 
-TEST_F(LogicalExpressionTest, DISABLED_testLtExpression) {
+TEST_F(LogicalExpressionTest, testLtExpression) {
     checkBinary<ltCompiles, ltCompilesFromType>();
     testBinaryOperator("<");
 }
 
-TEST_F(LogicalExpressionTest, DISABLED_testGtExpression) {
+TEST_F(LogicalExpressionTest, testGtExpression) {
     checkBinary<gtCompiles, gtCompilesFromType>();
     testBinaryOperator(">");
 }

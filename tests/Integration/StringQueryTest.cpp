@@ -22,6 +22,8 @@
 #include <gmock/gmock-generated-function-mockers.h>
 #include <gtest/gtest.h>
 
+#include <QueryCompiler/GeneratableTypes/Array.hpp>
+
 namespace NES {
 
 class StringQueryTest : public testing::Test {
@@ -100,14 +102,14 @@ class StringQueryTest : public testing::Test {
 };
 
 /// Test that padding has no influence on the actual size of an element in NES' implementation.
-TEST_F(StringQueryTest, DISABLED_paddingTest) {
+TEST_F(StringQueryTest, paddingTest) {
     constexpr std::size_t fixedArraySize = 3;
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
     ASSERT_EQ(4 + fixedArraySize, schema->getSchemaSizeInBytes());
 }
 
 /// Conduct a comparison between two string attributes.
-TEST_F(StringQueryTest, DISABLED_condition_on_attribute) {
+TEST_F(StringQueryTest, conditionOnAttribute) {
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
@@ -136,8 +138,8 @@ TEST_F(StringQueryTest, DISABLED_condition_on_attribute) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-/// Tests not-equal operator.
-TEST_F(StringQueryTest, DISABLED_neq_on_chars) {
+/// Tests not-equal operator. TODO: enable when neq expressions are allowed on legacy operators.
+TEST_F(StringQueryTest, DISABLED_neqOnChars) {
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
@@ -167,7 +169,7 @@ TEST_F(StringQueryTest, DISABLED_neq_on_chars) {
 }
 
 /// Test equality operator and equality comparison conducted by logical representation of the schema.
-TEST_F(StringQueryTest, DISABLED_eq_on_chars_multiple_return) {
+TEST_F(StringQueryTest, eqOnCharsMultipleReturn) {
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
@@ -198,20 +200,20 @@ TEST_F(StringQueryTest, DISABLED_eq_on_chars_multiple_return) {
 
 /// Test equality operator: Set up a query which matches the data's attribute to a fixed string.
 /// The filter allows only a single attribute. Test the query's output.
-TEST_F(StringQueryTest, DISABLED_eq_on_string) {
+TEST_F(StringQueryTest, eqOnString) {
     constexpr auto fixedArraySize = 4;
 
     using Schema_t = StringQueryTest::SchemaClass<fixedArraySize>;
     auto const schema = StringQueryTest::schemaPointer<fixedArraySize>();
 
-    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == std::string("112")))";
+    std::string queryWithFilterOperator = R"(Query::from("car").filter(Attribute("value") == std::string("113")))";
     TestHarness testHarness = TestHarness(queryWithFilterOperator, restPort, rpcPort);
 
     // add a memory source
     testHarness.addMemorySource("car", schema, "carMem");
 
     // push two elements to the memory source
-    testHarness.pushElement<Schema_t>({1, "112"}, 0);
+    testHarness.pushElement<Schema_t>({1, "113"}, 0);
     testHarness.pushElement<Schema_t>({1, "222"}, 0);
     testHarness.pushElement<Schema_t>({4, "333"}, 0);
     testHarness.pushElement<Schema_t>({1, "444"}, 0);
@@ -220,7 +222,7 @@ TEST_F(StringQueryTest, DISABLED_eq_on_string) {
 
     ASSERT_EQ(testHarness.getWorkerCount(), 1u);
 
-    std::vector<Schema_t> expectedOutput{{1, "112"}};
+    std::vector<Schema_t> expectedOutput{{1, "113"}};
     std::vector<Schema_t> actualOutput = testHarness.getOutput<Schema_t>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
@@ -228,7 +230,7 @@ TEST_F(StringQueryTest, DISABLED_eq_on_string) {
 }
 
 /// Check that wrong expected result reports a failure with the defined string comparator.
-TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int_not_comparator) {
+TEST_F(StringQueryTest, stringComparisonFilterOnIntNotComparator) {
 
     constexpr auto fixedArraySize = 4;
 
@@ -260,7 +262,7 @@ TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int_not_comparator)
 
 /// Test a query on a schema which contains a fixed-size char array. A filter predicate is evaluated on a value that
 /// is not of type non-fixed-size char.
-TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int) {
+TEST_F(StringQueryTest, stringComparisonFilterOnInt) {
 
     constexpr auto fixedArraySize = 4;
 
@@ -292,7 +294,7 @@ TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int) {
 
 /// Test a query on a schema which contains a fixed-size char array. A filter predicate is evaluated on a value that
 /// is not of type non-fixed-size char. The values of the string type are the same.
-TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int_same) {
+TEST_F(StringQueryTest, stringComparisonFilterOnIntSame) {
 
     constexpr auto fixedArraySize = 4;
 
@@ -323,7 +325,7 @@ TEST_F(StringQueryTest, DISABLED_string_comparison_filter_on_int_same) {
 }
 
 /// Test utilizing a single struct which defines equality operator and data schema.
-TEST_F(StringQueryTest, DISABLED_testHarnessUtilizeOneStruct) {
+TEST_F(StringQueryTest, testHarnessUtilizeOneStruct) {
     using Car = IntSchemaClass;
     auto const carSchema = intSchemaPointer();
 

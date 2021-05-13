@@ -176,7 +176,7 @@ TEST_F(StreamCatalogTest, testGetAllLogicalStream) {
 
     const map<std::string, std::string>& allLogicalStream = streamCatalog->getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 2);
-    for (auto const [key, value] : allLogicalStream) {
+    for (auto const& [key, value] : allLogicalStream) {
         bool cmp = key != defaultLogicalStreamName && key != "exdra";
         EXPECT_EQ(cmp, false);
     }
