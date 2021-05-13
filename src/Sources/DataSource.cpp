@@ -14,12 +14,9 @@
     limitations under the License.
 */
 
-#include <cassert>
 #include <chrono>
 #include <functional>
 #include <iostream>
-#include <limits>
-#include <random>
 #include <thread>
 
 #include <NodeEngine/FixedSizeBufferPool.hpp>
@@ -29,8 +26,6 @@
 #include <future>
 
 #include <Sources/ZmqSource.hpp>
-
-#include <Util/ThreadBarrier.hpp>
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
@@ -60,9 +55,9 @@ DataSource::DataSource(const SchemaPtr pSchema,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(queryManager), globalBufferManager(bufferManager), executableSuccessors(executableSuccessors),
-      operatorId(operatorId), schema(pSchema), generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX),
-      numSourceLocalBuffers(numSourceLocalBuffers), gatheringInterval(0), gatheringMode(gatheringMode),
-      wasGracefullyStopped(true), running(false), thread(nullptr), NodeEngine::Reconfigurable(), DataEmitter() {
+      operatorId(operatorId), schema(pSchema), numBuffersToProcess(UINT64_MAX), numSourceLocalBuffers(numSourceLocalBuffers),
+      gatheringInterval(0), gatheringMode(gatheringMode), wasGracefullyStopped(true), NodeEngine::Reconfigurable(),
+      thread(nullptr), DataEmitter() {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
@@ -161,7 +156,7 @@ bool DataSource::stop(bool graceful) {
     return ret;
 }
 
-bool DataSource::isRunning() { return running; }
+bool DataSource::isRunning() const noexcept { return running; }
 
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
@@ -194,14 +189,14 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
-    while (running) {
+    while (isRunning()) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t buffersProcessedCnt = 0;
 
         //produce buffers until limit for this second or for all perionds is reached or source is topped
-        while (buffersProcessedCnt < gatheringIngestionRate && running && processedOverallBufferCnt < numBuffersToProcess) {
+        while (buffersProcessedCnt < gatheringIngestionRate && isRunning() && processedOverallBufferCnt < numBuffersToProcess) {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
@@ -280,7 +275,7 @@ void DataSource::runningRoutineWithFrequency() {
     }
     open();
     uint64_t cnt = 0;
-    while (running) {
+    while (isRunning()) {
         bool recNow = false;
         auto tsNow = std::chrono::system_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
@@ -335,11 +330,13 @@ void DataSource::runningRoutineWithFrequency() {
                                              std::chrono::high_resolution_clock::now().time_since_epoch())
                                              .count());
                 emitWork(buf);
-                cnt++;
+                ++cnt;
             } else {
-                NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
-                running = false;
-                wasGracefullyStopped = false;
+                if (!wasGracefullyStopped) {
+                    NES_ERROR("DataSource " << operatorId << ": stopping cause of invalid buffer");
+                    running = false;
+                }
+                NES_DEBUG("DataSource " << operatorId << ": Thread terminating after graceful exit.");
             }
         } else {
             NES_DEBUG("DataSource " << operatorId << ": Receiving thread terminated ... stopping because cnt=" << cnt
