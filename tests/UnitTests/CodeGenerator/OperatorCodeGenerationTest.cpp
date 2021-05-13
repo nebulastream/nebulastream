@@ -220,7 +220,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
             tuples[i].valueFloat = i * M_PI;
             tuples[i].valueDouble = i * M_PI * 2;
             tuples[i].singleChar = ((i + 1) % (127 - 'A')) + 'A';
-            for (int j = 0; j < 11; ++j) {
+            for (std::size_t j = 0; j < 11; ++j) {
                 tuples[i].text[j] = ((i + 1) % 64) + 64;
             }
             tuples[i].text[11] = '\0';
@@ -802,7 +802,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
-    // auto str = strcmp("HHHHHHHHHHH", {'H', 'V'});
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
 
