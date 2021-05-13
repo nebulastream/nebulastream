@@ -162,7 +162,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                                                     "n",
                                                     DataTypeFactory::createFixedCharValue(vals));
         EXPECT_EQ(varDeclN.getCode(), "NES::Array<char, 12> n = NES::Array {'a', 'b', 'c', static_cast<char>(0)}");
-        
+
         auto varDeclO = VariableDeclaration::create(
             tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),
             "o",

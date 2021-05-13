@@ -71,9 +71,9 @@ inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr {
  *           left to be done.
  */
 template<typename... T>
-static constexpr bool expression_generator_v =
-    std::conjunction_v<std::negation<std::conjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>...>>,
-                       std::disjunction<std::is_constructible<ExpressionItem, T>, std::is_same<ExpressionItem , std::decay_t<T>>>...>;
+static constexpr bool expression_generator_v = std::conjunction_v<
+    std::negation<std::conjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>...>>,
+    std::disjunction<std::is_constructible<ExpressionItem, T>, std::is_same<ExpressionItem, std::decay_t<T>>>...>;
 
 /**
  * @brief Operator which accepts parameters as long as they can be used to construct an ExpressionItem.

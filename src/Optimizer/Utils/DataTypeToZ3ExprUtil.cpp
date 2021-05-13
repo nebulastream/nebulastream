@@ -42,7 +42,7 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForField(std::string fieldName,
         expr = std::make_shared<z3::expr>(context->bool_const(fieldName.c_str()));
     } else if (dataType->isChar()) {
         expr = std::make_shared<z3::expr>(context->constant(fieldName.c_str(), context->string_sort()));
-    } else if (dataType->isCharArray()) { // TODO: Enable Arrays in Z3
+    } else if (dataType->isCharArray()) {// TODO: Enable Arrays in Z3
         expr = std::make_shared<z3::expr>(context->constant(fieldName.c_str(), context->string_sort()));
     } else {
         NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + dataType->toString());
@@ -67,12 +67,12 @@ Z3ExprAndFieldMapPtr DataTypeToZ3ExprUtil::createForDataValue(ValueTypePtr value
         } else if (valueType->isFloat()) {
             expr = std::make_shared<z3::expr>(context->fpa_val(std::stod(basicValueType->value)));
         } else if (valueType->isBoolean()) {
-            bool const val = (strcasecmp(basicValueType->value.c_str(), "true") == 0
-                || std::atoi(basicValueType->value.c_str()) != 0);
+            bool const val =
+                (strcasecmp(basicValueType->value.c_str(), "true") == 0 || std::atoi(basicValueType->value.c_str()) != 0);
             expr = std::make_shared<z3::expr>(context->bool_val(val));
         } else if (valueType->isChar()) {
             expr = std::make_shared<z3::expr>(context->string_val(basicValueType->value));
-        } else if (valueType->isCharArray()) { // TODO: Enable Arrays for z3.
+        } else if (valueType->isCharArray()) {// TODO: Enable Arrays for z3.
             expr = std::make_shared<z3::expr>(context->string_val(basicValueType->value));
         } else {
             NES_THROW_RUNTIME_ERROR("Creating Z3 expression is not possible for " + valueType->toString());
