@@ -52,6 +52,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request req
             json::value errorResponse{};
             errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
+            return;
         }
 
         try {
