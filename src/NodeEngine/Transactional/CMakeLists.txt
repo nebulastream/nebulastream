@@ -13,11 +13,8 @@
 # limitations under the License.
 
 add_source_nes(
-        TransactionId.cpp
-        WatermarkManager.cpp
-        CombinedLatchWatermarkManager.cpp
-        LatchVectorWatermarkManager.cpp
-        AtomicWatermarkManager.cpp
-        LatchWatermarkManager.cpp
-        CombinedWatermarkManager.cpp
+        WatermarkUpdater.cpp
+        LocalWatermarkUpdater.cpp
+        WatermarkBarrier.cpp
+        WatermarkEmitter.cpp
 )
