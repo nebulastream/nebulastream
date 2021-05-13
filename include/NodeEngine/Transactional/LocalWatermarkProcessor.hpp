@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKUPDATER_HPP_
-#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKUPDATER_HPP_
+#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKPROCESSOR_HPP_
+#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKPROCESSOR_HPP_
 
 #include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 #include <queue>
@@ -23,25 +23,25 @@
 namespace NES::NodeEngine::Transactional {
 
 /**
- * @brief This class implements a latch based watermark manager.
- * @assumptions This watermark manager assumes strictly monotonic transaction ids.
- * To handle out of order processing, it maintains a priority queue.
+ * @brief This class implements a local watermark processor.
+ * It processes all WatermarkBarriers from one specific origin and applies all updates in sequential order.
+ * @assumptions This watermark manager assumes strictly monotonic WatermarkBarrier sequence numbers.
+ * To handle out of order processing, it stores in flight updates in a transaction log.
  */
-class LocalWatermarkUpdater {
+class LocalWatermarkProcessor {
   public:
-    explicit LocalWatermarkUpdater();
+    explicit LocalWatermarkProcessor();
 
     /**
-     * @brief In this implementation, update watermark adds the watermark ts and transaction as an update to the update queue.
-     * Afterwards it applies all outstanding updates from the update queue.
-     * To this end, it leverage the implicit sorting of the update queue.
-     * @param transactionId
-     * @param watermarkTs
+     * @brief In this implementation, update watermark processes a watermark barrier and applies all
+     * outstanding updates from the transaction log.
+     * To this end, it leverage the implicit sorting of the priority queue.
+     * @param watermarkBarrier
      */
     void updateWatermark(WatermarkBarrier& watermarkBarrier);
 
     /**
-     * @brief In this implementation, we just return the current watermark.
+     * @brief Returns the current watermark.
      * @return WatermarkTs
      */
     WatermarkTs getCurrentWatermark();
@@ -61,4 +61,4 @@ class LocalWatermarkUpdater {
 
 }// namespace NES::NodeEngine::Transactional
 
-#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKUPDATER_HPP_
+#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKPROCESSOR_HPP_

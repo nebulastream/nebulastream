@@ -13,21 +13,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Transactional/LocalWatermarkUpdater.hpp>
+#include <NodeEngine/Transactional/LocalWatermarkProcessor.hpp>
 namespace NES::NodeEngine::Transactional {
 
-LocalWatermarkUpdater::LocalWatermarkUpdater() : currentWatermark(0), currentTransactionId(0) {}
+LocalWatermarkProcessor::LocalWatermarkProcessor() : currentWatermark(0), currentTransactionId(0) {}
 
-void LocalWatermarkUpdater::updateWatermark(WatermarkBarrier& watermarkBarrier) {
+void LocalWatermarkProcessor::updateWatermark(WatermarkBarrier& watermarkBarrier) {
     std::scoped_lock lock(watermarkLatch);
 
-    // emplace current watermark and transaction im queue of outstanding updates
+    // emplace current watermark barrier in the update log
     updateLog.emplace(watermarkBarrier);
-    // pull all outstanding updates from the queue
+    // process all outstanding updates from the queue
     while (!updateLog.empty()) {
         auto nextWatermarkUpdate = updateLog.top();
-        // outstanding updates is sorted by the transaction id.
+        // the update log is sorted by the sequence number.
         // Thus, we only check if the next update is the one, which we expect.
+        // This implies, that each watermark barrier has to be received.
+        // If the system looses a watermark barrier, the watermark processor will make no progress.
         if (currentTransactionId + 1 != nextWatermarkUpdate.getSequenceNumber()) {
             // It is not the correct update, so we terminate here and can't further apply the next transaction.
             break;
@@ -39,7 +41,7 @@ void LocalWatermarkUpdater::updateWatermark(WatermarkBarrier& watermarkBarrier) 
     }
 }
 
-WatermarkTs LocalWatermarkUpdater::getCurrentWatermark() {
+WatermarkTs LocalWatermarkProcessor::getCurrentWatermark() {
     std::scoped_lock lock(watermarkLatch);
     return currentWatermark;
 }

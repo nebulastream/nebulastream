@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKPROCESSOR_HPP_
 #define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKPROCESSOR_HPP_
 
-#include <NodeEngine/Transactional/LocalWatermarkUpdater.hpp>
+#include <NodeEngine/Transactional/LocalWatermarkProcessor.hpp>
 #include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 #include <memory>
 namespace NES::NodeEngine::Transactional {
@@ -53,7 +53,7 @@ class WatermarkProcessor {
   private:
     std::mutex updateLatch;
     const uint64_t numberOfOrigins;
-    std::vector<std::unique_ptr<LocalWatermarkUpdater>> watermarkManagers;
+    std::vector<std::unique_ptr<LocalWatermarkProcessor>> watermarkManagers;
 };
 
 }// namespace NES::NodeEngine::Transactional

@@ -14,7 +14,7 @@
 
 add_source_nes(
         WatermarkProcessor.cpp
-        LocalWatermarkUpdater.cpp
+        LocalWatermarkProcessor.cpp
         WatermarkBarrier.cpp
         WatermarkEmitter.cpp
 )
