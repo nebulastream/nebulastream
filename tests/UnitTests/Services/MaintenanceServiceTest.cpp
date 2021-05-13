@@ -249,33 +249,4 @@ TEST_F(MaintenanceServiceTest, InvalidTopologyNodeOrStrategyOrExecutionNodeTest)
     ASSERT_TRUE(response == noExecutionNodeMessage);
     ASSERT_TRUE(topology->findNodeWithId(1)->getMaintenanceFlag() == true);
 }
-/**
- * Checks if a NESRequest for all Query Ids on node marked for maintenance is built.
- */
-TEST_F(MaintenanceServiceTest, MaintenanceRequestAmountTest){
-
-//    setupTopologyAndStreamCatalog();
-//    //Add several queries to ExecutionNode
-//    //check if the queries are there
-//
-//    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
-//    QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-//    NESRequestQueuePtr queryRequestQueue = std::make_shared<NESRequestQueue>(1);
-//    MaintenanceServicePtr maintenanceService = std::make_shared<MaintenanceService>(topology,queryCatalog,queryRequestQueue,globalExecutionPlan);
-//
-//    auto pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
-//    auto filterOp1 = LogicalOperatorFactory::createFilterOperator(pred1);
-//    ExecutionNodePtr executionNode = ExecutionNode::createExecutionNode(topology->findNodeWithId(2),1,filterOp1);
-//    executionNode->addNewQuerySubPlan(2,QueryPlan::create());
-//    executionNode->addNewQuerySubPlan(3,QueryPlan::create());
-//
-//    globalExecutionPlan->addExecutionNode(executionNode);
-//
-//    ASSERT_TRUE(globalExecutionPlan->getExecutionNodesByQueryId(1).size() == 1);
-//    auto responses = maintenanceService->submitMaintenanceRequest(2,2);
-//    ASSERT_TRUE(responses.size() == 2);
-//    for(auto &response  : responses){
-//        ASSERT_TRUE(response.info =="Strat2");
-//    }
-}
 }//namespace NES

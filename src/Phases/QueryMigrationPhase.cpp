@@ -126,13 +126,15 @@ std::vector<TopologyNodePtr> QueryMigrationPhase::findChildExecutionNodesAsTopol
 std::vector<TopologyNodePtr> QueryMigrationPhase::findParentExecutionNodesAsTopologyNodes(QueryId queryId,TopologyNodeId topologyNodeId) {
     std::vector<TopologyNodePtr>parentNodes = {};
     auto allExecutionNodesInvolvedInAQuery = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
-    auto allChildNodesOfTopologyNode = topology->findNodeWithId(topologyNodeId)->as<Node>()->getParents();
+    auto allParentNodesOfTopologyNode = topology->findNodeWithId(topologyNodeId)->as<Node>()->getParents();
     for(auto executionNode : allExecutionNodesInvolvedInAQuery){
-        for(auto node: allChildNodesOfTopologyNode){
-            auto nodeAsTopologyNode =node->as<TopologyNode>();
-            if (executionNode->getId() == nodeAsTopologyNode->getId() ){
-                parentNodes.push_back(nodeAsTopologyNode);
-            }
+        auto id = executionNode->getId();
+        auto it = std::find_if(allParentNodesOfTopologyNode.begin(), allParentNodesOfTopologyNode.end(), [id](NodePtr& node){
+
+            return id == (node->as<TopologyNode>()->getId());
+        });
+        if(it != allParentNodesOfTopologyNode.end()){
+            parentNodes.push_back(it->get()->as<TopologyNode>());
         }
     }
     return parentNodes;

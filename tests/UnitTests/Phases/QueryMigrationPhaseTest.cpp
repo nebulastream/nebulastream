@@ -57,7 +57,6 @@ class QueryMigrationPhaseTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES::setupLogging("QueryPlacementTest.log", NES::LOG_DEBUG);
-        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
         std::cout << "Setup QueryPlacementTest test case." << std::endl;
     }
 
@@ -66,53 +65,26 @@ class QueryMigrationPhaseTest : public testing::Test {
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down QueryPlacementTest test class." << std::endl; }
-
-    void setupTopologyAndStreamCatalog() {
-
-        topology = Topology::create();
-
-        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
-        topology->setAsRoot(rootNode);
-
-        TopologyNodePtr node1 = TopologyNode::create(2, "localhost", 123, 124, 4);
-        topology->addNewPhysicalNodeAsChild(rootNode, node1);
-
-        TopologyNodePtr node2 = TopologyNode::create(3, "localhost", 123, 124, 4);
-        topology->addNewPhysicalNodeAsChild(rootNode, node2);
-
-        TopologyNodePtr node3 = TopologyNode::create(4, "localhost", 123, 124, 4);
-        topology->addNewPhysicalNodeAsChild(rootNode, node3);
-
-        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
-                             "->addField(\"value\", BasicType::UINT64);";
-        const std::string streamName = "car";
-
-        streamCatalog = std::make_shared<StreamCatalog>();
-        streamCatalog->addLogicalStream(streamName, schema);
-
-        SourceConfigPtr sourceConfig = SourceConfig::create();
-        sourceConfig->setSourceFrequency(0);
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
-        sourceConfig->setPhysicalStreamName("test2");
-        sourceConfig->setLogicalStreamName("car");
-
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
-
-        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, node3);
-
-        streamCatalog->addPhysicalStream("car", streamCatalogEntry1);
-
-    }
-
-    StreamCatalogPtr streamCatalog;
-    TopologyPtr topology;
 };
 
 /**
  * @brief In this test we test if all Network Sink Operators that point to a specific node location are found.
  */
 TEST_F(QueryMigrationPhaseTest, testFindNetworkSinks) {
-    setupTopologyAndStreamCatalog();
+    TopologyPtr topology = Topology::create();
+
+    TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+    topology->setAsRoot(rootNode);
+
+    TopologyNodePtr node1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    topology->addNewPhysicalNodeAsChild(rootNode, node1);
+
+    TopologyNodePtr node2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+    topology->addNewPhysicalNodeAsChild(rootNode, node2);
+
+    TopologyNodePtr node3 = TopologyNode::create(4, "localhost", 123, 124, 4);
+    topology->addNewPhysicalNodeAsChild(node1, node3);
+    topology->addNewPhysicalNodeAsChild(node2, node3);
     GlobalExecutionPlanPtr globalExecutionPlanPtr = GlobalExecutionPlan::create();
     WorkerRPCClientPtr workerRpcClientPtr = std::make_shared<WorkerRPCClient>();
 
@@ -149,7 +121,21 @@ TEST_F(QueryMigrationPhaseTest, testFindNetworkSinks) {
     }
 }
 TEST_F(QueryMigrationPhaseTest, testFindNetworkSinksSeveralQueryPlans) {
-    setupTopologyAndStreamCatalog();
+    TopologyPtr topology = Topology::create();
+
+    TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+    topology->setAsRoot(rootNode);
+
+    TopologyNodePtr node1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    topology->addNewPhysicalNodeAsChild(rootNode, node1);
+
+    TopologyNodePtr node2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+    topology->addNewPhysicalNodeAsChild(rootNode, node2);
+
+    TopologyNodePtr node3 = TopologyNode::create(4, "localhost", 123, 124, 4);
+    topology->addNewPhysicalNodeAsChild(node1, node3);
+    topology->addNewPhysicalNodeAsChild(node2, node3);
+
     GlobalExecutionPlanPtr globalExecutionPlanPtr = GlobalExecutionPlan::create();
     WorkerRPCClientPtr workerRpcClientPtr = std::make_shared<WorkerRPCClient>();
 
@@ -197,14 +183,98 @@ TEST_F(QueryMigrationPhaseTest, testFindNetworkSinksSeveralQueryPlans) {
 
     ASSERT_TRUE(sinks1.size() == 4);
     for (int i = 0; i < sinks1.size(); i++) {
-        ASSERT_TRUE(sinks1.at(i) == i + 1);
+        EXPECT_TRUE(sinks1.at(i) == i + 1);
     }
     ASSERT_TRUE(sinks2.size() == 1);
-    ASSERT_TRUE(sinks2.at(0) == 3);
+    EXPECT_TRUE(sinks2.at(0) == 3);
 }
 
 TEST_F(QueryMigrationPhaseTest, testFindParentExecutionNodes) {
-}
-TEST_F(QueryMigrationPhaseTest, testFindChildExecutionNodes) {
+
+
+    TopologyPtr topology = Topology::create();
+
+    TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+    TopologyNodePtr node1 = TopologyNode::create(2, "localhost", 123, 124, 4);
+    TopologyNodePtr node2 = TopologyNode::create(3, "localhost", 123, 124, 4);
+    TopologyNodePtr node3 = TopologyNode::create(4, "localhost", 123, 124, 4);
+    TopologyNodePtr node4 = TopologyNode::create(5, "localhost", 123, 124, 4);
+    TopologyNodePtr node5 = TopologyNode::create(6, "localhost", 123, 124, 4);
+    TopologyNodePtr node6 = TopologyNode::create(7, "localhost", 123, 124, 4);
+    TopologyNodePtr node7 = TopologyNode::create(8, "localhost", 123, 124, 4);
+
+    topology->setAsRoot(rootNode);
+    topology->addNewPhysicalNodeAsChild(rootNode, node1);
+    topology->addNewPhysicalNodeAsChild(rootNode, node2);
+    topology->addNewPhysicalNodeAsChild(rootNode, node3);
+    topology->addNewPhysicalNodeAsChild(rootNode, node4);
+    topology->addNewPhysicalNodeAsChild(rootNode, node5);
+    topology->addNewPhysicalNodeAsChild(rootNode, node6);
+
+    topology->addNewPhysicalNodeAsChild(node1, node7);
+    topology->addNewPhysicalNodeAsChild(node2, node7);
+    topology->addNewPhysicalNodeAsChild(node3, node7);
+    topology->addNewPhysicalNodeAsChild(node4, node7);
+    topology->addNewPhysicalNodeAsChild(node5, node7);
+    topology->addNewPhysicalNodeAsChild(node6, node7);
+
+    ExecutionNodePtr executionNode1 = ExecutionNode::createExecutionNode(topology->findNodeWithId(2));
+    ExecutionNodePtr executionNode2 = ExecutionNode::createExecutionNode(topology->findNodeWithId(4));
+    ExecutionNodePtr executionNode3 = ExecutionNode::createExecutionNode(topology->findNodeWithId(6));
+
+    QueryPlanPtr queryPlan1 = QueryPlan::create();
+    QueryPlanPtr queryPlan2 = QueryPlan::create();
+    QueryPlanPtr queryPlan3 = QueryPlan::create();
+
+    queryPlan1->setQueryId(1);
+    queryPlan1->setQuerySubPlanId(1);
+    queryPlan2->setQueryId(1);
+    queryPlan2->setQuerySubPlanId(2);
+    queryPlan3->setQueryId(1);
+    queryPlan3->setQuerySubPlanId(3);
+
+    executionNode1->addNewQuerySubPlan(1,queryPlan1);
+    executionNode2->addNewQuerySubPlan(1,queryPlan2);
+    executionNode3->addNewQuerySubPlan(1,queryPlan3);
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    WorkerRPCClientPtr workerRpcClientPtr = std::make_shared<WorkerRPCClient>();
+
+    QueryMigrationPhasePtr migrationPhase = QueryMigrationPhase::create(globalExecutionPlan,topology,workerRpcClientPtr);
+    //Test correct behavior for 0 parent/child ExecutionNodes
+    std::vector<TopologyNodePtr> parentExecutionNodes = migrationPhase->findParentExecutionNodesAsTopologyNodes(1,8);
+    std::vector<TopologyNodePtr> childExecutionNodes = migrationPhase->findChildExecutionNodesAsTopologyNodes(1,1);
+    EXPECT_TRUE(parentExecutionNodes.empty());
+    EXPECT_TRUE(childExecutionNodes.empty());
+
+    globalExecutionPlan->addExecutionNode(executionNode1);
+    //Test correct behavior for 1 parent/child ExecutionNodes
+    parentExecutionNodes = migrationPhase->findParentExecutionNodesAsTopologyNodes(1,8);
+    ASSERT_TRUE(parentExecutionNodes.size() == 1);
+    EXPECT_TRUE(parentExecutionNodes.at(0)->getId() == 2);
+    childExecutionNodes = migrationPhase->findChildExecutionNodesAsTopologyNodes(1,1);
+    ASSERT_TRUE(childExecutionNodes.size() == 1);
+    EXPECT_TRUE(childExecutionNodes.at(0)->getId() == 2);
+
+
+    globalExecutionPlan->addExecutionNode(executionNode2);
+    globalExecutionPlan->addExecutionNode(executionNode3);
+
+    //Test correct behavior for many parent/child ExecutionNodes
+    parentExecutionNodes = migrationPhase->findParentExecutionNodesAsTopologyNodes(1,8);
+    childExecutionNodes = migrationPhase->findChildExecutionNodesAsTopologyNodes(1,1);
+    ASSERT_TRUE(parentExecutionNodes.size() == 3);
+    ASSERT_TRUE(childExecutionNodes.size() == 3);
+
+    for (auto id : {2,4,6}) {
+        auto foundParent = std::find_if(parentExecutionNodes.begin(),parentExecutionNodes.end(),[id](TopologyNodePtr& node){
+            return node->getId() == id;
+        });
+        auto foundChild = std::find_if(childExecutionNodes.begin(),childExecutionNodes.end(),[id](TopologyNodePtr& node){
+          return node->getId() == id;
+        });
+        EXPECT_TRUE(foundParent != parentExecutionNodes.end());
+        EXPECT_TRUE(foundChild != childExecutionNodes.end());
+    }
 }
 }// nes namepsace
