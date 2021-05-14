@@ -285,7 +285,7 @@ TEST_F(SimplePatternTest, testPatternWithTestStreamAndMultiWorkers) {
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        std::vector<string> content = UtilityFunctions::split(line, '|');
+        std::vector<string> content = UtilityFunctions::splitWithStringDelimiter(line, "|");
         for (auto keyWord : content) {
             if (keyWord == "R2000073") {
                 NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found=R2000073");
@@ -572,7 +572,7 @@ TEST_F(SimplePatternTest, DISABLED_testPatternWithTestStreamAndMultiWorkerMerge)
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        std::vector<string> content = UtilityFunctions::split(line, '|');
+        std::vector<string> content = UtilityFunctions::splitWithStringDelimiter(line, "|");
         for (auto keyWord : content) {
             if (keyWord == "R2000073") {
                 NES_INFO("SimplePatternTest (testPatternWithTestStreamAndMultiWorkers): found=R2000073");

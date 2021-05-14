@@ -318,7 +318,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidSimplePatternWi
 
     while (std::getline(ifs, line)) {
         NES_INFO("print line from content" << line);
-        std::vector<string> content = UtilityFunctions::split(line, ',');
+        std::vector<string> content = UtilityFunctions::splitWithStringDelimiter(line, ",");
         if (content.at(0) == "R2000073") {
             NES_INFO("First content=" << content.at(2));
             NES_INFO("First: expContent= 102.629631");
