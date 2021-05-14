@@ -16,7 +16,6 @@
 
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
-#include <NodeEngine/ThreadPool.hpp>
 #include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
@@ -25,6 +24,7 @@
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/ThreadPool.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
@@ -168,7 +168,9 @@ void QueryManager::destroy() {
 
 bool QueryManager::registerQuery(Execution::NewExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
-    NES_ASSERT2_FMT(queryManagerStatus.load() == Running, "QueryManager::registerQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
+    NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
+                    "QueryManager::registerQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
+                                                                               << qep->getQueryId());
     std::scoped_lock lock(queryMutex, statisticsMutex);
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
@@ -205,7 +207,9 @@ bool QueryManager::registerQuery(Execution::NewExecutableQueryPlanPtr qep) {
 
 bool QueryManager::startQuery(Execution::NewExecutableQueryPlanPtr qep, StateManagerPtr stateManager) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
-    NES_ASSERT2_FMT(queryManagerStatus.load() == Running, "QueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
+    NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
+                    "QueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
+                                                                            << qep->getQueryId());
     NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
                "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
@@ -714,11 +718,14 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     //    this->threadBarrier->wait();
     // must run this to execute all pending reconfiguration task (Destroy)
     //    bool hitReconfiguration = false;
+    std::unique_lock lock(workMutex);
     while (!taskQueue.empty()) {
-        std::unique_lock lock(workMutex);
+        //        std::unique_lock lock(workMutex);
+        NES_FATAL_ERROR("size before dequeue=" << taskQueue.size());
+
         auto task = taskQueue.front();
         taskQueue.pop_front();
-        lock.unlock();
+        //        lock.unlock();
         auto executable = task.getExecutable();
 #if 1
         // execute only reconfiguration tasks
@@ -748,7 +755,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
         }
 #endif
     }
-    //    lock.unlock();
+    lock.unlock();
     return ExecutionResult::Finished;
 }
 #else

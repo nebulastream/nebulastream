@@ -1,9 +1,8 @@
 # ~~~ Configurations for the NES E2E Benchmark ~~~
 
 # Parameter that are changed per run with comma separated list
-numberOfWorkerThreads: 1
-numberOfCoordinatorThreads: 1
-numberOfSources: 1
+numberOfWorkerThreads: 3
+numberOfSources: 3
 
 # engine configuration parameter
 numberOfBuffersInGlobalBufferManager: 16384
@@ -16,7 +15,7 @@ bufferSizeInBytes: 262144
 inputOutputMode: LambdaMode
 outputFile: changingThreadsAndSourceMapOneField.csv
 benchmarkName: changingThreadsAndSourceMapOneField
-query: 'Query::from("input").map(Attribute("field1") = 1).sink(NullOutputSinkDescriptor::create());'
+query: 'Query::from("input").filter(Attribute("value") > 10).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
