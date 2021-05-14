@@ -56,7 +56,7 @@ DataSource::DataSource(const SchemaPtr pSchema,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : queryManager(queryManager), globalBufferManager(bufferManager), executableSuccessors(executableSuccessors),
       operatorId(operatorId), schema(pSchema), numBuffersToProcess(UINT64_MAX), numSourceLocalBuffers(numSourceLocalBuffers),
-      gatheringInterval(0), gatheringMode(gatheringMode), wasGracefullyStopped(true), NodeEngine::Reconfigurable(),
+      gatheringInterval(0), gatheringMode(gatheringMode), NodeEngine::Reconfigurable(),
       thread(nullptr), DataEmitter() {
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
