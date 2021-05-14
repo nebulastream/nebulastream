@@ -24,6 +24,7 @@
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <iostream>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 
 namespace NES {
 
@@ -129,6 +130,85 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
+}
+
+TEST_F(RESTEndpointTest, testPostExecuteQueryEx) {
+    //NES Setup
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+
+    NES_INFO("RESTEndpointTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    NES_INFO("RESTEndpointTest: Coordinator started successfully");
+
+    NES_INFO("RESTEndpointTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("RESTEndpointTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+
+    //make httpclient with new endpoint -ex:
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
+                                                              + "/v1/nes/query/execute-query-ex");
+
+    QueryPlanPtr plan = QueryPlan::create();
+
+
+    //make a Protobuff object
+    SerializableQueryPlan* protobufMessage = QueryPlanSerializationUtil::serializeQueryPlan(plan);
+
+    //convert it to string for the request function
+    std::string msg = protobufMessage->SerializeAsString();
+
+    web::json::value postJsonReturn;
+
+    httpClient.request(web::http::methods::POST, msg)
+        .then([](const web::http::http_response& response) {
+          NES_INFO("get first then");
+          return response.extract_json();
+        })
+        .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
+          try {
+              NES_INFO("post execute-query-ex: set return");
+              postJsonReturn = task.get();
+          } catch (const web::http::http_exception& e) {
+              NES_ERROR("post execute-query-ex: error while setting return" << e.what());
+          }
+        })
+        .wait();
+
+    // I don't know how to test the postconditions here
+    // what to do with query id?     postJsonReturn.at("queryId").as_integer();
+    // what else could/should be tested?
+
+    EXPECT_TRUE(postJsonReturn.has_field("queryId"));
+
+
+    // testing of the NES setup:
+
+    NES_INFO("RESTEndpointTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("RESTEndpointTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("RESTEndpointTest: Test finished");
+
 }
 
 TEST_F(RESTEndpointTest, testGetAllRegisteredQueries) {
