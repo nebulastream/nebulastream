@@ -19,9 +19,9 @@
 namespace NES::NodeEngine::Transactional {
 
 WatermarkProcessor::WatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {
-    for (int i = 0; i < numberOfOrigins; i++) {
+    for (auto i = 0; i < numberOfOrigins; i++) {
         auto localWatermarkManager = std::make_unique<LocalWatermarkProcessor>();
-        watermarkManagers.emplace_back(std::move(localWatermarkManager));
+        localWatermarkProcessor.emplace_back(std::move(localWatermarkManager));
     }
 }
 
@@ -31,14 +31,14 @@ std::shared_ptr<WatermarkProcessor> WatermarkProcessor::create(const uint64_t nu
 
 void WatermarkProcessor::updateWatermark(WatermarkBarrier watermarkBarrier) {
     auto origenId = watermarkBarrier.getOrigin();
-    NES_ASSERT2_FMT(numberOfOrigins <= watermarkManagers.size(),
+    NES_ASSERT2_FMT(numberOfOrigins <= localWatermarkProcessor.size(),
                     "This origin is not valid: " << origenId << " max origins " << numberOfOrigins);
-    watermarkManagers[origenId]->updateWatermark(watermarkBarrier);
+    localWatermarkProcessor[origenId]->updateWatermark(watermarkBarrier);
 }
 
-WatermarkTs WatermarkProcessor::getCurrentWatermark() {
+WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
     WatermarkTs maxWatermarkTs = UINT64_MAX;
-    for (auto& localWatermarkManager : watermarkManagers) {
+    for (auto& localWatermarkManager : localWatermarkProcessor) {
         maxWatermarkTs = std::min(maxWatermarkTs, localWatermarkManager->getCurrentWatermark());
     }
     return maxWatermarkTs;

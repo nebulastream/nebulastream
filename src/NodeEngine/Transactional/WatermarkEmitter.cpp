@@ -25,9 +25,9 @@ std::shared_ptr<WatermarkEmitter> WatermarkEmitter::create(const OriginId origin
 }
 
 bool WatermarkEmitter::updateWatermark(uint64_t watermarkTs) {
-    std::scoped_lock lock(emitLatch);
+    std::unique_lock lock(emitLatch);
     NES_ASSERT2_FMT(watermarkTs >= currentWatermark,
-                    "We cant update the watermark, to a lower watermark the the current one. "
+                    "We cant update the watermark, to a lower watermark than the current one. "
                     "current watermark:"
                         << currentWatermark << " new watermark: " << watermarkTs);
     if (watermarkTs > currentWatermark) {
@@ -38,7 +38,7 @@ bool WatermarkEmitter::updateWatermark(uint64_t watermarkTs) {
 }
 
 WatermarkBarrier WatermarkEmitter::getNextWatermarkBarrier() {
-    std::scoped_lock lock(emitLatch);
+    std::unique_lock lock(emitLatch);
     return WatermarkBarrier(currentWatermark, ++currentSequenceNumber, originId);
 }
 

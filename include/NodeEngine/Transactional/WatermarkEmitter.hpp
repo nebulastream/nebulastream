@@ -34,13 +34,17 @@ class WatermarkEmitter {
      */
     WatermarkEmitter(const OriginId originId);
 
+    /**
+    * @brief Creates a new watermark emitter, with a specific origin id.
+    * @param originId
+    */
     static std::shared_ptr<WatermarkEmitter> create(const OriginId originId);
 
     /**
      * @brief Updates the local watermark and indicates that the watermark was changed.
      * This assumes that the watermarkTs increases in an strictly monotonic order.
      * @param watermarkTs
-     * @return
+     * @return true if the watermark was changed.
      */
     bool updateWatermark(uint64_t watermarkTs);
 
@@ -51,7 +55,7 @@ class WatermarkEmitter {
     WatermarkBarrier getNextWatermarkBarrier();
 
   private:
-    std::mutex emitLatch;
+    mutable std::mutex emitLatch;
     const OriginId originId;
     WatermarkTs currentWatermark;
     BarrierSequenceNumber currentSequenceNumber;
