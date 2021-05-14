@@ -38,48 +38,8 @@ ExpressionNodePtr operator>=(ExpressionNodePtr leftExp, ExpressionNodePtr rightE
 ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator!(ExpressionNodePtr exp);
+ExpressionNodePtr operator!(ExpressionItem leftExp);
 
-
-/**
- * @brief Defines common operations between a constant and an expression node.
- */
-ExpressionNodePtr operator&&(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator||(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator==(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator!=(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator<=(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator>=(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionNodePtr rightExp);
-
-/**
- * @brief Defines common logical operations between an expression node and a constant.
- */
-ExpressionNodePtr operator&&(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator||(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator==(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator!=(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator<=(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator>=(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionItem rightExp);
-
-/**
- * @brief Defines common logical operations between two expression items.
- */
-ExpressionNodePtr operator&&(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator||(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator==(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator!=(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator<=(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator>=(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionItem rightExp);
-ExpressionNodePtr operator!(ExpressionItem exp);
-
-
-
-#ifdef not_defined_comment_out
 
 /**
  * @brief Defines common operations on at least one operator which is not of type ExpressionNodePtr but
@@ -101,7 +61,7 @@ inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr {
         return t.getExpressionNode();
     }
     // Guaranteed copy elision.
-    return ExpressionItem{std::forward<T>(t)}.getExpressionNode();
+    return ExpressionItem {std::forward<T>(t)}.getExpressionNode();
 }
 
 /**
@@ -110,10 +70,14 @@ inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr {
  *            and therefore enable us to create or access an expression node pointer
  *        b) and `T...` are not all already expression node pointers as in that case, there would be no conversion
  *           left to be done.
+ *        c) any candidate is either an expression node pointer or an expression item. Otherwise another operator
+ *           might be more suitable (e.g. direct integer conversion).
  */
 template<typename... T>
 static constexpr bool expression_generator_v = std::conjunction_v<
     std::negation<std::conjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>...>>,
+    std::disjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>...,
+                     std::is_same<ExpressionItem, std::decay_t<T>> ...>,
     std::disjunction<std::is_constructible<ExpressionItem, T>, std::is_same<ExpressionItem, std::decay_t<T>>>...>;
 
 /**
@@ -172,10 +136,6 @@ template<typename LHS, typename RHS, typename = std::enable_if_t<expression_gene
 inline auto operator>(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
     return toExpressionNodePtr(std::forward<LHS>(lhs)) > toExpressionNodePtr(std::forward<RHS>(rhs));
 }
-
-inline auto operator!(ExpressionItem exp) -> ExpressionNodePtr { return !exp.getExpressionNode(); }
-
-#endif
 
 }// namespace NES
 
