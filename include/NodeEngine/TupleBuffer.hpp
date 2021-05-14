@@ -133,12 +133,6 @@ class TupleBuffer {
     friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) { return os << buff.ptr; }
 
     /**
-    * @brief revert the endianess of the tuple buffer
-    * @schema of the buffer
-    */
-    void revertEndianness(SchemaPtr schema);
-
-    /**
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
