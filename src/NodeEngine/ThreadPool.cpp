@@ -26,7 +26,7 @@
 #include <string.h>
 namespace NES::NodeEngine {
 
-ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint16_t numThreads)
+ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads)
     : running(false), numThreads(numThreads), nodeId(nodeId), threads(), queryManager(queryManager) {}
 
 ThreadPool::~ThreadPool() {
@@ -40,10 +40,11 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
     while (running) {
         try {
             switch (queryManager->processNextTask(running, workerContext)) {
+                case ExecutionResult::Finished:
                 case ExecutionResult::Ok: {
                     break;
                 }
-                case ExecutionResult::Finished: {
+                case ExecutionResult::AllFinished: {
                     running = false;
                     break;
                 }
@@ -74,12 +75,11 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext) {
 
 bool ThreadPool::start() {
     auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
-    std::unique_lock<std::mutex> lock(reconfigLock);
+    std::unique_lock lock(reconfigLock);
     if (running) {
         NES_DEBUG("Threadpool:start already running, return false");
         return false;
     }
-
     running = true;
     /* spawn threads */
     NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
@@ -96,14 +96,17 @@ bool ThreadPool::start() {
 }
 
 bool ThreadPool::stop() {
-    std::unique_lock<std::mutex> lock(reconfigLock);
+    std::unique_lock lock(reconfigLock);
     NES_DEBUG("ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads
                                                     << " threads");
+    auto expected = true;
+    if (!running.compare_exchange_strong(expected, false)) {
+        return false;
+    }
     /* wake up all threads in the query manager,
      * so they notice the change in the run variable */
     NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
-    running = false;
-    queryManager->unblockThreads();
+    queryManager->poisonWorkers();
     /* join all threads if possible */
     for (auto& thread : threads) {
         if (thread.joinable()) {
@@ -115,17 +118,9 @@ bool ThreadPool::stop() {
     return true;
 }
 
-void ThreadPool::restart() {
-    stop();
-    start();
+uint32_t ThreadPool::getNumberOfThreads() const {
+    std::unique_lock lock(reconfigLock);
+    return numThreads;
 }
-
-void ThreadPool::setNumberOfThreadsWithoutRestart(uint16_t size) { numThreads = size; }
-void ThreadPool::setNumberOfThreadsWithRestart(uint16_t size) {
-    numThreads = size;
-    restart();
-}
-
-uint16_t ThreadPool::getNumberOfThreads() { return numThreads; }
 
 }// namespace NES::NodeEngine

@@ -133,7 +133,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::shared_ptr<std::prom
     bool shutdownComplete = false;
 
     try {
-        zmq::proxy(TO_RAW_ZMQ_SOCKET(frontendSocket), TO_RAW_ZMQ_SOCKET(dispatcherSocket), nullptr);
+        zmq::proxy(frontendSocket, dispatcherSocket);
     } catch (...) {
         // we write the following code to propagate the exception in the
         // caller thread, e.g., the owner of the nes engine
