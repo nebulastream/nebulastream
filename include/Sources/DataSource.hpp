@@ -222,15 +222,15 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     SchemaPtr schema;
-    uint64_t generatedTuples = 0;
-    uint64_t generatedBuffers = 0;
+    uint64_t generatedTuples;
+    uint64_t generatedBuffers;
     uint64_t numBuffersToProcess;
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate;
     std::chrono::milliseconds gatheringInterval;
     GatheringMode gatheringMode;
     SourceType type;
-    std::atomic<bool> wasGracefullyStopped = false;
+    std::atomic<bool> wasGracefullyStopped;
 
     /**
      * @brief Emits a tuple buffer to the successors.
@@ -241,7 +241,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
   private:
     //bool indicating if the source is currently running'
     mutable std::mutex startStopMutex;
-    std::atomic_bool running = false;
+    std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
 
     /**
