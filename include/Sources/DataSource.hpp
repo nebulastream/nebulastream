@@ -239,7 +239,6 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     void emitWork(NodeEngine::TupleBuffer& buffer) override;
 
   private:
-    //bool indicating if the source is currently running'
     mutable std::mutex startStopMutex;
     std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
