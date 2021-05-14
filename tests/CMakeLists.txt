@@ -212,7 +212,7 @@ add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 ### LogicalExpressionTest ###
 add_executable(logical-expression-test "UnitTests/Query/LogicalExpressionTest.cpp")
 target_link_libraries(logical-expression-test nes ${GTEST_LIBRARIES})
-add_test(NAME logical-expression-test COMMAND logical-expression-test)
+#add_test(NAME logical-expression-test COMMAND logical-expression-test)
 
 ### QueryExecutionTest ###
 add_executable(query-execution-test "UnitTests/Query/QueryExecutionTest.cpp")

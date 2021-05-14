@@ -39,11 +39,52 @@ ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator!(ExpressionNodePtr exp);
 
+
+/**
+ * @brief Defines common operations between a constant and an expression node.
+ */
+ExpressionNodePtr operator&&(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator||(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator==(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator!=(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator<=(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator>=(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+
+/**
+ * @brief Defines common logical operations between an expression node and a constant.
+ */
+ExpressionNodePtr operator&&(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator||(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator==(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator!=(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator<=(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator>=(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+
+/**
+ * @brief Defines common logical operations between two expression items.
+ */
+ExpressionNodePtr operator&&(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator||(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator==(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator!=(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator<=(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator>=(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator!(ExpressionItem exp);
+
+
+
+#ifdef not_defined_comment_out
+
 /**
  * @brief Defines common operations on at least one operator which is not of type ExpressionNodePtr but
  * either a constant or an instance of the type ExpressionItem.
  */
-
 /// Utility which converts a constant or an expression item to an ExpressionNodePtr.
 template<typename T,
          typename = std::enable_if_t<std::disjunction_v<std::is_same<std::decay_t<T>, ExpressionNodePtr>,
@@ -134,5 +175,8 @@ inline auto operator>(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr {
 
 inline auto operator!(ExpressionItem exp) -> ExpressionNodePtr { return !exp.getExpressionNode(); }
 
+#endif
+
 }// namespace NES
+
 #endif// NES_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_
