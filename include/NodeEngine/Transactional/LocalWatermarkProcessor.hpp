@@ -25,7 +25,7 @@ namespace NES::NodeEngine::Transactional {
 /**
  * @brief This class implements a local watermark processor.
  * It processes all WatermarkBarriers from one specific origin and applies all updates in sequential order.
- * @assumptions This watermark manager assumes strictly monotonic WatermarkBarrier sequence numbers.
+ * @assumptions This watermark processor assumes strictly monotonic WatermarkBarrier sequence numbers.
  * To handle out of order processing, it stores in flight updates in a transaction log.
  */
 class LocalWatermarkProcessor {
@@ -44,19 +44,20 @@ class LocalWatermarkProcessor {
      * @brief Returns the current watermark.
      * @return WatermarkTs
      */
-    WatermarkTs getCurrentWatermark();
+    WatermarkTs getCurrentWatermark() const;
 
   private:
     struct WatermarkBarrierComparator{
         bool operator()(WatermarkBarrier const& wb1, WatermarkBarrier const& wb2) {
-            // return "true" if "p1" is ordered before "p2", for example:
+            // return "true" if "wb1" is ordered before "wb2", for example:
             return wb1.getSequenceNumber() > wb2.getSequenceNumber();
         }
     };
-    std::mutex watermarkLatch;
+    mutable std::mutex watermarkLatch;
     WatermarkTs currentWatermark;
-    BarrierSequenceNumber currentTransactionId;
-    std::priority_queue<WatermarkBarrier, std::vector<WatermarkBarrier>, WatermarkBarrierComparator> updateLog;
+    BarrierSequenceNumber currentSequenceNumber;
+    // Use a priority queue to keep track of all in flight transactions.
+    std::priority_queue<WatermarkBarrier, std::vector<WatermarkBarrier>, WatermarkBarrierComparator> transactionLog;
 };
 
 }// namespace NES::NodeEngine::Transactional

@@ -27,6 +27,12 @@ using BarrierSequenceNumber = uint64_t;
  */
 class WatermarkBarrier {
   public:
+    /**
+     * @brief Creates a new watermark barrier, which indicates the change of a watermark with a specific sequence number.
+     * @param ts watermark ts
+     * @param sequenceNumber the unique sequence number
+     * @param origin the origin id of this barrier
+     */
     WatermarkBarrier(WatermarkTs ts, BarrierSequenceNumber sequenceNumber, OriginId origin);
 
     /**
