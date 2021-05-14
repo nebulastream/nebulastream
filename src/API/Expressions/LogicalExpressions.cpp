@@ -58,11 +58,7 @@ ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
     return GreaterExpressionNode::create(leftExp, rightExp);
 }
 
-ExpressionNodePtr operator!(ExpressionNodePtr exp) {
-    return NegateExpressionNode::create(exp);
-}
-ExpressionNodePtr operator!(ExpressionItem exp) {
-    return !exp.getExpressionNode();
-}
+ExpressionNodePtr operator!(ExpressionNodePtr exp) { return NegateExpressionNode::create(exp); }
+ExpressionNodePtr operator!(ExpressionItem exp) { return !exp.getExpressionNode(); }
 
 }// namespace NES
