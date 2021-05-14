@@ -42,8 +42,6 @@ namespace detail {
 
 class MemorySegment;
 
-void revertEndianness(TupleBuffer& buffer, SchemaPtr schema);
-
 /**
  * @brief This class provides a convenient way to track the reference counter as well metadata for its owning
  * MemorySegment/TupleBuffer. In particular, it stores the atomic reference counter that tracks how many
