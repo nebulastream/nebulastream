@@ -45,6 +45,10 @@ class DynamicMemoryLayout {
      */
     std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const;
 
+    /**
+     * @brief Abstract copy method
+     * @return copied version
+     */
     virtual DynamicMemoryLayoutPtr copy() const = 0;
 
     /**

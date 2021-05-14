@@ -28,6 +28,7 @@ typedef uint64_t FIELD_SIZE;
 /**
  * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.
  * As the base class, it has multiple methods or members that are useful for both derived classes.
+ * This class is non-thread safe
  */
 class DynamicLayoutBuffer {
 

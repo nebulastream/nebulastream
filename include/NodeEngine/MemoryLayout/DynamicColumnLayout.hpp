@@ -31,13 +31,17 @@ class DynamicColumnLayout;
 class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicColumnLayout> {
 
   public:
+    /**
+     * @brief Copies a DynamicMemoryLayoutPtr
+     * @return copied version
+     */
     DynamicMemoryLayoutPtr copy() const override;
 
     /**
      * @brief Creates a DynamicColumnLayout as a shared_ptr
      * @param schema
      * @param checkBoundaries
-     * @return
+     * @return created DynamicColumnLayout as a shared ptr
      */
     static DynamicColumnLayoutPtr create(SchemaPtr schema, bool checkBoundaries);
 

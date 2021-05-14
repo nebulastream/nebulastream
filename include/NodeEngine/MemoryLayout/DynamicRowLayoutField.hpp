@@ -36,6 +36,8 @@ class DynamicRowLayoutField {
     /**
      * @param fieldIndex
      * @param layoutBuffer
+     * @tparam boundaryChecks if true will check if access is allowed
+     * @tparam T type of field
      * @return field handler via a fieldIndex and a layoutBuffer
      */
     static inline DynamicRowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
@@ -44,6 +46,8 @@ class DynamicRowLayoutField {
     /**
      * @param fieldIndex
      * @param layoutBuffer
+     * @tparam boundaryChecks if true will check if access is allowed
+     * @tparam T type of field
      * @return field handler via a fieldName and a layoutBuffer
      */
     static inline DynamicRowLayoutField<T, boundaryChecks> create(std::string fieldName,
@@ -56,6 +60,13 @@ class DynamicRowLayoutField {
     inline T& operator[](size_t recordIndex);
 
   private:
+    /**
+     * @brief Constructor for DynamicRowLayoutField
+     * @param dynamicRowLayoutBuffer
+     * @param basePointer
+     * @param fieldIndex
+     * @param recordSize
+     */
     DynamicRowLayoutField(std::shared_ptr<DynamicRowLayoutBuffer> dynamicRowLayoutBuffer,
                           uint8_t* basePointer,
                           FIELD_SIZE fieldIndex,
@@ -80,6 +91,7 @@ DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::share
     auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]);
     auto offSet = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
     auto basePointer = bufferBasePointer + offSet;
+
     return DynamicRowLayoutField<T, boundaryChecks>(layoutBuffer, basePointer, fieldIndex, layoutBuffer->getRecordSize());
 }
 

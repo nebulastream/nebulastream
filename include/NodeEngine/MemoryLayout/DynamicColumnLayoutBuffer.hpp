@@ -57,39 +57,48 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      * @param recordIndex
      * @param fieldIndex
      * @param boundaryChecks
-     * @return
+     * @return calculated offset
      */
     uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) override;
 
     /**
-     * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
-     * @tparam Types
+     * @brief Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
+     * @tparam Types belonging to record
+     * @tparam boundaryChecks if true will check if access is allowed
      * @param record
+     * @return record at given recordIndex
      */
     template<bool boundaryChecks, typename... Types>
     std::tuple<Types...> readRecord(uint64_t recordIndex);
 
     /**
-     * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
+     * @brief Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
      * @param record
-     * @return success
+     * @tparam Types belonging to record
+     * @tparam boundaryChecks if true will check if access is allowed
+     * @return success of this function
      */
     template<bool boundaryChecks, typename... Types>
     bool pushRecord(std::tuple<Types...> record);
 
     /**
      * @brief This function will write/overwrite a tuple at recordIndex position in the buffer
-     * @param boundaryChecks
+     * @tparam boundaryChecks if true will check if access is allowed
      * @param record
      * @param recordIndex
-     * @return success
+     * @return success of this function
      */
     template<bool boundaryChecks, typename... Types>
     bool pushRecord(std::tuple<Types...> record, uint64_t recordIndex);
 
   private:
     /**
-     * Copies fields of tuple sequentially to address
+     * @brief Copies fields of tuple to buffer, by iterating over tup via template recursion
+     * @tparam I works as a field index
+     * @tparam Ts fields of tup
+     * @param tup tuple to be read from
+     * @param fieldSizes needed for calculating correct address
+     * @param recordIndex
      */
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type
@@ -101,7 +110,12 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
                             const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes, uint64_t recordIndex);
 
     /**
-     * Copies fields of tuple sequentially from address
+     * @brief Copies fields of buffer to tuple, by iterating over tup via template recursion
+     * @tparam I works as a field index
+     * @tparam Ts fields of tup
+     * @param tup tuple to be written to
+     * @param recordIndex
+     * @param fieldSizes needed for calculating correct address
      */
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type
