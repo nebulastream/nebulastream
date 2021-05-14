@@ -18,8 +18,8 @@
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeStats.pb.h>
 #include <Util/Logger.hpp>
-#include <boost/filesystem.hpp>
 #include <string>
+#include <filesystem>
 
 namespace NES {
 
@@ -67,8 +67,8 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::st
     NES_DEBUG("CoordinatorRPCClient: registerLogicalStream " << streamName << " with path" << filePath);
 
     // Check if file can be found on system and read.
-    boost::filesystem::path path{filePath.c_str()};
-    if (!boost::filesystem::exists(path) || !boost::filesystem::is_regular_file(path)) {
+    std::filesystem::path path{filePath.c_str()};
+    if (!std::filesystem::exists(path) || !std::filesystem::is_regular_file(path)){
         NES_ERROR("CoordinatorRPCClient: file does not exits");
         throw Exception("files does not exist");
     }
