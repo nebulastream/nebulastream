@@ -35,6 +35,8 @@ class DynamicColumnLayoutField {
     /**
      * @param fieldIndex
      * @param layoutBuffer
+     * @tparam boundaryChecks if true will check if access is allowed
+     * @tparam T type of field
      * @return field handler via a fieldIndex and a layoutBuffer
      */
     static inline DynamicColumnLayoutField<T, boundaryChecks> create(uint64_t fieldIndex,
@@ -43,6 +45,8 @@ class DynamicColumnLayoutField {
     /**
      * @param fieldIndex
      * @param layoutBuffer
+     * @tparam boundaryChecks if true will check if access is allowed
+     * @tparam T type of field
      * @return field handler via a fieldName and a layoutBuffer
      */
     static inline DynamicColumnLayoutField<T, boundaryChecks> create(std::string fieldName,

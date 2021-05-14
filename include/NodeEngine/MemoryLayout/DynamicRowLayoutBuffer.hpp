@@ -51,33 +51,37 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @brief This function calculates the offset in the associated buffer for ithRecord and jthField in bytes
      * @param ithRecord
      * @param jthField
-     * @param boundaryChecks
-     * @return
+     * @param boundaryChecks if true will check if access is allowed
+     * @return calculated offset
      */
     uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) override;
 
     /**
-     * Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
-     * @tparam Types
+     * @brief Calling this function will result in reading record at recordIndex in the tupleBuffer associated with this layoutBuffer.
+     * @tparam Types belonging to record
      * @param record
+     * @tparam boundaryChecks if true will check if access is allowed
+     * @return record at given recordIndex
      */
     template<bool boundaryChecks, typename... Types>
     std::tuple<Types...> readRecord(uint64_t recordIndex);
 
     /**
-     * Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
-     * @tparam Types
+     * @brief Calling this function will result in adding record in the tupleBuffer associated with this layoutBuffer
+     * @tparam Types belonging to record
+     * @tparam boundaryChecks if true will check if access is allowed
      * @param record
+     * @return success of this function
      */
     template<bool boundaryChecks, typename... Types>
     bool pushRecord(std::tuple<Types...> record);
 
     /**
      * @brief This function will write/overwrite a tuple at recordIndex position in the buffer
-     * @param boundaryChecks
+     * @tparam boundaryChecks if true will check if access is allowed
      * @param record
      * @param recordIndex
-     * @return success
+     * @return success of this function
      */
     template<bool boundaryChecks, typename... Types>
     bool pushRecord(std::tuple<Types...> record, uint64_t recordIndex);
@@ -92,7 +96,11 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 
   private:
     /**
-     * Copies fields of tuple sequentially to address
+     * @brief Copies fields of tuple sequentially to address, by iterating over tup via template recursion
+     * @param address of corresponding tuples in tuple buffer
+     * @param tup tuple to be read from
+     * @tparam I works as a field index
+     * @tparam Ts fields of tup
      */
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
@@ -100,8 +108,12 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
 
     /**
-     * Copies fields of tuple sequentially from address
-     */
+     * @brief Copies fields of tuple sequentially from address, by iterating over tup via template recursion
+     * @param address of corresponding tuples in tuple buffer
+     * @param tup tuple to be written to
+     * @tparam I works as a field index
+     * @tparam Ts fields of tup
+    */
     template<size_t I = 0, typename... Ts>
     typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
     template<size_t I = 0, typename... Ts>

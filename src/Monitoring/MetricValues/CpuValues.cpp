@@ -67,6 +67,7 @@ CpuValues CpuValues::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf, 
         auto guestFields        = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 8, bindedRowLayout);
         auto guestniceFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i + 9, bindedRowLayout);
 
+        // Writing first and only tuple to CpuValues struct
         output.user         = userFields[0];
         output.nice         = niceFields[0];
         output.system       = systemFields[0];

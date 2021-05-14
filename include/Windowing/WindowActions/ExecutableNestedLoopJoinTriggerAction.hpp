@@ -272,19 +272,28 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
         NES_TRACE("write sizes left=" << sizeof(leftValue) << " right=" << sizeof(rightValue)
                                       << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
 
-// I find this looking more nicely but this throws an error that it can not convert InputTypeRight to const InputTypeRight (same for InputTypeLeft)
-//        std::tuple<uint64_t, uint64_t, KeyType, InputTypeRight, InputTypeLeft> newTuple(startTs, endTs, key, leftValue, rightValue);
-//        bindedRowLayout->pushRecord<true>(newTuple, index);
-
         auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
+
+        // I find this looking more nicely but this throws an error that it can not convert InputTypeRight to const InputTypeRight (same for InputTypeLeft)
+        // If someone figures out why this is or a solution, let me (Nils Schubert) know and I will fix it
+        //        std::tuple<uint64_t, uint64_t, KeyType, InputTypeRight, InputTypeLeft>
+        //            newTuple(startTs, endTs, key, const_cast<InputTypeLeft>(leftValue), const_cast<InputTypeRight>(rightValue));
+        //        bindedRowLayout->pushRecord<true>(newTuple, index);
 
         auto startTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
         auto endTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
         auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<KeyType, true>::create(2, bindedRowLayout);
+        auto leftValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<InputTypeLeft, true>::create(3, bindedRowLayout);
 
         startTsFields[index] = startTs;
         endTsFields[index] = endTs;
         keyFields[index] = key;
+
+
+        // This memcpy is necessary as DynamicRowLayoutField can not work with InputTypeLeft and InputTypeRight.
+        // A simple leftValueFields[index] = leftValue will not assign leftValueFields[index] the leftValue. If anyone knows how or why this is let me (Nils Schubert) know.
+        // auto rightValueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<InputTypeRight, true>::create(4, bindedRowLayout);
+        // leftValueFields[index] = leftValue;
 
         constexpr auto headerSize = sizeof(uint64_t) + sizeof(uint64_t) + sizeof(KeyType);
         // copy the left record at position at the index-th row with offset=headerSize

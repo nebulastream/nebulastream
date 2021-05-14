@@ -296,8 +296,8 @@ class ExecutableCompleteAggregationTriggerAction
     }
 
     /**
-    * @brief Writes a value to the output buffer with the following schema
-    * -- start_ts, end_ts, key, value --
+    * @brief Writes a value to the output buffer with the following schema (key can be omitted)
+    * -- start_ts, end_ts, cnt, key, value --
     * @tparam ValueType Type of the particular value
     * @param tupleBuffer reference to the tuple buffer we want to write to
     * @param index record index
@@ -331,6 +331,17 @@ class ExecutableCompleteAggregationTriggerAction
         }
     }
 
+    /**
+     * @brief Writes a value to the output buffer with the following schema (key can be omitted)
+     * -- start_ts, end_ts, key, value --
+     * @tparam ValueType Type of the particular value
+     * @param tupleBuffer reference to the tuple buffer we want to write to
+     * @param index record index
+     * @param startTs start ts of the window/slice
+     * @param endTs end ts of the window/slice
+     * @param key key of the value
+     * @param value value
+     */
     template<typename ValueType>
     void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
                            uint64_t index,
