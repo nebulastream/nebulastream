@@ -21,8 +21,6 @@
 
 #include <type_traits>
 
-using namespace std;
-
 namespace NES {
 
 class ArrayTypeTest : public testing::Test {
