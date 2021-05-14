@@ -35,6 +35,7 @@ Submitting user query for execution.
 **API**: /query/execute-query-ex \
 **Verb**: POST \
 **Response Code**: 200 OK
+
 **_Example_**:
 
 **Request**:
