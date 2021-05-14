@@ -24,6 +24,8 @@
 #include <REST/RestEngine.hpp>
 #include <Util/Logger.hpp>
 
+#include <iostream>
+
 namespace NES {
 
 RestEngine::RestEngine(StreamCatalogPtr streamCatalog,
@@ -70,27 +72,26 @@ void RestEngine::setEndpoint(const std::string& value) {
 }
 
 void RestEngine::handleGet(http_request request) {
-    auto path = getPath(request);
-    auto splittedPath = splitPath(path);
+    auto const path = getPath(request);
 
-    if (!splittedPath.empty()) {
-        if (splittedPath[0] == "query") {
-            queryController->handleGet(splittedPath, request);
+    if (auto const paths = splitPath(path); !paths.empty()) {
+        if (paths[0] == "query") {
+            queryController->handleGet(paths, request);
             return;
-        } else if (splittedPath[0] == "streamCatalog") {
-            streamCatalogController->handleGet(splittedPath, request);
+        } else if (paths[0] == "streamCatalog") {
+            streamCatalogController->handleGet(paths, request);
             return;
-        } else if (splittedPath[0] == "queryCatalog") {
-            queryCatalogController->handleGet(splittedPath, request);
+        } else if (paths[0] == "queryCatalog") {
+            queryCatalogController->handleGet(paths, request);
             return;
-        } else if (splittedPath[0] == "monitoring") {
-            monitoringController->handleGet(splittedPath, request);
+        } else if (paths[0] == "monitoring") {
+            monitoringController->handleGet(paths, request);
             return;
-        } else if (splittedPath[0] == "connectivity" && splittedPath.size() == 2) {
-            connectivityController->handleGet(splittedPath, request);
+        } else if (paths[0] == "connectivity" && paths.size() == 2) {
+            connectivityController->handleGet(paths, request);
             return;
-        } else if (splittedPath[0] == "topology") {
-            topologyController->handleGet(splittedPath, request);
+        } else if (paths[0] == "topology") {
+            topologyController->handleGet(paths, request);
             return;
         }
     }
