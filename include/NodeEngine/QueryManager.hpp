@@ -26,7 +26,6 @@
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
 #include <NodeEngine/Task.hpp>
-#include <NodeEngine/ThreadPool.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
 #include <Sources/DataSource.hpp>
@@ -50,7 +49,11 @@
 #include <folly/MPMCQueue.h>
 #endif
 
-namespace NES::NodeEngine {
+namespace NES {
+namespace NodeEngine {
+
+class ThreadPool;
+typedef std::shared_ptr<ThreadPool> ThreadPoolPtr; // TODO consider moving this atomic in c++20
 
 /**
  * @brief the query manager is the central class to process queries.
@@ -66,13 +69,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     typedef NES::detail::virtual_enable_shared_from_this<QueryManager> inherited0;
     typedef Reconfigurable inherited1;
 
-    enum QueryManagerStatus : uint8_t {
-        Created,
-        Running,
-        Stopped,
-        Destroyed,
-        Failed
-    };
+    enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
 
   public:
     QueryManager() = delete;
@@ -170,9 +167,9 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool failQuery(Execution::NewExecutableQueryPlanPtr qep);
 
     /**
-     * @brief notify all waiting threads in getWork() to wake up and try again
+     * @brief notify all waiting threads in getWork() to wake up and finish up
      */
-    void unblockThreads();
+    void poisonWorkers();
 
     /**
      * @brief reset query manager to intial state
@@ -285,6 +282,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
-}// namespace NES::NodeEngine
-
+}// namespace NodeEngine
+}// namespace NES
 #endif /* INCLUDE_query manager_H_ */

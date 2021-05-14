@@ -24,8 +24,10 @@ enum class ExecutionResult : unsigned char {
     Ok = 0,
     /// Execution completed unsuccessfully -> Must handle error
     Error,
-    /// Execution completed successfully and no further data are to be expected
-    Finished
+    /// Query Execution completed successfully and no further data are to be expected
+    Finished,
+    /// All Queries Execution completed successfully and no further data are to be expected
+    AllFinished
 };
 
 }
