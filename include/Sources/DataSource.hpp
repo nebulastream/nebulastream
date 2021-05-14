@@ -143,7 +143,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      *         this function, we have to ensure that `isRunning` and this class' private member `running` are
      *         consistent or that this class does not evaluate `running` directly when checking if it is running.
      */
-    bool isRunning() const noexcept;
+    inline bool isRunning() const noexcept { return running; }
 
     /**
      * @brief debug function for testing to get number of generated tuples

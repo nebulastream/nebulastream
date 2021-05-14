@@ -156,8 +156,6 @@ bool DataSource::stop(bool graceful) {
     return ret;
 }
 
-bool DataSource::isRunning() const noexcept { return running; }
-
 void DataSource::setGatheringInterval(std::chrono::milliseconds interval) { this->gatheringInterval = interval; }
 
 void DataSource::open() { bufferManager = globalBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers); }
@@ -189,14 +187,14 @@ void DataSource::runningRoutineWithIngestionRate() {
     uint64_t nextPeriodStartTime = 0;
     uint64_t curPeriod = 0;
     uint64_t processedOverallBufferCnt = 0;
-    while (isRunning()) {
+    while (running) {
         //create as many tuples as requested and then sleep
         auto startPeriod =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t buffersProcessedCnt = 0;
 
         //produce buffers until limit for this second or for all perionds is reached or source is topped
-        while (buffersProcessedCnt < gatheringIngestionRate && isRunning() && processedOverallBufferCnt < numBuffersToProcess) {
+        while (buffersProcessedCnt < gatheringIngestionRate && running && processedOverallBufferCnt < numBuffersToProcess) {
             auto optBuf = receiveData();
 
             if (optBuf.has_value()) {
@@ -275,7 +273,7 @@ void DataSource::runningRoutineWithFrequency() {
     }
     open();
     uint64_t cnt = 0;
-    while (isRunning()) {
+    while (running) {
         bool recNow = false;
         auto tsNow = std::chrono::system_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
