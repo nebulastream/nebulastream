@@ -66,6 +66,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     typedef NES::detail::virtual_enable_shared_from_this<QueryManager> inherited0;
     typedef Reconfigurable inherited1;
 
+    enum QueryManagerStatus : uint8_t {
+        Created,
+        Running,
+        Stopped,
+        Destroyed,
+        Failed
+    };
+
   public:
     QueryManager() = delete;
     QueryManager(const QueryManager&) = delete;
@@ -272,7 +280,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     uint64_t nodeEngineId;
 
-    std::atomic<bool> isDestroyed = false;
+    std::atomic<QueryManagerStatus> queryManagerStatus;
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

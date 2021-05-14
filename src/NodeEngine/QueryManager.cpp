@@ -95,7 +95,7 @@ static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
     : sourceIdToExecutableQueryPlanMap(), queryMutex(), bufferManager(std::move(bufferManager)), nodeEngineId(nodeEngineId),
-      numThreads(numThreads), isDestroyed(false), threadPool(nullptr)
+      numThreads(numThreads), queryManagerStatus(Created), threadPool(nullptr)
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
       ,
       workMutex()
@@ -117,37 +117,53 @@ QueryManager::~QueryManager() {
 bool QueryManager::startThreadPool() {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId=" << nodeEngineId << " with numThreads=" << numThreads);
     //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
-    NES_ASSERT(threadPool == nullptr, "thread pool already running");
-    NES_ASSERT(!isDestroyed, "thread pool already destroyed");
-    threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads);
-    return threadPool->start();
+    auto expected = Created;
+    if (queryManagerStatus.compare_exchange_strong(expected, Running)) {
+        threadPool = std::make_shared<ThreadPool>(nodeEngineId, inherited0::shared_from_this(), numThreads);
+        return threadPool->start();
+    }
+    NES_ASSERT2_FMT(false, "Cannot start query manager workers");
+    return false;
 }
 
 void QueryManager::destroy() {
-    auto expected = false;
-    if (!isDestroyed.compare_exchange_strong(expected, true)) {
-        return;
+    // 1. attempt transition from Running -> Stopped
+    auto expected = Running;
+
+    if (queryManagerStatus.compare_exchange_strong(expected, Stopped)) {
+        std::unique_lock lock(queryMutex);
+        auto copyOfRunningQeps = runningQEPs;
+        lock.unlock();
+        for (auto& [_, qep] : copyOfRunningQeps) {
+            stopQuery(qep, false);
+        }
     }
 
-    if (threadPool) {
-        threadPool->stop();
-        threadPool.reset();
-    }
+    // 2. attempt transition from Stopped -> Destroyed
+    expected = Stopped;
+    if (queryManagerStatus.compare_exchange_strong(expected, Destroyed)) {
+        if (threadPool) {
+            threadPool->stop();
+            threadPool.reset();
+        }
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-    std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-    NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
-    taskQueue.clear();
+        std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
+        NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
+        taskQueue.clear();
 #else
-    //    std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-    NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
-    taskQueue = folly::MPMCQueue<Task>();
+        //    std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
+        NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
+        taskQueue = folly::MPMCQueue<Task>();
 #endif
-    NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size());
+        NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size());
 
-    sourceIdToExecutableQueryPlanMap.clear();
-    queryToStatisticsMap.clear();
-    runningQEPs.clear();
-    NES_DEBUG("QueryManager::resetQueryManager finished");
+        sourceIdToExecutableQueryPlanMap.clear();
+        queryToStatisticsMap.clear();
+        runningQEPs.clear();
+        NES_DEBUG("QueryManager::resetQueryManager finished");
+    } else {
+        NES_ASSERT2_FMT(false, "invalid status of query manager, need to implement the transition");
+    }
 }
 
 bool QueryManager::registerQuery(Execution::NewExecutableQueryPlanPtr qep) {
@@ -394,7 +410,11 @@ bool QueryManager::stopQuery(Execution::NewExecutableQueryPlanPtr qep, bool grac
     auto copiedSources = std::vector(sources.begin(), sources.end());
     //    lock.unlock();
 
-    if (qep->getStatus() != Execution::Running) {
+    if (qep->getStatus() == Execution::ErrorState) {
+        NES_ASSERT2_FMT(false, "not supported yet " << qep->getQuerySubPlanId());
+    }
+
+    if (qep->getStatus() == Execution::Stopped || qep->getStatus() == Execution::Finished) {
         return true;
     }
 
@@ -533,8 +553,10 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
                                                             (executableQueryPlan),
                                                             std::move(weakQep));
         }
-        NES_INFO("QueryManager: QueryManager::addEndOfStream for source operator " << sourceId << " graceful=" << SoftEndOfStream
-                                                                                   << " tasks in queue=" << taskQueue.size());
+        NES_DEBUG("soft end-of-stream opId=" << sourceId << " reconfType=" << HardEndOfStream
+                                             << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
+                                             << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
+                                             << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());
         auto pipelineContext =
             std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                               inherited0::shared_from_this());
@@ -568,10 +590,10 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
                                                     HardEndOfStream,
                                                     threadPool->getNumberOfThreads(),
                                                     executableQueryPlan);
-    NES_FATAL_ERROR("EOS opId=" << sourceId << " reconfType=" << HardEndOfStream
-                                << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
-                                << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
-                                << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());
+    NES_DEBUG("hard end-of-stream opId=" << sourceId << " reconfType=" << HardEndOfStream
+                                         << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
+                                         << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
+                                         << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());
 
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
@@ -662,9 +684,9 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
         taskQueue.pop_front();
         lock.unlock();
         auto ret = task(workerContext);
-        if (ret == ExecutionResult::Ok) {
+        if (ret == ExecutionResult::Ok || ret == ExecutionResult::Finished) {
             completedWork(task, workerContext);
-            return ExecutionResult::Ok;
+            return ret;
         }
         return ExecutionResult::Error;
     } else {
@@ -695,15 +717,23 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
 
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
-    std::unique_lock lock(workMutex);
     //    this->threadBarrier->wait();
     // must run this to execute all pending reconfiguration task (Destroy)
-    bool hitReconfiguration = false;
+//    bool hitReconfiguration = false;
     while (!taskQueue.empty()) {
+        std::unique_lock lock(workMutex);
         auto task = taskQueue.front();
-        auto executable = task.getExecutable();
         taskQueue.pop_front();
         lock.unlock();
+        auto executable = task.getExecutable();
+#if 1
+        // execute only reconfiguration tasks
+        if (auto taskExecutable = std::get_if<Execution::NewExecutablePipelinePtr>(&(executable))) {
+            if ((*taskExecutable)->isReconfiguration()) {
+                task(workerContext);
+            }
+        }
+#else
         if (!hitReconfiguration) {
             // execute all pending tasks until first reconfiguration
             task(workerContext);
@@ -722,8 +752,9 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
             }
             lock.lock();
         }
+#endif
     }
-    lock.unlock();
+//    lock.unlock();
     return ExecutionResult::Finished;
 }
 #else
@@ -784,7 +815,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
     std::unique_lock lock(workMutex);
 #endif
-    NES_INFO("QueryManager::completedWork: Work for task=" << task.toString());
+    NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString());
     auto executable = task.getExecutable();
 
     // todo also support data sinks
