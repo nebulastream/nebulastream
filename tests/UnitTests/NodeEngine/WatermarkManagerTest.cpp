@@ -20,6 +20,8 @@
 #include <gtest/gtest.h>
 #include <iostream>
 #include <thread>
+#include <random>
+#include <algorithm>
 
 using namespace std;
 namespace NES {
@@ -126,6 +128,36 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
     }
     ASSERT_EQ(watermarkManager->getCurrentWatermark(), watermarkBarriers.back().getTs());
 }
+
+TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsOutofOrderTest) {
+    auto updates = 10000;
+    auto origins = 10;
+    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
+    // preallocate watermarks for each transaction
+    std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
+    for (int i = 1; i <= updates; i++) {
+        for (int o = 0; o < origins; o++) {
+            auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
+                /*sequence number*/ i,
+                /*origin*/ o);
+            watermarkBarriers.emplace_back(newWatermarkBarrier);
+        }
+    }
+
+    // shuffle barriers to mimic out of order processing
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), g);
+
+    for (auto i = 0; i < watermarkBarriers.size(); i++) {
+        auto currentWatermarkBarrier = watermarkBarriers[i];
+        auto oldWatermark = watermarkManager->getCurrentWatermark();
+        ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
+        watermarkManager->updateWatermark(currentWatermarkBarrier);
+    }
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(), updates);
+}
+
 
 TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
     const auto updates = 100000;
