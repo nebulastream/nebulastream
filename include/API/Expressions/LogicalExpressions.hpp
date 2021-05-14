@@ -40,7 +40,6 @@ ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr operator!(ExpressionNodePtr exp);
 ExpressionNodePtr operator!(ExpressionItem leftExp);
 
-
 /**
  * @brief Defines common operations on at least one operator which is not of type ExpressionNodePtr but
  * either a constant or an instance of the type ExpressionItem.
@@ -61,7 +60,7 @@ inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr {
         return t.getExpressionNode();
     }
     // Guaranteed copy elision.
-    return ExpressionItem {std::forward<T>(t)}.getExpressionNode();
+    return ExpressionItem{std::forward<T>(t)}.getExpressionNode();
 }
 
 /**
@@ -76,8 +75,7 @@ inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr {
 template<typename... T>
 static constexpr bool expression_generator_v = std::conjunction_v<
     std::negation<std::conjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>...>>,
-    std::disjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>...,
-                     std::is_same<ExpressionItem, std::decay_t<T>> ...>,
+    std::disjunction<std::is_same<ExpressionNodePtr, std::decay_t<T>>..., std::is_same<ExpressionItem, std::decay_t<T>>...>,
     std::disjunction<std::is_constructible<ExpressionItem, T>, std::is_same<ExpressionItem, std::decay_t<T>>>...>;
 
 /**
