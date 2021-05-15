@@ -52,8 +52,6 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext) {
 
 uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
-bool Task::isWatermarkOnly() { return buf.getNumberOfTuples() == 0; }
-
 bool Task::isReconfiguration() {
     if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&pipeline)) {
         return (*executablePipeline)->isReconfiguration();
