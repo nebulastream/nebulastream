@@ -18,8 +18,8 @@
 #define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKPROCESSOR_HPP_
 
 #include <NodeEngine/Transactional/WatermarkBarrier.hpp>
-#include <queue>
 #include <mutex>
+#include <queue>
 namespace NES::NodeEngine::Transactional {
 
 /**
@@ -47,7 +47,7 @@ class LocalWatermarkProcessor {
     WatermarkTs getCurrentWatermark() const;
 
   private:
-    struct WatermarkBarrierComparator{
+    struct WatermarkBarrierComparator {
         bool operator()(WatermarkBarrier const& wb1, WatermarkBarrier const& wb2) {
             // return "true" if "wb1" is ordered before "wb2", for example:
             return wb1.getSequenceNumber() > wb2.getSequenceNumber();
