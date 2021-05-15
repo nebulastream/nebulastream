@@ -320,7 +320,6 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
     EXPECT_TRUE(sinkOutputSchema->hasFieldName("f1"));
 }
 
-
 /**
  * @brief In this test we test the power operator
  */
@@ -334,9 +333,9 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
     streamCatalog->addLogicalStream("default_logical", inputSchema);
 
     auto query = Query::from("default_logical")
-        .map(Attribute("powIntInt") = POWER(Attribute("f1"), 2))
-        .map(Attribute("powFloatInt") = POWER(Attribute("f2"), 2))
-        .sink(FileSinkDescriptor::create(""));
+                     .map(Attribute("powIntInt") = POWER(Attribute("f1"), 2))
+                     .map(Attribute("powFloatInt") = POWER(Attribute("f2"), 2))
+                     .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog);

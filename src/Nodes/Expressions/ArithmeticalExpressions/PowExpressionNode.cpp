@@ -27,11 +27,11 @@ PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalExpression
 PowExpressionNode::PowExpressionNode(PowExpressionNode* other) : ArithmeticalExpressionNode(other) {}
 
 ExpressionNodePtr PowExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
-    auto addNode = std::make_shared<PowExpressionNode>(DataTypeFactory::createFloat()); // TODO: stamp should always be float, but is this the right way?
+    auto addNode = std::make_shared<PowExpressionNode>(
+        DataTypeFactory::createFloat());// TODO: stamp should always be float, but is this the right way?
     addNode->setChildren(left, right);
     return addNode;
 }
-
 
 void PowExpressionNode::inferStamp(SchemaPtr schema) {
     ArithmeticalExpressionNode::inferStamp(schema);
@@ -39,8 +39,10 @@ void PowExpressionNode::inferStamp(SchemaPtr schema) {
         stamp = DataTypeFactory::createUInt32();
         NES_DEBUG("PowExpressionNode: Updated stamp from Integer (assigned in ArithmeticalExpressionNode) to UINT32.");
     } else if (stamp->isFloat()) {
-        stamp = DataTypeFactory::createDouble(); // We could also create an "unsigned double" (as results of pow() is always non-negative), but this is very uncommon in programming languages.
-        NES_DEBUG("PowExpressionNode: Updated stamp from Float (assigned in ArithmeticalExpressionNode::inferStamp) to Double (FLOAT64).");
+        stamp = DataTypeFactory::
+            createDouble();// We could also create an "unsigned double" (as results of pow() is always non-negative), but this is very uncommon in programming languages.
+        NES_DEBUG("PowExpressionNode: Updated stamp from Float (assigned in ArithmeticalExpressionNode::inferStamp) to Double "
+                  "(FLOAT64).");
     }
 }
 

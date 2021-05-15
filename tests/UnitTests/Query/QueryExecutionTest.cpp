@@ -429,10 +429,17 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
 
     auto testSourceDescriptor = std::make_shared<TestUtils::TestSourceDescriptor>(
         testSchema,
-        [&](OperatorId id, SourceDescriptorPtr, NodeEngine::NodeEnginePtr, size_t numSourceLocalBuffers,
+        [&](OperatorId id,
+            SourceDescriptorPtr,
+            NodeEngine::NodeEnginePtr,
+            size_t numSourceLocalBuffers,
             std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors) -> DataSourcePtr {
-          return createDefaultDataSourceWithSchemaForOneBuffer(
-              testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), id, numSourceLocalBuffers, successors);
+            return createDefaultDataSourceWithSchemaForOneBuffer(testSchema,
+                                                                 nodeEngine->getBufferManager(),
+                                                                 nodeEngine->getQueryManager(),
+                                                                 id,
+                                                                 numSourceLocalBuffers,
+                                                                 successors);
         });
 
     auto outputSchema = Schema::create()->addField("id", BasicType::INT64);
@@ -440,10 +447,10 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
     auto testSinkDescriptor = std::make_shared<TestUtils::TestSinkDescriptor>(testSink);
 
     auto query = TestQuery::from(testSourceDescriptor)
-        .filter(Attribute("id") < 3)
-        .map(Attribute("value") = POWER(2, Attribute("one") + Attribute("id")))
-        .map(Attribute("value2") = POWER(2.0, Attribute("one") + Attribute("id")))
-        .sink(testSinkDescriptor);
+                     .filter(Attribute("id") < 3)
+                     .map(Attribute("value") = POWER(2, Attribute("one") + Attribute("id")))
+                     .map(Attribute("value2") = POWER(2.0, Attribute("one") + Attribute("id")))
+                     .sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -468,19 +475,21 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
 
-    SchemaPtr resultSchema = Schema::create()
-        ->addField("test$id", BasicType::INT64)
-        ->addField("test$one", BasicType::INT64)
-        ->addField("test$value", BasicType::UINT32) // pow(some int, some int) should result in UINT32
-        ->addField("test$value2", BasicType::FLOAT64); // pow(some float, some int) should result in Double
+    SchemaPtr resultSchema =
+        Schema::create()
+            ->addField("test$id", BasicType::INT64)
+            ->addField("test$one", BasicType::INT64)
+            ->addField("test$value", BasicType::UINT32)   // pow(some int, some int) should result in UINT32
+            ->addField("test$value2", BasicType::FLOAT64);// pow(some float, some int) should result in Double
 
-    std::string expectedContent = "+----------------------------------------------------+\n"
-                                  "|test$id:INT64|test$one:INT64|test$value:UINT32|test$value2:FLOAT64|\n"
-                                  "+----------------------------------------------------+\n"
-                                  "|0|1|2|2.000000|\n" // shows, that both Int & Double gets returned correctly, and can be written to existing & new fields
-                                  "|1|1|4|4.000000|\n"
-                                  "|2|1|8|8.000000|\n"
-                                  "+----------------------------------------------------+";
+    std::string expectedContent =
+        "+----------------------------------------------------+\n"
+        "|test$id:INT64|test$one:INT64|test$value:UINT32|test$value2:FLOAT64|\n"
+        "+----------------------------------------------------+\n"
+        "|0|1|2|2.000000|\n"// shows, that both Int & Double gets returned correctly, and can be written to existing & new fields
+        "|1|1|4|4.000000|\n"
+        "|2|1|8|8.000000|\n"
+        "+----------------------------------------------------+";
 
     auto& resultBuffer = testSink->get(0);
 

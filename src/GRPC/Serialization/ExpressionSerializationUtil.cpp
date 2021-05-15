@@ -19,8 +19,8 @@
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -199,7 +199,8 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(ExpressionNod
         serializedExpression->mutable_details()->PackFrom(serializedExpressionNode);
     } else if (expression->instanceOf<PowExpressionNode>()) {
         // serialize pow expression node.
-        NES_TRACE("ExpressionSerializationUtil:: serialize POWER arithmetical expression to SerializableExpression_PowExpression");
+        NES_TRACE(
+            "ExpressionSerializationUtil:: serialize POWER arithmetical expression to SerializableExpression_PowExpression");
         auto powExpressionNode = expression->as<PowExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_PowExpression();
         serializeExpression(powExpressionNode->getLeft(), serializedExpressionNode.mutable_left());

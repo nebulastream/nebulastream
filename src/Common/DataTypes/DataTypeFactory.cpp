@@ -74,7 +74,9 @@ DataTypePtr DataTypeFactory::createUInt16() { return createInteger(16, 0, UINT16
 
 DataTypePtr DataTypeFactory::createInt64() { return createInteger(64, INT64_MIN, INT64_MAX); };
 
-DataTypePtr DataTypeFactory::createUInt64() { return createInteger(64, 0, UINT64_MAX); }; // TODO / BUG: upper bound is a INT64 and can not capture this upper bound. -> upperbound overflows and is set to -1.
+DataTypePtr DataTypeFactory::createUInt64() {
+    return createInteger(64, 0, UINT64_MAX);
+};// TODO / BUG: upper bound is a INT64 and can not capture this upper bound. -> upperbound overflows and is set to -1.
 
 DataTypePtr DataTypeFactory::createInt32() { return createInteger(32, INT32_MIN, INT32_MAX); };
 
