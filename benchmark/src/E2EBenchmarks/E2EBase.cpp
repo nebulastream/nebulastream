@@ -756,9 +756,9 @@ std::string E2EBase::getResult() {
     std::cout << "Output tuples=" << tuplesProcessed << std::endl;
     std::cout << "tasksProcessed=" << tasksProcessed << std::endl;
     std::cout << "tuples per sec=" << throughputInTupsPerSec << std::endl;
+    std::cout << "avgLatencyInMs=" << avgLatencyInMs << std::endl;
     std::cout << "runtime in sec=" << runtimeInSec << std::endl;
     std::cout << "throughput MB/se=" << throughputInMBPerSec << std::endl;
-    std::cout << "avgLatencyInMs=" << avgLatencyInMs << std::endl;
 
     return out.str();
 }
