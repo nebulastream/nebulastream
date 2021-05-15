@@ -585,6 +585,33 @@ TEST_F(EngineTest, DISABLED_testParallelSameSourceAndSinkRegstart) {
 
     testOutput("qep3.txt", joinedExpectedOutput);
 }
+TEST_F(EngineTest, testPassingLogicalOpreratorIdToPhysicalSink) {
+    PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+    auto engine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
+    TopologyNodePtr node = TopologyNode::create(1, "localhost", 123, 124, 4);
+    Network::NesPartition nesPartition(0, 0, 0, 0);
+    auto nodeLocation = Network::NodeLocation(node->getId(), node->getIpAddress(),node->getDataPort());
+    auto networkSink = LogicalOperatorFactory::createSinkOperator(
+        Network::NetworkSinkDescriptor::create(nodeLocation, nesPartition, std::chrono::seconds(5), 3, 47));
+    auto networkSource = LogicalOperatorFactory::createSourceOperator(Network::NetworkSourceDescriptor::create(Schema::create(), nesPartition));
+    QueryPlanPtr queryPlan = QueryPlan::create(1,1,{networkSource});
+    queryPlan->appendOperatorAsNewRoot(networkSink);
+
+    EXPECT_TRUE(engine->registerQueryInNodeEngine(queryPlan));
+
+    auto qep =  engine->getDeployedQEP(1);
+    EXPECT_TRUE(qep);
+    EXPECT_TRUE(qep->get()->getSinks()[0]->getOperatorId() == 47);
+
+
+    EXPECT_TRUE(engine->undeployQuery(1));
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
+
+    EXPECT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
+
+}
 //
 TEST_F(EngineTest, testStartStopStartStop) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();

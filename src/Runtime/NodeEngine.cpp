@@ -486,4 +486,11 @@ bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHo
     //TODO: update emitFunctionHandler of the last Pipeline of every qep with updated network Sinks
 }
 
+std::optional<Execution::NewExecutableQueryPlanPtr> NodeEngine::getDeployedQEP(QuerySubPlanId id){
+    auto qep = deployedQEPs[id];
+    if(qep){
+        return qep;
+    }
+    return std::nullopt;
+}
 }// namespace NES::Runtime

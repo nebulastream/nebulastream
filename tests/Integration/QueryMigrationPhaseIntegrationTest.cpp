@@ -19,11 +19,14 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 #include <Plans/Query/QueryId.hpp>
+#include <Phases/QueryMigrationPhase.hpp>
 #include <Services/MaintenanceService.hpp>
 #include <Services/QueryService.hpp>
+#include <Services/NESRequestProcessorService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -506,34 +509,52 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-    //auto querySubPlans = globalExecutionPlan->getExecutionNodeByNodeId(2)->getQuerySubPlans(1);
-    //auto resourceUsage = globalExecutionPlan->getExecutionNodeByNodeId(2)->getOccupiedResources(1);
-    //maintenanceService->migrateSubqueries(3, 1, querySubPlans, resourceUsage);
-    maintenanceService->submitMaintenanceRequest(2,2);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    NES_DEBUG("After maintenanceService----------------------------------------------------------------------------------------------------");
-    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
-    auto querySubPlansOnNode3 = globalExecutionPlan->getExecutionNodeByNodeId(3)->getQuerySubPlans(1);
-    NES_DEBUG("test");
-    bool success = queryService->validateAndQueueStopRequest(1);
-    EXPECT_TRUE(success);
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk2->stop(true);
-    EXPECT_TRUE(retStopWrk2);
 
-    NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk3 = wrk3->stop(true);
-    EXPECT_TRUE(retStopWrk3);
+    auto exeNode = globalExecutionPlan->getExecutionNodeByNodeId(4);
+    auto queries = exeNode->getQuerySubPlans(1);
+    ASSERT_TRUE(queries.size() == 1);
+    QueryPlanPtr query = queries.at(0);
+    std::vector<SinkLogicalOperatorNodePtr> sinkOperators = query->getSinkOperators();
+    ASSERT_TRUE(sinkOperators.size() == 1);
+    SinkLogicalOperatorNodePtr sink = sinkOperators.at(0);
+    uint64_t sinkId = sink->getId();
+    EXPECT_TRUE(sinkId == 4);
 
-    NES_INFO("QueryDeploymentTest: Stop Coordinator");
-    bool retStopCord = crd->stopCoordinator(true);
-    EXPECT_TRUE(retStopCord);
-    NES_INFO("QueryDeploymentTest: Test finished");
+    TopologyPtr topology = crd->getTopology();
+    Network::NodeLocation location (2,topology->findNodeWithId(2)->getIpAddress(),topology->findNodeWithId(2)->getDataPort());
+
+    ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(1));
+    auto qep = wrk3->getNodeEngine()->getDeployedQEP(1)->get();
+    EXPECT_TRUE(qep->getSinks().size() == 1);
+    auto physicalSinkOperator = qep->getSinks().at(0);
+
+//    maintenanceService->submitMaintenanceRequest(2,2);
+//    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+//    NES_DEBUG("After maintenanceService----------------------------------------------------------------------------------------------------");
+//    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
+//    auto querySubPlansOnNode3 = globalExecutionPlan->getExecutionNodeByNodeId(3)->getQuerySubPlans(1);
+//    NES_DEBUG("test");
+//    bool success = queryService->validateAndQueueStopRequest(1);
+//    EXPECT_TRUE(success);
+//
+//    NES_INFO("QueryDeploymentTest: Stop worker 1");
+//    bool retStopWrk1 = wrk1->stop(true);
+//    EXPECT_TRUE(retStopWrk1);
+//
+//    NES_INFO("QueryDeploymentTest: Stop worker 2");
+//    bool retStopWrk2 = wrk2->stop(true);
+//    EXPECT_TRUE(retStopWrk2);
+//
+//    NES_INFO("QueryDeploymentTest: Stop worker 2");
+//    bool retStopWrk3 = wrk3->stop(true);
+//    EXPECT_TRUE(retStopWrk3);
+//
+//    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+//    bool retStopCord = crd->stopCoordinator(true);
+//    EXPECT_TRUE(retStopCord);
+//    NES_INFO("QueryDeploymentTest: Test finished");
 }
 TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_testDeploymentAndStartOfSubqueries) {
 

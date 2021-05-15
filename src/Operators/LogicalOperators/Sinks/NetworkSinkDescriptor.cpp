@@ -22,8 +22,8 @@ namespace NES::Network {
 NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::seconds waitTime,
-                                             OperatorId globalId,
-                                             uint32_t retryTimes
+                                             uint32_t retryTimes,
+                                             OperatorId globalId
                                             )
     : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes), globalId(globalId) {}
 

@@ -264,6 +264,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      */
     HardwareManagerPtr getHardwareManager() const;
 
+    std::optional<Execution::NewExecutableQueryPlanPtr> getDeployedQEP (QuerySubPlanId id);
+
   private:
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;

@@ -165,7 +165,7 @@ std::map<QuerySubPlanId, std::vector<OperatorId>> QueryMigrationPhase::querySubP
                         querySubPlansToNetworkSinksMap.insert(std::pair<uint64_t, std::vector<uint64_t>> (queryPlan->getQuerySubPlanId(), {}));
                         created = true;
                     }
-                    querySubPlansToNetworkSinksMap[queryPlan->getQuerySubPlanId()].push_back(logicalSink->getId());
+                    querySubPlansToNetworkSinksMap[queryPlan->getQuerySubPlanId()].push_back(logicalSink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getGlobalId());
                 }
             }
         }
