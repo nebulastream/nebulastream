@@ -12,9 +12,9 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: LambdaMode
-outputFile: changingThreadsAndSourceProjectionTwoOut.csv
-benchmarkName: changingThreadsAndSourceProjectTwoOut
-query: 'Query::from("input").project(Attribute("id")).sink(NullOutputSinkDescriptor::create());'
+outputFile: changingThreadsAndSourceHighSelectivityLambdaMode.csv
+benchmarkName: changingThreadsAndSourceHighSelectivityLambdaMode
+query: 'Query::from("input").filter(Attribute("value") > 10).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
