@@ -831,24 +831,22 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto statistics = queryToStatisticsMap.find(qepId);
 
         statistics->incProcessedTasks();
-        if (task.isWatermarkOnly()) {
-            statistics->incProcessedWatermarks();
-        } else if (!task.isReconfiguration()) {
+       if (!task.isReconfiguration()) {
             statistics->incProcessedBuffers();
-            auto* latency = task.getBufferRef().getBufferAs<uint64_t>();
+            auto creation = task.getBufferRef().getCreationTimestamp();
             auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
                            std::chrono::high_resolution_clock::now().time_since_epoch())
                            .count();
-            auto diff = now - latency[2];
+            auto diff = now - creation;
             statistics->incLatencySum(diff);
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
             statistics->addTimestampToLatencyValue(now, diff);
 #endif
-        }
-        statistics->incProcessedTuple(task.getNumberOfTuples());
-
+           statistics->incProcessedTuple(task.getNumberOfTuples());
+       }
     } else {
-        NES_WARNING("queryToStatisticsMap not set, this should only happen for testing");
+        NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
+        NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
     }
 }
 

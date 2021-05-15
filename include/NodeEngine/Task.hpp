@@ -58,12 +58,6 @@ class Task {
     Execution::SuccessorExecutablePipeline getExecutable();
 
     /**
-     * @brief method to check if it is a watermark-only buffer
-     * @retun bool indicating if this buffer is for watermarks only
-     */
-    bool isWatermarkOnly();
-
-    /**
    * @brief method to check if it is a watermark-only buffer
    * @retun bool indicating if this buffer is for watermarks only
    */

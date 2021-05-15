@@ -749,8 +749,12 @@ std::string E2EBase::getResult() {
         << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec
         << "," << avgLatencyInMs;
 
+    size_t tuplesPerBuffer = bufferSizeInBytes /  defaultSchema->getSchemaSizeInBytes();
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
-    std::cout << "tuples=" << tuplesProcessed << std::endl;
+    std::cout << "bufferProcessed=" << bufferProcessed << std::endl;
+    std::cout << "Input tuples=" << bufferProcessed * tuplesPerBuffer << std::endl;
+    std::cout << "Output tuples=" << tuplesProcessed << std::endl;
+    std::cout << "tasksProcessed=" << tasksProcessed << std::endl;
     std::cout << "tuples per sec=" << throughputInTupsPerSec << std::endl;
     std::cout << "runtime in sec=" << runtimeInSec << std::endl;
     std::cout << "throughput MB/se=" << throughputInMBPerSec << std::endl;
