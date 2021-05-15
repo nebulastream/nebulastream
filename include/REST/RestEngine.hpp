@@ -90,6 +90,7 @@ class RestEngine : public BaseController {
     void handlePatch(http_request request);
     void handleHead(http_request request);
     void handleTrace(http_request request);
+    void handlePreflightOptions(http_request request);
     void handleMerge(http_request request);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
