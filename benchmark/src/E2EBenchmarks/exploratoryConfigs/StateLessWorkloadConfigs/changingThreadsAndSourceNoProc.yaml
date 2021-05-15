@@ -12,8 +12,8 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: LambdaMode
-outputFile: changingThreadsAndSourceNoProc.csv
-benchmarkName: changingThreadsAndSourceNoProc
+outputFile: changingThreadsAndSourceNoProcLambda.csv
+benchmarkName: changingThreadsAndSourceNoProcLambda
 query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
