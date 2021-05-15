@@ -53,7 +53,8 @@ const std::string toString(const BinaryOperatorType& type) {
 
 const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
     const char* const names[] = {
-        "==", "!=", "<", "<=", ">", ">=", "+", "-", "*", "/", "pow(,)", "%", "&&", "||", "&", "|", "^", "<<", ">>", "=", "[]", "->", ".",
+        "==", "!=", "<", "<=", ">", ">=", "+",  "-", "*",  "/",  "pow(,)", "%",
+        "&&", "||", "&", "|",  "^", "<<", ">>", "=", "[]", "->", ".",
     };
     return std::make_shared<CodeExpression>(names[type]);
 }
