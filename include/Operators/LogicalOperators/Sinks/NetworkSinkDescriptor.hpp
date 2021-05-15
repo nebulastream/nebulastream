@@ -20,6 +20,8 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <chrono>
 #include <string>
 namespace NES {
@@ -40,7 +42,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @return SinkDescriptorPtr
      */
     static SinkDescriptorPtr
-    create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::seconds waitTime, uint32_t retryTimes);
+    create(NodeLocation nodeLocation, NesPartition nesPartition, std::chrono::seconds waitTime, uint32_t retryTimes, OperatorId globalId = UtilityFunctions::getNextOperatorId());
 
     /**
      * @brief returns the string representation of the network sink
@@ -79,16 +81,21 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      */
     uint8_t getRetryTimes() const;
 
+    OperatorId getGlobalId();
+
   private:
     explicit NetworkSinkDescriptor(NodeLocation nodeLocation,
                                    NesPartition nesPartition,
                                    std::chrono::seconds waitTime,
-                                   uint32_t retryTimes = 5);
+                                   OperatorId globalId,
+                                   uint32_t retryTimes = 5
+                                   );
 
     NodeLocation nodeLocation;
     NesPartition nesPartition;
     std::chrono::seconds waitTime;
     uint32_t retryTimes;
+    OperatorId globalId;
 };
 
 using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;

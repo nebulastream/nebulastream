@@ -39,7 +39,6 @@ class DataSinkProvider {
      * @return DataSinkPtr
      */
     virtual DataSinkPtr lower(OperatorId sinkId,
-                              OperatorId logicalSinkOperatorId,
                               SinkDescriptorPtr sinkDescriptor,
                               SchemaPtr schema,
                               Runtime::NodeEnginePtr nodeEngine,

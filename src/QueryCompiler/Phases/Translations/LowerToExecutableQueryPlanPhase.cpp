@@ -162,7 +162,6 @@ LowerToExecutableQueryPlanPhase::processSink(const OperatorPipelinePtr& pipeline
     auto rootOperator = pipeline->getQueryPlan()->getRootOperators()[0];
     auto sinkOperator = rootOperator->as<PhysicalOperators::PhysicalSinkOperator>();
     auto sink = sinkProvider->lower(sinkOperator->getId(),
-                                    sinkOperator->getLogicalOperatorId(),
                                     sinkOperator->getSinkDescriptor(),
                                     sinkOperator->getOutputSchema(),
                                     std::move(nodeEngine),
