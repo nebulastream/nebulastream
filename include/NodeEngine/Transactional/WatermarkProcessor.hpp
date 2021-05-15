@@ -44,7 +44,7 @@ class WatermarkProcessor {
      */
     WatermarkProcessor(const uint64_t numberOfOrigins);
 
-     /**
+    /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins
      */
