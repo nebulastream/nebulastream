@@ -55,6 +55,7 @@ void RestEngine::initRestOpHandlers() {
     _listener.support(methods::MERGE, std::bind(&RestEngine::handleMerge, this, std::placeholders::_1));
     _listener.support(methods::TRCE, std::bind(&RestEngine::handleTrace, this, std::placeholders::_1));
     _listener.support(methods::HEAD, std::bind(&RestEngine::handleHead, this, std::placeholders::_1));
+    _listener.support(methods::OPTIONS, std::bind(&RestEngine::handlePreflightOptions, this, std::placeholders::_1));
 }
 
 void RestEngine::setEndpoint(const std::string& value) {
@@ -144,6 +145,20 @@ void RestEngine::handleMerge(http_request request) {
 
 void RestEngine::handleTrace(http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
+}
+
+/**
+ * @brief handle preflight request (complex HTTP request)
+ * @param request: the request issued by the client
+ * @description A preflight request is sent as a response to a DELETE request,
+ *              the response allows the DELETE fetch request of our UI(localhost:3000)
+ */
+void RestEngine::handlePreflightOptions(http_request request) {
+    http_response response(status_codes::OK);
+    response.headers().add(("Access-Control-Allow-Origin"), ("http://localhost:3000"));
+    response.headers().add(("Access-Control-Allow-Methods"), ("DELETE"));
+    response.headers().add(("Access-Control-Allow-Headers"), ("Content-Type"));
+    request.reply(response);
 }
 
 void RestEngine::handlePut(http_request request) {
