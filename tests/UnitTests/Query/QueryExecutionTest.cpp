@@ -443,7 +443,7 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
         .filter(Attribute("id") < 3)
         .map(Attribute("value") = POWER(2, Attribute("one") + Attribute("id")))
         .map(Attribute("value2") = POWER(2.0, Attribute("one") + Attribute("id")))
-        .sink(DummySink::create());
+        .sink(testSinkDescriptor);
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
