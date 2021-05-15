@@ -11,7 +11,8 @@ numberOfBuffersInSourceLocalBufferPool: 1024
 bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
-inputOutputMode: LambdaMode
+#inputOutputMode: LambdaMode
+inputOutputMode: MemoryMode
 outputFile: changingThreadsAndSourceNoProcLambda.csv
 benchmarkName: changingThreadsAndSourceNoProcLambda
 query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
