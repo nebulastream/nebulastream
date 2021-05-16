@@ -19,9 +19,9 @@
 #include <utility>
 namespace NES {
 
-MulExpressionNode::MulExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(std::move(stamp)){};
+MulExpressionNode::MulExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-MulExpressionNode::MulExpressionNode(MulExpressionNode* other) : ArithmeticalExpressionNode(other) {}
+MulExpressionNode::MulExpressionNode(MulExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
 ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto mulNode = std::make_shared<MulExpressionNode>(left->getStamp());

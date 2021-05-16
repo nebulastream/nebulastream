@@ -15,12 +15,12 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 #include <utility>
 namespace NES {
 
-ArithmeticalExpressionNode::ArithmeticalExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)) {}
-ArithmeticalExpressionNode::ArithmeticalExpressionNode(ArithmeticalExpressionNode* other) : BinaryExpressionNode(other) {}
+ArithmeticalBinaryExpressionNode::ArithmeticalBinaryExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)), ArithmeticalExpressionNode() {}
+ArithmeticalBinaryExpressionNode::ArithmeticalBinaryExpressionNode(ArithmeticalBinaryExpressionNode* other) : BinaryExpressionNode(other) {}
 
 /**
  * @brief The current implementation of type inference for arithmetical expressions expects that both
@@ -29,7 +29,7 @@ ArithmeticalExpressionNode::ArithmeticalExpressionNode(ArithmeticalExpressionNod
  * (e.g., left:int8, right:int32 -> int32)
  * @param schema the current schema we use during type inference.
  */
-void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
+void ArithmeticalBinaryExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
     auto left = getLeft();
     auto right = getRight();
@@ -39,7 +39,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     // both sub expressions have to be numerical
     if (!left->getStamp()->isNumeric() || !right->getStamp()->isNumeric()) {
         throw std::logic_error(
-            "ArithmeticalExpressionNode: Error during stamp inference. Types need to be Numerical but Left was:"
+            "ArithmeticalBinaryExpressionNode: Error during stamp inference. Types need to be Numerical but Left was:"
             + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
     }
 
@@ -49,22 +49,22 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     // check if the common stamp is defined
     if (commonStamp->isUndefined()) {
         // the common stamp was not valid -> in this case the common stamp is undefined.
-        throw std::logic_error("ArithmeticalExpressionNode: " + commonStamp->toString()
+        throw std::logic_error("ArithmeticalBinaryExpressionNode: " + commonStamp->toString()
                                + " is not supported by arithmetical expressions");
     }
 
     stamp = commonStamp;
-    NES_TRACE("ArithmeticalExpressionNode: we assigned the following stamp: " << toString());
+    NES_TRACE("ArithmeticalBinaryExpressionNode: we assigned the following stamp: " << toString());
 }
 
-bool ArithmeticalExpressionNode::equal(NodePtr rhs) const {
-    if (rhs->instanceOf<ArithmeticalExpressionNode>()) {
-        auto otherAddNode = rhs->as<ArithmeticalExpressionNode>();
+bool ArithmeticalBinaryExpressionNode::equal(NodePtr rhs) const {
+    if (rhs->instanceOf<ArithmeticalBinaryExpressionNode>()) {
+        auto otherAddNode = rhs->as<ArithmeticalBinaryExpressionNode>();
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
 }
 
-const std::string ArithmeticalExpressionNode::toString() const { return "ArithmeticalExpression()"; }
+const std::string ArithmeticalBinaryExpressionNode::toString() const { return "ArithmeticalBinaryExpression()"; }
 
 }// namespace NES

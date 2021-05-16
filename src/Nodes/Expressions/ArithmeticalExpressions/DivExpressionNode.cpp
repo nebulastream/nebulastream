@@ -19,9 +19,9 @@
 #include <utility>
 namespace NES {
 
-DivExpressionNode::DivExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(std::move(stamp)){};
+DivExpressionNode::DivExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-DivExpressionNode::DivExpressionNode(DivExpressionNode* other) : ArithmeticalExpressionNode(other) {}
+DivExpressionNode::DivExpressionNode(DivExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
 ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto divNode = std::make_shared<DivExpressionNode>(left->getStamp());
