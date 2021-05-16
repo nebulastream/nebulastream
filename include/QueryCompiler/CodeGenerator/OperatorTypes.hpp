@@ -28,7 +28,8 @@ enum UnaryOperatorType {
     POSTFIX_DECREMENT_OP,
     BITWISE_COMPLEMENT_OP,
     LOGICAL_NOT_OP,
-    SIZE_OF_TYPE_OP
+    SIZE_OF_TYPE_OP,
+    ABSOLUTE_VALUE_OF_OP
 };
 
 const std::string toString(const UnaryOperatorType& type);

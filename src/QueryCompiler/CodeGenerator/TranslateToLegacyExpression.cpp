@@ -14,12 +14,13 @@
     limitations under the License.
 */
 
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -105,6 +106,15 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         auto legacyLeft = transformExpression(powExpressionNode->getLeft());
         auto legacyRight = transformExpression(powExpressionNode->getRight());
         return Predicate(BinaryOperatorType::POWER_OP, legacyLeft, legacyRight).copy();
+    } else if (expression->instanceOf<AbsExpressionNode>()) {
+        // Translate ABS expression node.
+        auto absExpressionNode = expression->as<AbsExpressionNode>();
+        absExpressionNode->toString();
+        (void) absExpressionNode;
+        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expressions not supported in "
+                        "legacy expressions: "
+                                << expression->toString());
+        NES_NOT_IMPLEMENTED();
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this arithmetical expression node: "
                     << expression->toString());
@@ -155,8 +165,8 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(Exp
         auto legacyRight = transformExpression(equalsExpressionNode->getRight());
         return Predicate(BinaryOperatorType::EQUAL_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<NegateExpressionNode>()) {
-        auto const equalsExpressionNode = expression->as<NegateExpressionNode>();
-        (void) equalsExpressionNode;
+        auto const negateExpressionNode = expression->as<NegateExpressionNode>();
+        (void) negateExpressionNode;
         NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expressions not supported in "
                         "legacy expressions: "
                         << expression->toString());

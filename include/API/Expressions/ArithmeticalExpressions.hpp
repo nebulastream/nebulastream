@@ -34,37 +34,43 @@ ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
-ExpressionNodePtr operator--(ExpressionNodePtr exp);
+ExpressionNodePtr ABS(ExpressionNodePtr exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp);
+ExpressionNodePtr operator--(ExpressionNodePtr exp);
 ExpressionNodePtr operator++(ExpressionNodePtr exp, int value);
 ExpressionNodePtr operator--(ExpressionNodePtr exp, int value);
 
 /**
- * @brief Defines common arithmetical operations between a constant and an expression node.
+ * @brief Defines common binary arithmetical operations between a constant and an expression node.
  */
-ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 
 /**
- * @brief Defines common arithmetical operations between an expression node and a constant.
+ * @brief Defines common binary arithmetical operations between an expression node and a constant.
  */
-ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 
 /**
- * @brief Defines common arithmetical operations between two expression items.
+ * @brief Defines common binary arithmetical operations between two expression items.
  */
-ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp);
+
+/**
+ * @brief Defines common unary arithmetical operations on an expression items.
+ */
+ExpressionNodePtr ABS(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp);
 ExpressionNodePtr operator--(ExpressionItem exp);
 ExpressionNodePtr operator++(ExpressionItem exp, int);
