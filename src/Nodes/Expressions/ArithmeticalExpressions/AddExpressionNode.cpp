@@ -19,9 +19,9 @@
 #include <utility>
 namespace NES {
 
-AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalExpressionNode(std::move(stamp)){};
+AddExpressionNode::AddExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-AddExpressionNode::AddExpressionNode(AddExpressionNode* other) : ArithmeticalExpressionNode(other) {}
+AddExpressionNode::AddExpressionNode(AddExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
 
 ExpressionNodePtr AddExpressionNode::create(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     auto addNode = std::make_shared<AddExpressionNode>(left->getStamp());

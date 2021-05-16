@@ -16,12 +16,12 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_POWEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_POWEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node represents an POWER expression.
  */
-class PowExpressionNode final : public ArithmeticalExpressionNode {
+class PowExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     PowExpressionNode(DataTypePtr stamp);
     ~PowExpressionNode() = default;
@@ -33,7 +33,7 @@ class PowExpressionNode final : public ArithmeticalExpressionNode {
     const std::string toString() const final;
 
     /**
-     * @brief Determine returned datatype (-> UInt64/Double/ Throw exception for invalid inputs). Override ArithmeticalExpressionNode::inferStamp to increase bounds.
+     * @brief Determine returned datatype (-> UInt64/Double/ Throw exception for invalid inputs). Override ArithmeticalBinaryExpressionNode::inferStamp to increase bounds.
      * @comment E.g. SQL Server has a very unintuitive behaviour of always returning the datatype of the base (Int/Float). C++ always returns a float. We decide to return a float, except when both base and exponent are an Integer; and we set high bounds as POWER is an exponential function.
      * @param schema: the current schema.
      */

@@ -16,13 +16,13 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 namespace NES {
 
 /**
  * @brief This node represents a subtraction expression.
  */
-class SubExpressionNode : public ArithmeticalExpressionNode {
+class SubExpressionNode : public ArithmeticalBinaryExpressionNode {
   public:
     SubExpressionNode(DataTypePtr stamp);
     ~SubExpressionNode() = default;
