@@ -189,7 +189,7 @@ TEST_F(QueryMigrationPhaseTest, testFindNetworkSinksSeveralQueryPlans) {
     EXPECT_TRUE(sinks2.at(0) == 3);
 }
 
-TEST_F(QueryMigrationPhaseTest, testFindParentExecutionNodes) {
+TEST_F(QueryMigrationPhaseTest, testFindParentAndChildExecutionNodes) {
 
 
     TopologyPtr topology = Topology::create();
