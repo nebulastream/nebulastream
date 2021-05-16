@@ -465,6 +465,13 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 
     {
+        auto map = LogicalOperatorFactory::createMapOperator(Attribute("f3") = ABS(Attribute("f3")));
+        auto serializedOperator = OperatorSerializationUtil::serializeOperator(map, new SerializableOperator());
+        auto mapOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        EXPECT_TRUE(map->equal(mapOperator));
+    }
+
+    {
         auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(sink, new SerializableOperator());
         auto sinkOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
