@@ -32,12 +32,13 @@ const std::string toString(const UnaryOperatorType& type) {
                                  "POSTFIX_DECREMENT_OP",
                                  "BITWISE_COMPLEMENT_OP",
                                  "LOGICAL_NOT_OP",
-                                 "SIZE_OF_TYPE_OP"};
+                                 "SIZE_OF_TYPE_OP",
+                                 "ABS_VALUE_OF_OP"};
     return std::string(names[type]);
 }
 
 const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
-    const char* const names[] = {"&", "*", "++", "--", "++", "--", "~", "!", "sizeof"};
+    const char* const names[] = {"&", "*", "++", "--", "++", "--", "~", "!", "sizeof", "abs"};
     return std::make_shared<CodeExpression>(names[type]);
 }
 
@@ -52,7 +53,7 @@ const CodeExpressionPtr UnaryOperatorStatement::getCode() const {
     if (POSTFIX_INCREMENT_OP == op_ || POSTFIX_DECREMENT_OP == op_) {
         /* postfix operators */
         code = combine(expr_->getCode(), toCodeExpression(op_));
-    } else if (SIZE_OF_TYPE_OP == op_) {
+    } else if (SIZE_OF_TYPE_OP == op_ || ABSOLUTE_VALUE_OF_OP == op_) {
         code = combine(toCodeExpression(op_), std::make_shared<CodeExpression>("("));
         code = combine(code, expr_->getCode());
         code = combine(code, std::make_shared<CodeExpression>(")"));
