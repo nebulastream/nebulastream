@@ -280,8 +280,7 @@ void E2EBase::setupSources() {
             std::cout << "memsource produces tuples=" << numRecords << std::endl;
             for (auto u = 0u; u < numRecords; ++u) {
                 records[u].id = i;
-                //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
-                records[u].value = u % 10;
+                records[u].value = u % 100;
                 records[u].timestamp = u;
             }
 
@@ -317,9 +316,8 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-                for (auto u = 0u; u < numberOfTuplesToProduce - 1; ++u) {
-                    records[u].id = u;
-                    //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
+                for (auto u = 0u; u < numRecords; ++u) {
+                    records[u].id = i;
                     records[u].value = u % 100;
                     records[u].timestamp = u;
                 }
@@ -749,7 +747,7 @@ std::string E2EBase::getResult() {
         << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec
         << "," << avgLatencyInMs;
 
-    size_t tuplesPerBuffer = bufferSizeInBytes /  defaultSchema->getSchemaSizeInBytes();
+    size_t tuplesPerBuffer = bufferSizeInBytes / defaultSchema->getSchemaSizeInBytes();
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
     std::cout << "bufferProcessed=" << bufferProcessed << std::endl;
     std::cout << "Input tuples=" << bufferProcessed * tuplesPerBuffer << std::endl;
