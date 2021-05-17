@@ -22,11 +22,11 @@
 #include <Util/Logger.hpp>
 #include <Version/version.hpp>
 #include <iostream>
-#include <util/BenchmarkUtils.hpp>
+//#include <util/BenchmarkUtils.hpp>
 
 using namespace NES;
 using namespace std;
-using namespace Benchmarking;
+//using namespace Benchmarking;
 
 /**
  * This function splits a string by a delimiter into a vector
@@ -53,6 +53,16 @@ std::vector<uint64_t> split(const std::string& str, char delim) {
  * @param str
  * @return
  * **/
+
+/**
+    * @brief creates a vector with a range of [start, stop) and step size
+    */
+template<typename T>
+static void createRangeVector(std::vector<T>& vector, T start, T stop, T stepSize) {
+    for (T i = start; i < stop; i += stepSize) {
+        vector.push_back(i);
+    }
+}
 std::vector<uint64_t> getParameterFromString(std::string str) {
     std::vector<uint64_t> retVec;
     if (str.find(",") != string::npos) {//if comma separated, we create one test run for each of the values
@@ -60,7 +70,7 @@ std::vector<uint64_t> getParameterFromString(std::string str) {
     } else if (str.find("-") != string::npos) {//if - separated, we will create a range from start to end with increment
         auto tempVec = split(str, '-');
         NES_ASSERT(tempVec.size() == 3, " wrong number of parameter");
-        BenchmarkUtils::createRangeVector<uint64_t>(retVec, tempVec[0], tempVec[1], tempVec[2]);
+        createRangeVector<uint64_t>(retVec, tempVec[0], tempVec[1], tempVec[2]);
     } else {//if only one value we will just push it
         retVec.push_back(stoi(str));
     }
