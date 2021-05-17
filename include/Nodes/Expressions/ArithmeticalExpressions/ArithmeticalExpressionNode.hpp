@@ -23,7 +23,7 @@ namespace NES {
  */
     class ArithmeticalExpressionNode {
     protected:
-        ArithmeticalExpressionNode(){};
+        ArithmeticalExpressionNode() = default;
     };
 
 }// namespace NES

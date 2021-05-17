@@ -23,7 +23,7 @@ namespace NES {
  */
 class LogicalExpressionNode {
   protected:
-    LogicalExpressionNode(){};
+    LogicalExpressionNode() = default;
 };
 }// namespace NES
 
