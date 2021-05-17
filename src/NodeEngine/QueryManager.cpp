@@ -815,14 +815,14 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
 }
 
 void QueryManager::completedWork(Task& task, WorkerContext&) {
-#ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
-    std::unique_lock lock(workMutex);
-#endif
     NES_DEBUG("QueryManager::completedWork: Work for task=" << task.toString());
-    auto executable = task.getExecutable();
+    if (task.isReconfiguration()) {
+        return;
+    }
 
     // todo also support data sinks
     uint64_t qepId = 0;
+    auto executable = task.getExecutable();
     if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
         qepId = (*sink)->getParentPlanId();
     } else if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
@@ -833,19 +833,17 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto statistics = queryToStatisticsMap.find(qepId);
 
         statistics->incProcessedTasks();
-        if (!task.isReconfiguration()) {
-            statistics->incProcessedBuffers();
-            auto creation = task.getBufferRef().getCreationTimestamp();
-            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                           std::chrono::high_resolution_clock::now().time_since_epoch())
-                           .count();
-            auto diff = now - creation;
-            statistics->incLatencySum(diff);
+        statistics->incProcessedBuffers();
+        auto creation = task.getBufferRef().getCreationTimestamp();
+        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                       std::chrono::high_resolution_clock::now().time_since_epoch())
+                       .count();
+        auto diff = now - creation;
+        statistics->incLatencySum(diff);
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
-            statistics->addTimestampToLatencyValue(now, diff);
+        statistics->addTimestampToLatencyValue(now, diff);
 #endif
-            statistics->incProcessedTuple(task.getNumberOfTuples());
-        }
+        statistics->incProcessedTuple(task.getNumberOfTuples());
     } else {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
