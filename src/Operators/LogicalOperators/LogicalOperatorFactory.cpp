@@ -111,10 +111,8 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createWatermarkAssignerOpera
     OperatorId id) {
     return std::make_shared<WatermarkAssignerLogicalOperatorNode>(watermarkStrategyDescriptor, id);
 }
-
-LogicalUnaryOperatorNodePtr createIterationOperator(std::uint64_t minIterations, std::uint64_t maxIterations,
-                                                           OperatorId id = UtilityFunctions::getNextOperatorId()){
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createIterationOperator(std::uint64_t minIterations, std::uint64_t maxIterations, OperatorId id) {
     return std::make_shared<IterationLogicalOperatorNode>(minIterations, maxIterations, id);
-};
+}
 
 }// namespace NES
