@@ -12,8 +12,8 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: MemoryMode
-outputFile: changingLocalBufferSize.csv
-benchmarkName: changingLocalBufferSize
+outputFile: changingLocalBufferSizeMemoryMode.csv
+benchmarkName: changingLocalBufferSizeMemoryMode
 query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
