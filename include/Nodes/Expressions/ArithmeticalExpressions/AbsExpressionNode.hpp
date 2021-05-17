@@ -21,7 +21,7 @@ namespace NES {
 /**
  * @brief This node represents an ABS (absolut value) expression.
  */
-class AbsExpressionNode : public ArithmeticalUnaryExpressionNode {
+class AbsExpressionNode final : public ArithmeticalUnaryExpressionNode {
   public:
     AbsExpressionNode(DataTypePtr stamp);
     ~AbsExpressionNode() = default;
