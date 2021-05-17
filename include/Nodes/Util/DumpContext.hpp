@@ -18,8 +18,8 @@
 #define NES_INCLUDE_NODES_UTIL_DUMPCONTEXT_HPP_
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 namespace NES {
 
 class Node;
