@@ -61,6 +61,11 @@ LambdaSource::LambdaSource(
 
     wasGracefullyStopped = false;
 }
+struct Record {
+    uint64_t id;
+    uint64_t value;
+    uint64_t timestamp;
+};
 
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
@@ -73,7 +78,31 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     }
     auto numberOfTuplesToProduce = buffer->getBufferSize() / schema->getSchemaSizeInBytes();
 
-    generationFunction(buffer.value(), numberOfTuplesToProduce);
+//    auto func = [](NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
+//      struct Record {
+//          uint64_t id;
+//          uint64_t value;
+//          uint64_t timestamp;
+//      };
+//
+//      auto records = buffer.getBufferAs<Record>();
+//      for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+//          records[u].id = u;
+//          records[u].value = u % 100;
+//          records[u].timestamp = u;
+//      }
+//      return;
+//    };
+
+
+//    auto records = buffer->getBufferAs<Record>();
+//    for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+//        records[u].id = u;
+//        records[u].value = u % 100;
+//        records[u].timestamp = u;
+//    }
+//    func(buffer.value(), numberOfTuplesToProduce);
+//    generationFunction(buffer.value(), numberOfTuplesToProduce);
 
     buffer->setNumberOfTuples(numberOfTuplesToProduce);
     generatedTuples += buffer->getNumberOfTuples();

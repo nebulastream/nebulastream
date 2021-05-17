@@ -228,6 +228,9 @@ void E2EBase::setupSources() {
     out << input;
     out.close();
 
+#ifdef NES_DEBUG_MODE
+#error "We want O3"
+#endif
     NES_ASSERT(crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName), "failed to create logical stream");
 
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
@@ -279,7 +282,7 @@ void E2EBase::setupSources() {
             size_t numRecords = std::floor(double(bufferSizeInBytes) / double(recordSize));
             std::cout << "memsource produces tuples=" << numRecords << std::endl;
             for (auto u = 0u; u < numRecords; ++u) {
-                records[u].id = i;
+                records[u].id = u;
                 records[u].value = u % 100;
                 records[u].timestamp = u;
             }
@@ -316,8 +319,8 @@ void E2EBase::setupSources() {
                 };
 
                 auto records = buffer.getBufferAs<Record>();
-                for (auto u = 0u; u < numRecords; ++u) {
-                    records[u].id = i;
+                for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+                    records[u].id = u;
                     records[u].value = u % 100;
                     records[u].timestamp = u;
                 }
