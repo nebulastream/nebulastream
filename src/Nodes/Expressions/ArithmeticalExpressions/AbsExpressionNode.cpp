@@ -15,8 +15,12 @@
 */
 
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
-#include <utility>
+#include <cmath>
+
 namespace NES {
 
 AbsExpressionNode::AbsExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
@@ -27,6 +31,24 @@ ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr child) {
     auto absNode = std::make_shared<AbsExpressionNode>(child->getStamp());
     absNode->setChild(child);
     return absNode;
+}
+
+void AbsExpressionNode::inferStamp(SchemaPtr schema) {
+    // infer stamp of child, check if its numerical, assume same stamp
+    ArithmeticalUnaryExpressionNode::inferStamp(schema);
+
+    // increase lower bound to 0
+    if (this->stamp->isFloat()) {
+        auto stamp = DataType::as<Float>(this->stamp);
+        auto newLowerBound = fmax(0, stamp->lowerBound);
+        this->stamp = DataTypeFactory::createFloat(stamp->getBits(), newLowerBound, stamp->upperBound);
+    } else if (this->stamp->isInteger()) {
+        auto stamp = DataType::as<Integer>(this->stamp);
+        auto newLowerBound = fmax(0, stamp->lowerBound);
+        this->stamp = DataTypeFactory::createInteger(stamp->getBits(), newLowerBound, stamp->upperBound);
+    }
+
+    NES_TRACE("AbsExpressionNode: increased the lower bound of stamp to 0: " << toString());
 }
 
 bool AbsExpressionNode::equal(const NodePtr rhs) const {
