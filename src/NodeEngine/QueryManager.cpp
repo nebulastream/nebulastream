@@ -126,6 +126,10 @@ bool QueryManager::startThreadPool() {
 }
 
 void QueryManager::destroy() {
+    // 0. if already destroyed
+    if (queryManagerStatus.load() == Destroyed) {
+        return;
+    }
     // 1. attempt transition from Running -> Stopped
     auto expected = Running;
 
@@ -720,12 +724,10 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
     //    bool hitReconfiguration = false;
     std::unique_lock lock(workMutex);
     while (!taskQueue.empty()) {
-        //        std::unique_lock lock(workMutex);
-        NES_FATAL_ERROR("size before dequeue=" << taskQueue.size());
+        NES_INFO("size before dequeue=" << taskQueue.size());
 
         auto task = taskQueue.front();
         taskQueue.pop_front();
-        //        lock.unlock();
         auto executable = task.getExecutable();
 #if 1
         // execute only reconfiguration tasks
@@ -831,7 +833,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto statistics = queryToStatisticsMap.find(qepId);
 
         statistics->incProcessedTasks();
-       if (!task.isReconfiguration()) {
+        if (!task.isReconfiguration()) {
             statistics->incProcessedBuffers();
             auto creation = task.getBufferRef().getCreationTimestamp();
             auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -842,8 +844,8 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
             statistics->addTimestampToLatencyValue(now, diff);
 #endif
-           statistics->incProcessedTuple(task.getNumberOfTuples());
-       }
+            statistics->incProcessedTuple(task.getNumberOfTuples());
+        }
     } else {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");
         NES_THROW_RUNTIME_ERROR("got buffer for not registered qep");
