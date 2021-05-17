@@ -34,15 +34,15 @@ MemorySource::MemorySource(SchemaPtr schema,
                            size_t numSourceLocalBuffers,
                            GatheringMode gatheringMode,
                            std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(std::move(schema),
-                 bufferManager,
-                 std::move(queryManager),
-                 operatorId,
-                 numSourceLocalBuffers,
-                 gatheringMode,
-                 successors),
-      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), globalBufferManager(bufferManager),
-      refCnt(0) {
+    : GeneratorSource(std::move(schema),
+                      std::move(bufferManager),
+                      std::move(queryManager),
+                      numBuffersToProcess,
+                      operatorId,
+                      numSourceLocalBuffers,
+                      gatheringMode,
+                      successors),
+      memoryArea(memoryArea), memoryAreaSize(memoryAreaSize), currentPositionInBytes(0), globalBufferManager(bufferManager) {
     this->numBuffersToProcess = numBuffersToProcess;
     if (gatheringMode == GatheringMode::FREQUENCY_MODE) {
         this->gatheringInterval = std::chrono::milliseconds(gatheringValue);
@@ -99,7 +99,6 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
     //        TODO: replace copy with inplace add like with the wraparound #1853
     //    auto buffer2 = NodeEngine::TupleBuffer::wrapMemory(memoryArea.get() + currentPositionInBytes, globalBufferManager->getBufferSize(), this);
 
-    refCnt++;
     if (memoryAreaSize > buffer->getBufferSize()) {
         NES_DEBUG("MemorySource::receiveData: add offset=" << globalBufferManager->getBufferSize()
                                                            << " to currentpos=" << currentPositionInBytes);
@@ -122,7 +121,4 @@ std::optional<NodeEngine::TupleBuffer> MemorySource::receiveData() {
 const std::string MemorySource::toString() const { return "MemorySource"; }
 
 NES::SourceType MemorySource::getType() const { return MEMORY_SOURCE; }
-void MemorySource::recyclePooledBuffer(NodeEngine::detail::MemorySegment*) { refCnt--; }
-void MemorySource::recycleUnpooledBuffer(NodeEngine::detail::MemorySegment*) {}
-
 }// namespace NES
