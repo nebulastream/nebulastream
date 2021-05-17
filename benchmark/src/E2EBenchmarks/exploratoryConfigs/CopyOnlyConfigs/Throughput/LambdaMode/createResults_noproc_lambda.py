@@ -13,14 +13,14 @@ import numpy as np
 
 # folder = "./"#in this folder
 folder = "./"
-df_changingBufferSize = pd.read_csv(folder + 'changingBufferSize.csv')
-df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCnt.csv')
-df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSize.csv')
+df_changingBufferSize = pd.read_csv(folder + 'changingBufferSizeLambdaMode.csv')
+df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCntLambdaMode.csv')
+df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSizeLambdaMode.csv')
 
-df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCnt.csv')
-df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCnt.csv')
-df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProc.csv')
-df_scalingLarge = pd.read_csv(folder + 'scalingLarge.csv')
+df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCntLambdaMode.csv')
+df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCntLambdaMode.csv')
+df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProcLambdaMode.csv')
+df_scalingLarge = pd.read_csv(folder + 'scalingLargeLambdaMode.csv')
 
 
 import plotly.graph_objects as go
@@ -499,7 +499,7 @@ fig.update_xaxes(title_text="Wrk/Src Large Scale", row=3, col=7)
 fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
-        'text': "<b>NebulaStream Performance Numbers  NoProc</b><br>"
+        'text': "<b>NebulaStream Performance Numbers -- LambdaMode -- NoProc</b><br>"
                 "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query: Only Forward)"
                 "<br>",
         'y': 0.98,
@@ -538,4 +538,4 @@ fig.update_layout(legend=dict(
 ))
 
 ###############################################################
-plotly.offline.plot(fig, filename='copyOnlyBaselineThroughput.html')
+plotly.offline.plot(fig, filename='NoProcLambdaMode.html')
