@@ -46,8 +46,13 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
     return PowExpressionNode::create(leftExp, rightExp);
 }
 
-ExpressionNodePtr ABS(ExpressionNodePtr child) {
-    return AbsExpressionNode::create(child);
+ExpressionNodePtr ABS(ExpressionNodePtr exp) {
+    // TODO: implement the ABS value in the coming compiler (unary operators are not planned for the legacy system), then remove this error
+    NES_FATAL_ERROR("ArithmeticExpressions: Unary expressions available in C++ API but not supported in the "
+                    "legacy compiler: ABS("
+                            << exp->toString() << ")");
+    NES_NOT_IMPLEMENTED();
+    return AbsExpressionNode::create(exp);
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp) {
@@ -113,7 +118,7 @@ ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp) {
 
 
 // calls of Unary operators with ExpressionItem
-ExpressionNodePtr ABS(ExpressionItem childExp) { return ABS(childExp.getExpressionNode()); }
+ExpressionNodePtr ABS(ExpressionItem exp) { return ABS(exp.getExpressionNode()); }
 
 ExpressionNodePtr operator++(ExpressionItem exp) { return ++exp.getExpressionNode(); }
 
