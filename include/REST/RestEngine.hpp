@@ -90,6 +90,13 @@ class RestEngine : public BaseController {
     void handlePatch(http_request request);
     void handleHead(http_request request);
     void handleTrace(http_request request);
+
+    /**
+    * @brief handle preflight request (complex HTTP request)
+    * @param request: the request issued by the client
+    * @description A preflight request is sent as a response to a DELETE request,
+    *              the response allows the DELETE fetch request of our UI(localhost:3000)
+    */
     void handlePreflightOptions(http_request request);
     void handleMerge(http_request request);
     void initRestOpHandlers();
