@@ -33,7 +33,7 @@ class LambdaSource : public GeneratorSource {
      *
    * @param operatorId the valid id of the source
    */
-    LambdaSource(SchemaPtr schema,
+    explicit LambdaSource(SchemaPtr schema,
                  NodeEngine::BufferManagerPtr bufferManager,
                  NodeEngine::QueryManagerPtr queryManager,
                  uint64_t numbersOfBufferToProduce,
@@ -49,6 +49,11 @@ class LambdaSource : public GeneratorSource {
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 
     /**
+    * @brief Provides a string representation of the source
+    * @return The string representation of the source
+    */
+    const std::string toString() const override;
+    /**
      * @brief method to stop the source.
      * 1.) check if bool running is false, if false return, if not stop source
      * 2.) stop thread by join
@@ -57,6 +62,7 @@ class LambdaSource : public GeneratorSource {
 
   private:
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
+
 };
 
 typedef std::shared_ptr<LambdaSource> LambdaSourcePtr;
