@@ -722,6 +722,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
 
         auto task = taskQueue.front();
         taskQueue.pop_front();
+        lock.unlock();
         auto executable = task.getExecutable();
 #if 1
         // execute only reconfiguration tasks
@@ -730,6 +731,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
                 task(workerContext);
             }
         }
+        lock.lock(); // relocking to access empty()
 #else
         if (!hitReconfiguration) {
             // execute all pending tasks until first reconfiguration
