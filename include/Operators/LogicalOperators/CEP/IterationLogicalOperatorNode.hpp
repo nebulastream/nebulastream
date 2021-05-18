@@ -67,4 +67,3 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
 
 }// namespace NES
 #endif//ITERATION_LOGICAL_OPERATOR_NODE_HPP
-
