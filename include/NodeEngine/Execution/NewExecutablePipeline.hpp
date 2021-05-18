@@ -16,7 +16,6 @@
 
 #ifndef INCLUDE_NES_NODEENGINE_EXECUTABLEPIPELINE_H_
 #define INCLUDE_NES_NODEENGINE_EXECUTABLEPIPELINE_H_
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>

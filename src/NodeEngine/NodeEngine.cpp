@@ -16,7 +16,6 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/ErrorListener.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/NewExecutablePipeline.hpp>
 #include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
@@ -24,10 +23,8 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
 #include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>

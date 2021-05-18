@@ -16,7 +16,6 @@
 
 #ifndef NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWHANDLER_JoinHandler_HPP_
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <State/StateManager.hpp>
