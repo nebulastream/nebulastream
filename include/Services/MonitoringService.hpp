@@ -55,7 +55,7 @@ class MonitoringService {
     void requestMonitoringData(const std::string& ipAddress,
                                int64_t grpcPort,
                                MonitoringPlanPtr plan,
-                               NodeEngine::TupleBuffer tupleBuffer);
+                               NodeEngine::TupleBuffer& tupleBuffer);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
