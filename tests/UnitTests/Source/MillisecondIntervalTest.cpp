@@ -136,7 +136,6 @@ TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     uint64_t numberOfBuffers = 1;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    // TODO: mock querymanager and make sure addWork is overriden for the test
     const DataSourcePtr source =
             createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                  path_to_file, del, numberOfTuplesToProcess, numberOfBuffers, frequency, false, 1, 12, {});
