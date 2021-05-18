@@ -121,10 +121,12 @@ struct LoggingBlackHole {
     } while (0)
 #endif
 #ifdef NES_LOGGING_DEBUG_LEVEL
-#define NES_TRACE(TEXT)                                                                                                          \
+#define NES_TRACE(...)                                                                                                          \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_DEBUG(TEXT)                                                                                                          \
     do {                                                                                                                         \
@@ -146,13 +148,17 @@ struct LoggingBlackHole {
 #ifdef NES_LOGGING_INFO_LEVEL
 #define NES_TRACE(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_DEBUG(TEXT)                                                                                                          \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_INFO(TEXT)                                                                                                           \
     do {                                                                                                                         \
@@ -170,18 +176,24 @@ struct LoggingBlackHole {
 #ifdef NES_LOGGING_WARNING_LEVEL
 #define NES_TRACE(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_DEBUG(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_INFO(TEXT)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_WARNING(TEXT)                                                                                                        \
     do {                                                                                                                         \
@@ -195,23 +207,31 @@ struct LoggingBlackHole {
 #ifdef NES_LOGGING_ERROR_LEVEL
 #define NES_TRACE(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_DEBUG(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_INFO(...)                                                                                                            \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_WARNING(...)                                                                                                         \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
@@ -221,23 +241,31 @@ struct LoggingBlackHole {
 #ifdef NES_LOGGING_FATAL_ERROR_LEVEL
 #define NES_TRACE(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_DEBUG(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_INFO(...)                                                                                                            \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_WARNING(...)                                                                                                         \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_ERROR(TEXT)                                                                                                          \
     do {                                                                                                                         \
@@ -247,28 +275,38 @@ struct LoggingBlackHole {
 #ifdef NES_LOGGING_NO_LEVEL
 #define NES_TRACE(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_DEBUG(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_INFO(...)                                                                                                            \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_WARNING(...)                                                                                                         \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #define NES_ERROR(...)                                                                                                           \
     do {                                                                                                                         \
-        NES::detail::LoggingBlackHole bh;                                                                                        \
-        ((void) (bh << __VA_ARGS__));                                                                                            \
+        if (0) {                                                                                                                 \
+            NES::detail::LoggingBlackHole bh;                                                                                    \
+            ((void) (bh << __VA_ARGS__));                                                                                        \
+        }                                                                                                                        \
     } while (0)
 #endif
 
