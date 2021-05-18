@@ -13,14 +13,14 @@ import numpy as np
 
 # folder = "./"#in this folder
 folder = "./"
-df_changingBufferSize = pd.read_csv(folder + 'changingBufferSizeLambdaMode.csv')
-df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCntLambdaMode.csv')
-df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSizeLambdaMode.csv')
+df_changingBufferSize = pd.read_csv(folder + 'changingBufferSizeMemoryMode.csv')
+df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCntMemoryMode.csv')
+df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSizeMemoryMode.csv')
 
-df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCntLambdaMode.csv')
-df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCntLambdaMode.csv')
-df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProcLambdaMode.csv')
-df_scalingLarge = pd.read_csv(folder + 'scalingLargeLambdaMode.csv')
+df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCntMemoryMode.csv')
+df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCntMemoryMode.csv')
+df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProcMemoryMode.csv')
+df_scalingLarge = pd.read_csv(folder + 'scalingLargeMemoryMode.csv')
 
 
 import plotly.graph_objects as go
@@ -499,8 +499,9 @@ fig.update_xaxes(title_text="Wrk/Src Large Scale", row=3, col=7)
 fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
-        'text': "<b>NebulaStream Performance Numbers -- LambdaMode -- NoProc</b><br>"
-                "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query: Only Forward)"
+        'text': "<b>NebulaStream Performance Numbers -- MemoryMode -- Source/Sink </b><br>"
+                "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, "
+                "LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query: Query::from(input).sink(NullOutputSinkDescriptor::create());)"
                 "<br>",
         'y': 0.98,
         'x': 0.5,
@@ -538,4 +539,4 @@ fig.update_layout(legend=dict(
 ))
 
 ###############################################################
-plotly.offline.plot(fig, filename='NoProcLambdaMode.html')
+plotly.offline.plot(fig, filename='SourceSinkWorkload.html')
