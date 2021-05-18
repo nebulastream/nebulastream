@@ -13,14 +13,14 @@ import numpy as np
 
 # folder = "./"#in this folder
 folder = "./"
-df_changingBufferSize = pd.read_csv(folder + 'changingBufferSizeMemoryMode.csv')
-df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCntMemoryMode.csv')
-df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSizeMemoryMode.csv')
+df_changingBufferSize = pd.read_csv(folder + 'changingBufferSizeReadOnly.csv')
+df_changingGlobalBufferCnt = pd.read_csv(folder + 'changingGlobalBufferCntReadOnly.csv')
+df_changingLocalBufferSize = pd.read_csv(folder + 'changingLocalBufferSizeReadOnly.csv')
 
-df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCntMemoryMode.csv')
-df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCntMemoryMode.csv')
-df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProcMemoryMode.csv')
-df_scalingLarge = pd.read_csv(folder + 'scalingLargeMemoryMode.csv')
+df_changingSourceCnt = pd.read_csv(folder + 'changingSourceCntReadOnly.csv')
+df_chaningWorkerCnt = pd.read_csv(folder + 'changingWorkerCntReadOnly.csv')
+df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProcReadOnly.csv')
+df_scalingLarge = pd.read_csv(folder + 'scalingLargeReadOnly.csv')
 
 
 import plotly.graph_objects as go
@@ -28,9 +28,9 @@ import plotly
 
 # ###############################################################
 fig = make_subplots(
-    rows=3, cols=7,
+    rows=4, cols=7,
     column_widths=[3, 3, 3, 3, 3, 3, 3],
-    row_heights=[1, 1, 1],
+    row_heights=[1, 1, 1, 1],
     shared_xaxes=False,
     subplot_titles=[
         'Sc. Buffer Size',
@@ -39,14 +39,14 @@ fig = make_subplots(
         'Sc. Source Cnt',
         'Sc. Worker Cnt',
         'Sc. Wrk/Src equal',
-        'Sc. Wrk/Src Large'
+        'Sc. Wrk/Src Large',
         'Sc. Buffer Size',
         'Sc. Global Buffer Cnt',
         'Sc. Local Buffer Cnt',
         'Sc. Source Cnt',
         'Sc. Worker Cnt',
         'Sc. Wrk/Src equal',
-        'Sc. Wrk/Src Large'
+        'Sc. Wrk/Src Large',
         'Sc. Buffer Size',
         'Sc. Global Buffer Cnt',
         'Sc. Local Buffer Cnt',
@@ -112,26 +112,29 @@ for i in range(len(df_changingBufferSize_pivot.columns)):
 fig.update_xaxes(title_text="BufferSizeInBytes", type="log", row=1, col=1)
 fig.update_yaxes(title_text="ThroughputInTupsPerSec", type="log", row=1, col=1)
 
-df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='ThroughputInMBPerSec',
+df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='ThroughputInTasksPerSec',
                                              index=['BufferSizeInBytes'], columns='WorkerThreads',
                                              aggfunc=np.sum)
+
 for i in range(len(df_changingBufferSize_pivot.columns)):
     col = df_changingBufferSize_pivot.columns[i]
     fig.add_trace(go.Scatter(x=df_changingBufferSize_pivot.index, y=df_changingBufferSize_pivot[col].values,
-                             # name=str(col),
+                             name=str(col),
+                             # log_x=True,
                              hoverinfo='x+y',
                              mode='markers+lines',
-                             line=dict(shape='linear', color=dictOfNames[col],
+                             line=dict(shape='linear',
+                                       color=dictOfNames[col],
                                        width=2),
                              connectgaps=True,
                              showlegend=False,
                              ),
-                  row=2, col=1
+                  row=2, col=1,
                   )
 fig.update_xaxes(title_text="BufferSizeInBytes", type="log", row=2, col=1)
-fig.update_yaxes(title_text="ThroughputInMBPerSec", type="log", row=2, col=1)
+fig.update_yaxes(title_text="ThroughputInTasksPerSec", type="log", row=2, col=1)
 
-df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='AvgLatencyInMs',
+df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='ThroughputInTasksPerSec',
                                              index=['BufferSizeInBytes'], columns='WorkerThreads',
                                              aggfunc=np.sum)
 for i in range(len(df_changingBufferSize_pivot.columns)):
@@ -148,7 +151,26 @@ for i in range(len(df_changingBufferSize_pivot.columns)):
                   row=3, col=1
                   )
 fig.update_xaxes(title_text="BufferSizeInBytes", type="log", row=3, col=1)
-fig.update_yaxes(title_text="AvgLatencyInMs", type="log", row=3, col=1)
+fig.update_yaxes(title_text="ThroughputInMBPerSec", type="log", row=3, col=1)
+
+df_changingBufferSize_pivot = pd.pivot_table(df_changingBufferSize, values='AvgLatencyInMs',
+                                             index=['BufferSizeInBytes'], columns='WorkerThreads',
+                                             aggfunc=np.sum)
+for i in range(len(df_changingBufferSize_pivot.columns)):
+    col = df_changingBufferSize_pivot.columns[i]
+    fig.add_trace(go.Scatter(x=df_changingBufferSize_pivot.index, y=df_changingBufferSize_pivot[col].values,
+                             # name=str(col),
+                             hoverinfo='x+y',
+                             mode='markers+lines',
+                             line=dict(shape='linear', color=dictOfNames[col],
+                                       width=2),
+                             connectgaps=True,
+                             showlegend=False,
+                             ),
+                  row=4, col=1
+                  )
+fig.update_xaxes(title_text="BufferSizeInBytes", type="log", row=4, col=1)
+fig.update_yaxes(title_text="AvgLatencyInMs", type="log", row=4, col=1)
 
 # ########################################## df_changingGlobalBufferCnt ##########################################################
 df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, values='ThroughputInTupsPerSec',
@@ -172,6 +194,27 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
 fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=1, col=2)
 fig.update_yaxes(type="log", row=1, col=2)
 
+df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, values='ThroughputInTasksPerSec',
+                                                  index=['NumberOfBuffersInGlobalBufferManager'],
+                                                  columns='WorkerThreads',
+                                                  aggfunc=np.sum)
+for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
+    col = df_changingGlobalBufferCnt_pivot.columns[i]
+    fig.add_trace(
+        go.Scatter(x=df_changingGlobalBufferCnt_pivot.index, y=df_changingGlobalBufferCnt_pivot[col].values,
+                   # name=str( col),
+                   hoverinfo='x+y',
+                   mode='markers+lines',
+                   line=dict(shape='linear', color=dictOfNames[col],
+                             width=2),
+                   connectgaps=True,
+                   showlegend=False,
+                   ),
+        row=2, col=2
+    )
+fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=2, col=2)
+fig.update_yaxes(type="log", row=2, col=2)
+
 df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, values='ThroughputInMBPerSec',
                                                   index=['NumberOfBuffersInGlobalBufferManager'],
                                                   columns='WorkerThreads',
@@ -189,10 +232,10 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    connectgaps=True,
                    showlegend=False,
                    ),
-        row=2, col=2
+        row=3, col=2
     )
-fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=2, col=2)
-fig.update_yaxes(type="log", row=2, col=2)
+fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=3, col=2)
+fig.update_yaxes(type="log", row=3, col=2)
 
 df_changingGlobalBufferCnt_pivot = pd.pivot_table(df_changingGlobalBufferCnt, values='AvgLatencyInMs',
                                                   index=['NumberOfBuffersInGlobalBufferManager'],
@@ -210,10 +253,10 @@ for i in range(len(df_changingGlobalBufferCnt_pivot.columns)):
                    connectgaps=True,
                    showlegend=False,
                    ),
-        row=3, col=2
+        row=4, col=2
     )
-fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=3, col=2)
-fig.update_yaxes(type="log", row=3, col=2)
+fig.update_xaxes(title_text="GlobalBufferCnt", type="log", row=4, col=2)
+fig.update_yaxes(type="log", row=4, col=2)
 
 # ########################################## df_changingLocalBufferSize ##########################################################
 df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='ThroughputInTupsPerSec',
@@ -237,7 +280,7 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
 fig.update_xaxes(title_text="LocalBufferCnt", type="log", row=1, col=3)
 fig.update_yaxes(type="log", row=1, col=3)
 
-df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='ThroughputInMBPerSec',
+df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='ThroughputInTasksPerSec',
                                                   index=['NumberOfBuffersInSourceLocalBufferPool'],
                                                   columns='WorkerThreads',
                                                   aggfunc=np.sum)
@@ -258,6 +301,27 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
 fig.update_xaxes(title_text="LocalBufferCnt", type="log", row=2, col=3)
 fig.update_yaxes(type="log", row=2, col=3)
 
+df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='ThroughputInMBPerSec',
+                                                  index=['NumberOfBuffersInSourceLocalBufferPool'],
+                                                  columns='WorkerThreads',
+                                                  aggfunc=np.sum)
+for i in range(len(df_changingLocalBufferSize_pivot.columns)):
+    col = df_changingLocalBufferSize_pivot.columns[i]
+    fig.add_trace(
+        go.Scatter(x=df_changingLocalBufferSize_pivot.index, y=df_changingLocalBufferSize_pivot[col].values,
+                   name=str(col),
+                   hoverinfo='x+y',
+                   mode='markers+lines',
+                   line=dict(shape='linear', color=dictOfNames[col],
+                             width=2),
+                   connectgaps=True,
+                   showlegend=False,
+                   ),
+        row=3, col=3
+    )
+fig.update_xaxes(title_text="LocalBufferCnt", type="log", row=3, col=3)
+fig.update_yaxes(type="log", row=3, col=3)
+
 df_changingLocalBufferSize_pivot = pd.pivot_table(df_changingLocalBufferSize, values='AvgLatencyInMs',
                                                   index=['NumberOfBuffersInSourceLocalBufferPool'],
                                                   columns='WorkerThreads',
@@ -275,10 +339,10 @@ for i in range(len(df_changingLocalBufferSize_pivot.columns)):
                    connectgaps=True,
                    showlegend=False,
                    ),
-        row=3, col=3
+        row=4, col=3
     )
-fig.update_xaxes(title_text="LocalBufferCnt", row=3, col=3)
-fig.update_yaxes(row=3, col=3)
+fig.update_xaxes(title_text="LocalBufferCnt", row=4, col=3)
+fig.update_yaxes(row=4, col=3)
 
 # ########################################## df_changingSourceCnt ##########################################################
 df_changingSourceCnt_pivot = pd.pivot_table(df_changingSourceCnt, values='ThroughputInTupsPerSec',
@@ -302,6 +366,27 @@ for i in range(len(df_changingSourceCnt_pivot.columns)):
     )
 fig.update_xaxes(title_text="SourceCnt", row=1, col=4)
 
+df_changingSourceCnt_pivot = pd.pivot_table(df_changingSourceCnt, values='ThroughputInTasksPerSec',
+                                            index=['SourceCnt'],
+                                            columns='WorkerThreads',
+                                            aggfunc=np.sum)
+
+for i in range(len(df_changingSourceCnt_pivot.columns)):
+    col = df_changingSourceCnt_pivot.columns[i]
+    fig.add_trace(
+        go.Scatter(x=df_changingSourceCnt_pivot.index, y=df_changingSourceCnt_pivot[col].values,
+                   name=str(col),
+                   hoverinfo='x+y',
+                   mode='markers+lines',
+                   line=dict(shape='linear', color=dictOfNames[col],
+                             width=2),
+                   connectgaps=True,
+                   showlegend=False
+                   ),
+        row=2, col=4
+    )
+fig.update_xaxes(title_text="SourceCnt", row=2, col=4)
+
 df_changingSourceCnt_pivot = pd.pivot_table(df_changingSourceCnt, values='ThroughputInMBPerSec',
                                             index=['SourceCnt'],
                                             columns='WorkerThreads',
@@ -318,9 +403,9 @@ for i in range(len(df_changingSourceCnt_pivot.columns)):
                    connectgaps=True,
                    showlegend=False
                    ),
-        row=2, col=4
+        row=3, col=4
     )
-fig.update_xaxes(title_text="SourceCnt", row=2, col=4)
+fig.update_xaxes(title_text="SourceCnt", row=3, col=4)
 
 df_changingSourceCnt_pivot = pd.pivot_table(df_changingSourceCnt, values='AvgLatencyInMs',
                                             index=['SourceCnt'],
@@ -338,9 +423,9 @@ for i in range(len(df_changingSourceCnt_pivot.columns)):
                    connectgaps=True,
                    showlegend=True
                    ),
-        row=3, col=4
+        row=4, col=4
     )
-fig.update_xaxes(title_text="SourceCnt", row=3, col=4)
+fig.update_xaxes(title_text="SourceCnt", row=4, col=4)
 
 # ########################################## df_chaningWorkerCnt ##########################################################
 df_chaningWorkerCnt_pivot = pd.pivot_table(df_chaningWorkerCnt, values='ThroughputInTupsPerSec',
@@ -364,27 +449,28 @@ for i in range(len(df_chaningWorkerCnt_pivot.columns)):
     )
 fig.update_xaxes(title_text="WorkerCnt <br>Legend=Src-X", row=1, col=5)
 
-df_chaningWorkerCnt_pivot = pd.pivot_table(df_chaningWorkerCnt, values='ThroughputInMBPerSec',
+df_chaningWorkerCnt_pivot = pd.pivot_table(df_chaningWorkerCnt, values='ThroughputInTasksPerSec',
                                            index=['WorkerThreads'],
                                            columns='SourceCnt',
                                            aggfunc=np.sum)
+
 for i in range(len(df_chaningWorkerCnt_pivot.columns)):
     col = df_chaningWorkerCnt_pivot.columns[i]
     fig.add_trace(
         go.Scatter(x=df_chaningWorkerCnt_pivot.index, y=df_chaningWorkerCnt_pivot[col].values,
-                   name=str(col),
+                   name=str('Src' + str(col)),
                    hoverinfo='x+y',
                    mode='markers+lines',
                    line=dict(shape='linear', color=dictOfNamesSrc[col],
                              width=2),
                    connectgaps=True,
-                   showlegend=False
+                   showlegend=True
                    ),
         row=2, col=5
     )
 fig.update_xaxes(title_text="WorkerCnt <br>Legend=Src-X", row=2, col=5)
 
-df_chaningWorkerCnt_pivot = pd.pivot_table(df_chaningWorkerCnt, values='AvgLatencyInMs',
+df_chaningWorkerCnt_pivot = pd.pivot_table(df_chaningWorkerCnt, values='ThroughputInMBPerSec',
                                            index=['WorkerThreads'],
                                            columns='SourceCnt',
                                            aggfunc=np.sum)
@@ -404,8 +490,27 @@ for i in range(len(df_chaningWorkerCnt_pivot.columns)):
     )
 fig.update_xaxes(title_text="WorkerCnt <br>Legend=Src-X", row=3, col=5)
 
-############################################# df_changingThreadsAndSourceNoProc #######################################################
+df_chaningWorkerCnt_pivot = pd.pivot_table(df_chaningWorkerCnt, values='AvgLatencyInMs',
+                                           index=['WorkerThreads'],
+                                           columns='SourceCnt',
+                                           aggfunc=np.sum)
+for i in range(len(df_chaningWorkerCnt_pivot.columns)):
+    col = df_chaningWorkerCnt_pivot.columns[i]
+    fig.add_trace(
+        go.Scatter(x=df_chaningWorkerCnt_pivot.index, y=df_chaningWorkerCnt_pivot[col].values,
+                   name=str(col),
+                   hoverinfo='x+y',
+                   mode='markers+lines',
+                   line=dict(shape='linear', color=dictOfNamesSrc[col],
+                             width=2),
+                   connectgaps=True,
+                   showlegend=False
+                   ),
+        row=4, col=5
+    )
+fig.update_xaxes(title_text="WorkerCnt <br>Legend=Src-X", row=4, col=5)
 
+############################################# df_changingThreadsAndSourceNoProc #######################################################
 df_changingThreadsAndSourceNoProc["src"] = "W" + df_changingThreadsAndSourceNoProc["WorkerThreads"].astype(str) + '/S' + \
                                            df_changingThreadsAndSourceNoProc["SourceCnt"].astype(str)
 fig.add_trace(
@@ -422,6 +527,22 @@ fig.add_trace(
 )
 fig.update_xaxes(title_text="WrkCnt & SrcCnt", row=1, col=6)
 
+df_changingThreadsAndSourceNoProc["src"] = "W" + df_changingThreadsAndSourceNoProc["WorkerThreads"].astype(str) + '/S' + \
+                                           df_changingThreadsAndSourceNoProc["SourceCnt"].astype(str)
+fig.add_trace(
+    go.Scatter(x=df_changingThreadsAndSourceNoProc['src'],
+               y=df_changingThreadsAndSourceNoProc['ThroughputInTasksPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='red',
+                         width=2),
+               name="Throughput in Tuples/sec",
+               showlegend=False
+               ),
+    row=2, col=6
+)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt", row=2, col=6)
+
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceNoProc['src'], y=df_changingThreadsAndSourceNoProc['ThroughputInMBPerSec'],
                hoverinfo='x+y',
@@ -431,9 +552,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=6
+    row=3, col=6
 )
-fig.update_xaxes(title_text="WrkCnt & SrcCnt", row=2, col=6)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt", row=3, col=6)
 
 df_changingThreadsAndSourceNoProc["src"] = "W" + df_changingThreadsAndSourceNoProc["WorkerThreads"].astype(str) + '/S' + \
                                            df_changingThreadsAndSourceNoProc["SourceCnt"].astype(str)
@@ -446,12 +567,11 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=6
+    row=4, col=6
 )
-fig.update_xaxes(title_text="WrkCnt & SrcCnt", row=3, col=6)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt", row=4, col=6)
 
 ############################################# df_scalingLarge #######################################################
-
 df_scalingLarge["src"] = "W" + df_scalingLarge[
     "WorkerThreads"].astype(str) + '/S' + df_scalingLarge["SourceCnt"].astype(str)
 fig.add_trace(
@@ -468,6 +588,22 @@ fig.add_trace(
 )
 fig.update_xaxes(title_text="Wrk/Src Large Scale", row=1, col=7)
 
+df_scalingLarge["src"] = "W" + df_scalingLarge[
+    "WorkerThreads"].astype(str) + '/S' + df_scalingLarge["SourceCnt"].astype(str)
+fig.add_trace(
+    go.Scatter(x=df_scalingLarge['src'],
+               y=df_scalingLarge['ThroughputInTasksPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='red',
+                         width=2),
+               name="Throughput in Tuples/sec",
+               showlegend=False
+               ),
+    row=2, col=7
+)
+fig.update_xaxes(title_text="Wrk/Src Large Scale", row=2, col=7)
+
 fig.add_trace(
     go.Scatter(x=df_scalingLarge['src'],
                y=df_scalingLarge['ThroughputInMBPerSec'],
@@ -478,9 +614,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=7
+    row=3, col=7
 )
-fig.update_xaxes(title_text="Wrk/Src Large Scale", row=2, col=7)
+fig.update_xaxes(title_text="Wrk/Src Large Scale", row=3, col=7)
 
 fig.add_trace(
     go.Scatter(x=df_scalingLarge['src'],
@@ -492,16 +628,16 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=7
+    row=4, col=7
 )
-fig.update_xaxes(title_text="Wrk/Src Large Scale", row=3, col=7)
+fig.update_xaxes(title_text="Wrk/Src Large Scale", row=4, col=7)
 
 fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
-        'text': "<b>NebulaStream Performance Numbers -- MemoryMode -- ReadOnly </b><br>"
+        'text': "<b>NebulaStream Performance Numbers -- MemoryMode -- ReadOnlyWorkload </b><br>"
                 "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, "
-                "LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query::from(input).filter(Attribute(value) > 10000).sink(NullOutputSinkDescriptor::create()); -- 0% selectivity)"
+                "LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query::from(input).filter(Attribute(value) > 10000).sink(NullOutputSinkDescriptor::create());' 0% Selectivity)"
                 "<br>",
         'y': 0.98,
         'x': 0.5,
@@ -509,7 +645,7 @@ fig.update_layout(
         'yanchor': 'top'},
 )
 fig.update_layout(
-   # width=2500, height=1500,
+    # width=2500, height=1500,
     title_font_family="Times New Roman",
     title_font_color="RebeccaPurple",
     title_font_size=30,
@@ -528,7 +664,7 @@ fig.update_layout(
 fig.update_layout(legend=dict(
     # orientation="h",
     # yanchor="top",
-     y=0.5,
+    y=0.5,
     # xanchor="right",
     # x=0.6,
     font=dict(

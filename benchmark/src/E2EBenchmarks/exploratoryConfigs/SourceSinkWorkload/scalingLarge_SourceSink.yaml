@@ -12,7 +12,7 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: MemoryMode
-outputFile: scalingLargeSource.csv
+outputFile: scalingLargeSourceSink.csv
 benchmarkName: scalingLargeSink
 query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
 
