@@ -48,10 +48,16 @@ TEST_F(BufferManagerTest, initializedBufferManager) {
     ASSERT_EQ(buffers_free, buffers_managed);
 }
 
-TEST_F(BufferManagerTest, testBufferManagerNoSingleton) {
-    auto manager = std::make_unique<NodeEngine::BufferManager>();
-    manager->configure(1024, 1024);
-    manager.reset();
+TEST_F(BufferManagerTest, initializedBufferManagerAlignment16) {
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed, 16);
+    auto buffer = bufferManager->getBufferBlocking();
+    ASSERT_TRUE(reinterpret_cast<uintptr_t>(buffer.getBuffer()) % 16 == 0);
+}
+
+TEST_F(BufferManagerTest, initializedBufferManagerAlignment64) {
+    auto bufferManager = std::make_shared<NodeEngine::BufferManager>(buffer_size, buffers_managed, 64);
+    auto buffer = bufferManager->getBufferBlocking();
+    ASSERT_TRUE(reinterpret_cast<uintptr_t>(buffer.getBuffer()) % 64 == 0);
 }
 
 TEST_F(BufferManagerTest, singleThreadedBufferRecycling) {

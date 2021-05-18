@@ -78,22 +78,30 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     };
 
   public:
-    BufferManager();
 
-    BufferManager(uint32_t bufferSize, uint32_t numOfBuffers);
+    /**
+     * @brief Creates a new global buffer manager
+     * @param bufferSize the size of each buffer in bytes
+     * @param numOfBuffers the total number of buffers in the pool
+     * @param withAlignment the alignment of each buffer, default is 0, i.e., no alignment
+     */
+    explicit BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment = 0);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
     ~BufferManager();
 
+  private:
     /**
      * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
      * This is a one shot call. A second invocation of this call will fail.
      * @param bufferSize
      * @param numOfBuffers
+     * @param withAlignment
      */
-    void configure(uint32_t bufferSize, uint32_t numOfBuffers);
+    void initialize(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment = 0);
 
+  public:
     /**
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
      * @return a new buffer
@@ -142,15 +150,6 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      */
     size_t getAvailableBuffers() const;
 
-    void printStatistics();
-
-    /**
-     * tells if the buffer is configured: only for legacy support
-     * @return true if the buffer manager is configured
-     * @deprecated
-     */
-    bool isReady() const { return isConfigured; }
-
     /**
      * @brief Create a local buffer manager that is assigned to one pipeline or thread
      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
@@ -195,7 +194,6 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     uint32_t bufferSize;
     uint32_t numOfBuffers;
 
-    std::atomic<bool> isConfigured;
     std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
 };
 }// namespace NodeEngine
