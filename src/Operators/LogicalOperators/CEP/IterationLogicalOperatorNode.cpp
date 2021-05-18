@@ -26,7 +26,7 @@ IterationLogicalOperatorNode::IterationLogicalOperatorNode(uint64_t minIteration
 
 uint64_t IterationLogicalOperatorNode::getMinIterations() { return minIterations; }
 
-uint64_t IterationLogicalOperatorNode::getMaxIterations() {return maxIterations;}
+uint64_t IterationLogicalOperatorNode::getMaxIterations() { return maxIterations; }
 
 bool IterationLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<IterationLogicalOperatorNode>()->getId() == id;
@@ -35,7 +35,7 @@ bool IterationLogicalOperatorNode::isIdentical(NodePtr rhs) const {
 bool IterationLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<IterationLogicalOperatorNode>()) {
         auto iteration = rhs->as<IterationLogicalOperatorNode>();
-        return (minIterations==iteration->minIterations && maxIterations==iteration->maxIterations);
+        return (minIterations == iteration->minIterations && maxIterations == iteration->maxIterations);
     }
     return false;
 };
@@ -72,8 +72,8 @@ void IterationLogicalOperatorNode::inferStringSignature() {
     }
 
     std::stringstream signatureStream;
-    signatureStream << "Iteration(" << minIterations << ", " << maxIterations << ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
+    signatureStream << "Iteration(" << minIterations << ", " << maxIterations << ")."
+                    << children[0]->as<LogicalOperatorNode>()->getStringSignature();
     setStringSignature(signatureStream.str());
-
-    }
+}
 }// namespace NES
