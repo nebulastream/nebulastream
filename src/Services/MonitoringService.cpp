@@ -47,7 +47,7 @@ MonitoringService::~MonitoringService() {
 void MonitoringService::requestMonitoringData(const std::string& ipAddress,
                                               int64_t grpcPort,
                                               MonitoringPlanPtr plan,
-                                              NodeEngine::TupleBuffer tupleBuffer) {
+                                              NodeEngine::TupleBuffer& tupleBuffer) {
     if (!plan) {
         auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
         plan = MonitoringPlan::create(metrics);
