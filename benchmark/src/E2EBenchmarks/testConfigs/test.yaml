@@ -12,8 +12,8 @@ bufferSizeInBytes: 262144
 
 ##benchmark parameter for the entire run
 #inputOutputMode: LambdaMode
-inputOutputMode: LambdaMode
-#inputOutputMode: MemoryMode
+#inputOutputMode: LambdaMode
+inputOutputMode: MemoryMode
 outputFile: changingThreadsAndSourceMapOneField.csv
 benchmarkName: changingThreadsAndSourceMapOneField
 query: 'Query::from("input").filter(Attribute("value") > 10).sink(NullOutputSinkDescriptor::create());'

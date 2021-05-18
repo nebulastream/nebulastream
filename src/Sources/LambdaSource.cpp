@@ -56,13 +56,9 @@ LambdaSource::LambdaSource(
     } else {
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
+    numberOfTuplesToProduce = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
     wasGracefullyStopped = false;
 }
-struct Record {
-    uint64_t id;
-    uint64_t value;
-    uint64_t timestamp;
-};
 
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     NES_DEBUG("LambdaSource::receiveData called on operatorId=" << operatorId);
@@ -73,7 +69,9 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
         NES_ERROR("Buffer invalid after waiting on timeout");
         return std::nullopt;
     }
-    auto numberOfTuplesToProduce = buffer->getBufferSize() / schema->getSchemaSizeInBytes();
+
+    NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer->getBufferSize(),
+                    "value to write is larger than the buffer");
 
     generationFunction(buffer.value(), numberOfTuplesToProduce);
 

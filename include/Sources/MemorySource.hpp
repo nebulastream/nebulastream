@@ -69,7 +69,7 @@ class MemorySource : public GeneratorSource {
     SourceType getType() const override;
 
   private:
-    NodeEngine::BufferManagerPtr globalBufferManager;
+    uint64_t numberOfTuplesToProduce;
     std::shared_ptr<uint8_t> memoryArea;
     const size_t memoryAreaSize;
     uint64_t currentPositionInBytes;
