@@ -138,7 +138,7 @@ int main(int argc, const char* argv[]) {
     std::string resultPrefix = "Time,BM_Name,NES_Version";
     std::string changeableParameterString = "WorkerThreads,SourceCnt";
     std::string benchmarkResultString = "ProcessedBuffersTotal,ProcessedTasksTotal,ProcessedTuplesTotal,ProcessedBytesTotal,"
-                                        "ThroughputInTupsPerSec,ThroughputInMBPerSec,AvgLatencyInMs";
+                                        "ThroughputInTupsPerSec,ThroughputInTasksPerSec,ThroughputInMBPerSec,AvgLatencyInMs";
 
     std::string fixParameterString = "NumberOfBuffersToProduce,NumberOfBuffersInGlobalBufferManager,numberOfBuffersPerPipeline,"
                                      "NumberOfBuffersInSourceLocalBufferPool,BufferSizeInBytes,query,InputOutputMode";
