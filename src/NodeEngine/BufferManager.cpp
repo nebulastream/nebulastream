@@ -91,7 +91,7 @@ void BufferManager::initialize(uint32_t bufferSize, uint32_t numOfBuffers, uint3
         if ((withAlignment & (withAlignment - 1))) { // not a pow of two
             NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is not a pow of two");
         }
-    } else if (withAlignment != 0) {
+    } else if (withAlignment > page_size) {
         NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is invalid");
     }
 
