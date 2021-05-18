@@ -148,7 +148,7 @@ void QueryManager::destroy() {
         {
             std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
             NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size()
-                      << " task queue size=" << taskQueue.size());
+                                                                    << " task queue size=" << taskQueue.size());
 
             sourceIdToExecutableQueryPlanMap.clear();
             queryToStatisticsMap.clear();
@@ -731,7 +731,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
                 task(workerContext);
             }
         }
-        lock.lock(); // relocking to access empty()
+        lock.lock();// relocking to access empty()
 #else
         if (!hitReconfiguration) {
             // execute all pending tasks until first reconfiguration

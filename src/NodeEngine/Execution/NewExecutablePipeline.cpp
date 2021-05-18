@@ -32,10 +32,12 @@ NewExecutablePipeline::NewExecutablePipeline(uint32_t pipelineId,
                                              std::vector<SuccessorExecutablePipeline> successorPipelines,
                                              bool reconfiguration)
     : pipelineStageId(pipelineId), qepId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
-      pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration), pipelineStatus(reconfiguration ? PipelineRunning : PipelineCreated),
-      activeProducers(numOfProducingPipelines), successorPipelines(successorPipelines) {
+      pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration),
+      pipelineStatus(reconfiguration ? PipelineRunning : PipelineCreated), activeProducers(numOfProducingPipelines),
+      successorPipelines(successorPipelines) {
     // nop
-    NES_ASSERT(this->executablePipelineStage && this->pipelineContext && numOfProducingPipelines > 0, "Wrong pipeline stage argument");
+    NES_ASSERT(this->executablePipelineStage && this->pipelineContext && numOfProducingPipelines > 0,
+               "Wrong pipeline stage argument");
 }
 
 ExecutionResult NewExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext) {
@@ -45,10 +47,10 @@ ExecutionResult NewExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerC
     if (pipelineStatus == PipelineRunning) {
         return executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
     } else if (pipelineStatus == PipelineStopped) {
-       return ExecutionResult::Finished;
+        return ExecutionResult::Finished;
     }
-    NES_ERROR("Cannot execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId() << " stage="
-                                                       << pipelineStageId << " as pipeline is not running anymore");
+    NES_ERROR("Cannot execute Pipeline Stage with id=" << qepId << " originId=" << inputBuffer.getOriginId()
+                                                       << " stage=" << pipelineStageId << " as pipeline is not running anymore");
     return ExecutionResult::Error;
 }
 

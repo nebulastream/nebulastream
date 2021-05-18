@@ -78,7 +78,6 @@ class ThreadPool {
     void runningRoutine(WorkerContext&& workerContext);
 
   public:
-
     /**
      * @brief get the current number of threads in thread pool
      * @return number of current threads
