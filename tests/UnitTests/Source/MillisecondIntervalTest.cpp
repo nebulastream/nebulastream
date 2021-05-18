@@ -15,21 +15,14 @@
 */
 
 #include <chrono>
-#include <cmath>
 #include <thread>
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
-#include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <Configurations/ConfigOptions/SourceConfig.hpp>
-#include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <NodeEngine/QueryManager.hpp>
 #include <Services/QueryService.hpp>
 #include <Sources/SourceCreator.hpp>
-#include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 
@@ -91,6 +84,9 @@ class MillisecondIntervalTest : public testing::Test {
         restPort = restPort + 3;
         rpcPort = rpcPort + 40;
 
+        PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
+        this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+
         crdConf = CoordinatorConfig::create();
         crdConf->setRpcPort(rpcPort);
         crdConf->setRestPort(restPort);
@@ -110,13 +106,18 @@ class MillisecondIntervalTest : public testing::Test {
         NES_INFO("Setup MillisecondIntervalTest class.");
     }
 
-    void TearDown() { NES_INFO("Tear down MillisecondIntervalTest test case."); }
+    void TearDown() {
+        nodeEngine->stop();
+        nodeEngine = nullptr;
+        NES_INFO("Tear down MillisecondIntervalTest test case.");
+    }
 
-};// FractionedIntervalTest
+    NodeEngine::NodeEnginePtr nodeEngine{nullptr};
+};// MillisecondIntervalTest
 
 TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
-    auto nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
+    auto nodeEngine = this->nodeEngine;
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     const std::string& del = ",";
@@ -139,8 +140,7 @@ TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     const DataSourcePtr source =
             createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
                                  path_to_file, del, numberOfTuplesToProcess, numberOfBuffers, frequency, false, 1, 12, {});
-
-    source->start();
+    source->open();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
@@ -160,7 +160,7 @@ TEST_F(MillisecondIntervalTest, testCSVSourceWithOneLoopOverFileSubSecond) {
     EXPECT_EQ(source->getGatheringIntervalCount(), frequency);
 }
 
-TEST_F(MillisecondIntervalTest, DISABLED_testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
+TEST_F(MillisecondIntervalTest, testMultipleOutputBufferFromDefaultSourcePrintSubSecond) {
 
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
