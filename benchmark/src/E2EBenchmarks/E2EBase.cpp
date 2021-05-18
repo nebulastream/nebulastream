@@ -626,8 +626,14 @@ void E2EBase::setup() {
     queryService = crd->getQueryService();
     queryCatalog = crd->getQueryCatalog();
 }
-
+std::string test()
+{
+    assert(0);
+    return "asd";
+}
 bool E2EBase::runQuery() {
+    NES_DEBUG("asd " << test());
+
     sleep(2);
     std::cout << "E2EBase: Submit query=" << config->getQuery()->getValue() << std::endl;
     queryId = queryService->validateAndQueueAddRequest(config->getQuery()->getValue(), "BottomUp");
