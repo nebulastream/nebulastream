@@ -18,7 +18,6 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
@@ -26,16 +25,8 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CCodeGenerator/Definitions/FunctionDefinition.hpp>
-#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
@@ -44,14 +35,11 @@
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/LegacyExpression.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Sinks/SinkCreator.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowActions/ExecutableCompleteAggregationTriggerAction.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
@@ -583,14 +571,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
                                                                            nodeEngine->getBufferManager(),
                                                                            windowOperatorHandler);
 
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1,
-                                                                          0,
-                                                                          stage2,
-                                                                          executionContext,
-                                                                          1,
-                                                                          nullptr,
-                                                                          input_schema,
-                                                                          windowOutputSchema);
     windowHandler->setup(executionContext);
 
     /* prepare input tuple buffer */
@@ -673,14 +653,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
                                                                            nodeEngine->getBufferManager(),
                                                                            windowOperatorHandler);
 
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1,
-                                                                          0,
-                                                                          stage2,
-                                                                          executionContext,
-                                                                          1,
-                                                                          nullptr,
-                                                                          schema,
-                                                                          windowOutputSchema);//is here schema = input_schema?
     windowHandler->setup(executionContext);
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
@@ -1072,9 +1044,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerations) {
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                            nodeEngine->getBufferManager(),
                                                                            joinOperatorHandler);
-    auto nextPipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(1, 0, stage2, executionContext, 1, nullptr, input_schema, outputSchema);
-
     auto context3 = PipelineContext::create();
     context3->registerOperatorHandler(joinOperatorHandler);
     context3->arity = PipelineContext::BinaryRight;
@@ -1186,25 +1155,10 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
                                                                                nodeEngine->getBufferManager(),
                                                                                windowOperatorHandler);
 
-        auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(2,
-                                                                              0,
-                                                                              stage2,
-                                                                              executionContext,
-                                                                              1,
-                                                                              nullptr,
-                                                                              input_schema,
-                                                                              windowOutputSchema,
-                                                                              false);
+        auto nextPipeline = NodeEngine::Execution::NewExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
 
-        auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1,
-                                                                               0,
-                                                                               stage1,
-                                                                               executionContext,
-                                                                               1,
-                                                                               nextPipeline,
-                                                                               input_schema,
-                                                                               windowOutputSchema,
-                                                                               false);
+        auto firstPipeline =
+            NodeEngine::Execution::NewExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
 
         ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
         ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
@@ -1289,25 +1243,8 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
                                                                            nodeEngine->getBufferManager(),
                                                                            windowOperatorHandler);
 
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(2,
-                                                                          0,
-                                                                          stage2,
-                                                                          executionContext,
-                                                                          1,
-                                                                          nullptr,
-                                                                          input_schema,
-                                                                          windowOutputSchema,
-                                                                          false);
-
-    auto firstPipeline = NodeEngine::Execution::ExecutablePipeline::create(1,
-                                                                           0,
-                                                                           stage1,
-                                                                           executionContext,
-                                                                           1,
-                                                                           nextPipeline,
-                                                                           input_schema,
-                                                                           windowOutputSchema,
-                                                                           false);
+    auto nextPipeline = NodeEngine::Execution::NewExecutablePipeline::create(2, 0, executionContext, stage2, 1, {});
+    auto firstPipeline = NodeEngine::Execution::NewExecutablePipeline::create(1, 0, executionContext, stage1, 1, {nextPipeline});
 
     ASSERT_TRUE(firstPipeline->setup(nodeEngine->getQueryManager(), nodeEngine->getBufferManager()));
     ASSERT_TRUE(firstPipeline->start(nodeEngine->getStateManager()));
@@ -1387,16 +1324,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
     auto executionContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
                                                                            nodeEngine->getBufferManager(),
                                                                            windowOperatorHandler);
-    auto nextPipeline = NodeEngine::Execution::ExecutablePipeline::create(1,
-                                                                          0,
-                                                                          stage2,
-                                                                          executionContext,
-                                                                          1,
-                                                                          nullptr,
-                                                                          input_schema,
-                                                                          windowOutputSchema);
     windowHandler->setup(executionContext);
-
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
 

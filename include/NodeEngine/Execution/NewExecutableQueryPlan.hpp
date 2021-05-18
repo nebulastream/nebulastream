@@ -17,7 +17,6 @@
 #ifndef INCLUDE_NODEENGINE_EXECUTABLEQUERYPLAN_H_
 #define INCLUDE_NODEENGINE_EXECUTABLEQUERYPLAN_H_
 
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
@@ -33,7 +32,7 @@
 
 namespace NES::NodeEngine::Execution {
 
-//enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
+enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
 
 /**
  * @brief Represents an executable plan of an particular query.

@@ -16,9 +16,7 @@
 
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/NewExecutablePipeline.hpp>
 #include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>

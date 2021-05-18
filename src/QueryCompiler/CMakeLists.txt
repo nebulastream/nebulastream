@@ -17,8 +17,6 @@ add_source_nes(
         CodeGenerator.cpp
         GeneratedCode.cpp
         QueryCompilerOptions.cpp
-        GeneratedQueryExecutionPlanBuilder.cpp
-        QueryCompiler.cpp
         PipelineContext.cpp
         CompilerTypeFactory.cpp
         RecordHandler.cpp
