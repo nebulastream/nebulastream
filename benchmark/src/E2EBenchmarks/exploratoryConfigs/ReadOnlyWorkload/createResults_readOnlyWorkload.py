@@ -499,9 +499,9 @@ fig.update_xaxes(title_text="Wrk/Src Large Scale", row=3, col=7)
 fig.update_layout(barmode='overlay')
 fig.update_layout(
     title={
-        'text': "<b>NebulaStream Performance Numbers -- MemoryMode -- Source/Sink </b><br>"
+        'text': "<b>NebulaStream Performance Numbers -- MemoryMode -- ReadOnly </b><br>"
                 "<span style=\"font-size:0.6em\" line-height=1em;margin=-4px>Default Config(GlobalBufferPool=65536, "
-                "LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query: Query::from(input).sink(NullOutputSinkDescriptor::create());)"
+                "LocalBufferPool=1024, BufferSize=4MB, Threads=1, Source=1, TupleSize=24Byte, Query::from(input).filter(Attribute(value) > 10000).sink(NullOutputSinkDescriptor::create()); -- 0% selectivity)"
                 "<br>",
         'y': 0.98,
         'x': 0.5,
@@ -539,4 +539,4 @@ fig.update_layout(legend=dict(
 ))
 
 ###############################################################
-plotly.offline.plot(fig, filename='SourceSinkWorkload.html')
+plotly.offline.plot(fig, filename='ReadOnlyWorkload.html')

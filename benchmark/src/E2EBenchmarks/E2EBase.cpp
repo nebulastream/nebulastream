@@ -228,9 +228,6 @@ void E2EBase::setupSources() {
     out << input;
     out.close();
 
-#ifdef NES_DEBUG_MODE
-#error "We want O3"
-#endif
     NES_ASSERT(crd->getNesWorker()->registerLogicalStream("input", testSchemaFileName), "failed to create logical stream");
 
     auto mode = getInputOutputModeFromString(config->getInputOutputMode()->getValue());
@@ -742,21 +739,24 @@ std::string E2EBase::getResult() {
     }
 
     uint64_t throughputInTupsPerSec = tuplesProcessed / runtimeInSec;
+    uint64_t throughputInTasksPerSec = tasksProcessed / runtimeInSec;
     uint64_t throughputInMBPerSec =
         (tuplesProcessed * defaultSchema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
     uint64_t avgLatencyInMs = latencySum / bufferProcessed;
 
     out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
-        << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInMBPerSec
+        << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInTasksPerSec << "," << throughputInMBPerSec
         << "," << avgLatencyInMs;
 
     size_t tuplesPerBuffer = bufferSizeInBytes / defaultSchema->getSchemaSizeInBytes();
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
+    std::cout << "tasksProcessed=" << tasksProcessed << std::endl;
     std::cout << "bufferProcessed=" << bufferProcessed << std::endl;
     std::cout << "Input tuples=" << bufferProcessed * tuplesPerBuffer << std::endl;
     std::cout << "Output tuples=" << tuplesProcessed << std::endl;
     std::cout << "tasksProcessed=" << tasksProcessed << std::endl;
     std::cout << "tuples per sec=" << throughputInTupsPerSec << std::endl;
+    std::cout << "tasks per sec=" << throughputInTasksPerSec << std::endl;
     std::cout << "avgLatencyInMs=" << avgLatencyInMs << std::endl;
     std::cout << "runtime in sec=" << runtimeInSec << std::endl;
     std::cout << "throughput MB/se=" << throughputInMBPerSec << std::endl;

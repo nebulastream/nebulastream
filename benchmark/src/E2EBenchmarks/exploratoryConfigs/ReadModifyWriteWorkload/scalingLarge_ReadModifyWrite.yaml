@@ -12,9 +12,9 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: MemoryMode
-outputFile: scalingLarge.csv
-benchmarkName: scalingLarge
-query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
+outputFile: scalingLargeReadModifyWriteOnly.csv
+benchmarkName: scalingLargeReadModifyWriteOnly
+query: 'Query::from("input").map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
@@ -23,4 +23,3 @@ logLevel: LOG_NONE
 experimentMeasureIntervalInSeconds: 1
 startupSleepIntervalInSeconds: 3
 numberOfMeasurementsToCollect: 5
-
