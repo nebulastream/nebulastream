@@ -318,6 +318,7 @@ WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPla
     NES_DEBUG("WorkerRPCClient: Monitoring request address=" << address);
 
     MonitoringRequest request;
+    //TODO: the plan should not be transmitted with each request
     request.mutable_monitoringplan()->CopyFrom(plan->serialize());
 
     ClientContext context;
@@ -330,6 +331,7 @@ WorkerRPCClient::requestMonitoringData(const std::string& address, MonitoringPla
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
+        //TODO: the schema should not be transmitted here
         auto parsedSchema = SchemaSerializationUtil::deserializeSchema(reply.mutable_schema());
         memcpy(buf.getBufferAs<char>(), reply.buffer().data(), parsedSchema->getSchemaSizeInBytes());
         buf.setNumberOfTuples(1);
