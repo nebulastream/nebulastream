@@ -28,12 +28,8 @@
 
 namespace NES::NodeEngine {
 
-BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(false) {
-    // nop
-}
-
-BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers) : bufferSize(0), numOfBuffers(0), isConfigured(false) {
-    configure(bufferSize, numOfBuffers);
+BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment) : bufferSize(0), numOfBuffers(0) {
+    initialize(bufferSize, numOfBuffers, withAlignment);
 }
 
 void BufferManager::destroy() {
@@ -76,11 +72,8 @@ BufferManager::~BufferManager() {
     // nop
 }
 
-void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
+void BufferManager::initialize(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment) {
     std::unique_lock lock(availableBuffersMutex);
-    if (isConfigured) {
-        NES_THROW_RUNTIME_ERROR("[BufferManager] Already configured - we cannot change the buffer manager at runtime for now!");
-    }
 
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
@@ -94,22 +87,35 @@ void BufferManager::configure(uint32_t bufferSize, uint32_t numOfBuffers) {
     if (requiredMemorySpace > memorySizeInBytes) {
         NES_THROW_RUNTIME_ERROR("NES tries to malloc more memory than physically available");
     }
+    if (withAlignment > 0) {
+        if ((withAlignment & (withAlignment - 1))) { // not a pow of two
+            NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is not a pow of two");
+        }
+    } else if (withAlignment != 0) {
+        NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is invalid");
+    }
 
     allBuffers.reserve(numOfBuffers);
     size_t realSize = bufferSize + sizeof(detail::BufferControlBlock);
     for (size_t i = 0; i < numOfBuffers; ++i) {
-        auto ptr = static_cast<uint8_t*>(malloc(realSize));
+        uint8_t* ptr = nullptr;
+        if (withAlignment == 0) {
+            ptr = static_cast<uint8_t*>(malloc(realSize));
+        } else {
+            void* tmp;
+            NES_ASSERT(posix_memalign(&tmp, withAlignment, realSize) == 0, "memory allocation failed with alignment");
+            ptr = static_cast<uint8_t*>(tmp);
+        }
         if (ptr == nullptr) {
-            NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
+            NES_THROW_RUNTIME_ERROR("memory allocation failed");
         }
         //We touch each buffer to make sure that is really allocated
-        std::memset(ptr, 0, sizeof(uint64_t));
+        std::memset(ptr, 0, realSize);
         allBuffers.emplace_back(ptr, bufferSize, this, [](detail::MemorySegment* segment, BufferRecycler* recycler) {
             recycler->recyclePooledBuffer(segment);
         });
         availableBuffers.emplace_back(&allBuffers.back());
     }
-    isConfigured = true;
     NES_DEBUG("BufferManager configuration bufferSize=" << this->bufferSize << " numOfBuffers=" << this->numOfBuffers);
 }
 
@@ -247,8 +253,6 @@ size_t BufferManager::getAvailableBuffers() const {
     std::unique_lock lock(availableBuffersMutex);
     return availableBuffers.size();
 }
-
-void BufferManager::printStatistics() { NES_INFO("BufferManager Statistics:"); }
 
 BufferManager::UnpooledBufferHolder::UnpooledBufferHolder() : size(0), free(false) { segment.reset(); }
 
