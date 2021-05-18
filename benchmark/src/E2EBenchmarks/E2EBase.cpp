@@ -742,7 +742,7 @@ std::string E2EBase::getResult() {
     uint64_t throughputInTasksPerSec = tasksProcessed / runtimeInSec;
     uint64_t throughputInMBPerSec =
         (tuplesProcessed * defaultSchema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
-    uint64_t avgLatencyInMs = latencySum / bufferProcessed;
+    double avgLatencyInMs = (double (latencySum * 1000) / (double) bufferProcessed)/ 1000;
 
     out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
         << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInTasksPerSec << "," << throughputInMBPerSec
