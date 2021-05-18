@@ -147,14 +147,8 @@ void QueryManager::destroy() {
     if (queryManagerStatus.compare_exchange_strong(expected, Destroyed)) {
         {
             std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-            NES_WARNING("QueryManager: Destroy Task Queue " << taskQueue.size());
-#else
-            //    std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
-            NES_DEBUG("QueryManager: Destroy Task Queue " << taskQueue.size());
-//            taskQueue = folly::MPMCQueue<Task>();
-#endif
-            NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size());
+            NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size()
+                      << " task queue size=" << taskQueue.size());
 
             sourceIdToExecutableQueryPlanMap.clear();
             queryToStatisticsMap.clear();
@@ -835,9 +829,9 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         statistics->incProcessedTasks();
         statistics->incProcessedBuffers();
         auto creation = task.getBufferRef().getCreationTimestamp();
-        auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                       std::chrono::high_resolution_clock::now().time_since_epoch())
-                       .count();
+        auto now =
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
+                .count();
         auto diff = now - creation;
         statistics->incLatencySum(diff);
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
