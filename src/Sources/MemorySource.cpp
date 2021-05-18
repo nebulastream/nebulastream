@@ -53,13 +53,13 @@ MemorySource::MemorySource(SchemaPtr schema,
     }
 
     //if the memory area is smaller than a buffer
-    if (memoryAreaSize <= bufferManager->getBufferSize()) {
-        numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(schema->getSchemaSizeInBytes()));
+    if (memoryAreaSize <= globalBufferManager->getBufferSize()) {
+        numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schema->getSchemaSizeInBytes()));
     } else {
         //if the memory area spans multiple buffers
-        auto restTuples = (memoryAreaSize - currentPositionInBytes) / schema->getSchemaSizeInBytes();
+        auto restTuples = (memoryAreaSize - currentPositionInBytes) / this->schema->getSchemaSizeInBytes();
         auto numberOfTuplesPerBuffer =
-            std::floor(double(bufferManager->getBufferSize()) / double(schema->getSchemaSizeInBytes()));
+            std::floor(double(globalBufferManager->getBufferSize()) / double(this->schema->getSchemaSizeInBytes()));
         if (restTuples > numberOfTuplesPerBuffer) {
             numberOfTuplesToProduce = numberOfTuplesPerBuffer;
         } else {
