@@ -23,28 +23,33 @@
 namespace NES {
 
 /**
- * @brief iteration operator, which contains the number of expected iterations (minimal,maximal)
- * all possible cases: (n) = exactly, (n,0) min n, (0,m) = max and (n,m) = min to max
+ * @brief iteration operator, which contains the number of expected iterations (minimal,maximal) for an event of one stream
+ * i.e., how often a duplicate event can (need to) appear before it fits the pattern
+ * all possible cases:
+ *  1. (n) = exactly n times an event appears per time window
+ *  2. (n,0) = at least n times an event appears per time window, regardless how much more
+ *  3. (0,m) = maximal m times an event appears per time window
+ *  4. (n,m) = at least n times an event appears and not more than m times per time window
  */
 class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    explicit IterationLogicalOperatorNode(std::uint64_t minIterations, std::uint64_t maxIterations, OperatorId id);
+    explicit IterationLogicalOperatorNode(uint64_t minIterations, uint64_t maxIterations, OperatorId id);
     ~IterationLogicalOperatorNode() = default;
 
     /**
     * @brief returns the minimal amount of iterations
     * @return amount of iterations
     */
-    std::uint64_t getMinIterations();
+    uint64_t getMinIterations();
 
     /**
    * @brief returns the maximal amount of iterations
    * @return amount of iterations
    */
-    std::uint64_t getMaxIterations();
+    uint64_t getMaxIterations();
 
     /**
-     * @brief check if two operators have the same output schema
+     * @brief check if two operators of the same class are equivalent, here: equal number of minIterations and maxIterations
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
@@ -52,17 +57,12 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;
     void inferStringSignature() override;
-
-    /**
-    * @brief infers the input and out schema of this operator depending on its child.
-    * @return true if schema was correctly inferred
-    */
     bool inferSchema() override;
     OperatorNodePtr copy() override;
 
   private:
-    std::uint64_t minIterations;
-    std::uint64_t maxIterations;
+    uint64_t minIterations;
+    uint64_t maxIterations;
 };
 
 }// namespace NES
