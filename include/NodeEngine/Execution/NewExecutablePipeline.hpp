@@ -33,12 +33,8 @@ namespace NES::NodeEngine::Execution {
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
 class NewExecutablePipeline : public Reconfigurable {
-    enum PipelineStatus : uint8_t {
-        PipelineCreated,
-        PipelineRunning,
-        PipelineStopped,
-        PipelineFailed
-    };
+    enum PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
+
   public:
     explicit NewExecutablePipeline(uint32_t pipelineId,
                                    QuerySubPlanId qepId,

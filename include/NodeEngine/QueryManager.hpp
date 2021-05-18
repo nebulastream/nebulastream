@@ -53,7 +53,7 @@ namespace NES {
 namespace NodeEngine {
 
 class ThreadPool;
-typedef std::shared_ptr<ThreadPool> ThreadPoolPtr; // TODO consider moving this atomic in c++20
+typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;// TODO consider moving this atomic in c++20
 
 /**
  * @brief the query manager is the central class to process queries.
