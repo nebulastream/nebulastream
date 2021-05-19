@@ -36,7 +36,7 @@
 #include <API/Schema.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <Windowing/Runtime/WindowManager.hpp>
 #include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/ExecutableCountAggregation.hpp>

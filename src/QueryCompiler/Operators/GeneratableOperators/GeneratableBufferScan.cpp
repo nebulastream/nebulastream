@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <Util/UtilityFunctions.hpp>
 

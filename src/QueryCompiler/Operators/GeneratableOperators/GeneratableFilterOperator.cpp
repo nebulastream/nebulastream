@@ -15,7 +15,7 @@
 */
 
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 

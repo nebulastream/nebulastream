@@ -17,7 +17,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEFILTER_HPP_
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
-#include <QueryCompiler/LegacyExpression.hpp>
+#include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {

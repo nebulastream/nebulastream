@@ -15,9 +15,9 @@
 */
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 namespace NES {

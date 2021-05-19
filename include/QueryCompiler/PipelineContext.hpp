@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #include <API/Schema.hpp>
-#include <QueryCompiler/RecordHandler.hpp>
+#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 
 namespace NES::Windowing {
 
