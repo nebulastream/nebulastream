@@ -20,8 +20,8 @@
 #include <memory>
 #include <string>
 
-#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <utility>
 

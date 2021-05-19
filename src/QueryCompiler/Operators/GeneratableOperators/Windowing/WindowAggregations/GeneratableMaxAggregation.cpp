@@ -15,10 +15,10 @@
 */
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 

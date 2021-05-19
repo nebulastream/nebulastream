@@ -18,8 +18,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>

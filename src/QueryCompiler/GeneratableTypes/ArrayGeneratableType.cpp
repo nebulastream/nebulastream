@@ -16,11 +16,11 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/FunctionCallStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/ArrayGeneratableType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>

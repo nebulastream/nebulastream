@@ -22,7 +22,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/ArrayGeneratableType.hpp>

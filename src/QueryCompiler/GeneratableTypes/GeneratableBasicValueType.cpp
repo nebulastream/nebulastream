@@ -15,7 +15,7 @@
 */
 
 #include <Common/ValueTypes/BasicValue.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableBasicValueType.hpp>
 #include <utility>
 

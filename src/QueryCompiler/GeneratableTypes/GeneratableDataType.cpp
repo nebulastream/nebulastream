@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 namespace NES {
 

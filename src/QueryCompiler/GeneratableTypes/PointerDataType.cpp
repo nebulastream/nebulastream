@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
 
 namespace NES {

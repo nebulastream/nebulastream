@@ -14,9 +14,9 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
-#include <QueryCompiler/GeneratedCode.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BlockScopeStatement.hpp>
+#include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <memory>
 #include <utility>

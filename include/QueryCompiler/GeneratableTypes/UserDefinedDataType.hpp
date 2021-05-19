@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
 
-#include <QueryCompiler/CCodeGenerator/Declarations/StructDeclaration.hpp>
-#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <memory>
 #include <string>

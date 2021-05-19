@@ -16,9 +16,9 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_
-#include <QueryCompiler/RecordHandler.hpp>
-#include <memory>
+#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <memory>
 
 namespace NES::Windowing {
 class WindowAggregationDescriptor;

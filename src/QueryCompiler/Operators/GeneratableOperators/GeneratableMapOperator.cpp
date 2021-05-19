@@ -17,7 +17,7 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 

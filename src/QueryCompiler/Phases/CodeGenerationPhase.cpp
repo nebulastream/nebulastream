@@ -15,8 +15,8 @@
 */
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
