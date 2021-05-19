@@ -26,7 +26,7 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
- * This class is non-thread safe
+ * @caution This class is non-thread safe
  */
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:

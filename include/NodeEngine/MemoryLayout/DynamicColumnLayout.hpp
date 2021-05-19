@@ -24,7 +24,7 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
 
 /**
  * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
- * This class is non-thread safe
+ * @caution This class is non-thread safe
  */
 class DynamicColumnLayout;
 
