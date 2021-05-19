@@ -21,6 +21,7 @@ add_source_nes(
         PhysicalSchema.cpp
         PhysicalFieldUtil.cpp
         DynamicColumnLayout.cpp
+        DynamicLayoutBuffer.cpp
         DynamicRowLayout.cpp
         DynamicMemoryLayout.cpp
         DynamicRowLayoutBuffer.cpp

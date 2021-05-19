@@ -38,8 +38,25 @@ class DynamicLayoutBuffer {
      * @param tupleBuffer
      * @param capacity
      */
-    DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
-        : tupleBuffer(tupleBuffer), capacity(capacity), numberOfRecords(0) {}
+    DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity);
+
+    /**
+    * @brief This method returns the maximum number of records, so the capacity.
+    * @return
+    */
+    uint64_t getCapacity();
+
+    /**
+     * @brief This method returns the current number of records that are in the associated buffer
+     * @return
+     */
+    uint64_t getNumberOfRecords();
+
+    /**
+     * @brief This methods returns a reference to the associated buffer
+     * @return
+     */
+    TupleBuffer getTupleBuffer();
 
     /**
      * @brief calculates the address/offset of ithRecord and jthField
@@ -49,23 +66,7 @@ class DynamicLayoutBuffer {
      */
     virtual uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) = 0;
 
-    /**
-     * @brief This method returns the maximum number of records, so the capacity.
-     * @return
-     */
-    uint64_t getCapacity() { return capacity; }
 
-    /**
-     * @brief This method returns the current number of records that are in the associated buffer
-     * @return
-     */
-    uint64_t getNumberOfRecords() { return numberOfRecords; }
-
-    /**
-     * @brief This methods returns a reference to the associated buffer
-     * @return
-     */
-    TupleBuffer getTupleBuffer() { return tupleBuffer; }
 
 
   protected:

@@ -101,7 +101,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      * @param recordIndex
      */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<I < sizeof...(Ts), void>::type
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type
     copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
                             const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes, uint64_t recordIndex);
     /**
@@ -126,7 +126,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      * @param fieldSizes needed for calculating correct address
      */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<I < sizeof...(Ts), void>::type
+    typename std::enable_if<(I < sizeof...(Ts)), void>::type
     copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup,
                               uint64_t recordIndex,
                               const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes);
@@ -151,7 +151,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
 };
 
 template<size_t I, typename... Ts>
-typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
+typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
                                                                                                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
                                                                                                            uint64_t recordIndex) {
     // Finished iterating through tuple via template recursion. So all that is left is to do a simple return.
@@ -175,7 +175,7 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuff
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsFromBuffer(
+typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsFromBuffer(
     std::tuple<Ts...>& tup,
     uint64_t recordIndex,
     const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes) {
