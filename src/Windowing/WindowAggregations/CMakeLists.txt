@@ -17,6 +17,7 @@ add_source_nes(
         MaxAggregationDescriptor.cpp
         MinAggregationDescriptor.cpp
         CountAggregationDescriptor.cpp
+        AvgAggregationDescriptor.cpp
         WindowAggregationDescriptor.cpp
         ExecutableWindowAggregation.cpp
         ExecutableMaxAggregation.cpp

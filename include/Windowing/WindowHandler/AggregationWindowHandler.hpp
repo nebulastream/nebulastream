@@ -36,10 +36,10 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
         BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,
-        uint64_t id)
+        uint64_t id, PartialAggregateType partialAggregateInitialValue)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
-          id(id), isRunning(false), windowStateVariable(nullptr) {
+          id(id), isRunning(false), windowStateVariable(nullptr), partialAggregateInitialValue(partialAggregateInitialValue) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
@@ -51,12 +51,13 @@ class AggregationWindowHandler : public AbstractWindowHandler {
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
            BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
            BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,
-           uint64_t id) {
+           uint64_t id, PartialAggregateType partialAggregateInitialValue) {
         return std::make_shared<AggregationWindowHandler>(windowDefinition,
                                                           windowAggregation,
                                                           executablePolicyTrigger,
                                                           executableWindowAction,
-                                                          id);
+                                                          id,
+                                                          partialAggregateInitialValue);
     }
 
     ~AggregationWindowHandler() {
@@ -74,8 +75,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         auto expected = false;
 
         //Defines a callback to execute every time a new key-value pair is created
-        auto defaultCallback = [](const KeyType&) {
-            return new Windowing::WindowSliceStore<PartialAggregateType>(0);
+        auto defaultCallback = [this](const KeyType&) {
+            return new Windowing::WindowSliceStore<PartialAggregateType>(partialAggregateInitialValue);
         };
         this->windowStateVariable =
             stateManager->registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(toString(), defaultCallback);
@@ -287,6 +288,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     mutable std::recursive_mutex windowMutex;
     std::atomic<bool> isRunning;
     NodeEngine::StateManagerPtr stateManager;
+    PartialAggregateType partialAggregateInitialValue;
 };
 
 }// namespace NES::Windowing
