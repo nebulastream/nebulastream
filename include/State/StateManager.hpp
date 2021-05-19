@@ -20,6 +20,7 @@
 #include <State/StateVariable.hpp>
 #include <mutex>
 #include <unordered_map>
+#include <State/StateId.hpp>
 namespace NES {
 namespace NodeEngine {
 /**
@@ -32,7 +33,7 @@ class StateManager {
 
   private:
     std::mutex mutex;
-    std::unordered_map<std::string, state_variable_base_type> state_variables;
+    std::unordered_map<StateId, state_variable_base_type> state_variables;
 
   public:
     StateManager() = default;
@@ -46,7 +47,7 @@ class StateManager {
      * @return the state variable as a reference
      */
     template<typename Key, typename Value>
-    StateVariable<Key, Value>* registerStateWithDefault(const std::string& variable_name,
+    StateVariable<Key, Value>* registerStateWithDefault(const StateId& variable_name,
                                                         std::function<Value(const Key&)>&& defaultCallback) {
         std::unique_lock<std::mutex> lock(mutex);
         auto state_var = new StateVariable<Key, Value>(variable_name, std::move(defaultCallback));
@@ -62,7 +63,7 @@ class StateManager {
      * @return the state variable as a reference
      */
     template<typename Key, typename Value>
-    StateVariable<Key, Value>* registerState(const std::string& variableName) {
+    StateVariable<Key, Value>* registerState(const StateId& variableName) {
         std::unique_lock<std::mutex> lock(mutex);
         auto state_var = new StateVariable<Key, Value>(variableName);
         state_variables[variableName] = state_var;
