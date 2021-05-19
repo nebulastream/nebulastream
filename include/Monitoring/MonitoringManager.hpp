@@ -20,6 +20,7 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 namespace NES {
 
@@ -27,20 +28,44 @@ class MonitoringPlan;
 class TupleBuffer;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
+class WorkerRPCClient;
+typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+
+class Topology;
+typedef std::shared_ptr<Topology> TopologyPtr;
+
 /**
  * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
  */
 class MonitoringManager {
   public:
-    MonitoringManager();
+    MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology);
+    ~MonitoringManager();
 
-    bool registerMonitoringPlan(uint64_t nodeId, MonitoringPlanPtr monitoringPlan);
-    bool requestMonitoringData(uint64_t nodeId, NodeEngine::TupleBuffer& tupleBuffer);
+    /**
+     * @brief Register a monitoring plan for given nodes.
+     * @param nodeId
+     * @param monitoringPlan
+     * @return True, if successful, else false
+     */
+    bool registerMonitoringPlan(std::vector<uint64_t> nodeIds, MonitoringPlanPtr monitoringPlan);
+
+    /**
+     * @brief Get the monitoring data for a given node.
+     * Note: Multiple nodes are not possible, as every node can have a different monitoring plan and
+     * TupleBuffer is not supporting different nested schemas.
+     * @param nodeId
+     * @param tupleBuffer
+     * @return
+     */
+    bool requestMonitoringData(uint64_t nodeIds, NodeEngine::TupleBuffer& tupleBuffer);
 
   private:
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
+    WorkerRPCClientPtr workerClient;
+    TopologyPtr topology;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_MONITORINGMANAGER_HPP_
