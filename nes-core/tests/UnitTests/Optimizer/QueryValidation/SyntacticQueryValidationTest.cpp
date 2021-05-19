@@ -171,4 +171,18 @@ TEST_F(SyntacticQueryValidationTest, attributeRenameOutsideProjection) {
     TestForException(queryStringWithJoinEqualsTo);
 }
 
+// Positive test for a syntactically valid query
+TEST_F(SyntacticQueryValidationTest, validQueryWithInferModelOperatorTest) {
+    NES_INFO("Valid Query test with Infer model operator");
+
+    auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
+
+    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100)"
+                              "                                .inferModel(\"models/iris.tflite\",\n"
+                              "                                           {Attribute(\"value\"), Attribute(\"id\")},\n"
+                              "                                           {Attribute(\"value\")}); ";
+
+    syntacticQueryValidation.checkValidity(queryString);
+}
+
 }// namespace NES

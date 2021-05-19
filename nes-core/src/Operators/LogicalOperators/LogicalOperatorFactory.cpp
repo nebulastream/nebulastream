@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
@@ -61,6 +62,13 @@ LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createProjectionOperator(con
 LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression,
                                                                       OperatorId id) {
     return std::make_shared<MapLogicalOperatorNode>(mapExpression, id);
+}
+
+LogicalUnaryOperatorNodePtr LogicalOperatorFactory::createInferModelOperator(std::string model,
+                                                                             std::vector<ExpressionItem> inputFields,
+                                                                             std::vector<ExpressionItem> outputFields,
+                                                                             OperatorId id) {
+    return std::make_shared<InferModelLogicalOperatorNode>(model, inputFields, outputFields, id);
 }
 
 LogicalBinaryOperatorNodePtr LogicalOperatorFactory::createUnionOperator(OperatorId id) {

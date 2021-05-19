@@ -16,6 +16,7 @@ add_source_files(nes-core
         FilterLogicalOperatorNode.cpp
         ProjectionLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
+        InferModelLogicalOperatorNode.cpp
         UnionLogicalOperatorNode.cpp
         LogicalOperatorFactory.cpp
         BroadcastLogicalOperatorNode.cpp

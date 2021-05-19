@@ -354,6 +354,16 @@ endif ()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
 message(STATUS "Using z3: " ${Z3_LIBRARIES})
 
+# TensorFlow Lite
+message(STATUS, "TF-Lite")
+set(TENSORFLOW_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/tensorflow_src" CACHE PATH
+    "Directory that contains the TensorFlow project")
+add_subdirectory(
+        "${TENSORFLOW_SOURCE_DIR}/tensorflow/lite"
+        "${CMAKE_CURRENT_BINARY_DIR}/tensorflow-lite"
+        EXCLUDE_FROM_ALL
+)
+
 # Log4cc
 find_package(log4cxx CONFIG REQUIRED)
 if (NOT ${log4cxx})

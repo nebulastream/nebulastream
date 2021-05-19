@@ -374,6 +374,9 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
     return true;
 }
 
+// add code generator
+//bool CCodeGenerator::generateCodeForInferModel()
+
 /**
  * generates code for a mapper with an defined AttributeField and a PredicatePtr
  * @param field - existing or new created field that includes the mapped function

@@ -51,6 +51,9 @@ using ProjectionLogicalOperatorNodePtr = std::shared_ptr<ProjectionLogicalOperat
 class MapLogicalOperatorNode;
 using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
 
+class InferModelLogicalOperatorNode;
+typedef std::shared_ptr<InferModelLogicalOperatorNode> InferModelLogicalOperatorNodePtr;
+
 class WindowLogicalOperatorNode;
 using WindowLogicalOperatorNodePtr = std::shared_ptr<WindowLogicalOperatorNode>;
 
