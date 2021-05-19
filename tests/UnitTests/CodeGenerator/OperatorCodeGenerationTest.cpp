@@ -701,7 +701,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
         valueFields[0] = 10;     //value 10
         buffer.setNumberOfTuples(1);
 
-
         startFields[1] = 100;   //start 100
         stopFields[1] = 110;    //stop 200
         cntFields[0] = 1;       //cnt

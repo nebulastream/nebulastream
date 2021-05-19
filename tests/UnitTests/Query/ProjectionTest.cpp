@@ -132,8 +132,6 @@ class WindowSource : public NES::DefaultSource {
         auto rowLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = rowLayout->bind(buffer);
 
-
-
         for (int i = 0; i < 10; i++) {
             NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(0, bindedRowLayout)[i] = 1;
             NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(1, bindedRowLayout)[i] = 1;
