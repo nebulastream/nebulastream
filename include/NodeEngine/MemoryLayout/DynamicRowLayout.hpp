@@ -26,7 +26,7 @@ typedef uint64_t FIELD_OFFSET;
 
 /**
  * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member
- * This class is non-thread safe
+ * @caution This class is non-thread safe
  */
 class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_from_this<DynamicRowLayout> {
 

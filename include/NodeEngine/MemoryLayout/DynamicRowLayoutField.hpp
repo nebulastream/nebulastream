@@ -27,7 +27,7 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
  * @brief This class is used for handling fields in a given DynamicColumnLayoutBuffer. It also overrides the operator[] for a more user friendly access of records for a predefined field.
  * @tparam T
  * @tparam boundaryChecks
- * This class is non-thread safe
+ * @caution This class is non-thread safe
  */
 template<class T, bool boundaryChecks>
 class DynamicRowLayoutField {
