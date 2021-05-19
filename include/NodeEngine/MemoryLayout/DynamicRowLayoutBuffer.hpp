@@ -103,9 +103,17 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @tparam Ts fields of tup
      */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
+    typename std::enable_if<I < sizeof...(Ts), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
+
+    /**
+     * @brief Recursion anchor for above function
+     * @param address of corresponding tuples in tuple buffer
+     * @param tup tuple to be read from
+     * @tparam I works as a field index
+     * @tparam Ts fields of tup
+     */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
+    typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsToBuffer(std::tuple<Ts...> tup, uint8_t* address);
 
     /**
      * @brief Copies fields of tuple sequentially from address, by iterating over tup via template recursion
@@ -115,9 +123,17 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @tparam Ts fields of tup
     */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<I == sizeof...(Ts), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
+    typename std::enable_if<I < sizeof...(Ts), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
+
+    /**
+     * @brief Recursion anchor for above function
+     * @param address of corresponding tuples in tuple buffer
+     * @param tup tuple to be read from
+     * @tparam I works as a field index
+     * @tparam Ts fields of tup
+     */
     template<size_t I = 0, typename... Ts>
-    typename std::enable_if<(I < sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
+    typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
 
     const DynamicRowLayoutPtr dynamicRowLayout;
     const uint8_t* basePointer;
