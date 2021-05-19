@@ -16,6 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
@@ -137,21 +138,36 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionL
 
     //Extract projected columns
     std::vector<std::string> updatedColumns;
-    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemas;
+    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaFieldToExprMaps;
     auto outputSchema = projectOperator->getOutputSchema();
-    auto schemas = childQuerySignature->getSchemaFieldToExprMaps();
-    for (auto schemaMap : schemas) {
+    auto expressions = projectOperator->getExpressions();
+
+    auto schemaFieldToExprMaps = childQuerySignature->getSchemaFieldToExprMaps();
+    for (auto schemaFieldToExprMap : schemaFieldToExprMaps) {
         std::map<std::string, z3::ExprPtr> updatedSchemaMap;
-        for (auto& field : outputSchema->fields) {
-            auto fieldName = field->getName();
-            auto found = schemaMap.find(fieldName);
-            if (found == schemaMap.end()) {
+        for (auto& expression : expressions) {
+
+            std::string newFieldName;
+            std::string fieldName;
+
+            if (expression->instanceOf<FieldRenameExpressionNode>()) {
+                auto fieldRename = expression->as<FieldRenameExpressionNode>();
+                newFieldName = fieldRename->getNewFieldName();
+                fieldName = fieldRename->getOriginalField()->getFieldName();
+            } else {
+                auto fieldAccess = expression->as<FieldAccessExpressionNode>();
+                newFieldName = fieldAccess->getFieldName();
+                fieldName = newFieldName;
+            }
+
+            auto found = schemaFieldToExprMap.find(fieldName);
+            if (found == schemaFieldToExprMap.end()) {
                 NES_THROW_RUNTIME_ERROR("QuerySignatureUtil: Unable to find projected field " + fieldName
                                         + " in children column set.");
             }
-            updatedSchemaMap[fieldName] = found->second;
+            updatedSchemaMap[newFieldName] = found->second;
         }
-        updatedSchemas.emplace_back(updatedSchemaMap);
+        updatedSchemaFieldToExprMaps.emplace_back(updatedSchemaMap);
     }
 
     for (auto& field : outputSchema->fields) {
@@ -163,7 +179,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForProject(ProjectionL
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     return QuerySignature::create(std::move(conditions),
                                   std::move(updatedColumns),
-                                  std::move(updatedSchemas),
+                                  std::move(updatedSchemaFieldToExprMaps),
                                   std::move(windowExpressions));
 }
 
@@ -241,12 +257,11 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     NES_TRACE("QuerySignatureUtil: Replace Z3 Expression for the filed with corresponding column values from "
               "children signatures");
     //Fetch the signature of only children and get the column values
-    auto schemas = childQuerySignature->getSchemaFieldToExprMaps();
+    auto schemaMaps = childQuerySignature->getSchemaFieldToExprMaps();
 
     //Substitute rhs operands with actual values computed previously
-    std::vector<std::map<std::string, z3::ExprPtr>> updatedSchemaMaps;
     z3::expr_vector filterExpressions(*context);
-    for (auto schemaMap : schemas) {
+    for (auto schemaMap : schemaMaps) {
         z3::ExprPtr updatedExpr = filterExpr;
         for (auto [operandExprName, operandExpr] : filterFieldMap) {
 
@@ -281,7 +296,7 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForFilter(z3::ContextP
     auto windowExpressions = childQuerySignature->getWindowsExpressions();
     auto columns = childQuerySignature->getColumns();
 
-    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(schemas), std::move(windowExpressions));
+    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(schemaMaps), std::move(windowExpressions));
 }
 
 QuerySignaturePtr

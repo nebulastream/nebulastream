@@ -1386,6 +1386,186 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
 }
 
 /**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
+ * but different filed names
+ */
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNames) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query1 = Query::from("car")
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("type") < 40)
+                       .project(Attribute("type").rename("t"), Attribute("value").rename("v"))
+                       .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query query2 = Query::from("car")
+                       .map(Attribute("value") = 40)
+                       .filter(Attribute("type") < 40)
+                       .project(Attribute("value"), Attribute("type"))
+                       .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    //assert
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
+
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedCompleteQueryMergerRule::create(context);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+        bool found = false;
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+            if (sink1GQNChild->equal(sink2GQNChild)) {
+                found = true;
+            }
+        }
+        EXPECT_TRUE(found);
+    }
+}
+
+/**
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
+ * but different filed names
+ */
+TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNamesAndFilters) {
+
+    // Prepare
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
+
+    Query query1 = Query::from("car")
+                       .filter(Attribute("type") < 40)
+                       .project(Attribute("type").rename("t"), Attribute("value").rename("v"))
+                       .filter(Attribute("v") < 30)
+                       .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan1 = query1.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator1 = queryPlan1->getSinkOperators()[0];
+    QueryId queryId1 = PlanIdGenerator::getNextQueryId();
+    queryPlan1->setQueryId(queryId1);
+
+    Query query2 = Query::from("car")
+                       .filter(Attribute("type") < 40)
+                       .project(Attribute("value"), Attribute("type"))
+                       .filter(Attribute("value") < 30)
+                       .sink(printSinkDescriptor);
+    QueryPlanPtr queryPlan2 = query2.getQueryPlan();
+    SinkLogicalOperatorNodePtr sinkOperator2 = queryPlan2->getSinkOperators()[0];
+    QueryId queryId2 = PlanIdGenerator::getNextQueryId();
+    queryPlan2->setQueryId(queryId2);
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    typeInferencePhase->execute(queryPlan1);
+    typeInferencePhase->execute(queryPlan2);
+
+    z3::ContextPtr context = std::make_shared<z3::context>();
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(context);
+    z3InferencePhase->execute(queryPlan1);
+    z3InferencePhase->execute(queryPlan2);
+
+    auto globalQueryPlan = GlobalQueryPlan::create();
+    globalQueryPlan->addQueryPlan(queryPlan1);
+    globalQueryPlan->addQueryPlan(queryPlan2);
+
+    //assert
+    auto sharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(sharedQMToDeploy.size() == 2);
+
+    auto sharedQueryPlan1 = sharedQMToDeploy[0]->getQueryPlan();
+    auto sharedQueryPlan2 = sharedQMToDeploy[1]->getQueryPlan();
+
+    //assert that the up-stream operator of sink has only one down-stream operator
+    auto rootOperators1 = sharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(rootOperators1.size() == 1);
+
+    auto root1Children = rootOperators1[0]->getChildren();
+    EXPECT_TRUE(root1Children.size() == 1);
+    EXPECT_TRUE(root1Children[0]->getParents().size() == 1);
+
+    auto rootOperators2 = sharedQueryPlan2->getRootOperators();
+    EXPECT_TRUE(rootOperators2.size() == 1);
+
+    auto root2Children = rootOperators2[0]->getChildren();
+    EXPECT_TRUE(root2Children.size() == 1);
+    EXPECT_TRUE(root2Children[0]->getParents().size() == 1);
+
+    //execute
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedCompleteQueryMergerRule::create(context);
+    signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
+
+    //assert
+    auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryMetaDataToDeploy();
+    EXPECT_TRUE(updatedSharedQMToDeploy.size() == 1);
+
+    auto updatedSharedQueryPlan1 = updatedSharedQMToDeploy[0]->getQueryPlan();
+    EXPECT_TRUE(updatedSharedQueryPlan1);
+
+    //assert that the sink operators have same up-stream operator
+    auto updatedRootOperators1 = updatedSharedQueryPlan1->getRootOperators();
+    EXPECT_TRUE(updatedRootOperators1.size() == 2);
+
+    for (auto sink1GQNChild : updatedRootOperators1[0]->getChildren()) {
+        bool found = false;
+        for (auto sink2GQNChild : updatedRootOperators1[1]->getChildren()) {
+            if (sink1GQNChild->equal(sink2GQNChild)) {
+                found = true;
+            }
+        }
+        EXPECT_TRUE(found);
+    }
+}
+
+/**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operator but in different order
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSameProjectOperatorButDifferentOrder) {
