@@ -68,47 +68,47 @@ std::optional<NodeEngine::TupleBuffer> DefaultSource::receiveData() {
             auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
             if (physicalType->isBasicType()) {
                 auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-                if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
+                if (basicPhysicalType->nativeType == BasicPhysicalType::CHAR) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<char, true>::create(fieldIndex,
                                                                                                bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_8) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_16) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, true>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_32) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, true>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::UINT_64) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(fieldIndex,
                                                                                                    bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_8) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, true>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_16) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_32) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::INT_64) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(fieldIndex,
                                                                                                   bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::FLOAT) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(fieldIndex,
                                                                                                 bindedRowLayout)[recordIndex] =
                         value;
-                } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
+                } else if (basicPhysicalType->nativeType == BasicPhysicalType::DOUBLE) {
                     NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(fieldIndex,
                                                                                                  bindedRowLayout)[recordIndex] =
                         value;
