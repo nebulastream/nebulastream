@@ -162,7 +162,7 @@ void BenchmarkUtils::runBenchmark(std::vector<NodeEngine::QueryStatistics*>& sta
     //    NES_WARNING("BenchmarkUtils: Stopping query...");
     //    nodeEngine->stopQuery(1, false);
     //    NES_WARNING("Query was stopped!");
-    
+
     /* This is not necessary anymore as we do not want to have the differences anymore. We are only interested in the total
      * number of tuples, buffers, tasks. Via the total number and runSingleExperimentSeconds we can calculate the throughput
      *
