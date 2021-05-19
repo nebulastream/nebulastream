@@ -253,11 +253,6 @@ add_executable(query-tests "UnitTests/Catalogs/QueryTest.cpp")
 target_link_libraries(query-tests nes ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 
-# QueryTest
-add_executable(translate-to-generatable-operator-phase-tests "UnitTests/QueryCompiler/TranslateToGeneratableOperatorPhaseTest.cpp")
-target_link_libraries(translate-to-generatable-operator-phase-tests nes ${GTEST_LIBRARIES})
-add_test(NAME translate-to-generatable-operator-phase-tests COMMAND translate-to-generatable-operator-phase-tests)
-
 # QueryPlanIteratorTest
 add_executable(queryplan-util-iterator-test "UnitTests/Plans/Util/QueryPlanIteratorTest.cpp")
 target_link_libraries(queryplan-util-iterator-test nes ${GTEST_LIBRARIES})

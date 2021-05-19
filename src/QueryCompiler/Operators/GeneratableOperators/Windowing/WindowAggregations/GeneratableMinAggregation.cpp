@@ -17,11 +17,13 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 namespace NES {
+namespace QueryCompilation {
+namespace GeneratableOperators {
 
 GeneratableMinAggregation::GeneratableMinAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
@@ -40,4 +42,6 @@ void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto ifStatement = IF(partialRef > *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
+}// namespace GeneratableOperators
+}// namespace QueryCompilation
 }// namespace NES

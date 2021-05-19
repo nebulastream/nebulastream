@@ -16,8 +16,10 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMINAGGREGATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMINAGGREGATION_HPP_
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 namespace NES {
+namespace QueryCompilation {
+namespace GeneratableOperators {
 
 class GeneratableMinAggregation : public GeneratableWindowAggregation {
   public:
@@ -40,6 +42,8 @@ class GeneratableMinAggregation : public GeneratableWindowAggregation {
                             RecordHandlerPtr recordHandler) override;
 };
 
+}// namespace GeneratableOperators
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMINAGGREGATION_HPP_

@@ -14,6 +14,16 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/GeneratableOperators/GeneratableOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <utility>
 
-namespace NES {}
+namespace NES {
+namespace QueryCompilation {
+namespace GeneratableOperators {
+
+GeneratableWindowAggregation::GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
+    : aggregationDescriptor(std::move(aggregationDescriptor)) {}
+
+}// namespace GeneratableOperators
+}// namespace QueryCompilation
+}// namespace NES

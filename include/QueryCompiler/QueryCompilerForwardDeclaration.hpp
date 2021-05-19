@@ -73,6 +73,9 @@ typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
 class WatermarkStrategyDescriptor;
 typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
 
+class WindowAggregationDescriptor;
+typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
+
 }// namespace Windowing
 
 class OperatorNode;
@@ -157,6 +160,10 @@ typedef std::shared_ptr<PhaseFactory> PhaseFactoryPtr;
 namespace GeneratableOperators {
 class GeneratableOperator;
 typedef std::shared_ptr<GeneratableOperator> GeneratableOperatorPtr;
+
+class GeneratableWindowAggregation;
+typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
+
 }// namespace GeneratableOperators
 
 namespace PhysicalOperators {

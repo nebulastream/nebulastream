@@ -63,9 +63,6 @@ typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
 class LegacyExpression;
 typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 
-class GeneratableWindowAggregation;
-typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
-
 class PipelineContext;
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
@@ -157,7 +154,7 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                               GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                               QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                                PipelineContextPtr context,
                                                uint64_t operatorHandlerIndex) = 0;
 
@@ -169,7 +166,7 @@ class CodeGenerator {
    * @return flag if the generation was successful.
    */
     virtual bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                              GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                              QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                               PipelineContextPtr context,
                                               uint64_t windowOperatorIndex) = 0;
 
@@ -181,7 +178,7 @@ class CodeGenerator {
     * @return flag if the generation was successful.
     */
     virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                                QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                                 PipelineContextPtr context,
                                                 uint64_t windowOperatorIndex) = 0;
 

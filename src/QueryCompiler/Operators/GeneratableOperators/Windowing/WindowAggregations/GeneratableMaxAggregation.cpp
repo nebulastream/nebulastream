@@ -16,30 +16,32 @@
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
+#include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 
 namespace NES {
+namespace QueryCompilation {
+namespace GeneratableOperators {
 
-GeneratableSumAggregation::GeneratableSumAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
+GeneratableMaxAggregation::GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
 GeneratableWindowAggregationPtr
-GeneratableSumAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
-    return std::make_shared<GeneratableSumAggregation>(aggregationDescriptor);
+GeneratableMaxAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
+    return std::make_shared<GeneratableMaxAggregation>(aggregationDescriptor);
 }
 
-void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
+void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
                                                    BinaryOperatorStatement partialRef,
                                                    RecordHandlerPtr recordHandler) {
-
     auto fieldReference =
         recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
-
-    auto sum = partialRef + *fieldReference;
-    auto updatedPartial = partialRef.assign(sum);
-    currentCode->addStatement(updatedPartial.copy());
+    auto ifStatement = IF(partialRef < *fieldReference, partialRef.assign(fieldReference));
+    currentCode->addStatement(ifStatement.createCopy());
 }
+}// namespace GeneratableOperators
+}// namespace QueryCompilation
 }// namespace NES

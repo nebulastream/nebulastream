@@ -14,20 +14,23 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#ifndef NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLECOUNTAGGREGATION_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLECOUNTAGGREGATION_HPP_
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 namespace NES {
+namespace QueryCompilation {
+namespace GeneratableOperators {
 
-class GeneratableMaxAggregation : public GeneratableWindowAggregation {
+class GeneratableCountAggregation : public GeneratableWindowAggregation {
   public:
-    explicit GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    explicit GeneratableCountAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
     /**
      * @brief Factory Method to create a new GeneratableWindowAggregation
      * @param aggregationDescriptor Window aggregation descriptor
      * @return GeneratableWindowAggregationPtr
      */
     static GeneratableWindowAggregationPtr create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+
     /**
      * @brief Generates code for window aggregate
      * @param currentCode current code pointer
@@ -39,5 +42,9 @@ class GeneratableMaxAggregation : public GeneratableWindowAggregation {
                             BinaryOperatorStatement expressionStatement,
                             RecordHandlerPtr recordHandler) override;
 };
+
+}// namespace GeneratableOperators
+}// namespace QueryCompilation
 }// namespace NES
-#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEMAXAGGREGATION_HPP_
+
+#endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLECOUNTAGGREGATION_HPP_

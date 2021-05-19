@@ -14,6 +14,9 @@
     limitations under the License.
 */
 
+#include <gtest/gtest.h>
+#include <iostream>
+#include <memory>
 #include <API/Query.hpp>
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
@@ -23,10 +26,6 @@
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
-#include <gtest/gtest.h>
-#include <iostream>
-#include <memory>
-
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
 #include <Operators/LogicalOperators/Sinks/NullOutputSinkDescriptor.hpp>
@@ -35,7 +34,6 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>

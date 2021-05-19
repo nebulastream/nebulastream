@@ -38,7 +38,6 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 
@@ -590,8 +589,8 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     queryPlan = distributeWindowRule->apply(queryPlan);
     std::cout << " plan=" << queryPlan->toString() << std::endl;
 
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+    //auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
   /*  std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
@@ -750,8 +749,8 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
-    auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-    auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
+   // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 /*
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())

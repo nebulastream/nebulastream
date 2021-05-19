@@ -18,6 +18,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_
 #include <QueryCompiler/RecordHandler.hpp>
 #include <memory>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::Windowing {
 class WindowAggregationDescriptor;
@@ -31,7 +32,8 @@ class BinaryOperatorStatement;
 class StructDeclaration;
 class CompoundStatement;
 typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
-
+namespace QueryCompilation {
+namespace GeneratableOperators {
 class GeneratableWindowAggregation {
   public:
     /**
@@ -47,12 +49,11 @@ class GeneratableWindowAggregation {
 
   protected:
     explicit GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
-
     Windowing::WindowAggregationDescriptorPtr aggregationDescriptor;
 };
 
-typedef std::shared_ptr<GeneratableWindowAggregation> GeneratableWindowAggregationPtr;
-
+}// namespace GeneratableOperators
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLEOPERATORS_WINDOWING_AGGREGATIONS_GENERATABLEWINDOWAGGREGATION_HPP_
