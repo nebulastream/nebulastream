@@ -473,6 +473,17 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
     return *this;
 }
 
+Query& Query::inferModel(const std::string model, const std::initializer_list<ExpressionItem> inputFields, const std::initializer_list<ExpressionItem> outputFields) {
+    NES_DEBUG("Query: add map inferModel to query");
+    auto inputFieldVector = std::vector(inputFields);
+    auto outputFieldVector = std::vector(outputFields);
+
+    OperatorNodePtr op = LogicalOperatorFactory::createInferModelOperator(model, inputFieldVector, outputFieldVector);
+    std::cout << op->toString() << std::endl;
+    queryPlan->appendOperatorAsNewRoot(op);
+    return *this;
+}
+
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     NES_DEBUG("Query: add sink operator to query");
     OperatorNodePtr op = LogicalOperatorFactory::createSinkOperator(sinkDescriptor);
