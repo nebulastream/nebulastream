@@ -54,18 +54,18 @@ class SimpleBenchmarkSink : public SinkMedium {
         return std::make_shared<SimpleBenchmarkSink>(schema, bufferManager);
     }
 
-    bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContext& workerContext) override {
+    bool writeData(NodeEngine::TupleBuffer& inputBuffer, NodeEngine::WorkerContext& workerContext) override {
         std::unique_lock lock(m);
-        NES_DEBUG("SimpleBenchmarkSink: got buffer with " << input_buffer.getNumberOfTuples() << " number of tuples!");
+        NES_DEBUG("SimpleBenchmarkSink: got buffer with " << inputBuffer.getNumberOfTuples() << " number of tuples!");
         NES_INFO("WorkerContextID=" << workerContext.getId());
 
-        currentTuples += input_buffer.getNumberOfTuples();
+        currentTuples += inputBuffer.getNumberOfTuples();
         bool endOfBenchmark = true;
 
         if (promiseSet)
             return true;
 
-        auto bindedRowLayout = rowLayout->bind(input_buffer);
+        auto bindedRowLayout = rowLayout->bind(inputBuffer);
         auto fields = getSchemaPtr()->fields;
         uint64_t recordIndex = 1;
         auto dataType = fields[fieldIndex]->getDataType();
