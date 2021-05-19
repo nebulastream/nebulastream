@@ -137,7 +137,8 @@ template<size_t I, typename... Ts>
 typename std::enable_if<I == sizeof...(Ts), void>::type DynamicColumnLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
                                                                                                            const std::vector<NES::NodeEngine::DynamicMemoryLayout::FIELD_SIZE>& fieldSizes,
                                                                                                            uint64_t recordIndex) {
-    // Iterated through tuple, so simply return
+    // Finished iterating through tuple via template recursion. So all that is left is to do a simple return.
+    // As we are not using any variable, we need to have them set void otherwise the compiler will throw an unused variable error.
     ((void) tup);
     ((void) fieldSizes);
     ((void) recordIndex);
@@ -183,6 +184,9 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicColumnLayoutBuff
 
 template<bool boundaryChecks, typename... Types>
 bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record) {
+    // Calling pushRecord<>() with numberOfRecords as recordIndex.
+    // This works as we are starting to count at 0 but numberOfRecords starts at 1
+    // numberOfRecords will be increased by one in called function
     return pushRecord<boundaryChecks>(record, numberOfRecords);
 }
 
@@ -203,8 +207,6 @@ bool DynamicColumnLayoutBuffer::pushRecord(std::tuple<Types...> record, uint64_t
     tupleBuffer.setNumberOfTuples(numberOfRecords);
     return true;
 }
-
-
 
 template<bool boundaryChecks, typename... Types>
 std::tuple<Types...> DynamicColumnLayoutBuffer::readRecord(uint64_t recordIndex) {
