@@ -151,7 +151,7 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicRowLayoutBuffer:
 
 template<size_t I, typename... Ts>
 typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicRowLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
-                                                                                                        uint8_t* address) {
+                                                                                                          uint8_t* address) {
     // Finished iterating through tuple via template recursion. So all that is left is to do a simple return.
     // As we are not using any variable, we need to have them set void otherwise the compiler will throw an unused variable error.
     ((void) address);
@@ -160,8 +160,8 @@ typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicRowLayoutBuffer
 }
 
 template<size_t I, typename... Ts>
-typename std::enable_if<(I == sizeof...(Ts)), void>::type DynamicRowLayoutBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup,
-                                                                                                          uint8_t* address) {
+typename std::enable_if<(I == sizeof...(Ts)), void>::type
+DynamicRowLayoutBuffer::copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address) {
     // Iterated through tuple, so simply return
     ((void) address);
     ((void) tup);
@@ -189,7 +189,8 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
 template<bool boundaryChecks, typename... Types>
 bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record, uint64_t recordIndex) {
     if (boundaryChecks && recordIndex >= capacity) {
-        NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is too small to write to position " << recordIndex << " and thus no write can happen!");
+        NES_WARNING("DynamicColumnLayoutBuffer: TupleBuffer is too small to write to position "
+                    << recordIndex << " and thus no write can happen!");
         return false;
     }
     uint64_t offSet = (recordIndex * this->getRecordSize());

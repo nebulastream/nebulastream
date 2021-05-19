@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_ExecutableNestedLoopJoinTriggerAction
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
-#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
@@ -273,9 +273,12 @@ class ExecutableNestedLoopJoinTriggerAction : public BaseExecutableJoinAction<Ke
                                       << " typeL=" << sizeof(InputTypeLeft) << " typeR=" << sizeof(InputTypeRight));
 
         auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
-        std::tuple<uint64_t, uint64_t, KeyType, InputTypeLeft, InputTypeRight> newTuple(startTs, endTs, key, leftValue, rightValue);
+        std::tuple<uint64_t, uint64_t, KeyType, InputTypeLeft, InputTypeRight> newTuple(startTs,
+                                                                                        endTs,
+                                                                                        key,
+                                                                                        leftValue,
+                                                                                        rightValue);
         bindedRowLayout->pushRecord<true>(newTuple, index);
-
     }
 
     SchemaPtr getJoinSchema() override { return windowSchema; }

@@ -308,8 +308,13 @@ class ExecutableCompleteAggregationTriggerAction
     */
     template<typename ValueType>
 
-    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
-                           ValueType value, uint64_t cnt) {
+    void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer,
+                           uint64_t index,
+                           uint64_t startTs,
+                           uint64_t endTs,
+                           KeyType key,
+                           ValueType value,
+                           uint64_t cnt) {
 
         auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
         if (windowDefinition->isKeyed()) {

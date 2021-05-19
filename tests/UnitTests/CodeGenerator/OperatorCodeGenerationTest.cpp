@@ -685,7 +685,8 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
 
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     {
-        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutPtr rowLayout =
+            NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = rowLayout->bind(buffer);
 
         auto startFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
@@ -694,39 +695,39 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
         auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(3, bindedRowLayout);
         auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(4, bindedRowLayout);
 
-        startFields[0] = 100;   //start 100
-        stopFields[0] = 110;    //stop 200
-        cntFields[0] = 1;       //cnt
-        keyFields[0] = 1;       //key 1
-        valueFields[0] = 10;     //value 10
+        startFields[0] = 100;//start 100
+        stopFields[0] = 110; //stop 200
+        cntFields[0] = 1;    //cnt
+        keyFields[0] = 1;    //key 1
+        valueFields[0] = 10; //value 10
         buffer.setNumberOfTuples(1);
 
-        startFields[1] = 100;   //start 100
-        stopFields[1] = 110;    //stop 200
-        cntFields[0] = 1;       //cnt
-        keyFields[1] = 1;       //key 1
-        valueFields[1] = 8;     //value 8
+        startFields[1] = 100;//start 100
+        stopFields[1] = 110; //stop 200
+        cntFields[0] = 1;    //cnt
+        keyFields[1] = 1;    //key 1
+        valueFields[1] = 8;  //value 8
         buffer.setNumberOfTuples(2);
 
-        startFields[2] = 100;   //start 100
-        stopFields[2] = 110;    //stop 200
-        cntFields[0] = 1;       //cnt
-        keyFields[2] = 1;       //key 1
-        valueFields[2] = 2;     //value 10
+        startFields[2] = 100;//start 100
+        stopFields[2] = 110; //stop 200
+        cntFields[0] = 1;    //cnt
+        keyFields[2] = 1;    //key 1
+        valueFields[2] = 2;  //value 10
         buffer.setNumberOfTuples(3);
 
-        startFields[3] = 200;   //start 200
-        stopFields[3] = 210;    //stop 210
-        cntFields[0] = 1;       //cnt
-        keyFields[3] = 3;       //key 3
-        valueFields[3] = 2;     //value 10
+        startFields[3] = 200;//start 200
+        stopFields[3] = 210; //stop 210
+        cntFields[0] = 1;    //cnt
+        keyFields[3] = 3;    //key 3
+        valueFields[3] = 2;  //value 10
         buffer.setNumberOfTuples(4);
 
-        startFields[4] = 200;   //start 200
-        stopFields[4] = 210;    //stop 210
-        cntFields[0] = 1;       //cnt
-        keyFields[4] = 5;       //key 1
-        valueFields[4] = 12;     //value 12
+        startFields[4] = 200;//start 200
+        stopFields[4] = 210; //stop 210
+        cntFields[0] = 1;    //cnt
+        keyFields[4] = 5;    //key 1
+        valueFields[4] = 12; //value 12
         buffer.setNumberOfTuples(5);
     }
     std::cout << "buffer=" << UtilityFunctions::prettyPrintTupleBuffer(buffer, schema) << std::endl;
@@ -921,10 +922,13 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationMapPredicateTest) {
         auto bindedInputRowLayout = inputLayout->bind(inputBuffer);
         auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
 
-        auto secondFieldsInput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
-        auto thirdFieldsInput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
+        auto secondFieldsInput =
+            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(2, bindedInputRowLayout);
+        auto thirdFieldsInput =
+            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(3, bindedInputRowLayout);
 
-        auto fourthFieldsOutput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
+        auto fourthFieldsOutput =
+            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, true>::create(4, bindedOutputRowLayout);
 
         for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
             auto floatValue = secondFieldsInput[recordIndex];

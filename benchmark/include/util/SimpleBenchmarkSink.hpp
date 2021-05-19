@@ -73,47 +73,69 @@ class SimpleBenchmarkSink : public SinkMedium {
         if (physicalType->isBasicType()) {
             auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
             if (basicPhysicalType->getNativeType() == BasicPhysicalType::CHAR) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (char) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<char, false>::create(fieldIndex,
+                                                                                                bindedRowLayout)[recordIndex]
+                    != (char) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_8) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (uint8_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint8_t, false>::create(fieldIndex,
+                                                                                                   bindedRowLayout)[recordIndex]
+                    != (uint8_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_16) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (uint16_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint16_t, false>::create(fieldIndex,
+                                                                                                    bindedRowLayout)[recordIndex]
+                    != (uint16_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_32) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (uint32_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint32_t, false>::create(fieldIndex,
+                                                                                                    bindedRowLayout)[recordIndex]
+                    != (uint32_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::UINT_64) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (uint64_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, false>::create(fieldIndex,
+                                                                                                    bindedRowLayout)[recordIndex]
+                    != (uint64_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_8) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (int8_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int8_t, false>::create(fieldIndex,
+                                                                                                  bindedRowLayout)[recordIndex]
+                    != (int8_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_16) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (int16_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int16_t, false>::create(fieldIndex,
+                                                                                                   bindedRowLayout)[recordIndex]
+                    != (int16_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_32) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (int32_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int32_t, false>::create(fieldIndex,
+                                                                                                   bindedRowLayout)[recordIndex]
+                    != (int32_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::INT_64) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (int64_t) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, false>::create(fieldIndex,
+                                                                                                   bindedRowLayout)[recordIndex]
+                    != (int64_t) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::FLOAT) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (float) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, false>::create(fieldIndex,
+                                                                                                 bindedRowLayout)[recordIndex]
+                    != (float) -1) {
                     endOfBenchmark = false;
                 }
             } else if (basicPhysicalType->getNativeType() == BasicPhysicalType::DOUBLE) {
-                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(fieldIndex, bindedRowLayout)[recordIndex] != (double) -1) {
+                if (NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<double, false>::create(fieldIndex,
+                                                                                                  bindedRowLayout)[recordIndex]
+                    != (double) -1) {
                     endOfBenchmark = false;
                 }
             } else {
