@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Utility to generate runtime calls for shared pointers.
  */
@@ -39,7 +39,7 @@ class SharedPointerGen {
      */
     static StatementPtr makeShared(GeneratableDataTypePtr type);
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_

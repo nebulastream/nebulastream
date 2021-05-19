@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_NEWQUERYCOMPILER_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_NEWQUERYCOMPILER_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
@@ -40,4 +40,4 @@ class QueryCompiler {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_NEWQUERYCOMPILER_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

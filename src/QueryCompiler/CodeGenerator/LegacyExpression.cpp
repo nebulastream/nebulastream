@@ -29,6 +29,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
+namespace QueryCompilation {
 
 Predicate::Predicate(const BinaryOperatorType& op,
                      const UserAPIExpressionPtr left,
@@ -45,7 +46,7 @@ Predicate::Predicate(const BinaryOperatorType& op,
 
 UserAPIExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
 
-const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const {
+const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     if (functionCallOverload.empty()) {
         if (bracket)
             return BinaryOperatorStatement(*(left->generateCode(code, recordHandler)),
@@ -77,7 +78,7 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, NES:
     }
 }
 
-const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, NES::RecordHandlerPtr recordHandler) const {
+const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, RecordHandlerPtr recordHandler) const {
     if (attribute) {
         //checks if the predicate field is contained in the current stream record.
         if (recordHandler->hasAttribute(attribute->getName())) {
@@ -97,7 +98,7 @@ const std::string Predicate::toString() const {
     std::stringstream stream;
     if (bracket)
         stream << "(";
-    stream << left->toString() << " " << ::NES::toCodeExpression(op)->code_ << " " << right->toString() << " ";
+    stream << left->toString() << " " << toCodeExpression(op)->code_ << " " << right->toString() << " ";
     if (bracket)
         stream << ")";
     return stream.str();
@@ -105,7 +106,7 @@ const std::string Predicate::toString() const {
 
 bool Predicate::equals(const LegacyExpression& _rhs) const {
     try {
-        auto rhs = dynamic_cast<const NES::Predicate&>(_rhs);
+        auto rhs = dynamic_cast<const Predicate&>(_rhs);
         if ((left == nullptr && rhs.left == nullptr) || (left->equals(*rhs.left.get()))) {
             if ((right == nullptr && rhs.right == nullptr) || (right->equals(*rhs.right.get()))) {
                 return op == rhs.op && bracket == rhs.bracket && functionCallOverload == rhs.functionCallOverload;
@@ -186,7 +187,7 @@ UserAPIExpressionPtr PredicateItem::copy() const { return std::make_shared<Predi
 
 bool PredicateItem::equals(const LegacyExpression& _rhs) const {
     try {
-        auto rhs = dynamic_cast<const NES::PredicateItem&>(_rhs);
+        auto rhs = dynamic_cast<const PredicateItem&>(_rhs);
         if ((attribute == nullptr && rhs.attribute == nullptr) || attribute->isEqual(rhs.attribute)) {
             if ((value == nullptr && rhs.value == nullptr) || (value->isEquals(rhs.value))) {
                 return mutation == rhs.mutation;
@@ -456,4 +457,5 @@ Predicate operator<<(const PredicateItem& lhs, const PredicateItem& rhs) {
 Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs) {
     return operator>>(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
+}// namespace QueryCompilation
 }//end namespace NES

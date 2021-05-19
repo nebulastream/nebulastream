@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CommentStatement.hpp>
 #include <sstream>
 namespace NES {
-
+namespace QueryCompilation {
 CommentStatement::CommentStatement(const std::string comment) : comment(comment) {}
 
 StatementType CommentStatement::getStamentType() const { return RETURN_STMT; }
@@ -31,5 +31,5 @@ const CodeExpressionPtr CommentStatement::getCode() const {
 const StatementPtr CommentStatement::createCopy() const { return std::make_shared<CommentStatement>(*this); }
 
 CommentStatement::~CommentStatement() {}
-
+}// namespace QueryCompilation
 }// namespace NES

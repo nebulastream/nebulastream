@@ -35,11 +35,12 @@
 #include <Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyPlanPhase.hpp>
 #include <utility>
 namespace NES {
 
+namespace QueryCompilation {
 TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() { return std::make_shared<TranslateToLegacyPlanPhase>(); }
 
 TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase() {}
@@ -167,5 +168,5 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(Exp
     NES_NOT_IMPLEMENTED();
     ;
 }
-
+}// namespace QueryCompilation
 }// namespace NES

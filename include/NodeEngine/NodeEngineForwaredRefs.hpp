@@ -87,14 +87,14 @@ namespace Execution {
 class OperatorHandler;
 typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
 
-class NewExecutablePipeline;
-typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
+class ExecutablePipeline;
+typedef std::shared_ptr<ExecutablePipeline> NewExecutablePipelinePtr;
 
-class NewExecutableQueryPlan;
-typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
+class ExecutableQueryPlan;
+typedef std::shared_ptr<ExecutableQueryPlan> NewExecutableQueryPlanPtr;
 
 typedef std::variant<DataSinkPtr, NewExecutablePipelinePtr> SuccessorExecutablePipeline;
-typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<NewExecutablePipeline>> PredecessorExecutablePipeline;
+typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>> PredecessorExecutablePipeline;
 
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;

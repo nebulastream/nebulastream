@@ -26,7 +26,7 @@
 #include <utility>
 
 namespace NES {
-
+namespace QueryCompilation {
 enum StatementType {
     RETURN_STMT,
     IF_STMT,
@@ -78,5 +78,5 @@ struct AssignmentStatment {
     VariableDeclaration rhs_field_var;
     VariableDeclaration rhs_index_var;
 };
-
+}// namespace QueryCompilation
 }// namespace NES

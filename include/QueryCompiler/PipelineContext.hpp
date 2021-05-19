@@ -27,6 +27,7 @@ typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 }// namespace NES::Windowing
 
 namespace NES {
+namespace QueryCompilation {
 
 class PipelineContext;
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
@@ -93,5 +94,6 @@ class PipelineContext {
     std::vector<BlockScopeStatementPtr> startScopes;
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers;
 };
+}// namespace QueryCompilation
 }// namespace NES
 #endif//NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_

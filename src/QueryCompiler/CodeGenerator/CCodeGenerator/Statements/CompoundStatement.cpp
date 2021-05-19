@@ -19,7 +19,7 @@
 #include <sstream>
 
 namespace NES {
-
+namespace QueryCompilation {
 CompoundStatement::CompoundStatement() : statements() {}
 
 const StatementPtr CompoundStatement::createCopy() const { return std::make_shared<CompoundStatement>(*this); }
@@ -40,5 +40,5 @@ void CompoundStatement::addStatement(StatementPtr stmt) {
 }
 
 CompoundStatement::~CompoundStatement() {}
-
+}// namespace QueryCompilation
 }// namespace NES

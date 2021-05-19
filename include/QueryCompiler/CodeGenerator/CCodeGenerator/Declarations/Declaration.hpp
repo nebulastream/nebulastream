@@ -21,13 +21,14 @@
 
 namespace NES {
 
+class DataType;
+typedef std::shared_ptr<DataType> DataTypePtr;
+
+namespace QueryCompilation {
 typedef std::string Code;
 
 class Declaration;
 typedef std::shared_ptr<Declaration> DeclarationPtr;
-
-class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
 
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
@@ -44,5 +45,5 @@ class Declaration {
 
 class StructDeclaration;
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl);
-
+}// namespace QueryCompilation
 }// namespace NES

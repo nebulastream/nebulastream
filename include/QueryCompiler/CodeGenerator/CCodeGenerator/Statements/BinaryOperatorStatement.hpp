@@ -25,7 +25,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 
 class BinaryOperatorStatement : public ExpressionStatment {
@@ -103,5 +103,5 @@ BinaryOperatorStatement operator^(const ExpressionStatment& lhs, const Expressio
 BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
 
 BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
-
+}// namespace QueryCompilation
 }// namespace NES

@@ -20,7 +20,7 @@
 #include <memory>
 
 namespace NES {
-
+namespace QueryCompilation {
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
@@ -66,6 +66,7 @@ class GeneratableDataType {
     */
     virtual StatementPtr getStmtCopyAssignment(const AssignmentStatment& assignmentStatement);
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEDATATYPE_HPP_

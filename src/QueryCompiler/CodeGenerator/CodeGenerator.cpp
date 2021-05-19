@@ -19,12 +19,12 @@
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 CodeGenerator::CodeGenerator() = default;
 
 CodeGenerator::~CodeGenerator() = default;
 
 CompilerTypesFactoryPtr CodeGenerator::getTypeFactory() { return std::make_shared<CompilerTypesFactory>(); }
 FunctionCallStatementPtr CodeGenerator::call(std::string function) { return FunctionCallStatement::create(function); }
-
+}// namespace QueryCompilation
 }// namespace NES

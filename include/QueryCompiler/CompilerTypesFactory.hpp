@@ -19,17 +19,18 @@
 #include <memory>
 namespace NES {
 
-class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
-
-class GeneratableValueType;
-typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
-
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
+
+namespace QueryCompilation {
+class GeneratableDataType;
+typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
+
+class GeneratableValueType;
+typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
 
 class StructDeclaration;
 
@@ -80,6 +81,7 @@ class CompilerTypesFactory {
     */
     GeneratableValueTypePtr createValueType(ValueTypePtr valueType);
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_COMPILERTYPESFACTORY_HPP_

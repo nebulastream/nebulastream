@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
@@ -42,7 +42,7 @@ class TypeCastExprStatement : public ExpressionStatment {
 };
 
 typedef TypeCastExprStatement TypeCast;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_TYPECASTEXPRSTATEMENT_HPP_

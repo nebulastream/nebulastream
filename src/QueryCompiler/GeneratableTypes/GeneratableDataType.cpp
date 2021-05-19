@@ -18,7 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatment& assignmentStatement) {
     // generates code for target = source
     auto target = VarRef(assignmentStatement.lhs_tuple_var)[VarRef(assignmentStatement.lhs_index_var)].accessRef(
@@ -27,5 +27,5 @@ StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatment
         VarRef(assignmentStatement.rhs_field_var));
     return target.assign(source).copy();
 }
-
+}// namespace QueryCompilation
 }// namespace NES

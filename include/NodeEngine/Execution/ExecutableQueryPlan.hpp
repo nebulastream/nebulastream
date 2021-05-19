@@ -39,10 +39,10 @@ enum class ExecutableQueryPlanResult : uint8_t { Ok, Error };
  * Each executable query plan contains at least one pipeline.
  * This class is thread-safe.
  */
-class NewExecutableQueryPlan : public Reconfigurable {
+class ExecutableQueryPlan : public Reconfigurable {
 
   public:
-    explicit NewExecutableQueryPlan(QueryId queryId,
+    explicit ExecutableQueryPlan(QueryId queryId,
                                     QuerySubPlanId querySubPlanId,
                                     std::vector<DataSourcePtr>&& sources,
                                     std::vector<DataSinkPtr>&& sinks,
@@ -57,7 +57,7 @@ class NewExecutableQueryPlan : public Reconfigurable {
                                             std::vector<NewExecutablePipelinePtr> pipelines,
                                             QueryManagerPtr queryManager,
                                             BufferManagerPtr bufferManager);
-    ~NewExecutableQueryPlan();
+    ~ExecutableQueryPlan();
 
     /**
      * @brief Increment the number of producers for this qep

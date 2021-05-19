@@ -27,12 +27,11 @@
 
 namespace NES {
 
-/**
- * @deprecated TODO this is deprecated and will be removed as soon as the the new physical operators are in place.
- */
-
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
+
+
+namespace QueryCompilation {
 
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
@@ -48,13 +47,10 @@ typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
-class Field;
-typedef std::shared_ptr<Field> FieldPtr;
-
 class LegacyExpression {
   public:
     virtual ~LegacyExpression(){};
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const = 0;
+    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
     virtual const std::string toString() const = 0;
     virtual UserAPIExpressionPtr copy() const = 0;
     virtual bool equals(const LegacyExpression& rhs) const = 0;
@@ -72,7 +68,7 @@ class Predicate : public LegacyExpression {
               const UserAPIExpressionPtr right,
               bool bracket = true);
 
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const override;
+    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
     virtual UserAPIExpressionPtr copy() const override;
     bool equals(const LegacyExpression& rhs) const override;
@@ -108,7 +104,7 @@ class PredicateItem : public LegacyExpression {
     PredicateItem(char val);
     PredicateItem(const char* val);
 
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, NES::RecordHandlerPtr recordHandler) const override;
+    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
     virtual UserAPIExpressionPtr copy() const override;
 
@@ -215,6 +211,6 @@ Predicate operator|(const PredicateItem& lhs, const PredicateItem& rhs);
 Predicate operator^(const PredicateItem& lhs, const PredicateItem& rhs);
 Predicate operator<<(const PredicateItem& lhs, const PredicateItem& rhs);
 Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs);
-
+}// namespace QueryCompilation
 }//end of namespace NES
 #endif

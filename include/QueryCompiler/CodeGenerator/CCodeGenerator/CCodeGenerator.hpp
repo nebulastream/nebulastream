@@ -22,7 +22,7 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief A code generator that generates C++ code optimized for X86 architectures.
  */
@@ -109,10 +109,11 @@ class CCodeGenerator : public CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                       QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                       PipelineContextPtr context,
-                                       uint64_t operatorHandlerIndex) override;
+    bool generateCodeForCompleteWindow(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t operatorHandlerIndex) override;
 
     /**
     * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -122,10 +123,11 @@ class CCodeGenerator : public CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                      QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                      PipelineContextPtr context,
-                                      uint64_t windowOperatorIndex) override;
+    bool generateCodeForSlicingWindow(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -135,10 +137,11 @@ class CCodeGenerator : public CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                        PipelineContextPtr context,
-                                        uint64_t windowOperatorIndex) override;
+    bool generateCodeForCombiningWindow(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) override;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
@@ -246,7 +249,7 @@ class CCodeGenerator : public CodeGenerator {
     VariableDeclaration
     getJoinOperatorHandler(PipelineContextPtr context, VariableDeclaration tupleBufferVariable, uint64_t joinOperatorIndex);
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATOR_HPP_

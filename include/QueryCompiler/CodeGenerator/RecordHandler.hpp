@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 namespace NES {
+namespace QueryCompilation {
 
 /**
  * @brief The record handler allows a generatable
@@ -52,7 +53,7 @@ class RecordHandler {
   private:
     std::map<std::string, ExpressionStatmentPtr> statementMap;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_RECORDHANDLER_HPP_

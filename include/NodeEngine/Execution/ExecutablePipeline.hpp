@@ -31,11 +31,10 @@ namespace NES::NodeEngine::Execution {
  * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
-class NewExecutablePipeline : public Reconfigurable {
+class ExecutablePipeline : public Reconfigurable {
     enum PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
-
   public:
-    explicit NewExecutablePipeline(uint32_t pipelineId,
+    explicit ExecutablePipeline(uint32_t pipelineId,
                                    QuerySubPlanId qepId,
                                    PipelineExecutionContextPtr pipelineExecutionContext,
                                    ExecutablePipelineStagePtr executablePipelineStage,
@@ -46,7 +45,7 @@ class NewExecutablePipeline : public Reconfigurable {
     /**
      * @brief Destructor of an ExecutablePipeline
      */
-    ~NewExecutablePipeline();
+    ~ExecutablePipeline();
 
     /**
      * @brief Factory method to create a new executable pipeline.

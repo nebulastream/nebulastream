@@ -24,7 +24,7 @@
 #include <vector>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Definition for a constructor in the generated code.
  */
@@ -89,7 +89,7 @@ class ConstructorDefinition : public std::enable_shared_from_this<ConstructorDef
     std::vector<StatementPtr> initializerStatements;
     bool isExplicit;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITIONS_CONSTRUCTORDEFINITION_HPP_

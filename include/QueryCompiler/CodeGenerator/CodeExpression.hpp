@@ -20,7 +20,7 @@
 #include <string>
 
 namespace NES {
-
+namespace QueryCompilation {
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
@@ -32,5 +32,5 @@ class CodeExpression {
 };
 
 const CodeExpressionPtr combine(const CodeExpressionPtr lhs, const CodeExpressionPtr rhs);
-
+}// namespace QueryCompilation
 }// namespace NES

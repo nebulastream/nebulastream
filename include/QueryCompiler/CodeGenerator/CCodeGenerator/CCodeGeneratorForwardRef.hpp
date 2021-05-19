@@ -22,6 +22,8 @@ namespace NES {
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+namespace QueryCompilation {
+
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
@@ -69,7 +71,7 @@ typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
 
 class RecordHandler;
 typedef std::shared_ptr<RecordHandler> RecordHandlerPtr;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CCODEGENERATORFORWARDREF_HPP_

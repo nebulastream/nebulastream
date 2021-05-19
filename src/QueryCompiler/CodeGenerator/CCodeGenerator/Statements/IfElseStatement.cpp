@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFElseStatement.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 IfElseStatement::IfElseStatement(const Statement&, const Statement&) {}
 
 const CodeExpressionPtr IfElseStatement::getCode() const { return std::make_shared<CodeExpression>(""); }
@@ -27,5 +27,5 @@ StatementType IfElseStatement::getStamentType() const { return IF_STMT; }
 const StatementPtr IfElseStatement::createCopy() const { return std::make_shared<IfElseStatement>(*this); }
 
 IfElseStatement::~IfElseStatement() noexcept {}
-
+}// namespace QueryCompilation
 }// namespace NES

@@ -28,14 +28,8 @@ namespace NES {
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
-class LegacyExpression;
-typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
-
 class Field;
 typedef std::shared_ptr<Field> FieldPtr;
-
-class Predicate;
-typedef std::shared_ptr<Predicate> PredicatePtr;
 
 class Mapper;
 typedef std::shared_ptr<Mapper> MapperPtr;
@@ -56,13 +50,13 @@ typedef std::shared_ptr<SinkMedium> DataSinkPtr;
 
 const DataSourcePtr copy(const DataSourcePtr);
 const DataSinkPtr copy(const DataSinkPtr);
-const PredicatePtr copy(const PredicatePtr);
+//const PredicatePtr copy(const PredicatePtr);
 const Attributes copy(const Attributes&);
 const MapperPtr copy(const MapperPtr);
 
 const std::string toString(const DataSourcePtr);
 const std::string toString(const DataSinkPtr);
-const std::string toString(const PredicatePtr);
+//const std::string toString(const PredicatePtr);
 const std::string toString(const Attributes&);
 const std::string toString(const MapperPtr);
 

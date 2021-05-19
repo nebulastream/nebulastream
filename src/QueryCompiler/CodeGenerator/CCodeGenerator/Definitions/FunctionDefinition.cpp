@@ -27,7 +27,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <sstream>
 namespace NES {
-
+namespace QueryCompilation {
 class StructBuilder {
   public:
     static StructBuilder create(const std::string& struct_name);
@@ -93,5 +93,5 @@ FunctionDefinitionPtr FunctionDefinition::addVariableDeclaration(VariableDeclara
     variablDeclarations.emplace_back(variableDeclaration);
     return shared_from_this();
 }
-
+}// namespace QueryCompilation
 }// namespace NES

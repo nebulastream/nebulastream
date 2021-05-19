@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/StdOutStatement.hpp>
 #include <sstream>
 namespace NES {
-
+namespace QueryCompilation {
 StdOutStatement::StdOutStatement(const std::string message) : message(message) {}
 
 StatementType StdOutStatement::getStamentType() const { return RETURN_STMT; }
@@ -31,5 +31,5 @@ const CodeExpressionPtr StdOutStatement::getCode() const {
 const StatementPtr StdOutStatement::createCopy() const { return std::make_shared<StdOutStatement>(*this); }
 
 StdOutStatement::~StdOutStatement() {}
-
+}// namespace QueryCompilation
 }// namespace NES

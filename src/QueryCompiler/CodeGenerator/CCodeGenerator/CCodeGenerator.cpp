@@ -66,7 +66,7 @@
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string structName, SchemaPtr schema) {
@@ -545,10 +545,11 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                   QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                   PipelineContextPtr context,
-                                                   uint64_t windowOperatorIndex) {
+bool CCodeGenerator::generateCodeForCompleteWindow(
+    Windowing::LogicalWindowDefinitionPtr window,
+    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+    PipelineContextPtr context,
+    uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     auto windowOperatorHandlerDeclaration =
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
@@ -785,10 +786,11 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
     return true;
 }
 
-bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                  QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                  PipelineContextPtr context,
-                                                  uint64_t windowOperatorId) {
+bool CCodeGenerator::generateCodeForSlicingWindow(
+    Windowing::LogicalWindowDefinitionPtr window,
+    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+    PipelineContextPtr context,
+    uint64_t windowOperatorId) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
     //NOTE: the distinction currently only happens in the trigger
     context->pipelineName = "SlicingWindowType";
@@ -1467,10 +1469,11 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
     return true;
 }
 
-bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                    PipelineContextPtr context,
-                                                    uint64_t windowOperatorIndex) {
+bool CCodeGenerator::generateCodeForCombiningWindow(
+    Windowing::LogicalWindowDefinitionPtr window,
+    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+    PipelineContextPtr context,
+    uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
     NES_DEBUG("CCodeGenerator: Generate code for combine window " << window);
     auto code = context->code;
@@ -2095,5 +2098,5 @@ VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr co
 
     return windowOperatorHandlerDeclaration;
 }
-
+}// namespace QueryCompilation
 }// namespace NES

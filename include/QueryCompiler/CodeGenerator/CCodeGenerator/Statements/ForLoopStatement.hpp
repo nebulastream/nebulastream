@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 class ForLoopStatement : public Statement {
   public:
     ForLoopStatement(DeclarationPtr variableDeclarationPtr,
@@ -47,7 +47,7 @@ class ForLoopStatement : public Statement {
 };
 
 typedef ForLoopStatement FOR;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FORLOOPSTATEMENT_HPP_

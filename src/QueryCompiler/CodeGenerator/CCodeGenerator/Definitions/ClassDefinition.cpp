@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 ClassDefinition::ClassDefinition(std::string name) : name(std::move(name)) {}
 
 ClassDefinitionPtr ClassDefinition::create(std::string name) { return std::make_shared<ClassDefinition>(std::move(name)); }
@@ -38,5 +38,5 @@ void ClassDefinition::addConstructor(ConstructorDefinitionPtr function) { public
 DeclarationPtr ClassDefinition::getDeclaration() { return ClassDeclaration::create(shared_from_this()); }
 
 void ClassDefinition::addBaseClass(std::string baseClassName) { baseClasses.emplace_back(baseClassName); }
-
+}// namespace QueryCompilation
 }// namespace NES

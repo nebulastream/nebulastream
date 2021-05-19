@@ -18,7 +18,7 @@
 #include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 PointerDataType::PointerDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(baseType) {}
 
 const CodeExpressionPtr PointerDataType::getCode() const {
@@ -30,5 +30,5 @@ const CodeExpressionPtr PointerDataType::getTypeDefinitionCode() const { return 
 CodeExpressionPtr PointerDataType::getDeclarationCode(std::string identifier) const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "* " + identifier);
 }
-
+}// namespace QueryCompilation
 }// namespace NES

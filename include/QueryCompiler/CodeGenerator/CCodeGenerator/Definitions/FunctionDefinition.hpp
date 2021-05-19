@@ -24,7 +24,7 @@
 #include <string>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Definition for a function in the generated code.
  */
@@ -81,6 +81,6 @@ class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinitio
     std::vector<VariableDeclaration> variablDeclarations;
     std::vector<StatementPtr> statements;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 #endif// NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDEFINITION_HPP_

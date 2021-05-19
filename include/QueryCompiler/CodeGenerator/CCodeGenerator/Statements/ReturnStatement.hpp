@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Represents a function return statement.
  */
@@ -40,7 +40,7 @@ class ReturnStatement : public Statement {
   private:
     StatementPtr statement;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RETURNSTATEMENT_HPP_

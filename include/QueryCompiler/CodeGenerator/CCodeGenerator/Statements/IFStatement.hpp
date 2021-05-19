@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 class IFStatement : public Statement {
   public:
     IFStatement(const Statement& cond_expr);
@@ -44,7 +44,7 @@ class IFStatement : public Statement {
 };
 
 typedef IFStatement IF;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFSTATEMENT_HPP_

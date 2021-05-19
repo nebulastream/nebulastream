@@ -37,9 +37,9 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
-#include <QueryCompiler/NewQueryCompiler.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 

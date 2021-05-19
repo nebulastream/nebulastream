@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 #include <vector>
 namespace NES {
-
+namespace QueryCompilation {
 class FunctionCallStatement : public ExpressionStatment {
   public:
     FunctionCallStatement(const std::string functionname);
@@ -40,7 +40,7 @@ class FunctionCallStatement : public ExpressionStatment {
     std::string functionName;
     std::vector<ExpressionStatmentPtr> expressions;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FUNCTIONCALLSTATEMENT_HPP_

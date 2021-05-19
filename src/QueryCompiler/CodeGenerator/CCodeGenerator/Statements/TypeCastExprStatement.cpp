@@ -18,7 +18,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 StatementType TypeCastExprStatement::getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
 
 const CodeExpressionPtr TypeCastExprStatement::getCode() const {
@@ -35,5 +35,5 @@ TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, Gen
     : expression(expr.copy()), dataType(type) {}
 
 TypeCastExprStatement::~TypeCastExprStatement() {}
-
+}// namespace QueryCompilation
 }// namespace NES

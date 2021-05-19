@@ -17,7 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 const StatementPtr ExpressionStatment::createCopy() const { return this->copy(); }
 
 ExpressionStatment::~ExpressionStatment() {}
@@ -49,5 +49,5 @@ BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref
 BinaryOperatorStatement ExpressionStatment::assign(ExpressionStatmentPtr ref) {
     return BinaryOperatorStatement(this->copy(), ASSIGNMENT_OP, ref);
 }
-
+}// namespace QueryCompilation
 }// namespace NES

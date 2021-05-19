@@ -21,6 +21,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 
 namespace NES {
+namespace QueryCompilation {
 /**
  * @brief Declaration for a namespace in the generated code.
  */
@@ -40,6 +41,7 @@ class NamespaceDeclaration : public Declaration {
     const Code getCode() const override;
     const DeclarationPtr copy() const override;
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_NAMESPACEDECLARATION_HPP_

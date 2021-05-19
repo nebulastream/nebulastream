@@ -16,8 +16,8 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/ErrorListener.hpp>
-#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
-#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeStatsProvider.hpp>
 #include <Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
