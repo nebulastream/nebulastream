@@ -13,12 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
@@ -152,20 +151,20 @@ void DefaultGeneratableOperatorProvider::lowerWatermarkAssignment(QueryPlanPtr q
     queryPlan->replaceOperator(physicalWatermarkAssignmentOperator, generatableWatermarkAssignmentOperator);
 }
 
-GeneratableWindowAggregationPtr DefaultGeneratableOperatorProvider::lowerWindowAggregation(
+GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperatorProvider::lowerWindowAggregation(
     Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
     switch (windowAggregationDescriptor->getType()) {
         case Windowing::WindowAggregationDescriptor::Count: {
-            return GeneratableCountAggregation::create(windowAggregationDescriptor);
+            return GeneratableOperators::GeneratableCountAggregation::create(windowAggregationDescriptor);
         };
         case Windowing::WindowAggregationDescriptor::Max: {
-            return GeneratableMaxAggregation::create(windowAggregationDescriptor);
+            return GeneratableOperators::GeneratableMaxAggregation::create(windowAggregationDescriptor);
         };
         case Windowing::WindowAggregationDescriptor::Min: {
-            return GeneratableMinAggregation::create(windowAggregationDescriptor);
+            return GeneratableOperators::GeneratableMinAggregation::create(windowAggregationDescriptor);
         };
         case Windowing::WindowAggregationDescriptor::Sum: {
-            return GeneratableSumAggregation::create(windowAggregationDescriptor);
+            return GeneratableOperators::GeneratableSumAggregation::create(windowAggregationDescriptor);
         };
         default:
             throw QueryCompilationException(

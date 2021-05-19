@@ -41,19 +41,10 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
-#include <QueryCompiler/LegacyExpression.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
-#include <Sinks/SinkCreator.hpp>
-#include <Sources/DefaultSource.hpp>
-#include <Sources/GeneratorSource.hpp>
-#include <State/StateVariable.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Windowing/LogicalJoinDefinition.hpp>
-#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <cassert>
 #include <cmath>
@@ -64,10 +55,6 @@
 #include <QueryCompiler/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
-#include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
-#include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-
-#include <Common/ValueTypes/ArrayValue.hpp>
 
 using std::cout;
 using std::endl;

@@ -110,7 +110,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                       GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                       QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                        PipelineContextPtr context,
                                        uint64_t operatorHandlerIndex) override;
 
@@ -123,7 +123,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                      GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                      QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                       PipelineContextPtr context,
                                       uint64_t windowOperatorIndex) override;
 
@@ -136,7 +136,7 @@ class CCodeGenerator : public CodeGenerator {
     * @return flag if the generation was successful.
     */
     bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                        GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                         PipelineContextPtr context,
                                         uint64_t windowOperatorIndex) override;
 

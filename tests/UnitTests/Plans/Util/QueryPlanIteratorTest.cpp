@@ -23,18 +23,14 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-
 #include <Catalogs/LogicalStream.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/QueryPlanIterator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableScanOperator.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableSinkOperator.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <iostream>

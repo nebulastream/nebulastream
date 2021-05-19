@@ -16,13 +16,10 @@
 
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/Numeric.hpp>
-#include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldRenameExpressionNode.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
@@ -36,13 +33,11 @@
 #include <QueryCompiler/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/BlockScopeStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/CommentStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ContinueStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/Statements/StdOutStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/VarRefStatement.hpp>
@@ -51,8 +46,7 @@
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
-#include <QueryCompiler/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/LegacyExpression.hpp>
@@ -60,21 +54,16 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
-#include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategy.hpp>
 #include <Windowing/WindowActions/BaseJoinActionDescriptor.hpp>
 #include <Windowing/WindowActions/BaseWindowActionDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/JoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
-#include <Windowing/WindowTypes/WindowType.hpp>
 
 namespace NES {
 
@@ -557,7 +546,7 @@ void CCodeGenerator::generateTupleBufferSpaceCheck(PipelineContextPtr context,
  * @return
  */
 bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                   GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                                   QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                                    PipelineContextPtr context,
                                                    uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();
@@ -797,7 +786,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(Windowing::LogicalWindowDefin
 }
 
 bool CCodeGenerator::generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                  GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                                  QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                                   PipelineContextPtr context,
                                                   uint64_t windowOperatorId) {
     NES_DEBUG("CCodeGenerator::generateCodeForSlicingWindow with " << window << " pipeline " << context);
@@ -1479,7 +1468,7 @@ bool CCodeGenerator::generateCodeForJoinBuild(Join::LogicalJoinDefinitionPtr joi
 }
 
 bool CCodeGenerator::generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                    GeneratableWindowAggregationPtr generatableWindowAggregation,
+                                                    QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
                                                     PipelineContextPtr context,
                                                     uint64_t windowOperatorIndex) {
     auto tf = getTypeFactory();

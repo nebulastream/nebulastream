@@ -19,7 +19,6 @@
 
 #include <Operators/AbstractOperators/Arity/UnaryOperatorNode.hpp>
 #include <Operators/OperatorNode.hpp>
-#include <QueryCompiler/GeneratableOperators/GeneratableOperatorForwardRef.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
 namespace QueryCompilation {

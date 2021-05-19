@@ -24,13 +24,17 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <QueryCompiler/CCodeGenerator/CCodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
-#include <QueryCompiler/GeneratableOperators/TranslateToGeneratableOperatorPhase.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratedCode.hpp>
 #include <QueryCompiler/LegacyExpression.hpp>
@@ -498,8 +502,6 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationWindowAssigner) {
                                         trigger,
                                         triggerAction,
                                         0);
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
 
     auto strategy = EventTimeWatermarkStrategy::create(windowDefinition->getOnKey(), 12, 1);
     codeGenerator->generateCodeForWatermarkAssigner(strategy, context1);
@@ -542,8 +544,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedSlicer) {
                                         triggerAction,
                                         0);
 
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForSlicingWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
@@ -624,8 +625,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationDistributedCombiner) {
                                         triggerAction,
                                         0);
 
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
@@ -774,8 +774,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationTriggerWindowOnRecord) {
                                         triggerAction,
                                         0);
 
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCombiningWindow(windowDefinition, aggregate, context1, 0);
     std::string codeString = codeGenerator->generateCode(context1);
 
@@ -1128,8 +1127,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowIngestio
                                             trigger,
                                             triggerAction,
                                             0);
-        auto aggregate =
-            TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+        auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
         codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
         /* compile code to pipeline stage */
@@ -1217,8 +1215,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
         trigger,
         triggerAction,
         0);
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */
@@ -1297,8 +1294,7 @@ TEST_F(OperatorCodeGenerationTest, DISABLED_codeGenerationCompleteWindowEventTim
         trigger,
         triggerAction,
         0);
-    auto aggregate =
-        TranslateToGeneratableOperatorPhase::create()->transformWindowAggregation(windowDefinition->getWindowAggregation());
+    auto aggregate = QueryCompilation::GeneratableOperators::GeneratableSumAggregation::create(sum);
     codeGenerator->generateCodeForCompleteWindow(windowDefinition, aggregate, context1, 0);
 
     /* compile code to pipeline stage */

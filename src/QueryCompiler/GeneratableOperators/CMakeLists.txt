@@ -12,17 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_nes(
-        GeneratableOperator.cpp
-        GeneratableFilterOperator.cpp
-        GeneratableMapOperator.cpp
-        GeneratableUnionOperator.cpp
-        GeneratableSinkOperator.cpp
-        GeneratableScanOperator.cpp
-        GeneratableWatermarkAssignerOperator.cpp
-        TranslateToGeneratableOperatorPhase.cpp
-        GeneratableJoinOperator.cpp
-        GeneratableProjectionOperator.cpp
-)
+add_source_nes()
 
 add_subdirectory(Windowing)

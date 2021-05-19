@@ -18,3 +18,4 @@ add_source_nes(
         GeneratableWindowOperator.cpp
 )
 
+add_subdirectory(WindowAggregations)
