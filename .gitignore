@@ -4,6 +4,7 @@
 .vscode
 .csv
 .log
+.DS_Store
 
 # Build files
 build
