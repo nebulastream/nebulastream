@@ -21,11 +21,14 @@
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
+#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 
 namespace NES::API {
 
 Windowing::WindowAggregationPtr Sum(ExpressionItem onField) { return Windowing::SumAggregationDescriptor::on(onField); }
+
+Windowing::WindowAggregationPtr Avg(ExpressionItem onField) { return Windowing::AvgAggregationDescriptor::on(onField); }
 
 Windowing::WindowAggregationPtr Min(ExpressionItem onField) { return Windowing::MinAggregationDescriptor::on(onField); }
 
