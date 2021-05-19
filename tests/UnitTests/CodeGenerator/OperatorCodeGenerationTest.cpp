@@ -403,13 +403,11 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationCopy) {
     auto resultBuffer = queryContext->buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-    {
-        auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
-        auto bindedRowLayout = layout->bind(buffer);
-        auto firstFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
-        for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
-            EXPECT_EQ(firstFields[recordIndex], 1);
-        }
+    auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
+    auto bindedRowLayout = layout->bind(buffer);
+    auto firstFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
+    for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples(); ++recordIndex) {
+        EXPECT_EQ(firstFields[recordIndex], 1);
     }
 }
 /**
