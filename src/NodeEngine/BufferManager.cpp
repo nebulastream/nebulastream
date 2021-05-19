@@ -28,7 +28,8 @@
 
 namespace NES::NodeEngine {
 
-BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment) : bufferSize(0), numOfBuffers(0) {
+BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
+    : bufferSize(0), numOfBuffers(0) {
     initialize(bufferSize, numOfBuffers, withAlignment);
 }
 
@@ -88,7 +89,7 @@ void BufferManager::initialize(uint32_t bufferSize, uint32_t numOfBuffers, uint3
         NES_THROW_RUNTIME_ERROR("NES tries to malloc more memory than physically available");
     }
     if (withAlignment > 0) {
-        if ((withAlignment & (withAlignment - 1))) { // not a pow of two
+        if ((withAlignment & (withAlignment - 1))) {// not a pow of two
             NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is not a pow of two");
         }
     } else if (withAlignment > page_size) {

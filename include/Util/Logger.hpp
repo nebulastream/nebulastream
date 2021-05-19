@@ -121,7 +121,7 @@ struct LoggingBlackHole {
     } while (0)
 #endif
 #ifdef NES_LOGGING_DEBUG_LEVEL
-#define NES_TRACE(...)                                                                                                          \
+#define NES_TRACE(...)                                                                                                           \
     do {                                                                                                                         \
         if (0) {                                                                                                                 \
             NES::detail::LoggingBlackHole bh;                                                                                    \
