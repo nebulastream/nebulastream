@@ -65,33 +65,20 @@ MemoryMetrics MemoryMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffe
         auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
         auto bindedRowLayout = layout->bind(buf);
 
-        auto totalRamFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto totalSwapFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto freeRamFields     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto sharedRamFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto bufferRamFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto freeSwapFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto totalHighFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto freeHighFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto procsFields       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto memUnitFields     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto load1MinFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto load5MinFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-        auto load15MinFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+        output.TOTAL_RAM    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.TOTAL_SWAP   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.FREE_RAM     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.SHARED_RAM   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.BUFFER_RAM   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.FREE_SWAP    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.TOTAL_HIGH   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.FREE_HIGH    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.PROCS       = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.MEM_UNIT     = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.LOADS_1MIN    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.LOADS_5MIN    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+        output.LOADS_15MIN   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
-        output.TOTAL_RAM = totalRamFields[0];
-        output.TOTAL_SWAP = totalSwapFields[0];
-        output.FREE_RAM = freeRamFields[0];
-        output.SHARED_RAM = sharedRamFields[0];
-        output.BUFFER_RAM = bufferRamFields[0];
-        output.FREE_SWAP = freeSwapFields[0];
-        output.TOTAL_HIGH = totalHighFields[0];
-        output.FREE_HIGH = freeHighFields[0];
-        output.PROCS = procsFields[0];
-        output.MEM_UNIT = memUnitFields[0];
-        output.LOADS_1MIN = load1MinFields[0];
-        output.LOADS_5MIN = load5MinFields[0];
-        output.LOADS_15MIN = load15MinFields[0];
     } else {
         NES_THROW_RUNTIME_ERROR("MemoryMetrics: Metrics could not be parsed from schema " + schema->toString());
     }

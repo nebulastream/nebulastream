@@ -64,18 +64,12 @@ DiskMetrics DiskMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& b
     auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(schema, true);
     auto bindedRowLayout = layout->bind(buf);
 
-    auto fBSizeFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-    auto fFrSizeFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-    auto fBlocksFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-    auto fBFreeFields    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
-    auto fBAvailFields   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout);
+    output.fBsize    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fFrsize   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBlocks   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBfree    = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
+    output.fBavail   = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(i++, bindedRowLayout)[0];
 
-
-    output.fBsize = fBSizeFields[0];
-    output.fFrsize = fFrSizeFields[0];
-    output.fBlocks = fBlocksFields[0];
-    output.fBfree = fBFreeFields[0];
-    output.fBavail = fBAvailFields[0];
 
     return output;
 }
