@@ -147,9 +147,9 @@ void RestEngine::handleTrace(http_request request) {
     request.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(request)));
 }
 
-//TODO the '*' should be replaced at some point, with specifically allowed addresses, provided by a config
+//TODO (covered in issue 1919 (Add option to configure whitelisted addresses for CORS))
+// the '*' should be replaced at some point, with specifically allowed addresses, provided by a config
 // Note: it is not possible to provide several allowed addresses at once, rather, a check should be performed here
-// covered in issue 1919 (Add option to configure whitelisted addresses for CORS)
 void RestEngine::handlePreflightOptions(http_request request) {
     http_response response(status_codes::OK);
     response.headers().add(("Access-Control-Allow-Origin"), ("*"));
