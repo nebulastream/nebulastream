@@ -33,7 +33,7 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool equal(const NodePtr rhs) const override;
     bool isIdentical(NodePtr rhs) const override;
     bool inferSchema() override;
-    std::string getStringBasedSignature() override;
+    void inferStringSignature() override;
 
 
   private:
