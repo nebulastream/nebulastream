@@ -78,12 +78,11 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     };
 
   public:
-
     /**
      * @brief Creates a new global buffer manager
      * @param bufferSize the size of each buffer in bytes
      * @param numOfBuffers the total number of buffers in the pool
-     * @param withAlignment the alignment of each buffer, default is 0, i.e., no alignment
+     * @param withAlignment the alignment of each buffer, default is 0, i.e., no alignment. This value must be a pow of two and smaller than page size
      */
     explicit BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment = 0);
 
