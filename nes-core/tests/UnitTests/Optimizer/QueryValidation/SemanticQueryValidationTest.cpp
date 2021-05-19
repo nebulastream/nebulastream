@@ -244,7 +244,7 @@ TEST_F(SemanticQueryValidationTest, validInferModelTest) {
     std::unique_ptr<tflite::FlatBufferModel> ml_model;
 
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
-    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+    auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
     auto query = Query::from("default_logical")
         .inferModel("models/iris.tflite",
