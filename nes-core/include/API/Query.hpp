@@ -457,6 +457,14 @@ class Query {
     Query& map(FieldAssignmentExpressionNodePtr const& mapExpression);
 
     /**
+     * @brief: inferModel
+     * @example example
+     * @param param
+     * @return query
+     */
+    Query& inferModel(std::string model, std::initializer_list<ExpressionItem> inputFields, std::initializer_list<ExpressionItem> outputFields);
+
+    /**
      * @brief Add sink operator for the query.
      * The Sink operator is defined by the sink descriptor, which represents the semantic of this sink.
      * @param sinkDescriptor

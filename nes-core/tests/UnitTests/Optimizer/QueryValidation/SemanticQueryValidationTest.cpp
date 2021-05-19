@@ -14,6 +14,8 @@
 
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include "Exceptions/InvalidQueryException.hpp"
+#include "tensorflow/lite/interpreter.h"
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UdfCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -26,6 +28,13 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <tensorflow/lite/model_builder.h>
+
+//#include "../../../../tensorflow_src/tensorflow/lite/interpreter.h"
+//#include "tensorflow/lite/kernels/register.h"
+//#include "../../../../tensorflow_src/tensorflow/lite/model.h"
+//#include "../../../../tensorflow_src/tensorflow/lite/model_builder.h"
+//#include "../../../../tensorflow_src/tensorflow/lite/optional_debug_tools.h"
 
 namespace NES {
 
@@ -227,6 +236,22 @@ TEST_F(SemanticQueryValidationTest, missingPhysicalSourceTest) {
                      .project(Attribute("id").as("new_id"), Attribute("value"))
                      .sink(FileSinkDescriptor::create(""));
     EXPECT_THROW(semanticQueryValidation->validate(std::make_shared<Query>(query)->getQueryPlan()), MapEntryNotFoundException);
+}
+
+TEST_F(SemanticQueryValidationTest, validInferModelTest) {
+    NES_INFO("Valid inferModel test");
+
+    std::unique_ptr<tflite::FlatBufferModel> ml_model;
+
+    StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
+    SemanticQueryValidationPtr semanticQueryValidation = SemanticQueryValidation::create(streamCatalogPtr);
+
+    auto query = Query::from("default_logical")
+        .inferModel("models/iris.tflite",
+                    {Attribute("value"), Attribute("id")},
+                    {Attribute("prediction")})
+        .filter(Attribute("prediction") > 42)
+        .sink(FileSinkDescriptor::create(""));
 }
 
 }// namespace NES
