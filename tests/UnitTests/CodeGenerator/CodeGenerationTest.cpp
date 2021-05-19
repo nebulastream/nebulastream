@@ -517,7 +517,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto layout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(recordSchema, true);
     auto bindedRowLayout = layout->bind(inputBuffer);
 
-    auto recordIndexFieldsInput = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
+    auto recordIndexFieldsInput =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayout);
 
     for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         recordIndexFieldsInput[recordIndex] = recordIndex;
@@ -527,9 +528,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* execute code */
     auto wctx = NodeEngine::WorkerContext{0};
-    auto context =
-        std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(), nodeEngine->getBufferManager(),
-                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+    auto context = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                  nodeEngine->getBufferManager(),
+                                                                  std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
     stage->setup(*context.get());
     stage->start(*context.get());
     ASSERT_EQ(stage->execute(inputBuffer, *context.get(), wctx), ExecutionResult::Ok);
@@ -538,7 +539,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* check result for correctness */
     auto bindedOutputRowLayout = layout->bind(outputBuffer);
-    auto sumGeneratedCode = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
+    auto sumGeneratedCode =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedOutputRowLayout)[0];
     auto sum = 0;
     for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
         sum += recordIndexFieldsInput[recordIndex];

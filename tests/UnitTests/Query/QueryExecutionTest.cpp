@@ -144,7 +144,8 @@ class WindowSource : public NES::DefaultSource {
 
             if (varyWatermark) {
                 if (!decreaseTime) {
-                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
+                    NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                        timestamp++;
                 } else {
                     if (runCnt == 0) {
                         /**
@@ -165,9 +166,13 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         if (i < 9) {
-                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp++;
+                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
+                                                                                                           bindedRowLayout)[i] =
+                                timestamp++;
                         } else {
-                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp + 20;
+                            NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2,
+                                                                                                           bindedRowLayout)[i] =
+                                timestamp + 20;
                         }
                     } else {
                         /**
@@ -187,7 +192,8 @@ class WindowSource : public NES::DefaultSource {
                             +----------------------------------------------------+
                          */
                         timestamp = timestamp - 1 <= 0 ? 0 : timestamp - 1;
-                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] = timestamp;
+                        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout)[i] =
+                            timestamp;
                     }
                 }
             } else {
@@ -286,9 +292,7 @@ class TestSink : public SinkMedium {
 
     SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
 
-    void cleanupBuffers() {
-        resultBuffers.clear();
-    }
+    void cleanupBuffers() { resultBuffers.clear(); }
 
     mutable std::recursive_mutex m;
     uint64_t expectedBuffer;
@@ -309,7 +313,6 @@ void fillBuffer(TupleBuffer& buf, NodeEngine::DynamicMemoryLayout::DynamicRowLay
         recordIndexFields[recordIndex] = recordIndex;
         fields01[recordIndex] = 1;
         fields02[recordIndex] = recordIndex % 2;
-
     }
     buf.setNumberOfTuples(10);
 }
@@ -366,7 +369,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);
 
     auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
-    auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultRecordIndexFields =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         // id
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
@@ -431,7 +435,8 @@ TEST_F(QueryExecutionTest, projectionQuery) {
 
     auto resultLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
     auto bindedRowLayoutResult = resultLayout->bind(resultBuffer);
-    auto resultRecordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto resultRecordIndexFields =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         // id
@@ -1087,7 +1092,8 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 5);// how to interpret this?
 
     auto bindedRowLayoutResult = memoryLayout->bind(resultBuffer);
-    auto recordIndexFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
+    auto recordIndexFields =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<int64_t, true>::create(0, bindedRowLayoutResult);
 
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);

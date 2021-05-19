@@ -66,9 +66,6 @@ class DynamicLayoutBuffer {
      */
     virtual uint64_t calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) = 0;
 
-
-
-
   protected:
     TupleBuffer tupleBuffer;
     uint64_t capacity;
