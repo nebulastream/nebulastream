@@ -487,7 +487,7 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Created);
     EXPECT_EQ(plan->getPipelines().size(), 1);
     auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto memoryLayout = NodeEngine::createRowLayout(testSchema);
+    auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
     fillBuffer(buffer, memoryLayout);
     plan->setup();
     ASSERT_EQ(plan->getStatus(), NodeEngine::Execution::ExecutableQueryPlanStatus::Deployed);
@@ -515,7 +515,7 @@ TEST_F(QueryExecutionTest, powerOperatorQuery) {
         "|2|1|8|8.000000|\n"
         "+----------------------------------------------------+";
 
-    auto& resultBuffer = testSink->get(0);
+    auto resultBuffer = testSink->get(0);
 
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, resultSchema));
 
