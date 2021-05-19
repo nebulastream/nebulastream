@@ -126,7 +126,8 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
 template<size_t I, typename... Ts>
 typename std::enable_if<I == sizeof...(Ts), void>::type DynamicRowLayoutBuffer::copyTupleFieldsToBuffer(std::tuple<Ts...> tup,
                                                                                                         uint8_t* address) {
-    // Iterated through tuple, so simply return
+    // Finished iterating through tuple via template recursion. So all that is left is to do a simple return.
+    // As we are not using any variable, we need to have them set void otherwise the compiler will throw an unused variable error.
     ((void) address);
     ((void) tup);
     return;
@@ -163,6 +164,9 @@ typename std::enable_if<(I < sizeof...(Ts)), void>::type DynamicRowLayoutBuffer:
 
 template<bool boundaryChecks, typename... Types>
 bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record) {
+    // Calling pushRecord<>() with numberOfRecords as recordIndex.
+    // This works as we are starting to count at 0 but numberOfRecords starts at 1
+    // numberOfRecords will be increased by one in called function
     return pushRecord<boundaryChecks>(record, numberOfRecords);
 }
 
