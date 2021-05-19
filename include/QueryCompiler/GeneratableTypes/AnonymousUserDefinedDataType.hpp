@@ -26,7 +26,7 @@
 #include <utility>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief A generatable data type that generates code for anonymous user define types.
  * This is usually used to generate code for runtime types, which are not covered by the nes type system.
@@ -58,7 +58,7 @@ class AnonymousUserDefinedDataType final : public GeneratableDataType {
   private:
     const std::string name;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_ANONYMOUSUSERDEFINEDDATATYPE_HPP_

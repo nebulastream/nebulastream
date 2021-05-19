@@ -23,7 +23,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 const std::string toString(const BinaryOperatorType& type) {
     const char* const names[] = {"EQUAL_OP",
                                  "UNEQUAL_OP",
@@ -189,5 +189,5 @@ BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const Expressi
 BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
     return BinaryOperatorStatement(lhs, BITWISE_RIGHT_SHIFT_OP, rhs);
 }
-
+}// namespace QueryCompilation
 }// namespace NES

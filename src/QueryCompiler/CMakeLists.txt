@@ -16,7 +16,7 @@ add_source_nes(
         QueryCompilerOptions.cpp
         PipelineContext.cpp
         CompilerTypeFactory.cpp
-        NewQueryCompiler.cpp
+        QueryCompiler.cpp
         DefaultQueryCompiler.cpp
         QueryCompilationRequest.cpp
         QueryCompilationResult.cpp

@@ -41,7 +41,7 @@ typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
 
 }// namespace NES::Windowing
 namespace NES {
-
+namespace QueryCompilation {
 class AttributeReference;
 typedef std::shared_ptr<AttributeReference> AttributeReferencePtr;
 
@@ -53,9 +53,6 @@ typedef std::shared_ptr<Predicate> PredicatePtr;
 
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
-
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 class CompilerTypesFactory;
 typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
@@ -153,10 +150,11 @@ class CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCompleteWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                               QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                               PipelineContextPtr context,
-                                               uint64_t operatorHandlerIndex) = 0;
+    virtual bool generateCodeForCompleteWindow(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t operatorHandlerIndex) = 0;
 
     /**
    * @brief Code generation for a slice creation operator for distributed window operator, which depends on a particular window definition.
@@ -165,10 +163,11 @@ class CodeGenerator {
    * @param operatorHandlerIndex index for the operator handler.
    * @return flag if the generation was successful.
    */
-    virtual bool generateCodeForSlicingWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                              QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                              PipelineContextPtr context,
-                                              uint64_t windowOperatorIndex) = 0;
+    virtual bool generateCodeForSlicingWindow(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) = 0;
 
     /**
     * @brief Code generation for a combiner operator for distributed window operator, which depends on a particular window definition.
@@ -177,10 +176,11 @@ class CodeGenerator {
     * @param operatorHandlerIndex index for the operator handler.
     * @return flag if the generation was successful.
     */
-    virtual bool generateCodeForCombiningWindow(Windowing::LogicalWindowDefinitionPtr window,
-                                                QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
-                                                PipelineContextPtr context,
-                                                uint64_t windowOperatorIndex) = 0;
+    virtual bool generateCodeForCombiningWindow(
+        Windowing::LogicalWindowDefinitionPtr window,
+        QueryCompilation::GeneratableOperators::GeneratableWindowAggregationPtr generatableWindowAggregation,
+        PipelineContextPtr context,
+        uint64_t windowOperatorIndex) = 0;
 
     /**
     * @brief Code generation the setup method for join operators, which depends on a particular join definition.
@@ -239,4 +239,5 @@ class CodeGenerator {
     CompilerTypesFactoryPtr getTypeFactory();
     FunctionCallStatementPtr call(std::string function);
 };
+}// namespace QueryCompilation
 }// namespace NES

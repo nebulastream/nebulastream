@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/NewQueryCompiler.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 
 namespace NES {
 namespace QueryCompilation {

@@ -16,7 +16,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 FunctionCallStatement::~FunctionCallStatement() {}
 
 StatementType FunctionCallStatement::getStamentType() const { return FUNC_CALL_STMT; }
@@ -47,5 +47,5 @@ FunctionCallStatement::FunctionCallStatement(const std::string functionname) : f
 FunctionCallStatementPtr FunctionCallStatement::create(const std::string functionname) {
     return std::make_shared<FunctionCallStatement>(functionname);
 }
-
+}// namespace QueryCompilation
 }// namespace NES

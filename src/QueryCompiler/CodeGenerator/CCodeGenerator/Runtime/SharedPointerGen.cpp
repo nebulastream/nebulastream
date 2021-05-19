@@ -19,7 +19,7 @@
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 GeneratableDataTypePtr SharedPointerGen::createSharedPtrType(GeneratableDataTypePtr type) {
     return CompilerTypesFactory().createAnonymusDataType("std::shared_ptr<" + type->getCode()->code_ + ">");
 }
@@ -27,5 +27,5 @@ GeneratableDataTypePtr SharedPointerGen::createSharedPtrType(GeneratableDataType
 StatementPtr SharedPointerGen::makeShared(GeneratableDataTypePtr type) {
     return FunctionCallStatement::create("std::make_shared<" + type->getTypeDefinitionCode()->code_ + ">");
 }
-
+}// namespace QueryCompilation
 }// namespace NES

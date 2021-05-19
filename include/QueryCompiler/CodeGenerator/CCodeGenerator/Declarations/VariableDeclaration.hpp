@@ -22,14 +22,15 @@
 
 namespace NES {
 
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
+
+namespace QueryCompilation {
 class VariableDeclaration;
 typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
 
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
-
-class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
 
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
@@ -61,7 +62,7 @@ class VariableDeclaration : public Declaration {
     std::string identifier_;
     ValueTypePtr init_value_;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_VARIABLEDECLARATION_HPP_

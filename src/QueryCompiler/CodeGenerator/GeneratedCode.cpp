@@ -18,7 +18,7 @@
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 GeneratedCode::GeneratedCode()
     : variableDeclarations(), variableInitStmts(), forLoopStmt(), currentCodeInsertionPoint(), cleanupStmts(), returnStmt(),
       varDeclarationRecordIndex(), varDeclarationReturnValue(),
@@ -37,5 +37,6 @@ GeneratedCode::GeneratedCode()
       typeDeclarations() {
     // nop
 }
+}// namespace QueryCompilation
 
 }// namespace NES

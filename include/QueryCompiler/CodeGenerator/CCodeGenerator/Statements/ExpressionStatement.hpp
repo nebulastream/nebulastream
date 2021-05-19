@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 class ExpressionStatment;
 typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
 
@@ -57,5 +57,6 @@ class ExpressionStatment : public Statement {
 
     virtual ~ExpressionStatment();
 };
+}// namespace QueryCompilation
 
 }// namespace NES

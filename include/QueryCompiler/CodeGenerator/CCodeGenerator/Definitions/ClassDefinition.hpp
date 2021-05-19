@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Definition for a class in the generated code.
  * class NAME {
@@ -80,6 +80,6 @@ class ClassDefinition : public std::enable_shared_from_this<ClassDefinition> {
     std::vector<FunctionDefinitionPtr> privateFunctions;
     std::vector<ConstructorDefinitionPtr> publicConstructors;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 #endif// NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_CLASSDEFINITION_HPP_

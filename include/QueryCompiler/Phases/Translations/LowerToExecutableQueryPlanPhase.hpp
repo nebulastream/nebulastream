@@ -16,10 +16,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
 
-#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <vector>
 
 namespace NES {

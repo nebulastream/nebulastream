@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
@@ -68,7 +68,7 @@ NodeEngine::Execution::NewExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase
                       pipelineToExecutableMap);
     }
 
-    return std::make_shared<NodeEngine::Execution::NewExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
+    return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
                                                                            pipelineQueryPlan->getQuerySubPlanId(),
                                                                            std::move(sources),
                                                                            std::move(sinks),
@@ -226,7 +226,7 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
                                                                           executableSuccessorPipelines.size());
 
     auto executablePipeline =
-        NodeEngine::Execution::NewExecutablePipeline::create(pipeline->getPipelineId(),
+        NodeEngine::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
                                                              subQueryPlanId,
                                                              executionContext,
                                                              executableOperator->getExecutablePipelineStage(),

@@ -16,9 +16,9 @@
 
 #include <Network/NetworkSink.hpp>
 #include <Network/NetworkSource.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
-#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
-#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/QueryManager.hpp>
@@ -487,7 +487,7 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
         ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking);// memcpy using copy ctor
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
-    auto pipeline = Execution::NewExecutablePipeline::create(-1,// any query plan
+    auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
                                                              queryExecutionPlanId,
                                                              pipelineContext,
                                                              reconfigurationExecutable,
@@ -532,7 +532,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         auto buffer = optBuffer.value();
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
-        auto weakQep = std::make_any<std::weak_ptr<Execution::NewExecutableQueryPlan>>(executableQueryPlan);
+        auto weakQep = std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
         if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&successor)) {
             new (buffer.getBuffer()) ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
                                                             SoftEndOfStream,
@@ -553,7 +553,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         auto pipelineContext =
             std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                               inherited0::shared_from_this());
-        auto pipeline = Execution::NewExecutablePipeline::create(-1,// any query plan
+        auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
                                                                  executableQueryPlan->getQuerySubPlanId(),
                                                                  pipelineContext,
                                                                  reconfigurationExecutable,
@@ -591,7 +591,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                           inherited0::shared_from_this());
-    auto pipeline = Execution::NewExecutablePipeline::create(-1,// any query plan
+    auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
                                                              executableQueryPlan->getQuerySubPlanId(),
                                                              pipelineContext,
                                                              reconfigurationExecutable,

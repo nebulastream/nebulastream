@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 class GeneratableValueType;
 typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
 
@@ -41,7 +41,7 @@ class ConstantExpressionStatement : public ExpressionStatment {
 };
 
 typedef ConstantExpressionStatement Constant;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CONSTANTEXPRESSIONSTATEMENT_HPP_

@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief this statements allows us to generate code for the "continue" instruction
  */
@@ -40,7 +40,7 @@ class ContinueStatement : public Statement {
 };
 
 typedef ContinueStatement Continue;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR__HPP_

@@ -18,9 +18,9 @@
 #define INCLUDE_QUERY_MANAGER_HPP_
 
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <NodeEngine/Execution/ExecutableQueryPlanStatus.hpp>
-#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
-#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/QueryStatistics.hpp>
 #include <NodeEngine/Reconfigurable.hpp>

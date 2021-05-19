@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <vector>
 namespace NES {
-
+namespace QueryCompilation {
 class CompoundStatement : public Statement {
   public:
     CompoundStatement();
@@ -40,7 +40,7 @@ class CompoundStatement : public Statement {
 };
 
 typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_COMPOUNDSTATEMENT_HPP_

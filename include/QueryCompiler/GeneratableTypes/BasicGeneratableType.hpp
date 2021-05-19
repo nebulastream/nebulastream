@@ -21,7 +21,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 class StructDeclaration;
 
 /**
@@ -54,6 +54,7 @@ class BasicGeneratableType final : public GeneratableDataType {
   private:
     BasicPhysicalTypePtr type;
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_BASICGENERATABLETYPE_HPP_

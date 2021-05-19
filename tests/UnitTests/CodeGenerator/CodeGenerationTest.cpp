@@ -59,6 +59,7 @@
 using std::cout;
 using std::endl;
 namespace NES {
+using namespace QueryCompilation;
 
 class CodeGenerationTest : public testing::Test {
   public:
@@ -114,7 +115,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
  * @brief This test checks the behavior of the code generation API
  */
 TEST_F(CodeGenerationTest, codeGenerationApiTest) {
-    auto tf = CompilerTypesFactory();
+    auto tf = QueryCompilation::CompilerTypesFactory();
     auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
                                                 "i",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));

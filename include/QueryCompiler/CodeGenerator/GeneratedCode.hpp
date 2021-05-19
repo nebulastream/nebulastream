@@ -35,7 +35,7 @@
 #include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
@@ -68,7 +68,7 @@ class GeneratedCode {
     std::vector<StructDeclaration> typeDeclarations;
     std::vector<DeclarationPtr> override_fields;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATEDCODE_HPP_

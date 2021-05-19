@@ -21,7 +21,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <vector>
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Declaration for a class in the generated code.
  */
@@ -45,6 +45,7 @@ class ClassDeclaration : public Declaration {
     std::string generateBaseClassNames() const;
     ClassDefinitionPtr classDefinition;
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_

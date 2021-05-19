@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Defines a namespace scope
  * For example:
@@ -48,6 +48,6 @@ class NamespaceDefinition {
     std::string name;
     std::vector<DeclarationPtr> declarations;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 #endif// NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_NAMESPACEDEFINITION_HPP_

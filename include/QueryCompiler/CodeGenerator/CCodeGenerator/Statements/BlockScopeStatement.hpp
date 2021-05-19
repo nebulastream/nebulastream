@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 class BlockScopeStatement;
 typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
 
@@ -35,7 +35,7 @@ class BlockScopeStatement : public CompoundStatement {
 
     const CodeExpressionPtr getCode() const override;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STATEMENTS_BLOCKSCOPESTATEMENT_HPP_

@@ -22,7 +22,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief A generatable data type which represent a reference to a typed value.
  */
@@ -53,5 +53,6 @@ class ReferenceDataType : public GeneratableDataType {
   private:
     GeneratableDataTypePtr baseType;
 };
+}// namespace QueryCompilation
 }// namespace NES
 #endif//INCLUDE_REFEREMCEDATATYPE_HPP_

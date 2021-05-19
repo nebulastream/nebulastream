@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 class VarDeclStatement : public ExpressionStatment {
   public:
     VarDeclStatement(const VariableDeclaration& var_decl);
@@ -36,7 +36,7 @@ class VarDeclStatement : public ExpressionStatment {
   private:
     std::shared_ptr<VariableDeclaration> variableDeclaration;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_VARDECLSTATEMENT_HPP_

@@ -22,7 +22,7 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 const GeneratableDataTypePtr VariableDeclaration::getType() const { return type_; }
 const std::string VariableDeclaration::getIdentifierName() const { return identifier_; }
 
@@ -68,5 +68,5 @@ VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::str
     auto typeFactory = CompilerTypesFactory();
     return VariableDeclaration(typeFactory.createDataType(type), identifier, value);
 }
-
+}// namespace QueryCompilation
 }// namespace NES

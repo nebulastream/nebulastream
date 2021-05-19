@@ -18,6 +18,12 @@
 #include <memory>
 namespace NES {
 
+class BasicValue;
+typedef std::shared_ptr<BasicValue> BasicValuePtr;
+
+class ArrayPhysicalType;
+typedef std::shared_ptr<ArrayPhysicalType> ArrayPhysicalTypePtr;
+
 namespace NodeEngine {
 class NodeEngine;
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
@@ -29,11 +35,11 @@ typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
 class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 
-class NewExecutablePipeline;
-typedef std::shared_ptr<NewExecutablePipeline> NewExecutablePipelinePtr;
+class ExecutablePipeline;
+typedef std::shared_ptr<ExecutablePipeline> NewExecutablePipelinePtr;
 
-class NewExecutableQueryPlan;
-typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
+class ExecutableQueryPlan;
+typedef std::shared_ptr<ExecutableQueryPlan> NewExecutableQueryPlanPtr;
 
 }// namespace Execution
 
@@ -41,12 +47,6 @@ typedef std::shared_ptr<NewExecutableQueryPlan> NewExecutableQueryPlanPtr;
 
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
-
-class PipelineContext;
-typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
-
-class CodeGenerator;
-typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
@@ -94,6 +94,12 @@ class SinkDescriptor;
 typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 namespace QueryCompilation {
+
+class PipelineContext;
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+
+class CodeGenerator;
+typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 
 enum JoinBuildSide { Left, Right };
 

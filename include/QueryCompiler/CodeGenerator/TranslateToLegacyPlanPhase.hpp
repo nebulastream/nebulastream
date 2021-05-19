@@ -21,14 +21,18 @@
 
 namespace NES {
 
-class TranslateToLegacyPlanPhase;
-typedef std::shared_ptr<TranslateToLegacyPlanPhase> TranslateToLegacyPlanPhasePtr;
+
 
 class OperatorNode;
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+
+namespace QueryCompilation {
+
+class TranslateToLegacyPlanPhase;
+typedef std::shared_ptr<TranslateToLegacyPlanPhase> TranslateToLegacyPlanPhasePtr;
 
 class LegacyExpression;
 typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
@@ -66,7 +70,7 @@ class TranslateToLegacyPlanPhase {
      */
     UserAPIExpressionPtr transformArithmeticalExpressions(ExpressionNodePtr node);
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_NODES_PHASES_TRANSLATETOLEGECYPLAN_HPP_

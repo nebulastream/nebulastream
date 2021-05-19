@@ -18,7 +18,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_VARREFSTATEMENT_HPP_
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 class VarRefStatement : public ExpressionStatment {
   public:
     VariableDeclarationPtr varDeclaration;
@@ -37,7 +37,7 @@ class VarRefStatement : public ExpressionStatment {
 };
 
 typedef VarRefStatement VarRef;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_VARREFSTATEMENT_HPP_

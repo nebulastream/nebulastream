@@ -17,8 +17,9 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEVALUETYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEVALUETYPE_HPP_
 #include <memory>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
@@ -37,7 +38,7 @@ class GeneratableValueType {
      */
     virtual CodeExpressionPtr getCodeExpression() const noexcept = 0;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEVALUETYPE_HPP_

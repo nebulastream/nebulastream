@@ -26,8 +26,8 @@
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacement/MinimumEnergyConsumptionStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyPlanPhase.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 

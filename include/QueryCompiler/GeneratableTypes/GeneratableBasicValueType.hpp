@@ -20,9 +20,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 
 namespace NES {
-
-class BasicValue;
-typedef std::shared_ptr<BasicValue> BasicValuePtr;
+namespace QueryCompilation {
 
 /**
  * @brief Generates code for basic values.
@@ -40,7 +38,7 @@ class GeneratableBasicValueType final : public GeneratableValueType {
   private:
     BasicValuePtr value;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_GENERATABLEBASICVALUETYPE_HPP_

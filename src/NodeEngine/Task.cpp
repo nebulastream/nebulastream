@@ -15,7 +15,7 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
 #include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/Task.hpp>

@@ -20,7 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief this statements allows us to generate code comments
  */
@@ -41,7 +41,7 @@ class CommentStatement : public Statement {
 };
 
 typedef CommentStatement Comment;
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR__HPP_

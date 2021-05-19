@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Execution/NewExecutablePipeline.hpp>
-#include <NodeEngine/Execution/NewExecutableQueryPlan.hpp>
+#include <NodeEngine/Execution/ExecutablePipeline.hpp>
+#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -23,7 +23,7 @@
 
 namespace NES::NodeEngine::Execution {
 
-NewExecutableQueryPlan::NewExecutableQueryPlan(QueryId queryId,
+ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
                                                QuerySubPlanId querySubPlanId,
                                                std::vector<DataSourcePtr>&& sources,
                                                std::vector<DataSinkPtr>&& sinks,
@@ -37,14 +37,14 @@ NewExecutableQueryPlan::NewExecutableQueryPlan(QueryId queryId,
     // nop
 }
 
-NewExecutableQueryPlanPtr NewExecutableQueryPlan::create(QueryId queryId,
+NewExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
                                                          QuerySubPlanId querySubPlanId,
                                                          std::vector<DataSourcePtr> sources,
                                                          std::vector<DataSinkPtr> sinks,
                                                          std::vector<NewExecutablePipelinePtr> pipelines,
                                                          QueryManagerPtr queryManager,
                                                          BufferManagerPtr bufferManager) {
-    return std::make_shared<NewExecutableQueryPlan>(queryId,
+    return std::make_shared<ExecutableQueryPlan>(queryId,
                                                     querySubPlanId,
                                                     std::move(sources),
                                                     std::move(sinks),
@@ -53,15 +53,15 @@ NewExecutableQueryPlanPtr NewExecutableQueryPlan::create(QueryId queryId,
                                                     std::move(bufferManager));
 }
 
-void NewExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
+void ExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
 
-QueryId NewExecutableQueryPlan::getQueryId() { return queryId; }
+QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
 
-std::vector<NewExecutablePipelinePtr> NewExecutableQueryPlan::getPipelines() { return pipelines; }
+std::vector<NewExecutablePipelinePtr> ExecutableQueryPlan::getPipelines() { return pipelines; }
 
-QuerySubPlanId NewExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
+QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
-NewExecutableQueryPlan::~NewExecutableQueryPlan() {
+ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
     NES_ASSERT(qepStatus.load() == Created || qepStatus.load() == Stopped || qepStatus.load() == ErrorState,
                "QueryPlan is created but not executing " << queryId);
@@ -71,11 +71,11 @@ NewExecutableQueryPlan::~NewExecutableQueryPlan() {
     bufferManager.reset();
 }
 
-std::shared_future<ExecutableQueryPlanResult> NewExecutableQueryPlan::getTerminationFuture() {
+std::shared_future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture() {
     return qepTerminationStatusFuture.share();
 }
 
-bool NewExecutableQueryPlan::fail() {
+bool ExecutableQueryPlan::fail() {
     bool ret = true;
     auto expected = Running;
     if (qepStatus.compare_exchange_strong(expected, ErrorState)) {
@@ -94,9 +94,9 @@ bool NewExecutableQueryPlan::fail() {
     return ret;
 }
 
-ExecutableQueryPlanStatus NewExecutableQueryPlan::getStatus() { return qepStatus.load(); }
+ExecutableQueryPlanStatus ExecutableQueryPlan::getStatus() { return qepStatus.load(); }
 
-bool NewExecutableQueryPlan::setup() {
+bool ExecutableQueryPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup " << queryId << " " << querySubPlanId);
     auto expected = Created;
     if (qepStatus.compare_exchange_strong(expected, Deployed)) {
@@ -113,7 +113,7 @@ bool NewExecutableQueryPlan::setup() {
     return true;
 }
 
-bool NewExecutableQueryPlan::start(StateManagerPtr stateManager) {
+bool ExecutableQueryPlan::start(StateManagerPtr stateManager) {
     NES_DEBUG("QueryExecutionPlan: start " << queryId << " " << querySubPlanId);
     auto expected = Deployed;
     if (qepStatus.compare_exchange_strong(expected, Running)) {
@@ -131,22 +131,22 @@ bool NewExecutableQueryPlan::start(StateManagerPtr stateManager) {
     return true;
 }
 
-QueryManagerPtr NewExecutableQueryPlan::getQueryManager() { return queryManager; }
+QueryManagerPtr ExecutableQueryPlan::getQueryManager() { return queryManager; }
 
-BufferManagerPtr NewExecutableQueryPlan::getBufferManager() { return bufferManager; }
+BufferManagerPtr ExecutableQueryPlan::getBufferManager() { return bufferManager; }
 
-std::vector<DataSourcePtr> NewExecutableQueryPlan::getSources() const { return sources; }
+std::vector<DataSourcePtr> ExecutableQueryPlan::getSources() const { return sources; }
 
-std::vector<DataSinkPtr> NewExecutableQueryPlan::getSinks() const { return sinks; }
+std::vector<DataSinkPtr> ExecutableQueryPlan::getSinks() const { return sinks; }
 
-void NewExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
+void ExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);
     for (auto& sink : sinks) {
         sink->reconfigure(task, context);
     }
 }
 
-bool NewExecutableQueryPlan::stop() {
+bool ExecutableQueryPlan::stop() {
     bool allStagesStopped = true;
     auto expected = Running;
     NES_DEBUG("QueryExecutionPlan: stop " << queryId << " " << querySubPlanId);
@@ -189,7 +189,7 @@ bool NewExecutableQueryPlan::stop() {
     return false;
 }
 
-void NewExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& task) {
+void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& task) {
     Reconfigurable::postReconfigurationCallback(task);
     //soft eos means we drain the state and hard means we truncate it
     switch (task.getType()) {

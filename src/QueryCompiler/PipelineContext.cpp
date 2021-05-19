@@ -22,7 +22,7 @@
 #include <utility>
 
 namespace NES {
-
+namespace QueryCompilation {
 PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) {
     this->code = std::make_shared<GeneratedCode>();
 }
@@ -67,5 +67,5 @@ const uint64_t PipelineContext::getHandlerIndex(NodeEngine::Execution::OperatorH
 const std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
     return this->operatorHandlers;
 }
-
+}// namespace QueryCompilation
 }// namespace NES

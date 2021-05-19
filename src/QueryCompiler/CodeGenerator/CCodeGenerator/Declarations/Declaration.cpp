@@ -18,7 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 Declaration::~Declaration() {}
-
+}// namespace QueryCompilation
 }// namespace NES

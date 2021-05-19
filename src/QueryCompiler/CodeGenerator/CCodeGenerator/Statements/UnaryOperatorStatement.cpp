@@ -22,7 +22,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 const std::string toString(const UnaryOperatorType& type) {
     const char* const names[] = {"ADDRESS_OF_OP",
                                  "DEREFERENCE_POINTER_OP",
@@ -81,5 +81,5 @@ UnaryOperatorStatement operator~(const ExpressionStatment& ref) { return UnaryOp
 UnaryOperatorStatement operator!(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, LOGICAL_NOT_OP); }
 
 UnaryOperatorStatement sizeOf(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP); }
-
+}// namespace QueryCompilation
 }// namespace NES

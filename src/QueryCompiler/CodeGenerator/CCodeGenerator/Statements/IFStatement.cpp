@@ -18,7 +18,7 @@
 #include <sstream>
 
 namespace NES {
-
+namespace QueryCompilation {
 IFStatement::~IFStatement() {}
 
 IFStatement::IFStatement(const Statement& cond_expr)
@@ -44,5 +44,5 @@ const CodeExpressionPtr IFStatement::getCode() const {
 const StatementPtr IFStatement::createCopy() const { return std::make_shared<IFStatement>(*this); }
 
 const CompoundStatementPtr IFStatement::getCompoundStatement() { return trueCaseStatement; }
-
+}// namespace QueryCompilation
 }// namespace NES

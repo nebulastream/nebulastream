@@ -19,7 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <vector>
 namespace NES {
-
+namespace QueryCompilation {
 class VariableDeclaration;
 
 class StructDeclaration : public Declaration {
@@ -58,7 +58,7 @@ class StructDeclaration : public Declaration {
     std::vector<DeclarationPtr> decls_;
     bool packed_struct_;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_

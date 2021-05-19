@@ -20,7 +20,7 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 StructDeclaration StructDeclaration::create(const std::string& type_name, const std::string& variable_name) {
     return StructDeclaration(type_name, variable_name);
 }
@@ -107,5 +107,5 @@ VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string&
 }
 
 StructDeclaration::~StructDeclaration() {}
-
+}// namespace QueryCompilation
 }// namespace NES

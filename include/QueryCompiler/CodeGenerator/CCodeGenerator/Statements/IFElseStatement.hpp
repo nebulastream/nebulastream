@@ -18,6 +18,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFELSESTATEMENT_HPP_
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 namespace NES {
+namespace QueryCompilation {
 class IfElseStatement : public Statement {
   public:
     IfElseStatement(const Statement& cond_true, const Statement& cond_false);
@@ -27,6 +28,7 @@ class IfElseStatement : public Statement {
     const StatementPtr createCopy() const override;
     ~IfElseStatement() override;
 };
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFELSESTATEMENT_HPP_

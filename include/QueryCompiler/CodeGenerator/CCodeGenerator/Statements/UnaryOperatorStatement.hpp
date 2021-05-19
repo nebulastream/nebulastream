@@ -24,7 +24,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 
 namespace NES {
-
+namespace QueryCompilation {
 const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
 
 class UnaryOperatorStatement : public ExpressionStatment {
@@ -58,5 +58,5 @@ UnaryOperatorStatement operator~(const ExpressionStatment& ref);
 UnaryOperatorStatement operator!(const ExpressionStatment& ref);
 
 UnaryOperatorStatement sizeOf(const ExpressionStatment& ref);
-
+}// namespace QueryCompilation
 }// namespace NES

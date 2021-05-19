@@ -27,7 +27,7 @@
 #include <string>
 #include <utility>
 namespace NES {
-
+namespace QueryCompilation {
 ClassDeclaration::ClassDeclaration(ClassDefinitionPtr classDefinition) : classDefinition(classDefinition) {}
 
 ClassDeclarationPtr ClassDeclaration::create(ClassDefinitionPtr classDefinition) {
@@ -98,5 +98,5 @@ std::string ClassDeclaration::generateBaseClassNames() const {
 }
 
 const DeclarationPtr ClassDeclaration::copy() const { return std::make_shared<ClassDeclaration>(*this); }
-
+}// namespace QueryCompilation
 }// namespace NES

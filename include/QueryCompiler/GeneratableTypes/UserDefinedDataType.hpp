@@ -25,7 +25,7 @@
 #include <utility>
 
 namespace NES {
-
+namespace QueryCompilation {
 /**
  * @brief Generated code for structure declarations
  */
@@ -56,7 +56,7 @@ class UserDefinedDataType final : public GeneratableDataType {
   private:
     StructDeclaration declaration;
 };
-
+}// namespace QueryCompilation
 }// namespace NES
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_USERDEFINEDDATATYPE_HPP_
