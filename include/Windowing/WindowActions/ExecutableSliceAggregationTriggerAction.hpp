@@ -209,22 +209,12 @@ class ExecutableSliceAggregationTriggerAction
     void writeResultRecord(NodeEngine::TupleBuffer& tupleBuffer, uint64_t index, uint64_t startTs, uint64_t endTs, KeyType key,
                            ValueType value, uint64_t cnt) {
         auto bindedRowLayout = windowTupleLayout->bind(tupleBuffer);
-
-        auto startTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(0, bindedRowLayout);
-        auto endTsFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(1, bindedRowLayout);
-        auto cntFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<uint64_t, true>::create(2, bindedRowLayout);
-        startTsFields[index] = startTs;
-        endTsFields[index] = endTs;
-        cntFields[index] = cnt;
-
         if (windowDefinition->isKeyed()) {
-            auto keyFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<KeyType, true>::create(3, bindedRowLayout);
-            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<ValueType, true>::create(4, bindedRowLayout);
-            keyFields[index] = key;
-            valueFields[index] = value;
+            std::tuple<uint64_t, uint64_t, uint64_t, KeyType, ValueType> keyedTuple(startTs, endTs, cnt, key, value);
+            bindedRowLayout->pushRecord<true>(keyedTuple, index);
         } else {
-            auto valueFields = NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<ValueType, true>::create(3, bindedRowLayout);
-            valueFields[index] = value;
+            std::tuple<uint64_t, uint64_t, uint64_t, ValueType> notKeyedTuple(startTs, endTs, cnt, value);
+            bindedRowLayout->pushRecord<true>(notKeyedTuple, index);
         }
     }
 
