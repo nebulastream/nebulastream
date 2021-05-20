@@ -114,6 +114,10 @@ const std::string InferModelLogicalOperatorNode::toString() const {
 
 OperatorNodePtr InferModelLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFields, outputFields, id);
+    copy->setInputSchema(inputSchema);
+    copy->setOutputSchema(outputSchema);
+    copy->setStringSignature(stringSignature);
+    copy->setZ3Signature(z3Signature);
     return copy;
 }
 bool InferModelLogicalOperatorNode::equal(const NodePtr rhs) const {
@@ -132,6 +136,24 @@ bool InferModelLogicalOperatorNode::inferSchema() {
     if (!LogicalUnaryOperatorNode::inferSchema()) {
         return false;
     }
+
+    // use the default input schema to calculate the out schema of this operator.
+//    mapExpression->inferStamp(getInputSchema());
+//
+//    auto assignedField = mapExpression->getField();
+//    std::string fieldName = assignedField->getFieldName();
+//
+//    if (outputSchema->hasFieldName(fieldName)) {
+//        // The assigned field is part of the current schema.
+//        // Thus we check if it has the correct type.
+//        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is already in the schema, so we updated its type.");
+//        outputSchema->replaceField(fieldName, assignedField->getStamp());
+//    } else {
+//        // The assigned field is not part of the current schema.
+//        // Thus we extend the schema by the new attribute.
+//        NES_TRACE("MAP Logical Operator: the field " << fieldName << " is not part of the schema, so we added it.");
+//        outputSchema->addField(fieldName, assignedField->getStamp());
+//    }
     return true;
 }
 
