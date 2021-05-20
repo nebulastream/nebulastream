@@ -14,18 +14,18 @@
     limitations under the License.
 */
 
-#include <sstream>
-#include <string>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
+#include <sstream>
+#include <string>
 
 namespace NES {
 namespace QueryCompilation {
@@ -61,7 +61,7 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, Reco
         FunctionCallStatement expr = FunctionCallStatement(functionCallOverload);
         expr.addParameter(left->generateCode(code, recordHandler));
         expr.addParameter(right->generateCode(code, recordHandler));
-        auto tf = CompilerTypesFactory();
+        auto tf = GeneratableTypesFactory();
         if (bracket)
             return BinaryOperatorStatement(expr,
                                            op,
@@ -87,7 +87,7 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr&, Recor
         }
     } else if (value) {
         // todo remove if compiler refactored
-        auto tf = CompilerTypesFactory();
+        auto tf = GeneratableTypesFactory();
         return ConstantExpressionStatement(tf.createValueType(value)).copy();
     }
     return nullptr;
@@ -169,7 +169,7 @@ const std::string PredicateItem::toString() const {
     switch (mutation) {
         case PredicateItemMutation::ATTRIBUTE: return attribute->toString();
         case PredicateItemMutation::VALUE: {
-            auto tf = CompilerTypesFactory();
+            auto tf = GeneratableTypesFactory();
             return tf.createValueType(value)->getCodeExpression()->code_;
         }
     }

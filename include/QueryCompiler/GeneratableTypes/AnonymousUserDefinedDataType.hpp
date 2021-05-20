@@ -19,11 +19,8 @@
 
 #include <memory>
 #include <string>
-
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
-#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <utility>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
 namespace QueryCompilation {

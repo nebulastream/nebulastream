@@ -47,8 +47,8 @@
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -1938,7 +1938,7 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
     createFunction->addStatement(returnStatement);
 
     createFunction->returns(SharedPointerGen::createSharedPtrType(
-        CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+        GeneratableTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileBuilder.addDeclaration(pipelineNamespace->getDeclaration()).build();
 

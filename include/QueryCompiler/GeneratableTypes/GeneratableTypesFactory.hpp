@@ -17,27 +17,14 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_COMPILERTYPESFACTORY_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_COMPILERTYPESFACTORY_HPP_
 #include <memory>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 namespace NES {
-
-class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
-
-class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
-
 namespace QueryCompilation {
-class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
-
-class GeneratableValueType;
-typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
-
-class StructDeclaration;
 
 /**
  * @brief The compiler type factory creates generatable data types, which are required during query compilation.
  */
-class CompilerTypesFactory {
+class GeneratableTypesFactory {
   public:
     /**
      * @brief Create a annonymus data type, which is used to represent types of the runtime system that are not covered by the nes type system.

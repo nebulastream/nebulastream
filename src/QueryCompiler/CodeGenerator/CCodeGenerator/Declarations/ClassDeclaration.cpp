@@ -18,9 +18,9 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ClassDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
 #include <iostream>
 #include <sstream>
@@ -35,7 +35,7 @@ ClassDeclarationPtr ClassDeclaration::create(ClassDefinitionPtr classDefinition)
 }
 
 const GeneratableDataTypePtr ClassDeclaration::getType() const {
-    return CompilerTypesFactory().createAnonymusDataType(classDefinition->name);
+    return GeneratableTypesFactory().createAnonymusDataType(classDefinition->name);
 }
 const std::string ClassDeclaration::getIdentifierName() const { return ""; }
 

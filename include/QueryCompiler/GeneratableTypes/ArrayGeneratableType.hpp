@@ -21,7 +21,6 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES {
-
 namespace QueryCompilation {
 
 /**

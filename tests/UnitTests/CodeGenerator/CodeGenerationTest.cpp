@@ -41,8 +41,8 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
@@ -115,7 +115,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
  * @brief This test checks the behavior of the code generation API
  */
 TEST_F(CodeGenerationTest, codeGenerationApiTest) {
-    auto tf = QueryCompilation::CompilerTypesFactory();
+    auto tf = QueryCompilation::GeneratableTypesFactory();
     auto varDeclI = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createInt32()),
                                                 "i",
                                                 DataTypeFactory::createBasicValue(DataTypeFactory::createInt32(), "0"));
@@ -357,7 +357,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
-    auto tf = CompilerTypesFactory();
+    auto tf = GeneratableTypesFactory();
     auto tupleBufferType = tf.createAnonymusDataType("NodeEngine::TupleBuffer");
     auto pipelineExecutionContextType = tf.createAnonymusDataType("NodeEngine::Execution::PipelineExecutionContext");
     auto workerContextType = tf.createAnonymusDataType("NodeEngine::WorkerContext");
@@ -491,7 +491,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     createFunction->addStatement(returnStatement);
     ;
     createFunction->returns(SharedPointerGen::createSharedPtrType(
-        CompilerTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
+        GeneratableTypesFactory().createAnonymusDataType("NodeEngine::Execution::ExecutablePipelineStage")));
     pipelineNamespace->addDeclaration(createFunction->getDeclaration());
     CodeFile file = fileB.addDeclaration(pipelineNamespace->getDeclaration()).build();
 

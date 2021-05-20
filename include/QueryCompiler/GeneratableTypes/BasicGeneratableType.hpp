@@ -17,12 +17,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_BASICGENERATABLETYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_BASICGENERATABLETYPE_HPP_
 
-#include <Common/DataTypes/DataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
 namespace QueryCompilation {
-class StructDeclaration;
 
 /**
  * @brief A basic generatable data type which generates code for all BasicPhysicalTypes.

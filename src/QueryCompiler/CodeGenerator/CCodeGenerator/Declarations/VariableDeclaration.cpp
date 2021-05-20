@@ -16,8 +16,8 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
 
@@ -38,7 +38,7 @@ const Code VariableDeclaration::getCode() const {
     std::stringstream str;
     str << type_->getDeclarationCode(identifier_)->code_;
     if (init_value_) {
-        auto valueType = CompilerTypesFactory().createValueType(init_value_);
+        auto valueType = GeneratableTypesFactory().createValueType(init_value_);
         str << " = " << valueType->getCodeExpression()->code_;
     }
     return str.str();
@@ -65,7 +65,7 @@ VariableDeclaration VariableDeclaration::create(GeneratableDataTypePtr type, con
     return VariableDeclaration(type, identifier, value);
 }
 VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string& identifier, ValueTypePtr value) {
-    auto typeFactory = CompilerTypesFactory();
+    auto typeFactory = GeneratableTypesFactory();
     return VariableDeclaration(typeFactory.createDataType(type), identifier, value);
 }
 }// namespace QueryCompilation

@@ -16,7 +16,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -25,7 +25,7 @@ StructDeclaration StructDeclaration::create(const std::string& type_name, const 
     return StructDeclaration(type_name, variable_name);
 }
 
-const GeneratableDataTypePtr StructDeclaration::getType() const { return CompilerTypesFactory().createUserDefinedType(*this); }
+const GeneratableDataTypePtr StructDeclaration::getType() const { return GeneratableTypesFactory().createUserDefinedType(*this); }
 
 const std::string StructDeclaration::getIdentifierName() const { return variable_name_; }
 
