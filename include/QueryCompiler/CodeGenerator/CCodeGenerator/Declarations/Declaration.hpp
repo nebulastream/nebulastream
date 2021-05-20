@@ -16,22 +16,12 @@
 
 #pragma once
 
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
 #include <string>
-
 namespace NES {
 
-class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
-
 namespace QueryCompilation {
-typedef std::string Code;
-
-class Declaration;
-typedef std::shared_ptr<Declaration> DeclarationPtr;
-
-class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
 class Declaration {
   public:

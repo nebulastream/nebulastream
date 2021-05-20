@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 namespace NES {
 namespace QueryCompilation {
 FunctionCallStatement::~FunctionCallStatement() {}

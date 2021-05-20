@@ -18,10 +18,8 @@
 
 #include <memory>
 #include <string>
-
-#include <Operators/OperatorTypes.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/OperatorTypes.hpp>
 
 namespace NES {
 namespace QueryCompilation {

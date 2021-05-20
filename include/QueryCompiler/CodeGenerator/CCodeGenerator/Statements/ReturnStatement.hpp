@@ -18,7 +18,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RETURNSTATEMENT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 namespace NES {
 namespace QueryCompilation {
 /**

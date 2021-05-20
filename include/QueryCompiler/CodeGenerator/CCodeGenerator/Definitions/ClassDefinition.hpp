@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_CLASSDEFINITION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DEFINITION_CLASSDEFINITION_HPP_
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <string>
 #include <vector>
 

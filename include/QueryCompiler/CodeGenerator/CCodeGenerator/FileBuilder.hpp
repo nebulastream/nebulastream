@@ -16,15 +16,14 @@
 
 #pragma once
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
 
 namespace NES {
 namespace QueryCompilation {
+
 class CodeFile {
   public:
     std::string code;

@@ -15,7 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFElseStatement.hpp>
-
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 namespace NES {
 namespace QueryCompilation {
 IfElseStatement::IfElseStatement(const Statement&, const Statement&) {}

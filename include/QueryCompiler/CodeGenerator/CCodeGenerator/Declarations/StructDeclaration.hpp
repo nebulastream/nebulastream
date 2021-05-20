@@ -20,7 +20,6 @@
 #include <vector>
 namespace NES {
 namespace QueryCompilation {
-class VariableDeclaration;
 
 class StructDeclaration : public Declaration {
   public:

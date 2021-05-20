@@ -24,6 +24,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/FunctionDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <sstream>
 namespace NES {

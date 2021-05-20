@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_FUNCTIONDECLARATION_HPP_
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -26,9 +26,6 @@ namespace QueryCompilation {
  * @brief Declaration for a function in the generated code.
  */
 class FunctionDeclaration : public Declaration {
-  private:
-    Code functionCode;
-
   public:
     FunctionDeclaration(Code code);
     static FunctionDeclarationPtr create(Code code);
@@ -40,6 +37,9 @@ class FunctionDeclaration : public Declaration {
 
     const Code getCode() const override;
     const DeclarationPtr copy() const override;
+
+  private:
+    Code functionCode;
 };
 }// namespace QueryCompilation
 }// namespace NES

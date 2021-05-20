@@ -16,35 +16,34 @@
 
 #include <sstream>
 #include <string>
-
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
-
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 
 Predicate::Predicate(const BinaryOperatorType& op,
-                     const UserAPIExpressionPtr left,
-                     const UserAPIExpressionPtr right,
+                     const LegacyExpressionPtr left,
+                     const LegacyExpressionPtr right,
                      const std::string& functionCallOverload,
                      bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload(functionCallOverload) {}
 
 Predicate::Predicate(const BinaryOperatorType& op,
-                     const UserAPIExpressionPtr left,
-                     const UserAPIExpressionPtr right,
+                     const LegacyExpressionPtr left,
+                     const LegacyExpressionPtr right,
                      bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload("") {}
 
-UserAPIExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
+LegacyExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }
 
 const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const {
     if (functionCallOverload.empty()) {
@@ -121,9 +120,9 @@ bool Predicate::equals(const LegacyExpression& _rhs) const {
 PredicateItem::PredicateItem(AttributeFieldPtr attribute) : mutation(PredicateItemMutation::ATTRIBUTE), attribute(attribute) {}
 BinaryOperatorType Predicate::getOperatorType() const { return op; }
 
-const UserAPIExpressionPtr Predicate::getLeft() const { return left; }
+const LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
-const UserAPIExpressionPtr Predicate::getRight() const { return right; }
+const LegacyExpressionPtr Predicate::getRight() const { return right; }
 
 PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutation::VALUE), value(value) {}
 
@@ -183,7 +182,7 @@ const DataTypePtr PredicateItem::getDataTypePtr() const {
     return value->dataType;
 };
 
-UserAPIExpressionPtr PredicateItem::copy() const { return std::make_shared<PredicateItem>(*this); }
+LegacyExpressionPtr PredicateItem::copy() const { return std::make_shared<PredicateItem>(*this); }
 
 bool PredicateItem::equals(const LegacyExpression& _rhs) const {
     try {

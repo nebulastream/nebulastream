@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_NAMESPACEDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_NAMESPACEDECLARATION_HPP_
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -26,20 +26,17 @@ namespace QueryCompilation {
  * @brief Declaration for a namespace in the generated code.
  */
 class NamespaceDeclaration : public Declaration {
-  private:
-    Code namespaceCode;
-
   public:
     NamespaceDeclaration(Code code);
     static NamespaceDeclarationPtr create(Code code);
-
     virtual const GeneratableDataTypePtr getType() const override;
     virtual const std::string getIdentifierName() const override;
-
     const Code getTypeDefinitionCode() const override;
-
     const Code getCode() const override;
     const DeclarationPtr copy() const override;
+
+  private:
+    Code namespaceCode;
 };
 }// namespace QueryCompilation
 }// namespace NES

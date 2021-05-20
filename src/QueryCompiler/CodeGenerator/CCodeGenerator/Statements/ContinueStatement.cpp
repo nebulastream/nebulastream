@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ContinueStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 namespace NES {
 namespace QueryCompilation {

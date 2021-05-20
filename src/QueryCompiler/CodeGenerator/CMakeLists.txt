@@ -16,6 +16,6 @@ add_source_nes(CodeExpression.cpp
         CodeGenerator.cpp
         GeneratedCode.cpp
         RecordHandler.cpp
-        TranslateToLegacyPlanPhase.cpp
+        TranslateToLegacyExpression.cpp
         LegacyExpression.cpp)
 add_subdirectory(CCodeGenerator)

@@ -15,7 +15,7 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_RECORDHANDLER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_RECORDHANDLER_HPP_
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <map>
 #include <string>
 namespace NES {

@@ -17,8 +17,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CONSTRUCTORDECLARATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CONSTRUCTORDECLARATION_HPP_
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
 namespace NES {
 namespace QueryCompilation {

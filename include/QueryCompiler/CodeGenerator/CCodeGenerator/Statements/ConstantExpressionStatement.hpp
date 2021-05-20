@@ -18,11 +18,10 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CONSTANTEXPRESSIONSTATEMENT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
 namespace NES {
 namespace QueryCompilation {
-class GeneratableValueType;
-typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
 
 class ConstantExpressionStatement : public ExpressionStatment {
   public:

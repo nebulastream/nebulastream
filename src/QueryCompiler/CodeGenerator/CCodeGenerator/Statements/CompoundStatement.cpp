@@ -15,7 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
-
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 
 namespace NES {

@@ -20,6 +20,7 @@
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <utility>
 namespace NES {
 namespace QueryCompilation {

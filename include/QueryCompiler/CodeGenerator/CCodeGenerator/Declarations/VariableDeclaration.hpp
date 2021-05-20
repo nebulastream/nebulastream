@@ -19,21 +19,10 @@
 
 #include <Common/ValueTypes/ValueType.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
 namespace NES {
-
-class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
-
 namespace QueryCompilation {
-class VariableDeclaration;
-typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
-
-class CodeExpression;
-typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
-
-class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
 class VariableDeclaration : public Declaration {
   public:

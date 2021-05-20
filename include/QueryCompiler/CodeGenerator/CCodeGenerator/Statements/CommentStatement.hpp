@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STDOUT__HPP_
-#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STDOUT__HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_COMMENT_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_COMMENT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 /**
@@ -44,4 +44,4 @@ typedef CommentStatement Comment;
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR__HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_COMMENT_HPP_

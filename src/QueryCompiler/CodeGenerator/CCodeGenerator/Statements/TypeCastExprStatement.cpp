@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
