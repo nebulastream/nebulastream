@@ -13,8 +13,9 @@ import numpy as np
 
 # folder = "./"#in this folder
 folder = "./"
-
-df_changingThreadsAndSourceNoProc = pd.read_csv(folder + 'changingThreadsAndSourceNoProcMemoryMode.csv')
+df_changingThreadsAndSourceSourceSink = pd.read_csv(folder + 'changingThreadsAndSourceBaselineSourceSinkMemoryMode.csv')
+df_changingThreadsAndSourceReadOnly = pd.read_csv(folder + 'changingThreadsAndSourceBaselineReadOnlyMemoryMode.csv')
+df_changingThreadsAndSourceReadModifyWrite = pd.read_csv(folder + 'changingThreadsAndSourceBaselineReadModifyWriteMemoryMode.csv')
 
 df_changingThreadsAndSourceMedSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceMedSelectivityMemoryMode.csv')
 df_changingThreadsAndSourceHighSelectivity = pd.read_csv(folder + 'changingThreadsAndSourceHighSelectivityMemoryMode.csv')
@@ -31,12 +32,14 @@ import plotly
 
 # ###############################################################
 fig = make_subplots(
-    rows=3, cols=8,
-    column_widths=[3, 3, 3, 3, 3, 3, 3, 3],
+    rows=3, cols=10,
+    column_widths=[3, 3, 3, 3, 3, 3, 3, 3,3,3],
     row_heights=[1, 1, 1],
     shared_xaxes=False,
     subplot_titles=[
-        'Baseline NoProc',
+        'Baseline Source/Sink',
+        'Baseline ReadOnly',
+        'Baseline ReadModifyWrite',
         'Selection Low Selectivity',
         'Selection Med Selectivity',
         'Selection High Selectivity',
@@ -81,11 +84,11 @@ dictOfNamesSrc = {
 
 ############################################# df_changingThreadsAndSourceNoProc #######################################################
 
-df_changingThreadsAndSourceNoProc["src"] = "W" + df_changingThreadsAndSourceNoProc["WorkerThreads"].astype(str) + '/S' + \
-                                           df_changingThreadsAndSourceNoProc["SourceCnt"].astype(str)
+df_changingThreadsAndSourceSourceSink["src"] = "W" + df_changingThreadsAndSourceSourceSink["WorkerThreads"].astype(str) + '/S' + \
+                                               df_changingThreadsAndSourceSourceSink["SourceCnt"].astype(str)
 fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceNoProc['src'],
-               y=df_changingThreadsAndSourceNoProc['ThroughputInTupsPerSec'],
+    go.Scatter(x=df_changingThreadsAndSourceSourceSink['src'],
+               y=df_changingThreadsAndSourceSourceSink['ThroughputInTupsPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='red',
@@ -95,11 +98,11 @@ fig.add_trace(
                ),
     row=1, col=1
 )
-fig.update_xaxes(title_text="WrkCnt & SrcCnt NoProc", row=1, col=1)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt Source/Sink", row=1, col=1)
 fig.update_yaxes(title_text="ThroughputInTupsPerSec", type="log", row=1, col=1)
 
 fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceNoProc['src'], y=df_changingThreadsAndSourceNoProc['ThroughputInMBPerSec'],
+    go.Scatter(x=df_changingThreadsAndSourceSourceSink['src'], y=df_changingThreadsAndSourceSourceSink['ThroughputInMBPerSec'],
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='blue',
@@ -109,14 +112,14 @@ fig.add_trace(
                ),
     row=2, col=1
 )
-fig.update_xaxes(title_text="WrkCnt & SrcCnt NoProc", row=2, col=1)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt Source/Sink", row=2, col=1)
 fig.update_yaxes(title_text="ThroughputInMBPerSec", type="log", row=2, col=1)
 
 
-df_changingThreadsAndSourceNoProc["src"] = "W" + df_changingThreadsAndSourceNoProc["WorkerThreads"].astype(str) + '/S' + \
-                                           df_changingThreadsAndSourceNoProc["SourceCnt"].astype(str)
+df_changingThreadsAndSourceSourceSink["src"] = "W" + df_changingThreadsAndSourceSourceSink["WorkerThreads"].astype(str) + '/S' + \
+                                               df_changingThreadsAndSourceSourceSink["SourceCnt"].astype(str)
 fig.add_trace(
-    go.Scatter(x=df_changingThreadsAndSourceNoProc['src'], y=df_changingThreadsAndSourceNoProc['AvgLatencyInMs'],
+    go.Scatter(x=df_changingThreadsAndSourceSourceSink['src'], y=df_changingThreadsAndSourceSourceSink['AvgLatencyInMs'],
                hoverinfo='x+y',
                mode='markers+lines',
                line=dict(color='green',
@@ -126,9 +129,106 @@ fig.add_trace(
                ),
     row=3, col=1
 )
-fig.update_xaxes(title_text="WrkCnt & SrcCnt NoProc", row=3, col=1)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt Source/Sink", row=3, col=1)
 fig.update_yaxes(title_text="AvgLatencyInMs", type="log", row=3, col=1)
 
+
+
+############################################# df_changingThreadsAndSourceReadOnly #######################################################
+
+df_changingThreadsAndSourceReadOnly["src"] = "W" + df_changingThreadsAndSourceReadOnly["WorkerThreads"].astype(str) + '/S' + \
+                                             df_changingThreadsAndSourceReadOnly["SourceCnt"].astype(str)
+fig.add_trace(
+    go.Scatter(x=df_changingThreadsAndSourceReadOnly['src'],
+               y=df_changingThreadsAndSourceReadOnly['ThroughputInTupsPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='red',
+                         width=2),
+               name="Throughput in Tuples/sec",
+               showlegend=False
+               ),
+    row=1, col=2
+)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt ReadOnly", row=1, col=2)
+
+fig.add_trace(
+    go.Scatter(x=df_changingThreadsAndSourceReadOnly['src'], y=df_changingThreadsAndSourceReadOnly['ThroughputInMBPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='blue',
+                         width=2),
+               name="ThroughputInMBPerSec",
+               showlegend=False
+               ),
+    row=2, col=2
+)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt ReadOnly", row=2, col=2)
+
+
+df_changingThreadsAndSourceReadOnly["src"] = "W" + df_changingThreadsAndSourceReadOnly["WorkerThreads"].astype(str) + '/S' + \
+                                             df_changingThreadsAndSourceReadOnly["SourceCnt"].astype(str)
+fig.add_trace(
+    go.Scatter(x=df_changingThreadsAndSourceReadOnly['src'], y=df_changingThreadsAndSourceReadOnly['AvgLatencyInMs'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='green',
+                         width=2),
+               name="AvgLatencyInMs",
+               showlegend=False
+               ),
+    row=3, col=2
+)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt ReadOnly", row=3, col=2)
+
+
+
+############################################# df_changingThreadsAndSourceReadModifyWrite #######################################################
+
+df_changingThreadsAndSourceReadModifyWrite["src"] = "W" + df_changingThreadsAndSourceReadModifyWrite["WorkerThreads"].astype(str) + '/S' + \
+                                                    df_changingThreadsAndSourceReadModifyWrite["SourceCnt"].astype(str)
+fig.add_trace(
+    go.Scatter(x=df_changingThreadsAndSourceReadModifyWrite['src'],
+               y=df_changingThreadsAndSourceReadModifyWrite['ThroughputInTupsPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='red',
+                         width=2),
+               name="Throughput in Tuples/sec",
+               showlegend=False
+               ),
+    row=1, col=3
+)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt ReadModifyWrite", row=1, col=3)
+
+fig.add_trace(
+    go.Scatter(x=df_changingThreadsAndSourceReadModifyWrite['src'], y=df_changingThreadsAndSourceReadModifyWrite['ThroughputInMBPerSec'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='blue',
+                         width=2),
+               name="ThroughputInMBPerSec",
+               showlegend=False
+               ),
+    row=2, col=3
+)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt ReadModifyWrite", row=2, col=3)
+
+
+df_changingThreadsAndSourceReadModifyWrite["src"] = "W" + df_changingThreadsAndSourceReadModifyWrite["WorkerThreads"].astype(str) + '/S' + \
+                                                    df_changingThreadsAndSourceReadModifyWrite["SourceCnt"].astype(str)
+fig.add_trace(
+    go.Scatter(x=df_changingThreadsAndSourceReadModifyWrite['src'], y=df_changingThreadsAndSourceReadModifyWrite['AvgLatencyInMs'],
+               hoverinfo='x+y',
+               mode='markers+lines',
+               line=dict(color='green',
+                         width=2),
+               name="AvgLatencyInMs",
+               showlegend=False
+               ),
+    row=3, col=3
+)
+fig.update_xaxes(title_text="WrkCnt & SrcCnt ReadModifyWrite", row=3, col=3)
 
 
 ############################################# df_changingThreadsAndSourceLowSelectivity #######################################################
@@ -145,9 +245,9 @@ fig.add_trace(
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
-    row=1, col=2
+    row=1, col=4
 )
-fig.update_xaxes(title_text="Filter (10%)", row=1, col=2)
+fig.update_xaxes(title_text="Filter (10%)", row=1, col=4)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceLowSelectivity['src'],
@@ -159,9 +259,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=2
+    row=2, col=4
 )
-fig.update_xaxes(title_text="Filter (10%)", row=2, col=2)
+fig.update_xaxes(title_text="Filter (10%)", row=2, col=4)
 
 df_changingThreadsAndSourceLowSelectivity["src"] = "W" + df_changingThreadsAndSourceLowSelectivity[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceLowSelectivity["SourceCnt"].astype(str)
@@ -175,9 +275,9 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=2
+    row=3, col=4
 )
-fig.update_xaxes(title_text="Filter (10%)", row=3, col=2)
+fig.update_xaxes(title_text="Filter (10%)", row=3, col=4)
 
 ####################################################################################################
 
@@ -196,9 +296,9 @@ fig.add_trace(
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
-    row=1, col=3
+    row=1, col=5
 )
-fig.update_xaxes(title_text="Filter (50%)", row=1, col=3)
+fig.update_xaxes(title_text="Filter (50%)", row=1, col=5)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceMedSelectivity['src'],
@@ -210,9 +310,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=3
+    row=2, col=5
 )
-fig.update_xaxes(title_text="Filter (50%)", row=2, col=3)
+fig.update_xaxes(title_text="Filter (50%)", row=2, col=5)
 
 df_changingThreadsAndSourceMedSelectivity["src"] = "W" + df_changingThreadsAndSourceMedSelectivity[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceMedSelectivity["SourceCnt"].astype(str)
@@ -226,9 +326,9 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=3
+    row=3, col=5
 )
-fig.update_xaxes(title_text="Filter (50%)", row=3, col=3)
+fig.update_xaxes(title_text="Filter (50%)", row=3, col=5)
 
 ####################################################################################################
 
@@ -247,9 +347,9 @@ fig.add_trace(
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
-    row=1, col=4
+    row=1, col=6
 )
-fig.update_xaxes(title_text="Filter (90%)", row=1, col=4)
+fig.update_xaxes(title_text="Filter (90%)", row=1, col=6)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceHighSelectivity['src'],
@@ -261,9 +361,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=4
+    row=2, col=6
 )
-fig.update_xaxes(title_text="Filter (90%)", row=2, col=4)
+fig.update_xaxes(title_text="Filter (90%)", row=2, col=6)
 
 df_changingThreadsAndSourceHighSelectivity["src"] = "W" + df_changingThreadsAndSourceHighSelectivity[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceHighSelectivity["SourceCnt"].astype(str)
@@ -277,9 +377,9 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=4
+    row=3, col=6
 )
-fig.update_xaxes(title_text="Filter (90%)", row=3, col=4)
+fig.update_xaxes(title_text="Filter (90%)", row=3, col=6)
 
 
 ############################################# df_changingThreadsAndSourceProjectionOneOut #######################################################
@@ -296,9 +396,9 @@ fig.add_trace(
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
-    row=1, col=5
+    row=1, col=7
 )
-fig.update_xaxes(title_text="Projection 1 out of 3", row=1, col=5)
+fig.update_xaxes(title_text="Projection 1 out of 3", row=1, col=7)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceProjectionOneOut['src'],
@@ -310,9 +410,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=5
+    row=2, col=7
 )
-fig.update_xaxes(title_text="Projection 1 out of 3", row=2, col=5)
+fig.update_xaxes(title_text="Projection 1 out of 3", row=2, col=7)
 
 df_changingThreadsAndSourceProjectionOneOut["src"] = "W" + df_changingThreadsAndSourceProjectionOneOut[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceProjectionOneOut["SourceCnt"].astype(str)
@@ -326,9 +426,9 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=5
+    row=3, col=7
 )
-fig.update_xaxes(title_text="Projection 1 out of 3", row=3, col=5)
+fig.update_xaxes(title_text="Projection 1 out of 3", row=3, col=7)
 
 
 ############################################# df_changingThreadsAndSourceProjectionTwoOut #######################################################
@@ -345,9 +445,9 @@ fig.add_trace(
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
-    row=1, col=6
+    row=1, col=8
 )
-fig.update_xaxes(title_text="Projection 1 out of 3", row=1, col=6)
+fig.update_xaxes(title_text="Projection 1 out of 3", row=1, col=8)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceProjectionTwoOut['src'],
@@ -359,9 +459,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=6
+    row=2, col=8
 )
-fig.update_xaxes(title_text="Projection 1 out of 3", row=2, col=6)
+fig.update_xaxes(title_text="Projection 1 out of 3", row=2, col=8)
 
 df_changingThreadsAndSourceProjectionTwoOut["src"] = "W" + df_changingThreadsAndSourceProjectionTwoOut[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceProjectionTwoOut["SourceCnt"].astype(str)
@@ -375,9 +475,9 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=6
+    row=3, col=8
 )
-fig.update_xaxes(title_text="Projection 1 out of 3", row=3, col=6)
+fig.update_xaxes(title_text="Projection 1 out of 3", row=3, col=8)
 
 
 ############################################# df_changingThreadsAndSourceMapOneField #######################################################
@@ -394,9 +494,9 @@ fig.add_trace(
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
-    row=1, col=7
+    row=1, col=9
 )
-fig.update_xaxes(title_text="Map add 1 field", row=1, col=7)
+fig.update_xaxes(title_text="Map add 1 field", row=1, col=9)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceMapOneField['src'],
@@ -408,9 +508,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=7
+    row=2, col=9
 )
-fig.update_xaxes(title_text="Map add 1 field", row=2, col=7)
+fig.update_xaxes(title_text="Map add 1 field", row=2, col=9)
 
 df_changingThreadsAndSourceMapOneField["src"] = "W" + df_changingThreadsAndSourceMapOneField[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceMapOneField["SourceCnt"].astype(str)
@@ -424,9 +524,9 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=7
+    row=3, col=9
 )
-fig.update_xaxes(title_text="Map add 1 field", row=3, col=7)
+fig.update_xaxes(title_text="Map add 1 field", row=3, col=9)
 
 
 ############################################# df_changingThreadsAndSourceMapTwoField #######################################################
@@ -443,9 +543,9 @@ fig.add_trace(
                name="Throughput in Tuples/sec",
                showlegend=False
                ),
-    row=1, col=8
+    row=1, col=10
 )
-fig.update_xaxes(title_text="Map add 2 fields", row=1, col=8)
+fig.update_xaxes(title_text="Map add 2 fields", row=1, col=10)
 
 fig.add_trace(
     go.Scatter(x=df_changingThreadsAndSourceMapTwoField['src'],
@@ -457,9 +557,9 @@ fig.add_trace(
                name="ThroughputInMBPerSec",
                showlegend=False
                ),
-    row=2, col=8
+    row=2, col=10
 )
-fig.update_xaxes(title_text="Map add 2 fields", row=2, col=8)
+fig.update_xaxes(title_text="Map add 2 fields", row=2, col=10)
 
 df_changingThreadsAndSourceMapTwoField["src"] = "W" + df_changingThreadsAndSourceMapTwoField[
     "WorkerThreads"].astype(str) + '/S' + df_changingThreadsAndSourceMapTwoField["SourceCnt"].astype(str)
@@ -473,9 +573,9 @@ fig.add_trace(
                name="AvgLatencyInMs",
                showlegend=False
                ),
-    row=3, col=8
+    row=3, col=10
 )
-fig.update_xaxes(title_text="Map add 2 fields", row=3, col=8)
+fig.update_xaxes(title_text="Map add 2 fields", row=3, col=10)
 ###############
 
 
