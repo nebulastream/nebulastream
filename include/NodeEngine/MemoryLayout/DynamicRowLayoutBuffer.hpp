@@ -194,8 +194,6 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record, uint64_t re
         return false;
     }
     uint64_t offSet = (recordIndex * this->getRecordSize());
-    // Without const_cast it is not possible to get new memory address by adding an offset to basePointer
-    // uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
     uint8_t* address = basePointer + offSet;
 
     copyTupleFieldsToBuffer(record, address);
