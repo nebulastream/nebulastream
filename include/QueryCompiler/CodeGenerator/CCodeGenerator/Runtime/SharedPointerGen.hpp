@@ -15,9 +15,7 @@
 */
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_RUNTIME_SHAREDPOINTERGENERATION_HPP_
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
-#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 namespace NES {
 namespace QueryCompilation {
 /**

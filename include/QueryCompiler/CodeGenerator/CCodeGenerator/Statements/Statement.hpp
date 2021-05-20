@@ -16,13 +16,10 @@
 
 #pragma once
 
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
 #include <string>
-
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/ValueTypes/ValueType.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
-#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <utility>
 
 namespace NES {

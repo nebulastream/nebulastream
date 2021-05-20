@@ -16,13 +16,12 @@
 
 #pragma once
 
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
 #include <string>
 
 namespace NES {
 namespace QueryCompilation {
-class CodeExpression;
-typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
 class CodeExpression {
   public:

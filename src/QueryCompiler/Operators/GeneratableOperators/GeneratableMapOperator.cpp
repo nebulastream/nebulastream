@@ -17,7 +17,7 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/CodeGenerator/TranslateToLegacyPlanPhase.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -47,7 +47,7 @@ void GeneratableMapOperator::generateExecute(CodeGeneratorPtr codegen, PipelineC
     auto field = mapExpression->getField();
     auto assignment = mapExpression->getAssignment();
     // todo remove if code gen can handle expressions
-    auto legacyMapExpression = TranslateToLegacyPlanPhase::create()->transformExpression(assignment);
+    auto legacyMapExpression = TranslateToLegacyExpression::create()->transformExpression(assignment);
     codegen->generateCodeForMap(AttributeField::create(field->getFieldName(), field->getStamp()), legacyMapExpression, context);
 }
 

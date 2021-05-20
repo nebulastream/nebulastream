@@ -20,9 +20,9 @@
 
 #include <API/Schema.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
@@ -34,34 +34,9 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 
-namespace NES::Windowing {
 
-class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
-
-}// namespace NES::Windowing
 namespace NES {
 namespace QueryCompilation {
-class AttributeReference;
-typedef std::shared_ptr<AttributeReference> AttributeReferencePtr;
-
-class CodeGenerator;
-typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
-
-class Predicate;
-typedef std::shared_ptr<Predicate> PredicatePtr;
-
-class GeneratedCode;
-typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
-
-class CompilerTypesFactory;
-typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
-
-class LegacyExpression;
-typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
-
-class PipelineContext;
-typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
 /**
  * @brief The code generator encapsulates the code generation for different operators.
@@ -111,7 +86,7 @@ class CodeGenerator {
      * @param context The context of the current pipeline.
      * @return flag if the generation was successful.
      */
-    virtual bool generateCodeForMap(AttributeFieldPtr field, UserAPIExpressionPtr pred, PipelineContextPtr context) = 0;
+    virtual bool generateCodeForMap(AttributeFieldPtr field, LegacyExpressionPtr pred, PipelineContextPtr context) = 0;
 
     /**
     * @brief Code generation for a emit, which depends on a particular output schema.

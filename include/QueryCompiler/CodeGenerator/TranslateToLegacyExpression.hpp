@@ -17,58 +17,44 @@
 #ifndef NES_INCLUDE_NODES_PHASES_TRANSLATETOLEGECYPLAN_HPP_
 #define NES_INCLUDE_NODES_PHASES_TRANSLATETOLEGECYPLAN_HPP_
 
-#include <memory>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
 namespace NES {
 
-
-
-class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
-
-class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
-
 namespace QueryCompilation {
-
-class TranslateToLegacyPlanPhase;
-typedef std::shared_ptr<TranslateToLegacyPlanPhase> TranslateToLegacyPlanPhasePtr;
-
-class LegacyExpression;
-typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
 
 /**
  * @brief Translates a logical query plan to the legacy operator tree
  */
-class TranslateToLegacyPlanPhase {
+class TranslateToLegacyExpression {
   public:
     /**
      * @brief Factory method to create a translator phase.
      */
-    static TranslateToLegacyPlanPhasePtr create();
+    static TranslateToLegacyExpressionPtr create();
 
-    TranslateToLegacyPlanPhase();
+    TranslateToLegacyExpression();
 
     /**
      * @brief Translates an expression to a legacy user api expression.
      * @param expression node
-     * @return UserAPIExpressionPtr
+     * @return LegacyExpressionPtr
      */
-    UserAPIExpressionPtr transformExpression(ExpressionNodePtr node);
+    LegacyExpressionPtr transformExpression(ExpressionNodePtr node);
 
     /**
      * @brief Translates logical expessions to a legacy user api expression.
      * @param expression node
-     * @return UserAPIExpressionPtr
+     * @return LegacyExpressionPtr
      */
-    UserAPIExpressionPtr transformLogicalExpressions(ExpressionNodePtr node);
+    LegacyExpressionPtr transformLogicalExpressions(ExpressionNodePtr node);
 
     /**
      * @brief Translates arithmetical expessions to a legacy user api expression.
      * @param expression node
-     * @return UserAPIExpressionPtr
+     * @return LegacyExpressionPtr
      */
-    UserAPIExpressionPtr transformArithmeticalExpressions(ExpressionNodePtr node);
+    LegacyExpressionPtr transformArithmeticalExpressions(ExpressionNodePtr node);
 };
 }// namespace QueryCompilation
 }// namespace NES

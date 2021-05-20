@@ -15,7 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/CodeGenerator/TranslateToLegacyPlanPhase.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -35,7 +35,7 @@ GeneratableOperatorPtr GeneratableFilterOperator::create(OperatorId id, SchemaPt
 
 void GeneratableFilterOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     // todo remove if code gen can handle expressions
-    auto legacyPredicate = TranslateToLegacyPlanPhase::create()->transformExpression(predicate);
+    auto legacyPredicate = TranslateToLegacyExpression::create()->transformExpression(predicate);
     codegen->generateCodeForFilter(std::dynamic_pointer_cast<Predicate>(legacyPredicate), context);
 }
 

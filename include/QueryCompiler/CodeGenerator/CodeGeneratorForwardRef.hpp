@@ -22,10 +22,52 @@ namespace NES {
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+class ValueType;
+typedef std::shared_ptr<ValueType> ValueTypePtr;
+
+class AttributeField;
+typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
+
+namespace Windowing {
+
+class LogicalWindowDefinition;
+typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+
+}// namespace Windowing
+
 namespace QueryCompilation {
+
+typedef std::string Code;
+
+class GeneratedCode;
+typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
+
+class CodeGenerator;
+typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
+
+class TranslateToLegacyExpression;
+typedef std::shared_ptr<TranslateToLegacyExpression> TranslateToLegacyExpressionPtr;
+
+class PipelineContext;
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+
+class Predicate;
+typedef std::shared_ptr<Predicate> PredicatePtr;
+
+class CompilerTypesFactory;
+typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
+
+class LegacyExpression;
+typedef std::shared_ptr<LegacyExpression> LegacyExpressionPtr;
+
+class CodeExpression;
+typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
 class GeneratableDataType;
 typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
+
+class GeneratableValueType;
+typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
 
 class FunctionDefinition;
 typedef std::shared_ptr<FunctionDefinition> FunctionDefinitionPtr;
@@ -57,8 +99,13 @@ typedef std::shared_ptr<NamespaceDeclaration> NamespaceDeclarationPtr;
 class Statement;
 typedef std::shared_ptr<Statement> StatementPtr;
 
+class BinaryOperatorStatement;
+
 class FunctionCallStatement;
 typedef std::shared_ptr<FunctionCallStatement> FunctionCallStatementPtr;
+
+class CompoundStatement;
+typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
 
 class VarRefStatement;
 typedef std::shared_ptr<VarRefStatement> VarRefStatementPtr;
@@ -68,6 +115,9 @@ typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
 
 class ExpressionStatment;
 typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
+
+class BlockScopeStatement;
+typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
 
 class RecordHandler;
 typedef std::shared_ptr<RecordHandler> RecordHandlerPtr;

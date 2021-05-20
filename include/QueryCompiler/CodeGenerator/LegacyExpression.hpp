@@ -17,70 +17,50 @@
 #ifndef USERAPIEXPRESSION_HPP
 #define USERAPIEXPRESSION_HPP
 
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
+#include <QueryCompiler/CodeGenerator/OperatorTypes.hpp>
 #include <memory>
 #include <string>
 
-#include <API/AttributeField.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Operators/OperatorTypes.hpp>
-#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
-
 namespace NES {
-
-class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
-
-
 namespace QueryCompilation {
 
-class GeneratedCode;
-typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
-
-class ExpressionStatment;
-typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
-
 enum class PredicateItemMutation { ATTRIBUTE, VALUE };
-
-class LegacyExpression;
-typedef std::shared_ptr<LegacyExpression> UserAPIExpressionPtr;
-
-class Predicate;
-typedef std::shared_ptr<Predicate> PredicatePtr;
 
 class LegacyExpression {
   public:
     virtual ~LegacyExpression(){};
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
     virtual const std::string toString() const = 0;
-    virtual UserAPIExpressionPtr copy() const = 0;
+    virtual LegacyExpressionPtr copy() const = 0;
     virtual bool equals(const LegacyExpression& rhs) const = 0;
 };
 
 class Predicate : public LegacyExpression {
   public:
     Predicate(const BinaryOperatorType& op,
-              const UserAPIExpressionPtr left,
-              const UserAPIExpressionPtr right,
+              const LegacyExpressionPtr left,
+              const LegacyExpressionPtr right,
               const std::string& functionCallOverload,
               bool bracket = true);
     Predicate(const BinaryOperatorType& op,
-              const UserAPIExpressionPtr left,
-              const UserAPIExpressionPtr right,
+              const LegacyExpressionPtr left,
+              const LegacyExpressionPtr right,
               bool bracket = true);
 
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
-    virtual UserAPIExpressionPtr copy() const override;
+    virtual LegacyExpressionPtr copy() const override;
     bool equals(const LegacyExpression& rhs) const override;
     BinaryOperatorType getOperatorType() const;
-    const UserAPIExpressionPtr getLeft() const;
-    const UserAPIExpressionPtr getRight() const;
+    const LegacyExpressionPtr getLeft() const;
+    const LegacyExpressionPtr getRight() const;
 
   private:
     Predicate() = default;
     BinaryOperatorType op;
-    UserAPIExpressionPtr left;
-    UserAPIExpressionPtr right;
+    LegacyExpressionPtr left;
+    LegacyExpressionPtr right;
     bool bracket;
     std::string functionCallOverload;
 };
@@ -106,7 +86,7 @@ class PredicateItem : public LegacyExpression {
 
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
-    virtual UserAPIExpressionPtr copy() const override;
+    virtual LegacyExpressionPtr copy() const override;
 
     bool equals(const LegacyExpression& rhs) const override;
 

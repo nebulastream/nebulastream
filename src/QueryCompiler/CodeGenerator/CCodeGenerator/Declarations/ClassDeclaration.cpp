@@ -25,7 +25,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <utility>
+
 namespace NES {
 namespace QueryCompilation {
 ClassDeclaration::ClassDeclaration(ClassDefinitionPtr classDefinition) : classDefinition(classDefinition) {}

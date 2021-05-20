@@ -17,17 +17,15 @@
 #include <iostream>
 #include <string>
 #include <utility>
-#include <vector>
-
-#include <API/AttributeField.hpp>
+#include <memory>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/ConstructorDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <Util/Logger.hpp>
-#include <memory>
-#include <sstream>
+
 
 namespace NES {
 namespace QueryCompilation {

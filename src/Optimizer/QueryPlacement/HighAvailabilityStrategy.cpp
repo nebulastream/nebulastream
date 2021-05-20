@@ -25,7 +25,7 @@
 #include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <QueryCompiler/CodeGenerator/TranslateToLegacyPlanPhase.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
 namespace NES {

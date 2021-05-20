@@ -17,11 +17,9 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_STATEMENTS_BLOCKSCOPESTATEMENT_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 namespace NES {
 namespace QueryCompilation {
-class BlockScopeStatement;
-typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
 
 /**
  * @brief A block scope statement

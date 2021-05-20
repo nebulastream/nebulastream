@@ -36,20 +36,20 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
-#include <QueryCompiler/CodeGenerator/TranslateToLegacyPlanPhase.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <utility>
 namespace NES {
 
 namespace QueryCompilation {
-TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() { return std::make_shared<TranslateToLegacyPlanPhase>(); }
+TranslateToLegacyExpressionPtr TranslateToLegacyExpression::create() { return std::make_shared<TranslateToLegacyExpression>(); }
 
-TranslateToLegacyPlanPhase::TranslateToLegacyPlanPhase() {}
+TranslateToLegacyExpression::TranslateToLegacyExpression() {}
 
 /**
  * Translate the expression node into the corresponding user api expression of the legacy api.
  * To this end we first cast the expression node in the right subtype and then translate it.
  */
-UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionNodePtr expression) {
+LegacyExpressionPtr TranslateToLegacyExpression::transformExpression(ExpressionNodePtr expression) {
     if (expression->instanceOf<LogicalExpressionNode>()) {
         // Translate logical expressions to the legacy representation
         return transformLogicalExpressions(expression);
@@ -74,7 +74,7 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionN
     ;
 }
 
-UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformArithmeticalExpressions(ExpressionNodePtr expression) {
+LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpressions(ExpressionNodePtr expression) {
     if (expression->instanceOf<AddExpressionNode>()) {
         // Translate add expression node.
         auto addExpressionNode = expression->as<AddExpressionNode>();
@@ -111,7 +111,7 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformArithmeticalExpression
     NES_NOT_IMPLEMENTED();
 }
 
-UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformLogicalExpressions(ExpressionNodePtr expression) {
+LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(ExpressionNodePtr expression) {
     if (expression->instanceOf<AndExpressionNode>()) {
         // Translate and expression node.
         auto andExpressionNode = expression->as<AndExpressionNode>();

@@ -21,8 +21,6 @@
 
 namespace NES {
 namespace QueryCompilation {
-class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
 
 class TypeCastExprStatement : public ExpressionStatment {
   public:

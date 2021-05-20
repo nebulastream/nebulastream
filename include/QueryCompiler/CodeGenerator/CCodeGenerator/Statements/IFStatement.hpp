@@ -16,8 +16,9 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_IFSTATEMENT_HPP_
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+
 namespace NES {
 namespace QueryCompilation {
 class IFStatement : public Statement {

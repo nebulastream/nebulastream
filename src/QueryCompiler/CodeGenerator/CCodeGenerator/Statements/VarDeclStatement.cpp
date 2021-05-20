@@ -15,7 +15,7 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
-
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 namespace NES {
 namespace QueryCompilation {
 StatementType VarDeclStatement::getStamentType() const { return VAR_DEC_STMT; }
