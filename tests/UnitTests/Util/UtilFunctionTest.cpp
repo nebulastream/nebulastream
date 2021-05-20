@@ -88,4 +88,16 @@ tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
 EXPECT_TRUE(tokens == test);
 }
 
+TEST(UtilFunctionTest, splitWithOmittingEmptyLast){
+std::vector<std::string> tokens;
+std::vector<std::string> test;
+test.push_back("This is a random ");
+test.push_back(" line with ");
+test.push_back(" delimiter. ");
+std::string line = "This is a random x line with x delimiter. x";
+std::string delimiter = "x";
+tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
+EXPECT_TRUE(tokens == test);
+}
+
 }// namespace NES
