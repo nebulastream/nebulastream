@@ -372,7 +372,7 @@ void QueryManager::poisonWorkers() {
     auto buffer = optBuffer.value();
 
     auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(-1, inherited0::shared_from_this());
-    auto pipeline = Execution::NewExecutablePipeline::create(-1,// any query plan
+    auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
                                                              -1,// any sub query plan
                                                              pipelineContext,
                                                              std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
