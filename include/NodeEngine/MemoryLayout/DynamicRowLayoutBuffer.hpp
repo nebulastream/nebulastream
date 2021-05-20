@@ -136,7 +136,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
     typename std::enable_if<(I == sizeof...(Ts)), void>::type copyTupleFieldsFromBuffer(std::tuple<Ts...>& tup, uint8_t* address);
 
     const DynamicRowLayoutPtr dynamicRowLayout;
-    const uint8_t* basePointer;
+    uint8_t* basePointer;
 };
 
 template<size_t I, typename... Ts>
@@ -195,7 +195,8 @@ bool DynamicRowLayoutBuffer::pushRecord(std::tuple<Types...> record, uint64_t re
     }
     uint64_t offSet = (recordIndex * this->getRecordSize());
     // Without const_cast it is not possible to get new memory address by adding an offset to basePointer
-    uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
+    // uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
+    uint8_t* address = basePointer + offSet;
 
     copyTupleFieldsToBuffer(record, address);
 
