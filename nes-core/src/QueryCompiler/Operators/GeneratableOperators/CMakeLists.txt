@@ -17,6 +17,7 @@ add_source_files(nes-core
         GeneratableBufferScan.cpp
         GeneratableFilterOperator.cpp
         GeneratableFilterOperatorPredicated.cpp
+        GeneratableInferModelOperator.cpp
         GeneratableMapOperator.cpp
         GeneratableProjectionOperator.cpp
         GeneratableWatermarkAssignerOperator.cpp

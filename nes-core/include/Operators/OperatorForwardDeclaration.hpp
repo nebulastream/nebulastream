@@ -44,6 +44,7 @@ class UnionLogicalOperatorNode;
 using UnionLogicalOperatorNodePtr = std::shared_ptr<UnionLogicalOperatorNode>;
 
 class ExpressionItem;
+typedef std::shared_ptr<ExpressionItem> ExpressionItemPtr;
 
 class ProjectionLogicalOperatorNode;
 using ProjectionLogicalOperatorNodePtr = std::shared_ptr<ProjectionLogicalOperatorNode>;
