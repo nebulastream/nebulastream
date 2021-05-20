@@ -250,15 +250,17 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
 }
 
 std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& s, std::string delim){
-        std::string copy = s;
-        size_t pos = 0;
-        std::vector<std::string> elems;
-        while ((pos = s.find(delim)) != std::string::npos) {
-            elems.push_back(s.substr(0, pos));
-            s.erase(0, pos + delim.length());
-        }
-        elems.push_back(s.substr(0, pos));
-        return elems;
+    std::string copy = s;
+    size_t pos = 0;
+    std::vector<std::string> elems;
+    while ((pos = copy.find(delim)) != std::string::npos) {
+        elems.push_back(copy.substr(0, pos));
+        copy.erase(0, pos + delim.length());
+    }
+    if (!copy.substr(0, pos).empty())
+        elems.push_back(copy.substr(0, pos));
+
+    return elems;
 }
 
 std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
