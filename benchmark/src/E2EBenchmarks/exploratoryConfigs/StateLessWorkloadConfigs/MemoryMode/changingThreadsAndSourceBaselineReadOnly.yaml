@@ -12,9 +12,9 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: MemoryMode
-outputFile: changingThreadsAndSourceNoProcMemoryMode.csv
-benchmarkName: changingThreadsAndSourceNoProcMemoryMode
-query: 'Query::from("input").sink(NullOutputSinkDescriptor::create());'
+outputFile: changingThreadsAndSourceBaselineReadOnlyMemoryMode.csv
+benchmarkName: changingThreadsAndSourceBaselineReadOnlyMemoryMode
+query: 'Query::from("input").filter(Attribute("value") > 10000).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
 numberOfBuffersToProduce: 5000000
