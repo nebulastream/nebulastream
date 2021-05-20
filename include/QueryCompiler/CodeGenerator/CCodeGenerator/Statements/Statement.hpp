@@ -67,7 +67,8 @@ class Statement {
     virtual ~Statement();
 };
 
-struct AssignmentStatment {
+class AssignmentStatment {
+  public:
     VariableDeclaration lhs_tuple_var;
     VariableDeclaration lhs_field_var;
     VariableDeclaration lhs_index_var;

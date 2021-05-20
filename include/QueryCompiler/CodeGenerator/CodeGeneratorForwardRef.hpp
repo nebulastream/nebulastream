@@ -25,6 +25,9 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
+class BasicValue;
+typedef std::shared_ptr<BasicValue> BasicValuePtr;
+
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
@@ -54,8 +57,8 @@ typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
-class CompilerTypesFactory;
-typedef std::shared_ptr<CompilerTypesFactory> CompilerTypesFactoryPtr;
+class GeneratableTypesFactory;
+typedef std::shared_ptr<GeneratableTypesFactory> CompilerTypesFactoryPtr;
 
 class LegacyExpression;
 typedef std::shared_ptr<LegacyExpression> LegacyExpressionPtr;
@@ -77,6 +80,11 @@ typedef std::shared_ptr<ConstructorDefinition> ConstructorDefinitionPtr;
 
 class ConstructorDeclaration;
 typedef std::shared_ptr<ConstructorDeclaration> ConstructorDeclarationPtr;
+
+class AssignmentStatment;
+
+class StructDeclaration;
+typedef std::shared_ptr<StructDeclaration> StructDeclarationPtr;
 
 class NamespaceDefinition;
 typedef std::shared_ptr<NamespaceDefinition> NamespaceDefinitionPtr;

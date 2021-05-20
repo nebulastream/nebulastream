@@ -15,6 +15,7 @@
 */
 
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 namespace NES {
 namespace QueryCompilation {
 UserDefinedDataType::UserDefinedDataType(const StructDeclaration& decl) : declaration(decl) {}

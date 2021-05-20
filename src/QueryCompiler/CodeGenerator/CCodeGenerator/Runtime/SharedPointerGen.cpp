@@ -16,12 +16,12 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 namespace NES {
 namespace QueryCompilation {
 GeneratableDataTypePtr SharedPointerGen::createSharedPtrType(GeneratableDataTypePtr type) {
-    return CompilerTypesFactory().createAnonymusDataType("std::shared_ptr<" + type->getCode()->code_ + ">");
+    return GeneratableTypesFactory().createAnonymusDataType("std::shared_ptr<" + type->getCode()->code_ + ">");
 }
 
 StatementPtr SharedPointerGen::makeShared(GeneratableDataTypePtr type) {

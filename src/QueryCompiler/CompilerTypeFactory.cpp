@@ -23,19 +23,19 @@
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
-#include <QueryCompiler/CompilerTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/ArrayGeneratableType.hpp>
 #include <QueryCompiler/GeneratableTypes/BasicGeneratableType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableArrayValueType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableBasicValueType.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/ReferenceDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
 
 namespace NES {
 namespace QueryCompilation {
-GeneratableDataTypePtr CompilerTypesFactory::createDataType(DataTypePtr type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createDataType(DataTypePtr type) {
     auto const physicalType = DefaultPhysicalTypeFactory().getPhysicalType(type);
     if (type->isArray()) {
         auto const arrayType = DataType::as<ArrayType>(type);
@@ -48,26 +48,26 @@ GeneratableDataTypePtr CompilerTypesFactory::createDataType(DataTypePtr type) {
     }
 }
 
-GeneratableValueTypePtr CompilerTypesFactory::createValueType(ValueTypePtr valueType) {
+GeneratableValueTypePtr GeneratableTypesFactory::createValueType(ValueTypePtr valueType) {
     if (valueType->dataType->isArray())
         return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->values);
 
     return std::make_shared<GeneratableBasicValueType>(std::dynamic_pointer_cast<BasicValue>(valueType));
 }
 
-GeneratableDataTypePtr CompilerTypesFactory::createAnonymusDataType(std::string type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createAnonymusDataType(std::string type) {
     return std::make_shared<AnonymousUserDefinedDataType>(type);
 }
 
-GeneratableDataTypePtr CompilerTypesFactory::createUserDefinedType(StructDeclaration structDeclaration) {
+GeneratableDataTypePtr GeneratableTypesFactory::createUserDefinedType(StructDeclaration structDeclaration) {
     return std::make_shared<UserDefinedDataType>(structDeclaration);
 }
 
-GeneratableDataTypePtr CompilerTypesFactory::createPointer(GeneratableDataTypePtr type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createPointer(GeneratableDataTypePtr type) {
     return std::make_shared<PointerDataType>(type);
 }
 
-GeneratableDataTypePtr CompilerTypesFactory::createReference(GeneratableDataTypePtr type) {
+GeneratableDataTypePtr GeneratableTypesFactory::createReference(GeneratableDataTypePtr type) {
     return std::make_shared<ReferenceDataType>(type);
 }
 }// namespace QueryCompilation
