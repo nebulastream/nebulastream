@@ -171,7 +171,12 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << body);
                     // 1.  decode string into protobuf message
                     std::shared_ptr<SerializableQueryPlan> protobufMessage = std::make_shared<SerializableQueryPlan>();
-                    protobufMessage->ParseFromArray(body.data(), body.size());
+                    if(!protobufMessage->ParseFromArray(body.data(), body.size())){
+                        json::value errorResponse{};
+                        errorResponse["detail"] = json::value::string("Invalid Protobuf message");
+                        badRequestImpl(message, errorResponse);
+                        return;
+                    }
 
                     // 2. decode protobuf message into c++ obj repr
                     std::shared_ptr<QueryPlan> queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(protobufMessage.get()));
