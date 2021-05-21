@@ -36,10 +36,10 @@ class ExecutablePipelineStage;
 typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
 
 class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> NewExecutablePipelinePtr;
+typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
 class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> NewExecutableQueryPlanPtr;
+typedef std::shared_ptr<ExecutableQueryPlan> ExecutableQueryPlanPtr;
 
 }// namespace Execution
 
@@ -75,6 +75,9 @@ typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptor
 
 class WindowAggregationDescriptor;
 typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
+
+class AbstractWindowHandler;
+typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
 
 }// namespace Windowing
 

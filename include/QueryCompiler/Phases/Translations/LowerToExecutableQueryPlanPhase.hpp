@@ -29,7 +29,7 @@ class LowerToExecutableQueryPlanPhase {
   public:
     LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
     static LowerToExecutableQueryPlanPhasePtr create(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
-    NodeEngine::Execution::NewExecutableQueryPlanPtr apply(PipelineQueryPlanPtr pipelineQueryPlan,
+    NodeEngine::Execution::ExecutableQueryPlanPtr apply(PipelineQueryPlanPtr pipelineQueryPlan,
                                                            NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
@@ -38,7 +38,7 @@ class LowerToExecutableQueryPlanPhase {
     void processSource(OperatorPipelinePtr pipeline,
                        std::vector<DataSourcePtr>& sources,
                        std::vector<DataSinkPtr>& sinks,
-                       std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
+                       std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
                        NodeEngine::NodeEnginePtr nodeEngine,
                        QueryId queryId,
                        QuerySubPlanId subQueryPlanId,
@@ -48,7 +48,7 @@ class LowerToExecutableQueryPlanPhase {
     processSuccessor(OperatorPipelinePtr pipeline,
                      std::vector<DataSourcePtr>& sources,
                      std::vector<DataSinkPtr>& sinks,
-                     std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
+                     std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
                      NodeEngine::NodeEnginePtr nodeEngine,
                      QueryId queryId,
                      QuerySubPlanId subQueryPlanId,
@@ -58,7 +58,7 @@ class LowerToExecutableQueryPlanPhase {
     processSink(OperatorPipelinePtr pipeline,
                 std::vector<DataSourcePtr>& sources,
                 std::vector<DataSinkPtr>& sinks,
-                std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
+                std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
                 NodeEngine::NodeEnginePtr nodeEngine,
                 QueryId queryId,
                 QuerySubPlanId subQueryPlanId);
@@ -67,7 +67,7 @@ class LowerToExecutableQueryPlanPhase {
     processOperatorPipeline(OperatorPipelinePtr pipeline,
                             std::vector<DataSourcePtr>& sources,
                             std::vector<DataSinkPtr>& sinks,
-                            std::vector<NodeEngine::Execution::NewExecutablePipelinePtr>& executablePipelines,
+                            std::vector<NodeEngine::Execution::ExecutablePipelinePtr>& executablePipelines,
                             NodeEngine::NodeEnginePtr nodeEngine,
                             QueryId queryId,
                             QuerySubPlanId subQueryPlanId,

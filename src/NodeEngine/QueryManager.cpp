@@ -162,7 +162,7 @@ void QueryManager::destroy() {
     }
 }
 
-bool QueryManager::registerQuery(Execution::NewExecutableQueryPlanPtr qep) {
+bool QueryManager::registerQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::registerQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
@@ -201,7 +201,7 @@ bool QueryManager::registerQuery(Execution::NewExecutableQueryPlanPtr qep) {
     return true;
 }
 
-bool QueryManager::startQuery(Execution::NewExecutableQueryPlanPtr qep, StateManagerPtr stateManager) {
+bool QueryManager::startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
@@ -266,7 +266,7 @@ bool QueryManager::startQuery(Execution::NewExecutableQueryPlanPtr qep, StateMan
     return true;
 }
 
-bool QueryManager::deregisterQuery(Execution::NewExecutableQueryPlanPtr qep) {
+bool QueryManager::deregisterQuery(Execution::ExecutableQueryPlanPtr qep) {
     NES_DEBUG("QueryManager::deregisterAndUndeployQuery: query" << qep);
 
     std::unique_lock lock(queryMutex);
@@ -304,7 +304,7 @@ bool QueryManager::deregisterQuery(Execution::NewExecutableQueryPlanPtr qep) {
     return succeed;
 }
 
-bool QueryManager::failQuery(Execution::NewExecutableQueryPlanPtr) {
+bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
     NES_NOT_IMPLEMENTED();
 #if 0
     NES_DEBUG("QueryManager::failQuery: query" << qep);
@@ -393,7 +393,7 @@ void QueryManager::poisonWorkers() {
 #endif
 }
 
-bool QueryManager::stopQuery(Execution::NewExecutableQueryPlanPtr qep, bool graceful) {
+bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful) {
     NES_DEBUG("QueryManager::stopQuery: query sub-plan id " << qep->getQuerySubPlanId() << " graceful=" << graceful);
     bool ret = true;
     //    std::unique_lock lock(queryMutex);
@@ -533,7 +533,7 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
         // create reconfiguration message. If the successor is a executable pipeline we send a reconfiguration message to the pipeline.
         // If successor is a data sink we send the reconfiguration message to the query plan.
         auto weakQep = std::make_any<std::weak_ptr<Execution::ExecutableQueryPlan>>(executableQueryPlan);
-        if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&successor)) {
+        if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor)) {
             new (buffer.getBuffer()) ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
                                                             SoftEndOfStream,
                                                             threadPool->getNumberOfThreads(),
@@ -603,7 +603,7 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     while (!taskQueue.empty()) {
         Task task = taskQueue.front();
         auto executable = task.getExecutable();
-        if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
+        if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
             if ((*executablePipeline)->isReconfiguration()) {
                 temp.push(task);
                 taskQueue.pop_front();
@@ -724,7 +724,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext) {
         auto executable = task.getExecutable();
 #if 1
         // execute only reconfiguration tasks
-        if (auto taskExecutable = std::get_if<Execution::NewExecutablePipelinePtr>(&(executable))) {
+        if (auto taskExecutable = std::get_if<Execution::ExecutablePipelinePtr>(&(executable))) {
             if ((*taskExecutable)->isReconfiguration()) {
                 task(workerContext);
             }
@@ -781,13 +781,13 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock2(workMutex);
     // dispatch buffer as task
-    if (auto nextPipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
+    if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
-            NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipeStageId() << " inputBuffer "
+            NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
             taskQueue.emplace_back(executable, buffer);
         } else {
-            NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipeStageId());
+            NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
     } else {
         taskQueue.emplace_back(executable, buffer);
@@ -821,8 +821,8 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
     auto executable = task.getExecutable();
     if (auto sink = std::get_if<DataSinkPtr>(&executable)) {
         qepId = (*sink)->getParentPlanId();
-    } else if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
-        qepId = (*executablePipeline)->getQepParentId();
+    } else if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
+        qepId = (*executablePipeline)->getQuerySubPlanId();
     }
 
     if (queryToStatisticsMap.contains(qepId)) {

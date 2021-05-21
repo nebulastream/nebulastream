@@ -81,7 +81,7 @@ typedef std::shared_ptr<ConstructorDefinition> ConstructorDefinitionPtr;
 class ConstructorDeclaration;
 typedef std::shared_ptr<ConstructorDeclaration> ConstructorDeclarationPtr;
 
-class AssignmentStatment;
+class AssignmentStatement;
 
 class StructDeclaration;
 typedef std::shared_ptr<StructDeclaration> StructDeclarationPtr;

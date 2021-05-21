@@ -67,7 +67,7 @@ class Statement {
     virtual ~Statement();
 };
 
-class AssignmentStatment {
+class AssignmentStatement {
   public:
     VariableDeclaration lhs_tuple_var;
     VariableDeclaration lhs_field_var;

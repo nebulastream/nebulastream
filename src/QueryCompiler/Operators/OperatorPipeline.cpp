@@ -37,11 +37,11 @@ OperatorPipelinePtr OperatorPipeline::createSourcePipeline() {
 
 void OperatorPipeline::setType(Type pipelineType) { this->pipelineType = pipelineType; }
 
-bool OperatorPipeline::isOperatorPipeline() { return pipelineType == OperatorPipelineType; }
+bool OperatorPipeline::isOperatorPipeline() const { return pipelineType == OperatorPipelineType; }
 
-bool OperatorPipeline::isSinkPipeline() { return pipelineType == SinkPipelineType; }
+bool OperatorPipeline::isSinkPipeline() const { return pipelineType == SinkPipelineType; }
 
-bool OperatorPipeline::isSourcePipeline() { return pipelineType == SourcePipelineType; }
+bool OperatorPipeline::isSourcePipeline() const { return pipelineType == SourcePipelineType; }
 
 void OperatorPipeline::addPredecessor(OperatorPipelinePtr pipeline) {
     pipeline->successorPipelines.emplace_back(shared_from_this());
@@ -55,7 +55,7 @@ void OperatorPipeline::addSuccessor(OperatorPipelinePtr pipeline) {
     }
 }
 
-std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() {
+const std::vector<OperatorPipelinePtr>& OperatorPipeline::getPredecessors() const {
     std::vector<OperatorPipelinePtr> predecessors;
     for (auto predecessor : predecessorPipelines) {
         predecessors.emplace_back(predecessor.lock());
@@ -63,7 +63,7 @@ std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() {
     return predecessors;
 }
 
-bool OperatorPipeline::hasOperators() { return !this->queryPlan->getRootOperators().empty(); }
+bool OperatorPipeline::hasOperators() const { return !this->queryPlan->getRootOperators().empty(); }
 
 void OperatorPipeline::clearPredecessors() {
     for (auto pre : predecessorPipelines) {
@@ -97,7 +97,7 @@ void OperatorPipeline::clearSuccessors() {
     successorPipelines.clear();
 }
 
-std::vector<OperatorPipelinePtr> OperatorPipeline::getSuccessors() { return successorPipelines; }
+const std::vector<OperatorPipelinePtr>& OperatorPipeline::getSuccessors() const { return successorPipelines; }
 void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
@@ -105,7 +105,7 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     this->queryPlan->appendOperatorAsNewRoot(newRootOperator);
 }
 
-uint64_t OperatorPipeline::getPipelineId() { return id; }
+const uint64_t OperatorPipeline::getPipelineId() const { return id; }
 QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
 
 }// namespace QueryCompilation

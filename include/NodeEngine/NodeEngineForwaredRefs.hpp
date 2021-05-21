@@ -88,12 +88,12 @@ class OperatorHandler;
 typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
 
 class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> NewExecutablePipelinePtr;
+typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
 class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> NewExecutableQueryPlanPtr;
+typedef std::shared_ptr<ExecutableQueryPlan> ExecutableQueryPlanPtr;
 
-typedef std::variant<DataSinkPtr, NewExecutablePipelinePtr> SuccessorExecutablePipeline;
+typedef std::variant<DataSinkPtr, ExecutablePipelinePtr> SuccessorExecutablePipeline;
 typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>> PredecessorExecutablePipeline;
 
 class ExecutablePipelineStage;

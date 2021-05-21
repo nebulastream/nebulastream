@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef INCLUDE_NES_NODEENGINE_EXECUTABLEPIPELINE_H_
-#define INCLUDE_NES_NODEENGINE_EXECUTABLEPIPELINE_H_
+#ifndef NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
+#define NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_
 #include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
@@ -32,15 +32,27 @@ namespace NES::NodeEngine::Execution {
  * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
  */
 class ExecutablePipeline : public Reconfigurable {
-    enum PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
+    enum class PipelineStatus : uint8_t { PipelineCreated, PipelineRunning, PipelineStopped, PipelineFailed };
+
   public:
-    explicit ExecutablePipeline(uint32_t pipelineId,
-                                   QuerySubPlanId qepId,
-                                   PipelineExecutionContextPtr pipelineExecutionContext,
-                                   ExecutablePipelineStagePtr executablePipelineStage,
-                                   uint32_t numOfProducingPipelines,
-                                   std::vector<SuccessorExecutablePipeline> successorPipelines,
-                                   bool reconfiguration);
+    /**
+     * @brief Constructor for an executable pipeline.
+     * @param pipelineId The Id of this pipeline
+     * @param querySubPlanId the id of the query sub plan
+     * @param pipelineContext the pipeline context
+     * @param executablePipelineStage the executable pipeline stage
+     * @param numOfProducingPipelines number of producing pipelines
+     * @param successorPipelines a vector of successor pipelines
+     * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
+     * @return ExecutablePipelinePtr
+     */
+    explicit ExecutablePipeline(uint64_t pipelineId,
+                                QuerySubPlanId qepId,
+                                PipelineExecutionContextPtr pipelineExecutionContext,
+                                ExecutablePipelineStagePtr executablePipelineStage,
+                                uint32_t numOfProducingPipelines,
+                                std::vector<SuccessorExecutablePipeline> successorPipelines,
+                                bool reconfiguration);
 
     /**
      * @brief Destructor of an ExecutablePipeline
@@ -51,19 +63,20 @@ class ExecutablePipeline : public Reconfigurable {
      * @brief Factory method to create a new executable pipeline.
      * @param pipelineId The Id of this pipeline
      * @param querySubPlanId the id of the query sub plan
-     * @param executablePipelineStage the executable pipeline stage
      * @param pipelineContext the pipeline context
-     * @param nextPipelineStage a pointer to the next pipeline
+     * @param executablePipelineStage the executable pipeline stage
+     * @param numOfProducingPipelines number of producing pipelines
+     * @param successorPipelines a vector of successor pipelines
      * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
      * @return ExecutablePipelinePtr
      */
-    static NewExecutablePipelinePtr create(uint32_t pipelineId,
-                                           QuerySubPlanId qepId,
-                                           PipelineExecutionContextPtr pipelineExecutionContext,
-                                           ExecutablePipelineStagePtr executablePipelineStage,
-                                           uint32_t numOfProducingPipelines,
-                                           std::vector<SuccessorExecutablePipeline> successorPipelines,
-                                           bool reconfiguration = false);
+    static ExecutablePipelinePtr create(uint64_t pipelineId,
+                                        QuerySubPlanId qepId,
+                                        PipelineExecutionContextPtr pipelineExecutionContext,
+                                        ExecutablePipelineStagePtr executablePipelineStage,
+                                        uint32_t numOfProducingPipelines,
+                                        std::vector<SuccessorExecutablePipeline> successorPipelines,
+                                        bool reconfiguration = false);
 
     /**
      * @brief Execute a pipeline stage
@@ -71,7 +84,7 @@ class ExecutablePipeline : public Reconfigurable {
      * @param workerContext
      * @return true if no error occurred
      */
-    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+    const ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
     /**
    * @brief Initialises a pipeline stage
@@ -96,13 +109,13 @@ class ExecutablePipeline : public Reconfigurable {
     * @brief Get id of pipeline stage
     * @return
     */
-    uint32_t getPipeStageId();
+    const uint64_t getPipelineId() const;
 
     /**
-     * @brief Get the parent query id.
-     * @return query id.
+     * @brief Get query sub plan id.
+     * @return QuerySubPlanId.
      */
-    QuerySubPlanId getQepParentId() const;
+    const QuerySubPlanId getQuerySubPlanId() const;
 
     /**
      * @brief Checks if this pipeline is running
@@ -134,10 +147,10 @@ class ExecutablePipeline : public Reconfigurable {
     void incrementProducerCount();
 
     /**
-     * @brief Gets the successor pipeline
-     * @return SuccessorPipeline
+     * @brief Gets the successor pipelines
+     * @return SuccessorPipelines
      */
-    std::vector<SuccessorExecutablePipeline> getSuccessors();
+    const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
 
     /**
      * @brief Adds a new successor pipeline
@@ -146,8 +159,8 @@ class ExecutablePipeline : public Reconfigurable {
     void addSuccessor(SuccessorExecutablePipeline predecessorPipeline);
 
   private:
-    uint32_t pipelineStageId;
-    QuerySubPlanId qepId;
+    const uint64_t pipelineId;
+    const QuerySubPlanId querySubPlanId;
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;
     bool reconfiguration;
@@ -158,4 +171,4 @@ class ExecutablePipeline : public Reconfigurable {
 
 }// namespace NES::NodeEngine::Execution
 
-#endif /* INCLUDE_NES_NODEENGINE_EXECUTABLEPIPELINE_H_ */
+#endif /* NES_INCLUDE_NODEENGINE_EXECUTION_EXECUTABLEPIPELINE_H_ */

@@ -16,6 +16,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
+#include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>

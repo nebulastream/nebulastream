@@ -56,7 +56,7 @@ class GeneratableDataType {
     * @deprecated this will move to an own copy statement in the future.
     * @return CodeExpressionPtr
     */
-    virtual StatementPtr getStmtCopyAssignment(const AssignmentStatment& assignmentStatement);
+    virtual StatementPtr getStmtCopyAssignment(const AssignmentStatement& assignmentStatement);
 };
 }// namespace QueryCompilation
 }// namespace NES
