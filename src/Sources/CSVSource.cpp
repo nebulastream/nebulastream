@@ -23,10 +23,10 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <chrono>
+#include <cstring>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <cstring>
 
 namespace NES {
 
