@@ -12,8 +12,8 @@ bufferSizeInBytes: 4194304
 
 ##benchmark parameter for the entire run
 inputOutputMode: LambdaMode
-outputFile: changingThreadsAndSourceBaselineSourceSinkLambdaMode.csv
-benchmarkName: changingThreadsAndSourceBaselineSourceSinkLambdaMode
+outputFile: changingThreadsAndSourceBaselineReadModifyWrite.csv
+benchmarkName: changingThreadsAndSourceBaselineReadModifyWrite
 query: 'Query::from("input").map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());'
 
 #benchmark internal parameter
