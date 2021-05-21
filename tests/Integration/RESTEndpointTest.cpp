@@ -330,20 +330,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryEx_wrongPayload) {
     //make httpclient with new endpoint -ex:
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
                                                   + "/v1/nes/query/execute-query-ex");
-/*
-    //get a non empty query
-    Query query = Query::from("StreamName");
-    QueryPlanPtr plan = query.getQueryPlan();
 
-    //make a Protobuff object
-    SerializableQueryPlan* protobufMessage = QueryPlanSerializationUtil::serializeQueryPlan(plan);
-
-    //convert it to string for the request function
-    std::string msg = protobufMessage->SerializeAsString();
-
-    //make a wrong paylod
-    msg.resize(msg.size()/2);
-*/
     std::string msg = "hello";
 
     web::json::value postJsonReturn;
