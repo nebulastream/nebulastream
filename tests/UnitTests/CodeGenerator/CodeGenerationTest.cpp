@@ -53,6 +53,7 @@
 #include <utility>
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Runtime/SharedPointerGen.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <Windowing/WindowActions/CompleteAggregationTriggerActionDescriptor.hpp>
 #include <Windowing/WindowActions/LazyNestLoopJoinTriggerActionDescriptor.hpp>
 
@@ -97,10 +98,10 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
             0,
             queryManager,
             std::move(bufferManager),
-            [this](TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
+            [this](NodeEngine::TupleBuffer& buffer, NodeEngine::WorkerContextRef) {
                 this->buffers.emplace_back(std::move(buffer));
             },
-            [this](TupleBuffer& buffer) {
+            [this](NodeEngine::TupleBuffer& buffer) {
                 this->buffers.emplace_back(std::move(buffer));
             },
             std::move(operatorHandlers),
@@ -108,7 +109,7 @@ class TestPipelineExecutionContext : public NodeEngine::Execution::PipelineExecu
             // nop
         };
 
-    std::vector<TupleBuffer> buffers;
+    std::vector<NodeEngine::TupleBuffer> buffers;
 };
 
 /**
@@ -151,7 +152,9 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
         auto varDeclN = VariableDeclaration::create(tf.createDataType(DataTypeFactory::createFixedChar(12)),
                                                     "n",
                                                     DataTypeFactory::createFixedCharValue(vals));
-        EXPECT_EQ(varDeclN.getCode(), "NES::QueryCompilation::Array<char, 12> n = NES::QueryCompilation::Array {'a', 'b', 'c', static_cast<char>(0)}");
+        EXPECT_EQ(
+            varDeclN.getCode(),
+            "NES::QueryCompilation::Array<char, 12> n = NES::QueryCompilation::Array {'a', 'b', 'c', static_cast<char>(0)}");
 
         auto varDeclO = VariableDeclaration::create(
             tf.createDataType(DataTypeFactory::createArray(4, DataTypeFactory::createUInt8())),

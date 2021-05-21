@@ -25,17 +25,12 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/WorkerContext.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/CCodeGenerator.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableCountAggregation.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
-#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
@@ -54,6 +49,7 @@
 #include <utility>
 
 #include <NodeEngine/FixedSizeBufferPool.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
@@ -69,6 +65,7 @@
 
 using std::cout;
 using std::endl;
+using namespace NES::NodeEngine;
 namespace NES {
 
 class OperatorCodeGenerationTest : public testing::Test {
@@ -141,9 +138,9 @@ class SelectionDataGenSource : public GeneratorSource {
 
     ~SelectionDataGenSource() = default;
 
-    std::optional<TupleBuffer> receiveData() override {
+    std::optional<NodeEngine::TupleBuffer> receiveData() override {
         // 10 tuples of size one
-        TupleBuffer buf = bufferManager->getBufferBlocking();
+        auto buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
 
         assert(buf.getBuffer() != NULL);
