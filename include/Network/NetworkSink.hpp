@@ -22,7 +22,6 @@
 #include <Network/OutputChannel.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
-#include <boost/thread/tss.hpp>
 #include <string>
 
 namespace NES {
