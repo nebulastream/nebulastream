@@ -89,7 +89,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * respective map
      * @param QueryExecutionPlan to be deployed
      */
-    bool registerQuery(Execution::NewExecutableQueryPlanPtr qep);
+    bool registerQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -97,7 +97,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param QueryExecutionPlan to be deployed
      * @return bool indicating if register was successful
      */
-    bool deregisterQuery(Execution::NewExecutableQueryPlanPtr qep);
+    bool deregisterQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief process task from task queue
@@ -149,7 +149,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param qep of the query to start
      * @return bool indicating success
      */
-    bool startQuery(Execution::NewExecutableQueryPlanPtr qep, StateManagerPtr stateManager);
+    bool startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager);
 
     /**
      * @brief method to start a query
@@ -157,14 +157,14 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    bool stopQuery(Execution::NewExecutableQueryPlanPtr qep, bool graceful = false);
+    bool stopQuery(Execution::ExecutableQueryPlanPtr qep, bool graceful = false);
 
     /**
     * @brief method to fail a query
     * @param qep of the query to fail
     * @return bool indicating success
     */
-    bool failQuery(Execution::NewExecutableQueryPlanPtr qep);
+    bool failQuery(Execution::ExecutableQueryPlanPtr qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and finish up
@@ -252,11 +252,11 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     ThreadPoolPtr threadPool;
 
     // TODO remove these unnecessary structures
-    std::map<OperatorId, Execution::NewExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
+    std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
     std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
-    std::unordered_map<QuerySubPlanId, Execution::NewExecutableQueryPlanPtr> runningQEPs;
+    std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
     //TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;

@@ -35,7 +35,7 @@ Task::Task() : pipeline(), buf(), id(-1) {}
 ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     // execute this task.
     // a task could be a executable pipeline, or a data sink.
-    if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&pipeline)) {
+    if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
         return (*executablePipeline)->execute(buf, workerContext);
     } else if (auto dataSink = std::get_if<DataSinkPtr>(&pipeline)) {
         auto result = (*dataSink)->writeData(buf, workerContext);
@@ -53,7 +53,7 @@ ExecutionResult Task::operator()(WorkerContextRef workerContext) {
 uint64_t Task::getNumberOfTuples() { return buf.getNumberOfTuples(); }
 
 bool Task::isReconfiguration() {
-    if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&pipeline)) {
+    if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
         return (*executablePipeline)->isReconfiguration();
     }
     return false;
@@ -71,9 +71,9 @@ uint64_t Task::getId() { return id; }
 std::string Task::toString() {
     std::stringstream ss;
     ss << "Task: id=" << id;
-    if (auto executablePipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&pipeline)) {
-        ss << " execute pipelineId=" << (*executablePipeline)->getPipeStageId()
-           << " qepParentId=" << (*executablePipeline)->getQepParentId();
+    if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&pipeline)) {
+        ss << " execute pipelineId=" << (*executablePipeline)->getPipelineId()
+           << " qepParentId=" << (*executablePipeline)->getQuerySubPlanId();
     } else if (std::holds_alternative<DataSinkPtr>(pipeline)) {
         ss << " execute data sink";
     }

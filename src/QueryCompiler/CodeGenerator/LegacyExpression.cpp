@@ -19,6 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
+#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>

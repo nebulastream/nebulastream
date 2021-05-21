@@ -18,6 +18,8 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BlockScopeStatement.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
+#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
+#include <Util/Logger.hpp>
 #include <memory>
 #include <utility>
 
@@ -25,6 +27,10 @@ namespace NES {
 namespace QueryCompilation {
 PipelineContext::PipelineContext(PipelineContextArity arity) : arity(arity), recordHandler(RecordHandler::create()) {
     this->code = std::make_shared<GeneratedCode>();
+}
+
+PipelineContext::~PipelineContext() {
+    NES_DEBUG("~PipelineContext(" + pipelineName + ")");
 }
 
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }

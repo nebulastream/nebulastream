@@ -20,19 +20,12 @@
 #include <memory>
 #include <vector>
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ForLoopStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/FunctionCallStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ForLoopStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/StructDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
-#include <QueryCompiler/Compiler/Compiler.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
 
 namespace NES {
 namespace QueryCompilation {

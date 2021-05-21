@@ -24,12 +24,12 @@
 namespace NES::NodeEngine::Execution {
 
 ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
-                                               QuerySubPlanId querySubPlanId,
-                                               std::vector<DataSourcePtr>&& sources,
-                                               std::vector<DataSinkPtr>&& sinks,
-                                               std::vector<NewExecutablePipelinePtr>&& pipelines,
-                                               QueryManagerPtr&& queryManager,
-                                               BufferManagerPtr&& bufferManager)
+                                         QuerySubPlanId querySubPlanId,
+                                         std::vector<DataSourcePtr>&& sources,
+                                         std::vector<DataSinkPtr>&& sinks,
+                                         std::vector<ExecutablePipelinePtr>&& pipelines,
+                                         QueryManagerPtr&& queryManager,
+                                         BufferManagerPtr&& bufferManager)
     : queryId(queryId), querySubPlanId(querySubPlanId), sources(std::move(sources)), sinks(std::move(sinks)),
       pipelines(std::move(pipelines)), queryManager(std::move(queryManager)), bufferManager(std::move(bufferManager)),
       qepStatus(Created), numOfProducers(this->sources.size()), qepTerminationStatusPromise(),
@@ -37,29 +37,29 @@ ExecutableQueryPlan::ExecutableQueryPlan(QueryId queryId,
     // nop
 }
 
-NewExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
-                                                         QuerySubPlanId querySubPlanId,
-                                                         std::vector<DataSourcePtr> sources,
-                                                         std::vector<DataSinkPtr> sinks,
-                                                         std::vector<NewExecutablePipelinePtr> pipelines,
-                                                         QueryManagerPtr queryManager,
-                                                         BufferManagerPtr bufferManager) {
+ExecutableQueryPlanPtr ExecutableQueryPlan::create(QueryId queryId,
+                                                   QuerySubPlanId querySubPlanId,
+                                                   std::vector<DataSourcePtr> sources,
+                                                   std::vector<DataSinkPtr> sinks,
+                                                   std::vector<ExecutablePipelinePtr> pipelines,
+                                                   QueryManagerPtr queryManager,
+                                                   BufferManagerPtr bufferManager) {
     return std::make_shared<ExecutableQueryPlan>(queryId,
-                                                    querySubPlanId,
-                                                    std::move(sources),
-                                                    std::move(sinks),
-                                                    std::move(pipelines),
-                                                    std::move(queryManager),
-                                                    std::move(bufferManager));
+                                                 querySubPlanId,
+                                                 std::move(sources),
+                                                 std::move(sinks),
+                                                 std::move(pipelines),
+                                                 std::move(queryManager),
+                                                 std::move(bufferManager));
 }
 
 void ExecutableQueryPlan::incrementProducerCount() { numOfProducers++; }
 
-QueryId ExecutableQueryPlan::getQueryId() { return queryId; }
+const QueryId ExecutableQueryPlan::getQueryId() const { return queryId; }
 
-std::vector<NewExecutablePipelinePtr> ExecutableQueryPlan::getPipelines() { return pipelines; }
+const std::vector<ExecutablePipelinePtr>& ExecutableQueryPlan::getPipelines() const { return pipelines; }
 
-QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
+const QuerySubPlanId ExecutableQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
 ExecutableQueryPlan::~ExecutableQueryPlan() {
     NES_DEBUG("destroy qep " << queryId << " " << querySubPlanId);
@@ -118,7 +118,7 @@ bool ExecutableQueryPlan::start(StateManagerPtr stateManager) {
     auto expected = Deployed;
     if (qepStatus.compare_exchange_strong(expected, Running)) {
         for (auto& stage : pipelines) {
-            NES_DEBUG("ExecutableQueryPlan::start qep=" << stage->getQepParentId() << " pipe=" << stage->getPipeStageId());
+            NES_DEBUG("ExecutableQueryPlan::start qep=" << stage->getQuerySubPlanId() << " pipe=" << stage->getPipelineId());
             if (!stage->start(stateManager)) {
                 NES_ERROR("QueryExecutionPlan: start failed! " << queryId << " " << querySubPlanId);
                 this->stop();
@@ -135,9 +135,9 @@ QueryManagerPtr ExecutableQueryPlan::getQueryManager() { return queryManager; }
 
 BufferManagerPtr ExecutableQueryPlan::getBufferManager() { return bufferManager; }
 
-std::vector<DataSourcePtr> ExecutableQueryPlan::getSources() const { return sources; }
+const std::vector<DataSourcePtr>& ExecutableQueryPlan::getSources() const { return sources; }
 
-std::vector<DataSinkPtr> ExecutableQueryPlan::getSinks() const { return sinks; }
+const std::vector<DataSinkPtr>& ExecutableQueryPlan::getSinks() const { return sinks; }
 
 void ExecutableQueryPlan::reconfigure(ReconfigurationMessage& task, WorkerContext& context) {
     Reconfigurable::reconfigure(task, context);

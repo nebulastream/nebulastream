@@ -156,7 +156,7 @@ NodeEngine::~NodeEngine() {
     stop();
 }
 
-bool NodeEngine::deployQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan) {
+bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine: deployQueryInNodeEngine query using qep " << queryExecutionPlan);
     bool successRegister = registerQueryInNodeEngine(queryExecutionPlan);
@@ -195,7 +195,7 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     }
 }
 
-bool NodeEngine::registerQueryInNodeEngine(Execution::NewExecutableQueryPlanPtr queryExecutionPlan) {
+bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();

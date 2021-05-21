@@ -82,13 +82,13 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Gets list of all predecessors
      * @return std::vector<OperatorPipelinePtr>
      */
-    std::vector<OperatorPipelinePtr> getPredecessors();
+    const std::vector<OperatorPipelinePtr>& getPredecessors() const;
 
     /**
      * @brief Gets list of all sucessors
      * @return std::vector<OperatorPipelinePtr>
      */
-    std::vector<OperatorPipelinePtr> getSuccessors();
+    const std::vector<OperatorPipelinePtr>& getSuccessors() const;
 
     /**
      * @brief Removes all predecessors
@@ -110,7 +110,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Returns the pipeline id
      * @return pipeline id.
      */
-    uint64_t getPipelineId();
+    const uint64_t getPipelineId() const;
 
     /**
      * @brief Sets the type of an pipeline to Source, Sink, or Operator
@@ -128,25 +128,25 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Checks if this pipeline has an operator.
      * @return true if pipeline has an operator.
      */
-    bool hasOperators();
+    bool hasOperators() const;
 
     /**
      * @brief Indicates if this is a source pipeline.
      * @return true if source pipeline
      */
-    bool isSourcePipeline();
+    bool isSourcePipeline() const;
 
     /**
      * @brief Indicates if this is a sink pipeline.
      * @return true if sink pipeline
      */
-    bool isSinkPipeline();
+    bool isSinkPipeline() const;
 
     /**
      * @brief Indicates if this is a operator pipeline.
      * @return true if operator pipeline
      */
-    bool isOperatorPipeline();
+    bool isOperatorPipeline() const;
 
   protected:
     OperatorPipeline(uint64_t pipelineId, Type pipelineType);

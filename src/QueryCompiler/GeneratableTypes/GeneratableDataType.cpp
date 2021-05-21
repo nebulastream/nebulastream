@@ -16,10 +16,11 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 namespace NES {
 namespace QueryCompilation {
-StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatment& assignmentStatement) {
+StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatement& assignmentStatement) {
     // generates code for target = source
     auto target = VarRef(assignmentStatement.lhs_tuple_var)[VarRef(assignmentStatement.lhs_index_var)].accessRef(
         VarRef(assignmentStatement.lhs_field_var));
