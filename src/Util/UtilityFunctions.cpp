@@ -249,7 +249,7 @@ std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::stri
     return input.substr(endPosOfFirstDelim, lastDelimPos - endPosOfFirstDelim);
 }
 
-std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& s, std::string delim){
+std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string& s, std::string delim) {
     std::string copy = s;
     size_t pos = 0;
     std::vector<std::string> elems;
