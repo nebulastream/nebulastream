@@ -1387,7 +1387,7 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQueriesWithSamePr
 
 /**
  * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
- * but different filed names
+ * but different attribute names
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNames) {
 
@@ -1476,8 +1476,8 @@ TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSamePro
 }
 
 /**
- * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operators
- * but different filed names
+ * @brief Test applying SignatureBasedEqualQueryMergerRule on Global query plan with two queries with same project operator
+ * but different attribute names and additional filter operator
  */
 TEST_F(Z3SignatureBasedCompleteQueryMergerRuleTest, testMergingQuerisWithSameProjectOperatorWithDifferentFieldNamesAndFilters) {
 
