@@ -20,7 +20,6 @@
 #include <Sources/SenseSource.hpp>
 #include <Util/Logger.hpp>
 #include <assert.h>
-#include <boost/algorithm/string.hpp>
 #include <fstream>
 #include <sstream>
 #include <string>
