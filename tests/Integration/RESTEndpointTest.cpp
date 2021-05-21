@@ -206,8 +206,6 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryEx_WithEmptyQuery) {
 
 }
 
-
-//TODO: Fix segmentation in handlePost Function
 TEST_F(RESTEndpointTest, testPostExecuteQueryEx_nonEmptyQuery) {
     //NES Setup
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
