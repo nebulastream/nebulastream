@@ -25,6 +25,7 @@
 #include <cpprest/http_client.h>
 #include <iostream>
 #include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
 
 namespace NES {
 
@@ -240,8 +241,22 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryEx_nonEmptyQuery) {
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
                                                   + "/v1/nes/query/execute-query-ex");
 
-    //get a non empty query
-    Query query = Query::from("StreamName");
+    /* REGISTER QUERY */
+    SourceConfigPtr sourceConfig;
+    sourceConfig = SourceConfig::create();
+    sourceConfig->setSourceConfig("");
+    sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+    sourceConfig->setNumberOfBuffersToProduce(3);
+    sourceConfig->setPhysicalStreamName("test2");
+    sourceConfig->setLogicalStreamName("test_stream");
+
+    TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(conf, physicalNode);
+    StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addPhysicalStream("default_logical", sce);
+
+    Query query = Query::from("default_logical");
     QueryPlanPtr plan = query.getQueryPlan();
 
     //make a Protobuff object
@@ -268,9 +283,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryEx_nonEmptyQuery) {
         .wait();
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
+    EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
 
     // testing of the NES setup:
-
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -281,6 +296,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryEx_nonEmptyQuery) {
     NES_INFO("RESTEndpointTest: Test finished");
 
 }
+
 
 
 
