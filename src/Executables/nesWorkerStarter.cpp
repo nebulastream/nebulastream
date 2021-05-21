@@ -24,7 +24,6 @@
  *
  ********************************************************/
 
-#include "boost/program_options.hpp"
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
@@ -33,8 +32,6 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <thread>
-
-namespace po = boost::program_options;
 
 using namespace NES;
 using std::cout;
