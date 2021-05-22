@@ -556,7 +556,10 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForJoin(z3::ContextPtr
         NES_NOT_IMPLEMENTED();
     }
 
-    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(updatedSchemaFieldToExprMaps), std::move(windowExpressions));
+    return QuerySignature::create(std::move(conditions),
+                                  std::move(columns),
+                                  std::move(updatedSchemaFieldToExprMaps),
+                                  std::move(windowExpressions));
 }
 
 QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextPtr context,
@@ -703,6 +706,9 @@ QuerySignaturePtr QuerySignatureUtil::createQuerySignatureForWindow(z3::ContextP
         columns.emplace_back(outputField->getName());
     }
     auto conditions = childQuerySignature->getConditions();
-    return QuerySignature::create(std::move(conditions), std::move(columns), std::move(updatedSchemaFieldToExprMaps), std::move(windowExpressions));
+    return QuerySignature::create(std::move(conditions),
+                                  std::move(columns),
+                                  std::move(updatedSchemaFieldToExprMaps),
+                                  std::move(windowExpressions));
 }
 }// namespace NES::Optimizer
