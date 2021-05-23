@@ -172,6 +172,7 @@ class NesWorker {
     NodeEngine::NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
+    // BDAPRO change this to a vector of configurations
     PhysicalStreamConfigPtr conf;
     bool connected;
     bool withRegisterStream;

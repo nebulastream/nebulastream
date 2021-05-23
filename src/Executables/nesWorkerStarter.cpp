@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     WorkerConfigPtr workerConfig = WorkerConfig::create();
+    // BDAPRO change sourceConfig to vector and add default NoSource config
     SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceType("NoSource");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
@@ -72,6 +73,7 @@ int main(int argc, char** argv) {
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
     auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
+    // BDAPRO check if sourceConfigPath contains multiple paths or only a single path
 
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
@@ -79,6 +81,8 @@ int main(int argc, char** argv) {
     if (sourceConfigPath != commandLineParams.end()) {
         sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
     }
+    // BDAPRO handle multipleSourceConfigPath
+
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
@@ -92,6 +96,7 @@ int main(int argc, char** argv) {
                                                    NodeType::Sensor// TODO what is this?!
     );
 
+    // BDAPRO handle creating multiple physical stream configs and register
     //register phy stream if necessary
     if (sourceConfig->getSourceType()->getValue() != "NoSource") {
         NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
@@ -101,7 +106,7 @@ int main(int argc, char** argv) {
                  << sourceConfig->getSourceType()->getValue() << " Config = " << sourceConfig->getSourceConfig()->getValue()
                  << " physicalStreamName = " << sourceConfig->getPhysicalStreamName()->getValue()
                  << " logicalStreamName = " << sourceConfig->getLogicalStreamName()->getValue());
-
+        // BDAPRO adjust call to register with multiple sources
         wrk->setWithRegister(conf);
     } else if (workerConfig->getParentId()->getValue() != "-1") {
         NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());

@@ -58,6 +58,7 @@ NesWorker::~NesWorker() {
 }
 
 bool NesWorker::setWithRegister(PhysicalStreamConfigPtr conf) {
+    // BDAPRO add overload to use vector of PhysicalStreamConfigPtrs
     withRegisterStream = true;
     this->conf = conf;
     return true;
@@ -157,6 +158,7 @@ bool NesWorker::start(bool blocking, bool withConnect) {
         NES_ASSERT(con, "cannot connect");
     }
     if (withRegisterStream) {
+        // BDAPRO loop over all configurations and register individually
         NES_DEBUG("NesWorker: start with register stream");
         bool success = registerPhysicalStream(conf);
         NES_DEBUG("registered= " << success);
@@ -291,6 +293,7 @@ bool NesWorker::registerPhysicalStream(AbstractPhysicalStreamConfigPtr conf) {
     NES_ASSERT(con, "cannot connect");
     bool success = coordinatorRpcClient->registerPhysicalStream(conf);
     NES_ASSERT(success, "failed to register stream");
+    // BDAPRO change from setConfig to addConfig
     // TODO we need to get rid of this
     nodeEngine->setConfig(conf);
     NES_DEBUG("NesWorker::registerPhysicalStream success=" << success);

@@ -51,6 +51,7 @@ NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamC
 
 NodeStatsProviderPtr NodeEngine::getNodeStatsProvider() { return nodeStatsProvider; }
 
+// BDAPRO adjust NodeEngine constructor to take multiple configs as input
 NodeEnginePtr NodeEngine::create(const std::string& hostname,
                                  uint16_t port,
                                  PhysicalStreamConfigPtr config,
@@ -116,6 +117,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
     return nullptr;
 }
 
+// BDAPRO adjust NodeEngine constructor to take multiple configs as input
 NodeEngine::NodeEngine(PhysicalStreamConfigPtr config,
                        BufferManagerPtr&& bufferManager,
                        QueryManagerPtr&& queryManager,
@@ -470,6 +472,7 @@ std::vector<QueryStatisticsPtr> NodeEngine::getQueryStatistics(QueryId queryId) 
 
 Network::PartitionManagerPtr NodeEngine::getPartitionManager() { return partitionManager; }
 
+// BDAPRO adjust to handle multiple sources
 SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
     NES_INFO("NodeEngine: Updating the default Logical Source Descriptor to the Logical Source Descriptor supported by the node");
 
@@ -487,6 +490,7 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     }
 }
 
+// BDAPRO rename to addConfig to make clear we are handling multiple configs
 void NodeEngine::setConfig(AbstractPhysicalStreamConfigPtr config) {
     NES_ASSERT(config, "physical source config is not specified");
     this->configs.emplace_back(config);
