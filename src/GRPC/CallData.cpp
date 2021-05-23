@@ -18,7 +18,7 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-CallData::CallData(WorkerRPCServer::Service* service, grpc_impl::ServerCompletionQueue* cq)
+CallData::CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq)
     : service(service), completionQueue(cq), responder(&ctx), status(CREATE) {
     // Invoke the serving logic right away.
 }

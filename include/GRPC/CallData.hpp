@@ -34,7 +34,7 @@ class CallData {
      * @param service server to listen on
      * @param cq queue to listen on
      */
-    CallData(WorkerRPCServer::Service* service, grpc_impl::ServerCompletionQueue* cq);
+    CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq);
 
     /**
     * @brief Run method to process the call data through it different stages
@@ -47,7 +47,7 @@ class CallData {
     WorkerRPCServer::Service* service;
 
     // The producer-consumer queue where for asynchronous server notifications.
-    grpc_impl::ServerCompletionQueue* completionQueue;
+    grpc::ServerCompletionQueue* completionQueue;
 
     // Context for the rpc, allowing to tweak aspects of it such as the use
     // of compression, authentication, as well as to send metadata back to the
@@ -61,7 +61,7 @@ class CallData {
     RegisterQueryReply reply;
 
     // The means to get back to the client.
-    grpc_impl::ServerAsyncResponseWriter<RegisterQueryReply> responder;
+    grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder;
 
     // Let's implement a tiny state machine with the following states.
     enum CallStatus { CREATE, PROCESS, FINISH };
