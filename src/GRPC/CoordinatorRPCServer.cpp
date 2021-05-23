@@ -60,6 +60,8 @@ Status CoordinatorRPCServer::RegisterPhysicalStream(ServerContext*,
                                                     RegisterPhysicalStreamReply* reply) {
     NES_DEBUG("CoordinatorRPCServer::RegisterPhysicalStream: request =" << request);
 
+
+    // BDAPRO make logical stream name nullable
     bool success = coordinatorEngine->registerPhysicalStream(request->id(),
                                                              request->sourcetype(),
                                                              request->physicalstreamname(),

@@ -41,6 +41,7 @@ SourceConfig::SourceConfig() {
         ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.");
     physicalStreamName =
         ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.");
+    // BDAPRO remove default_logical as default logical stream and instead register without logicalStreamName
     logicalStreamName = ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.");
     skipHeader = ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.");
 }

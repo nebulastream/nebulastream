@@ -111,6 +111,14 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
     }
 }
 
+/* BDAPRO implement new method to create physical streamwithout logical stream name
+bool StreamCatalog::addPhysicalStreamWithLogicalStreams(StreamCatalogEntryPtr newEntry) {
+    // check that entry does not contain a logical stream name
+    // add physical stream to StreamCatalog with predefined key
+}
+*/
+
+// BDAPRO adjust to changes in StreamCatalogEntryPtr in case necessary
 bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in addPhysicalStream() " << logicalStreamName);
@@ -164,6 +172,7 @@ bool StreamCatalog::removeAllPhysicalStreams(std::string) {
     NES_NOT_IMPLEMENTED();
 }
 
+// BDAPRO add level of indirection through physicalStreams
 bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName, std::uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName);
@@ -202,6 +211,8 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
     return false;
 }
 
+// BDAPRO add level of indirection through physicalStreams
+// care to remove from both data structures
 bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     for (auto logStream : logicalToPhysicalStreamMapping) {
@@ -255,6 +266,7 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
         != logicalToPhysicalStreamMapping.end();
 }
 
+// BDAPRO add level of indirection through physicalStreams
 std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     std::vector<TopologyNodePtr> listOfSourceNodes;
@@ -297,6 +309,7 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     return ss.str();
 }
 
+// BDAPRO add level of indirection through physicalStreams
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
     return logicalToPhysicalStreamMapping[logicalStreamName];
 }

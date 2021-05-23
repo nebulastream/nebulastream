@@ -148,6 +148,7 @@ bool CoordinatorEngine::unregisterNode(uint64_t nodeId) {
     return successCatalog && successTopology;
 }
 
+// BDAPRO adjust to StreamCatalogEntry and allow registration without empty (or null) logicalStreamName
 bool CoordinatorEngine::registerPhysicalStream(uint64_t nodeId,
                                                std::string sourceType,
                                                std::string physicalStreamName,
