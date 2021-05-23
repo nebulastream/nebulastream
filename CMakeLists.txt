@@ -11,8 +11,36 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 cmake_minimum_required(VERSION 3.16.0)
+set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+
+function(download_file url filename hash_type hash)
+    message("Download: ${url}")
+    if (NOT EXISTS ${filename})
+        file(DOWNLOAD ${url} ${filename}
+                TIMEOUT 60)
+    endif ()
+endfunction(download_file)
+
+# check if prebuild dependencies are already downloaded
+# todo add versioning
+if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+
+    IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/nesDebs)
+        message("NES dependencies do not exist!")
+        download_file(https://github.com/nebulastream/dependencies/releases/download/0.1/nesDebs.zip
+                ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.zip
+                SHA1 074e7a34c486d8956562b65a247d908ee097fb07)
+        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    endif ()
+
+    # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
+    message("Set toolchain file for prebuild dir.")
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/nesDebs/scripts/buildsystems/vcpkg.cmake")
+else ()
+    message("Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+endif ()
+
 project(NES CXX)
 
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
@@ -75,7 +103,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES
 if (NES_BUILD_BENCHMARKS)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNES_BENCHMARKS_FLAG_MODE=1")
     message("Build with all flags on, only use for benchmarking")
-    if(NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT)
+    if (NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT)
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}  -DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT=1")
         message("use latency measurement")
     endif ()
@@ -84,9 +112,9 @@ endif ()
 
 if (NES_BUILD_NATIVE)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
-    if(${AVX2_FOUND})
+    if (${AVX2_FOUND})
         set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mavx2")
-    endif()
+    endif ()
 endif ()
 
 # Compiler should produce specific code for system architecture
@@ -122,15 +150,15 @@ message("AVX2 found=" ${AVX2_FOUND})
 
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-find_package(Folly)
-if (FOLLY_FOUND)
-    message(STATUS "Found folly: ${FOLLY_INCLUDE_DIR}")
-    include_directories(${FOLLY_INCLUDE_DIR})
-    set(LIBRARIES ${LIBRARIES} ${FOLLY_LIBRARIES})
-else(FOLLY_FOUND)
-    message(FATAL_ERROR "Cannot find folly")
-endif(FOLLY_FOUND)
-endif()
+    find_package(Folly)
+    if (FOLLY_FOUND)
+        message(STATUS "Found folly: ${FOLLY_INCLUDE_DIR}")
+        include_directories(${FOLLY_INCLUDE_DIR})
+        set(LIBRARIES ${LIBRARIES} ${FOLLY_LIBRARIES})
+    else (FOLLY_FOUND)
+        message(FATAL_ERROR "Cannot find folly")
+    endif (FOLLY_FOUND)
+endif ()
 
 # LLVM
 find_package(LLVM 3 REQUIRED)
@@ -201,24 +229,22 @@ add_custom_command(
 # LibZMQ
 # ------
 message(STATUS "Libzmq")
-set(ZMQ_RELEASE "4.3.2")
-find_package(ZeroMQ ${ZMQ_RELEASE} REQUIRED)
+#set(ZMQ_RELEASE "4.3.2")
+find_package(ZeroMQ CONFIG REQUIRED)
 if (NOT ${ZeroMQ_FOUND})
     message(FATAL_ERROR "Unable to find libzmq")
 endif ()
-set(LIBRARIES ${LIBRARIES} ${ZeroMQ_LIBRARIES})
-message(STATUS "Using Libzmq: " ${ZeroMQ_LIBRARIES})
-
+set(LIBRARIES ${LIBRARIES} libzmq libzmq-static)
 
 # CppZMQ
 message(STATUS "cppzmq")
-set(CPPZMQ_RELEASE "4.7.0")
-find_package(CPPZMQ ${CPPZMQ_RELEASE} REQUIRED)
+find_package(cppzmq CONFIG REQUIRED)
 if (NOT ${CPPZMQ_FOUND})
     message(FATAL_ERROR "Unable to find cppzmq")
 endif ()
-#set(LIBRARIES ${LIBRARIES} ${CPPZMQ_LIBRARIES}) CPPZMQ is header only so we dont need to link anything
-message(STATUS "Using cppzmq: " ${CPPZMQ_LIBRARIES})
+set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
+#CPPZMQ is header only so we dont need to link anything
+#message(STATUS "Using cppzmq: " ${CPPZMQ_LIBRARIES})
 
 # Z3 Solver
 message(STATUS "Z3")
@@ -227,26 +253,24 @@ if (NOT ${Z3_FOUND})
     message(FATAL_ERROR "Unable to find Z3")
 endif ()
 set(LIBRARIES ${LIBRARIES} ${Z3_LIBRARIES})
+message(STATUS "Using z3: " ${Z3_LIBRARIES})
 
 # Log4cc
-find_package(Log4cxx REQUIRED)
+find_package(log4cxx CONFIG REQUIRED)
+if (NOT ${log4cxx})
+    message(FATAL_ERROR "Unable to find log4cxx")
+endif ()
 include_directories(${Log4cxx_INCLUDE_DIR})
-set(LIBRARIES ${LIBRARIES} ${Log4cxx_LIBRARY})
-
-if (LOG4CXX_FOUND)
-    message(STATUS "LOG4CXX found")
-else (LOG4CXX_FOUND)
-    message(STATUS "LOG4CXX not found")
-    message(STATUS "On Ubuntu, install the package by the following command!")
-    message(STATUS "sudo apt-get install liblog4cxx10-dev")
-endif (LOG4CXX_FOUND)
+set(LIBRARIES ${LIBRARIES} log4cxx)
+message(STATUS "Using Log4cxx: " ${Log4cxx_LIBRARY})
 
 # Boost Libraries
-set(Boost_USE_MULTITHREADED TRUE)
-find_package(Boost 1.65.1 REQUIRED system thread program_options filesystem chrono) # Only check if lib is available on system for generated code.
-link_directories(${Boost_LIBRARY_DIRS})
+#set(Boost_USE_MULTITHREADED TRUE)
+find_package(Boost REQUIRED system thread program_options filesystem chrono) # Only check if lib is available on system for generated code.
+#link_directories(${Boost_LIBRARY_DIRS})
+message("Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
-set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
+set(LIBRARIES ${LIBRARIES} Boost::boost Boost::system Boost::thread Boost::program_options Boost::filesystem Boost::chrono)
 
 # Backward
 
@@ -261,11 +285,9 @@ set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 # C++ REST SDK
-set(cpprestsdk_DIR ${CPPRESTSDK_DIR})
-message("Found cpprestsdk in ${cpprestsdk_DIR}")
-find_package(cpprestsdk REQUIRED)
+find_package(cpprestsdk CONFIG REQUIRED)
 # Library containing rest dependencies
-set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
+set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest cpprestsdk::cpprestsdk_zlib_internal cpprestsdk::cpprestsdk_boost_internal cpprestsdk::cpprestsdk_openssl_internal)
 
 # Library containing actor framework
 #find_package(CAF COMPONENTS core io)
@@ -273,27 +295,31 @@ set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
 
 # Library containing Kafka client
 if (NES_USE_KAFKA)
-    find_package(CppKafka REQUIRED)
+    find_package(CppKafka CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} ${CppKafka_LIBRARIES})
     add_compile_definitions(ENABLE_KAFKA_BUILD)
 endif (NES_USE_KAFKA)
 
 # Library containing OPC client
 if (NES_USE_OPC)
-    find_package(open62541 REQUIRED COMPONENTS FullNamespace)
+    find_package(open62541 CONFIG REQUIRED)
     set(LIBRARIES ${LIBRARIES} open62541::open62541)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
 
 # Library containing MQTT client
+
 if (NES_USE_MQTT)
-    set(LIBRARIES ${LIBRARIES} paho-mqtt3as paho-mqttpp3)
+    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
+    find_package(PahoMqttCpp CONFIG REQUIRED)
+    #  target_link_libraries(main PRIVATE PahoMqttCpp::paho-mqttpp3-static)
+    set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
 
 # Eigen 3.3 linear algebra library
 if (NES_USE_ADAPTIVE)
-    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+    find_package(Eigen3 CONFIG REQUIRED NO_MODULE)
     set(LIBRARIES ${LIBRARIES} Eigen3::Eigen)
     message("Adaptive sampling dependencies OK")
 endif (NES_USE_ADAPTIVE)
@@ -370,7 +396,7 @@ endif ()
 add_subdirectory(docs)
 
 add_executable(nesCoordinator src/Executables/nesCoordinatorStarter.cpp)
-target_link_libraries(nesCoordinator PUBLIC ${LIBRARIES} nes)
+target_link_libraries(nesCoordinator PRIVATE ${LIBRARIES} nes)
 target_include_directories(nesCoordinator PUBLIC "include")
 target_include_directories(nesCoordinator PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 if (GRPC_LIBRARIES)

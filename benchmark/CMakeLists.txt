@@ -129,4 +129,4 @@ if (NES_BUILD_BENCHMARKS)
 
 else (NES_BUILD_BENCHMARKS)
     message("---Not building benchmarks!")
-endif (NES_BUILD_BENCHMARKS)
+endif ()

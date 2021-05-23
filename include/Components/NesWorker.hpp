@@ -167,7 +167,7 @@ class NesWorker {
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
-    std::unique_ptr<grpc_impl::ServerCompletionQueue> completionQueue;
+    std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
 
     NodeEngine::NodeEnginePtr nodeEngine;
     CoordinatorRPCClientPtr coordinatorRpcClient;
