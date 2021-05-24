@@ -133,7 +133,7 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
     NES_INFO("RESTEndpointTest: Test finished");
 }
 
-TEST_F(RESTEndpointTest, testPostExecuteQueryEx_WithEmptyQuery) {
+TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     //NES Setup
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
@@ -206,7 +206,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryEx_WithEmptyQuery) {
 
 }
 
-TEST_F(RESTEndpointTest, testPostExecuteQueryEx_nonEmptyQuery) {
+TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     //NES Setup
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
@@ -298,7 +298,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryEx_nonEmptyQuery) {
 
 
 
-TEST_F(RESTEndpointTest, testPostExecuteQueryEx_wrongPayload) {
+TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     //NES Setup
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
