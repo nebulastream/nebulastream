@@ -13,6 +13,7 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.18.0)
 set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+set(VCPKG_BINARY_VERSION v1)
 
 function(download_file url filename hash_type hash)
     message("Download: ${url}")
@@ -25,26 +26,26 @@ endfunction(download_file)
 # check if prebuild dependencies are already downloaded
 # todo add versioning
 if (NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
-
-    IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/nesDebs)
+    set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
+    IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
         message("NES dependencies do not exist!")
-        download_file(https://github.com/nebulastream/dependencies/releases/download/0.1/nesDebs.7z
-                ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.7z
+        download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${BINARY_NAME}.7z
+                ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z
                 SHA1 074e7a34c486d8956562b65a247d908ee097fb07)
-        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.7z DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     endif ()
 
     # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
     message("Set toolchain file for prebuild dir.")
-    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/nesDebs/scripts/buildsystems/vcpkg.cmake")
+    set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/scripts/buildsystems/vcpkg.cmake")
 
     # In combination with prebuild binaries, NES supports self hosting its compilation with the clang binary.
     # This could be handy if the build environment has no recent compiler.
     if (NES_SELF_HOSTING)
         message(STATUS "Self-host compilation of NES")
-        set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/nesDebs/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang-11")
-        set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/nesDebs/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang++")
-    else()
+        set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang-11")
+        set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang++")
+    else ()
         message(STATUS "Use system compiler")
     endif ()
 else ()
