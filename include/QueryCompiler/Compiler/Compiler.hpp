@@ -83,7 +83,8 @@ class Compiler {
      */
     std::string formatAndPrintSource(const std::string& filename);
 
-    const static std::string IncludePath;
+    const static std::string NESIncludePath;
+    const static std::string DEBSIncludePath;
 };
 
 }// namespace NES

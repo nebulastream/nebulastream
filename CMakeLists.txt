@@ -24,25 +24,37 @@ endfunction(download_file)
 
 # check if prebuild dependencies are already downloaded
 # todo add versioning
-if (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+if (NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
 
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/nesDebs)
         message("NES dependencies do not exist!")
-        download_file(https://github.com/nebulastream/dependencies/releases/download/0.1/nesDebs.zip
-                ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.zip
+        download_file(https://github.com/nebulastream/dependencies/releases/download/0.1/nesDebs.7z
+                ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.7z
                 SHA1 074e7a34c486d8956562b65a247d908ee097fb07)
-        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.zip DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+        file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/nesDebs.7z DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     endif ()
 
     # set toolchain file to use prebuild dependencies only if no toolchain file is already set.
     message("Set toolchain file for prebuild dir.")
     set(CMAKE_TOOLCHAIN_FILE "${CMAKE_CURRENT_BINARY_DIR}/nesDebs/scripts/buildsystems/vcpkg.cmake")
+
+    # In combination with prebuild binaries, NES supports self hosting its compilation with the clang binary.
+    # This could be handy if the build environment has no recent compiler.
+    if (NES_SELF_HOSTING)
+        message(STATUS "Self-host compilation of NES")
+        set(CMAKE_C_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/nesDebs/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang-11")
+        set(CMAKE_CXX_COMPILER "${CMAKE_CURRENT_BINARY_DIR}/nesDebs/installed/${VCPKG_TARGET_TRIPLET}/tools/llvm/clang++")
+    else()
+        message(STATUS "Use system compiler")
+    endif ()
 else ()
     message("Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
 endif ()
 
 project(NES CXX)
 
+message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
+message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" OFF)
@@ -160,10 +172,6 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     endif (FOLLY_FOUND)
 endif ()
 
-# LLVM
-find_package(LLVM 3 REQUIRED)
-find_package(clang REQUIRED)
-message("-- LLVM version ${LLVM_VERSION_STRING}")
 
 # GRPC and protobuf
 set(gRPC_RELEASE "v1.28.1")
@@ -325,7 +333,8 @@ if (NES_USE_ADAPTIVE)
 endif (NES_USE_ADAPTIVE)
 
 # Print all used include directories
-message(STATUS "INCLUDE_DIRS:")
+message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
+set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 foreach (dir ${dirs})
     message(STATUS "  - ${dir}")
@@ -335,12 +344,27 @@ message(STATUS " Libraries: ${LIBRARIES}")
 message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
+# LLVM
+find_package(LLVM 11.1.0 CONFIG REQUIRED)
+if (LLVM_FOUND)
+    message("-- LLVM version ${LLVM_PACKAGE_VERSION}")
+    message("-- LLVM binary dir ${LLVM_BINARY_DIR}")
+    message("-- LLVM tool dir ${LLVM_TOOLS_INSTALL_DIR}")
+    set(CLANG_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang++)
+    set(CLANG_FORMAT_EXECUTABLE ${LLVM_BINARY_DIR}/${LLVM_TOOLS_INSTALL_DIR}/clang-format)
+else ()
+    message(FATAL_ERROR "Cannot find llvm")
+endif ()
+message("-- LLVM version ${LLVM_VERSION_STRING}")
+message("-- LLVM version ${LLVM_ROOT_DIR}")
 
 # Set definition values.
-set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
-set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
+#set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
+#set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
+set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
+message("PATH_TO_DEB_SOURCE_CODE Dir: ${PATH_TO_DEB_SOURCE_CODE}")
 
 # Print definition values.
 message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
@@ -352,6 +376,7 @@ add_definitions(-D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"')
 add_definitions(-D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"')
 add_definitions(-D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"')
 add_definitions(-D 'PATH_TO_NES_SOURCE_CODE=\"${PATH_TO_NES_SOURCE_CODE}\"')
+add_definitions(-D 'PATH_TO_DEB_SOURCE_CODE=\"${PATH_TO_DEB_SOURCE_CODE}\"')
 
 add_definitions(-D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"')
 add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
