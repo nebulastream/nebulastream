@@ -78,7 +78,7 @@ std::vector<NodeEngine::TupleBuffer> CsvFormat::getData(NodeEngine::TupleBuffer&
         buffers.push_back(buf);
         NES_DEBUG("CsvFormat::getData: successfully copied buffer=" << numberOfBuffers);
     } else {
-        NES_DEBUG("CsvFormat::getData: content fits in one buffer =" << bufferContent);
+        NES_TRACE("CsvFormat::getData: content fits in one buffer =" << bufferContent);
         auto buf = this->bufferManager->getBufferBlocking();
         std::copy(bufferContent.begin(), bufferContent.end(), buf.getBuffer());
         buf.setNumberOfTuples(contentSize);
