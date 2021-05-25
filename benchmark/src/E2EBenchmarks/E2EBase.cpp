@@ -626,8 +626,7 @@ void E2EBase::setup() {
     queryService = crd->getQueryService();
     queryCatalog = crd->getQueryCatalog();
 }
-std::string test()
-{
+std::string test() {
     assert(0);
     return "asd";
 }
@@ -748,11 +747,11 @@ std::string E2EBase::getResult() {
     uint64_t throughputInTasksPerSec = tasksProcessed / runtimeInSec;
     uint64_t throughputInMBPerSec =
         (tuplesProcessed * defaultSchema->getSchemaSizeInBytes() / (uint64_t) runtimeInSec) / 1024 / 1024;
-    double avgLatencyInMs = (double (latencySum * 1000) / (double) bufferProcessed)/ 1000;
+    double avgLatencyInMs = (double(latencySum * 1000) / (double) bufferProcessed) / 1000;
 
     out << bufferProcessed << "," << tasksProcessed << "," << tuplesProcessed << ","
-        << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << "," << throughputInTasksPerSec << "," << throughputInMBPerSec
-        << "," << avgLatencyInMs;
+        << tuplesProcessed * defaultSchema->getSchemaSizeInBytes() << "," << throughputInTupsPerSec << ","
+        << throughputInTasksPerSec << "," << throughputInMBPerSec << "," << avgLatencyInMs;
 
     size_t tuplesPerBuffer = bufferSizeInBytes / defaultSchema->getSchemaSizeInBytes();
     std::cout.imbue(std::locale(std::cout.getloc(), new space_out));
