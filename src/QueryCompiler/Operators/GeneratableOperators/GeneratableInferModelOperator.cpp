@@ -16,6 +16,7 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableInferModelOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -46,9 +47,7 @@ GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,
 }
 
 void GeneratableInferModelOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-//    // todo generateCodeForInferModel
-//    auto legacyInferModelExpression = TranslateToLegacyPlanPhase::create()->transformExpression(assignment);
-//    codegen->generateCodeForInferModel(AttributeField::create(field->getFieldName(), field->getStamp()), legacyInferModelExpression, context);
+//    codegen->generateCodeForInferModel(context);
 }
 
 const std::string GeneratableInferModelOperator::toString() const { return "GeneratableInferModelOperator"; }
