@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_HPP_
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 namespace NES {
@@ -42,4 +42,4 @@ typedef ContinueStatement Continue;
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_CODEGENERATOR_CCODEGENERATOR_HPP_
