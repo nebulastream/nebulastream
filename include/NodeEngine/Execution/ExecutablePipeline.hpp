@@ -54,9 +54,6 @@ class ExecutablePipeline : public Reconfigurable {
                                 std::vector<SuccessorExecutablePipeline> successorPipelines,
                                 bool reconfiguration);
 
-    /**
-     * @brief Destructor of an ExecutablePipeline
-     */
     ~ExecutablePipeline();
 
     /**
