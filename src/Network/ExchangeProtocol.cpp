@@ -80,6 +80,22 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         protocolListener->onServerError(Messages::ErrorMessage(endOfStreamMessage.getChannelId(), Messages::kUnknownPartition));
     }
 }
+void ExchangeProtocol::onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage updateNetworkSinkMessage) {
+    if (partitionManager->isRegistered(updateNetworkSinkMessage.getChannelId().getNesPartition())) {
+        if (partitionManager->unregisterSubpartition(updateNetworkSinkMessage.getChannelId().getNesPartition())) {
+            protocolListener->onNetworkSinkUpdate(updateNetworkSinkMessage);
+        } else {
+            NES_DEBUG("ExchangeProtocol: updateNetworkSink message received from "
+                          << updateNetworkSinkMessage.getChannelId().toString() << " but there is still some active subpartition: "
+                          << partitionManager->getSubpartitionCounter(updateNetworkSinkMessage.getChannelId().getNesPartition()));
+        }
+    } else {
+        NES_ERROR("ExchangeProtocol: updateNetworkSink message received from "
+                      << updateNetworkSinkMessage.getChannelId().toString() << " however the partition is not registered on this worker");
+        protocolListener->onServerError(Messages::ErrorMessage(updateNetworkSinkMessage.getChannelId(), Messages::kUnknownPartition));
+    }
+
+}
 
 std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }
 

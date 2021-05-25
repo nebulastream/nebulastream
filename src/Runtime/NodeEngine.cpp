@@ -446,9 +446,10 @@ bool NodeEngine::bufferData(QueryId) { return true; }
 
 bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort,
                                     const std::map<QuerySubPlanId, std::vector<uint64_t>>& queryToNetworkSinkIdsMap) {
-    NodeEnginePtr self = this->inherited1::shared_from_this();
 
+    NodeEnginePtr self = this->inherited1::shared_from_this();
     NodeLocationPOD pod{newNodeId, newHostname, newPort};
+    std::unique_lock lock(engineMutex);
     for (auto& entry : queryToNetworkSinkIdsMap) {
         NES_DEBUG(entry.first);
         auto qep = deployedQEPs[entry.first];
@@ -485,9 +486,19 @@ bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHo
     return true;
     //TODO: update emitFunctionHandler of the last Pipeline of every qep with updated network Sinks
 }
+void NodeEngine::onNetworkSinkUpdate(Network::Messages::UpdateNetworkSinkMessage msg) {
+    NES_DEBUG("Going to inject UpdateNetworkSinkMessage for " << msg.getChannelId().getNesPartition());
+    NES_DEBUG("Revieved updateNetworkSink Message");
+    // propagate updateNetworkSinkMessage to the locally running QEPs that use the network source
+    NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
+    queryManager->addUpdateNetworkSink(msg.getChannelId().getNesPartition().getOperatorId());
+}
+
+
 
 std::optional<Execution::NewExecutableQueryPlanPtr> NodeEngine::getDeployedQEP(QuerySubPlanId id){
-    auto qep = deployedQEPs[id];
+    std::unique_lock lock(engineMutex);
+    auto qep =  deployedQEPs[id];
     if(qep){
         return qep;
     }

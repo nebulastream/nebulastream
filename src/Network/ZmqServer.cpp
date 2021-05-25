@@ -255,6 +255,16 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
+                case Messages::kUpdateNetworkSink: {
+                    // if server receives a message that networkSinks have been updated
+                    zmq::message_t networkSinkUpdateEnvelope;
+                    auto optRetSize = dispatcherSocket.recv(networkSinkUpdateEnvelope, kZmqRecvDefault);
+                    NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
+                    auto unsMsg = *networkSinkUpdateEnvelope.data<Messages::UpdateNetworkSinkMessage>();
+                    NES_DEBUG("ZmqServer:UpdateNetworkSinkMessage received for channel " << unsMsg.getChannelId());
+                    exchangeProtocol.onNetworkSinkUpdate(unsMsg);
+                    break;
+                }
                 default: {
                     NES_ERROR("ZmqServer: received unknown message type");
                 }

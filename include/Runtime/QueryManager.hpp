@@ -219,6 +219,13 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool addEndOfStream(OperatorId sourceId, bool graceful = true);
 
     /**
+    * @brief introduces updateNetworkSinkMessage to all QEPs connected to this source
+    * @param operatorId the id of the source
+    * @return true if it went through
+    */
+    bool addUpdateNetworkSink(OperatorId operatorId);
+
+    /**
      * @return true if thread pool is running
      */
     bool isThreadPoolRunning() const;

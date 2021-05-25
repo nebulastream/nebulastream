@@ -47,6 +47,11 @@ class ExchangeProtocolListener {
      * @brief This is called on the channel side as soon as an error is raised
      */
     virtual void onChannelError(Messages::ErrorMessage) = 0;
+
+    /**
+     * @brief called on server side when an updateNetworkSinkMessage is revieced
+     */
+    virtual void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) = 0;
 };
 }// namespace Network
 }// namespace NES

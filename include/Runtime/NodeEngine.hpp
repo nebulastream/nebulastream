@@ -234,6 +234,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     void onEndOfStream(Network::Messages::EndOfStreamMessage) override;
 
     /**
+    * @brief this callback is called once an network sink update message arrives
+    */
+    void onNetworkSinkUpdate(Network::Messages::UpdateNetworkSinkMessage) override;
+
+    /**
      * @brief this callback is called once an error is raised on the server side
      */
     void onServerError(Network::Messages::ErrorMessage) override;

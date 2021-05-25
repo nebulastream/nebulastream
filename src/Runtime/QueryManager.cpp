@@ -784,6 +784,25 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     return true;
 }
 
+bool QueryManager::addUpdateNetworkSink(OperatorId sourceId){
+    std::shared_lock queryLock(queryMutex);
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+    std::unique_lock lock(workMutex);
+#endif
+    bool isSourcePipeline = sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end();
+    NES_DEBUG("QueryManager: QueryManager::addUpdateNetworkSink for source operator " << sourceId <<  " end "
+                                                                                << isSourcePipeline);
+    NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
+    NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
+    NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
+                    "Operator id to query map for operator is empty");
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+    cv.notify_all();
+#endif
+    return true;
+}
+
+
 #if defined(NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE) || defined(NES_USE_ONE_QUEUE_PER_NUMA_NODE)
 ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& workerContext) {
 #else

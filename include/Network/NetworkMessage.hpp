@@ -47,6 +47,8 @@ enum MessageType {
     kEndOfStream,
     /// message type of an event buffer
     kEventBuffer,
+    /// message type when NetworkSinks are reconfigured to point elsewhere
+    kUpdateNetworkSink,
 };
 
 /// this enum defines the errors that can occur in the network stack logic
@@ -143,6 +145,14 @@ class ErrorMessage : public ExchangeMessage {
 
   private:
     const ErrorType error;
+};
+
+class UpdateNetworkSinkMessage : public ExchangeMessage {
+  public:
+    static constexpr MessageType MESSAGE_TYPE = kUpdateNetworkSink;
+
+    explicit UpdateNetworkSinkMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
+
 };
 
 class DataBufferMessage {
