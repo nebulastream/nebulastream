@@ -47,6 +47,10 @@ const std::string PhysicalInferModelOperator::toString() const { return "Physica
 
 OperatorNodePtr PhysicalInferModelOperator::copy() { return create(id, inputSchema, outputSchema, model, inputFields, outputFields); }
 
+const std::string& PhysicalInferModelOperator::getModel() const { return model; }
+const std::vector<ExpressionItemPtr>& PhysicalInferModelOperator::getInputFields() const { return inputFields; }
+const std::vector<ExpressionItemPtr>& PhysicalInferModelOperator::getOutputFields() const { return outputFields; }
+
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
 }// namespace NES
