@@ -19,7 +19,7 @@ function(download_file url filename hash_type hash)
     message("Download: ${url}")
     if (NOT EXISTS ${filename})
         file(DOWNLOAD ${url} ${filename}
-                TIMEOUT 60)
+                TIMEOUT 0)
     endif ()
 endfunction(download_file)
 
@@ -31,7 +31,8 @@ if (NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
         message("NES dependencies do not exist!")
         download_file(https://github.com/nebulastream/dependencies/releases/download/${VCPKG_BINARY_VERSION}/${BINARY_NAME}.7z
                 ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z
-                SHA1 074e7a34c486d8956562b65a247d908ee097fb07)
+                SHA1 074e7a34c486d8956562b65a247d908ee097fb07
+                )
         file(ARCHIVE_EXTRACT INPUT ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME}.7z DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
     endif ()
 
