@@ -17,10 +17,10 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DATATYPES_ANONYMOUSUSERDEFINEDDATATYPE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DATATYPES_ANONYMOUSUSERDEFINEDDATATYPE_HPP_
 
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <memory>
 #include <string>
 #include <utility>
-#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
 namespace NES {
 namespace QueryCompilation {

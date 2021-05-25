@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_QUERYCOMPILER_COMPILERTYPESFACTORY_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_COMPILERTYPESFACTORY_HPP_
-#include <memory>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
+#include <memory>
 namespace NES {
 namespace QueryCompilation {
 

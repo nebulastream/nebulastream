@@ -30,7 +30,7 @@ class LowerToExecutableQueryPlanPhase {
     LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
     static LowerToExecutableQueryPlanPhasePtr create(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider);
     NodeEngine::Execution::ExecutableQueryPlanPtr apply(PipelineQueryPlanPtr pipelineQueryPlan,
-                                                           NodeEngine::NodeEnginePtr nodeEngine);
+                                                        NodeEngine::NodeEnginePtr nodeEngine);
 
   private:
     DataSinkProviderPtr sinkProvider;

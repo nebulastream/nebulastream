@@ -19,9 +19,9 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ConstantExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
-#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
+#include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
@@ -38,10 +38,7 @@ Predicate::Predicate(const BinaryOperatorType& op,
                      bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload(functionCallOverload) {}
 
-Predicate::Predicate(const BinaryOperatorType& op,
-                     const LegacyExpressionPtr left,
-                     const LegacyExpressionPtr right,
-                     bool bracket)
+Predicate::Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload("") {}
 
 LegacyExpressionPtr Predicate::copy() const { return std::make_shared<Predicate>(*this); }

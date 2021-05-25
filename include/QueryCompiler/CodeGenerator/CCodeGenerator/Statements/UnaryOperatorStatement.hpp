@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/OperatorTypes.hpp>
+#include <memory>
+#include <string>
 
 namespace NES {
 namespace QueryCompilation {

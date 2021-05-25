@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ForLoopStatement.hpp>
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ForLoopStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <memory>
 #include <sstream>

@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/CompoundStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/IFStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 

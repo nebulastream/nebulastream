@@ -48,8 +48,8 @@
 #include <iostream>
 #include <utility>
 
-#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>

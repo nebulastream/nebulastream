@@ -373,12 +373,12 @@ void QueryManager::poisonWorkers() {
 
     auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(-1, inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
-                                                             -1,// any sub query plan
-                                                             pipelineContext,
-                                                             std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
-                                                             1,
-                                                             std::vector<Execution::SuccessorExecutablePipeline>(),
-                                                             true);
+                                                          -1,// any sub query plan
+                                                          pipelineContext,
+                                                          std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
+                                                          1,
+                                                          std::vector<Execution::SuccessorExecutablePipeline>(),
+                                                          true);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock(workMutex);
     for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
@@ -488,12 +488,12 @@ bool QueryManager::addReconfigurationMessage(QuerySubPlanId queryExecutionPlanId
     auto pipelineContext =
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryExecutionPlanId, inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
-                                                             queryExecutionPlanId,
-                                                             pipelineContext,
-                                                             reconfigurationExecutable,
-                                                             1,
-                                                             std::vector<Execution::SuccessorExecutablePipeline>(),
-                                                             true);
+                                                          queryExecutionPlanId,
+                                                          pipelineContext,
+                                                          reconfigurationExecutable,
+                                                          1,
+                                                          std::vector<Execution::SuccessorExecutablePipeline>(),
+                                                          true);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     {
         std::unique_lock lock(workMutex);
@@ -554,12 +554,12 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
             std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                               inherited0::shared_from_this());
         auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
-                                                                 executableQueryPlan->getQuerySubPlanId(),
-                                                                 pipelineContext,
-                                                                 reconfigurationExecutable,
-                                                                 1,
-                                                                 std::vector<Execution::SuccessorExecutablePipeline>(),
-                                                                 true);
+                                                              executableQueryPlan->getQuerySubPlanId(),
+                                                              pipelineContext,
+                                                              reconfigurationExecutable,
+                                                              1,
+                                                              std::vector<Execution::SuccessorExecutablePipeline>(),
+                                                              true);
         // emit the end of stream for each processing task
         for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
@@ -592,12 +592,12 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
         std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
                                                                           inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
-                                                             executableQueryPlan->getQuerySubPlanId(),
-                                                             pipelineContext,
-                                                             reconfigurationExecutable,
-                                                             1,
-                                                             std::vector<Execution::SuccessorExecutablePipeline>(),
-                                                             true);
+                                                          executableQueryPlan->getQuerySubPlanId(),
+                                                          pipelineContext,
+                                                          reconfigurationExecutable,
+                                                          1,
+                                                          std::vector<Execution::SuccessorExecutablePipeline>(),
+                                                          true);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::stack<Task> temp;
     while (!taskQueue.empty()) {

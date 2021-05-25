@@ -138,8 +138,7 @@ void ExecutablePipeline::addSuccessor(SuccessorExecutablePipeline successorPipel
 void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& task) {
     NES_ASSERT2_FMT(isRunning(), "Going to reconfigure a non-running pipeline!");
     NES_DEBUG("Going to execute postReconfigurationCallback on pipeline belonging to subplanId: " << querySubPlanId
-                                                                                                  << " stage id: "
-                                                                                                  << pipelineId);
+                                                                                                  << " stage id: " << pipelineId);
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType()) {
         case SoftEndOfStream: {
@@ -147,9 +146,8 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
             //we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1) {//all producers sent EOS
-                NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: "
-                          << querySubPlanId << " stage id: " << pipelineId
-                                                                                           << " reached prev=1");
+                NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: " << querySubPlanId << " stage id: "
+                                                                                           << pipelineId << " reached prev=1");
                 for (auto operatorHandler : pipelineContext->getOperatorHandlers()) {
                     operatorHandler->postReconfigurationCallback(task);
                 }
