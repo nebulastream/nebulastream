@@ -16,6 +16,7 @@
 
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -218,6 +219,29 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 return;
             }
             break;
+        }
+        case RemoveQEP: {
+            NES_DEBUG("Removing qep " << queryId << " " << querySubPlanId);
+            if (numOfProducers.fetch_sub(1) == 1) {
+                //NES_DEBUG("Executing HardEndOfStream and going to stop for qep " << queryId << " " << querySubPlanId);
+                for (auto sink : sinks) {
+                    auto newReconf = NES::NodeEngine::ReconfigurationMessage(querySubPlanId, NES::NodeEngine::RemoveQEP, sink);
+                    queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
+                }
+                if(stop()){
+                    queryManager->addReconfigurationMessage(querySubPlanId,
+                                                             ReconfigurationMessage(querySubPlanId, Destroy, queryManager),
+                                                            false);
+                }
+                else{
+                    //TODO: add error handling
+                    NES_DEBUG("Error during removal of a qep. Stopping of qep failed!");
+                }
+            } else {
+                return;// we must not remove a qep until all sources have send notification
+            }
+            break;
+
         }
         default: {
             break;

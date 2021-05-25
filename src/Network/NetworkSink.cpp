@@ -97,6 +97,13 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
                 workerContext.updateChannel(nesPartition.getOperatorId(), std::move(updatedChannel));
                 break;
         }
+        case NodeEngine::RemoveQEP: {
+            NES_DEBUG("When removing a qep, NetworkSink ZMQ sockets must be closed. Closing ZMQ socket for Sink ");
+            workerContext.removeChannel(nesPartition.getOperatorId());
+            NES_DEBUG("NetworkSink: reconfigure() removed channel without propagating EoS message on " << nesPartition.toString() << " Thread "
+                                                                        << NodeEngine::NesThread::getId());
+            break;
+        }
         default: {
             break;
         }

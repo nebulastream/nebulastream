@@ -86,8 +86,18 @@ class WorkerContext {
      * @return an output channel
      */
     Network::OutputChannel* getChannel(Network::OperatorId ownerId);
-
+    /**
+     * removes a registered output channel, without propagating EoS message. Then stores
+     * the supplied channel for the supplied Operator
+     * @param id
+     * @param channel
+     */
     void updateChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel);
+    /**
+     * closes ZMQ socket behind channel WITHOUT propaating EoS message
+     * @param id
+     */
+    void removeChannel(Network::OperatorId id);
 };
 }// namespace NES::Runtime
 #endif// NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_

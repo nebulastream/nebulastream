@@ -54,6 +54,10 @@ Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {
     return channels[ownerId].get();
 }
 void WorkerContext::updateChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel) {
+    removeChannel(id);
+    channels[id] = std::move(channel);
+}
+void WorkerContext::removeChannel(Network::OperatorId id) {
     auto it = channels.find(id);
     if (it != channels.end()) {
         if (it->second) {
@@ -61,7 +65,6 @@ void WorkerContext::updateChannel(Network::OperatorId id, Network::OutputChannel
         }
         channels.erase(it);
     }
-    channels[id] = std::move(channel);
 }
 
 }// namespace NES::Runtime

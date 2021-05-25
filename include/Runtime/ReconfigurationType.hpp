@@ -31,6 +31,8 @@ enum ReconfigurationType : uint8_t {
     HardEndOfStream,
     //use UpdateSinks for updating Sinks of a QEP
     UpdateSinks,
+    //use RemoveQEP to remove a QEP without EoS message propagation
+    RemoveQEP,
 };
 }
 
