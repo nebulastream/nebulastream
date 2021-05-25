@@ -46,11 +46,11 @@ const std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSinkPipelines() con
 }
 
 const std::vector<OperatorPipelinePtr> PipelineQueryPlan::getSourcePipelines() const {
-    std::vector<OperatorPipelinePtr> sinks;
-    std::copy_if(pipelines.begin(), pipelines.end(), std::back_inserter(sinks), [](OperatorPipelinePtr pipeline) {
+    std::vector<OperatorPipelinePtr> sources;
+    std::copy_if(pipelines.begin(), pipelines.end(), std::back_inserter(sources), [](OperatorPipelinePtr pipeline) {
         return pipeline->getPredecessors().empty();
     });
-    return sinks;
+    return sources;
 }
 
 const std::vector<OperatorPipelinePtr>& PipelineQueryPlan::getPipelines() const { return pipelines; }
