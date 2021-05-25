@@ -22,6 +22,7 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
 #include <NodeEngine/WorkerContext.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
