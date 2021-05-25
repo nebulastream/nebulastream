@@ -88,7 +88,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Gets list of all sucessors
      * @return std::vector<OperatorPipelinePtr>
      */
-    const std::vector<OperatorPipelinePtr>& getSuccessors() const;
+    const std::vector<OperatorPipelinePtr> getSuccessors() const;
 
     /**
      * @brief Removes all predecessors
