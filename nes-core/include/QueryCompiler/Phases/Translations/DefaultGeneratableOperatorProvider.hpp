@@ -70,6 +70,13 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
     static void lowerFilter(const QueryPlanPtr& queryPlan, const PhysicalOperators::PhysicalOperatorPtr& operatorNode);
 
     /**
+     * @brief Lowers an inferModel operator.
+     * @param queryPlan the query plan
+     * @param operatorNode the current operator node.
+     */
+    void lowerInferModel(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode);
+
+    /**
      * @brief Lowers a map operator.
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
