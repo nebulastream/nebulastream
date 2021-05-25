@@ -348,12 +348,14 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
         Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDefinition,
                                                                                                               aggregation,
                                                                                                               resultSchema,
-                                                                                                              1);
+                                                                                                              1,
+                                                                                                              0);
     return Windowing::AggregationWindowHandler<uint64_t, uint64_t, uint64_t, uint64_t>::create(windowDefinition,
                                                                                                aggregation,
                                                                                                trigger,
                                                                                                triggerAction,
-                                                                                               1);
+                                                                                               1,
+                                                                                               0);
 }
 
 /**

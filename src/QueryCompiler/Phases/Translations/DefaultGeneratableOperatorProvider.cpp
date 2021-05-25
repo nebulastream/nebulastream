@@ -26,6 +26,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMaxAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableMinAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableAvgAggregation.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSliceMergingOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
@@ -165,6 +166,9 @@ GeneratableOperators::GeneratableWindowAggregationPtr DefaultGeneratableOperator
         };
         case Windowing::WindowAggregationDescriptor::Sum: {
             return GeneratableOperators::GeneratableSumAggregation::create(windowAggregationDescriptor);
+        };
+        case Windowing::WindowAggregationDescriptor::Avg: {
+            return GeneratableOperators::GeneratableAvgAggregation::create(windowAggregationDescriptor);
         };
         default:
             throw QueryCompilationException(

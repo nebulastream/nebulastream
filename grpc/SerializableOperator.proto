@@ -283,6 +283,7 @@ message SerializableOperator{
         MAX = 1;
         MIN = 2;
         COUNT = 3;
+        AVG = 4;
       }
       Type type = 1;
       SerializableExpression onField = 2;

@@ -226,7 +226,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
         ->addField(createField("start", UINT64))
         ->addField(createField("end", UINT64))
         ->addField("key", UINT64)
-        ->addField("value", FLOAT32);
+        ->addField("value", FLOAT64);
 
     AVGPartialType<uint64_t> avgInit = AVGPartialType<uint64_t>();
 
@@ -253,8 +253,8 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
-    aggregates[sliceIndex].sum++;
-    aggregates[sliceIndex].count++;
+    aggregates[sliceIndex].addToSum(1);
+    aggregates[sliceIndex].addToCount();
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
     //    store->setLastWatermark(7);
@@ -264,13 +264,13 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
-    aggregates[sliceIndex].sum += 5;
-    aggregates[sliceIndex].count++;
-    std::cout << aggregates[sliceIndex].sum << std::endl;
-    std::cout << aggregates[sliceIndex].count << std::endl;
+    aggregates[sliceIndex].addToSum(5);
+    aggregates[sliceIndex].addToCount();
+    std::cout << aggregates[sliceIndex].getSum() << std::endl;
+    std::cout << aggregates[sliceIndex].getCount() << std::endl;
 
-    ASSERT_EQ(aggregates[sliceIndex].sum, 5);
-    ASSERT_EQ(aggregates[sliceIndex].count, 2);
+    ASSERT_EQ(aggregates[sliceIndex].getSum(), 5);
+    ASSERT_EQ(aggregates[sliceIndex].getCount(), 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
     auto windowAction =

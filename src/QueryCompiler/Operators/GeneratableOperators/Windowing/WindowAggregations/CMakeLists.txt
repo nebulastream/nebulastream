@@ -18,4 +18,5 @@ add_source_nes(
         GeneratableCountAggregation.cpp
         GeneratableMaxAggregation.cpp
         GeneratableMinAggregation.cpp
+        GeneratableAvgAggregation.cpp
 )
