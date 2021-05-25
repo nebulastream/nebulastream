@@ -86,6 +86,12 @@ class CodeGenerator {
     virtual bool generateCodeForFilterPredicated(PredicatePtr predicate, PipelineContextPtr context) = 0;
 
     /**
+     * @brief Code generation for an infer model operator
+     * @return flag if the generation was successful.
+     */
+    virtual bool generateCodeForInferModel(PipelineContextPtr context) = 0;
+
+    /**
      * @brief Code generation for a map operator, which depends on a particular map predicate.
      * @param field The field, which we want to manipulate with the map predicate.
      * @param predicate The map predicate.
