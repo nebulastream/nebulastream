@@ -26,31 +26,31 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-    GeneratableAvgAggregation::GeneratableAvgAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
-            : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
+GeneratableAvgAggregation::GeneratableAvgAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
+    : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
 
-    GeneratableWindowAggregationPtr
-    GeneratableAvgAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
-        return std::make_shared<GeneratableAvgAggregation>(aggregationDescriptor);
-    }
+GeneratableWindowAggregationPtr
+GeneratableAvgAggregation::create(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor) {
+    return std::make_shared<GeneratableAvgAggregation>(aggregationDescriptor);
+}
 
-    void GeneratableAvgAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
-                                                       BinaryOperatorStatement partialRef,
-                                                       RecordHandlerPtr recordHandler) {
+void GeneratableAvgAggregation::compileLiftCombine(CompoundStatementPtr currentCode,
+                                                   BinaryOperatorStatement partialRef,
+                                                   RecordHandlerPtr recordHandler) {
 
-        auto fieldReference =
-                recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
+    auto fieldReference =
+        recordHandler->getAttribute(aggregationDescriptor->on()->as<FieldAccessExpressionNode>()->getFieldName());
 
-        auto addSumFunctionCall = FunctionCallStatement("addToSum");
-        addSumFunctionCall.addParameter(*fieldReference);
-        auto updateSumStatement = partialRef.accessRef(addSumFunctionCall);
+    auto addSumFunctionCall = FunctionCallStatement("addToSum");
+    addSumFunctionCall.addParameter(*fieldReference);
+    auto updateSumStatement = partialRef.accessRef(addSumFunctionCall);
 
-        auto setCountFunctionCall = FunctionCallStatement("addToCount");
-        auto updateCountStatement = partialRef.accessRef(setCountFunctionCall);
+    auto setCountFunctionCall = FunctionCallStatement("addToCount");
+    auto updateCountStatement = partialRef.accessRef(setCountFunctionCall);
 
-        currentCode->addStatement(updateSumStatement.copy());
-        currentCode->addStatement(updateCountStatement.copy());
-    }
+    currentCode->addStatement(updateSumStatement.copy());
+    currentCode->addStatement(updateCountStatement.copy());
+}
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
 }// namespace NES

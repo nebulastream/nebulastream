@@ -24,10 +24,10 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
+#include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMaxAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableMinAggregation.hpp>
 #include <Windowing/WindowAggregations/ExecutableSumAggregation.hpp>
-#include <Windowing/WindowAggregations/ExecutableAVGAggregation.hpp>
 
 #include <Util/Logger.hpp>
 #include <cstdlib>
@@ -154,7 +154,6 @@ TEST_F(WindowManagerTest, testAvgAggregation) {
     ASSERT_EQ(result, 2.5);
 }
 
-
 TEST_F(WindowManagerTest, testCheckSlice) {
     auto store = new WindowSliceStore<int64_t>(0L);
     auto aggregation = Sum(Attribute("value"));
@@ -187,7 +186,8 @@ TEST_F(WindowManagerTest, testCheckSlice) {
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType, class sumType>
 std::shared_ptr<Windowing::AggregationWindowHandler<KeyType, InputType, PartialAggregateType, FinalAggregateType>>
-createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema,
+createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition,
+                    SchemaPtr resultSchema,
                     PartialAggregateType partialAggregateInitialValue) {
 
     auto aggregation = sumType::create();
@@ -200,7 +200,8 @@ createWindowHandler(Windowing::LogicalWindowDefinitionPtr windowDefinition, Sche
         aggregation,
         trigger,
         triggerAction,
-        1, partialAggregateInitialValue);
+        1,
+        partialAggregateInitialValue);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
@@ -223,17 +224,19 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
     auto windowInputSchema = Schema::create();
     auto windowOutputSchema = Schema::create()
-        ->addField(createField("start", UINT64))
-        ->addField(createField("end", UINT64))
-        ->addField("key", UINT64)
-        ->addField("value", FLOAT64);
+                                  ->addField(createField("start", UINT64))
+                                  ->addField(createField("end", UINT64))
+                                  ->addField("key", UINT64)
+                                  ->addField("value", FLOAT64);
 
     AVGPartialType<uint64_t> avgInit = AVGPartialType<uint64_t>();
 
     auto windowHandler =
-        createWindowHandler<uint64_t, uint64_t, AVGPartialType<uint64_t>, AVGResultType, Windowing::ExecutableAVGAggregation<uint64_t>>(
-            windowDef,
-            windowOutputSchema, avgInit);
+        createWindowHandler<uint64_t,
+                            uint64_t,
+                            AVGPartialType<uint64_t>,
+                            AVGResultType,
+                            Windowing::ExecutableAVGAggregation<uint64_t>>(windowDef, windowOutputSchema, avgInit);
     windowHandler->start(nodeEngine->getStateManager());
     auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
     auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
@@ -273,9 +276,9 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     ASSERT_EQ(aggregates[sliceIndex].getCount(), 1);
     auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
 
-    auto windowAction =
-        std::dynamic_pointer_cast<Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, AVGPartialType<uint64_t>, AVGResultType>>(
-            windowHandler->getWindowAction());
+    auto windowAction = std::dynamic_pointer_cast<
+        Windowing::ExecutableCompleteAggregationTriggerAction<uint64_t, uint64_t, AVGPartialType<uint64_t>, AVGResultType>>(
+        windowHandler->getWindowAction());
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, 7);
     windowAction->aggregateWindows(10, store, windowDef, buf, ts, ts);
 
@@ -290,7 +293,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     ASSERT_EQ(tuples[0], 0);
     ASSERT_EQ(tuples[1], 10);
     ASSERT_EQ(tuples[2], 10);
-//    ASSERT_EQ(tuples[3], 1);
+    //    ASSERT_EQ(tuples[3], 1);
 }
 
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {

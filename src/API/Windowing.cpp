@@ -17,11 +17,11 @@
 #include <API/Expressions/Expressions.hpp>
 #include <API/Windowing.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
 
 namespace NES::API {

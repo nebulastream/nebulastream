@@ -555,9 +555,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         getWindowOperatorHandler(context, context->code->varDeclarationExecutionContext, windowOperatorIndex);
     auto windowHandlerVariableDeclration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "windowHandler");
     auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
-    auto getWindowHandlerStatement = getAggregationWindowHandler(windowOperatorHandlerDeclaration,
-                                                                 keyStamp,
-                                                                 window->getWindowAggregation());
+    auto getWindowHandlerStatement =
+        getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
 
@@ -578,7 +577,8 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     NES_ASSERT(!window->getWindowAggregation()->getInputStamp()->isUndefined(), "window input type is undefined");
     NES_ASSERT((!window->getWindowAggregation()->getPartialAggregateStamp()->isUndefined()
-                || window->getWindowAggregation()->getType() == Windowing::WindowAggregationDescriptor::Avg), "window partial type is undefined");
+                || window->getWindowAggregation()->getType() == Windowing::WindowAggregationDescriptor::Avg),
+               "window partial type is undefined");
     NES_ASSERT(!window->getWindowAggregation()->getFinalAggregateStamp()->isUndefined(), "window final type is undefined");
 
     auto getWindowManagerStatement = getWindowManager(windowHandlerVariableDeclration);
@@ -662,7 +662,9 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
         }
         case Windowing::WindowAggregationDescriptor::Avg: {
             auto aggregationInputType = tf->createDataType(window->getWindowAggregation()->getInputStamp());
-            auto avgInitialValueDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("Windowing::AVGPartialType<"+aggregationInputType->getCode()->code_+">"), "initialValue");
+            auto avgInitialValueDeclaration = VariableDeclaration::create(
+                tf->createAnonymusDataType("Windowing::AVGPartialType<" + aggregationInputType->getCode()->code_ + ">"),
+                "initialValue");
             context->code->currentCodeInsertionPoint->addStatement(VarDeclStatement(avgInitialValueDeclaration).createCopy());
             getValueFromKeyHandle.addParameter(VarRefStatement(avgInitialValueDeclaration));
             break;
@@ -1505,9 +1507,8 @@ bool CCodeGenerator::generateCodeForCombiningWindow(
 
     auto keyStamp = window->isKeyed() ? window->getOnKey()->getStamp() : window->getWindowAggregation()->on()->getStamp();
 
-    auto getWindowHandlerStatement = getAggregationWindowHandler(windowOperatorHandlerDeclaration,
-                                                                 keyStamp,
-                                                                 window->getWindowAggregation());
+    auto getWindowHandlerStatement =
+        getAggregationWindowHandler(windowOperatorHandlerDeclaration, keyStamp, window->getWindowAggregation());
     context->code->variableInitStmts.emplace_back(
         VarDeclStatement(windowHandlerVariableDeclration).assign(getWindowHandlerStatement).copy());
 
@@ -1713,17 +1714,24 @@ void CCodeGenerator::generateCodeForAggregationInitialization(BlockScopeStatemen
 
     // If the the aggregate is Avg, we initialize the partialAggregate with an empty AVGPartialType<InputType>
     if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Avg) {
-        auto partialAggregateInitStatement = VarDeclStatement(partialAggregateInitialValue).assign(call("Windowing::AVGPartialType<"+aggregationInputType->getCode()->code_+">"));
+        auto partialAggregateInitStatement =
+            VarDeclStatement(partialAggregateInitialValue)
+                .assign(call("Windowing::AVGPartialType<" + aggregationInputType->getCode()->code_ + ">"));
         setupScope->addStatement(partialAggregateInitStatement.copy());
         createAggregateCall = call("Windowing::ExecutableAVGAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
     } else {
         // If the the aggregate is Avg, we initialize the partialAggregate with 0
-        auto partialAggregateInitStatement = VarDeclStatement(partialAggregateInitialValue).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
+        auto partialAggregateInitStatement =
+            VarDeclStatement(partialAggregateInitialValue)
+                .assign(Constant(
+                    tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), std::to_string(0)))));
 
         if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Sum) {
-            createAggregateCall = call("Windowing::ExecutableSumAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
+            createAggregateCall =
+                call("Windowing::ExecutableSumAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
         } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Count) {
-            createAggregateCall = call("Windowing::ExecutableCountAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
+            createAggregateCall =
+                call("Windowing::ExecutableCountAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
         } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Min) {
             // If the the aggregate is Min, we initialize the partialAggregate with the upper bound of the type of the aggregated field
             std::string upperBoundstr;
@@ -1732,9 +1740,13 @@ void CCodeGenerator::generateCodeForAggregationInitialization(BlockScopeStatemen
             } else if (auto floatType = DataType::as<Float>(aggregation->getPartialAggregateStamp())) {
                 upperBoundstr = std::to_string(floatType->upperBound);
             }
-            partialAggregateInitStatement = VarDeclStatement(partialAggregateInitialValue).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), upperBoundstr))));
+            partialAggregateInitStatement =
+                VarDeclStatement(partialAggregateInitialValue)
+                    .assign(Constant(
+                        tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), upperBoundstr))));
 
-            createAggregateCall = call("Windowing::ExecutableMinAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
+            createAggregateCall =
+                call("Windowing::ExecutableMinAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
         } else if (aggregation->getType() == Windowing::WindowAggregationDescriptor::Max) {
             // If the the aggregate is Max, we initialize the partialAggregate with the lower bound of the type of the aggregated field
             std::string lowerBoundStr;
@@ -1743,10 +1755,14 @@ void CCodeGenerator::generateCodeForAggregationInitialization(BlockScopeStatemen
             } else if (auto floatType = DataType::as<Float>(aggregation->getPartialAggregateStamp())) {
                 lowerBoundStr = std::to_string(floatType->lowerBound);
             }
-            partialAggregateInitStatement = VarDeclStatement(partialAggregateInitialValue).assign(Constant(tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), lowerBoundStr))));
+            partialAggregateInitStatement =
+                VarDeclStatement(partialAggregateInitialValue)
+                    .assign(Constant(
+                        tf->createValueType(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), lowerBoundStr))));
 
-            createAggregateCall = call("Windowing::ExecutableMaxAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
-        } else  {
+            createAggregateCall =
+                call("Windowing::ExecutableMaxAggregation<" + aggregationInputType->getCode()->code_ + ">::create");
+        } else {
             NES_FATAL_ERROR("Aggregation Handler: aggregation=" << aggregation->getType() << " not implemented");
         }
         // add the partial aggregation initialization to the code
@@ -1757,7 +1773,6 @@ void CCodeGenerator::generateCodeForAggregationInitialization(BlockScopeStatemen
     auto statement = VarDeclStatement(executableAggregation).assign(createAggregateCall);
     setupScope->addStatement(statement.copy());
 }
-
 
 uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionPtr window,
                                              SchemaPtr,
@@ -1813,13 +1828,17 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         partialAggregateTypeCode = partialAggregateType->getCode()->code_;
     }
 
-    auto partialAggregateInitialValue = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "partialAggregateInitialValue");
+    auto partialAggregateInitialValue =
+        VariableDeclaration::create(tf->createAnonymusDataType("auto"), "partialAggregateInitialValue");
     auto finalAggregateType = tf->createDataType(aggregation->getFinalAggregateStamp());
     auto executableAggregation = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "aggregation");
 
     // generate code for aggregation initialization
-    generateCodeForAggregationInitialization(setupScope, executableAggregation, partialAggregateInitialValue,
-                                             aggregationInputType, aggregation);
+    generateCodeForAggregationInitialization(setupScope,
+                                             executableAggregation,
+                                             partialAggregateInitialValue,
+                                             aggregationInputType,
+                                             aggregation);
 
     auto policy = window->getTriggerPolicy();
     auto executableTrigger = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "trigger");
@@ -1844,10 +1863,9 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
     auto action = window->getTriggerAction();
     auto executableTriggerAction = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "triggerAction");
     if (action->getActionType() == Windowing::WindowAggregationTriggerAction) {
-        auto createTriggerActionCall =
-            call("Windowing::ExecutableCompleteAggregationTriggerAction<" + keyType->getCode()->code_ + ","
-                 + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
-                 + finalAggregateType->getCode()->code_ + ">::create");
+        auto createTriggerActionCall = call("Windowing::ExecutableCompleteAggregationTriggerAction<" + keyType->getCode()->code_
+                                            + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
+                                            + finalAggregateType->getCode()->code_ + ">::create");
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
         createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
@@ -1856,10 +1874,9 @@ uint64_t CCodeGenerator::generateWindowSetup(Windowing::LogicalWindowDefinitionP
         auto triggerStatement = VarDeclStatement(executableTriggerAction).assign(createTriggerActionCall);
         setupScope->addStatement(triggerStatement.copy());
     } else if (action->getActionType() == Windowing::SliceAggregationTriggerAction) {
-        auto createTriggerActionCall =
-            call("Windowing::ExecutableSliceAggregationTriggerAction<" + keyType->getCode()->code_ + ","
-                 + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
-                 + finalAggregateType->getCode()->code_ + ">::create");
+        auto createTriggerActionCall = call("Windowing::ExecutableSliceAggregationTriggerAction<" + keyType->getCode()->code_
+                                            + "," + aggregationInputType->getCode()->code_ + "," + partialAggregateTypeCode + ","
+                                            + finalAggregateType->getCode()->code_ + ">::create");
         createTriggerActionCall->addParameter(VarRef(windowDefDeclaration));
         createTriggerActionCall->addParameter(VarRef(executableAggregation));
         createTriggerActionCall->addParameter(VarRef(resultSchemaDeclaration));
@@ -2085,9 +2102,10 @@ BinaryOperatorStatement CCodeGenerator::getOriginId(VariableDeclaration tupleBuf
 
 #define TO_CODE(type) tf->createDataType(type)->getCode()->code_
 
-BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
-                                                                    DataTypePtr keyType,
-                                                                    Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
+BinaryOperatorStatement
+CCodeGenerator::getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
+                                            DataTypePtr keyType,
+                                            Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor) {
     auto tf = getTypeFactory();
     // determine the partialAggregate parameter based on the aggregation type
     // Avg aggregation uses AVGPartialType, other aggregates use their getPartialAggregateStamp
@@ -2098,9 +2116,10 @@ BinaryOperatorStatement CCodeGenerator::getAggregationWindowHandler(VariableDecl
         auto partialAggregateType = tf->createDataType(windowAggregationDescriptor->getPartialAggregateStamp());
         partialAggregateCode = partialAggregateType->getCode()->code_;
     }
-    auto call = FunctionCallStatement(std::string("getWindowHandler<NES::Windowing::AggregationWindowHandler, ")
-                                      + TO_CODE(keyType) + ", " + TO_CODE(windowAggregationDescriptor->getInputStamp()) + "," + partialAggregateCode + ","
-                                      + TO_CODE(windowAggregationDescriptor->getFinalAggregateStamp()) + " >");
+    auto call =
+        FunctionCallStatement(std::string("getWindowHandler<NES::Windowing::AggregationWindowHandler, ") + TO_CODE(keyType) + ", "
+                              + TO_CODE(windowAggregationDescriptor->getInputStamp()) + "," + partialAggregateCode + ","
+                              + TO_CODE(windowAggregationDescriptor->getFinalAggregateStamp()) + " >");
     return VarRef(pipelineContextVariable).accessPtr(call);
 }
 

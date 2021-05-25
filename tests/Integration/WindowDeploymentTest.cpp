@@ -1913,10 +1913,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
     };
 
     auto carSchema = Schema::create()
-        ->addField("key", DataTypeFactory::createUInt64())
-        ->addField("value1", DataTypeFactory::createUInt64())
-        ->addField("value2", DataTypeFactory::createUInt64())
-        ->addField("timestamp", DataTypeFactory::createUInt64());
+                         ->addField("key", DataTypeFactory::createUInt64())
+                         ->addField("value1", DataTypeFactory::createUInt64())
+                         ->addField("value2", DataTypeFactory::createUInt64())
+                         ->addField("timestamp", DataTypeFactory::createUInt64());
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 

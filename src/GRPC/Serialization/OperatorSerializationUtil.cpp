@@ -50,11 +50,11 @@
 #include <SerializableOperator.pb.h>
 #include <Windowing/DistributionCharacteristic.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
+#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/CountAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MaxAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/MinAggregationDescriptor.hpp>
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
-#include <Windowing/WindowAggregations/AvgAggregationDescriptor.hpp>
 
 #include <Windowing/WindowPolicies/OnBufferTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>

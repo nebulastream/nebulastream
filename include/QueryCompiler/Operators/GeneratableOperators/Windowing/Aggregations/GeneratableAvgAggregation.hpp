@@ -21,7 +21,6 @@ namespace NES {
 namespace QueryCompilation {
 namespace GeneratableOperators {
 
-
 class GeneratableAvgAggregation : public GeneratableWindowAggregation {
   public:
     GeneratableAvgAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);

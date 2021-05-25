@@ -65,7 +65,7 @@ class ExecutableCompleteAggregationTriggerAction
         uint64_t id,
         PartialAggregateType partialAggregateTypeInitialValue)
         : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id),
-            partialAggregateTypeInitialValue(partialAggregateTypeInitialValue){
+          partialAggregateTypeInitialValue(partialAggregateTypeInitialValue) {
 
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
                                                                                        << " id=" << id);
@@ -247,19 +247,19 @@ class ExecutableCompleteAggregationTriggerAction
                 if (recordsPerWindow[i] != 0) {
                     if (windowDefinition->getDistributionType()->getType() == DistributionCharacteristic::Type::Merging) {
                         writeResultRecord<FinalAggregateType>(tupleBuffer,
-                                                                currentNumberOfTuples,
-                                                                window.getStartTs(),
-                                                                window.getEndTs(),
-                                                                key,
-                                                                value,
-                                                                recordsPerWindow[i]);
+                                                              currentNumberOfTuples,
+                                                              window.getStartTs(),
+                                                              window.getEndTs(),
+                                                              key,
+                                                              value,
+                                                              recordsPerWindow[i]);
                     } else {
                         writeResultRecord<FinalAggregateType>(tupleBuffer,
-                                                                currentNumberOfTuples,
-                                                                window.getStartTs(),
-                                                                window.getEndTs(),
-                                                                key,
-                                                                value);
+                                                              currentNumberOfTuples,
+                                                              window.getStartTs(),
+                                                              window.getEndTs(),
+                                                              key,
+                                                              value);
                     }
 
                     currentNumberOfTuples++;

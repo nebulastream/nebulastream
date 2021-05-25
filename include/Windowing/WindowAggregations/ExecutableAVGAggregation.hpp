@@ -32,8 +32,8 @@ class AVGPartialType {
     SumType getSum() const { return sum; }
     int64_t getCount() const { return count; }
 
-    void addToSum(SumType value) { sum += value;}
-    void addToCount(int64_t value = 1) {count += value;}
+    void addToSum(SumType value) { sum += value; }
+    void addToCount(int64_t value = 1) { count += value; }
 
   private:
     SumType sum;
