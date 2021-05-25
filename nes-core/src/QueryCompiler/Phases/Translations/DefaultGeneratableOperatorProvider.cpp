@@ -17,6 +17,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
+#include <QueryCompiler/Operators/GeneratableOperators/GeneratableInferModelOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableWatermarkAssignmentOperator.hpp>
@@ -50,6 +51,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalPythonUdfOperator.hpp>
@@ -112,6 +114,8 @@ void DefaultGeneratableOperatorProvider::lower(QueryPlanPtr queryPlan, PhysicalO
         lowerProjection(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFilterOperator>()) {
         lowerFilter(queryPlan, operatorNode);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalInferModelOperator>()) {
+        lowerInferModel(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
         lowerMap(queryPlan, operatorNode);
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalIterationCEPOperator>()) {
@@ -210,6 +214,16 @@ void DefaultGeneratableOperatorProvider::lowerFilter(const QueryPlanPtr& queryPl
         GeneratableOperators::GeneratableFilterOperator::create(physicalFilterOperator->getInputSchema(),
                                                                 physicalFilterOperator->getPredicate());
     queryPlan->replaceOperator(physicalFilterOperator, generatableFilterOperator);
+}
+
+void DefaultGeneratableOperatorProvider::lowerInferModel(QueryPlanPtr queryPlan,
+                                                     PhysicalOperators::PhysicalOperatorPtr operatorNode) {
+    auto physicalInferModelOperator = operatorNode->as<PhysicalOperators::PhysicalInferModelOperator>();
+//    auto generatableInferModelOperator =
+//        GeneratableOperators::GeneratableInferModelOperator::create(physicalInferModelOperator->getInputSchema(),
+//                                                                    physicalInferModelOperator->getOutputSchema(),
+//                                                                    "model", [], []));
+//    queryPlan->replaceOperator(physicalInferModelOperator, generatableInferModelOperator);
 }
 
 void DefaultGeneratableOperatorProvider::lowerMap(const QueryPlanPtr& queryPlan,
