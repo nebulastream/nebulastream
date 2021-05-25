@@ -141,6 +141,11 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES_RELEASE_MODE=1")
 include(cmake/Sanitizers.cmake)
 
+find_program(iwyu_path NAMES include-what-you-use iwyu)
+if(NOT iwyu_path)
+    message(FATAL_ERROR "Could not find the program include-what-you-use")
+endif()
+
 if (NES_BUILD_BENCHMARKS)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNES_BENCHMARKS_FLAG_MODE=1")
     message("Build with all flags on, only use for benchmarking")
@@ -431,6 +436,8 @@ add_library(nes SHARED ${nes_SOURCE_FILES} ${nes_HEADER_FILES} ${OUTPUT_SOURCES}
 target_include_directories(nes PUBLIC "include")
 target_include_directories(nes PUBLIC "${CMAKE_CURRENT_BINARY_DIR}")
 target_link_libraries(nes PUBLIC ${LIBRARIES} ${PROTOBUF_LIBRARIES})
+set_property(TARGET nes PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
+
 if (GRPC_LIBRARIES)
     target_link_libraries(nes PRIVATE ${GRPC_LIBRARIES})
 endif ()
