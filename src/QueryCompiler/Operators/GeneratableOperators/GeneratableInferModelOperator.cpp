@@ -16,8 +16,6 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Phases/TranslateToLegacyPlanPhase.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableInferModelOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -29,12 +27,12 @@ GeneratableInferModelOperator::GeneratableInferModelOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                std::string model,
-                                               std::vector<ExpressionItem> inputFields,
-                                               std::vector<ExpressionItem> outputFields)
+                                               std::vector<ExpressionItemPtr> inputFields,
+                                               std::vector<ExpressionItemPtr> outputFields)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields) {}
 
 GeneratableOperatorPtr
-GeneratableInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields) {
+GeneratableInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields);
 }
 
@@ -42,8 +40,8 @@ GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,
                                                       SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,
                                                       std::string model,
-                                                      std::vector<ExpressionItem> inputFields,
-                                                      std::vector<ExpressionItem> outputFields) {
+                                                      std::vector<ExpressionItemPtr> inputFields,
+                                                      std::vector<ExpressionItemPtr> outputFields) {
     return std::make_shared<GeneratableInferModelOperator>(GeneratableInferModelOperator(id, inputSchema, outputSchema, model, inputFields, outputFields));
 }
 

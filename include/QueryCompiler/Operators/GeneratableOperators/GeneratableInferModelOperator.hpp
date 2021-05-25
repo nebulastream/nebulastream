@@ -17,7 +17,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEINFER_MODEL_HPP_
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
-#include <QueryCompiler/LegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 
 namespace NES {
@@ -29,17 +28,17 @@ namespace GeneratableOperators {
  */
 class GeneratableInferModelOperator : public GeneratableOperator {
   public:
-    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields);
-    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields);
+    static GeneratableOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
+    static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
-    GeneratableInferModelOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields);
+    GeneratableInferModelOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
     std::string model;
-    std::vector<ExpressionItem> inputFields;
-    std::vector<ExpressionItem> outputFields;
+    std::vector<ExpressionItemPtr> inputFields;
+    std::vector<ExpressionItemPtr> outputFields;
 };
 }// namespace GeneratableOperators
 }// namespace QueryCompilation
