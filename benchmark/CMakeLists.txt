@@ -125,20 +125,6 @@ if (NES_BUILD_BENCHMARKS)
 #    target_link_libraries(query-merger-benchmark nes ${GBENCHMARK_LIBRARIES})
 #    add_test(NAME query-merger-benchmark COMMAND query-merger-benchmark --benchmark_out=query-merger-benchmark.log --benchmark_out_format=json)
 
-    ###########################  E2E Benchmarks ######################
-    ### E2e Benchmark Runner ###
-    add_executable(e2e-benchmark-runner "src/E2EBenchmarks/E2ERunner.cpp")
-    target_link_libraries(e2e-benchmark-runner nes libgbenchmark libgbenchmark_main pthread)
-    target_sources(e2e-benchmark-runner PUBLIC "src/E2EBenchmarks/E2EBenchmarkConfig.cpp")
-    target_sources(e2e-benchmark-runner PUBLIC "src/E2EBenchmarks/E2EBase.cpp")
-#    target_sources(e2e-benchmark-runner PUBLIC "src/util/BenchmarkUtils.cpp")
-    add_test(NAME e2e-benchmark-runner COMMAND e2e-benchmark-runner)
-
-    message("BENCHMARK FLAG")
-    message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
-    message(STATUS "CMAKE_CXX_FLAGS_DEBUG ${CMAKE_CXX_FLAGS_DEBUG}")
-    message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
-
     message("---Done building benchmarks")
 
 else (NES_BUILD_BENCHMARKS)
