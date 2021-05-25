@@ -136,7 +136,7 @@ class DummyExchangeProtocolListener : public ExchangeProtocolListener {
     void onDataBuffer(NesPartition, TupleBuffer&) override {}
     void onEndOfStream(Messages::EndOfStreamMessage) override {}
     void onServerError(Messages::ErrorMessage) override {}
-
+    void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) override {};
     void onChannelError(Messages::ErrorMessage) override {}
 };
 
@@ -178,7 +178,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-
+            void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) override {};
             void onChannelError(Messages::ErrorMessage) override {}
 
           private:
@@ -248,7 +248,7 @@ TEST_F(NetworkStackTest, testSendData) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-
+            void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) override{};
             void onChannelError(Messages::ErrorMessage) override {}
         };
 
@@ -330,7 +330,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
-
+            void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) override {};
             void onChannelError(Messages::ErrorMessage) override {}
         };
 
@@ -433,7 +433,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                 NES_INFO("NetworkStackTest: Channel error called!");
                 ASSERT_EQ(errorMsg.getErrorType(), Messages::kPartitionNotRegisteredError);
             }
-
+            void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) override {};
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override {}
         };
@@ -502,6 +502,7 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             void onEndOfStream(Messages::EndOfStreamMessage p) override {
                 completedPromises[p.getChannelId().getNesPartition().getQueryId()].set_value(true);
             }
+            void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) override {};
         };
 
         auto partMgr = std::make_shared<PartitionManager>();
@@ -617,6 +618,7 @@ TEST_F(NetworkStackTest, testNetworkSink) {
                     completed.set_value(true);
                 }
             }
+            void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) override {};
         };
 
         auto pManager = std::make_shared<PartitionManager>();
