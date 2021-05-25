@@ -599,17 +599,25 @@ TEST_F(EngineTest, testPassingLogicalOpreratorIdToPhysicalSink) {
     queryPlan->appendOperatorAsNewRoot(networkSink);
 
     EXPECT_TRUE(engine->registerQueryInNodeEngine(queryPlan));
+    //wait
+    engine->startQuery(queryPlan->getQueryId());
+
 
     auto qep =  engine->getDeployedQEP(1);
-    EXPECT_TRUE(qep);
+    ASSERT_TRUE(qep);
+    ASSERT_TRUE(qep->get()->getStatus() == Running);
     EXPECT_TRUE(qep->get()->getSinks()[0]->getOperatorId() == 47);
+    ReconfigurationMessage message = ReconfigurationMessage(queryPlan->getQuerySubPlanId(),NES::NodeEngine::RemoveQEP,*qep);
+    engine->getQueryManager()->addReconfigurationMessage(queryPlan->getQuerySubPlanId(),message,false);
 
 
-    EXPECT_TRUE(engine->undeployQuery(1));
-    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
 
-    EXPECT_TRUE(engine->stop());
-    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Invalid);
+
+    //EXPECT_TRUE(engine->stop());
+    EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
+    while(true){
+        std::this_thread::sleep_for (std::chrono::seconds(5));
+    }
 
 }
 //
