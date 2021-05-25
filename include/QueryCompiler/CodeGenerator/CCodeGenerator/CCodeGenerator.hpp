@@ -225,9 +225,7 @@ class CCodeGenerator : public CodeGenerator {
 
     BinaryOperatorStatement getAggregationWindowHandler(VariableDeclaration pipelineContextVariable,
                                                         DataTypePtr keyType,
-                                                        DataTypePtr inputType,
-                                                        DataTypePtr partialAggregateType,
-                                                        DataTypePtr finalAggregateType);
+                                                        Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 
     BinaryOperatorStatement getJoinWindowHandler(VariableDeclaration pipelineContextVariable,
                                                  DataTypePtr KeyType,
@@ -243,6 +241,12 @@ class CCodeGenerator : public CodeGenerator {
 
     void generateCodeForWatermarkUpdaterWindow(PipelineContextPtr context, VariableDeclaration handler);
     void generateCodeForWatermarkUpdaterJoin(PipelineContextPtr context, VariableDeclaration handler, bool leftSide);
+
+    void generateCodeForAggregationInitialization(BlockScopeStatementPtr setupScope,
+                                                  VariableDeclaration executableAggregation,
+                                                  VariableDeclaration partialAggregateInitialValue,
+                                                  GeneratableDataTypePtr aggregationInputType,
+                                                  Windowing::WindowAggregationDescriptorPtr aggregation);
 
     StructDeclaration getStructDeclarationFromWindow(std::string structName);
 

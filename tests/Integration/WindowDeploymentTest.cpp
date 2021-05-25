@@ -1902,6 +1902,56 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 }
 
 /*
+ * @brief Test if the avg aggregation can be deployed
+ */
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
+    struct Car {
+        uint64_t key;
+        uint64_t value1;
+        uint64_t value2;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createUInt64())
+        ->addField("value1", DataTypeFactory::createUInt64())
+        ->addField("value2", DataTypeFactory::createUInt64())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Avg(Attribute("value1"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    testHarness.pushElement<Car>({1, 2, 2, 1000}, 0);
+    testHarness.pushElement<Car>({1, 4, 4, 1500}, 0);
+    testHarness.pushElement<Car>({1, 5, 5, 2000}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        uint64_t key;
+        double value1;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, 3}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+/*
  * @brief Test if the max aggregation can be deployed
  */
 TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {

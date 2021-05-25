@@ -58,7 +58,7 @@ WindowAggregationDescriptorPtr AvgAggregationDescriptor::copy() {
 }
 
 DataTypePtr AvgAggregationDescriptor::getInputStamp() { return onField->getStamp(); }
-DataTypePtr AvgAggregationDescriptor::getPartialAggregateStamp() { return onField->getStamp(); }
-DataTypePtr AvgAggregationDescriptor::getFinalAggregateStamp() { return onField->getStamp(); }
+DataTypePtr AvgAggregationDescriptor::getPartialAggregateStamp() { return DataTypeFactory::createUndefined(); }
+DataTypePtr AvgAggregationDescriptor::getFinalAggregateStamp() { return DataTypeFactory::createDouble(); }
 
 }// namespace NES::Windowing
