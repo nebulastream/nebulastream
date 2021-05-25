@@ -36,7 +36,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
         BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
         BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,
-        uint64_t id, PartialAggregateType partialAggregateInitialValue)
+        uint64_t id,
+        PartialAggregateType partialAggregateInitialValue)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
           id(id), isRunning(false), windowStateVariable(nullptr), partialAggregateInitialValue(partialAggregateInitialValue) {
@@ -51,7 +52,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
            std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> windowAggregation,
            BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger,
            BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction,
-           uint64_t id, PartialAggregateType partialAggregateInitialValue) {
+           uint64_t id,
+           PartialAggregateType partialAggregateInitialValue) {
         return std::make_shared<AggregationWindowHandler>(windowDefinition,
                                                           windowAggregation,
                                                           executablePolicyTrigger,
