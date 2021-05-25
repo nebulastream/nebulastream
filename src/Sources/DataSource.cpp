@@ -280,7 +280,8 @@ void DataSource::runningRoutineWithFrequency() {
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
 
         //this check checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
-        if (gatheringInterval.count() == 0 || type == ZMQ_SOURCE) {
+        NES_DEBUG("DataSource::runningRoutine will now check src type with gatheringInterval=" << gatheringInterval.count());
+        if (gatheringInterval.count() == 0 || type == ZMQ_SOURCE) { // 0 means never sleep
             NES_DEBUG("DataSource::runningRoutine will produce buffers fast enough for source type="
                           << getType() << " and gatheringInterval=" << gatheringInterval.count()
                           << "ms, tsNow=" << lastTimeStampMillis.count() << "ms, now=" << nowInMillis.count() << "ms");
@@ -294,7 +295,7 @@ void DataSource::runningRoutineWithFrequency() {
                 NES_DEBUG("lastTimeStampMillis=" << lastTimeStampMillis.count() << "nowInMillis=" << nowInMillis.count());
             }
         } else {
-            NES_DEBUG("DataSource::runningRoutine check for specific source type");
+            NES_DEBUG("DataSource::runningRoutine check for interval");
             // check each interval
             if (nowInMillis != lastTimeStampMillis) {//we are in another interval
                 if ((nowInMillis - lastTimeStampMillis) <= gatheringInterval
