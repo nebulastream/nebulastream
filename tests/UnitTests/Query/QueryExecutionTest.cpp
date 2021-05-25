@@ -21,8 +21,8 @@
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutField.hpp>
-#include <NodeEngine/WorkerContext.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/WorkerContext.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -44,8 +44,8 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/LocalBufferPool.hpp>
@@ -1031,11 +1031,10 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
-
     // nodeEngine->getQueryManager()->registerQuery(plan);
 
     // The plan should have three pipeline
-   // EXPECT_EQ(plan->getNumberOfPipelines(), 3);
+    // EXPECT_EQ(plan->getNumberOfPipelines(), 3);
 
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(testSchema, true);
@@ -1044,14 +1043,14 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
     // TODO do not rely on sleeps
     // ingest test data
     //plan->setup();
-   // plan->start(nodeEngine->getStateManager());
+    // plan->start(nodeEngine->getStateManager());
     NodeEngine::WorkerContext workerContext{1};
     //auto stage_0 = plan->getPipeline(0);
     //auto stage_1 = plan->getPipeline(1);
     for (int i = 0; i < 10; i++) {
 
-      //  stage_0->execute(buffer, workerContext);// P1
-      //  stage_1->execute(buffer, workerContext);// P2
+        //  stage_0->execute(buffer, workerContext);// P1
+        //  stage_1->execute(buffer, workerContext);// P2
         // Contfext -> Context 1 and Context 2;
         //
         // P1 -> P2 -> P3

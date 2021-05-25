@@ -19,5 +19,5 @@
 namespace NES {
 namespace QueryCompilation {
 Statement::~Statement() {}
-}
+}// namespace QueryCompilation
 }// namespace NES

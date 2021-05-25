@@ -14,8 +14,8 @@
     limitations under the License.
 */
 
-#include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
 namespace NES {
 namespace QueryCompilation {
 UserDefinedDataType::UserDefinedDataType(const StructDeclaration& decl) : declaration(decl) {}

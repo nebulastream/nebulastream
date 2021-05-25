@@ -50,7 +50,7 @@ LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(DataS
 }
 
 NodeEngine::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan,
-                                                                                        NodeEngine::NodeEnginePtr nodeEngine) {
+                                                                                     NodeEngine::NodeEnginePtr nodeEngine) {
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<NodeEngine::Execution::ExecutablePipelinePtr> executablePipelines;
@@ -69,12 +69,12 @@ NodeEngine::Execution::ExecutableQueryPlanPtr LowerToExecutableQueryPlanPhase::a
     }
 
     return std::make_shared<NodeEngine::Execution::ExecutableQueryPlan>(pipelineQueryPlan->getQueryId(),
-                                                                           pipelineQueryPlan->getQuerySubPlanId(),
-                                                                           std::move(sources),
-                                                                           std::move(sinks),
-                                                                           std::move(executablePipelines),
-                                                                           nodeEngine->getQueryManager(),
-                                                                           nodeEngine->getBufferManager());
+                                                                        pipelineQueryPlan->getQuerySubPlanId(),
+                                                                        std::move(sources),
+                                                                        std::move(sinks),
+                                                                        std::move(executablePipelines),
+                                                                        nodeEngine->getQueryManager(),
+                                                                        nodeEngine->getBufferManager());
 }
 NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
     OperatorPipelinePtr pipeline,
@@ -225,13 +225,12 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
                                                                           executableOperator->getOperatorHandlers(),
                                                                           executableSuccessorPipelines.size());
 
-    auto executablePipeline =
-        NodeEngine::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
-                                                             subQueryPlanId,
-                                                             executionContext,
-                                                             executableOperator->getExecutablePipelineStage(),
-                                                             pipeline->getPredecessors().size(),
-                                                             executableSuccessorPipelines);
+    auto executablePipeline = NodeEngine::Execution::ExecutablePipeline::create(pipeline->getPipelineId(),
+                                                                                subQueryPlanId,
+                                                                                executionContext,
+                                                                                executableOperator->getExecutablePipelineStage(),
+                                                                                pipeline->getPredecessors().size(),
+                                                                                executableSuccessorPipelines);
 
     executablePipelines.emplace_back(executablePipeline);
     return executablePipeline;

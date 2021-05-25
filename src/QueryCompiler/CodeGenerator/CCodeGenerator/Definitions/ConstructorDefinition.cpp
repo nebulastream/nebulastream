@@ -14,18 +14,17 @@
     limitations under the License.
 */
 
-#include <iostream>
-#include <string>
-#include <utility>
-#include <memory>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/ConstructorDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Definitions/ConstructorDefinition.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
-#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
+#include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 #include <Util/Logger.hpp>
-
+#include <iostream>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace NES {
 namespace QueryCompilation {

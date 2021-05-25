@@ -15,17 +15,13 @@
 */
 
 #include "../../util/NESTest.hpp"
-#include <Util/Logger.hpp>
-#include <gtest/gtest.h>
-#include <iostream>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Sources/DefaultSource.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
@@ -34,6 +30,10 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Util/Logger.hpp>
+#include <gtest/gtest.h>
+#include <iostream>
 
 using namespace std;
 

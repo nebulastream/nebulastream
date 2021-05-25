@@ -34,7 +34,6 @@
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
 
-
 namespace NES {
 namespace QueryCompilation {
 

@@ -131,7 +131,8 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
      * @param queryPlan the query plan
      * @param operatorNode the current operator node.
      */
-    GeneratableOperators::GeneratableWindowAggregationPtr lowerWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
+    GeneratableOperators::GeneratableWindowAggregationPtr
+    lowerWindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
 };
 
 }// namespace QueryCompilation

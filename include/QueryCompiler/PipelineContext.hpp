@@ -18,7 +18,6 @@
 #define NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-
 namespace NES {
 namespace QueryCompilation {
 

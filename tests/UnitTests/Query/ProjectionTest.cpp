@@ -41,8 +41,8 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Topology/TopologyNode.hpp>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Optimizer/QueryRewrite/DistributeWindowRule.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 #include "../../util/TestQueryCompiler.hpp"
 #include <NodeEngine/FixedSizeBufferPool.hpp>
@@ -556,7 +556,6 @@ TEST_F(ProjectionTest, projectNotExistingField) {
     }
 }
 
-
 TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
 
@@ -592,7 +591,7 @@ TEST_F(ProjectionTest, DISABLED_tumblingWindowQueryTestWithProjection) {
     //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
     //auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
 
-  /*  std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
+    /*  std::vector<std::shared_ptr<WindowLogicalOperatorNode>> winOps =
         generatableOperators->getNodesByType<WindowLogicalOperatorNode>();
     winOps[0]->setOutputSchema(windowResultSchema);
     std::vector<std::shared_ptr<SourceLogicalOperatorNode>> leafOps =
@@ -750,8 +749,8 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(nullptr);
     auto queryPlan = typeInferencePhase->execute(mergedQuery.getQueryPlan());
     //auto translatePhase = TranslateToGeneratableOperatorPhase::create();
-   // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
-/*
+    // auto generatableOperators = translatePhase->transform(queryPlan->getRootOperators()[0]);
+    /*
     auto builder = GeneratedQueryExecutionPlanBuilder::create()
                        .setQueryManager(nodeEngine->getQueryManager())
                        .setBufferManager(nodeEngine->getBufferManager())
@@ -782,8 +781,8 @@ TEST_F(ProjectionTest, DISABLED_mergeQuery) {
     //auto stage_1 = plan->getPipeline(1);
     for (int i = 0; i < 10; i++) {
 
-     //   stage_0->execute(buffer, workerContext);// P1
-     //   stage_1->execute(buffer, workerContext);// P2
+        //   stage_0->execute(buffer, workerContext);// P1
+        //   stage_1->execute(buffer, workerContext);// P2
         // Contfext -> Context 1 and Context 2;
         //
         // P1 -> P2 -> P3

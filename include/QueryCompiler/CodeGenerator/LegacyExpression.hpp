@@ -43,10 +43,7 @@ class Predicate : public LegacyExpression {
               const LegacyExpressionPtr right,
               const std::string& functionCallOverload,
               bool bracket = true);
-    Predicate(const BinaryOperatorType& op,
-              const LegacyExpressionPtr left,
-              const LegacyExpressionPtr right,
-              bool bracket = true);
+    Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket = true);
 
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     virtual const std::string toString() const override;
