@@ -39,6 +39,9 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
+    const std::string& getModel() const;
+    const std::vector<ExpressionItemPtr>& getInputFields() const;
+    const std::vector<ExpressionItemPtr>& getOutputFields() const;
 
   protected:
     const std::string model;
