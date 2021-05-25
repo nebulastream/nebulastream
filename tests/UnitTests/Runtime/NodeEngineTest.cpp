@@ -615,9 +615,6 @@ TEST_F(EngineTest, testPassingLogicalOpreratorIdToPhysicalSink) {
 
     //EXPECT_TRUE(engine->stop());
     EXPECT_TRUE(engine->getQueryStatus(1) == ExecutableQueryPlanStatus::Running);
-    while(true){
-        std::this_thread::sleep_for (std::chrono::seconds(5));
-    }
 
 }
 //

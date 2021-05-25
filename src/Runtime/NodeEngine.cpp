@@ -496,7 +496,7 @@ void NodeEngine::onNetworkSinkUpdate(Network::Messages::UpdateNetworkSinkMessage
 
 
 
-std::optional<Execution::NewExecutableQueryPlanPtr> NodeEngine::getDeployedQEP(QuerySubPlanId id){
+std::optional<Execution::ExecutableQueryPlanPtr> NodeEngine::getDeployedQEP(QuerySubPlanId id){
     std::unique_lock lock(engineMutex);
     auto qep =  deployedQEPs[id];
     if(qep){
