@@ -22,26 +22,30 @@ namespace PhysicalOperators {
 PhysicalInferModelOperator::PhysicalInferModelOperator(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
-                                         std::string model)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model) {}
+                                         std::string model,
+                                         std::vector<ExpressionItemPtr> inputFields,
+                                         std::vector<ExpressionItemPtr> outputFields)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields) {}
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(OperatorId id,
                                                 SchemaPtr inputSchema,
                                                 SchemaPtr outputSchema,
-                                                std::string model) {
-    return std::make_shared<PhysicalInferModelOperator>(id, inputSchema, outputSchema, model);
+                                                std::string model,
+                                                std::vector<ExpressionItemPtr> inputFields,
+                                                std::vector<ExpressionItemPtr> outputFields) {
+    return std::make_shared<PhysicalInferModelOperator>(id, inputSchema, outputSchema, model, inputFields, outputFields);
 }
 
 PhysicalOperatorPtr
 PhysicalInferModelOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model,
-                                   std::vector<ExpressionItem> inputFields,
-                                   std::vector<ExpressionItem> outputFields) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, model);
+                                   std::vector<ExpressionItemPtr> inputFields,
+                                   std::vector<ExpressionItemPtr> outputFields) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields);
 }
 
 const std::string PhysicalInferModelOperator::toString() const { return "PhysicalInferModelOperator"; }
 
-OperatorNodePtr PhysicalInferModelOperator::copy() { return create(id, inputSchema, outputSchema, model); }
+OperatorNodePtr PhysicalInferModelOperator::copy() { return create(id, inputSchema, outputSchema, model, inputFields, outputFields); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

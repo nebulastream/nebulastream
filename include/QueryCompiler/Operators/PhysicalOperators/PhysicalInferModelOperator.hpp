@@ -30,18 +30,20 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator {
     PhysicalInferModelOperator(OperatorId id,
                         SchemaPtr inputSchema,
                         SchemaPtr outputSchema,
-                        std::string model);
+                        std::string model,
+                        std::vector<ExpressionItemPtr> inputFields,
+                        std::vector<ExpressionItemPtr> outputFields);
     static PhysicalOperatorPtr
-    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model);
+    create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
     static PhysicalOperatorPtr
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItem> inputFields, std::vector<ExpressionItem> outputFields);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields);
     const std::string toString() const override;
     OperatorNodePtr copy() override;
 
   protected:
     const std::string model;
-//    const std::vector<ExpressionItemPtr> inputFields;
-//    const std::vector<ExpressionItemPtr> outputFields;
+    const std::vector<ExpressionItemPtr> inputFields;
+    const std::vector<ExpressionItemPtr> outputFields;
 };
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
