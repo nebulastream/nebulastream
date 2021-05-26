@@ -19,8 +19,6 @@ if [ $# -eq 0 ]
 then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
-    export CC=/usr/bin/clang
-    export CXX=/usr/bin/clang++
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
     make version
     make -j4
