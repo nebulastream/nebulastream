@@ -49,7 +49,6 @@ endif ()
 ]]
 
 # check if prebuild dependencies are already downloaded
-# todo add versioning
 if (NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
