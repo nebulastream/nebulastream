@@ -28,7 +28,7 @@ git config --local core.sshcommand "/usr/bin/ssh -i \"~/.ssh/id_rsa\" -o \"UserK
 # Performing Release and formatting
 mkdir -p /nebulastream/build
 cd /nebulastream/build
-cmake -DCMAKE_BUILD_TYPE=Release cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 ..
+cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/$($ACTUAL_TRIPLE)" -DCPPRESTSDK_DIR="/usr/lib/$($ACTUAL_TRIPLE)/cmake/" -DNES_USE_OPC=1 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 ..
 make version
 make format
 make nes-doc
