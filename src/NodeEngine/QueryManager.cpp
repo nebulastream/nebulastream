@@ -851,6 +851,9 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
                 .count();
         auto diff = now - creation;
         statistics->incLatencySum(diff);
+
+        statistics->incQueueSizeSum(taskQueue.size());
+
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);
 #endif
