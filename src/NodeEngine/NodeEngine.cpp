@@ -302,8 +302,9 @@ bool NodeEngine::unregisterQuery(QueryId queryId) {
 bool NodeEngine::stopQuery(QueryId queryId, bool graceful) {
     std::unique_lock lock(engineMutex);
     NES_DEBUG("NodeEngine:stopQuery for qep" << queryId);
-    if (queryIdToQuerySubPlanIds.find(queryId) != queryIdToQuerySubPlanIds.end()) {
-        std::vector<QuerySubPlanId> querySubPlanIds = queryIdToQuerySubPlanIds[queryId];
+    auto it = queryIdToQuerySubPlanIds.find(queryId);
+    if (it != queryIdToQuerySubPlanIds.end()) {
+        std::vector<QuerySubPlanId> querySubPlanIds = it->second;
         if (querySubPlanIds.empty()) {
             NES_ERROR("NodeEngine: Unable to find qep ids for the query " << queryId << ". Start failed.");
             return false;
