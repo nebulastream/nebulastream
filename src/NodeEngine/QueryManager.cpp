@@ -405,12 +405,19 @@ bool QueryManager::stopQuery(Execution::ExecutableQueryPlanPtr qep, bool gracefu
     auto copiedSources = std::vector(sources.begin(), sources.end());
     //    lock.unlock();
 
-    if (qep->getStatus() == Execution::ErrorState) {
-        NES_ASSERT2_FMT(false, "not supported yet " << qep->getQuerySubPlanId());
-    }
-
-    if (qep->getStatus() == Execution::Stopped || qep->getStatus() == Execution::Finished) {
-        return true;
+    switch (qep->getStatus()) {
+        case Execution::Finished:
+        case Execution::Stopped: {
+            return true;
+        }
+        case Execution::ErrorState:
+        case Execution::Invalid: {
+            NES_ASSERT2_FMT(false, "not supported yet " << qep->getQuerySubPlanId());
+            break;
+        }
+        default: {
+            break;
+        }
     }
 
     for (const auto& source : copiedSources) {
@@ -906,6 +913,10 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
         case Destroy: {
             auto qepId = task.getParentPlanId();
             auto status = getQepStatus(qepId);
+            if (status == Execution::Invalid) {
+                NES_WARNING("Query" << qepId << "was already removed or never deployed");
+                return;
+            }
             NES_ASSERT(status == Execution::ExecutableQueryPlanStatus::Stopped
                            || status == Execution::ExecutableQueryPlanStatus::ErrorState,
                        "query plan " << qepId << " is not in valid state " << status);

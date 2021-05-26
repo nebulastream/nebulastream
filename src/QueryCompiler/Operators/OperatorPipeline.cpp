@@ -55,7 +55,7 @@ void OperatorPipeline::addSuccessor(OperatorPipelinePtr pipeline) {
     }
 }
 
-const std::vector<OperatorPipelinePtr>& OperatorPipeline::getPredecessors() const {
+const std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const {
     std::vector<OperatorPipelinePtr> predecessors;
     for (auto predecessor : predecessorPipelines) {
         predecessors.emplace_back(predecessor.lock());
@@ -98,6 +98,7 @@ void OperatorPipeline::clearSuccessors() {
 }
 
 const std::vector<OperatorPipelinePtr>& OperatorPipeline::getSuccessors() const { return successorPipelines; }
+
 void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
         throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
