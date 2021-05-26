@@ -175,7 +175,7 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorNodePtr
     */
-    static LogicalUnaryOperatorNodePtr createIterationOperator(std::uint64_t minIterations,
+    static LogicalUnaryOperatorNodePtr createCEPIterationOperator(std::uint64_t minIterations,
                                                                std::uint64_t maxIterations,
                                                                OperatorId id = UtilityFunctions::getNextOperatorId());
 };
