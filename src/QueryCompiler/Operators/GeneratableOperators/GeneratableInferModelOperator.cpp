@@ -18,6 +18,7 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableInferModelOperator.hpp>
+#include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 namespace NES {
@@ -47,7 +48,7 @@ GeneratableOperatorPtr GeneratableInferModelOperator::create(OperatorId id,
 }
 
 void GeneratableInferModelOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
-//    codegen->generateCodeForInferModel(context);
+    codegen->generateCodeForInferModel(context, model, inputFields, outputFields);
 }
 
 const std::string GeneratableInferModelOperator::toString() const { return "GeneratableInferModelOperator"; }
