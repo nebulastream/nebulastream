@@ -50,7 +50,7 @@ class ExecutableSliceAggregationTriggerAction
     }
 
     virtual ~ExecutableSliceAggregationTriggerAction() {
-        // nop
+        //nop
     }
 
     ExecutableSliceAggregationTriggerAction(
