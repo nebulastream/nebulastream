@@ -144,7 +144,11 @@ void QueryManager::destroy() {
     expected = Stopped;
     if (queryManagerStatus.compare_exchange_strong(expected, Destroyed)) {
         {
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
             std::scoped_lock locks(queryMutex, workMutex, statisticsMutex);
+#else
+            std::scoped_lock locks(queryMutex, statisticsMutex);
+#endif
             NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToExecutableQueryPlanMap.size()
                                                                     << " task queue size=" << taskQueue.size());
 
@@ -801,13 +805,13 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
     }
     cv.notify_all();
 #else
-    if (auto nextPipeline = std::get_if<Execution::NewExecutablePipelinePtr>(&executable)) {
+    if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
-            NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipeStageId() << " inputBuffer "
+            NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
                                                                     << buffer);
             taskQueue.write(Task(executable, buffer));
         } else {
-            NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipeStageId());
+            NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
     } else {
         taskQueue.write(Task(executable, buffer));
