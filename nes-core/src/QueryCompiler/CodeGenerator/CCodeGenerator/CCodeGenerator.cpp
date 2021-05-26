@@ -45,6 +45,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarRefStatement.hpp>
+#include <QueryCompiler/CodeGenerator/CCodeGenerator/TensorflowAdapter.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/CodeGenerator/GeneratedCode.hpp>
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
@@ -379,7 +380,8 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
  * @return flag if the generation was successful.
  */
 bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) {
-
+    TensorflowAdapter tensorflowAdapter;
+    tensorflowAdapter.generateTFLiteCode();
     return true;
 }
 

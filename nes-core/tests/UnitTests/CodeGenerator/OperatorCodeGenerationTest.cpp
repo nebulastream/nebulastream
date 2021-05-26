@@ -924,6 +924,29 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates an infer model operator
  */
 TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 6116, streamConf);
+
+    /* prepare objects for test */
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
+    auto codeGenerator = QueryCompilation::CCodeGenerator::create();
+    auto context = QueryCompilation::PipelineContext::create();
+    context->pipelineName = "1";
+    auto inputSchema = source->getSchema();
+    auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
+
+    /* generate code for writing result tuples to output buffer */
+    auto outputSchema = Schema::create()
+        ->addField("id", DataTypeFactory::createInt32())
+        ->addField("valueSmall", DataTypeFactory::createInt16())
+        ->addField("valueFloat", DataTypeFactory::createFloat())
+        ->addField("valueDouble", DataTypeFactory::createDouble())
+        ->addField(mappedValue)
+        ->addField("valueChar", DataTypeFactory::createChar())
+        ->addField("text", DataTypeFactory::createFixedChar(12));
+
+    codeGenerator->generateCodeForInferModel(context, "", {}, {});
+
     EXPECT_TRUE(true);
 }
 
