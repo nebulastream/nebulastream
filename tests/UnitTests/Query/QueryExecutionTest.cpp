@@ -52,7 +52,6 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 
 using namespace NES;
-using NodeEngine::MemoryLayoutPtr;
 using NodeEngine::TupleBuffer;
 
 class QueryExecutionTest : public testing::Test {

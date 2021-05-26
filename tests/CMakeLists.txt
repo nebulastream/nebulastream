@@ -193,11 +193,6 @@ if (NES_USE_MQTT)
     add_test(NAME mqtt-sink-tests COMMAND mqtt-sink-tests)
 endif (NES_USE_MQTT)
 
-### Memory Layout Tests ###
-add_executable(memory-layout-tests "UnitTests/NodeEngine/MemoryLayoutTest.cpp")
-target_link_libraries(memory-layout-tests nes ${GTEST_LIBRARIES})
-add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
-
 ### Dynamic Memory Layout Tests ###
 add_executable(dynamic-memory-layout-tests "UnitTests/DynamicMemoryLayoutTest.cpp")
 target_link_libraries(dynamic-memory-layout-tests nes ${GTEST_LIBRARIES})
