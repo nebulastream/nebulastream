@@ -19,7 +19,6 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <Sources/LambdaSource.hpp>

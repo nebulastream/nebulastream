@@ -21,7 +21,6 @@
 #include <Sources/MonitoringSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <Util/Logger.hpp>
 
 #include <Util/UtilityFunctions.hpp>

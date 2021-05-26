@@ -16,8 +16,6 @@
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Network/NetworkSource.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <NodeEngine/QueryManager.hpp>
 #include <Sources/BinarySource.hpp>

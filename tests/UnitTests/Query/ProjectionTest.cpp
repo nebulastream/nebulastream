@@ -49,7 +49,6 @@
 #include <NodeEngine/LocalBufferPool.hpp>
 
 using namespace NES;
-using NodeEngine::MemoryLayoutPtr;
 using NodeEngine::TupleBuffer;
 
 class ProjectionTest : public testing::Test {

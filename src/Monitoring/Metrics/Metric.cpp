@@ -16,7 +16,6 @@
 
 #include <Monitoring/Metrics/Metric.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
-#include <NodeEngine/MemoryLayout/RowLayout.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>

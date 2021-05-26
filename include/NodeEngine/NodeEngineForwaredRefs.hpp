@@ -48,9 +48,6 @@ class ArrayPhysicalField;
 class PhysicalSchema;
 typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
 
-class MemoryLayout;
-typedef std::shared_ptr<MemoryLayout> MemoryLayoutPtr;
-
 class TupleBuffer;
 
 class BufferManager;
