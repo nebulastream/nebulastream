@@ -5,6 +5,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   libdwarf1 \
   binutils-dev \
   libdw-dev \
+  libssl-dev \
   build-essential \
   clang-format \
   libmbedtls-dev \
