@@ -21,12 +21,13 @@
 
 namespace NES {
 
-IterationLogicalOperatorNode::IterationLogicalOperatorNode(uint64_t minIterations, uint64_t maxIterations, uint64_t id)
+IterationLogicalOperatorNode::IterationLogicalOperatorNode(std::shared_ptr<ConstantValueExpressionNode> minIterations,
+                                                           std::shared_ptr<ConstantValueExpressionNode> maxIterations, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), minIterations(minIterations), maxIterations(maxIterations) {}
 
-uint64_t IterationLogicalOperatorNode::getMinIterations() { return minIterations; }
+ConstantValueExpressionNodePtr IterationLogicalOperatorNode::getMinIterations() { return minIterations; }
 
-uint64_t IterationLogicalOperatorNode::getMaxIterations() { return maxIterations; }
+ConstantValueExpressionNodePtr IterationLogicalOperatorNode::getMaxIterations() { return maxIterations; }
 
 bool IterationLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<IterationLogicalOperatorNode>()->getId() == id;
@@ -55,7 +56,7 @@ bool IterationLogicalOperatorNode::inferSchema() {
 }
 
 OperatorNodePtr IterationLogicalOperatorNode::copy() {
-    auto copy = LogicalOperatorFactory::createIterationOperator(minIterations, maxIterations, id);
+    auto copy = LogicalOperatorFactory::createCEPIterationOperator(minIterations, maxIterations, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
     return copy;

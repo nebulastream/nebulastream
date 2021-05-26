@@ -75,6 +75,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 
+#include <Operators/LogicalOperators/CEP/IterationLogicalOperatorNode.hpp>
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #ifdef ENABLE_OPC_BUILD
 #include <Operators/LogicalOperators/Sinks/OPCSinkDescriptor.hpp>
@@ -134,6 +135,17 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         // serialize map expression
         ExpressionSerializationUtil::serializeExpression(mapOperator->getMapExpression(), mapDetails.mutable_expression());
         serializedOperator->mutable_details()->PackFrom(mapDetails);
+    } else if (operatorNode->instanceOf<IterationLogicalOperatorNode>()) {
+        // serialize CEPIteration operator
+        NES_TRACE("OperatorSerializationUtil:: serialize to CEPIterationLogicalOperatorNode");
+        auto iterationDetails = SerializableOperator_CEPIterationDetails();
+        auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
+        // serialize CEP iteration iteration
+        ExpressionSerializationUtil::serializeExpression(iterationOperator->getMinIterations(),
+                                                         iterationDetails.mutable_miniteration());
+        ExpressionSerializationUtil::serializeExpression(iterationOperator->getMaxIterations(),
+                                                         iterationDetails.mutable_maxiteration());
+        serializedOperator->mutable_details()->PackFrom(iterationDetails);
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
         NES_TRACE("OperatorSerializationUtil:: serialize to CentralWindowOperator");
@@ -243,6 +255,15 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
             exps.push_back(projectExpression);
         }
         operatorNode = LogicalOperatorFactory::createProjectionOperator(exps);
+    } else if (details.Is<SerializableOperator_CEPIterationDetails>()) {
+        // de-serialize CEPIteration operator
+        NES_TRACE("OperatorSerializationUtil:: de-serialize to CEPIterationLogicalOperator");
+        auto serializedCEPIterationOperator = SerializableOperator_CEPIterationDetails();
+        details.UnpackTo(&serializedCEPIterationOperator);
+        // de-serialize cep iterations
+        auto maxIteration = ExpressionSerializationUtil::deserializeExpression(serializedCEPIterationOperator.mutable_maxiteration());
+        auto minIteration = ExpressionSerializationUtil::deserializeExpression(serializedCEPIterationOperator.mutable_miniteration());
+        operatorNode = LogicalOperatorFactory::createCEPIterationOperator(minIteration->as<ConstantValueExpressionNode>(), maxIteration->as<ConstantValueExpressionNode>());
     } else if (details.Is<SerializableOperator_UnionDetails>()) {
         // de-serialize union operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");

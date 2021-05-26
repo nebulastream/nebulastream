@@ -220,6 +220,14 @@ message SerializableOperator{
   }
 
   /**
+   CEPIteration Details contains properties for the CEPIteration operator, such as the field assignment minIteration and maxIteration
+   */
+  message CEPIterationDetails {
+    SerializableExpression minIteration = 1;
+    SerializableExpression maxIteration = 2;
+  }
+
+  /**
   Projection Details contains properties for the projection operator, i.e., the output schema
   */
   message ProjectionDetails {
