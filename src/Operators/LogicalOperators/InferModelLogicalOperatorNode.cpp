@@ -170,5 +170,21 @@ void InferModelLogicalOperatorNode::inferStringSignature() {
     signatureStream << "INFER_MODEL(" + model + ")." << children[0]->as<LogicalOperatorNode>()->getStringSignature();
     setStringSignature(signatureStream.str());
 }
-
+const std::string& InferModelLogicalOperatorNode::getModel() const { return model; }
+const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getInputFields() const { return inputFields; }
+const std::vector<ExpressionItem>& InferModelLogicalOperatorNode::getOutputFields() const { return outputFields; }
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getInputFieldsAsPtr() {
+    for(auto f : inputFields){
+        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+        inputFieldsPtr.push_back(fp);
+    }
+    return inputFieldsPtr;
+}
+const std::vector<ExpressionItemPtr>& InferModelLogicalOperatorNode::getOutputFieldsAsPtr() {
+    for(auto f : outputFields){
+        ExpressionItemPtr fp = std::make_shared<ExpressionItem>(f);
+        outputFieldsPtr.push_back(fp);
+    }
+    return outputFieldsPtr;
+}
 }// namespace NES
