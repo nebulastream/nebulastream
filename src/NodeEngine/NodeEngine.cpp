@@ -478,8 +478,13 @@ SourceDescriptorPtr NodeEngine::createLogicalSourceDescriptor(SourceDescriptorPt
     // 2.) if we have really two sources, then we would have two real configurations here
     if (configs.size() > 1) {
         NES_ASSERT(!configs.empty(), "no config for Lambda source");
+        // BDAPRO wtf is this????
         auto conf = configs.back();
         configs.pop_back();
+        // BDAPRO iterate through conf
+        // and select the one with the corresponding mapping of sourceDescriptor.getStreamName()
+        // throw error if multiple physical streams on the same node are mapped to one logical stream
+        // (this check should probably done before)
         return conf->build(sourceDescriptor->getSchema());
     } else {
         NES_ASSERT(configs[0], "physical source config is not specified");

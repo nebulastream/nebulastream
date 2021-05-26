@@ -106,6 +106,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     uint32_t numberOfBuffersToProduce;
 
     std::string physicalStreamName;
+    // BDAPRO adjust to or remove multiple logical stream names
     std::string logicalStreamName;
     bool skipHeader;
 };

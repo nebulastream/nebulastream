@@ -93,7 +93,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         resourceNotFoundImpl(request);
     }
 }
-
+// BDAPRO handle update of mapping a physical stream to multiple logical streams
 void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
 
     if (path[1] == "addLogicalStream") {

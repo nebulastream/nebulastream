@@ -70,6 +70,7 @@ bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     auto* config = this;
+    // BDAPRO this needs to be reoslved for multiple names
     auto streamName = config->getLogicalStreamName();
 
     // Pick the first element from the catalog entry and identify the type to create appropriate source type
@@ -82,6 +83,7 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 
     uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
+    // BDAPRO resolve for multiple logical stream names
     if (type == "DefaultSource") {
         NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
         return DefaultSourceDescriptor::create(schema, streamName, numBuffers, frequency.count());

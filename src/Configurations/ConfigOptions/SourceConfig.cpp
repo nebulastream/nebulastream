@@ -41,6 +41,7 @@ SourceConfig::SourceConfig() {
         ConfigOption<uint32_t>::create("numberOfTuplesToProducePerBuffer", 1, "Number of tuples to produce per buffer.");
     physicalStreamName =
         ConfigOption<std::string>::create("physicalStreamName", "default_physical", "Physical name of the stream.");
+    // BDAPRO change this to multiple logical stream names
     logicalStreamName = ConfigOption<std::string>::create("logicalStreamName", "default_logical", "Logical name of the stream.");
     skipHeader = ConfigOption<bool>::create("skipHeader", false, "Skip first line of the file.");
 }
@@ -58,6 +59,7 @@ void SourceConfig::overwriteConfigWithYAMLFileInput(const std::string& filePath)
             setNumberOfBuffersToProduce(config["numberOfBuffersToProduce"].As<uint64_t>());
             setNumberOfTuplesToProducePerBuffer(config["numberOfTuplesToProducePerBuffer"].As<uint16_t>());
             setPhysicalStreamName(config["physicalStreamName"].As<std::string>());
+            // BDAPRO adapt for multiple logical stream names
             setLogicalStreamName(config["logicalStreamName"].As<std::string>());
             setSkipHeader(config["skipHeader"].As<bool>());
         } catch (std::exception& e) {
@@ -87,6 +89,7 @@ void SourceConfig::overwriteConfigWithCommandLineInput(const std::map<std::strin
             } else if (it->first == "--physicalStreamName") {
                 setPhysicalStreamName(it->second);
             } else if (it->first == "--logicalStreamName") {
+                // BDAPRO check for multiple names
                 setLogicalStreamName(it->second);
             } else if (it->first == "--skipHeader") {
                 setSkipHeader((it->second == "true"));
@@ -108,6 +111,7 @@ void SourceConfig::resetSourceOptions() {
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
     setPhysicalStreamName(physicalStreamName->getDefaultValue());
+    // BDAPRO check for multiple logical stream names
     setLogicalStreamName(logicalStreamName->getDefaultValue());
     setSkipHeader(skipHeader->getDefaultValue());
 }
@@ -124,6 +128,7 @@ const IntConfigOption SourceConfig::getNumberOfTuplesToProducePerBuffer() const 
 
 const StringConfigOption SourceConfig::getPhysicalStreamName() const { return physicalStreamName; }
 
+// BDAPRO adjust to multiple
 const StringConfigOption SourceConfig::getLogicalStreamName() const { return logicalStreamName; }
 
 const BoolConfigOption SourceConfig::getSkipHeader() const { return skipHeader; }
@@ -145,7 +150,7 @@ void SourceConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesTo
 void SourceConfig::setPhysicalStreamName(std::string physicalStreamNameValue) {
     physicalStreamName->setValue(physicalStreamNameValue);
 }
-
+// BDAPRO adjust to multiple
 void SourceConfig::setLogicalStreamName(std::string logicalStreamNameValue) {
     logicalStreamName->setValue(logicalStreamNameValue);
 }
