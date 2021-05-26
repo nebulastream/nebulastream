@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 cmake_minimum_required(VERSION 3.18.0)
-set(VCPKG_TARGET_TRIPLET x64-linux-nes)
-set(VCPKG_BINARY_VERSION v1)
 
+set(VCPKG_BINARY_VERSION v1)
+set(VCPKG_TARGET_TRIPLET x64-linux-nes)
 function(download_file url filename hash_type hash)
     message("Download: ${url}")
     if (NOT EXISTS ${filename})
@@ -22,6 +22,31 @@ function(download_file url filename hash_type hash)
                 TIMEOUT 0)
     endif ()
 endfunction(download_file)
+#[[
+message("test: ${CMAKE_HOST_SYSTEM_PROCESSOR}")
+message("test: ${CMAKE_GENERATOR_PLATFORM}")
+message("test: ${UNIX}")
+message("test: ${CMAKE_HOST_SYSTEM}")
+if (${APPLE})
+
+    if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "64Bit")
+        set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+    else ()
+        message(ERROR "NES currently dose not support non ${CMAKE_HOST_SYSTEM_PROCESSOR} architectures on Apple")
+    endif ()
+elseif (${UNIX})
+
+    if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "64Bit")
+        set(VCPKG_TARGET_TRIPLET x64-linux-nes)
+    elseif (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "arm64")
+        set(VCPKG_TARGET_TRIPLET arm64-linux-nes)
+    else ()
+        message(ERROR "NES currently dose not support ${CMAKE_HOST_SYSTEM_PROCESSOR} architectures on UNIX")
+    endif ()
+else ()
+    message(ERROR "NES currently dose not support ${CMAKE_HOST_SYSTEM_NAME} with ${CMAKE_HOST_SYSTEM_PROCESSOR} architectures on UNIX")
+endif ()
+]]
 
 # check if prebuild dependencies are already downloaded
 # todo add versioning
@@ -239,7 +264,6 @@ add_custom_command(
 # LibZMQ
 # ------
 message(STATUS "Libzmq")
-#set(ZMQ_RELEASE "4.3.2")
 find_package(ZeroMQ CONFIG REQUIRED)
 if (NOT ${ZeroMQ_FOUND})
     message(FATAL_ERROR "Unable to find libzmq")
@@ -253,8 +277,6 @@ if (NOT ${CPPZMQ_FOUND})
     message(FATAL_ERROR "Unable to find cppzmq")
 endif ()
 set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
-#CPPZMQ is header only so we dont need to link anything
-#message(STATUS "Using cppzmq: " ${CPPZMQ_LIBRARIES})
 
 # Z3 Solver
 message(STATUS "Z3")
@@ -275,9 +297,8 @@ set(LIBRARIES ${LIBRARIES} log4cxx)
 message(STATUS "Using Log4cxx: " ${Log4cxx_LIBRARY})
 
 # Boost Libraries
-#set(Boost_USE_MULTITHREADED TRUE)
+set(Boost_USE_MULTITHREADED TRUE)
 find_package(Boost REQUIRED system thread program_options filesystem chrono) # Only check if lib is available on system for generated code.
-#link_directories(${Boost_LIBRARY_DIRS})
 message("Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIRS}")
 include_directories(${Boost_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} Boost::boost Boost::system Boost::thread Boost::program_options Boost::filesystem Boost::chrono)
@@ -322,7 +343,6 @@ endif (NES_USE_OPC)
 if (NES_USE_MQTT)
     message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
     find_package(PahoMqttCpp CONFIG REQUIRED)
-    #  target_link_libraries(main PRIVATE PahoMqttCpp::paho-mqttpp3-static)
     set(LIBRARIES ${LIBRARIES} PahoMqttCpp::paho-mqttpp3)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
@@ -361,8 +381,6 @@ message("-- LLVM version ${LLVM_VERSION_STRING}")
 message("-- LLVM version ${LLVM_ROOT_DIR}")
 
 # Set definition values.
-#set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
-#set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
