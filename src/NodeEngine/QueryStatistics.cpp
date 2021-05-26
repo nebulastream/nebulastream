@@ -28,6 +28,8 @@ const std::atomic<uint64_t> QueryStatistics::getProcessedWatermarks() const { re
 
 const std::atomic<uint64_t> QueryStatistics::getLatencySum() const { return latencySum.load(); }
 
+const std::atomic<uint64_t> QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); }
+
 void QueryStatistics::setProcessedTasks(const std::atomic<uint64_t>& processedTasks) {
     this->processedTasks = processedTasks.load();
 }
@@ -43,6 +45,7 @@ void QueryStatistics::incProcessedTasks() { this->processedTasks++; }
 void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
+void QueryStatistics::incQueueSizeSum(uint64_t size){ this->queueSizeSum += size; }
 
 void QueryStatistics::setProcessedBuffers(const std::atomic<uint64_t>& processedBuffers) {
     this->processedBuffers = processedBuffers.load();
