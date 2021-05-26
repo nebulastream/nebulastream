@@ -34,12 +34,18 @@ class InferModelLogicalOperatorNode : public LogicalUnaryOperatorNode {
     bool isIdentical(NodePtr rhs) const override;
     bool inferSchema() override;
     void inferStringSignature() override;
-
+    const std::string& getModel() const;
+    const std::vector<ExpressionItem>& getInputFields() const;
+    const std::vector<ExpressionItem>& getOutputFields() const;
+    const std::vector<ExpressionItemPtr>& getInputFieldsAsPtr();
+    const std::vector<ExpressionItemPtr>& getOutputFieldsAsPtr();
 
   private:
     std::string model;
     std::vector<ExpressionItem> inputFields;
     std::vector<ExpressionItem> outputFields;
+    std::vector<ExpressionItemPtr> inputFieldsPtr;
+    std::vector<ExpressionItemPtr> outputFieldsPtr;
 };
 
 }// namespace NES

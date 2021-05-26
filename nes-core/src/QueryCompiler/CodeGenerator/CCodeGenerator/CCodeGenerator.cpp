@@ -378,7 +378,8 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
  * @brief Code generation for an infer model operator
  * @return flag if the generation was successful.
  */
-bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context) {
+bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) {
+
     return true;
 }
 
