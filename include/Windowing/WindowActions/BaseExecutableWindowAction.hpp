@@ -48,6 +48,7 @@ class BaseExecutableWindowAction {
     }
 
   protected:
+    std::atomic<uint64_t> emitSequenceNumber = 0;
     std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
     std::shared_ptr<NodeEngine::Execution::PipelineExecutionContext> phantom;
     SchemaPtr windowSchema;
