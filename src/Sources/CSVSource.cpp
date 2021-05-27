@@ -160,17 +160,12 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
             auto field = physicalTypes[j];
             uint64_t fieldSize = field->size();
 
+            NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
+                            "Overflow detected: buffer size = " << buf.getBufferSize()
+                                                                << " position = " << (offset + tupCnt * tupleSize)
+                                                                << " field size " << fieldSize);
             if (field->isBasicType()) {
                 auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
-                /*
-             * TODO: this requires proper MIN / MAX size checks, numeric_limits<T>-like
-             * TODO: this requires underflow/overflow checks
-             * TODO: our types need their own sto/strto methods
-             */
-                NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
-                                "Overflow detected: buffer size = " << buf.getBufferSize()
-                                                                    << " position = " << (offset + tupCnt * tupleSize)
-                                                                    << " field size " << fieldSize);
                 if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
                     uint64_t val = std::stoull(tokens[j].c_str());
                     memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
@@ -209,10 +204,6 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
                     memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, &val, fieldSize);
                 }
             } else {
-                NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
-                                "Overflow detected: buffer size = " << buf.getBufferSize()
-                                                                    << " position = " << (offset + tupCnt * tupleSize)
-                                                                    << " field size " << fieldSize);
                 memcpy(buf.getBufferAs<char>() + offset + tupCnt * tupleSize, tokens[j].c_str(), fieldSize);
             }
 
