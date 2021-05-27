@@ -276,7 +276,7 @@ void DataSource::runningRoutineWithFrequency() {
     uint64_t cnt = 0;
     while (running) {
         bool recNow = false;
-        auto tsNow = std::chrono::system_clock::now();
+        auto tsNow = std::chrono::steady_clock::now();
         std::chrono::milliseconds nowInMillis = std::chrono::duration_cast<std::chrono::milliseconds>(tsNow.time_since_epoch());
 
         //this check checks if the gathering interval is zero or a ZMQ_Source, where we do not create a watermark-only buffer
