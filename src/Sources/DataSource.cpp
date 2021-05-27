@@ -65,7 +65,7 @@ DataSource::DataSource(const SchemaPtr& pSchema,
     NES_ASSERT(this->queryManager, "Invalid query manager");
 }
 
-void DataSource::emitWork(NodeEngine::TupleBuffer& buffer) {
+void DataSource::emitWorkFromSource(NodeEngine::TupleBuffer& buffer) {
     generatedTuples += buffer.getNumberOfTuples();
 
     // set the origin id for this source
@@ -78,6 +78,11 @@ void DataSource::emitWork(NodeEngine::TupleBuffer& buffer) {
     // A data source generates a monotonic increasing sequence number
     generatedBuffers++;
     buffer.setSequenceNumber(generatedBuffers);
+
+    emitWork(buffer);
+}
+
+void DataSource::emitWork(NodeEngine::TupleBuffer& buffer) {
 
     for (const auto& successor : executableSuccessors) {
         queryManager->addWorkForNextPipeline(buffer, successor);
@@ -216,7 +221,7 @@ void DataSource::runningRoutineWithIngestionRate() {
                 // here we got a valid bu fer
                 NES_DEBUG("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
-                emitWork(buf);
+                emitWorkFromSource(buf);
 
                 buffersProcessedCnt++;
                 processedOverallBufferCnt++;
@@ -335,7 +340,7 @@ void DataSource::runningRoutineWithFrequency() {
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
                                                        << " orgID=" << this->operatorId);
 
-                emitWork(buf);
+                emitWorkFromSource(buf);
                 ++cnt;
             } else {
                 if (!wasGracefullyStopped) {

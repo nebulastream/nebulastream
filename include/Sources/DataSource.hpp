@@ -236,6 +236,8 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
      */
     void emitWork(NodeEngine::TupleBuffer& buffer) override;
 
+    void emitWorkFromSource(NodeEngine::TupleBuffer& buffer);
+
   private:
     uint64_t generatedTuples;
     uint64_t generatedBuffers;
@@ -252,6 +254,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     * @brief running routine with a fix ingestion rate
     */
     void runningRoutineWithIngestionRate();
+
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

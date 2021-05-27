@@ -87,7 +87,7 @@ void AdaptiveSource::runningRoutine() {
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                 << " iteration=" << cnt);
 
-                    emitWork(buf);
+                    emitWorkFromSource(buf);
                     cnt++;
                 }
             }
