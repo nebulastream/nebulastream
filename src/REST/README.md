@@ -29,7 +29,6 @@ Submitting user query for execution.
 **Response**:
 {"queryId": "system_generate_uuid"}
 
-
 *Submitting user query as a protobuf Object:*
 
 **API**: /query/execute-query-ex \
@@ -43,8 +42,6 @@ A Protobuf encoded QueryPlan.
 
 **Response**:
 {"queryId": "system_generate_uuid"}
-
-
 
 ### Getting Execution Plan
 

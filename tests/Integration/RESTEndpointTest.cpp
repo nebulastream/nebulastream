@@ -134,7 +134,6 @@ TEST_F(RESTEndpointTest, testGetExecutionPlanFromWithSingleWorker) {
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
-    //NES Setup
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -161,7 +160,6 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-
     //make httpclient with new endpoint -ex:
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
                                                               + "/v1/nes/query/execute-query-ex");
@@ -170,12 +168,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
 
     //make a Protobuff object
     SerializableQueryPlan* protobufMessage = QueryPlanSerializationUtil::serializeQueryPlan(plan);
-
     //convert it to string for the request function
     std::string msg = protobufMessage->SerializeAsString();
-
     web::json::value postJsonReturn;
-
     httpClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
           NES_INFO("get first then");
@@ -193,8 +188,6 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
 
-   // testing of the NES setup:
-
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
@@ -203,11 +196,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
-
 }
 
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
-    //NES Setup
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -233,7 +224,6 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
 
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-
 
     //make httpclient with new endpoint -ex:
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
@@ -259,12 +249,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
 
     //make a Protobuff object
     SerializableQueryPlan* protobufMessage = QueryPlanSerializationUtil::serializeQueryPlan(plan);
-
     //convert it to string for the request function
     std::string msg = protobufMessage->SerializeAsString();
-
     web::json::value postJsonReturn;
-
     httpClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
           NES_INFO("get first then");
@@ -282,24 +269,16 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
 
     EXPECT_TRUE(postJsonReturn.has_field("queryId"));
     EXPECT_TRUE(queryCatalog->queryExists(postJsonReturn.at("queryId").as_integer()));
-
-    // testing of the NES setup:
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-
     NES_INFO("RESTEndpointTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
     NES_INFO("RESTEndpointTest: Test finished");
-
 }
 
-
-
-
 TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
-    //NES Setup
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
     WorkerConfigPtr workerConfig = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
@@ -326,13 +305,11 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
-
     //make httpclient with new endpoint -ex:
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
                                                   + "/v1/nes/query/execute-query-ex");
 
     std::string msg = "hello";
-
     web::json::value postJsonReturn;
     int statusCode;
     httpClient.request(web::http::methods::POST, "", msg)
@@ -352,13 +329,9 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
         .wait();
     EXPECT_EQ(statusCode,400);
     EXPECT_TRUE(postJsonReturn.has_field("detail"));
-
-    // testing of the NES setup:
-
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
-
     NES_INFO("RESTEndpointTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
