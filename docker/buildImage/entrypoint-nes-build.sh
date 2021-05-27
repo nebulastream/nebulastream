@@ -27,7 +27,7 @@ then
    	ln -s ../nesWorker .
     make test_debug
     result=$?
-#    rm -rf /nebulastream/build
+    rm -rf /nebulastream/build
     exit $result
 else
     exec $@
