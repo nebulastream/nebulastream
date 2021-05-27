@@ -253,7 +253,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 1);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -264,7 +264,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     //    store->setLastWatermark(7);
 
     ts = 14;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 2);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -341,7 +341,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 1);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -351,7 +351,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     //    store->setLastWatermark(7);
 
     ts = 14;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 2);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -423,7 +423,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 1);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -433,7 +433,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     //    store->setLastWatermark(7);
 
     ts = 14;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 2);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -506,7 +506,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 1);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -516,7 +516,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     //    store->setLastWatermark(7);
 
     ts = 14;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 2);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -592,7 +592,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 1);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -600,7 +600,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     windowHandler->setLastWatermark(7);
     store->incrementRecordCnt(sliceIndex);
     ts = 14;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 2);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
@@ -676,7 +676,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     auto* store = keyRef.value();
 
     uint64_t ts = 7;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 1);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     auto sliceIndex = store->getSliceIndexByTs(ts);
     auto& aggregates = store->getPartialAggregates();
@@ -686,7 +686,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     //    store->setLastWatermark(7);
 
     ts = 14;
-    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->updateMaxTs(ts, 0, 2);
     windowHandler->getWindowManager()->sliceStream(ts, store, 0);
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
