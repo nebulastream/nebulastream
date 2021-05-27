@@ -40,6 +40,13 @@ using SchemaPtr = std::shared_ptr<Schema>;
 
 }// namespace NES
 
+namespace NES::NodeEngine::Transactional{
+
+class WatermarkProcessor;
+typedef std::shared_ptr<WatermarkProcessor> WatermarkProcessorPtr;
+
+}
+
 namespace NES::Windowing {
 
 class WindowOperatorHandler;

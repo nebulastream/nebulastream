@@ -31,7 +31,7 @@ std::shared_ptr<WatermarkProcessor> WatermarkProcessor::create(const uint64_t nu
 
 void WatermarkProcessor::updateWatermark(WatermarkBarrier watermarkBarrier) {
     auto origenId = watermarkBarrier.getOrigin();
-    NES_ASSERT2_FMT(numberOfOrigins <= localWatermarkProcessor.size(),
+    NES_ASSERT2_FMT(origenId < numberOfOrigins,
                     "This origin is not valid: " << origenId << " max origins " << numberOfOrigins);
     localWatermarkProcessor[origenId]->updateWatermark(watermarkBarrier);
 }

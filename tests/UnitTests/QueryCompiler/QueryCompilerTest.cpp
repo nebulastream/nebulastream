@@ -130,6 +130,42 @@ TEST_F(QueryCompilerTest, windowQuery) {
     ASSERT_FALSE(result->hasError());
 }
 
+
+/**
+ * @brief Input Query Plan:
+ *
+ * |Source| -- |window| -- |Sink|
+ *
+ */
+TEST_F(QueryCompilerTest, windowQueryEventTime) {
+    SchemaPtr schema = Schema::create();
+    schema->addField("key", INT32);
+    schema->addField("ts", INT64);
+    schema->addField("value", INT32);
+    auto streamCatalog = std::make_shared<StreamCatalog>();
+    streamCatalog->addLogicalStream("streamName", schema);
+    auto streamConf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 31337, streamConf, 1, 4096, 1024, 12, 12);
+    auto compilerOptions = QueryCompilerOptions::createDefaultOptions();
+    auto phaseFactory = Phases::DefaultPhaseFactory::create();
+    auto queryCompiler = DefaultQueryCompiler::create(compilerOptions, phaseFactory);
+
+    auto query = Query::from("streamName")
+        .window(SlidingWindow::of(TimeCharacteristic::createEventTime(Attribute("ts")), Seconds(10), Seconds(2)))
+        .byKey(Attribute("key"))
+        .apply(Sum(Attribute("value")))
+        .sink(NullOutputSinkDescriptor::create());
+    auto queryPlan = query.getQueryPlan();
+
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);
+    queryPlan = typeInferencePhase->execute(queryPlan);
+
+    auto request = QueryCompilationRequest::create(queryPlan, nodeEngine);
+    request->enableDump();
+    auto result = queryCompiler->compileQuery(request);
+    ASSERT_FALSE(result->hasError());
+}
+
 /**
  * @brief Input Query Plan:
  *

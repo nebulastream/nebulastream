@@ -25,7 +25,7 @@ using BarrierSequenceNumber = uint64_t;
 /**
  * @brief A watermark barrier, which consists of the watermark timestamp, the sequence number, and the origin id.
  */
-class WatermarkBarrier {
+class WatermarkBarrier final {
   public:
     /**
      * @brief Creates a new watermark barrier, which indicates the change of a watermark with a specific sequence number.
@@ -39,19 +39,19 @@ class WatermarkBarrier {
      * @brief Gets the watermark timestamp
      * @return WatermarkTs
      */
-    [[nodiscard]] WatermarkTs getTs() const;
+     [[nodiscard]] WatermarkTs const getTs() const;
 
     /**
      * @brief Gets the sequence number
      * @return BarrierSequenceNumber
      */
-    [[nodiscard]] BarrierSequenceNumber getSequenceNumber() const;
+    [[nodiscard]] BarrierSequenceNumber const getSequenceNumber() const;
 
     /**
      * @brief Gets the origin id
      * @return OriginId
      */
-    [[nodiscard]] OriginId getOrigin() const;
+    [[nodiscard]] OriginId const getOrigin() const;
 
   private:
     WatermarkTs ts;

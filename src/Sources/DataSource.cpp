@@ -66,6 +66,19 @@ DataSource::DataSource(const SchemaPtr& pSchema,
 }
 
 void DataSource::emitWork(NodeEngine::TupleBuffer& buffer) {
+    generatedTuples += buffer.getNumberOfTuples();
+
+    // set the origin id for this source
+    buffer.setOriginId(operatorId);
+    // set the creation timestamp
+    buffer.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::high_resolution_clock::now().time_since_epoch())
+                                 .count());
+    // Set the sequence number of this buffer.
+    // A data source generates a monotonic increasing sequence number
+    generatedBuffers++;
+    buffer.setSequenceNumber(generatedBuffers);
+
     for (const auto& successor : executableSuccessors) {
         queryManager->addWorkForNextPipeline(buffer, successor);
     }
@@ -203,10 +216,6 @@ void DataSource::runningRoutineWithIngestionRate() {
                 // here we got a valid bu fer
                 NES_DEBUG("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
-                buf.setOriginId(operatorId);
-                buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                             std::chrono::high_resolution_clock::now().time_since_epoch())
-                                             .count());
                 emitWork(buf);
 
                 buffersProcessedCnt++;
@@ -325,10 +334,7 @@ void DataSource::runningRoutineWithFrequency() {
                                                        << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                        << " iteration=" << cnt << " operatorId=" << this->operatorId
                                                        << " orgID=" << this->operatorId);
-                buf.setOriginId(operatorId);
-                buf.setCreationTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-                                             std::chrono::high_resolution_clock::now().time_since_epoch())
-                                             .count());
+
                 emitWork(buf);
                 ++cnt;
             } else {

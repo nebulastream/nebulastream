@@ -234,6 +234,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     buffer.setOriginId(bufferHeader->originId);
                     buffer.setWatermark(bufferHeader->watermark);
                     buffer.setCreationTimestamp(bufferHeader->creationTimestamp);
+                    buffer.setSequenceNumber(bufferHeader->sequenceNumber);
 
                     exchangeProtocol.onBuffer(nesPartition, buffer);
                     break;

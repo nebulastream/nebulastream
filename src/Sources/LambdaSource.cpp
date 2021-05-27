@@ -75,8 +75,6 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     generationFunction(buffer.value(), numberOfTuplesToProduce);
 
     buffer->setNumberOfTuples(numberOfTuplesToProduce);
-    generatedTuples += buffer->getNumberOfTuples();
-    generatedBuffers++;
 
     NES_DEBUG("LambdaSource::receiveData filled buffer with tuples=" << buffer->getNumberOfTuples()
                                                                      << " outOrgID=" << buffer->getOriginId());

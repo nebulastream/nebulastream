@@ -153,15 +153,17 @@ class DataBufferMessage {
                                       uint32_t numOfRecords,
                                       uint64_t originId,
                                       uint64_t watermark,
-                                      uint64_t creationTimestamp) noexcept
+                                      uint64_t creationTimestamp,
+                                      uint64_t sequenceNumber) noexcept
         : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
-          creationTimestamp(creationTimestamp) {}
+          creationTimestamp(creationTimestamp), sequenceNumber(sequenceNumber) {}
 
     uint32_t const payloadSize;
     uint32_t const numOfRecords;
     uint64_t const originId;
     uint64_t const watermark;
     uint64_t const creationTimestamp;
+    uint64_t const sequenceNumber;
 };
 
 class NesNetworkError : public std::runtime_error {

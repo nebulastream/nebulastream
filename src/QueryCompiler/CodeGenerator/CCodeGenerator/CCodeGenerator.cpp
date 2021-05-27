@@ -360,7 +360,10 @@ bool CCodeGenerator::generateCodeForEmit(SchemaPtr sinkSchema, PipelineContextPt
     // 3. copy origin id
     code->cleanupStmts.push_back(setOriginId(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
 
-    // 4. emit the buffer to the runtime.
+    // 4. copy sequence number
+    code->cleanupStmts.push_back(setSequenceNumber(code->varDeclarationResultBuffer, code->varDeclarationInputBuffer).copy());
+
+    // 5. emit the buffer to the runtime.
     code->cleanupStmts.push_back(
         emitTupleBuffer(code->varDeclarationExecutionContext, code->varDeclarationResultBuffer, code->varDeclarationWorkerContext)
             .copy());
@@ -459,6 +462,7 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterWindow(const PipelineContext
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
+    updateAllWatermarkTsFunctionCall.addParameter(getSequenceNumber(context->code->varDeclarationInputBuffer));
     auto updateAllWatermarkTsFunctionCallStatement = VarRef(handler).accessPtr(updateAllWatermarkTsFunctionCall);
 
     context->code->cleanupStmts.push_back(updateAllWatermarkTsFunctionCallStatement.createCopy());
@@ -2080,6 +2084,15 @@ BinaryOperatorStatement CCodeGenerator::setOriginId(const VariableDeclaration& t
     return VarRef(tupleBufferVariable).accessRef(setOriginIdFunctionCall);
 }
 
+BinaryOperatorStatement CCodeGenerator::setSequenceNumber(VariableDeclaration tupleBufferVariable,
+                                                    VariableDeclaration inputBufferVariable) {
+    auto setOriginIdFunctionCall = FunctionCallStatement("setSequenceNumber");
+    setOriginIdFunctionCall.addParameter(getSequenceNumber(inputBufferVariable));
+    /* copy watermark */
+    return VarRef(tupleBufferVariable).accessRef(setOriginIdFunctionCall);
+}
+
+
 CCodeGenerator::~CCodeGenerator() = default;
 ;
 
@@ -2102,6 +2115,11 @@ BinaryOperatorStatement CCodeGenerator::getWatermark(const VariableDeclaration& 
 
 BinaryOperatorStatement CCodeGenerator::getOriginId(const VariableDeclaration& tupleBufferVariable) {
     auto getWatermarkFunctionCall = FunctionCallStatement("getOriginId");
+    return VarRef(tupleBufferVariable).accessRef(getWatermarkFunctionCall);
+}
+
+BinaryOperatorStatement CCodeGenerator::getSequenceNumber(VariableDeclaration tupleBufferVariable) {
+    auto getWatermarkFunctionCall = FunctionCallStatement("getSequenceNumber");
     return VarRef(tupleBufferVariable).accessRef(getWatermarkFunctionCall);
 }
 

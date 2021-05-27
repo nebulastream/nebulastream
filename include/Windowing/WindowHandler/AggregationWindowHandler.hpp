@@ -275,10 +275,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     auto getWindowAction() { return executableWindowAction; }
 
-    void updateMaxTs(uint64_t ts, uint64_t originId) override {
-        std::unique_lock lock(windowMutex);
-        AbstractWindowHandler::updateMaxTs(ts, originId);
-    }
 
   private:
     NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable{nullptr};
@@ -287,7 +283,6 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
     std::string handlerType;
     uint64_t id;
-    mutable std::recursive_mutex windowMutex;
     std::atomic<bool> isRunning{false};
     NodeEngine::StateManagerPtr stateManager;
     PartialAggregateType partialAggregateInitialValue;

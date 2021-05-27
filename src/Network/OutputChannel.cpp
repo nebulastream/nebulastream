@@ -122,6 +122,7 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();
     auto watermark = inputBuffer.getWatermark();
+    auto sequenceNumber = inputBuffer.getSequenceNumber();
     auto creationTimestamp = inputBuffer.getCreationTimestamp();
     auto payloadSize = tupleSize * numOfTuples;
     auto* ptr = inputBuffer.getBuffer<uint8_t>();
@@ -133,7 +134,8 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
                                                            numOfTuples,
                                                            originId,
                                                            watermark,
-                                                           creationTimestamp);
+                                                           creationTimestamp,
+                                                           sequenceNumber);
 
     // We need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
     // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
