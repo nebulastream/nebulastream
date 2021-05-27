@@ -106,6 +106,8 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
+
 # Set NES Flags
 set(NES_SPECIFIC_FLAGS)
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
@@ -134,7 +136,7 @@ else (NES_LOGGING_LEVEL)
 endif (NES_LOGGING_LEVEL)
 
 # Set Optimization Flags
-set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -g ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS "-Wall -Werror=return-type -Werror=return-stack-address -fstandalone-debug -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES_RELEASE_MODE=1")
 
