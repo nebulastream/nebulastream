@@ -19,6 +19,7 @@
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/Reconfigurable.hpp>
+#include <NodeEngine/Transactional/WatermarkProcessor.hpp>
 #include <State/StateManager.hpp>
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalWindowDefinition.hpp>
@@ -49,7 +50,8 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
   public:
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
         : windowDefinition(std::move(windowDefinition)), running(false) {
-        // nop
+        this->watermarkProcessor =
+            NodeEngine::Transactional::WatermarkProcessor::create(windowDefinition->getNumberOfInputEdges());
     }
 
     ~AbstractWindowHandler() noexcept(false) override = default;
@@ -105,74 +107,31 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     void setLastWatermark(uint64_t lastWatermark) { this->lastWatermark = lastWatermark; }
 
     /**
-     * @brief Gets the maximal processed ts per origin id.
-     * @param originId
-     * @return max ts.
-     */
-    uint32_t getMaxTs(uint32_t originId) { return originIdToMaxTsMap[originId]; };
-
-    /**
-     * @brief Gets number of mappings.
-     * @return size of origin map.
-     */
-    uint64_t getNumberOfMappings() { return originIdToMaxTsMap.size(); };
-
-    /**
-     * @brief this function prints the content of the map for debugging purposes
-     * @return
-     */
-    std::string getAllMaxTs() {
-        std::stringstream ss;
-        for (auto& a : originIdToMaxTsMap) {
-            ss << " id=" << a.first << " val=" << a.second;
-        }
-        return ss.str();
-    }
-
-    /**
      * @brief Calculate the min watermark
      * @return MinAggregationDescriptor watermark
      */
-    uint64_t getMinWatermark() {
-        if (originIdToMaxTsMap.size() == numberOfInputEdges) {
-            auto min =
-                std::min_element(originIdToMaxTsMap.begin(),
-                                 originIdToMaxTsMap.end(),
-                                 [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-                                     return a.second < b.second;
-                                 });
-
-            std::stringstream ss;
-            for (auto& entry : originIdToMaxTsMap) {
-                ss << " id=" << entry.first << " max=" << entry.second;
-            }
-            NES_DEBUG("map=" << ss.str());
-            NES_DEBUG("getMinWatermark() return min=" << min->second);
-            return min->second;
-        }
-        NES_DEBUG("getMinWatermark() return 0 because there is no mapping yet current number of mappings="
-                  << originIdToMaxTsMap.size() << " expected mappings=" << numberOfInputEdges);
-        return 0;//TODO: we have to figure out how many downstream positions are there
-    };
+    uint64_t getMinWatermark() { return watermarkProcessor->getCurrentWatermark(); };
 
     /**
      * @brief Update the max processed ts, per origin.
      * @param ts
      * @param originId
      */
-    virtual void updateMaxTs(uint64_t ts, uint64_t originId) {
+    void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber) {
+        std::unique_lock lock(windowMutex);
+        auto watermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(ts, originId, sequenceNumber);
         NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
                                  << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
-            auto beforeMin = getMinWatermark();
-            originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
-            auto afterMin = getMinWatermark();
-            if (beforeMin < afterMin) {
-                NES_DEBUG("AbstractWindowHandler trigger for before=" << beforeMin << " afterMin=" << afterMin);
+            auto oldWatermark = watermarkProcessor->getCurrentWatermark();
+            watermarkProcessor->updateWatermark(watermarkBarrier);
+            auto newWatermark = watermarkProcessor->getCurrentWatermark();
+            if (oldWatermark < newWatermark) {
+                NES_DEBUG("AbstractWindowHandler trigger for before=" << oldWatermark << " afterMin=" << newWatermark);
                 trigger();
             }
         } else {
-            originIdToMaxTsMap[originId] = std::max(originIdToMaxTsMap[originId], ts);
+            watermarkProcessor->updateWatermark(watermarkBarrier);
         }
     }
 
@@ -204,7 +163,9 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
     }
 
   protected:
+    mutable std::recursive_mutex windowMutex;
     LogicalWindowDefinitionPtr windowDefinition;
+    NodeEngine::Transactional::WatermarkProcessorPtr watermarkProcessor;
     std::atomic_bool running;
     WindowManagerPtr windowManager;
     std::map<uint64_t, uint64_t> originIdToMaxTsMap;

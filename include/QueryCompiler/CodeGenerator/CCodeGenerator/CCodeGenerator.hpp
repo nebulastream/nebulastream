@@ -205,6 +205,7 @@ class CCodeGenerator : public CodeGenerator {
     getWindowOperatorHandler(const PipelineContextPtr& context, const VariableDeclaration& tupleBufferVariable, uint64_t index);
     static BinaryOperatorStatement getWatermark(const VariableDeclaration& tupleBufferVariable);
     static BinaryOperatorStatement getOriginId(const VariableDeclaration& tupleBufferVariable);
+    BinaryOperatorStatement getSequenceNumber(VariableDeclaration tupleBufferVariable);
 
     TypeCastExprStatement getTypedBuffer(const VariableDeclaration& tupleBufferVariable,
                                          const StructDeclaration& structDeclaration);
@@ -215,6 +216,7 @@ class CCodeGenerator : public CodeGenerator {
                                          const VariableDeclaration& inputBufferVariable);
     BinaryOperatorStatement setOriginId(const VariableDeclaration& tupleBufferVariable,
                                         const VariableDeclaration& inputBufferVariable);
+    BinaryOperatorStatement setSequenceNumber(VariableDeclaration tupleBufferVariable, VariableDeclaration inputBufferVariable);
 
     static BinaryOperatorStatement allocateTupleBuffer(const VariableDeclaration& pipelineContext);
     static BinaryOperatorStatement emitTupleBuffer(const VariableDeclaration& pipelineContext,

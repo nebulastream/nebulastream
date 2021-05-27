@@ -20,10 +20,10 @@ namespace NES::NodeEngine::Transactional {
 WatermarkBarrier::WatermarkBarrier(WatermarkTs ts, BarrierSequenceNumber sequenceNumber, OriginId origin)
     : ts(ts), sequenceNumber(sequenceNumber), origin(origin) {}
 
-WatermarkTs WatermarkBarrier::getTs() const { return ts; }
+WatermarkTs const WatermarkBarrier::getTs() const { return ts; }
 
-BarrierSequenceNumber WatermarkBarrier::getSequenceNumber() const { return sequenceNumber; }
+BarrierSequenceNumber const WatermarkBarrier::getSequenceNumber() const { return sequenceNumber; }
 
-OriginId WatermarkBarrier::getOrigin() const { return origin; }
+OriginId const WatermarkBarrier::getOrigin() const { return origin; }
 
 }// namespace NES::NodeEngine::Transactional

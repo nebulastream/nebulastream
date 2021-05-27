@@ -84,9 +84,6 @@ std::optional<NodeEngine::TupleBuffer> CSVSource::receiveData() {
     fillBuffer(buffer);
     NES_DEBUG("CSVSource::receiveData filled buffer with tuples=" << buffer.getNumberOfTuples());
 
-    generatedTuples += buffer.getNumberOfTuples();
-    generatedBuffers++;
-
     if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }

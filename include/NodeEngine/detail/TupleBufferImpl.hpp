@@ -116,6 +116,12 @@ class BufferControlBlock {
     void setWatermark(uint64_t watermark);
 
     /**
+     * @brief method to set the sequenceNumber
+     * @param value
+     */
+    void setSequenceNumber(uint64_t sequenceNumber);
+
+    /**
      * @brief get id where this buffer was created
      * @return origin id
      */
@@ -146,7 +152,8 @@ class BufferControlBlock {
   private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
-    int64_t watermark = 0;
+    uint64_t watermark = 0;
+    uint64_t sequenceNumber = 0;
     int64_t creationTimestamp{};
     uint64_t originId = 0;
 
@@ -181,6 +188,7 @@ class BufferControlBlock {
     std::mutex owningThreadsMutex;
     std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
 #endif
+    uint64_t getSequenceNumber();
 };
 
 /**

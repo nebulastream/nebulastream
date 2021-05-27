@@ -18,6 +18,7 @@
 #define INCLUDE_TUPLEBUFFER_H_
 
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
+#include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -208,6 +209,18 @@ class TupleBuffer {
 
     /// @brief get the creation timestamp as a timestamp
     [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
+
+    /**
+    * @brief method to set the watermark with a timestamp
+    * @param value timestamp
+    */
+    void setSequenceNumber(uint64_t watermarkBarrier);
+
+    /**
+     * @brief method to get the sequence number
+     * @return sequenceNumber
+     */
+    uint64_t getSequenceNumber() const noexcept;
 
     /// @brief set the creation timestamp with a timestamp
     inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
