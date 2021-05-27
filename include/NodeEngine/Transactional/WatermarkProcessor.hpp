@@ -19,7 +19,9 @@
 
 #include <NodeEngine/Transactional/LocalWatermarkProcessor.hpp>
 #include <NodeEngine/Transactional/WatermarkBarrier.hpp>
+#include <map>
 #include <memory>
+#include <mutex>
 namespace NES::NodeEngine::Transactional {
 
 /**
@@ -63,9 +65,10 @@ class WatermarkProcessor {
     [[nodiscard]] WatermarkTs getCurrentWatermark() const;
 
   private:
+    mutable std::mutex watermarkLatch;
     const uint64_t numberOfOrigins;
     // The watermark processor maintains a local watermark processor for each origin.
-    std::vector<std::unique_ptr<LocalWatermarkProcessor>> localWatermarkProcessor;
+    std::map<uint64_t, std::unique_ptr<LocalWatermarkProcessor>> localWatermarkProcessor;
 };
 
 }// namespace NES::NodeEngine::Transactional
