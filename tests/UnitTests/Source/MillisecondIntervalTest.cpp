@@ -42,6 +42,7 @@ struct __attribute__((packed)) ysbRecord {
 
     ysbRecord() {
         event_type[0] = '-';// invalid record
+        event_type[1] = '\0';
         current_ms = 0;
         ip = 0;
     }
@@ -142,14 +143,16 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
+        // will be handled by issue #1612, test is disabled
+        // use WindowDeploymentTest->testYSBWindow, where getBuffer is cast to ysbRecord
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
-            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
+            auto record = optBuf->getBufferAs<ysbRecord>() + i * tuple_size;
+            std::cout << "i=" << i << " record.ad_type: " << record->ad_type << ", record.event_type: " << record->event_type
                       << std::endl;
-            EXPECT_STREQ(record.ad_type, "banner78");
-            EXPECT_TRUE((!strcmp(record.event_type, "view") || !strcmp(record.event_type, "click")
-                         || !strcmp(record.event_type, "purchase")));
+            EXPECT_STREQ(record->ad_type, "banner78");
+            EXPECT_TRUE((!strcmp(record->event_type, "view") || !strcmp(record->event_type, "click")
+                         || !strcmp(record->event_type, "purchase")));
             i++;
         }
     }
