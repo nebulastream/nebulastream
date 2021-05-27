@@ -223,7 +223,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     * @param operatorId the id of the source
     * @return true if it went through
     */
-    bool addUpdateNetworkSink(OperatorId operatorId);
+    bool addRemoveQEP(OperatorId operatorId);
 
     /**
      * @return true if thread pool is running
@@ -262,6 +262,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
 
     bool addSoftEndOfStream(OperatorId sourceId);
     bool addHardEndOfStream(OperatorId sourceId);
+    bool addRemoveQEPReconfiguration(OperatorId sourceId);
 
     /**
      * @brief Returns the next free task id

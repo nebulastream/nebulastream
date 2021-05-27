@@ -784,18 +784,15 @@ bool QueryManager::addEndOfStream(OperatorId sourceId, bool graceful) {
     return true;
 }
 
-bool QueryManager::addUpdateNetworkSink(OperatorId sourceId){
+bool QueryManager::addRemoveQEP(OperatorId sourceId){
     std::shared_lock queryLock(queryMutex);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::unique_lock lock(workMutex);
 #endif
-    bool isSourcePipeline = sourceIdToSuccessorMap.find(sourceId) != sourceIdToSuccessorMap.end();
-    NES_DEBUG("QueryManager: QueryManager::addUpdateNetworkSink for source operator " << sourceId <<  " end "
-                                                                                << isSourcePipeline);
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool no longer running");
-    NES_ASSERT2_FMT(isSourcePipeline, "invalid source");
     NES_ASSERT2_FMT(sourceIdToExecutableQueryPlanMap.find(sourceId) != sourceIdToExecutableQueryPlanMap.end(),
                     "Operator id to query map for operator is empty");
+    addRemoveQEPReconfiguration(sourceId);
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     cv.notify_all();
 #endif
@@ -1138,5 +1135,60 @@ uint64_t QueryManager::getNodeId() const { return nodeEngineId; }
 bool QueryManager::isThreadPoolRunning() const { return threadPool != nullptr; }
 
 uint64_t QueryManager::getNextTaskId() { return ++taskIdCounter; }
+
+bool QueryManager::addRemoveQEPReconfiguration(OperatorId sourceId) {
+    auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
+    auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
+    NES_ASSERT(!!optBuffer, "invalid buffer");
+    auto buffer = optBuffer.value();
+
+    //use in-place construction to create the reconfig task within a buffer
+    new (buffer.getBuffer()) ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                                    RemoveQEP,
+                                                    threadPool->getNumberOfThreads(),
+                                                    executableQueryPlan);
+    NES_DEBUG("hard end-of-stream opId=" << sourceId << " reconfType=" <<  RemoveQEP
+                                         << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
+                                         << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
+                                         << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());
+
+    auto pipelineContext =
+        std::make_shared<detail::ReconfigurationPipelineExecutionContext>(executableQueryPlan->getQuerySubPlanId(),
+                                                                          inherited0::shared_from_this());
+    auto pipeline = Execution::ExecutablePipeline::create(-1,// any query plan
+                                                          executableQueryPlan->getQuerySubPlanId(),
+                                                          pipelineContext,
+                                                          reconfigurationExecutable,
+                                                          1,
+                                                          std::vector<Execution::SuccessorExecutablePipeline>(),
+                                                          true);
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
+    std::stack<Task> temp;
+    while (!taskQueue.empty()) {
+        Task task = taskQueue.front();
+        auto executable = task.getExecutable();
+        if (auto executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
+            if ((*executablePipeline)->isReconfiguration()) {
+                temp.push(task);
+                taskQueue.pop_front();
+            } else {
+                break;// reached a data task
+            }
+        } else {
+            break;// reached a data task
+        }
+    }
+    for (auto i = 0; i < threadPool->getNumberOfThreads(); ++i) {
+        taskQueue.emplace_front(pipeline, buffer);
+    }
+    while (!temp.empty()) {
+        taskQueue.emplace_front(temp.top());
+        temp.pop();
+    }
+#else
+    NES_ASSERT2_FMT(false, "not supported yet");
+#endif
+    return true;
+}
 
 }// namespace NES::Runtime
