@@ -119,7 +119,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      */
     void updateMaxTs(uint64_t ts, uint64_t originId, uint64_t sequenceNumber) {
         std::unique_lock lock(windowMutex);
-        auto watermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(ts, originId, sequenceNumber);
+        auto watermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(ts, sequenceNumber, originId);
         NES_DEBUG("updateMaxTs=" << ts << " orId=" << originId << " current val=" << originIdToMaxTsMap[originId]
                                  << " new val=" << std::max(originIdToMaxTsMap[originId], ts));
         if (windowDefinition->getTriggerPolicy()->getPolicyType() == Windowing::triggerOnWatermarkChange) {
