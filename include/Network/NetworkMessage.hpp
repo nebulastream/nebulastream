@@ -48,7 +48,7 @@ enum MessageType {
     /// message type of an event buffer
     kEventBuffer,
     /// message type when NetworkSinks are reconfigured to point elsewhere
-    kUpdateNetworkSink,
+    kRemoveQEP,
 };
 
 /// this enum defines the errors that can occur in the network stack logic
@@ -147,11 +147,11 @@ class ErrorMessage : public ExchangeMessage {
     const ErrorType error;
 };
 
-class UpdateNetworkSinkMessage : public ExchangeMessage {
+class RemoveQEPMessage : public ExchangeMessage {
   public:
-    static constexpr MessageType MESSAGE_TYPE = kUpdateNetworkSink;
+    static constexpr MessageType MESSAGE_TYPE = kRemoveQEP;
 
-    explicit UpdateNetworkSinkMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
+    explicit RemoveQEPMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
 
 };
 

@@ -255,14 +255,14 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     exchangeProtocol.onEndOfStream(eosMsg);
                     break;
                 }
-                case Messages::kUpdateNetworkSink: {
+                case Messages::kRemoveQEP: {
                     // if server receives a message that networkSinks have been updated
-                    zmq::message_t networkSinkUpdateEnvelope;
-                    auto optRetSize = dispatcherSocket.recv(networkSinkUpdateEnvelope, kZmqRecvDefault);
+                    zmq::message_t removeQEPEnvelope;
+                    auto optRetSize = dispatcherSocket.recv(removeQEPEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
-                    auto unsMsg = *networkSinkUpdateEnvelope.data<Messages::UpdateNetworkSinkMessage>();
-                    NES_DEBUG("ZmqServer:UpdateNetworkSinkMessage received for channel " << unsMsg.getChannelId());
-                    exchangeProtocol.onNetworkSinkUpdate(unsMsg);
+                    auto removeQEPMsg = *removeQEPEnvelope.data<Messages::RemoveQEPMessage>();
+                    NES_DEBUG("ZmqServer:UpdateNetworkSinkMessage received for channel " << removeQEPMsg.getChannelId());
+                    exchangeProtocol.onRemoveQEP(removeQEPMsg);
                     break;
                 }
                 default: {

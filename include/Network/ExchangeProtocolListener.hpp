@@ -51,7 +51,7 @@ class ExchangeProtocolListener {
     /**
      * @brief called on server side when an updateNetworkSinkMessage is revieced
      */
-    virtual void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage) = 0;
+    virtual void onRemoveQEP(Messages::RemoveQEPMessage) = 0;
 };
 }// namespace Network
 }// namespace NES

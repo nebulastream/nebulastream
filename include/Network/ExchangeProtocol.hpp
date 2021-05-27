@@ -72,7 +72,7 @@ class ExchangeProtocol {
      */
     void onEndOfStream(Messages::EndOfStreamMessage endOfStreamMessage);
 
-    void onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage updateNetworkSinkMessage);
+    void onRemoveQEP(Messages::RemoveQEPMessage updateNetworkSinkMessage);
     /**
      * @brief getter for the PartitionManager
      * @return the PartitionManager

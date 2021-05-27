@@ -167,7 +167,7 @@ void OutputChannel::shutdownZMQSocket() {
     if (isClosed) {
         return;
     }
-    sendMessage<Messages::UpdateNetworkSinkMessage>(zmqSocket, channelId);
+    sendMessage<Messages::RemoveQEPMessage>(zmqSocket, channelId);
     zmqSocket.close();
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;

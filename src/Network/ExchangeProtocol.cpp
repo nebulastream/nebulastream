@@ -80,19 +80,19 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
         protocolListener->onServerError(Messages::ErrorMessage(endOfStreamMessage.getChannelId(), Messages::kUnknownPartition));
     }
 }
-void ExchangeProtocol::onNetworkSinkUpdate(Messages::UpdateNetworkSinkMessage updateNetworkSinkMessage) {
-    if (partitionManager->isRegistered(updateNetworkSinkMessage.getChannelId().getNesPartition())) {
-        if (partitionManager->unregisterSubpartition(updateNetworkSinkMessage.getChannelId().getNesPartition())) {
-            protocolListener->onNetworkSinkUpdate(updateNetworkSinkMessage);
+void ExchangeProtocol::onRemoveQEP(Messages::RemoveQEPMessage removeQEPMessage) {
+    if (partitionManager->isRegistered(removeQEPMessage.getChannelId().getNesPartition())) {
+        if (partitionManager->unregisterSubpartition(removeQEPMessage.getChannelId().getNesPartition())) {
+            protocolListener->onRemoveQEP(removeQEPMessage);
         } else {
             NES_DEBUG("ExchangeProtocol: updateNetworkSink message received from "
-                          << updateNetworkSinkMessage.getChannelId().toString() << " but there is still some active subpartition: "
-                          << partitionManager->getSubpartitionCounter(updateNetworkSinkMessage.getChannelId().getNesPartition()));
+                          << removeQEPMessage.getChannelId().toString() << " but there is still some active subpartition: "
+                          << partitionManager->getSubpartitionCounter(removeQEPMessage.getChannelId().getNesPartition()));
         }
     } else {
         NES_ERROR("ExchangeProtocol: updateNetworkSink message received from "
-                      << updateNetworkSinkMessage.getChannelId().toString() << " however the partition is not registered on this worker");
-        protocolListener->onServerError(Messages::ErrorMessage(updateNetworkSinkMessage.getChannelId(), Messages::kUnknownPartition));
+                      << removeQEPMessage.getChannelId().toString() << " however the partition is not registered on this worker");
+        protocolListener->onServerError(Messages::ErrorMessage(removeQEPMessage.getChannelId(), Messages::kUnknownPartition));
     }
 
 }

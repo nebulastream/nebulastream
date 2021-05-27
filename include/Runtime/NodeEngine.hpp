@@ -236,7 +236,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
     * @brief this callback is called once an network sink update message arrives
     */
-    void onNetworkSinkUpdate(Network::Messages::UpdateNetworkSinkMessage) override;
+    void onRemoveQEP(Network::Messages::RemoveQEPMessage) override;
 
     /**
      * @brief this callback is called once an error is raised on the server side
