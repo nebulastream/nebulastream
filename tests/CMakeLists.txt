@@ -130,10 +130,15 @@ add_executable(topology-tests "UnitTests/Topology/TopologyTest.cpp")
 target_link_libraries(topology-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-tests COMMAND topology-tests)
 
-### NES Topology Tests ###
+### NES TopologyProperty Tests ###
 add_executable(topology-property-tests "UnitTests/Topology/TopologyPropertyTest.cpp")
 target_link_libraries(topology-property-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-property-tests COMMAND topology-property-tests)
+
+### NES TopologyIterator Test ###
+add_executable(topology-iterator-tests "UnitTests/Topology/TopologyIteratorTest.cpp")
+target_link_libraries(topology-iterator-tests nes ${GTEST_LIBRARIES})
+add_test(NAME topology-iterator-tests COMMAND topology-iterator-tests)
 
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/NodeEngine/BufferManagerTest.cpp" UnitTests/CoordinatorEngine/CoordinatorEngineTest.cpp)
