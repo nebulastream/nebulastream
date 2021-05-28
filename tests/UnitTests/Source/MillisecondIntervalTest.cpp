@@ -147,7 +147,7 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
         // use WindowDeploymentTest->testYSBWindow, where getBuffer is cast to ysbRecord
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            auto record = optBuf->getBufferAs<ysbRecord>() + i * tuple_size;
+            auto record = optBuf->getBufferAs<ysbRecord>() + i;
             std::cout << "i=" << i << " record.ad_type: " << record->ad_type << ", record.event_type: " << record->event_type
                       << std::endl;
             EXPECT_STREQ(record->ad_type, "banner78");
