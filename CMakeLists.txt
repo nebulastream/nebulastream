@@ -190,14 +190,15 @@ message("AVX2 found=" ${AVX2_FOUND})
 
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    find_package(Folly)
-    if (FOLLY_FOUND)
-        message(STATUS "Found folly: ${FOLLY_INCLUDE_DIR}")
-        include_directories(${FOLLY_INCLUDE_DIR})
-        set(LIBRARIES ${LIBRARIES} ${FOLLY_LIBRARIES})
-    else (FOLLY_FOUND)
-        message(FATAL_ERROR "Cannot find folly")
-    endif (FOLLY_FOUND)
+    find_package(folly CONFIG REQUIRED)
+#    if (FOLLY_FOUND)
+#        message(STATUS "Found folly: ${FOLLY_INCLUDE_DIR}")
+#        include_directories(${FOLLY_INCLUDE_DIR})
+#        set(LIBRARIES ${LIBRARIES} ${FOLLY_LIBRARIES})
+#    else (FOLLY_FOUND)
+#        message(FATAL_ERROR "Cannot find folly")
+#    endif (FOLLY_FOUND)
+    set(LIBRARIES ${LIBRARIES} Folly::folly Folly::folly_deps)
 endif ()
 
 
