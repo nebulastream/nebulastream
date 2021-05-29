@@ -17,6 +17,8 @@
 #ifndef NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #define NES_INCLUDE_WINDOWING_WINDOWACTIONS_EXECUTABLEWINDOWACTION_HPP_
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
@@ -41,6 +43,12 @@ class BaseExecutableWindowAction {
                           uint64_t lastWatermark) = 0;
 
     virtual std::string toString() = 0;
+
+    void emitBuffer(NodeEngine::TupleBuffer& tupleBuffer) {
+        emitSequenceNumber++;
+        tupleBuffer.setSequenceNumber(emitSequenceNumber);
+        weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
+    };
 
     void setup(const NodeEngine::Execution::PipelineExecutionContextPtr& executionContext) {
         this->weakExecutionContext = executionContext;
