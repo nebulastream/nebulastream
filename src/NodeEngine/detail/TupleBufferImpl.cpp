@@ -87,9 +87,15 @@ MemorySegment::~MemorySegment() {
             NES_ASSERT(refCnt == 0,
                        "[MemorySegment] invalid reference counter" << refCnt <<" on mem segment dtor");
         }
+
+        // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
+        // have to call the destructor, as the memory segemnt that contains the controlBlock is managed separately.
         if ((ptr + size) != reinterpret_cast<uint8_t*>(controlBlock)) {
             delete controlBlock;
+        } else {
+            controlBlock->~BufferControlBlock();
         }
+
         free(ptr);
         ptr = nullptr;
     }
