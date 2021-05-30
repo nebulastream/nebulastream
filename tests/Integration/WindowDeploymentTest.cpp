@@ -233,7 +233,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
             }
         };
 
-        auto records = buffer.getBufferAs<YsbRecord>();
+        auto records = buffer.getBuffer<YsbRecord>();
         auto ts =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();

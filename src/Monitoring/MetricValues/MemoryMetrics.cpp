@@ -46,7 +46,7 @@ SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) {
 }
 
 void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(MemoryMetrics) < buf.getBufferSize(), "MemoryMetrics: Content does not fit in TupleBuffer");
 
     memcpy(tbuffer + byteOffset, &metrics, sizeof(MemoryMetrics));

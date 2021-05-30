@@ -203,7 +203,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
 
-        InputTuple* tuples = buf.getBufferAs<InputTuple>();
+        InputTuple* tuples = buf.getBuffer<InputTuple>();
 
         for (uint32_t i = 0; i < tupleCnt; i++) {
             tuples[i].id = i;

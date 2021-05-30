@@ -153,7 +153,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
 
     ExecutionResult
     execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
-        auto tuples = inputTupleBuffer.getBufferAs<uint64_t>();
+        auto tuples = inputTupleBuffer.getBuffer<uint64_t>();
 
         NES_INFO("Test: Start execution");
 
@@ -173,7 +173,7 @@ class TextExecutablePipeline : public ExecutablePipelineStage {
             TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
 
             NES_DEBUG("TEST: got buffer");
-            auto arr = outputBuffer.getBufferAs<uint32_t>();
+            auto arr = outputBuffer.getBuffer<uint32_t>();
             arr[0] = static_cast<uint32_t>(sum.load());
             outputBuffer.setNumberOfTuples(1);
             NES_DEBUG("TEST: " << this << " written " << arr[0]);

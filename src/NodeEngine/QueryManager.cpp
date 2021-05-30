@@ -64,7 +64,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
         NES_TRACE("QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread "
                   << workerContext.getId());
         auto queryManager = pipelineContext.getQueryManager();
-        auto* task = buffer.getBufferAs<ReconfigurationMessage>();
+        auto* task = buffer.getBuffer<ReconfigurationMessage>();
         NES_TRACE(
             "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait on thread "
             << workerContext.getId());

@@ -88,7 +88,7 @@ DynamicRowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::share
     }
 
     // via pointer arithmetic gets the starting field address
-    auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]);
+    auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBuffer<uint8_t>()[0]);
     auto offSet = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
     auto basePointer = bufferBasePointer + offSet;
 

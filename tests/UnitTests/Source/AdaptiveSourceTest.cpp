@@ -96,7 +96,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
             uint64_t offset = 0;
             offset += sizeof(uint32_t);
             uint32_t val = std::stoul(tokens[0].c_str());
-            memcpy(tupleBuffer.getBufferAs<char>() + offset + i * 4096, &val, 4);
+            memcpy(tupleBuffer.getBuffer<char>() + offset + i * 4096, &val, 4);
             ++i;
         }
         generatedTuples += generated_tuples_this_pass;

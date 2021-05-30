@@ -79,7 +79,7 @@ DynamicColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex,
         NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layoutBuffer->getFieldSizes().size() << " >= " << fieldIndex);
     }
 
-    auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBufferAs<uint8_t>()[0]);
+    auto bufferBasePointer = &(layoutBuffer->getTupleBuffer().getBuffer<uint8_t>()[0]);
     auto fieldOffset = layoutBuffer->calcOffset(0, fieldIndex, boundaryChecks);
 
     T* basePointer = reinterpret_cast<T*>(bufferBasePointer + fieldOffset);
