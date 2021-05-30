@@ -1380,7 +1380,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
             uint64_t timestamp;
         };
 
-        auto records = buffer.getBufferAs<Record>();
+        auto records = buffer.getBuffer<Record>();
         auto ts =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();
@@ -1408,7 +1408,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
             uint64_t timestamp;
         };
 
-        auto records = buffer.getBufferAs<Record>();
+        auto records = buffer.getBuffer<Record>();
         auto ts =
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
                 .count();

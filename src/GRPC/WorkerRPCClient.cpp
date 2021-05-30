@@ -320,6 +320,7 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, Monitor
     request.mutable_monitoringplan()->CopyFrom(plan->serialize());
 
     ClientContext context;
+<<<<<<< HEAD
     MonitoringRegistrationReply reply;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
@@ -341,7 +342,7 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
     MonitoringDataRequest request;
     ClientContext context;
     MonitoringDataReply reply;
-    reply.set_buffer(buf.getBufferAs<char>());
+    reply.set_buffer(buf.getBuffer<char>());
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
@@ -349,7 +350,7 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
 
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
-        memcpy(buf.getBufferAs<char>(), reply.buffer().data(), schemaSizeBytes);
+        memcpy(buf.getBuffer<char>(), reply.buffer().data(), schemaSizeBytes);
         buf.setNumberOfTuples(1);
         reply.release_buffer();
         return true;

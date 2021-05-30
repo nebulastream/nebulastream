@@ -165,7 +165,7 @@ TEST_F(SourceTest, testBinarySource) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            ysbRecord record(*((ysbRecord*) (optBuf->getBuffer<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
                       << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
@@ -219,7 +219,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceOnePassOverFile) {
         if (optBuf.has_value()) {
             std::cout << "buffer no=" << bufferCnt << std::endl;
             for (uint64_t i = 0; i < optBuf->getNumberOfTuples(); i++) {
-                ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+                ysbRecord record(*((ysbRecord*) (optBuf->getBuffer<char>() + i * tuple_size)));
                 std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
                           << std::endl;
                 EXPECT_STREQ(record.ad_type, "banner78");
@@ -327,7 +327,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceWatermark) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            ysbRecord record(*((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            ysbRecord record(*((ysbRecord*) (optBuf->getBuffer<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type
                       << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
@@ -381,7 +381,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceIntTypes) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            everyIntTypeRecord record(*((everyIntTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            everyIntTypeRecord record(*((everyIntTypeRecord*) (optBuf->getBuffer<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.uint64_entry: " << record.uint64_entry
                       << ", record.int64_entry: " << record.int64_entry << ", record.uint32_entry: " << record.uint32_entry
                       << ", record.int32_entry: " << record.int32_entry << ", record.uint16_entry: " << record.uint16_entry
@@ -464,7 +464,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceFloatTypes) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            everyFloatTypeRecord record(*((everyFloatTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            everyFloatTypeRecord record(*((everyFloatTypeRecord*) (optBuf->getBuffer<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.float64_entry: " << record.float64_entry
                       << ", record.float32_entry: " << record.float32_entry << std::endl;
 
@@ -519,7 +519,7 @@ TEST_F(SourceTest, DISABLED_testCSVSourceBooleanTypes) {
         auto optBuf = source->receiveData();
         uint64_t i = 0;
         while (i * tuple_size < buffer_size - tuple_size && optBuf.has_value()) {
-            everyBooleanTypeRecord record(*((everyBooleanTypeRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
+            everyBooleanTypeRecord record(*((everyBooleanTypeRecord*) (optBuf->getBuffer<char>() + i * tuple_size)));
             std::cout << "i=" << i << " record.false_entry: " << record.false_entry
                       << ", record.true_entry: " << record.true_entry << ", record.falsey_entry: " << record.falsey_entry
                       << ", record.truthy_entry: " << record.truthy_entry << std::endl;
@@ -671,7 +671,7 @@ TEST_F(SourceTest, testLambdaSource) {
                     + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
             }
         };
-        auto ysbRecords = buffer.getBufferAs<Record>();
+        auto ysbRecords = buffer.getBuffer<Record>();
         for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
             //            auto record = ysbRecords[i];
             ysbRecords[i].userId = i;
@@ -699,7 +699,7 @@ TEST_F(SourceTest, testLambdaSource) {
     lambdaSource->open();
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
-        auto ysbRecords = optBuf.value().getBufferAs<Record>();
+        auto ysbRecords = optBuf.value().getBuffer<Record>();
 
         for (int i = 0; i < numberOfTuplesToProduce; i++) {
             std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
@@ -819,7 +819,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
                     + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
             }
         };
-        auto ysbRecords = buffer.getBufferAs<Record>();
+        auto ysbRecords = buffer.getBuffer<Record>();
         for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
             //            auto record = ysbRecords[i];
             ysbRecords[i].userId = i;
@@ -847,7 +847,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
     lambdaSource->open();
     while (lambdaSource->getNumberOfGeneratedBuffers() < numBuffers) {
         auto optBuf = lambdaSource->receiveData();
-        auto ysbRecords = optBuf.value().getBufferAs<Record>();
+        auto ysbRecords = optBuf.value().getBuffer<Record>();
 
         for (int i = 0; i < numberOfTuplesToProduce; i++) {
             std::cout << "Read rec i=" << i << " content=" << ysbRecords[i].toString() << std::endl;
@@ -894,7 +894,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
             uint64_t timestamp;
         };
         static int calls = 0;
-        auto records = buffer.getBufferAs<Record>();
+        auto records = buffer.getBuffer<Record>();
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = 1;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
@@ -1033,7 +1033,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
             uint64_t timestamp;
         };
 
-        auto records = buffer.getBufferAs<Record>();
+        auto records = buffer.getBuffer<Record>();
         auto ts = time(0);
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = u;
@@ -1051,7 +1051,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
             uint64_t timestamp;
         };
 
-        auto records = buffer.getBufferAs<Record>();
+        auto records = buffer.getBuffer<Record>();
         auto ts = time(0);
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = u;
@@ -1132,7 +1132,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
                 uint64_t timestamp;
             };
 
-            auto records = buffer.getBufferAs<Record>();
+            auto records = buffer.getBuffer<Record>();
             auto ts = time(0);
             for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
                 records[u].id = u;

@@ -88,7 +88,7 @@ class FormatIterator {
          * @return string in json representation
          */
         std::string dataJson() {
-            uint8_t* tuplePointer = &this->buffer.getBufferAs<uint8_t>()[currentSeek];
+            uint8_t* tuplePointer = &this->buffer.getBuffer<uint8_t>()[currentSeek];
 
             // Iterate over all fields in a tuple. Get field offsets from fieldOffsets array. Use fieldNames as keys and TupleBuffer
             // values as the corresponding values

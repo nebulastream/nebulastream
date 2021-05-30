@@ -95,7 +95,7 @@ web::json::value NetworkMetrics::toJson() {
 }
 
 void writeToBuffer(const NetworkMetrics& metrics, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    auto* tbuffer = buf.getBuffer<uint8_t>();
     uint64_t intNum = metrics.getInterfaceNum();
 
     uint64_t totalSize = byteOffset + sizeof(uint64_t) + sizeof(NetworkValues) * intNum;

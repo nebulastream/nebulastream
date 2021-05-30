@@ -23,7 +23,7 @@
 namespace NES {
 
 void writeToBuffer(uint64_t metric, NodeEngine::TupleBuffer& buf, uint64_t byteOffset) {
-    auto* tbuffer = buf.getBufferAs<uint8_t>();
+    auto* tbuffer = buf.getBuffer<uint8_t>();
     NES_ASSERT(byteOffset + sizeof(uint64_t) < buf.getBufferSize(), "Metric: Content does not fit in TupleBuffer");
 
     memcpy(tbuffer + byteOffset, &metric, sizeof(uint64_t));

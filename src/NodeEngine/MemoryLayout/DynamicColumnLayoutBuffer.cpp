@@ -36,7 +36,7 @@ DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer,
                                                      std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                                                      std::vector<COL_OFFSET_SIZE> columnOffsets)
     : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(dynamicColLayout) {
-    this->basePointer = tupleBuffer.getBufferAs<uint8_t>();
+    this->basePointer = tupleBuffer.getBuffer<uint8_t>();
 }
 
 }// namespace NES::NodeEngine::DynamicMemoryLayout

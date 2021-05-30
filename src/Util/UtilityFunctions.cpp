@@ -266,7 +266,7 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
 std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {
-        ss << buffer.getBufferAs<char>()[i];
+        ss << buffer.getBuffer<char>()[i];
     }
     return ss.str();
 }
@@ -305,7 +305,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
 
-    auto buf = buffer.getBufferAs<char>();
+    auto buf = buffer.getBuffer<char>();
     for (uint32_t i = 0; i < buffer.getNumberOfTuples() * schema->getSchemaSizeInBytes(); i += schema->getSchemaSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
@@ -328,7 +328,7 @@ std::string UtilityFunctions::prettyPrintTupleBuffer(NodeEngine::TupleBuffer& bu
 std::string UtilityFunctions::printTupleBufferAsCSV(NodeEngine::TupleBuffer& tbuffer, SchemaPtr schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
-    auto buffer = tbuffer.getBufferAs<char>();
+    auto buffer = tbuffer.getBuffer<char>();
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (uint64_t i = 0; i < numberOfTuples; i++) {
         uint64_t offset = 0;
