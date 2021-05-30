@@ -93,8 +93,9 @@ class TupleBuffer {
     /**
     * @return the content of the buffer as pointer to unsigned char
     */
-    template<typename T = uint8_t>
-    inline T* getBuffer() noexcept {
+    template<typename T = uint8_t> inline T* getBuffer() noexcept {
+        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
+        static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
     }
 
@@ -104,17 +105,6 @@ class TupleBuffer {
     bool isValid() const;
 
     TupleBuffer* operator&() = delete;
-
-    /**
-    * @tparam T
-    * @return the content of the buffer as pointer to T
-    */
-    template<typename T>
-    T* getBufferAs() {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(ispow2<alignof(T)>);
-        return reinterpret_cast<T*>(ptr);
-    }
 
     /**
     * @brief Increases the internal reference counter by one
