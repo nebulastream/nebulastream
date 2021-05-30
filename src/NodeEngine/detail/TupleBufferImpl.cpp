@@ -96,8 +96,8 @@ MemorySegment::~MemorySegment() {
             controlBlock->~BufferControlBlock();
         }
 
-        free(ptr);
-        ptr = nullptr;
+        // Free the pointer and set it to nullptr to avoid use after deallocation.
+        free(std::exchange(ptr, nullptr));
     }
 }
 
