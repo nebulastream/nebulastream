@@ -203,8 +203,8 @@ bool BufferControlBlock::release() {
         }
 #endif
         return true;
-    } else if (prevRefCnt == 0) {
-        NES_THROW_RUNTIME_ERROR("BufferControlBlock: releasing an already released buffer");
+    } else {
+        NES_ASSERT(prevRefCnt != 0, "BufferControlBlock: releasing an already released buffer");
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     {
