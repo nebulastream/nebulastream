@@ -49,14 +49,22 @@ TupleBuffer::TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.cont
 }
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
-    if (this == &other) {
+    if (this == std::addressof(other)) {
         return *this;
     }
-    controlBlock = other.controlBlock;
+
+    // Override the content of this with those of `other`
+    auto const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
     ptr = other.ptr;
     size = other.size;
-    if (controlBlock) {
-        controlBlock->retain();
+
+    // Update reference ounts: If the new and old controlBlocks differ, retain the new one and release the old one.
+    if (oldControlBlock != controlBlock) {
+        retain();
+
+        if (oldControlBlock) {
+            oldControlBlock->release();
+        }
     }
     return *this;
 }
