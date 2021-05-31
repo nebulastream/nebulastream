@@ -82,7 +82,7 @@ class MonitoringStackTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MonitoringStackTest, testCPUStats) {
+TEST_F(MonitoringStackTest, DISABLED_testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
     CpuMetrics cpuMetrics = cpuStats.measure();
     EXPECT_TRUE(cpuMetrics.getNumCores() > 0);
@@ -119,7 +119,7 @@ TEST_F(MonitoringStackTest, testNetworkStats) {
     }
 }
 
-TEST_F(MonitoringStackTest, testMetric) {
+TEST_F(MonitoringStackTest, DISABLED_testMetric) {
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
     Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
@@ -164,7 +164,7 @@ TEST_F(MonitoringStackTest, testMetric) {
     EXPECT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
-TEST_F(MonitoringStackTest, testMetricGroup) {
+TEST_F(MonitoringStackTest, DISABLED_testMetricGroup) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
