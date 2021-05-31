@@ -336,7 +336,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
     bool expected = true;
     if (!isRunning.compare_exchange_strong(expected, false)) {
         NES_WARNING("NodeEngine::stop: engine already stopped");
-        return false;
+        return true;
     }
     NES_DEBUG("NodeEngine::stop: going to stop the node engine");
     std::unique_lock lock(engineMutex);
