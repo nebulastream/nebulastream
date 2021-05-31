@@ -84,7 +84,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
      * @param numOfBuffers the total number of buffers in the pool
      * @param withAlignment the alignment of each buffer, default is 0, i.e., no alignment. This value must be a pow of two and smaller than page size
      */
-    explicit BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment = 0);
+    explicit BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment = 64);
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
