@@ -126,6 +126,7 @@ class TupleBuffer {
 
     /// @brief Print the buffer's address.
     friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) {
+        // TODO: C++2a: change to std::bit_cast
         return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
     }
 
