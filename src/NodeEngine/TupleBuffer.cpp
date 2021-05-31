@@ -49,7 +49,7 @@ TupleBuffer::TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.cont
 }
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
-    if (this == std::addressof(other)) {
+    if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
         return *this;
     }
 
@@ -58,7 +58,7 @@ TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
     ptr = other.ptr;
     size = other.size;
 
-    // Update reference ounts: If the new and old controlBlocks differ, retain the new one and release the old one.
+    // Update reference counts: If the new and old controlBlocks differ, retain the new one and release the old one.
     if (oldControlBlock != controlBlock) {
         retain();
 
@@ -70,18 +70,18 @@ TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
 }
 
 TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) {
-    if (this == std::addressof(other)) {
+
+    // Especially for rvalues, the following branch should most likely never be taken if the caller writes
+    // reasonable code. Therefore, this branch is considered unlikely.
+    if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
         return *this;
     }
-    if (controlBlock) {
-        controlBlock->release();
-    }
-    controlBlock = other.controlBlock;
-    ptr = other.ptr;
-    size = other.size;
-    other.controlBlock = nullptr;
-    other.ptr = nullptr;
-    other.size = 0;
+
+    // Swap content of this with those of `other` to let the other's destructor take care of releasing the overwritten
+    // resource.
+    using std::swap;
+    swap(*this, other);
+
     return *this;
 }
 
@@ -122,9 +122,12 @@ void TupleBuffer::setCreationTimestamp(uint64_t value) { controlBlock->setCreati
 uint64_t TupleBuffer::getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
 
 void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
-    std::swap(lhs.ptr, rhs.ptr);
-    std::swap(lhs.size, rhs.size);
-    std::swap(lhs.controlBlock, rhs.controlBlock);
+    // Enable ADL to spell out to onlookers how swap should be used.
+    using std::swap;
+
+    swap(lhs.ptr, rhs.ptr);
+    swap(lhs.size, rhs.size);
+    swap(lhs.controlBlock, rhs.controlBlock);
 }
 
 }// namespace NES::NodeEngine
