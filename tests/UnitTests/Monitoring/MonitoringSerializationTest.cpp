@@ -82,7 +82,7 @@ class MonitoringSerializationTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MonitoringSerializationTest, testSerializationMetricsCpu) {
+TEST_F(MonitoringSerializationTest, DISABLED_testSerializationMetricsCpu) {
     auto cpuStats = MetricUtils::CPUStats();
     auto tupleBuffer = bufferManager->getBufferBlocking();
 
@@ -126,7 +126,7 @@ TEST_F(MonitoringSerializationTest, testSerializationMetricsNetworkMetrics) {
     EXPECT_EQ(measuredVal, deserNw);
 }
 
-TEST_F(MonitoringSerializationTest, testSerializationGroups) {
+TEST_F(MonitoringSerializationTest, DISABLED_testSerializationGroups) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
@@ -155,7 +155,7 @@ TEST_F(MonitoringSerializationTest, testSerializationGroups) {
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, metricGroup->createSchema()));
 }
 
-TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
+TEST_F(MonitoringSerializationTest, DISABLED_testDeserializationMetricValues) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
@@ -198,7 +198,7 @@ TEST_F(MonitoringSerializationTest, testDeserializationMetricValues) {
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 }
 
-TEST_F(MonitoringSerializationTest, testSerDeserMetricGroup) {
+TEST_F(MonitoringSerializationTest, DISABLED_testSerDeserMetricGroup) {
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
 

@@ -65,7 +65,7 @@ class E2ECoordinatorMultiWorkerTest : public testing::Test {
     static void TearDownTestCase() { NES_INFO("Tear down ActorCoordinatorWorkerTest test class."); }
 };
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingValidUserQueryWithFileOutputTwoWorker) {
     NES_INFO(" start coordinator");
     std::string outputFilePath = "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
