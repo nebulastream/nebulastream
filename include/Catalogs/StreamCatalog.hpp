@@ -190,7 +190,8 @@ class StreamCatalog {
     // BDAPRO create new std::map<std::string, std::vector<StreamCatalogEntryPtr>> physicalStreams
     // BDAPRO modify logicalToPhysicalStreamMapping to std::map<std::string, std::string>>
     //map logical stream to physical source
-    std::map<std::string, std::vector<StreamCatalogEntryPtr>> logicalToPhysicalStreamMapping;
+    std::map<std::string, std::vector<StreamCatalogEntryPtr>> physicalStreams;
+    std::map<std::string, std::string> logicalToPhysicalStreamMapping;
 
     void addDefaultStreams();
 };
