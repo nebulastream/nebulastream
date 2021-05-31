@@ -211,7 +211,7 @@ TEST_F(MonitoringStackTest, testMetricGroup) {
 /**
  * @brief Tests that the schema from the sample method and the metric group are the same, so that no inconsistencies occur
  */
-TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
+TEST_F(MonitoringStackTest, DISABLED_testIndependentSamplingAndGrouping) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
@@ -242,7 +242,7 @@ TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
     NES_INFO(metricGroup->createSchema()->toString());
 }
 
-TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
+TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromGrpcClient) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
@@ -287,7 +287,7 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsBuffer) {
+TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsBuffer) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
@@ -339,7 +339,7 @@ TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsBuffer) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsJson) {
+TEST_F(MonitoringStackTest, DSIABLED_requestMonitoringDataFromServiceAsJson) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
