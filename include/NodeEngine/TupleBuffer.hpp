@@ -124,7 +124,10 @@ class TupleBuffer {
 
     void setNumberOfTuples(uint64_t numberOfTuples);
 
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) { return os << buff.ptr; }
+    /// @brief Print the buffer's address.
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) {
+        return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
+    }
 
     /**
      * @brief method to get the watermark as a timestamp
