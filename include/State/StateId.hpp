@@ -17,15 +17,32 @@
 #ifndef NES_STATEID_HPP
 #define NES_STATEID_HPP
 
-struct StateId
-{
-    uint32_t operatorId;
-    uint32_t subqueryId;
+namespace NES {
+    /**
+     * This structure represents a key in a hashmap of state variables, which is stored in the StateManager.
+     * The key defines a state variable in unique way consisting of a node id, handler id and a local state variable id
+     * for the case when an operator has more than one state variable.
+     */
+    struct StateId
+    {
+        uint64_t nodeId;
+        uint64_t handlerId;
+        uint32_t localId;
 
-    bool operator==(const StateId &other) const
-    { return (operatorId == other.operatorId
-              && subqueryId == other.subqueryId);
-    }
-};
+        friend bool operator==(const StateId &left, const StateId &right) {
+            return (left.nodeId == right.nodeId
+                    && left.handlerId == right.handlerId
+                    && left.localId == left.localId);
+        }
+    };
+}
+namespace std {
+    template<> struct hash <NES::StateId> {
+        uint64_t operator()(const NES::StateId& stateId) const {
+            typedef unsigned long ulong;
+            return ulong(stateId.nodeId << 16) | ulong(stateId.handlerId << 8) | ulong(stateId.localId);
+        }
+    };
+}
 
 #endif//NES_STATEID_HPP

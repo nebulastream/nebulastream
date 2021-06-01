@@ -71,17 +71,18 @@ class AggregationWindowHandler : public AbstractWindowHandler {
    * @brief Starts thread to check if the window should be triggered
    * @return boolean if the window thread is started
    */
-    bool start(NodeEngine::StateManagerPtr stateManager) override {
+    bool start(NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) override {
         std::unique_lock lock(windowMutex);
         this->stateManager = stateManager;
         auto expected = false;
+        StateId stateId = {stateManager->getNodeId(), id, localStateVariableId};
 
         //Defines a callback to execute every time a new key-value pair is created
         auto defaultCallback = [this](const KeyType&) {
             return new Windowing::WindowSliceStore<PartialAggregateType>(partialAggregateInitialValue);
         };
         this->windowStateVariable =
-            stateManager->registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(toString(), defaultCallback);
+            stateManager->registerStateWithDefault<KeyType, WindowSliceStore<PartialAggregateType>*>(stateId, defaultCallback);
         if (isRunning.compare_exchange_strong(expected, true)) {
             return executablePolicyTrigger->start(this->AbstractWindowHandler::shared_from_base<AggregationWindowHandler>());
         }
@@ -98,7 +99,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         bool result = false;
         if (isRunning.compare_exchange_strong(expected, false)) {
             result = executablePolicyTrigger->stop();
-            stateManager->unRegisterState(toString());
+            stateManager->unRegisterState(windowStateVariable);
         }
         NES_DEBUG("AggregationWindowHandler(" << handlerType << "," << id << "):  stop result =" << result);
         return result;

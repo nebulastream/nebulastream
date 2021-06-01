@@ -797,7 +797,7 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                          std::move(networkManagerCreator),
                          std::move(partitionManager),
                          std::move(queryCompiler),
-                         std::make_shared<NES::NodeEngine::StateManager>(),
+                         std::make_shared<NES::NodeEngine::StateManager>(0),
                          0,
                          64,
                          64,

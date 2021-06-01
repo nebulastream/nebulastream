@@ -67,7 +67,9 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     }
 
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
-               NodeEngine::StateManagerPtr stateManager) override;
+               NodeEngine::StateManagerPtr stateManager,
+               uint32_t localStateVariableId) override;
+
     void stop(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
 
     LogicalJoinDefinitionPtr getJoinDefinition();

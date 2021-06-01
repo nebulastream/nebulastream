@@ -202,6 +202,12 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     */
     StateManagerPtr getStateManager();
 
+        /**
+    * @brief getter of node id
+    * @return NodeEngineId
+    */
+    uint64_t getNodeEngineId();
+
     /**
      * @brief getter of buffer manager
      * @return bufferManager
