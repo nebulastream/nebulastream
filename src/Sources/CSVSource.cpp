@@ -161,9 +161,8 @@ void CSVSource::fillBuffer(NodeEngine::TupleBuffer& buf) {
             uint64_t fieldSize = field->size();
 
             NES_ASSERT2_FMT(fieldSize + offset + tupCnt * tupleSize < buf.getBufferSize(),
-                            "Overflow detected: buffer size = " << buf.getBufferSize()
-                                                                << " position = " << (offset + tupCnt * tupleSize)
-                                                                << " field size " << fieldSize);
+                            "Overflow detected: buffer size = " << buf.getBufferSize() << " position = "
+                                                                << (offset + tupCnt * tupleSize) << " field size " << fieldSize);
             if (field->isBasicType()) {
                 auto basicPhysicalField = std::dynamic_pointer_cast<BasicPhysicalType>(field);
                 if (basicPhysicalField->nativeType == BasicPhysicalType::UINT_64) {
