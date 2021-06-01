@@ -585,6 +585,8 @@ bool QueryManager::addSoftEndOfStream(OperatorId sourceId) {
 
 bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
     auto executableQueryPlan = sourceIdToExecutableQueryPlanMap[sourceId];
+
+#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     auto optBuffer = bufferManager->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(!!optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
@@ -609,7 +611,6 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
                                                           1,
                                                           std::vector<Execution::SuccessorExecutablePipeline>(),
                                                           true);
-#ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     std::stack<Task> temp;
     while (!taskQueue.empty()) {
         Task task = taskQueue.front();
@@ -633,7 +634,12 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
         temp.pop();
     }
 #else
-    NES_ASSERT2_FMT(false, "not supported yet");
+    auto reconfigurationToken = ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
+                                                       HardEndOfStream,
+                                                       1,
+                                                       executableQueryPlan);
+    reconfigurationToken.wait();
+    executableQueryPlan->postReconfigurationCallback(reconfigurationToken);
 #endif
     return true;
 }
