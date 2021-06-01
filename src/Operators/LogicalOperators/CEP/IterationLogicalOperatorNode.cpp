@@ -21,13 +21,13 @@
 
 namespace NES {
 
-IterationLogicalOperatorNode::IterationLogicalOperatorNode(std::shared_ptr<ConstantValueExpressionNode> minIterations,
-                                                           std::shared_ptr<ConstantValueExpressionNode> maxIterations, uint64_t id)
+IterationLogicalOperatorNode::IterationLogicalOperatorNode(uint64_t minIterations,
+                                                           uint64_t maxIterations, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), minIterations(minIterations), maxIterations(maxIterations) {}
 
-ConstantValueExpressionNodePtr IterationLogicalOperatorNode::getMinIterations() { return minIterations; }
+uint64_t IterationLogicalOperatorNode::getMinIterations() { return minIterations; }
 
-ConstantValueExpressionNodePtr IterationLogicalOperatorNode::getMaxIterations() { return maxIterations; }
+uint64_t IterationLogicalOperatorNode::getMaxIterations() { return maxIterations; }
 
 bool IterationLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<IterationLogicalOperatorNode>()->getId() == id;
