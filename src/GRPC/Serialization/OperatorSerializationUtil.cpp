@@ -141,10 +141,8 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         auto iterationDetails = SerializableOperator_CEPIterationDetails();
         auto iterationOperator = operatorNode->as<IterationLogicalOperatorNode>();
         // serialize CEP iteration iteration
-        ExpressionSerializationUtil::serializeExpression(iterationOperator->getMinIterations(),
-                                                         iterationDetails.mutable_miniteration());
-        ExpressionSerializationUtil::serializeExpression(iterationOperator->getMaxIterations(),
-                                                         iterationDetails.mutable_maxiteration());
+        iterationDetails.set_miniteration(iterationOperator->getMaxIterations());
+        iterationDetails.set_maxiteration(iterationOperator->getMaxIterations());
         serializedOperator->mutable_details()->PackFrom(iterationDetails);
     } else if (operatorNode->instanceOf<CentralWindowOperator>()) {
         // serialize window operator
@@ -261,9 +259,9 @@ OperatorNodePtr OperatorSerializationUtil::deserializeOperator(SerializableOpera
         auto serializedCEPIterationOperator = SerializableOperator_CEPIterationDetails();
         details.UnpackTo(&serializedCEPIterationOperator);
         // de-serialize cep iterations
-        auto maxIteration = ExpressionSerializationUtil::deserializeExpression(serializedCEPIterationOperator.mutable_maxiteration());
-        auto minIteration = ExpressionSerializationUtil::deserializeExpression(serializedCEPIterationOperator.mutable_miniteration());
-        operatorNode = LogicalOperatorFactory::createCEPIterationOperator(minIteration->as<ConstantValueExpressionNode>(), maxIteration->as<ConstantValueExpressionNode>());
+        auto maxIteration = serializedCEPIterationOperator.maxiteration();
+        auto minIteration = serializedCEPIterationOperator.miniteration();
+        operatorNode = LogicalOperatorFactory::createCEPIterationOperator(minIteration, maxIteration);
     } else if (details.Is<SerializableOperator_UnionDetails>()) {
         // de-serialize union operator
         NES_TRACE("OperatorSerializationUtil:: de-serialize to UnionLogicalOperator");

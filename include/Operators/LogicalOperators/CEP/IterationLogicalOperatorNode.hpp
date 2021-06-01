@@ -33,21 +33,21 @@ namespace NES {
  */
 class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    explicit IterationLogicalOperatorNode(std::shared_ptr<ConstantValueExpressionNode> minIterations,
-                                          std::shared_ptr<ConstantValueExpressionNode> maxIterations, OperatorId id);
+    explicit IterationLogicalOperatorNode(uint64_t minIterations,
+                                          uint64_t maxIterations, OperatorId id);
     ~IterationLogicalOperatorNode() = default;
 
     /**
     * @brief returns the minimal amount of iterations
     * @return amount of iterations
     */
-    ConstantValueExpressionNodePtr getMinIterations();
+    uint64_t getMinIterations();
 
     /**
    * @brief returns the maximal amount of iterations
    * @return amount of iterations
    */
-    ConstantValueExpressionNodePtr getMaxIterations();
+    uint64_t getMaxIterations();
 
     /**
      * @brief check if two operators of the same class are equivalent, here: equal number of minIterations and maxIterations
@@ -62,8 +62,8 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
     OperatorNodePtr copy() override;
 
   private:
-    const ConstantValueExpressionNodePtr minIterations;
-    const ConstantValueExpressionNodePtr maxIterations;
+    const uint64_t minIterations;
+    const uint64_t maxIterations;
 };
 
 }// namespace NES
