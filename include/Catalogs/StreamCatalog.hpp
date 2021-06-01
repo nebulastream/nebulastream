@@ -65,10 +65,17 @@ class StreamCatalog {
     bool removeLogicalStream(std::string logicalStreamName);
 
     /**
-   * @brief method to add a physical stream
-   * @caution combination of node and name has to be unique
-   * @return bool indicating success of insert stream
-   */
+     * @brief method to add a physical stream without a logical stream leading to a misconfigured physicalStream
+     * @param newEntry
+     * @return
+     */
+    bool addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry;
+
+        /**
+       * @brief method to add a physical stream
+       * @caution combination of node and name has to be unique
+       * @return bool indicating success of insert stream
+       */
     bool addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr entry);
 
     /**

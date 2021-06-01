@@ -111,19 +111,18 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
     }
 }
 
-/* BDAPRO implement new method to create physical stream without logical stream name
+// BDAPRO implement new method to create physical stream without logical stream name
+// BDAPRO - discuss why bool is necessary here. i.e. what should be checked here?
 bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry) {
     // check that entry does not contain a logical stream name
     // we wont check that now since there are other adjustments in the next issues to do that excludes this.
-    misconfiguredPhysicalStreams[newEntry.physicalStreamname] = newEntry; // basic idea
-
-
-    // add physical stream to StreamCatalog with predefined key
-
-
-
+    // BDAPRO add entry to misconfigured physical streams. - done
+    misconfiguredPhysicalStreams[newEntry->getPhysicalName()] = newEntry->getNode()->getId(); // discuss whether this is the correct id.
+    // BDAPRO add entry to hashIdToPhysicalStream mapping - done
+    hashIdToPhysicalStream[newEntry->getNode()->getId()] = newEntry;
+    return true;
 }
-*/
+
 
 // BDAPRO adjust to changes in StreamCatalogEntryPtr in case necessary
 bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry) {
