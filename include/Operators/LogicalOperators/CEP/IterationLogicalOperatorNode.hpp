@@ -33,8 +33,7 @@ namespace NES {
  */
 class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    explicit IterationLogicalOperatorNode(uint64_t minIterations,
-                                          uint64_t maxIterations, OperatorId id);
+    explicit IterationLogicalOperatorNode(uint64_t minIterations, uint64_t maxIterations, OperatorId id);
     ~IterationLogicalOperatorNode() = default;
 
     /**
