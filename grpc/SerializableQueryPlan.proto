@@ -26,3 +26,9 @@ message SerializableQueryPlan{
   uint64 queryId = 2;
   uint64 querySubPlanId = 3;
 }
+
+message SubmitQueryRequest {
+  SerializableQueryPlan queryPlan = 1;
+  string placement = 2;
+  string queryString = 3;
+}

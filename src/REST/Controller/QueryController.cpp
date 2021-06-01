@@ -170,7 +170,9 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                 try {
                     NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << body);
                     // decode string into protobuf message
-                    std::shared_ptr<SerializableQueryPlan> protobufMessage = std::make_shared<SerializableQueryPlan>();
+                    //std::shared_ptr<SerializableQueryPlan> protobufMessage = std::make_shared<SerializableQueryPlan>();
+                    std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
+
                     if(!protobufMessage->ParseFromArray(body.data(), body.size())){
                         json::value errorResponse{};
                         errorResponse["detail"] = json::value::string("Invalid Protobuf message");
@@ -178,8 +180,14 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                         return;
                     }
                     // decode protobuf message into c++ obj repr
-                    std::shared_ptr<QueryPlan> queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(protobufMessage.get()));
-                    QueryId queryId = queryService->addQueryRequest(queryPlan, "");
+                    //std::shared_ptr<QueryPlan> queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(protobufMessage.get()));
+                    SerializableQueryPlan* queryPlanSerialized = protobufMessage->mutable_queryplan();
+                    QueryPlanPtr queryPlan(QueryPlanSerializationUtil::deserializeQueryPlan(queryPlanSerialized));
+                    std::string* placementStrategy = protobufMessage->mutable_placement();
+                    std::string* queryString = protobufMessage->mutable_querystring();
+
+                    QueryId queryId = queryService->addQueryRequest(*queryString, queryPlan, *placementStrategy);
+
                     json::value restResponse{};
                     restResponse["queryId"] = json::value::number(queryId);
                     successMessageImpl(message, restResponse);

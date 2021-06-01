@@ -164,12 +164,18 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
                                                               + "/v1/nes/query/execute-query-ex");
 
-    QueryPlanPtr plan = QueryPlan::create();
+    QueryPlanPtr queryPlan = QueryPlan::create();
 
     //make a Protobuff object
-    SerializableQueryPlan* protobufMessage = QueryPlanSerializationUtil::serializeQueryPlan(plan);
+    SerializableQueryPlan* plan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
     //convert it to string for the request function
-    std::string msg = protobufMessage->SerializeAsString();
+    SubmitQueryRequest request;
+    request.set_querystring("");
+    request.set_placement("");
+    request.set_allocated_queryplan(plan);
+
+    std::string msg = request.SerializeAsString();
+
     web::json::value postJsonReturn;
     httpClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
@@ -245,12 +251,17 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     streamCatalog->addPhysicalStream("default_logical", sce);
 
     Query query = Query::from("default_logical");
-    QueryPlanPtr plan = query.getQueryPlan();
+    QueryPlanPtr queryPlan = query.getQueryPlan();
 
     //make a Protobuff object
-    SerializableQueryPlan* protobufMessage = QueryPlanSerializationUtil::serializeQueryPlan(plan);
-    //convert it to string for the request function
-    std::string msg = protobufMessage->SerializeAsString();
+    SerializableQueryPlan* plan = QueryPlanSerializationUtil::serializeQueryPlan(queryPlan);
+    SubmitQueryRequest request;
+    request.set_querystring("default_logical");
+    request.set_placement("");
+    request.set_allocated_queryplan(plan);
+
+    std::string msg = request.SerializeAsString();
+
     web::json::value postJsonReturn;
     httpClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
