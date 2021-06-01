@@ -1037,3 +1037,119 @@ TEST_F(QueryPlacementTest, testIFCOPPlacementOnBranchedTopology) {
     EXPECT_TRUE(isSource2PlacementValid);
     EXPECT_EQ(mapPlacementCount, 2U);
 }
+
+class ILPPlacementTest : public testing::Test {
+  public:
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() { std::cout << "Setup ILPPlacementTest test class." << std::endl; }
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
+        NES::setupLogging("ILPPlacementTest.log", NES::LOG_DEBUG);
+        StreamCatalogPtr streamCatalog = std::make_shared<StreamCatalog>();
+        std::cout << "Setup ILPPlacementTest test case." << std::endl;
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() { std::cout << "Setup ILPPlacementTest test case." << std::endl; }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() { std::cout << "Tear down ILPPlacementTest test class." << std::endl; }
+
+    void setupTopologyAndStreamCatalogForILP() {
+
+        topologyForILP = Topology::create();
+
+        TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+        topologyForILP->setAsRoot(rootNode);
+
+        TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 4);
+        topologyForILP->addNewPhysicalNodeAsChild(rootNode, middleNode);
+
+        TopologyNodePtr sourceNode = TopologyNode::create(3, "localhost", 123, 124, 4);
+        topologyForILP->addNewPhysicalNodeAsChild(middleNode, sourceNode);
+
+        std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
+                             "->addField(\"value\", BasicType::UINT64);";
+        const std::string streamName = "car";
+
+        streamCatalogForILP = std::make_shared<StreamCatalog>();
+        streamCatalogForILP->addLogicalStream(streamName, schema);
+
+        SourceConfigPtr sourceConfig = SourceConfig::create();
+        sourceConfig->setSourceFrequency(0);
+        sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+        sourceConfig->setPhysicalStreamName("test3");
+        sourceConfig->setLogicalStreamName("car");
+
+        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+
+        StreamCatalogEntryPtr streamCatalogEntry1 = std::make_shared<StreamCatalogEntry>(conf, sourceNode);
+
+        streamCatalogForILP->addPhysicalStream("car", streamCatalogEntry1);
+    }
+
+    StreamCatalogPtr streamCatalogForILP;
+    TopologyPtr topologyForILP;
+};
+
+/* Test query placement with ILP strategy  */
+TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
+
+    setupTopologyAndStreamCatalogForILP();
+
+    GlobalExecutionPlanPtr globalExecutionPlan = GlobalExecutionPlan::create();
+    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalogForILP);
+    auto placementStrategy = Optimizer::PlacementStrategyFactory::getStrategy("ILP",
+                                                                              globalExecutionPlan,
+                                                                              topologyForILP,
+                                                                              typeInferencePhase,
+                                                                              streamCatalogForILP);
+
+    Query query = Query::from("car").map(Attribute("c") = Attribute("id") + Attribute("value")).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+
+    QueryPlanPtr queryPlan = query.getQueryPlan();
+    QueryId queryId = PlanIdGenerator::getNextQueryId();
+    queryPlan->setQueryId(queryId);
+
+    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    queryPlan = queryReWritePhase->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
+    topologySpecificQueryRewrite->execute(queryPlan);
+    typeInferencePhase->execute(queryPlan);
+
+    placementStrategy->updateGlobalExecutionPlan(queryPlan);
+    std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
+
+    //Assertion
+    ASSERT_EQ(executionNodes.size(), 3);
+    for (auto executionNode : executionNodes) {
+        if (executionNode->getId() == 1) {
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            ASSERT_EQ(actualRootOperator->getId(), queryPlan->getRootOperators()[0]->getId());
+            ASSERT_EQ(actualRootOperator->getChildren().size(), 2);
+            /*for (auto children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<SourceLogicalOperatorNode>());
+            }*/
+        } else {
+            EXPECT_TRUE(executionNode->getId() == 2 || executionNode->getId() == 3);
+            std::vector<QueryPlanPtr> querySubPlans = executionNode->getQuerySubPlans(queryId);
+            ASSERT_EQ(querySubPlans.size(), 1);
+            auto querySubPlan = querySubPlans[0];
+            std::vector<OperatorNodePtr> actualRootOperators = querySubPlan->getRootOperators();
+            ASSERT_EQ(actualRootOperators.size(), 1);
+            OperatorNodePtr actualRootOperator = actualRootOperators[0];
+            //EXPECT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperatorNode>());
+            for (auto children : actualRootOperator->getChildren()) {
+                EXPECT_TRUE(children->instanceOf<FilterLogicalOperatorNode>());
+            }
+        }
+    }
+}
