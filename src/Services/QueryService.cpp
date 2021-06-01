@@ -112,9 +112,9 @@ bool QueryService::validateAndQueueStopRequest(QueryId queryId) {
     return false;
 }
 
-uint64_t QueryService::addQueryRequest(std::string queryString, QueryPtr query, std::string placementStrategyName) {
+uint64_t QueryService::addQueryRequest(std::string queryString, Query query, std::string placementStrategyName) {
     NES_INFO("QueryService: Queuing the query for the execution");
-    auto queryPlan = query->getQueryPlan();
+    auto queryPlan = query.getQueryPlan();
     QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
     if (entry) {
         auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
@@ -123,10 +123,6 @@ uint64_t QueryService::addQueryRequest(std::string queryString, QueryPtr query, 
     } else {
         throw Exception("QueryService: unable to create query catalog entry");
     }
-}
-
-uint64_t QueryService::addQueryRequest(QueryPtr query, std::string placementStrategyName) {
-    return addQueryRequest("", query, placementStrategyName);
 }
 
 uint64_t QueryService::addQueryRequest(QueryPlanPtr queryPlan, std::string placementStrategyName) {
@@ -139,5 +135,17 @@ uint64_t QueryService::addQueryRequest(QueryPlanPtr queryPlan, std::string place
         throw Exception("QueryService: unable to create query catalog entry");
     }
 }
+
+uint64_t QueryService::addQueryRequest(std::string queryString, QueryPlanPtr queryPlan, std::string placementStrategyName) {
+    QueryCatalogEntryPtr entry = queryCatalog->addNewQuery(queryString, queryPlan, placementStrategyName);
+    if (entry) {
+        auto request = RunQueryRequest::create(queryPlan, placementStrategyName);
+        queryRequestQueue->add(request);
+        return queryPlan->getQueryId();
+    } else {
+        throw Exception("QueryService: unable to create query catalog entry");
+    }
+}
+
 
 }// namespace NES
