@@ -529,9 +529,9 @@ target_link_libraries(network-stack-test nes ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
 
 # MonitoringStackTest
-add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.cpp")
-target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
-add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
+#add_executable(monitoring-stack-test "UnitTests/Monitoring/MonitoringStackTest.cpp")
+#target_link_libraries(monitoring-stack-test nes ${GTEST_LIBRARIES})
+#add_test(NAME monitoring-stack-test COMMAND monitoring-stack-test)
 
 # MonitoringSerializationTest
 add_executable(monitoring-serialization-test "UnitTests/Monitoring/MonitoringSerializationTest.cpp")
