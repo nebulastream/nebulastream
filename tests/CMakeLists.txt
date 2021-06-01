@@ -136,7 +136,7 @@ target_link_libraries(topology-property-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-property-tests COMMAND topology-property-tests)
 
 ### NES TopologyIterator Test ###
-add_executable(topology-iterator-tests "UnitTests/Topology/TopologyIteratorTest.cpp")
+add_executable(topology-iterator-tests "UnitTests/Topology/TopologyIterationTest.cpp")
 target_link_libraries(topology-iterator-tests nes ${GTEST_LIBRARIES})
 add_test(NAME topology-iterator-tests COMMAND topology-iterator-tests)
 
