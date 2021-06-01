@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "StateId.hpp"
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
 namespace NES {
@@ -58,8 +59,9 @@ struct StateVariableDestroyerHelper<Key, T*> {
     static void destroy(cuckoohash_map<Key, T*>& backend) {
         auto locked_table = backend.lock_table();
         for (auto& it : locked_table) {
-
-            delete it.second;
+            if (it.second != nullptr) {
+                delete it.second;
+            }
         }
         locked_table.clear();
         locked_table.unlock();
@@ -75,15 +77,16 @@ class Destroyable {
 template<typename Key, typename Value, std::enable_if_t<std::is_integral<Value>::value || std::is_pointer<Value>::value, int> = 0>
 class StateVariable : public detail::Destroyable {
   private:
-    using StateBackend = cuckoohash_map<Key, Value>;
-    using StateBackendRef = StateBackend&;
-    using StateBackendMappedType = typename cuckoohash_map<Key, Value>::mapped_type;
-    using LockedStateBackend = typename cuckoohash_map<Key, Value>::locked_table;
-    using LockedStateBackendRef = LockedStateBackend&;
-    using KeyValueRangeHandleConstIterator = typename LockedStateBackend::const_iterator;
-    using KeyValueRangeHandleIterator = typename LockedStateBackend::iterator;
+    typedef cuckoohash_map<Key, Value> StateBackend;
+    typedef StateBackend& StateBackendRef;
+    typedef typename cuckoohash_map<Key, Value>::mapped_type StateBackendMappedType;
+    typedef typename cuckoohash_map<Key, Value>::locked_table LockedStateBackend;
+    typedef LockedStateBackend& LockedStateBackendRef;
+    typedef typename LockedStateBackend::const_iterator KeyValueRangeHandleConstIterator;
+    typedef typename LockedStateBackend::iterator KeyValueRangeHandleIterator;
 
-    std::string name;
+  private:
+    StateId name;
     StateBackend backend;
     std::function<Value(const Key&)> defaultCallback;
 
@@ -91,12 +94,14 @@ class StateVariable : public detail::Destroyable {
     class KeyValueHandle {
         friend class StateVariable;
 
+      private:
         StateBackendRef backend;
         Key key;
         std::function<Value(const Key&)> defaultCallback;
 
+      private:
         explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback)
-            : backend(backend), key(key), defaultCallback(std::move(defaultCallback)) {}
+            : backend(backend), key(key), defaultCallback(defaultCallback) {}
 
       public:
         /**
@@ -235,13 +240,14 @@ class StateVariable : public detail::Destroyable {
         LockedStateBackend backend;
     };
 
+  public:
     /**
      * @brief Creates a new state variable
      * @param name of the state variable
      * @param defaultCallback a function that gets called when retrieving a value not present in the state
      */
-    explicit StateVariable(std::string name, std::function<Value(const Key&)> defaultCallback)
-        : name(std::move(name)), backend(), defaultCallback(std::move(defaultCallback)) {
+    explicit StateVariable(StateId name, std::function<Value(const Key&)> defaultCallback)
+        : name(std::move(name)), backend(), defaultCallback(defaultCallback) {
         NES_ASSERT(this->defaultCallback, "invalid default callback");
     }
 
@@ -249,13 +255,13 @@ class StateVariable : public detail::Destroyable {
      * @brief Creates a new state variable
      * @param name of the state variable
      */
-    explicit StateVariable(std::string name) : name(std::move(name)), backend(), defaultCallback(nullptr) {}
+    explicit StateVariable(StateId name) : name(std::move(name)), backend(), defaultCallback(nullptr) {}
 
     /**
      * @brief Copy Constructor of a state variable
      * @param other the param to copy
      */
-    explicit StateVariable(const StateVariable<Key, Value>& other)
+    StateVariable(const StateVariable<Key, Value>& other)
         : name(other.name), backend(other.backend), defaultCallback(other.defaultCallback) {
         // nop
     }
@@ -264,12 +270,12 @@ class StateVariable : public detail::Destroyable {
      * @brief Move Constructor of a state variable
      * @param other the param to move
      */
-    explicit StateVariable(StateVariable<Key, Value>&& other) noexcept { *this = std::move(other); }
+    StateVariable(StateVariable<Key, Value>&& other) { *this = std::move(other); }
 
     /**
      * @brief Destructor of a state variable. It frees all allocated resources.
      */
-    ~StateVariable() override {
+    virtual ~StateVariable() override {
         NES_DEBUG("~StateVariable()");
         detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend);
     }
@@ -291,12 +297,13 @@ class StateVariable : public detail::Destroyable {
      * @param other the param to move
      * @return the same state variable
      */
-    StateVariable& operator=(StateVariable<Key, Value>&& other) noexcept {
+    StateVariable& operator=(StateVariable<Key, Value>&& other) {
         name = std::move(other.name);
         backend = std::move(other.backend);
         return *this;
     }
 
+  public:
     /**
      * Point lookup of a key-value pair
      * @param key

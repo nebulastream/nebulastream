@@ -65,9 +65,10 @@ class JoinHandler : public AbstractJoinHandler {
    * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
-    bool start(NodeEngine::StateManagerPtr stateManager) override {
+    bool start(NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) override {
         std::unique_lock lock(mutex);
         this->stateManager = stateManager;
+        StateId stateId = {stateManager->getNodeId(), id, localStateVariableId};
         NES_DEBUG("JoinHandler start id=" << id << " " << this);
         auto expected = false;
 
@@ -80,11 +81,11 @@ class JoinHandler : public AbstractJoinHandler {
         };
         this->leftJoinState =
             stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeLeft>*>(
-                "leftSide" + toString(),
+                stateId,
                 leftDefaultCallback);
         this->rightJoinState =
             stateManager->registerStateWithDefault<KeyType, Windowing::WindowedJoinSliceListStore<ValueTypeRight>*>(
-                "rightSide" + toString(),
+                stateId,
                 rightDefaultCallback);
 
         if (isRunning.compare_exchange_strong(expected, true)) {

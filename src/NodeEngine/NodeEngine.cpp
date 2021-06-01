@@ -61,7 +61,7 @@ NodeEnginePtr NodeEngine::create(const std::string& hostname,
         auto partitionManager = std::make_shared<Network::PartitionManager>();
         auto bufferManager = std::make_shared<BufferManager>(bufferSize, numberOfBuffersInGlobalBufferManager);
         auto queryManager = std::make_shared<QueryManager>(bufferManager, nodeEngineId, numThreads);
-        auto stateManager = std::make_shared<StateManager>();
+        auto stateManager = std::make_shared<StateManager>(nodeEngineId);
         if (!partitionManager) {
             NES_ERROR("NodeEngine: error while creating partition manager");
             throw Exception("Error while creating partition manager");
@@ -393,6 +393,8 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
 BufferManagerPtr NodeEngine::getBufferManager() { return bufferManager; }
 
 StateManagerPtr NodeEngine::getStateManager() { return stateManager; }
+
+uint64_t NodeEngine::getNodeEngineId() { return nodeEngineId; }
 
 Network::NetworkManagerPtr NodeEngine::getNetworkManager() { return networkManager; }
 

@@ -35,21 +35,22 @@ class StateTest : public testing::Test {
 };
 
 TEST_F(StateTest, testAddClear) {
-    StateManager stateManager;
-    auto var = StateVariable<uint32_t, uint32_t>{*stateManager.registerState<uint32_t, uint32_t>("window-content-0")};
+    StateManager stateManager = StateManager(0);
+    StateId stateId = {0, 0, 0};
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>(stateId);
     auto kv = var[23];
 
     EXPECT_EQ(!!kv, false);
 
     kv.put(43);
 
-    EXPECT_EQ(kv.value(), 43u);
+    EXPECT_EQ(kv.value(), 43);
 
     kv.clear();// unexpected bahavior afterwards
 
     bool catched = false;
     try {
-        EXPECT_NE(kv.value(), 43u);
+        EXPECT_NE(kv.value(), 43);
     } catch (std::out_of_range& e) {
         catched = true;
     }
@@ -57,21 +58,22 @@ TEST_F(StateTest, testAddClear) {
 }
 
 TEST_F(StateTest, testEmplaceClear) {
-    StateManager stateManager;
-    auto var = StateVariable<uint32_t, uint32_t>{*stateManager.registerState<uint32_t, uint32_t>("window-content-1")};
+    StateManager stateManager = StateManager(1);
+    StateId stateId = {0, 0, 1};
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>(stateId);
     auto kv = var[23];
 
     EXPECT_EQ(!!kv, false);
 
     kv.emplace(43);
 
-    EXPECT_EQ(kv.value(), 43u);
+    EXPECT_EQ(kv.value(), 43);
 
     kv.clear();// unexpected bahavior afterwards
 
     bool catched = false;
     try {
-        EXPECT_NE(kv.value(), 43u);
+        EXPECT_NE(kv.value(), 43);
     } catch (std::out_of_range& e) {
         catched = true;
     }
@@ -79,8 +81,9 @@ TEST_F(StateTest, testEmplaceClear) {
 }
 
 TEST_F(StateTest, testMultipleAddLookup) {
-    StateManager stateManager;
-    auto var = StateVariable<uint32_t, uint32_t>{*stateManager.registerState<uint32_t, uint32_t>("window-content-2")};
+    StateManager stateManager = StateManager(2);
+    StateId stateId = {0, 0, 2};
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>(stateId);
 
     std::unordered_map<uint32_t, uint32_t> map;
 
@@ -101,8 +104,9 @@ TEST_F(StateTest, testMultipleAddLookup) {
 }
 
 TEST_F(StateTest, testMultipleAddLookupMt) {
-    StateManager stateManager;
-    auto var = StateVariable<uint32_t, uint32_t>{*stateManager.registerState<uint32_t, uint32_t>("window-content-3")};
+    StateManager stateManager = StateManager(3);
+    StateId stateId = {0, 0, 3};
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>(stateId);
 
     std::vector<std::thread> t;
 
@@ -142,8 +146,9 @@ TEST_F(StateTest, testMultipleAddLookupMt) {
 }
 
 TEST_F(StateTest, testAddRangeMt) {
-    StateManager stateManager;
-    auto var = StateVariable<uint32_t, uint32_t>{*stateManager.registerState<uint32_t, uint32_t>("window-content-4")};
+    StateManager stateManager = StateManager(4);
+    StateId stateId = {0, 0, 4};
+    StateVariable<uint32_t, uint32_t> var = *stateManager.registerState<uint32_t, uint32_t>(stateId);
 
     std::vector<std::thread> t;
 
@@ -195,9 +200,9 @@ struct window_metadata {
 };
 
 TEST_F(StateTest, testStruct) {
-    StateManager stateManager;
-    auto var =
-        StateVariable<uint32_t, window_metadata*>{*stateManager.registerState<uint32_t, window_metadata*>("window-content-5")};
+    StateManager stateManager = StateManager(5);
+    StateId stateId = {0, 0, 5};
+    StateVariable<uint32_t, window_metadata*> var = *stateManager.registerState<uint32_t, window_metadata*>(stateId);
 
     for (uint64_t i = 0; i < 8192; i++) {
 
@@ -205,7 +210,7 @@ TEST_F(StateTest, testStruct) {
         uint64_t start = rand();
         uint64_t end = start + rand();
         var[key].emplace(start, end);
-        auto* v = var[key].value();
+        auto v = var[key].value();
 
         EXPECT_EQ(v->start, start);
         EXPECT_EQ(v->end, end);
