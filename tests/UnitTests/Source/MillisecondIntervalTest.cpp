@@ -137,9 +137,18 @@ TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSeco
     uint64_t numberOfBuffers = 1;
     uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
 
-    const DataSourcePtr source =
-            createCSVFileSource(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(),
-                                 path_to_file, del, numberOfTuplesToProcess, numberOfBuffers, frequency, false, 1, 12, {});
+    const DataSourcePtr source = createCSVFileSource(schema,
+                                                     nodeEngine->getBufferManager(),
+                                                     nodeEngine->getQueryManager(),
+                                                     path_to_file,
+                                                     del,
+                                                     numberOfTuplesToProcess,
+                                                     numberOfBuffers,
+                                                     frequency,
+                                                     false,
+                                                     1,
+                                                     12,
+                                                     {});
     source->start();
     while (source->getNumberOfGeneratedBuffers() < numberOfBuffers) {
         auto optBuf = source->receiveData();
