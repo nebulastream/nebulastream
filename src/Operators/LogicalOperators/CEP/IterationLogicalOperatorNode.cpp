@@ -21,8 +21,7 @@
 
 namespace NES {
 
-IterationLogicalOperatorNode::IterationLogicalOperatorNode(uint64_t minIterations,
-                                                           uint64_t maxIterations, uint64_t id)
+IterationLogicalOperatorNode::IterationLogicalOperatorNode(uint64_t minIterations, uint64_t maxIterations, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), minIterations(minIterations), maxIterations(maxIterations) {}
 
 uint64_t IterationLogicalOperatorNode::getMinIterations() { return minIterations; }

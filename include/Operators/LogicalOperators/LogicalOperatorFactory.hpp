@@ -178,7 +178,7 @@ class LogicalOperatorFactory {
     */
     static LogicalUnaryOperatorNodePtr createCEPIterationOperator(const uint64_t minIterations,
                                                                   const uint64_t maxIterations,
-                                                               OperatorId id = UtilityFunctions::getNextOperatorId());
+                                                                  OperatorId id = UtilityFunctions::getNextOperatorId());
 };
 
 }// namespace NES
