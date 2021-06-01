@@ -38,6 +38,7 @@ enum NESPlacementStrategyType {
     TopDown,
     BottomUp,
     IFCOP,
+    ILP,
     // FIXME: enable them with issue #755
     LowLatency,
     HighThroughput,
@@ -50,6 +51,7 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
     {"BottomUp", BottomUp},
     {"TopDown", TopDown},
     {"IFCOP", IFCOP},
+    {"ILP", ILP},
     // FIXME: enable them with issue #755
     //    {"Latency", LowLatency},
     //    {"HighThroughput", HighThroughput},
