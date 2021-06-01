@@ -187,11 +187,12 @@ class StreamCatalog {
     //map logical stream to schema
     std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
 
-    // BDAPRO create new std::map<std::string, std::vector<StreamCatalogEntryPtr>> physicalStreams
+    // BDAPRO create new std::map<std::string, std::vector<StreamCatalogEntryPtr>> physicalStreams // string with the logical stream gets mapped to a vector of physical streams
     // BDAPRO modify logicalToPhysicalStreamMapping to std::map<std::string, std::string>>
     //map logical stream to physical source
-    std::map<std::string, std::vector<StreamCatalogEntryPtr>> physicalStreams;
-    std::map<std::string, std::string> logicalToPhysicalStreamMapping;
+    std::map<std::string, std::vector<std::uint64_t>> logicalToPhysicalStreamMapping; // logical stream name to hashID physical stream
+    std::map<std::uint64_t, StreamCatalogEntryPtr> hashIdToPhysicalStream;
+    std::map<std::string, uint64_t> misconfiguredPhysicalStreams; // id to misconfigured phy. streams hashID
 
     void addDefaultStreams();
 };
