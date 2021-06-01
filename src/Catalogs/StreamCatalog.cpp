@@ -191,25 +191,30 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
 
     // check if logical stream exists
     if (logicalStreamToSchemaMapping.find(logicalStreamName) == logicalStreamToSchemaMapping.end()) {
-        NES_ERROR("StreamCatalog: logical stream "
+        NES_DEBUG("StreamCatalog: logical stream "
                   << logicalStreamName << " does not exists when trying to remove physical stream with hashId" << hashId);
+        // BDAPRO add physical stream to misconfigured streams - lets discuss this.
+        // misconfiguredPhysicalStreams[physicalStreamName] = hashId;
         return false;
     } else {
         NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream"
                                                    << physicalStreamName << " from node " << hashId);
-        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry =
+        for (std::vector<uint64_t>::const_iterator id =
                  logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
-             entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
-             entry++) {
-            NES_DEBUG("test node id=" << entry->get()->getNode()->getId() << " phyStr=" << entry->get()->getPhysicalName());
+             id != logicalToPhysicalStreamMapping[logicalStreamName].cend();
+             id++) {
+            StreamCatalogEntryPtr entry = hashIdToPhysicalStream[*id];
+            NES_DEBUG("test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName());
             NES_DEBUG("test to be deleted id=" << hashId << " phyStr=" << physicalStreamName);
-            if (entry->get()->getPhysicalName() == physicalStreamName) {
+            if (entry->getPhysicalName() == physicalStreamName) {
                 NES_DEBUG("StreamCatalog: node with name=" << physicalStreamName << " exists try match hashId" << hashId);
 
-                if (entry->get()->getNode()->getId() == hashId) {
+                if (entry->getNode()->getId() == hashId) {
                     NES_DEBUG("StreamCatalog: node with id=" << hashId << " name=" << physicalStreamName
                                                              << " exists try to erase");
-                    logicalToPhysicalStreamMapping[logicalStreamName].erase(entry);
+                    // BDAPRO add physical stream to misconfigured streams - lets discuss this.
+                    misconfiguredPhysicalStreams[physicalStreamName] = hashId;
+                    logicalToPhysicalStreamMapping[logicalStreamName].erase(id);
                     NES_DEBUG("StreamCatalog: number of entries afterwards "
                               << logicalToPhysicalStreamMapping[logicalStreamName].size());
                     return true;
@@ -227,22 +232,30 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
 // care to remove from both data structures
 bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
-    for (auto logStream : logicalToPhysicalStreamMapping) {
+    // BDAPRO remove from those associated to logical Streams - this can be multiple mappings -done
+    for (auto logStream : logicalToPhysicalStreamMapping) { // these are single mappings
         NES_DEBUG("StreamCatalog: check log stream " << logStream.first);
-        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry = logicalToPhysicalStreamMapping[logStream.first].cbegin();
-             entry != logicalToPhysicalStreamMapping[logStream.first].cend();
-             entry++) {
-            if (entry->get()->getNode()->getId() == hashId) {
-                NES_DEBUG("StreamCatalog: found entry with nodeid=" << entry->get()->getNode()->getId()
-                                                                    << " physicalStream=" << entry->get()->getPhysicalName()
+        for (std::vector<uint64_t>::const_iterator id = logicalToPhysicalStreamMapping[logStream.first].cbegin();
+            id != logicalToPhysicalStreamMapping[logStream.first].cend();
+            id++) {
+            if (*id == hashId){
+                NES_DEBUG("StreamCatalog: found entry with nodeid=" << *id
+                                                                    << " physicalStream=" << " " // BDAPRO name necessary?
                                                                     << " logicalStream=" << logStream.first);
-                //TODO: fix this to return value of erase to update entry or if you use the foreach loop, collect the entries to remove, and remove them in a batch after
-                NES_DEBUG("StreamCatalog: deleted physical stream with hashID" << hashId << "and name"
-                                                                               << entry->get()->getPhysicalName());
-                logicalToPhysicalStreamMapping[logStream.first].erase(entry);
-                return true;
+                logicalToPhysicalStreamMapping[logStream.first].erase(id);
+                NES_DEBUG("StreamCatalog: deleted physical stream with hashID" << hashId << " from StreamCatalog"); // BDAPRO name necessary?
+
+                // BDAPRO remove those from hashIdToPhysicalStream -done
+                hashIdToPhysicalStream.erase(hashId);
+                return true
             }
         }
+    }
+    // BDAPRO remove additionally from those not associated to logical streams i.e. free roaming physical streams. -done
+    // check if existent. -done
+    if(std::find(hashIdToPhysicalStream.begin(), hashIdToPhysicalStream.end(),hashId)!=hashIdToPhysicalStream.end()){
+        hashIdToPhysicalStream.erase(hashId);
+        return true
     }
     return false;
 }
@@ -278,13 +291,20 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::str
         != logicalToPhysicalStreamMapping.end();
 }
 
-// BDAPRO add level of indirection through physicalStreams
+// BDAPRO add level of indirection through physicalStreams - done
 std::vector<TopologyNodePtr> StreamCatalog::getSourceNodesForLogicalStream(std::string logicalStreamName) {
     std::unique_lock lock(catalogMutex);
     std::vector<TopologyNodePtr> listOfSourceNodes;
 
     //get current physical stream for this logical stream
-    std::vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];
+    // BDAPRO change this to multiple physicalStreams for a logical stream - with indirection. - done
+    std::vector<std::uint64_t> physicalStreamsHashIds = logicalToPhysicalStreamMapping[logicalStreamName];
+
+    // BDAPRO loop over vector to get StreamCatalogEntryPtrs - done
+    std::vector<StreamCatalogEntryPtr> physicalStreams;
+    for (auto id : physicalStreamsHashIds){
+        physicalStreams.push_back(hashIdToPhysicalStream[id]);
+    }
 
     if (physicalStreams.empty()) {
         return listOfSourceNodes;
@@ -308,6 +328,7 @@ bool StreamCatalog::reset() {
     return true;
 }
 
+// BDAPRO needs adjustment : logicalToPhysicalStreamMapping no longer holds StreamCatalogEntryPtr but hashid as uint64_t
 std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     std::unique_lock lock(catalogMutex);
     std::stringstream ss;
@@ -321,9 +342,16 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     return ss.str();
 }
 
-// BDAPRO add level of indirection through physicalStreams
+// BDAPRO add level of indirection through physicalStreams - done
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
-    return logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<std::uint64_t> physicalStreamsHashIds = logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<StreamCatalogEntryPtr> physicalStreams;
+
+    // Iterate over all hashIDs and retrieve respective StreamCatalogEntryPtr
+    for (auto id : physicalStreamsHashIds){
+        physicalStreams.push_back(hashIdToPhysicalStream[id]);
+    }
+    return physicalStreams;
 }
 
 std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() { return logicalStreamToSchemaMapping; }

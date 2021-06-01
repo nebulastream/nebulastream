@@ -192,7 +192,7 @@ class StreamCatalog {
     //map logical stream to physical source
     std::map<std::string, std::vector<std::uint64_t>> logicalToPhysicalStreamMapping; // logical stream name to hashID physical stream
     std::map<std::uint64_t, StreamCatalogEntryPtr> hashIdToPhysicalStream;
-    std::map<std::string, uint64_t> misconfiguredPhysicalStreams; // id to misconfigured phy. streams hashID
+    std::map<std::string, uint64_t> misconfiguredPhysicalStreams; // id to misconfigured phy. streams hashID BDAPRO: Should be a list.
 
     void addDefaultStreams();
 };
