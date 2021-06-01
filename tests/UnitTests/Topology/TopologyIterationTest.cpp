@@ -16,7 +16,8 @@
 
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <Topology/TopologyIterator.hpp>
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
@@ -67,12 +68,19 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
 
-    auto topologyIterator = TopologyIterator(topology).begin();
-    EXPECT_EQ(rootNode, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src1, *topologyIterator);
+    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src1, *bfIterator);
+
+    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid1, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src1, *dfIterator);
 }
 
 /**
@@ -100,14 +108,23 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
 
-    auto topologyIterator = TopologyIterator(topology).begin();
-    EXPECT_EQ(rootNode, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src2, *topologyIterator);
+    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src2, *bfIterator);
+
+    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid1, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src2, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src1, *dfIterator);
 }
 
 /**
@@ -139,16 +156,27 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
 
-    auto topologyIterator = TopologyIterator(topology).begin();
-    EXPECT_EQ(rootNode, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid2, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src2, *topologyIterator);
+    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid2, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src2, *bfIterator);
+
+    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid1, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid2, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src2, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src1, *dfIterator);
 }
 
 /**
@@ -180,16 +208,27 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
 
-    auto topologyIterator = TopologyIterator(topology).begin();
-    EXPECT_EQ(rootNode, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid2, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src2, *topologyIterator);
+    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid2, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src2, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src1, *bfIterator);
+
+    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid1, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src2, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid2, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src1, *dfIterator);
 }
 
 /**
@@ -227,16 +266,27 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
 
-    auto topologyIterator = TopologyIterator(topology).begin();
-    EXPECT_EQ(rootNode, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid2, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid3, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src1, *topologyIterator);
+    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid2, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid3, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src1, *bfIterator);
+
+    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid1, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid3, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src1, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid2, *dfIterator);
 }
 
 /**
@@ -285,20 +335,37 @@ TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
 
     NES_DEBUG("TopologyIteratorTest::testLinearTopology topology:" << topology->toString());
 
-    auto topologyIterator = TopologyIterator(topology).begin();
-    EXPECT_EQ(rootNode, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src1, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src2, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(mid2, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src3, *topologyIterator);
-    ++topologyIterator;
-    EXPECT_EQ(src4, *topologyIterator);
+    // BF iteration
+    auto bfIterator = BreadthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(mid2, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src1, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src2, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src3, *bfIterator);
+    ++bfIterator;
+    EXPECT_EQ(src4, *bfIterator);
+
+    // DF iteration
+    auto dfIterator = DepthFirstNodeIterator(topology->getRoot()).begin();
+    EXPECT_EQ(rootNode, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid2, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src4, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src3, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(mid1, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src2, *dfIterator);
+    ++dfIterator;
+    EXPECT_EQ(src1, *dfIterator);
 }
 
 }// namespace NES
