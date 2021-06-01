@@ -445,7 +445,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidUserQueryWithTumblingWin
     coordinatorProc.terminate();
 }
 
-TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingMonitoringTwoWorker) {
+TEST_F(E2ECoordinatorMultiWorkerTest, DISABLED_testExecutingMonitoringTwoWorker) {
     NES_INFO(" start coordinator");
     string coordinatorRPCPort = std::to_string(rpcPort);
     string cmdCoord = "./nesCoordinator --coordinatorPort=" + coordinatorRPCPort + " --restPort=" + std::to_string(restPort);
