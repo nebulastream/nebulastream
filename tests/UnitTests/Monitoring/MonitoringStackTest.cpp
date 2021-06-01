@@ -95,7 +95,7 @@ TEST_F(MonitoringStackTest, DISABLED_testCPUStats) {
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
 }
 
-TEST_F(MonitoringStackTest, testMemoryStats) {
+TEST_F(MonitoringStackTest, DISABLED_testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
     auto memMetrics = memStats.measure();
     EXPECT_TRUE(memMetrics.FREE_RAM > 0);
@@ -103,13 +103,13 @@ TEST_F(MonitoringStackTest, testMemoryStats) {
     NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM / (1024 * 1024) << "gb");
 }
 
-TEST_F(MonitoringStackTest, testDiskStats) {
+TEST_F(MonitoringStackTest, DISABLED_testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
     auto diskMetrics = diskStats.measure();
     EXPECT_TRUE(diskMetrics.fBavail > 0);
 }
 
-TEST_F(MonitoringStackTest, testNetworkStats) {
+TEST_F(MonitoringStackTest, DISABLED_testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
     auto networkMetrics = networkStats.measure();
     EXPECT_TRUE(!networkMetrics.getInterfaceNames().empty());
@@ -339,7 +339,7 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsBuffer) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringStackTest, DSIABLED_requestMonitoringDataFromServiceAsJson) {
+TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsJson) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
