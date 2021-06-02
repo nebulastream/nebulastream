@@ -168,6 +168,14 @@ class TupleBuffer {
      */
     uint64_t getOriginId() const;
 
+    /**
+     * @brief returns the control block of the buffer USE THIS WITH CAUTION!
+     * @return
+     */
+    detail::BufferControlBlock* getControlBlock() const {
+        return controlBlock;
+    }
+
   private:
     detail::BufferControlBlock* controlBlock;
     uint8_t* ptr;
