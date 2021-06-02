@@ -186,7 +186,7 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     workerConfig->setNumberOfBuffersInSourceLocalBufferPool(numberOfBuffersInSourceLocalBufferPool);
     workerConfig->setnumberOfBuffersPerPipeline(numberOfBuffersPerPipeline);
     workerConfig->setNumberOfBuffersInGlobalBufferManager(numberOfBuffersInGlobalBufferManager);
-    worker = std::make_shared<NesWorker>(workerConfig, "Worker");
+    worker = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
     worker->start(/**blocking*/ false, /**withConnect*/ true);
 
     //create the monitoring service, it can only be used if a NesWorker has started

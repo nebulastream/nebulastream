@@ -201,7 +201,7 @@ TEST_F(StreamCatalogTest, testGetPhysicalStreamForLogicalStream) {
     TopologyNodePtr physicalNode = TopologyNode::create(1, "localhost", 4000, 4002, 4);
 
     sourceConfig->resetSourceOptions();
-    sourceConfig->setSourceType("sensor");
+    sourceConfig->setSourceType("Sensor");
     sourceConfig->setSourceConfig("");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(3);

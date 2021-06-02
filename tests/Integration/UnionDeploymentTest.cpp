@@ -74,7 +74,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest: Worker1 started successfully");
@@ -83,7 +83,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest: Worker2 started successfully");
@@ -261,7 +261,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest: Worker1 started successfully");
@@ -270,7 +270,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest: Worker2 started successfully");
@@ -448,7 +448,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest: Worker1 started successfully");
@@ -457,7 +457,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest: Worker2 started successfully");
@@ -636,7 +636,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest: Worker1 started successfully");
@@ -645,7 +645,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest: Worker2 started successfully");
@@ -736,7 +736,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Worker1 started successfully");
@@ -745,7 +745,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersBelowAndTwoFiltersAlre
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
@@ -904,7 +904,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Worker1 started successfully");
@@ -913,7 +913,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testOneFilterPushDownWithMergeOfTwoDifferen
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");
@@ -1041,7 +1041,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOf
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Worker1 started successfully");
@@ -1050,7 +1050,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testPushingTwoFiltersAlreadyBelowAndMergeOf
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("UnionDeploymentTest For Filter-Push-Down: Worker2 started SUCCESSFULLY");

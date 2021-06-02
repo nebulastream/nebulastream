@@ -39,14 +39,17 @@ namespace grpc{
 };
 
 namespace NES {
-
+enum NesNodeType : int {
+    Worker,
+    Sensor
+};
 class NesWorker {
   public:
     /**
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(WorkerConfigPtr workerConfig, std::string type);
+    explicit NesWorker(WorkerConfigPtr workerConfig, NesNodeType type);
 
     /**
      * @brief default dtor
@@ -202,7 +205,7 @@ class NesWorker {
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
-    std::string type;
+    NesNodeType type;
     std::atomic<bool> isRunning;
     TopologyNodeId topologyNodeId;
     /**
