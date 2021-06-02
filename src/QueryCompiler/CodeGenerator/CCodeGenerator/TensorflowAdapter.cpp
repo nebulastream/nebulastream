@@ -29,6 +29,55 @@
 
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
+//void NES::TensorflowAdapter::initializeModel(){
+//    initializeModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
+//}
+//
+//void NES::TensorflowAdapter::initializeModel(std::string model){
+//    std::unique_ptr<tflite::FlatBufferModel> ml_model =
+//        tflite::FlatBufferModel::BuildFromFile(model.c_str());
+//
+//    tflite::ops::builtin::BuiltinOpResolver resolver;
+//    tflite::InterpreterBuilder builder(*ml_model, resolver);
+//
+//    builder(&interpreter);
+//    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
+//
+//    // Allocate tensor buffers.
+//    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
+//
+//}
+
+void NES::TensorflowAdapter::infer(std::vector<float> v){
+    std::unique_ptr<tflite::FlatBufferModel> ml_model =
+        tflite::FlatBufferModel::BuildFromFile("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
+
+    tflite::ops::builtin::BuiltinOpResolver resolver;
+    tflite::InterpreterBuilder builder(*ml_model, resolver);
+    std::unique_ptr<tflite::Interpreter> interpreter;
+    builder(&interpreter);
+    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
+
+    // Allocate tensor buffers.
+    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
+
+    float* input = interpreter->typed_input_tensor<float>(0);
+
+    for (int i = 0; i < v.size(); ++i) {
+        input[i] = v.at(i);
+    }
+
+    // Run inference
+    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
+
+    float* output = interpreter->typed_output_tensor<float>(0);
+
+    std::cout << "----------------------------\n";
+    std::cout << output[0] << std::endl;
+    std::cout << output[1] << std::endl;
+    std::cout << output[2] << std::endl;
+}
+
 void NES::TensorflowAdapter::callSimple(float v){
     std::unique_ptr<tflite::FlatBufferModel> ml_model =
         tflite::FlatBufferModel::BuildFromFile("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
