@@ -504,7 +504,8 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
     auto sources = qep->getSources();
     auto copiedSources = std::vector(sources.begin(), sources.end());
     //    lock.unlock();
-
+    auto qepStatus = qep->getStatus();
+    NES_DEBUG("Querymanager: Stopping a qep. Getting Status: " << qepStatus);
     switch (qep->getStatus()) {
         case Execution::Finished:
         case Execution::Stopped: {
@@ -1147,7 +1148,7 @@ bool QueryManager::addRemoveQEPReconfiguration(OperatorId sourceId) {
                                                     RemoveQEP,
                                                     threadPool->getNumberOfThreads(),
                                                     executableQueryPlan);
-    NES_DEBUG("hard end-of-stream opId=" << sourceId << " reconfType=" <<  RemoveQEP
+    NES_DEBUG("remove QEP opId=" << sourceId << " reconfType=" <<  RemoveQEP
                                          << " queryExecutionPlanId=" << executableQueryPlan->getQuerySubPlanId()
                                          << " threadPool->getNumberOfThreads()=" << threadPool->getNumberOfThreads() << " qep"
                                          << executableQueryPlan->getQueryId() << " tasks in queue=" << taskQueue.size());

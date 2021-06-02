@@ -261,7 +261,7 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     auto optRetSize = dispatcherSocket.recv(removeQEPEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
                     auto removeQEPMsg = *removeQEPEnvelope.data<Messages::RemoveQEPMessage>();
-                    NES_DEBUG("ZmqServer:UpdateNetworkSinkMessage received for channel " << removeQEPMsg.getChannelId());
+                    NES_DEBUG("ZmqServer:RemoveQEPMessage received for channel " << removeQEPMsg.getChannelId());
                     exchangeProtocol.onRemoveQEP(removeQEPMsg);
                     break;
                 }

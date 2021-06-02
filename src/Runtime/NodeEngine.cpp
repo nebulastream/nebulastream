@@ -487,10 +487,10 @@ bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHo
     //TODO: update emitFunctionHandler of the last Pipeline of every qep with updated network Sinks
 }
 void NodeEngine::onRemoveQEP(Network::Messages::RemoveQEPMessage msg) {
-    NES_DEBUG("Going to inject UpdateNetworkSinkMessage for " << msg.getChannelId().getNesPartition());
-    NES_DEBUG("Revieved updateNetworkSink Message");
+    NES_DEBUG("Going to inject RemoveQEPMessage for " << msg.getChannelId().getNesPartition());
+    NES_DEBUG("Revieved RemoveQEP Message");
     // propagate updateNetworkSinkMessage to the locally running QEPs that use the network source
-    NES_DEBUG("Going to inject eos for " << msg.getChannelId().getNesPartition());
+    NES_DEBUG("Going to inject RemoveQEP for " << msg.getChannelId().getNesPartition());
     queryManager->addRemoveQEP(msg.getChannelId().getNesPartition().getOperatorId());
 }
 

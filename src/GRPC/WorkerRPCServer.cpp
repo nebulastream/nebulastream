@@ -159,11 +159,11 @@ Status WorkerRPCServer::UpdateNetworkSinks(ServerContext*, const UpdateNetworkSi
 
     bool success = nodeEngine->updateNetworkSinks(newNodeId,newHostname,newPort,queryToSinkIdsMap);
     if (success) {
-        NES_DEBUG("WorkerRPCServer::StopQuery: success");
+        NES_DEBUG("WorkerRPCServer::UpdateNetworkSinks: success");
         reply->set_success(true);
         return Status::OK;
     } else {
-        NES_ERROR("WorkerRPCServer::StopQuery: failed");
+        NES_ERROR("WorkerRPCServer::UpdateNetworkSinks: failed");
         reply->set_success(false);
         return Status::CANCELLED;
     }
