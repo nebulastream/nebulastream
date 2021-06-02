@@ -634,10 +634,8 @@ bool QueryManager::addHardEndOfStream(OperatorId sourceId) {
         temp.pop();
     }
 #else
-    auto reconfigurationToken = ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(),
-                                                       HardEndOfStream,
-                                                       1,
-                                                       executableQueryPlan);
+    auto reconfigurationToken =
+        ReconfigurationMessage(executableQueryPlan->getQuerySubPlanId(), HardEndOfStream, 1, executableQueryPlan);
     reconfigurationToken.wait();
     executableQueryPlan->postReconfigurationCallback(reconfigurationToken);
 #endif
