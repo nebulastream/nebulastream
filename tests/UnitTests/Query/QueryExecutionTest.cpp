@@ -263,8 +263,6 @@ class TestSink : public SinkMedium {
     std::string toString() { return "Test_Sink"; }
 
     void shutdown() override {
-        std::unique_lock lock(m);
-        cleanupBuffers();
     }
 
     ~TestSink() override {
@@ -364,7 +362,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     buffer.release();
     plan->stop();
 }
@@ -431,7 +429,7 @@ TEST_F(QueryExecutionTest, projectionQuery) {
         EXPECT_EQ(resultRecordIndexFields[recordIndex], recordIndex);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
     buffer.release();
     plan->stop();
 }
@@ -586,7 +584,7 @@ TEST_F(QueryExecutionTest, watermarkAssignerTest) {
     EXPECT_EQ(resultBuffer.getWatermark(), 14 - millisecondOfallowedLateness);
 
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 /**
@@ -675,7 +673,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTest) {
         EXPECT_EQ(valueFields[recordIndex], 10);
     }
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 /**
@@ -766,7 +764,7 @@ TEST_F(QueryExecutionTest, tumblingWindowQueryTestWithOutOfOrderBuffer) {
     }
 
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
@@ -838,7 +836,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize10slide5) {
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
@@ -919,7 +917,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourceSize15Slide5) {
     EXPECT_EQ(expectedContent2, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer2, windowResultSchema));
 
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 /*
@@ -995,7 +993,7 @@ TEST_F(QueryExecutionTest, SlidingWindowQueryWindowSourcesize4slide2) {
                                   "+----------------------------------------------------+";
     EXPECT_EQ(expectedContent, UtilityFunctions::prettyPrintTupleBuffer(resultBuffer, windowResultSchema));
     nodeEngine->stopQuery(0);
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
 
 // P1 = Source1 -> filter1
@@ -1075,5 +1073,5 @@ TEST_F(QueryExecutionTest, DISABLED_mergeQuery) {
         EXPECT_EQ(recordIndexFields[recordIndex], recordIndex);
     }
 
-    testSink->shutdown();
+    testSink->cleanupBuffers();
 }
