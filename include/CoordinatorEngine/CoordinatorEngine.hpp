@@ -16,19 +16,19 @@
 
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
-#include <CoordinatorRPCService.pb.h>
-#include <NodeStats.pb.h>
+
 
 #include <memory>
 #include <mutex>
-
+enum NodeType : int;
 namespace NES {
 class StreamCatalog;
 typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
 
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
-
+class NodeStats;
+typedef std::shared_ptr<NodeStats> NodeStatsPtr;
 class CoordinatorEngine {
 
   public:
@@ -46,7 +46,7 @@ class CoordinatorEngine {
                           int64_t grpcPort,
                           int64_t dataPort,
                           uint16_t numberOfSlots,
-                          NodeStats nodeStats,
+                          NodeStatsPtr nodeStats,
                           NodeType type);
 
     /**

@@ -18,6 +18,7 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <deque>
+#include <algorithm>
 
 namespace NES {
 

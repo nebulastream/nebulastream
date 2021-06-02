@@ -31,7 +31,7 @@
 #include <cpprest/http_client.h>
 #include <iostream>
 #include <memory>
-#include <CoordinatorRPCService.pb.h>
+//#include <CoordinatorRPCService.pb.h>
 
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
@@ -574,72 +574,72 @@ class TestUtils {
         return false;
     }
 
-    static TopologyNodePtr registerTestNode(uint64_t id,
-                                            std::string address,
-                                            int cpu,
-                                            NodeStats nodeProperties,
-                                            PhysicalStreamConfigPtr streamConf,
-                                            NodeType type,
-                                            StreamCatalogPtr streamCatalog,
-                                            TopologyPtr topology) {
-        TopologyNodePtr nodePtr;
-        if (type == NodeType::Sensor) {
-            NES_DEBUG("CoordinatorService::registerNode: register sensor node");
-            nodePtr = TopologyNode::create(id, address, 4000, 4002, cpu);
-
-            NES_DEBUG("try to register sensor phyName=" << streamConf->getPhysicalStreamName() << " logName="
-                                                        << streamConf->getLogicalStreamName() << " nodeID=" << nodePtr->getId());
-
-            //check if logical stream exists
-            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
-                NES_ERROR("Coordinator: error logical stream" << streamConf->getLogicalStreamName()
-                                                              << " does not exist when adding physical stream "
-                                                              << streamConf->getPhysicalStreamName());
-                throw Exception("logical stream does not exist " + streamConf->getLogicalStreamName());
-            }
-
-            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf->getLogicalStreamName());
-
-            DataSourcePtr source;
-            string sourceType = streamConf->getSourceType();
-            if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
-                NES_ERROR("Coordinator: error source type " << sourceType << " is not supported");
-                throw Exception("Coordinator: error source type " + sourceType + " is not supported");
-            }
-
-            StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, nodePtr);
-
-            bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
-            if (!success) {
-                NES_ERROR("Coordinator: physical stream " << streamConf->getPhysicalStreamName()
-                                                          << " could not be added to catalog");
-                throw Exception("Coordinator: physical stream " + streamConf->getPhysicalStreamName()
-                                + " could not be added to catalog");
-            }
-
-        } else if (type == NodeType::Worker) {
-            NES_DEBUG("CoordinatorService::registerNode: register worker node");
-            nodePtr = TopologyNode::create(id, address, 4004, 4006, cpu);
-        } else {
-            NES_FATAL_ERROR("CoordinatorService::registerNode: type not supported " << type);
-        }
-        NES_ASSERT(nodePtr, "pointer not vaild");
-
-        if (nodeProperties.IsInitialized()) {
-            nodePtr->setNodeStats(nodeProperties);
-        }
-
-        const TopologyNodePtr rootNode = topology->getRoot();
-
-        if (rootNode == nodePtr) {
-            NES_DEBUG("CoordinatorService::registerNode: tree is empty so this becomes new root");
-            topology->setAsRoot(nodePtr);
-        } else {
-            NES_DEBUG("CoordinatorService::registerNode: add link to root node " << rootNode);
-            topology->addNewPhysicalNodeAsChild(rootNode, nodePtr);
-        }
-        return nodePtr;
-    }
+//    static TopologyNodePtr registerTestNode(uint64_t id,
+//                                            std::string address,
+//                                            int cpu,
+//                                            NodeStats nodeProperties,
+//                                            PhysicalStreamConfigPtr streamConf,
+//                                            NesNodeType type,
+//                                            StreamCatalogPtr streamCatalog,
+//                                            TopologyPtr topology) {
+//        TopologyNodePtr nodePtr;
+//        if (type == NesNodeType::Sensor) {
+//            NES_DEBUG("CoordinatorService::registerNode: register sensor node");
+//            nodePtr = TopologyNode::create(id, address, 4000, 4002, cpu);
+//
+//            NES_DEBUG("try to register sensor phyName=" << streamConf->getPhysicalStreamName() << " logName="
+//                                                        << streamConf->getLogicalStreamName() << " nodeID=" << nodePtr->getId());
+//
+//            //check if logical stream exists
+//            if (!streamCatalog->testIfLogicalStreamExistsInSchemaMapping(streamConf->getLogicalStreamName())) {
+//                NES_ERROR("Coordinator: error logical stream" << streamConf->getLogicalStreamName()
+//                                                              << " does not exist when adding physical stream "
+//                                                              << streamConf->getPhysicalStreamName());
+//                throw Exception("logical stream does not exist " + streamConf->getLogicalStreamName());
+//            }
+//
+//            SchemaPtr schema = streamCatalog->getSchemaForLogicalStream(streamConf->getLogicalStreamName());
+//
+//            DataSourcePtr source;
+//            string sourceType = streamConf->getSourceType();
+//            if (sourceType != "CSVSource" && sourceType != "DefaultSource") {
+//                NES_ERROR("Coordinator: error source type " << sourceType << " is not supported");
+//                throw Exception("Coordinator: error source type " + sourceType + " is not supported");
+//            }
+//
+//            StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf, nodePtr);
+//
+//            bool success = streamCatalog->addPhysicalStream(streamConf->getLogicalStreamName(), sce);
+//            if (!success) {
+//                NES_ERROR("Coordinator: physical stream " << streamConf->getPhysicalStreamName()
+//                                                          << " could not be added to catalog");
+//                throw Exception("Coordinator: physical stream " + streamConf->getPhysicalStreamName()
+//                                + " could not be added to catalog");
+//            }
+//
+//        } else if (type == NodeType::Worker) {
+//            NES_DEBUG("CoordinatorService::registerNode: register worker node");
+//            nodePtr = TopologyNode::create(id, address, 4004, 4006, cpu);
+//        } else {
+//            NES_FATAL_ERROR("CoordinatorService::registerNode: type not supported " << type);
+//        }
+//        NES_ASSERT(nodePtr, "pointer not vaild");
+//
+//        if (nodeProperties.IsInitialized()) {
+//            nodePtr->setNodeStats(nodeProperties);
+//        }
+//
+//        const TopologyNodePtr rootNode = topology->getRoot();
+//
+//        if (rootNode == nodePtr) {
+//            NES_DEBUG("CoordinatorService::registerNode: tree is empty so this becomes new root");
+//            topology->setAsRoot(nodePtr);
+//        } else {
+//            NES_DEBUG("CoordinatorService::registerNode: add link to root node " << rootNode);
+//            topology->addNewPhysicalNodeAsChild(rootNode, nodePtr);
+//        }
+//        return nodePtr;
+//    }
 
     static bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWorkers) {
         auto baseUri = "http://localhost:" + std::to_string(restPort) + "/v1/nes/topology";

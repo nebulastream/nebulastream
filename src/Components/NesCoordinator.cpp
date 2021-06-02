@@ -29,6 +29,8 @@
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <thread>
+#include <grpcpp/grpcpp.h>
+#include <grpcpp/server_builder.h>
 
 //GRPC Includes
 #include <Configurations/ConfigOption.hpp>

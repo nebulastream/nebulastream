@@ -17,17 +17,19 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
+#include <vector>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <future>
-#include <grpcpp/grpcpp.h>
-#include <grpcpp/server_builder.h>
 #include <string>
 #include <thread>
-#include <Plans/Query/QueryId.hpp>
 
+namespace grpc {
+class Server;
+}
 namespace NES {
 class NESRequestQueue;
 typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
