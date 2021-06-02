@@ -948,7 +948,7 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
         ->addField("text", DataTypeFactory::createFixedChar(12));
 
     auto op = LogicalOperatorFactory::createInferModelOperator("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
-                                                     {Attribute("valueFloat")},
+                                                     {Attribute("valueFloat"), Attribute("valueFloat"), Attribute("valueFloat"), Attribute("valueFloat")},
                                                      {Attribute("mappedValue")});
     auto imop = op->as<InferModelLogicalOperatorNode>();
 
