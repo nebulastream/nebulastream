@@ -254,6 +254,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 // -----------------------------------------------------------------------------
 
 void zmqBufferRecyclingCallback(void* ptr, void* hint) {
+    NES_VERIFY(hint != nullptr, "Hint cannot be null");
     auto controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
     controlBlock->release();
 }
