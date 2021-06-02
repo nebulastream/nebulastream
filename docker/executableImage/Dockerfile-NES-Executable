@@ -5,13 +5,14 @@ COPY ./ /nebulastream
 RUN mkdir -p /nebulastream/build && \
     cd /nebulastream/build && \
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 .. && \
-    make version && make -j4 && cpack && cp *.deb /nes.deb && cd && rm -rf /nebulastream/build
+    make version && make -j4 && cpack && cp *.deb /nes.deb
 
 FROM nebulastream/nes-build-image:latest AS execimg
 
 COPY --from=buildimg /nes.deb .
+COPY --from=buildimg /nebulastream/build/nes-dependencies-v1-x64-linux-nes/installed/x64-linux-nes/lib/libpaho*so /usr/local/lib/
 
-RUN dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools -y -qq && \
+RUN ldconfig && dpkg -i /nes.deb && apt install iproute2 ifupdown net-tools -y -qq && \
     apt autoclean -y -qq && rm -rf /*.deb && cd
 
 COPY ./docker/executableImage/resources/exdra.csv /opt/local/nebula-stream/exdra.csv
