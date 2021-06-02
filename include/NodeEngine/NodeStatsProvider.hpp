@@ -18,8 +18,8 @@
 #define _NODEENGINE_NODESTATSPROVIDER_HPP
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <NodeStats.pb.h>
 #include <memory>
+class NodeStats;
 
 namespace NES::NodeEngine {
 
@@ -102,7 +102,7 @@ class NodeStatsProvider {
 
   private:
     long nbrProcessors;
-    NodeStats nodeStats;
+    std::shared_ptr<NodeStats> nodeStats;
     std::string clientName;
     std::string clientPort;
 };

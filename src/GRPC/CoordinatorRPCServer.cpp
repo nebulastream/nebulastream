@@ -27,7 +27,7 @@ Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequ
                                                   request->grpcport(),
                                                   request->dataport(),
                                                   request->numberofslots(),
-                                                  request->nodeproperties(),
+                                                  std::make_shared<NodeStats>(request->nodeproperties()),
                                                   (NodeType) request->type());
     if (id != 0) {
         NES_DEBUG("CoordinatorRPCServer::RegisterNode: success id=" << id);

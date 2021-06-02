@@ -22,6 +22,7 @@
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
+#include <CoordinatorRPCService.pb.h>
 
 #include <string>
 using namespace std;
@@ -60,7 +61,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     TopologyPtr topology = Topology::create();
     CoordinatorEnginePtr coordinatorEngine = std::make_shared<CoordinatorEngine>(streamCatalog, topology);
 
-    auto nodeStats = NodeStats();
+    auto nodeStats = std::make_shared<NodeStats>();
     uint64_t nodeId = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 
@@ -68,10 +69,9 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterNode) {
     EXPECT_NE(nodeId1, 0);
 
     //test register existing node
-    auto nodeStats2 = NodeStats();
+    auto nodeStats2 = std::make_shared<NodeStats>();
     uint64_t nodeId2 = coordinatorEngine->registerNode(ip, publish_port, 5000, 6, nodeStats2, NodeType::Sensor);
     EXPECT_EQ(nodeId2, 0);
-
     //test unregister not existing node
     bool successUnregisterNotExistingNode = coordinatorEngine->unregisterNode(552);
     EXPECT_FALSE(successUnregisterNotExistingNode);
@@ -121,7 +121,7 @@ TEST_F(CoordinatorEngineTest, testRegisterUnregisterPhysicalStream) {
 
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
-    auto nodeStats = NodeStats();
+    auto nodeStats = std::make_shared<NodeStats>();
     uint64_t nodeId = coordinatorEngine->registerNode(address, 4000, 5000, 6, nodeStats, NodeType::Sensor);
     EXPECT_NE(nodeId, 0);
 

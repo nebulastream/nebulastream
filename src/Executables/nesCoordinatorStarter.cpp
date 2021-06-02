@@ -23,6 +23,7 @@
  *    |_| \_| |______| |_____/
  *
  ********************************************************/
+#include <vector>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>

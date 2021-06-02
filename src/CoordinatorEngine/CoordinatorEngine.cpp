@@ -22,6 +22,8 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <CoordinatorRPCService.pb.h>
+#include <NodeStats.pb.h>
 
 namespace NES {
 
@@ -36,10 +38,10 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
                                          int64_t grpcPort,
                                          int64_t dataPort,
                                          uint16_t numberOfSlots,
-                                         NodeStats nodeStats,
+                                         NodeStatsPtr nodeStats,
                                          NodeType type) {
     NES_TRACE("CoordinatorEngine: Register Node address=" << address << " numberOfSlots=" << numberOfSlots
-                                                          << " nodeProperties=" << nodeStats.DebugString() << " type=" << type);
+                                                          << " nodeProperties=" << nodeStats->DebugString() << " type=" << type);
     std::unique_lock<std::mutex> lock(registerDeregisterNode);
 
     NES_DEBUG("CoordinatorEngine::registerNode: topology before insert");
@@ -103,9 +105,10 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         NES_THROW_RUNTIME_ERROR("CoordinatorEngine::registerNode type not supported ");
     }
 
-    if (nodeStats.IsInitialized()) {
-        physicalNode->setNodeStats(nodeStats);
-    }
+    //TODO: this has to be refactored
+//    if (nodeStats->IsInitialized()) {
+//        physicalNode->setNodeStats(std::make_shared<NodeStats>());
+//    }
 
     const TopologyNodePtr rootNode = topology->getRoot();
 
