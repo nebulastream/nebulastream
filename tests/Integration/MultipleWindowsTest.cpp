@@ -67,7 +67,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -153,7 +153,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -164,7 +164,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
@@ -257,7 +257,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -349,7 +349,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -359,7 +359,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
@@ -457,7 +457,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -558,7 +558,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -569,7 +569,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
@@ -667,7 +667,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -678,7 +678,7 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("MultipleWindowsTest: Worker2 started successfully");
@@ -811,7 +811,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(3);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Worker");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -822,7 +822,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
@@ -834,7 +834,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);
@@ -977,7 +977,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(3);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Worker");
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Worker);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -988,7 +988,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     wrk2->replaceParent(1, 2);
@@ -1000,7 +1000,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, "Sensor");
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     wrk3->replaceParent(1, 2);

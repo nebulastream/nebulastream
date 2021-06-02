@@ -35,7 +35,7 @@ void termFunc(int) {
 
 namespace NES {
 
-NesWorker::NesWorker(WorkerConfigPtr workerConfig, std::string type)
+NesWorker::NesWorker(WorkerConfigPtr workerConfig, NesNodeType type)
     : coordinatorIp(std::move(workerConfig->getCoordinatorIp()->getValue())),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),
       localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
@@ -241,12 +241,12 @@ bool NesWorker::connect() {
     auto nodeStats = nodeStatsProvider->getNodeStats();
 
     bool successPRCRegister = false;
-    if(type == "Sensor")
+    if(type == NesNodeType::Sensor)
     {
         successPRCRegister =
             coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, NodeType::Sensor, nodeStats);
     }
-    else if(type == "Worker")
+    else if(type == NesNodeType::Worker)
     {
         successPRCRegister =
             coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, NodeType::Worker, nodeStats);

@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
                                                   << workerConfig->getDataPort()->getValue() << " pid=" << getpid()
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
     NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig,
-                                                   "Sensor"
+                                                   NesNodeType::Sensor
     );
 
     //register phy stream if necessary
