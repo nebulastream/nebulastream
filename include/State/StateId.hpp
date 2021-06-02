@@ -32,7 +32,7 @@ namespace NES {
         friend bool operator==(const StateId &left, const StateId &right) {
             return (left.nodeId == right.nodeId
                     && left.handlerId == right.handlerId
-                    && left.localId == left.localId);
+                    && left.localId == right.localId);
         }
     };
 }
