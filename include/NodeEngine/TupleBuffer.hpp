@@ -30,7 +30,11 @@
 template<std::size_t v>
 static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
-namespace NES::NodeEngine {
+namespace NES {
+namespace Network {
+class OutputChannel;
+}
+namespace NodeEngine {
 
 /**
  * @brief The TupleBuffer is the NES API that allows runtime components to access memory to store records
@@ -57,6 +61,7 @@ class TupleBuffer {
     friend class detail::MemorySegment;
     friend class LocalBufferPool;
     friend class FixedSizeBufferPool;
+    friend class Network::OutputChannel;
 
   public:
     /**
@@ -168,19 +173,18 @@ class TupleBuffer {
      */
     uint64_t getOriginId() const;
 
+  private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      * @return
      */
-    detail::BufferControlBlock* getControlBlock() const {
-        return controlBlock;
-    }
+    detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
   private:
     detail::BufferControlBlock* controlBlock;
     uint8_t* ptr;
     uint32_t size;
 };
-
-}// namespace NES::NodeEngine
+}// namespace NodeEngine
+}// namespace NES
 #endif /* INCLUDE_TUPLEBUFFER_H_ */
