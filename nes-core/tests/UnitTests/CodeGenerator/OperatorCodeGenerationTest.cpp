@@ -74,6 +74,8 @@
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
+#include <Operators/LogicalOperators/InferModelLogicalOperatorNode.hpp>
+
 using std::cout;
 using std::endl;
 using namespace NES::Runtime;
@@ -945,7 +947,35 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
         ->addField("valueChar", DataTypeFactory::createChar())
         ->addField("text", DataTypeFactory::createFixedChar(12));
 
-    codeGenerator->generateCodeForInferModel(context, "", {}, {});
+    auto op = LogicalOperatorFactory::createInferModelOperator("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
+                                                     {Attribute("valueFloat")},
+                                                     {Attribute("mappedValue")});
+    auto imop = op->as<InferModelLogicalOperatorNode>();
+
+    codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
+
+    codeGenerator->generateCodeForInferModel(context, imop->getModel(), imop->getInputFieldsAsPtr(), imop->getOutputFieldsAsPtr());
+
+    /* generate code for writing result tuples to output buffer */
+    codeGenerator->generateCodeForEmit(outputSchema, context);
+
+    /* compile code to pipeline stage */
+    auto stage = codeGenerator->compile(context);
+
+    /* prepare input tuple buffer */
+    source->open();
+    auto inputBuffer = source->receiveData().value();
+
+    /* execute Stage */
+    NodeEngine::WorkerContext wctx{0};
+
+    auto queryContext = std::make_shared<TestPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                       nodeEngine->getBufferManager(),
+                                                                       std::vector<NodeEngine::Execution::OperatorHandlerPtr>());
+
+    stage->setup(*queryContext.get());
+    stage->start(*queryContext.get());
+    stage->execute(inputBuffer, *queryContext.get(), wctx);
 
     EXPECT_TRUE(true);
 }

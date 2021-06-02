@@ -29,6 +29,38 @@
 
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
+void NES::TensorflowAdapter::callSimple(float v){
+    std::unique_ptr<tflite::FlatBufferModel> ml_model =
+        tflite::FlatBufferModel::BuildFromFile("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
+
+    tflite::ops::builtin::BuiltinOpResolver resolver;
+    tflite::InterpreterBuilder builder(*ml_model, resolver);
+    std::unique_ptr<tflite::Interpreter> interpreter;
+    builder(&interpreter);
+    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
+
+    // Allocate tensor buffers.
+    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
+
+    float* input = interpreter->typed_input_tensor<float>(0);
+
+    input[0] = v;
+    input[1] = 3.4f;
+    input[2] = 5.4f;
+    input[3] = 2.3f;
+
+    // Run inference
+    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
+
+    float* output = interpreter->typed_output_tensor<float>(0);
+
+    std::cout << "----------------------------\n";
+//    std::cout << "v="<< v << "\n";
+    std::cout << output[0] << std::endl;
+    std::cout << output[1] << std::endl;
+    std::cout << output[2] << std::endl;
+}
+
 void NES::TensorflowAdapter::generateTFLiteCode(){
     std::unique_ptr<tflite::FlatBufferModel> ml_model =
         tflite::FlatBufferModel::BuildFromFile("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
@@ -52,6 +84,9 @@ void NES::TensorflowAdapter::generateTFLiteCode(){
     // TODO(user): Insert code to fill input tensors.
     // Note: The buffer of the input tensor with index `i` of type T can
     // be accessed with `T* input = interpreter->typed_input_tensor<T>(i);`
+
+    std::cout << "INPUTS SIZE " << interpreter->inputs().size() << std::endl;
+    std::cout << "OUTPUTS SIZE " << interpreter->outputs().size() << std::endl;
 
     float* input = interpreter->typed_input_tensor<float>(0);
 
@@ -84,9 +119,10 @@ void NES::TensorflowAdapter::generateTFLiteCode(){
     // Note: The buffer of the output tensor with index `i` of type T can
     // be accessed with `T* output = interpreter->typed_output_tensor<T>(i);`
 
-    float* output = interpreter->typed_output_tensor<float>(9);
+    float* output = interpreter->typed_output_tensor<float>(0);
 
     std::cout << output[0] << std::endl;
     std::cout << output[1] << std::endl;
     std::cout << output[2] << std::endl;
 }
+NES::SemanticQueryValidationPtr NES::TensorflowAdapter::create() { return std::make_shared<TensorflowAdapter>(); }
