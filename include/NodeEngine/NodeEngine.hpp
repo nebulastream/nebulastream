@@ -257,7 +257,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @brief Set the physical stream config
      * @param config : configuration to be set
      */
-    void setConfig(AbstractPhysicalStreamConfigPtr config);
+    void addConfig(AbstractPhysicalStreamConfigPtr config);
 
     /**
      * @brief Creates a logical source descriptor according to a logical source descriptor

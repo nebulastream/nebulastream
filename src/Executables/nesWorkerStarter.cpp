@@ -30,6 +30,7 @@
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
 #include <Util/Logger.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <iostream>
 #include <sys/stat.h>
 #include <thread>
@@ -58,10 +59,11 @@ int main(int argc, char** argv) {
     NES::setupLogging("nesCoordinatorStarter.log", NES::getDebugLevelFromString("LOG_DEBUG"));
 
     WorkerConfigPtr workerConfig = WorkerConfig::create();
-    // BDAPRO change sourceConfig to vector and add default NoSource config
     SourceConfigPtr sourceConfig = SourceConfig::create();
     sourceConfig->setSourceType("NoSource");
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
+
+    std::vector<SourceConfigPtr> sourceConfigs;
 
     std::map<string, string> commandLineParams;
 
@@ -73,20 +75,33 @@ int main(int argc, char** argv) {
 
     auto workerConfigPath = commandLineParams.find("--workerConfigPath");
     auto sourceConfigPath = commandLineParams.find("--sourceConfigPath");
-    // BDAPRO check if sourceConfigPath contains multiple paths or only a single path
 
     if (workerConfigPath != commandLineParams.end()) {
         workerConfig->overwriteConfigWithYAMLFileInput(workerConfigPath->second);
     }
     if (sourceConfigPath != commandLineParams.end()) {
-        sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
+        // BDAPRO check this again, this looks a bit clunky, any recommendations?
+        auto sourceConfigPaths = UtilityFunctions::splitWithStringDelimiter(sourceConfigPath->second, ":");
+        if (sourceConfigPaths.size() == 1) {
+            sourceConfig->overwriteConfigWithYAMLFileInput(sourceConfigPath->second);
+        } else {
+            for (std::vector<std::string>::const_iterator path = sourceConfigPaths.cbegin(); path != sourceConfigPaths.cend();
+                 ++path) {
+                SourceConfigPtr curr = SourceConfig::create();
+                curr->overwriteConfigWithYAMLFileInput(*path);
+                sourceConfigs.emplace_back(curr);
+            }
+        }
     }
-    // BDAPRO handle multipleSourceConfigPath
-
     if (argc >= 1) {
         workerConfig->overwriteConfigWithCommandLineInput(commandLineParams);
         sourceConfig->overwriteConfigWithCommandLineInput(commandLineParams);
     }
+
+    if (sourceConfig->getSourceType()->getValue() != "NoSource") {
+        sourceConfigs.emplace_back(sourceConfig);
+    }
+
     NES::setLogLevel(NES::getDebugLevelFromString(workerConfig->getLogLevel()->getValue()));
 
     NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="
@@ -96,18 +111,20 @@ int main(int argc, char** argv) {
                                                    NodeType::Sensor// TODO what is this?!
     );
 
-    // BDAPRO handle creating multiple physical stream configs and register
-    //register phy stream if necessary
-    if (sourceConfig->getSourceType()->getValue() != "NoSource") {
-        NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
-        PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
+    // register phy stream if necessary
+    if (sourceConfigs.size() > 0) {
+        for (std::vector<SourceConfigPtr>::const_iterator config = sourceConfigs.cbegin(); config != sourceConfigs.cend();
+             ++config) {
 
-        NES_INFO("NESWORKERSTARTER: Source Config type = "
-                 << sourceConfig->getSourceType()->getValue() << " Config = " << sourceConfig->getSourceConfig()->getValue()
-                 << " physicalStreamName = " << sourceConfig->getPhysicalStreamName()->getValue()
-                 << " logicalStreamName = " << sourceConfig->getLogicalStreamName()->getValue());
-        // BDAPRO adjust call to register with multiple sources
-        wrk->setWithRegister(conf);
+            NES_INFO("start with dedicated source=" << (*config)->getSourceType()->getValue() << "\n");
+            PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(*config);
+
+            NES_INFO("NESWORKERSTARTER: Source Config type = "
+                     << (*config)->getSourceType()->getValue() << " Config = " << (*config)->getSourceConfig()->getValue()
+                     << " physicalStreamName = " << (*config)->getPhysicalStreamName()->getValue()
+                     << " logicalStreamName = " << (*config)->getLogicalStreamName()->getValue());
+            wrk->setWithRegister(conf);
+        }
     } else if (workerConfig->getParentId()->getValue() != "-1") {
         NES_INFO("start with dedicated parent=" << workerConfig->getParentId()->getValue());
         wrk->setWithParent(workerConfig->getParentId()->getValue());
