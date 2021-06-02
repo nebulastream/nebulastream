@@ -253,7 +253,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 // ------------------ Utility functions for TupleBuffer ------------------------
 // -----------------------------------------------------------------------------
 
-void zmqBufferRecyclingCallback(void* ptr, void* hint) {
+void zmqBufferRecyclingCallback(void*, void* hint) {
     NES_VERIFY(hint != nullptr, "Hint cannot be null");
     auto controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
     controlBlock->release();
