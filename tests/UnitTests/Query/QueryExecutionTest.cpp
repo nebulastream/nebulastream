@@ -262,8 +262,7 @@ class TestSink : public SinkMedium {
 
     std::string toString() { return "Test_Sink"; }
 
-    void shutdown() override {
-    }
+    void shutdown() override {}
 
     ~TestSink() override {
         NES_DEBUG("~TestSink()");
