@@ -380,8 +380,46 @@ bool CCodeGenerator::generateCodeForFilterPredicated(PredicatePtr pred, Pipeline
  * @return flag if the generation was successful.
  */
 bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::string model, std::vector<ExpressionItemPtr> inputFields, std::vector<ExpressionItemPtr> outputFields) {
-    TensorflowAdapter tensorflowAdapter;
-    tensorflowAdapter.generateTFLiteCode();
+
+    for (auto f : inputFields){
+        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
+    }
+
+    auto code = context->code;
+    auto tf = getTypeFactory();
+    auto recordHandler = context->getRecordHandler();
+
+    auto tensorflowDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "tensorflowAdapter");
+    auto tensorflowCreateCall = call("TensorflowAdapter::create");
+    auto tensorflowDeclStatement = VarDeclStatement(tensorflowDeclaration).assign(tensorflowCreateCall);
+    code->variableInitStmts.push_back(tensorflowDeclStatement.copy());
+
+    auto generateTensorFlowSimpleCall = call("tensorflowAdapter->callSimple");
+    for (auto f : inputFields){
+        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
+        auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
+        generateTensorFlowSimpleCall->addParameter(
+            VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]
+                .accessRef(VarRef(variableDeclaration)));
+    }
+    code->currentCodeInsertionPoint->addStatement(generateTensorFlowSimpleCall);
+
+    auto pred = createPredicate(QueryCompilation::PredicateItem(40) + QueryCompilation::PredicateItem(2));
+    auto mapExpression = pred->generateCode(code, context->getRecordHandler());
+
+    for (auto f : outputFields){
+        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+        auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
+
+        auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
+        auto attributeVariable = VarDeclStatement(variableDeclaration);
+        auto assignedMap = attributeVariable.assign(mapExpression).copy();
+        recordHandler->registerAttribute(attrField->getName(), VarRef(variableDeclaration).copy());
+        code->currentCodeInsertionPoint->addStatement(assignedMap);
+    }
+
     return true;
 }
 
