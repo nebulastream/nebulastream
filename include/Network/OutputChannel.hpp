@@ -86,10 +86,10 @@ class OutputChannel {
     void close();
 
     /**
-     * shut down ZMQ sockt without sending EoS message. Used for updating networkSink
+     * shut down ZMQ sockt without sending EoS message. Used for updating networkSinkOut
      */
 
-    void shutdownZMQSocket();
+    void shutdownZMQSocket(bool withMessagePropagation);
 
   private:
     const std::string socketAddr;

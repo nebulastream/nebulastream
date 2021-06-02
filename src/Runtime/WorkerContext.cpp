@@ -54,14 +54,14 @@ Network::OutputChannel* WorkerContext::getChannel(Network::OperatorId ownerId) {
     return channels[ownerId].get();
 }
 void WorkerContext::updateChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel) {
-    removeChannel(id);
+    removeChannel(id, true);
     channels[id] = std::move(channel);
 }
-void WorkerContext::removeChannel(Network::OperatorId id) {
+void WorkerContext::removeChannel(Network::OperatorId id, bool withMessagePropagation) {
     auto it = channels.find(id);
     if (it != channels.end()) {
         if (it->second) {
-            it->second->shutdownZMQSocket();
+            it->second->shutdownZMQSocket(withMessagePropagation);
         }
         channels.erase(it);
     }

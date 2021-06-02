@@ -163,11 +163,14 @@ void OutputChannel::close() {
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;
 }
-void OutputChannel::shutdownZMQSocket() {
+void OutputChannel::shutdownZMQSocket(bool withMessagePropagation) {
     if (isClosed) {
         return;
     }
-    sendMessage<Messages::RemoveQEPMessage>(zmqSocket, channelId);
+    if(withMessagePropagation) {
+        NES_DEBUG("OutputChanneel: Sending RemoveQEP Message to " << socketAddr);
+        sendMessage<Messages::RemoveQEPMessage>(zmqSocket, channelId);
+    }
     zmqSocket.close();
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);
     isClosed = true;

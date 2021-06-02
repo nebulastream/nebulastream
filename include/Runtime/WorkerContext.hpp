@@ -94,10 +94,11 @@ class WorkerContext {
      */
     void updateChannel(Network::OperatorId id, Network::OutputChannelPtr&& channel);
     /**
-     * closes ZMQ socket behind channel WITHOUT propaating EoS message
+     * closes ZMQ socket behind channel
      * @param id
+     * @param withMessagePropagation bool determines if closing socket also propagates RemoveQEP message
      */
-    void removeChannel(Network::OperatorId id);
+    void removeChannel(Network::OperatorId id, bool withMessagePropagation = false);
 };
 }// namespace NES::Runtime
 #endif// NES_INCLUDE_RUNTIME_WORKER_CONTEXT_HPP_
