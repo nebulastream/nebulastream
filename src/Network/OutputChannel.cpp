@@ -119,14 +119,12 @@ std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::contex
 }
 
 bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tupleSize) {
-    auto bufferSize = inputBuffer.getBufferSize();
     auto numOfTuples = inputBuffer.getNumberOfTuples();
     auto originId = inputBuffer.getOriginId();
     auto watermark = inputBuffer.getWatermark();
     auto creationTimestamp = inputBuffer.getCreationTimestamp();
     auto payloadSize = tupleSize * numOfTuples;
     auto ptr = inputBuffer.getBuffer<uint8_t>();
-    auto bufferSizeAsVoidPointer = reinterpret_cast<void*>(bufferSize);// DON'T TRY THIS AT HOME :P
     if (payloadSize == 0) {
         return true;
     }
