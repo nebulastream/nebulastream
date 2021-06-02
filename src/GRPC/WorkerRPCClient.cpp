@@ -320,7 +320,6 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, Monitor
     request.mutable_monitoringplan()->CopyFrom(plan->serialize());
 
     ClientContext context;
-<<<<<<< HEAD
     MonitoringRegistrationReply reply;
 
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
@@ -355,8 +354,10 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
         reply.release_buffer();
         return true;
     } else {
-        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
-                                + status.error_message());
+
+        // We need to release reply's buffer (in case we handle the exception).
+        reply.release_buffer();
+        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": " << status.error_message());
     }
     return false;
 }
