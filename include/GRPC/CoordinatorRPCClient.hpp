@@ -22,7 +22,7 @@
 
 #include <grpcpp/grpcpp.h>
 #include <string>
-
+#include <Catalogs/AbstractPhysicalStreamConfig.hpp>
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;

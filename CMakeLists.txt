@@ -49,7 +49,9 @@ endif ()
 ]]
 
 # check if prebuild dependencies are already downloaded
-if (NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
+if (CMAKE_TOOLCHAIN_FILE)
+    message("Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
+else ()
     set(BINARY_NAME nes-dependencies-${VCPKG_BINARY_VERSION}-${VCPKG_TARGET_TRIPLET})
     IF (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/${BINARY_NAME})
         message("NES dependencies do not exist!")
@@ -73,8 +75,6 @@ if (NOT DEFINED ${CMAKE_TOOLCHAIN_FILE})
     else ()
         message(STATUS "Use system compiler")
     endif ()
-else ()
-    message("Use custom toolchain file: ${CMAKE_TOOLCHAIN_FILE}.")
 endif ()
 
 project(NES CXX)
@@ -150,6 +150,11 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
+# AVX detection
+find_package(AVX)
+message("AVX found=" ${AVX_FOUND})
+message("AVX2 found=" ${AVX2_FOUND})
+
 if (NES_BUILD_NATIVE)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
     if (${AVX2_FOUND})
@@ -183,10 +188,6 @@ endif ()
 # lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
-# AVX detection
-find_package(AVX)
-message("AVX found=" ${AVX_FOUND})
-message("AVX2 found=" ${AVX2_FOUND})
 
 # folly
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)

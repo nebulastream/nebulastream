@@ -18,7 +18,6 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
-#include <GRPC/WorkerRPCClient.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -27,6 +26,7 @@
 #include <grpcpp/server_builder.h>
 #include <string>
 #include <thread>
+#include <Plans/Query/QueryId.hpp>
 
 namespace NES {
 class NESRequestQueue;
@@ -67,6 +67,9 @@ typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
 
 class GlobalQueryPlan;
 typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+
+class WorkerRPCClient;
+typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this

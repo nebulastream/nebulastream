@@ -256,7 +256,7 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromGrpcClient) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
@@ -301,7 +301,7 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsBuffer) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
@@ -353,7 +353,7 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsJson) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");

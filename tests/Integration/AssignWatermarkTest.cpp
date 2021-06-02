@@ -88,7 +88,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("AssignWatermarkTest: Worker1 started successfully");
@@ -185,7 +185,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Worker");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("AssignWatermarkTest: Worker 1 started successfully");
@@ -194,7 +194,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, "Worker");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("AssignWatermarkTest: Worker 2 started successfully");
@@ -203,7 +203,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, "Worker");
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("AssignWatermarkTest: Worker 3 started successfully");
@@ -304,7 +304,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Worker");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("AssignWatermarkTest: Worker1 started successfully");
@@ -403,7 +403,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Worker");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("AssignWatermarkTest: Worker 1 started successfully");
@@ -412,7 +412,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 20);
     wrkConf->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, "Worker");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("AssignWatermarkTest: Worker 2 started successfully");
@@ -421,7 +421,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 30);
     wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, "Worker");
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
     NES_INFO("AssignWatermarkTest: Worker 3 started successfully");

@@ -19,11 +19,24 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <GRPC/CallData.hpp>
-#include <GRPC/CoordinatorRPCClient.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
+//#include <CoordinatorRPCService.pb.h>
+//#include <GRPC/CoordinatorRPCClient.hpp>
+//#include <GRPC/WorkerRPCServer.hpp>
+
+namespace WorkerRPCServer
+{
+class Service;
+}
+class CoordinatorRPCClient;
+typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
+
+namespace grpc{
+    class Server;
+    class ServerCompletionQueue;
+};
 
 namespace NES {
 
@@ -33,7 +46,7 @@ class NesWorker {
      * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
-    explicit NesWorker(WorkerConfigPtr workerConfig, NodeType type);
+    explicit NesWorker(WorkerConfigPtr workerConfig, std::string type);
 
     /**
      * @brief default dtor
@@ -163,7 +176,7 @@ class NesWorker {
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
    */
     void buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom);
-    void handleRpcs(WorkerRPCServer::Service& service);
+//    void handleRpcs(WorkerRPCServer::Service& service);
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
@@ -189,7 +202,7 @@ class NesWorker {
     uint32_t numberOfBuffersPerPipeline;
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
-    NodeType type;
+    std::string type;
     std::atomic<bool> isRunning;
     TopologyNodeId topologyNodeId;
     /**

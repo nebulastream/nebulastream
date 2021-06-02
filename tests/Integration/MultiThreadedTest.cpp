@@ -69,7 +69,7 @@ TEST_F(MultiThreadedTest, testFilterQuery) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -175,7 +175,7 @@ TEST_F(MultiThreadedTest, testProjectQuery) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("QueryDeploymentTest: Worker1 started successfully");
@@ -283,7 +283,7 @@ TEST_F(MultiThreadedTest, DISABLED_testCentralWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -378,7 +378,7 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindows) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -468,7 +468,7 @@ TEST_F(MultiThreadedTest, DISABLED_testMultipleWindowsCrashTest) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumberOfSlots(12);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("MultipleWindowsTest: Worker1 started successfully");
@@ -557,7 +557,7 @@ TEST_F(MultiThreadedTest, DISABLED_testOneJoin) {
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     wrkConf->setNumberOfSlots(8);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
@@ -665,7 +665,7 @@ TEST_F(MultiThreadedTest, DISABLED_test2Joins) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
@@ -802,7 +802,7 @@ TEST_F(MultiThreadedTest, DISABLED_threeJoins) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");
@@ -978,7 +978,7 @@ TEST_F(MultiThreadedTest, DISABLED_joinCrashTest) {
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
     wrkConf->setNumberOfSlots(8);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("JoinDeploymentTest: Worker1 started successfully");

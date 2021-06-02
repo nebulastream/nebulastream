@@ -78,7 +78,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -161,7 +161,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -305,7 +305,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -393,7 +393,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -484,7 +484,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -585,7 +585,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -594,7 +594,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -686,7 +686,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -695,7 +695,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -787,7 +787,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -796,7 +796,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -901,7 +901,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -991,7 +991,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -1087,7 +1087,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -1096,7 +1096,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker2 started successfully");
@@ -1192,7 +1192,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -1201,7 +1201,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -1293,7 +1293,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -1371,7 +1371,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -1380,7 +1380,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker 2 started successfully");
@@ -1460,7 +1460,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -1540,7 +1540,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
@@ -1549,7 +1549,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
     NES_INFO("WindowDeploymentTest: Worker2 started successfully");
@@ -1633,7 +1633,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -1642,7 +1642,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     wrk2->replaceParent(1, 2);
     EXPECT_TRUE(retStart2);
@@ -1652,7 +1652,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     wrk3->replaceParent(1, 2);
 
@@ -1663,7 +1663,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 40);
     workerConfig->setDataPort(port + 41);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     wrk4->replaceParent(1, 2);
     EXPECT_TRUE(retStart4);
@@ -1673,7 +1673,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 60);
     workerConfig->setDataPort(port + 61);
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     wrk5->replaceParent(1, 2);
     EXPECT_TRUE(retStart5);
@@ -1777,7 +1777,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);//id=2
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker 1 started successfully");
@@ -1786,7 +1786,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 20);
     workerConfig->setDataPort(port + 21);
-    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(workerConfig, "Worker");
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);//id=3
     wrk2->replaceParent(1, 2);
     EXPECT_TRUE(retStart2);
@@ -1796,7 +1796,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 30);
     workerConfig->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(workerConfig, "Worker");
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     wrk3->replaceParent(1, 2);
 
@@ -1807,7 +1807,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 40);
     workerConfig->setDataPort(port + 41);
-    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(workerConfig, "Worker");
     bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
     wrk4->replaceParent(1, 2);
     EXPECT_TRUE(retStart4);
@@ -1817,7 +1817,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 60);
     workerConfig->setDataPort(port + 61);
-    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig, NodeType::Worker);
+    NesWorkerPtr wrk5 = std::make_shared<NesWorker>(workerConfig, "Worker");
     bool retStart5 = wrk5->start(/**blocking**/ false, /**withConnect**/ true);
     wrk5->replaceParent(1, 2);
     EXPECT_TRUE(retStart5);
