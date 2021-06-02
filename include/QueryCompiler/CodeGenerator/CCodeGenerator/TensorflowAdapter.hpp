@@ -17,12 +17,19 @@
 #ifndef NES_TENSORFLOWADAPTER_HPP
 #define NES_TENSORFLOWADAPTER_HPP
 
+#include <memory>
+
 namespace NES {
+
+class TensorflowAdapter;
+typedef std::shared_ptr<TensorflowAdapter> SemanticQueryValidationPtr;
 
 class TensorflowAdapter {
   public:
+    static SemanticQueryValidationPtr create();
     TensorflowAdapter();
     void generateTFLiteCode();
+    void callSimple(float v);
 };
 
 }// namespace NES

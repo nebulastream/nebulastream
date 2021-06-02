@@ -39,66 +39,6 @@ InferModelLogicalOperatorNode::InferModelLogicalOperatorNode(std::string model, 
 }
 
 const std::string InferModelLogicalOperatorNode::toString() const {
-    std::unique_ptr<tflite::FlatBufferModel> ml_model =
-        tflite::FlatBufferModel::BuildFromFile("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
-
-    // Build the interpreter with the InterpreterBuilder.
-    // Note: all Interpreters should be built with the InterpreterBuilder,
-    // which allocates memory for the Interpreter and does various set up
-    // tasks so that the Interpreter can read the provided model.
-    tflite::ops::builtin::BuiltinOpResolver resolver;
-    tflite::InterpreterBuilder builder(*ml_model, resolver);
-    std::unique_ptr<tflite::Interpreter> interpreter;
-    builder(&interpreter);
-    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
-
-    // Allocate tensor buffers.
-    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
-    printf("=== Pre-invoke Interpreter State ===\n");
-    tflite::PrintInterpreterState(interpreter.get());
-
-    // Fill input buffers
-    // TODO(user): Insert code to fill input tensors.
-    // Note: The buffer of the input tensor with index `i` of type T can
-    // be accessed with `T* input = interpreter->typed_input_tensor<T>(i);`
-
-    float* input = interpreter->typed_input_tensor<float>(0);
-
-    // 5.1, 3.5, 1.4, 0.2 should be 0
-    // 6.0, 2.9, 4.5, 1.5 should be 1
-    // 6.2, 3.4, 5.4, 2.3 should be 2
-
-//    input[0] = 5.1f;
-//    input[1] = 3.5f;
-//    input[2] = 1.4f;
-//    input[3] = 0.2f;
-
-//    input[0] = 6.0f;
-//    input[1] = 2.9f;
-//    input[2] = 4.5f;
-//    input[3] = 1.5f;
-//
-    input[0] = 6.2f;
-    input[1] = 3.4f;
-    input[2] = 5.4f;
-    input[3] = 2.3f;
-
-    // Run inference
-    TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
-    printf("\n\n=== Post-invoke Interpreter State ===\n");
-    tflite::PrintInterpreterState(interpreter.get());
-
-    // Read output buffers
-    // TODO(user): Insert getting data out code.
-    // Note: The buffer of the output tensor with index `i` of type T can
-    // be accessed with `T* output = interpreter->typed_output_tensor<T>(i);`
-
-    float* output = interpreter->typed_output_tensor<float>(9);
-
-    std::cout << output[0] << std::endl;
-    std::cout << output[1] << std::endl;
-    std::cout << output[2] << std::endl;
-
     std::stringstream ss;
     ss << "Model: " << model << std::endl;
     ss << "input fields:" << std::endl;
