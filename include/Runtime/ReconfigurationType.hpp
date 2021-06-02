@@ -33,6 +33,8 @@ enum ReconfigurationType : uint8_t {
     UpdateSinks,
     //use RemoveQEP to remove a QEP without EoS message propagation
     RemoveQEP,
+    //RemoveSink used by RemoveQEP reconfig flow to remove Sinks without propagating EoS
+    RemoveSink,
 };
 }
 

@@ -225,8 +225,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             if (numOfProducers.fetch_sub(1) == 1) {
                 //NES_DEBUG("Executing HardEndOfStream and going to stop for qep " << queryId << " " << querySubPlanId);
                 for (auto sink : sinks) {
-                    auto newReconf = NES::NodeEngine::ReconfigurationMessage(querySubPlanId, NES::NodeEngine::RemoveQEP, sink);
-                    queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
+                        sink->postReconfigurationCallback(task);
                 }
                 if(stop()){
                     queryManager->addReconfigurationMessage(querySubPlanId,
