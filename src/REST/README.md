@@ -38,7 +38,7 @@ Submitting user query for execution.
 **_Example_**:
 
 **Request**:
-A Protobuf encoded QueryPlan.
+A Protobuf encoded QueryPlan, query String and PlacementStrategy.
 
 **Response**:
 {"queryId": "system_generate_uuid"}
