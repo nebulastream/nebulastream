@@ -411,7 +411,7 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
         code->currentCodeInsertionPoint->addStatement(pushbackCall);
     }
 //    auto generateTensorFlowInitCall = call("tensorflowAdapter->initializeModel");
-//    generateTensorFlowInitCall->addParameter(model);
+//    generateTensorFlowInitCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createFixedCharValue(model))));
 //    code->currentCodeInsertionPoint->addStatement(generateTensorFlowInitCall);
 
     auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
@@ -420,16 +420,17 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
 
     code->currentCodeInsertionPoint->addStatement(call("inputVector.clear"));
 
-    auto pred = createPredicate(QueryCompilation::PredicateItem(40) + QueryCompilation::PredicateItem(2));
-    auto mapExpression = pred->generateCode(code, context->getRecordHandler());
-
-    for (auto f : outputFields){
-        auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
+    for (int i = 0; i < outputFields.size(); ++i) {
+        auto field = outputFields.at(i)->getExpressionNode()->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp()) ;
 
         auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
         auto attributeVariable = VarDeclStatement(variableDeclaration);
-        auto assignedMap = attributeVariable.assign(mapExpression).copy();
+
+        auto getResultCall = call("tensorflowAdapter->getResultAt");
+        getResultCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) i))));
+        auto assignedMap = attributeVariable.assign(getResultCall).copy();
+
         recordHandler->registerAttribute(attrField->getName(), VarRef(variableDeclaration).copy());
         code->currentCodeInsertionPoint->addStatement(assignedMap);
     }

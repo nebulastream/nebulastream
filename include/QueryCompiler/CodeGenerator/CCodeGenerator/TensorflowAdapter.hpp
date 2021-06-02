@@ -29,13 +29,14 @@ class TensorflowAdapter {
   public:
     static SemanticQueryValidationPtr create();
     TensorflowAdapter();
-    void generateTFLiteCode();
-    void callSimple(float v);
     void infer(std::vector<float> v);
+    float getResultAt(int i);
 //    void initializeModel(std::string model);
 //    void initializeModel();
-//  private:
+  private:
+      float* output;
 //    std::unique_ptr<tflite::Interpreter> interpreter;
+
 };
 
 }// namespace NES

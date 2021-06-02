@@ -936,6 +936,9 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     context->pipelineName = "1";
     auto inputSchema = source->getSchema();
     auto mappedValue = AttributeField::create("mappedValue", DataTypeFactory::createDouble());
+    auto iris0 = AttributeField::create("iris0", DataTypeFactory::createFloat());
+    auto iris1 = AttributeField::create("iris1", DataTypeFactory::createFloat());
+    auto iris2 = AttributeField::create("iris2", DataTypeFactory::createFloat());
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
@@ -943,13 +946,15 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
         ->addField("valueSmall", DataTypeFactory::createInt16())
         ->addField("valueFloat", DataTypeFactory::createFloat())
         ->addField("valueDouble", DataTypeFactory::createDouble())
-        ->addField(mappedValue)
+        ->addField(iris0)
+        ->addField(iris1)
+        ->addField(iris2)
         ->addField("valueChar", DataTypeFactory::createChar())
         ->addField("text", DataTypeFactory::createFixedChar(12));
 
     auto op = LogicalOperatorFactory::createInferModelOperator("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite",
                                                      {Attribute("valueFloat"), Attribute("valueFloat"), Attribute("valueFloat"), Attribute("valueFloat")},
-                                                     {Attribute("mappedValue")});
+                                                     {Attribute("iris0"), Attribute("iris1"), Attribute("iris2")});
     auto imop = op->as<InferModelLogicalOperatorNode>();
 
     codeGenerator->generateCodeForScan(inputSchema, outputSchema, context);
@@ -976,6 +981,26 @@ TEST_F(OperatorCodeGenerationTest, codeGenerationInferModelTest) {
     stage->setup(*queryContext.get());
     stage->start(*queryContext.get());
     stage->execute(inputBuffer, *queryContext.get(), wctx);
+
+    /* printing results */
+
+    auto resultBuffer = queryContext->buffers[0];
+    auto outputLayout = NodeEngine::DynamicMemoryLayout::DynamicRowLayout::create(outputSchema, true);
+    auto bindedOutputRowLayout = outputLayout->bind(resultBuffer);
+
+    auto iris0FieldsOutput =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(4, bindedOutputRowLayout);
+    auto iris1FieldsOutput =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(5, bindedOutputRowLayout);
+    auto iris2FieldsOutput =
+        NodeEngine::DynamicMemoryLayout::DynamicRowLayoutField<float, true>::create(6, bindedOutputRowLayout);
+
+    for (uint64_t recordIndex = 0; recordIndex < resultBuffer.getNumberOfTuples() - 1; recordIndex++) {
+        std::cout << "-------------------------\n";
+        std::cout << iris0FieldsOutput[recordIndex] << std::endl;
+        std::cout << iris1FieldsOutput[recordIndex] << std::endl;
+        std::cout << iris2FieldsOutput[recordIndex] << std::endl;
+    }
 
     EXPECT_TRUE(true);
 }
