@@ -14,10 +14,10 @@
     limitations under the License.
 */
 
-#include <Topology/Topology.hpp>
-#include <Topology/TopologyNode.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <Topology/Topology.hpp>
+#include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 
