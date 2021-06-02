@@ -254,9 +254,7 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 // -----------------------------------------------------------------------------
 
 void zmqBufferRecyclingCallback(void* ptr, void* hint) {
-    auto bufferSize = reinterpret_cast<uintptr_t>(hint);
-    auto buffer = reinterpret_cast<uint8_t*>(ptr);
-    auto controlBlock = reinterpret_cast<BufferControlBlock*>(buffer + bufferSize);
+    auto controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
     controlBlock->release();
 }
 

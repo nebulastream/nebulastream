@@ -138,7 +138,7 @@ bool OutputChannel::sendBuffer(NodeEngine::TupleBuffer& inputBuffer, uint64_t tu
                                                            creationTimestamp);
     inputBuffer.retain();
     auto sentBytesOpt =
-        zmqSocket.send(zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, bufferSizeAsVoidPointer),
+        zmqSocket.send(zmq::message_t(ptr, payloadSize, &NodeEngine::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
                        kZmqSendDefault);
     if (sentBytesOpt.has_value()) {
         NES_TRACE("OutputChannel: Sending buffer with " << inputBuffer.getNumberOfTuples() << "/" << inputBuffer.getBufferSize()
