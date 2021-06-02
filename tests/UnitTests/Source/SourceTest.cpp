@@ -876,7 +876,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     wrkConf->setBufferSizeInBytes(72);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    auto wrk1 = std::make_shared<NES::NesWorker>(wrkConf, NodeType::Sensor);
+    auto wrk1 = std::make_shared<NES::NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 
@@ -1015,7 +1015,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    auto wrk1 = std::make_shared<NES::NesWorker>(wrkConf, NodeType::Sensor);
+    auto wrk1 = std::make_shared<NES::NesWorker>(wrkConf, "Sensor");
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     NES_ASSERT(retStart1, "retStart1");
 

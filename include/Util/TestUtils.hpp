@@ -31,6 +31,7 @@
 #include <cpprest/http_client.h>
 #include <iostream>
 #include <memory>
+#include <CoordinatorRPCService.pb.h>
 
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;

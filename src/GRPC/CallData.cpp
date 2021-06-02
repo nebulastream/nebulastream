@@ -15,7 +15,9 @@
 */
 
 #include <GRPC/CallData.hpp>
+//#include <GRPC/WorkerRPCServer.hpp>
 #include <Util/Logger.hpp>
+
 namespace NES {
 
 CallData::CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq)
