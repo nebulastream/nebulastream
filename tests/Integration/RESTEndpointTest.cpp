@@ -26,6 +26,7 @@
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <iostream>
+#include "SerializableQueryPlan.pb.h"
 
 namespace NES {
 
@@ -152,7 +153,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
@@ -222,7 +223,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
@@ -306,7 +307,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     workerConfig->setCoordinatorPort(port);
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("RESTEndpointTest: Worker1 started successfully");
