@@ -42,9 +42,11 @@
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <utility>
+#include "z3++.h"
 
 using namespace NES;
 using namespace web;
+using namespace z3;
 
 class QueryPlacementTest : public testing::Test {
   public:
@@ -1093,6 +1095,85 @@ class ILPPlacementTest : public testing::Test {
     TopologyPtr topologyForILP;
 };
 
+TEST_F(QueryPlacementTest, Z3Test) {
+    context c;
+    optimize opt(c);
+
+    // node1 -> node2 -> node3
+    int M1 = 2;
+    int M2 = 1;
+    int M3 = 0;
+
+    // src -> operator -> sink
+    double dmf = 2;
+    int out1 = 100;
+    int out2 = out1 * dmf;
+
+    // Binary assignment
+    expr P11 = c.int_const("P11");
+    expr P12 = c.int_const("P12");
+    expr P13 = c.int_const("P13");
+
+    expr P21 = c.int_const("P21");
+    expr P22 = c.int_const("P22");
+    expr P23 = c.int_const("P23");
+
+    expr P31 = c.int_const("P31");
+    expr P32 = c.int_const("P32");
+    expr P33 = c.int_const("P33");
+
+    // Distance
+    expr D1 = M1 * P11 + M2 * P12 + M3 * P13 - M1 * P21 - M2 * P22 - M3 * P23;
+    expr D2 = M1 * P21 + M2 * P22 + M3 * P23 - M1 * P31 - M2 * P32 - M3 * P33;
+
+    // Cost
+    expr cost = out1 * D1 + out2 * D2;
+
+    // Constraints
+    opt.add(D1 >= 0);
+    opt.add(D2 >= 0);
+
+    opt.add(P11 + P12 + P13 == 1);
+    opt.add(P21 + P22 + P23 == 1);
+    opt.add(P31 + P32 + P33 == 1);
+
+    opt.add(P11 == 1);
+    opt.add(P33 == 1);
+
+    opt.add(P11 == 0 || P11 == 1);
+    opt.add(P12 == 0 || P12 == 1);
+    opt.add(P13 == 0 || P13 == 1);
+    opt.add(P21 == 0 || P21 == 1);
+    opt.add(P22 == 0 || P22 == 1);
+    opt.add(P23 == 0 || P23 == 1);
+    opt.add(P31 == 0 || P31 == 1);
+    opt.add(P32 == 0 || P32 == 1);
+    opt.add(P33 == 0 || P33 == 1);
+
+    // goal
+    opt.minimize(cost);
+
+    //optimize::handle h2 = opt.maximize(y);
+    while (true) {
+        if (sat == opt.check()) {
+            model m = opt.get_model();
+            std::cout << m << std::endl;
+            std::cout << "-------------------------------" << std::endl;
+            if (m.eval(P21).get_numeral_int() == 1) {
+                std::cout << "Operator on Node 1" << std::endl;
+            } else if (m.eval(P22).get_numeral_int() == 1) {
+                std::cout << "Operator on Node 2" << std::endl;
+            } else if (m.eval(P23).get_numeral_int() == 1) {
+                std::cout << "Operator on Node 3" << std::endl;
+            }
+            std::cout << "-------------------------------" << std::endl;
+            break;
+        } else {
+            break;
+        }
+    }
+}
+
 /* Test query placement with ILP strategy  */
 TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
 
@@ -1106,15 +1187,47 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
                                                                               typeInferencePhase,
                                                                               streamCatalogForILP);
 
-    Query query = Query::from("car").map(Attribute("c") = Attribute("id") + Attribute("value")).filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
+    Query query = Query::from("car").filter(Attribute("id") < 45).map(Attribute("c") = Attribute("id") + Attribute("value")).sink(PrintSinkDescriptor::create());
+
+    std::vector<std::map<std::string, std::any>> properties;
+
+
+    // adding property of the source
+    std::map<std::string, std::any> srcProp;
+    double srcout = 1000.0;
+    srcProp.insert(std::make_pair("output", srcout));
+
+    // adding property of the filter
+    std::map<std::string, std::any> filterProp;
+    double filterdmf = 0.5;
+    double filterout = srcout * filterdmf;
+    filterProp.insert(std::make_pair("output", filterout));
+
+    // adding property of the map
+    std::map<std::string, std::any> mapProp;
+    double mapdmf = 4.0;
+    double mapout = filterout * mapdmf;
+    mapProp.insert(std::make_pair("output", mapout));
+
+    // adding property of the sink
+    std::map<std::string, std::any> sinkProp;
+    double snkout = mapout;
+    sinkProp.insert(std::make_pair("output", snkout));
+
+    // add properties in reverse order; Why?
+    properties.push_back(sinkProp);
+    properties.push_back(mapProp);
+    properties.push_back(filterProp);
+    properties.push_back(srcProp);
+    ASSERT_TRUE(UtilityFunctions::assignPropertiesToQueryOperators(query.getQueryPlan(), properties));
 
     QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
 
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
+    //auto queryReWritePhase = Optimizer::QueryRewritePhase::create(false);
+    //queryPlan = queryReWritePhase->execute(queryPlan);
+    //typeInferencePhase->execute(queryPlan);
 
     auto topologySpecificQueryRewrite = Optimizer::TopologySpecificQueryRewritePhase::create(streamCatalogForILP);
     topologySpecificQueryRewrite->execute(queryPlan);

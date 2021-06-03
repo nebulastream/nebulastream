@@ -5,6 +5,7 @@
 #ifndef NES_ILPSTRATEGY_HPP
 #define NES_ILPSTRATEGY_HPP
 
+#include <Nodes/Node.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
 namespace NES {
@@ -36,6 +37,7 @@ class ILPStrategy : public BasePlacementStrategy {
                               StreamCatalogPtr streamCatalog);
 
     void placeOperators();
+    std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
 };
 }// namespace NES::Optimizer
 
