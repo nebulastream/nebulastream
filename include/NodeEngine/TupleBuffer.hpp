@@ -30,12 +30,11 @@
 template<std::size_t v>
 static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 class OutputChannel;
 }
-namespace NodeEngine {
 
+namespace NES::NodeEngine {
 /**
  * @brief The TupleBuffer is the NES API that allows runtime components to access memory to store records
  * The purpose of the TupleBuffer is to zero memory allocations and enable batching. To zero the memory allocation
@@ -185,6 +184,6 @@ class TupleBuffer {
     uint8_t* ptr;
     uint32_t size;
 };
-}// namespace NodeEngine
-}// namespace NES
+
+}// namespace NES::NodeEngine
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

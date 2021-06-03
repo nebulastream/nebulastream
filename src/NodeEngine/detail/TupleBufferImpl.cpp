@@ -69,14 +69,9 @@ MemorySegment::MemorySegment(uint8_t* ptr,
                              std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
                              bool)
     : ptr(ptr), size(size) {
-    // TODO ensure this doesnt break zmq recycle callback (Ventura)
+    NES_ASSERT2_FMT(this->ptr, "invalid ptr");
+    NES_ASSERT2_FMT(this->size, "invalid size");
     controlBlock = new BufferControlBlock(this, recycler, std::move(recycleFunction));
-    if (!this->ptr) {
-        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
-    }
-    if (!this->size) {
-        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid size");
-    }
     controlBlock->prepare();
 }
 
@@ -223,21 +218,6 @@ bool BufferControlBlock::release() {
     return false;
 }
 
-uint64_t BufferControlBlock::getNumberOfTuples() const noexcept { return numberOfTuples; }
-
-void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
-
-uint64_t BufferControlBlock::getWatermark() const noexcept { return watermark; }
-
-void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = watermark; }
-
-void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
-
-uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }
-
-uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
-void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = originId; }
-
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
     : threadName(threadName), callstack(callstack) {
@@ -252,6 +232,22 @@ BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT
 // -----------------------------------------------------------------------------
 // ------------------ Utility functions for TupleBuffer ------------------------
 // -----------------------------------------------------------------------------
+
+uint64_t BufferControlBlock::getNumberOfTuples() const noexcept { return numberOfTuples; }
+
+void BufferControlBlock::setNumberOfTuples(uint64_t numberOfTuples) { this->numberOfTuples = numberOfTuples; }
+
+uint64_t BufferControlBlock::getWatermark() const noexcept { return watermark; }
+
+void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = watermark; }
+
+void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
+
+uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }
+
+uint64_t BufferControlBlock::getOriginId() const noexcept { return originId; }
+
+void BufferControlBlock::setOriginId(uint64_t originId) { this->originId = originId; }
 
 void zmqBufferRecyclingCallback(void*, void* hint) {
     NES_VERIFY(hint != nullptr, "Hint cannot be null");
