@@ -125,6 +125,7 @@ bool StreamCatalog::addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr
 
 
 // BDAPRO adjust to changes in StreamCatalogEntryPtr in case necessary
+// BDAPRO check why pushBack won't work
 bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry) {
     std::unique_lock lock(catalogMutex);
     NES_DEBUG("StreamCatalog: search for logical stream in addPhysicalStream() " << logicalStreamName);
