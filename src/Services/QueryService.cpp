@@ -147,5 +147,4 @@ uint64_t QueryService::addQueryRequest(std::string queryString, QueryPlanPtr que
     }
 }
 
-
 }// namespace NES

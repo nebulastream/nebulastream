@@ -18,14 +18,14 @@
 
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryId.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <iostream>
-#include <GRPC/Serialization/QueryPlanSerializationUtil.hpp>
-#include <CoordinatorEngine/CoordinatorEngine.hpp>
 
 namespace NES {
 
@@ -161,8 +161,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                              + "/v1/nes/query/execute-query-ex");
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/query/execute-query-ex");
 
     QueryPlanPtr queryPlan = QueryPlan::create();
 
@@ -179,16 +178,16 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithEmptyQuery) {
     web::json::value postJsonReturn;
     httpClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
+            NES_INFO("get first then");
+            return response.extract_json();
         })
         .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("post execute-query-ex: set return");
-              postJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("post execute-query-ex: error while setting return" << e.what());
-          }
+            try {
+                NES_INFO("post execute-query-ex: set return");
+                postJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post execute-query-ex: error while setting return" << e.what());
+            }
         })
         .wait();
 
@@ -232,8 +231,7 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                  + "/v1/nes/query/execute-query-ex");
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/query/execute-query-ex");
 
     /* REGISTER QUERY */
     SourceConfigPtr sourceConfig;
@@ -265,16 +263,16 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWithNonEmptyQuery) {
     web::json::value postJsonReturn;
     httpClient.request(web::http::methods::POST, "", msg)
         .then([](const web::http::http_response& response) {
-          NES_INFO("get first then");
-          return response.extract_json();
+            NES_INFO("get first then");
+            return response.extract_json();
         })
         .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("post execute-query-ex: set return");
-              postJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("post execute-query-ex: error while setting return" << e.what());
-          }
+            try {
+                NES_INFO("post execute-query-ex: set return");
+                postJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post execute-query-ex: error while setting return" << e.what());
+            }
         })
         .wait();
 
@@ -317,28 +315,27 @@ TEST_F(RESTEndpointTest, testPostExecuteQueryExWrongPayload) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //make httpclient with new endpoint -ex:
-    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort)
-                                                  + "/v1/nes/query/execute-query-ex");
+    web::http::client::http_client httpClient("http://127.0.0.1:" + std::to_string(restPort) + "/v1/nes/query/execute-query-ex");
 
     std::string msg = "hello";
     web::json::value postJsonReturn;
     int statusCode;
     httpClient.request(web::http::methods::POST, "", msg)
         .then([&statusCode](const web::http::http_response& response) {
-          statusCode = response.status_code();
-          NES_INFO("get first then");
-          return response.extract_json();
+            statusCode = response.status_code();
+            NES_INFO("get first then");
+            return response.extract_json();
         })
         .then([&postJsonReturn](const pplx::task<web::json::value>& task) {
-          try {
-              NES_INFO("post execute-query-ex: set return");
-              postJsonReturn = task.get();
-          } catch (const web::http::http_exception& e) {
-              NES_ERROR("post execute-query-ex: error while setting return" << e.what());
-          }
+            try {
+                NES_INFO("post execute-query-ex: set return");
+                postJsonReturn = task.get();
+            } catch (const web::http::http_exception& e) {
+                NES_ERROR("post execute-query-ex: error while setting return" << e.what());
+            }
         })
         .wait();
-    EXPECT_EQ(statusCode,400);
+    EXPECT_EQ(statusCode, 400);
     EXPECT_TRUE(postJsonReturn.has_field("detail"));
     NES_INFO("RESTEndpointTest: Stop worker 1");
     bool retStopWrk1 = wrk1->stop(true);
