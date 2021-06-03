@@ -172,7 +172,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                     // decode string into protobuf message
                     std::shared_ptr<SubmitQueryRequest> protobufMessage = std::make_shared<SubmitQueryRequest>();
 
-                    if(!protobufMessage->ParseFromArray(body.data(), body.size())){
+                    if (!protobufMessage->ParseFromArray(body.data(), body.size())) {
                         json::value errorResponse{};
                         errorResponse["detail"] = json::value::string("Invalid Protobuf message");
                         badRequestImpl(message, errorResponse);
