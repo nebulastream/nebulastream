@@ -179,7 +179,7 @@ class NesWorker {
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
    */
     void buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom);
-//    void handleRpcs(WorkerRPCServer::Service& service);
+    void handleRpcs(WorkerRPCServer::Service& service);
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;

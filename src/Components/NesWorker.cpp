@@ -24,6 +24,7 @@
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Components/NesWorker.hpp>
+#include <GRPC/CallData.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -72,30 +73,30 @@ bool NesWorker::setWithParent(std::string parentId) {
     return true;
 }
 //
-//void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
-//    //TODO: somehow we need this although it is not called at all
-//    // Spawn a new CallData instance to serve new clients.
-//
-//    CallDataPtr call = std::make_shared<CallData>(&service, completionQueue.get());
-//    call->proceed();
-//    void* tag;// uniquely identifies a request.
-//    bool ok;  //
-//    while (true) {
-//        // Block waiting to read the next event from the completion queue. The
-//        // event is uniquely identified by its tag, which in this case is the
-//        // memory address of a CallData instance.
-//        // The return value of Next should always be checked. This return value
-//        // tells us whether there is any kind of event or completionQueue is shutting down.
-//        bool ret = completionQueue->Next(&tag, &ok);
-//        NES_DEBUG("handleRpcs got item from queue with ret=" << ret);
-//        if (!ret) {
-//            //we are going to shut down
-//            return;
-//        }
-//        NES_ASSERT(ok, "handleRpcs got invalid message");
-//        static_cast<CallData*>(tag)->proceed();
-//    }
-//}
+void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
+    //TODO: somehow we need this although it is not called at all
+    // Spawn a new CallData instance to serve new clients.
+
+    CallData call(&service, completionQueue.get());
+    call.proceed();
+    void* tag;// uniquely identifies a request.
+    bool ok;  //
+    while (true) {
+        // Block waiting to read the next event from the completion queue. The
+        // event is uniquely identified by its tag, which in this case is the
+        // memory address of a CallData instance.
+        // The return value of Next should always be checked. This return value
+        // tells us whether there is any kind of event or completionQueue is shutting down.
+        bool ret = completionQueue->Next(&tag, &ok);
+        NES_DEBUG("handleRpcs got item from queue with ret=" << ret);
+        if (!ret) {
+            //we are going to shut down
+            return;
+        }
+        NES_ASSERT(ok, "handleRpcs got invalid message");
+        static_cast<CallData*>(tag)->proceed();
+    }
+}
 
 void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {
     WorkerRPCServer service(nodeEngine);
@@ -107,7 +108,7 @@ void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom
     prom->set_value(true);
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress);
     //this call is already blocking
-//    handleRpcs(service);
+    handleRpcs(service);
     rpcServer->Wait();
     NES_DEBUG("NesWorker: buildAndStartGRPCServer end listening");
 }

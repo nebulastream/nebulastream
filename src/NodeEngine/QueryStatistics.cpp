@@ -64,6 +64,7 @@ std::string QueryStatistics::getQueryStatisticsAsString() {
     ss << " processedBuffers=" << processedBuffers;
     ss << " processedWatermarks=" << processedWatermarks;
     ss << " latencySum=" << latencySum;
+    ss << " queueSizeSum=" << queueSizeSum;
     return ss.str();
 }
 uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }
