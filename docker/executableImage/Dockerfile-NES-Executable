@@ -1,4 +1,4 @@
-FROM nebulastream/nes-build-image:latest AS buildimg
+FROM nebulastream/nes-build-image:latest
 
 COPY ./ /nebulastream
 
