@@ -395,6 +395,9 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
     auto tensorflowDeclStatement = VarDeclStatement(tensorflowDeclaration).assign(tensorflowCreateCall);
     code->variableInitStmts.push_back(tensorflowDeclStatement.copy());
 
+    auto generateTensorFlowInitCall = call("tensorflowAdapter->initializeModel(\"" + model +"\"); \n tensorflowAdapter->pass");
+    code->variableInitStmts.push_back(generateTensorFlowInitCall);
+
     auto inputVectorDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inputVector");
     auto inputVectorCreateCall = call("std::vector<float>");
     auto inputVectorDeclStatement = VarDeclStatement(inputVectorDeclaration).assign(inputVectorCreateCall);
@@ -410,9 +413,6 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
                 .accessRef(VarRef(variableDeclaration)));
         code->currentCodeInsertionPoint->addStatement(pushbackCall);
     }
-//    auto generateTensorFlowInitCall = call("tensorflowAdapter->initializeModel");
-//    generateTensorFlowInitCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createFixedCharValue(model))));
-//    code->currentCodeInsertionPoint->addStatement(generateTensorFlowInitCall);
 
     auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
     generateTensorFlowInferCall->addParameter(VarRef(inputVectorDeclaration));
