@@ -263,6 +263,17 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
     return elems;
 }
 
+std::string UtilityFunctions::combineStringsWithDelimiter(std::vector<std::string>& strings, std::string delim){
+    std::string combined = "";
+    for(auto & s : strings){
+        combined += s+delim;
+    }
+
+    combined = combined.substr(0, combined.size() - delim.size());
+
+    return combined;
+}
+
 std::string UtilityFunctions::printTupleBufferAsText(NodeEngine::TupleBuffer& buffer) {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++) {

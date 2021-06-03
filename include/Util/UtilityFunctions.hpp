@@ -141,6 +141,15 @@ class UtilityFunctions {
 
     static std::vector<std::string> splitWithStringDelimiter(std::string& s, std::string delim);
 
+    /**
+     * @brief concatenates a vector of strings with a delimiter between the substrings,
+     * the delimiter is allowed to be a string rather than a char only
+     * @param strings - a std::vector<std::string> with the strings to combine
+     * @param delimiter - string on which the vector elements are joined on
+     * @return
+     */
+    static std::string combineStringsWithDelimiter(std::vector<std::string>& strings, std::string delim);
+
     static std::string prettyPrintTupleBuffer(NodeEngine::TupleBuffer& buffer, SchemaPtr schema);
 
     /**

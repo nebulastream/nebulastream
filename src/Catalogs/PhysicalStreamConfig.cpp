@@ -22,6 +22,7 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
+#include <Util/UtilityFunctions.hpp>
 namespace NES {
 
 PhysicalStreamConfigPtr PhysicalStreamConfig::create(SourceConfigPtr sourceConfig) {
@@ -48,7 +49,7 @@ const std::string PhysicalStreamConfig::toString() {
        << "ms"
        << " numberOfTuplesToProducePerBuffer=" << numberOfTuplesToProducePerBuffer
        << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-       << " logicalStreamName=" << logicalStreamName;
+       << " logicalStreamName=" << "("+UtilityFunctions::combineStringsWithDelimiter(logicalStreamName, ", ")+")";
     return ss.str();
 }
 
@@ -64,13 +65,13 @@ uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numb
 
 const std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+const std::vector<std::string> PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 
 SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     auto* config = this;
-    // BDAPRO this needs to be reoslved for multiple names
+    // BDAPRO this needs to be resolved for multiple names
     auto streamName = config->getLogicalStreamName();
 
     // Pick the first element from the catalog entry and identify the type to create appropriate source type
@@ -107,7 +108,6 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
 }
 void PhysicalStreamConfig::setSourceFrequency(uint32_t sourceFrequency) {
     PhysicalStreamConfig::sourceFrequency = std::chrono::milliseconds(sourceFrequency);
-    ;
 }
 void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer) {
     PhysicalStreamConfig::numberOfTuplesToProducePerBuffer = numberOfTuplesToProducePerBuffer;

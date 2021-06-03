@@ -33,6 +33,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <thread>
+#include <Util/UtilityFunctions.hpp>
 
 namespace po = boost::program_options;
 
@@ -97,10 +98,13 @@ int main(int argc, char** argv) {
         NES_INFO("start with dedicated source=" << sourceConfig->getSourceType()->getValue() << "\n");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(sourceConfig);
 
+        std::vector<std::string> lNames = sourceConfig->getLogicalStreamName()->getValue();
+
         NES_INFO("NESWORKERSTARTER: Source Config type = "
                  << sourceConfig->getSourceType()->getValue() << " Config = " << sourceConfig->getSourceConfig()->getValue()
                  << " physicalStreamName = " << sourceConfig->getPhysicalStreamName()->getValue()
-                 << " logicalStreamName = " << sourceConfig->getLogicalStreamName()->getValue());
+                 << " logicalStreamName = (" <<
+                 UtilityFunctions::combineStringsWithDelimiter(lNames,",") +")");
 
         wrk->setWithRegister(conf);
     } else if (workerConfig->getParentId()->getValue() != "-1") {

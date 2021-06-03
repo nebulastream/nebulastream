@@ -51,10 +51,10 @@ class AbstractPhysicalStreamConfig {
     virtual const std::string getPhysicalStreamName() = 0;
 
     /**
-     * @brief Provides the logical stream name of the source
-     * @return the logical stream name of the source
+     * @brief Provides the vector of logical stream names of the source
+     * @return the logical stream names of the source
      */
-    virtual const std::string getLogicalStreamName() = 0;
+    virtual const std::vector<std::string> getLogicalStreamName() = 0;
 };
 
 typedef std::shared_ptr<AbstractPhysicalStreamConfig> AbstractPhysicalStreamConfigPtr;

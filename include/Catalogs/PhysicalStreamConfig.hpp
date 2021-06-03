@@ -36,7 +36,7 @@ typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
  * @param numberOfTuplesToProducePerBuffer: the number of tuples that are put into a buffer, e.g., for csv the number of lines read
  * @param numberOfBuffersToProduce: the number of buffers to produce
  * @param physicalStreamName: name of the stream created by this source
- * @param logicalStreamName: name of the logical steam where this physical stream contributes to
+ * @param logicalStreamName: vector of logical steam names where this physical stream contributes to
  */
 class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
@@ -81,10 +81,10 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     const std::string getPhysicalStreamName() override;
 
     /**
-     * @brief get logical stream name
+     * @brief get a vector of logical stream names
      * @return logical stream name
      */
-    const std::string getLogicalStreamName() override;
+    const std::vector<std::string> getLogicalStreamName() override;
 
     const std::string toString() override;
 
@@ -106,8 +106,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
     uint32_t numberOfBuffersToProduce;
 
     std::string physicalStreamName;
-    // BDAPRO adjust to or remove multiple logical stream names
-    std::string logicalStreamName;
+    std::vector<std::string> logicalStreamName;
     bool skipHeader;
 };
 

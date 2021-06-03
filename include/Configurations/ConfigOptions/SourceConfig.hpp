@@ -30,6 +30,7 @@ class ConfigOption;
 typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
 typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
 typedef std::shared_ptr<ConfigOption<bool>> BoolConfigOption;
+typedef std::shared_ptr<ConfigOption<std::vector<std::string>>> VectorStringConfigOption;
 
 /**
  * @brief Configuration object for source config
@@ -117,14 +118,19 @@ class SourceConfig {
     void setPhysicalStreamName(std::string physicalStreamName);
 
     /**
-     * @brief gets a ConfigOption object with logicalStreamName
+     * @brief gets a ConfigOption object with a vector of logicalStreamNames
      */
-    const std::shared_ptr<ConfigOption<std::string>> getLogicalStreamName() const;
+    const std::shared_ptr<ConfigOption<std::vector<std::string>>> getLogicalStreamName() const;
 
     /**
      * @brief set the value for logicalStreamName with the appropriate data format
      */
-    void setLogicalStreamName(std::string logicalStreamName);
+    void setLogicalStreamName(std::vector<std::string> logicalStreamName);
+
+    /**
+     * @brief add the logicalStreamName to the vector of logicalStreamNames
+     */
+    void addLogicalStreamName(std::string logicalStreamName);
 
     /**
      * @brief gets a ConfigOption object with skipHeader
@@ -147,7 +153,7 @@ class SourceConfig {
     IntConfigOption numberOfBuffersToProduce;
     IntConfigOption numberOfTuplesToProducePerBuffer;
     StringConfigOption physicalStreamName;
-    StringConfigOption logicalStreamName;
+    VectorStringConfigOption logicalStreamName;
     BoolConfigOption skipHeader;
 };
 }// namespace NES
