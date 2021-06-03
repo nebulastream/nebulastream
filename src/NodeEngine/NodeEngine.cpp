@@ -184,6 +184,7 @@ bool NodeEngine::registerQueryInNodeEngine(const QueryPlanPtr& queryPlan) {
     NES_INFO("Creating ExecutableQueryPlan for " << queryId << " " << querySubPlanId);
 
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, inherited1::shared_from_this());
+    request->enableDump();
     auto result = queryCompiler->compileQuery(request);
     try {
         auto executablePlan = result->getExecutableQueryPlan();
