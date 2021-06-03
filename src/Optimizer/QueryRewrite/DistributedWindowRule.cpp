@@ -150,7 +150,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
                                                            numberOfEdgesForMerger,
                                                            triggerPolicy,
-                                                           triggerActionComplete,
+                                                           Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
 
         } else {
@@ -160,7 +160,7 @@ void DistributeWindowRule::createDistributedWindowOperator(const WindowOperatorN
                                                            Windowing::DistributionCharacteristic::createMergingWindowType(),
                                                            numberOfEdgesForMerger,
                                                            triggerPolicy,
-                                                           triggerActionComplete,
+                                                           Windowing::SliceAggregationTriggerActionDescriptor::create(),
                                                            allowedLateness);
         }
         NES_DEBUG("DistributeWindowRule::apply: created logical window definition for slice merger operator"

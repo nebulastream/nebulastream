@@ -700,7 +700,7 @@ ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& worke
     // there is a potential task in the queue and the thread pool is running
     if (running && !taskQueue.empty()) {
         auto task = taskQueue.front();
-        NES_TRACE("QueryManager: provide task" << task.toString() << " to thread (getWork())");
+        NES_DEBUG("QueryManager: provide task" << task.toString() << " to thread (getWork())");
         taskQueue.pop_front();
         lock.unlock();
         auto ret = task(workerContext);
@@ -812,13 +812,17 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
     // dispatch buffer as task
     if (auto* nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable)) {
         if ((*nextPipeline)->isRunning()) {
-            NES_TRACE("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
-                                                                    << buffer);
+            NES_DEBUG("QueryManager: added Task for next pipeline " << (*nextPipeline)->getPipelineId() << " inputBuffer "
+                                                                    << buffer.getOriginId()
+                                                                    << " sequence:" << buffer.getSequenceNumber());
             taskQueue.emplace_back(executable, buffer);
         } else {
             NES_ASSERT2_FMT(false, "Pushed task for non running pipeline " << (*nextPipeline)->getPipelineId());
         }
-    } else {
+    } else if (auto dataSink = std::get_if<DataSinkPtr>(&executable)) {
+        NES_DEBUG("QueryManager: added Task for next a data sink " << (*dataSink)->toString() << " inputBuffer "
+                                                                   << buffer.getOriginId()
+                                                                   << " sequence:" << buffer.getSequenceNumber());
         taskQueue.emplace_back(executable, buffer);
     }
     cv.notify_all();

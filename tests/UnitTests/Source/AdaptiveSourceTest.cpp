@@ -100,9 +100,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
             memcpy(tupleBuffer.getBuffer<char>() + offset + i * 4096, &val, 4);
             ++i;
         }
-        generatedTuples += generated_tuples_this_pass;
         tupleBuffer.setNumberOfTuples(generated_tuples_this_pass);
-        generatedBuffers++;
     };
 
     /**
