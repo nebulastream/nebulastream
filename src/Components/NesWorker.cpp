@@ -206,10 +206,10 @@ bool NesWorker::stop(bool) {
             NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
         }
         nodeEngine.reset();
-        //shut down the async queue
-        completionQueue->Shutdown();
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
+        //shut down the async queue
+        completionQueue->Shutdown();
 
         if (rpcThread->joinable()) {
             NES_DEBUG("NesWorker: join rpcThread");
