@@ -29,24 +29,10 @@
 
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
-//void NES::TensorflowAdapter::initializeModel(){
-//    initializeModel("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
-//}
-//
-//void NES::TensorflowAdapter::initializeModel(std::string model){
-//    std::unique_ptr<tflite::FlatBufferModel> ml_model =
-//        tflite::FlatBufferModel::BuildFromFile(model.c_str());
-//
-//    tflite::ops::builtin::BuiltinOpResolver resolver;
-//    tflite::InterpreterBuilder builder(*ml_model, resolver);
-//
-//    builder(&interpreter);
-//    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
-//
-//    // Allocate tensor buffers.
-//    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
-//
-//}
+void NES::TensorflowAdapter::initializeModel(std::string m){
+    model = m;
+    std::cout << "INITIALIZING MODEL: " << model << std::endl;
+}
 
 NES::SemanticQueryValidationPtr NES::TensorflowAdapter::create() {
     return std::make_shared<TensorflowAdapter>();
@@ -58,7 +44,7 @@ float NES::TensorflowAdapter::getResultAt(int i) {
 
 void NES::TensorflowAdapter::infer(std::vector<float> v){
     std::unique_ptr<tflite::FlatBufferModel> ml_model =
-        tflite::FlatBufferModel::BuildFromFile("/home/sumegim/Documents/tub/thesis/tflite/hello_world/iris_92acc.tflite");
+        tflite::FlatBufferModel::BuildFromFile(model.c_str());
 
     tflite::ops::builtin::BuiltinOpResolver resolver;
     tflite::InterpreterBuilder builder(*ml_model, resolver);

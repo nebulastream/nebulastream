@@ -18,6 +18,7 @@
 #define NES_TENSORFLOWADAPTER_HPP
 
 #include <memory>
+//#include <tensorflow/lite/interpreter.h>
 #include <vector>
 
 namespace NES {
@@ -31,12 +32,11 @@ class TensorflowAdapter {
     TensorflowAdapter();
     void infer(std::vector<float> v);
     float getResultAt(int i);
-//    void initializeModel(std::string model);
-//    void initializeModel();
+    void initializeModel(std::string model);
+    void pass() {}
   private:
-      float* output;
-//    std::unique_ptr<tflite::Interpreter> interpreter;
-
+    float* output{};
+    std::string model;
 };
 
 }// namespace NES
