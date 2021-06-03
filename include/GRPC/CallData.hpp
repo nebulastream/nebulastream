@@ -16,58 +16,71 @@
 
 #ifndef NES_SRC_GRPC_CALLDATA_HPP_
 #define NES_SRC_GRPC_CALLDATA_HPP_
-//
-////#include <GRPC/WorkerRPCServer.hpp>
-//
-//namespace NES {
-//
-///**
-// * @brief This is taken from https://github.com/grpc/grpc/tree/master/examples/cpp/helloworld
-// *  Take in the "service" instance (in this case representing an asynchronous
-// * server) and the completion queue "completionQueue" used for asynchronous communication
-// * with the gRPC runtime.
-// */
-//class CallData {
-//  public:
-//    /**
-//     * @brief Constructor for the Call Data
-//     * @param service server to listen on
-//     * @param cq queue to listen on
-//     */
-//    CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq);
-//
-//    /**
-//    * @brief Run method to process the call data through it different stages
-//    */
-//    void proceed();
-//
-//  private:
-//    // The means of communication with the gRPC runtime for an asynchronous
-//    // server.
-//    WorkerRPCServer::Service* service;
-//
-//    // The producer-consumer queue where for asynchronous server notifications.
-//    grpc::ServerCompletionQueue* completionQueue;
-//
-//    // Context for the rpc, allowing to tweak aspects of it such as the use
-//    // of compression, authentication, as well as to send metadata back to the
-//    // client.
-//    ServerContext ctx;
+
+//#include <GRPC/WorkerRPCServer.hpp>
+namespace WorkerRPCServer
+{
+    class Service;
+}
+
+namespace grpc{
+ class ServerCompletionQueue;
+// class ServerAsyncResponseWriter;
+}
+
+//class ServerContext;
+//class RegisterQueryRequest;
+//class RegisterQueryReply;
+namespace NES {
+
+/**
+ * @brief This is taken from https://github.com/grpc/grpc/tree/master/examples/cpp/helloworld
+ *  Take in the "service" instance (in this case representing an asynchronous
+ * server) and the completion queue "completionQueue" used for asynchronous communication
+ * with the gRPC runtime.
+ */
+class CallData {
+  public:
+    /**
+     * @brief Constructor for the Call Data
+     * @param service server to listen on
+     * @param cq queue to listen on
+     */
+    CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq);
+
+    /**
+    * @brief Run method to process the call data through it different stages
+    */
+    void proceed();
+
+  private:
+    // The means of communication with the gRPC runtime for an asynchronous
+    // server.
+    WorkerRPCServer::Service* service;
+
+    // The producer-consumer queue where for asynchronous server notifications.
+    grpc::ServerCompletionQueue* completionQueue;
+
+    // Context for the rpc, allowing to tweak aspects of it such as the use
+    // of compression, authentication, as well as to send metadata back to the
+    // client.
+//    ServerContext* ctx;
 //
 //    // What we get from the client.
-//    RegisterQueryRequest request;
+//    RegisterQueryRequest* request;
 //
 //    // What we send back to the client.
-//    RegisterQueryReply reply;
-//
-//    // The means to get back to the client.
-//    grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder;
-//
-//    // Let's implement a tiny state machine with the following states.
-//    enum CallStatus { CREATE, PROCESS, FINISH };
-//    CallStatus status;// The current serving state.
-//};
+//    RegisterQueryReply* reply;
+
+    // The means to get back to the client.
+//    grpc::ServerAsyncResponseWriter<grpc::RegisterQueryReply> responder;
+
+    // Let's implement a tiny state machine with the following states.
+    enum CallStatus { CREATE, PROCESS, FINISH };
+    CallStatus status;// The current serving state.
+};
+
 //typedef std::shared_ptr<CallData> CallDataPtr;
 
-//}// namespace NES
+}// namespace NES
 #endif//NES_SRC_GRPC_CALLDATA_HPP_

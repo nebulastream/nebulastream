@@ -13,19 +13,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <GRPC/WorkerRPCServer.hpp>
 #include <GRPC/CallData.hpp>
-//#include <GRPC/WorkerRPCServer.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
 CallData::CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq)
-    : service(service), completionQueue(cq), responder(&ctx), status(CREATE) {
+    : service(service), completionQueue(cq), status(CREATE) {
+//    responder(&ctx),
     // Invoke the serving logic right away.
 }
 
 void CallData::proceed() {
+    // What we get from the client.
+    RegisterQueryRequest request;
+//
+//    // What we send back to the client.
+    RegisterQueryReply reply;
+
+    ServerContext ctx;
+    grpc::ServerAsyncResponseWriter<RegisterQueryReply> responder(&ctx);
+
     if (status == CREATE) {
         NES_DEBUG("RequestInSyncInCreate=" << request.DebugString());
         // Make this instance progress to the PROCESS state.
