@@ -27,6 +27,7 @@
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <Util/Logger.hpp>
+#include "SerializableQueryPlan.pb.h"
 
 using namespace web;
 using namespace http;
