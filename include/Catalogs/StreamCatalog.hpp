@@ -65,11 +65,12 @@ class StreamCatalog {
     bool removeLogicalStream(std::string logicalStreamName);
 
     /**
-     * @brief method to add a physical stream without a logical stream leading to a misconfigured physicalStream
+     * @brief method to add a physical stream without a logical stream leading to a misconfigured physicalStream which is
+     * stored in misconfiguredPhysicalStreams
      * @param newEntry
      * @return
      */
-    bool addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry;
+    bool addPhysicalStreamWithoutLogicalStreams(StreamCatalogEntryPtr newEntry);
 
         /**
        * @brief method to add a physical stream
@@ -193,10 +194,13 @@ class StreamCatalog {
 
     //map logical stream to schema
     std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
+
     //map logicalStreamName to vector of physicalStreamName
     std::map<std::string, std::vector<std::string>> logicalToPhysicalStreamMapping;
+
     // map physicalStreamName to StreamCatalogEntryPtr
     std::map<std::string, StreamCatalogEntryPtr> nameToPhysicalStream;
+
     // map physicalStreamName of misconfigured stream
     std::map<std::string, std::string> misconfiguredPhysicalStreams;
 
