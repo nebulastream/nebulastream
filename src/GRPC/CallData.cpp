@@ -21,7 +21,6 @@ namespace NES {
 
 CallData::CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq)
     : service(service), completionQueue(cq), status(CREATE) {
-//    responder(&ctx),
     // Invoke the serving logic right away.
 }
 

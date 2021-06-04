@@ -105,7 +105,7 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
         NES_THROW_RUNTIME_ERROR("CoordinatorEngine::registerNode type not supported ");
     }
 
-    //TODO: this has to be refactored
+    //TODO: this has to be refactored #1971
 //    if (nodeStats->IsInitialized()) {
 //        physicalNode->setNodeStats(std::make_shared<NodeStats>());
 //    }

@@ -72,7 +72,7 @@ bool NesWorker::setWithParent(std::string parentId) {
     this->parentId = parentId;
     return true;
 }
-//
+
 void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
     //TODO: somehow we need this although it is not called at all
     // Spawn a new CallData instance to serve new clients.
