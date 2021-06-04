@@ -18,7 +18,7 @@ namespace NES::Windowing {
 
 WatermarkProcessor::WatermarkProcessor() = default;
 
-void WatermarkProcessor::updateWatermark(WatermarkTs ts, BarrierSequenceNumber sequenceNumber) {
+void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber) {
     std::unique_lock lock(watermarkLatch);
 
     // emplace current watermark barrier in the update log
