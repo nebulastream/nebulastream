@@ -18,24 +18,24 @@
 #include <sstream>
 namespace NES::NodeEngine {
 
-const std::atomic<uint64_t> QueryStatistics::getProcessedTasks() const { return processedTasks.load(); }
+uint64_t QueryStatistics::getProcessedTasks() const { return processedTasks.load(); }
 
-const std::atomic<uint64_t> QueryStatistics::getProcessedTuple() const { return processedTuple.load(); }
+uint64_t QueryStatistics::getProcessedTuple() const { return processedTuple.load(); }
 
-const std::atomic<uint64_t> QueryStatistics::getProcessedBuffers() const { return processedBuffers.load(); }
+uint64_t QueryStatistics::getProcessedBuffers() const { return processedBuffers.load(); }
 
-const std::atomic<uint64_t> QueryStatistics::getProcessedWatermarks() const { return processedWatermarks.load(); }
+uint64_t QueryStatistics::getProcessedWatermarks() const { return processedWatermarks.load(); }
 
-const std::atomic<uint64_t> QueryStatistics::getLatencySum() const { return latencySum.load(); }
+uint64_t QueryStatistics::getLatencySum() const { return latencySum.load(); }
 
-const std::atomic<uint64_t> QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); }
+uint64_t QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); }
 
-void QueryStatistics::setProcessedTasks(const std::atomic<uint64_t>& processedTasks) {
-    this->processedTasks = processedTasks.load();
+void QueryStatistics::setProcessedTasks(uint64_t processedTasks) {
+    this->processedTasks = processedTasks;
 }
 
-void QueryStatistics::setProcessedTuple(const std::atomic<uint64_t>& processedTuple) {
-    this->processedTuple = processedTuple.load();
+void QueryStatistics::setProcessedTuple(uint64_t processedTuple) {
+    this->processedTuple = processedTuple;
 }
 
 void QueryStatistics::incProcessedBuffers() { this->processedBuffers++; }
@@ -47,8 +47,8 @@ void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTupl
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
 void QueryStatistics::incQueueSizeSum(uint64_t size){ this->queueSizeSum += size; }
 
-void QueryStatistics::setProcessedBuffers(const std::atomic<uint64_t>& processedBuffers) {
-    this->processedBuffers = processedBuffers.load();
+void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) {
+    this->processedBuffers = processedBuffers;
 }
 
 void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) { tsToLatencyMap[now].push_back(latency); }
@@ -57,14 +57,14 @@ std::map<uint64_t, std::vector<uint64_t>> QueryStatistics::getTsToLatencyMap() {
 
 std::string QueryStatistics::getQueryStatisticsAsString() {
     std::stringstream ss;
-    ss << "queryId=" << queryId;
-    ss << " subPlanId=" << subQueryId;
-    ss << " processedTasks=" << processedTasks;
-    ss << " processedTuple=" << processedTuple;
-    ss << " processedBuffers=" << processedBuffers;
-    ss << " processedWatermarks=" << processedWatermarks;
-    ss << " latencySum=" << latencySum;
-    ss << " queueSizeSum=" << queueSizeSum;
+    ss << "queryId=" << queryId.load();
+    ss << " subPlanId=" << subQueryId.load();
+    ss << " processedTasks=" << processedTasks.load();
+    ss << " processedTuple=" << processedTuple.load();
+    ss << " processedBuffers=" << processedBuffers.load();
+    ss << " processedWatermarks=" << processedWatermarks.load();
+    ss << " latencySum=" << latencySum.load();
+    ss << " queueSizeSum=" << queueSizeSum.load();
     return ss.str();
 }
 uint64_t QueryStatistics::getQueryId() const { return queryId.load(); }

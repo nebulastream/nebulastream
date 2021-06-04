@@ -26,44 +26,43 @@ namespace NES::NodeEngine {
 class QueryStatistics {
   public:
     QueryStatistics(uint64_t queryId, uint64_t subQueryId)
-        : processedTasks(0), processedTuple(0), processedBuffers(0), processedWatermarks(0), queryId(queryId),
-          subQueryId(subQueryId){};
+        : queryId(queryId),subQueryId(subQueryId){};
 
     /**
      * @brief getter for processedTasks
      * @return processedTasks
      */
-    const std::atomic<uint64_t> getProcessedTasks() const;
+    uint64_t getProcessedTasks() const;
 
     /**
    * @brief getter for processedTuple
    * @return processedTuple
    */
-    const std::atomic<uint64_t> getProcessedTuple() const;
+    uint64_t getProcessedTuple() const;
 
     /**
    * @brief getter for processedBuffers
    * @return processedBuffers
    */
-    const std::atomic<uint64_t> getProcessedBuffers() const;
+    uint64_t getProcessedBuffers() const;
 
     /**
     * @brief getter for processedWatermarks
     * @return processedBuffers
     */
-    const std::atomic<uint64_t> getProcessedWatermarks() const;
+    uint64_t getProcessedWatermarks() const;
 
     /**
     * @brief setter for processedTasks
     * @return processedTasks
     */
-    void setProcessedTasks(const std::atomic<uint64_t>& processedTasks);
+    void setProcessedTasks(uint64_t processedTasks);
 
     /**
    * @brief setter for processedTuple
    * @return processedTuple
    */
-    void setProcessedTuple(const std::atomic<uint64_t>& processedTuple);
+    void setProcessedTuple(uint64_t processedTuple);
 
     /**
   * @brief increment processedBuffers
@@ -89,7 +88,7 @@ class QueryStatistics {
      * @brief get sum of all latencies
      * @return value
      */
-    const std::atomic<uint64_t> getLatencySum() const;
+    uint64_t getLatencySum() const;
 
     /**
     * @brief increment queue size sum
@@ -100,7 +99,7 @@ class QueryStatistics {
      * @brief get sum of all queue sizes
      * @return value
      */
-    const std::atomic<uint64_t> getQueueSizeSum() const;
+    uint64_t getQueueSizeSum() const;
 
 
     /**
@@ -112,7 +111,7 @@ class QueryStatistics {
   * @brief setter for processedBuffers
   * @return processedBuffers
   */
-    void setProcessedBuffers(const std::atomic<uint64_t>& processedBuffers);
+    void setProcessedBuffers(uint64_t processedBuffers);
 
     /**
      * @brief return the current statistics as a string
@@ -146,14 +145,14 @@ class QueryStatistics {
     std::map<uint64_t, std::vector<uint64_t>> getTsToLatencyMap();
 
   private:
-    std::atomic<uint64_t> processedTasks;
-    std::atomic<uint64_t> processedTuple;
-    std::atomic<uint64_t> processedBuffers;
-    std::atomic<uint64_t> processedWatermarks;
+    std::atomic<uint64_t> processedTasks = 0;
+    std::atomic<uint64_t> processedTuple = 0;
+    std::atomic<uint64_t> processedBuffers = 0;
+    std::atomic<uint64_t> processedWatermarks = 0;
     std::atomic<uint64_t> latencySum = 0;
     std::atomic<uint64_t> queueSizeSum = 0;
-    std::atomic<uint64_t> queryId;
-    std::atomic<uint64_t> subQueryId;
+    std::atomic<uint64_t> queryId = 0;
+    std::atomic<uint64_t> subQueryId = 0;
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
 };
 
