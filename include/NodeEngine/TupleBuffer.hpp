@@ -18,7 +18,6 @@
 #define INCLUDE_TUPLEBUFFER_H_
 
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
-#include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>

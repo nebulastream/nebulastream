@@ -30,4 +30,3 @@ add_source_nes(
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)
 add_subdirectory(detail)
-add_subdirectory(Transactional)

@@ -13,9 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Transactional/WatermarkEmitter.hpp>
-#include <NodeEngine/Transactional/WatermarkProcessor.hpp>
 #include <Util/Logger.hpp>
+#include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <algorithm>
 #include <atomic>
 #include <gtest/gtest.h>
@@ -46,37 +45,37 @@ class WatermarkManagerTest : public testing::Test {
 
 TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterTest) {
     auto updates = 10000;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ 1);
+    auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ 1);
     // preallocate watermarks for each transaction
-    std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
-        auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
-                                                                               /*sequence number*/ i,
-                                                                               /*origin*/ 0);
-        watermarkBarriers.emplace_back(newWatermarkBarrier);
+        watermarkBarriers.emplace_back(/*ts*/ i,
+                                       /*sequence number*/ i,
+                                       /*origin*/ 0);
     }
     for (auto i = 0; i < updates; i++) {
         auto currentWatermarkBarrier = watermarkBarriers[i];
         auto oldWatermark = watermarkManager->getCurrentWatermark();
-        ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
-        watermarkManager->updateWatermark(currentWatermarkBarrier);
-        ASSERT_LE(watermarkManager->getCurrentWatermark(), currentWatermarkBarrier.getTs());
+        ASSERT_LT(oldWatermark, std::get<0>(currentWatermarkBarrier));
+        watermarkManager->updateWatermark(std::get<0>(currentWatermarkBarrier),
+                                          std::get<1>(currentWatermarkBarrier),
+                                          std::get<2>(currentWatermarkBarrier));
+        ASSERT_LE(watermarkManager->getCurrentWatermark(), std::get<0>(currentWatermarkBarrier));
     }
-    ASSERT_EQ(watermarkManager->getCurrentWatermark(), watermarkBarriers.back().getTs());
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
 }
 
 TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
     const auto updates = 100000;
     const auto threadsCount = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ 1);
+    auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ 1);
 
     // preallocate watermarks for each transaction
-    std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (int i = 1; i <= updates * threadsCount; i++) {
-        auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
-                                                                               /*sequence number*/ i,
-                                                                               /*origin*/ 0);
-        watermarkBarriers.emplace_back(newWatermarkBarrier);
+        watermarkBarriers.emplace_back(/*ts*/ i,
+                                       /*sequence number*/ i,
+                                       /*origin*/ 0);
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
     std::vector<std::thread> threads;
@@ -88,12 +87,14 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
                 auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
                 auto oldWatermark = watermarkManager->getCurrentWatermark();
                 // check if the watermark manager dose not return a watermark higher then the current one
-                ASSERT_LT(oldWatermark, currentWatermark.getTs());
-                watermarkManager->updateWatermark(currentWatermark);
+                ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
+                watermarkManager->updateWatermark(std::get<0>(currentWatermark),
+                                                  std::get<1>(currentWatermark),
+                                                  std::get<2>(currentWatermark));
                 // check that the watermark manager returns a watermark that is <= to the max watermark
                 auto globalCurrentWatermark = watermarkManager->getCurrentWatermark();
                 auto maxCurrentWatermark = watermarkBarriers[globalUpdateCounter - 1];
-                ASSERT_LE(globalCurrentWatermark, maxCurrentWatermark.getTs());
+                ASSERT_LE(globalCurrentWatermark, std::get<0>(maxCurrentWatermark));
             }
         }));
     }
@@ -101,45 +102,46 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterTest) {
     for (auto& thread : threads) {
         thread.join();
     }
-    ASSERT_EQ(watermarkManager->getCurrentWatermark(), watermarkBarriers.back().getTs());
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
 }
 
 TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
     auto updates = 10000;
     auto origins = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
+    auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ origins);
     // preallocate watermarks for each transaction
-    std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
-            auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
-                                                                                   /*sequence number*/ i,
-                                                                                   /*origin*/ o);
-            watermarkBarriers.emplace_back(newWatermarkBarrier);
+            watermarkBarriers.emplace_back(/*ts*/ i,
+                                           /*sequence number*/ i,
+                                           /*origin*/ o);
         }
     }
 
     for (auto currentWatermarkBarrier : watermarkBarriers) {
         auto oldWatermark = watermarkManager->getCurrentWatermark();
-        ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
-        watermarkManager->updateWatermark(currentWatermarkBarrier);
-        ASSERT_LE(watermarkManager->getCurrentWatermark(), currentWatermarkBarrier.getTs());
+        ASSERT_LT(oldWatermark, std::get<0>(currentWatermarkBarrier));
+        watermarkManager->updateWatermark(std::get<0>(currentWatermarkBarrier),
+                                          std::get<1>(currentWatermarkBarrier),
+                                          std::get<2>(currentWatermarkBarrier));
+        ASSERT_LE(watermarkManager->getCurrentWatermark(), std::get<0>(currentWatermarkBarrier));
     }
-    ASSERT_EQ(watermarkManager->getCurrentWatermark(), watermarkBarriers.back().getTs());
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
 }
 
 TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsOutofOrderTest) {
     auto updates = 10000u;
     auto origins = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
+    auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ origins);
+
     // preallocate watermarks for each transaction
-    std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (auto i{1u}; i <= updates; ++i) {
         for (int o = 0; o < origins; o++) {
-            auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
-                                                                                   /*sequence number*/ i,
-                                                                                   /*origin*/ o);
-            watermarkBarriers.emplace_back(newWatermarkBarrier);
+            watermarkBarriers.emplace_back(/*ts*/ i,
+                                           /*sequence number*/ i,
+                                           /*origin*/ o);
         }
     }
 
@@ -150,8 +152,10 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsOutofOrd
 
     for (auto currentWatermarkBarrier : watermarkBarriers) {
         auto oldWatermark = watermarkManager->getCurrentWatermark();
-        ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
-        watermarkManager->updateWatermark(currentWatermarkBarrier);
+        ASSERT_LT(oldWatermark, std::get<0>(currentWatermarkBarrier));
+        watermarkManager->updateWatermark(std::get<0>(currentWatermarkBarrier),
+                                          std::get<1>(currentWatermarkBarrier),
+                                          std::get<2>(currentWatermarkBarrier));
     }
     ASSERT_EQ(watermarkManager->getCurrentWatermark(), updates);
 }
@@ -160,17 +164,15 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
     const auto updates = 100000;
     const auto origins = 10;
     const auto threadsCount = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
+    auto watermarkManager = Windowing::MultiOriginWatermarkProcessor::create(/*origins*/ origins);
 
     // preallocate watermarks for each transaction
-
-    std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
+    std::vector<std::tuple<WatermarkTs, SequenceNumber, OriginId>> watermarkBarriers;
     for (int i = 1; i <= updates; i++) {
         for (int o = 0; o < origins; o++) {
-            auto newWatermarkBarrier = NodeEngine::Transactional::WatermarkBarrier(/*ts*/ i,
-                                                                                   /*sequence number*/ i,
-                                                                                   /*origin*/ o);
-            watermarkBarriers.emplace_back(newWatermarkBarrier);
+            watermarkBarriers.emplace_back(/*ts*/ i,
+                                           /*sequence number*/ i,
+                                           /*origin*/ o);
         }
     }
     std::atomic<uint64_t> globalUpdateCounter = 0;
@@ -183,12 +185,14 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
                 auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
                 auto oldWatermark = watermarkManager->getCurrentWatermark();
                 // check if the watermark manager dose not return a watermark higher then the current one
-                ASSERT_LT(oldWatermark, currentWatermark.getTs());
-                watermarkManager->updateWatermark(currentWatermark);
+                ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
+                watermarkManager->updateWatermark(std::get<0>(currentWatermark),
+                                                  std::get<1>(currentWatermark),
+                                                  std::get<2>(currentWatermark));
                 // check that the watermark manager returns a watermark that is <= to the max watermark
                 auto globalCurrentWatermark = watermarkManager->getCurrentWatermark();
                 auto maxCurrentWatermark = watermarkBarriers[globalUpdateCounter - 1];
-                ASSERT_LE(globalCurrentWatermark, maxCurrentWatermark.getTs());
+                ASSERT_LE(globalCurrentWatermark, std::get<0>(maxCurrentWatermark));
             }
         }));
     }
@@ -196,38 +200,7 @@ TEST_F(WatermarkManagerTest, concurrentWatermarkUpdaterMultipleOriginsTest) {
     for (auto& thread : threads) {
         thread.join();
     }
-    ASSERT_EQ(watermarkManager->getCurrentWatermark(), watermarkBarriers.back().getTs());
-}
-
-TEST_F(WatermarkManagerTest, singleThreadWatermarkEmitterAndUpdaterTest) {
-    auto updates = 10000;
-    auto origins = 10;
-    auto watermarkManager = NodeEngine::Transactional::WatermarkProcessor::create(/*origins*/ origins);
-
-    std::vector<std::shared_ptr<NodeEngine::Transactional::WatermarkEmitter>> emitters;
-    emitters.reserve(origins);
-    for (int o = 0; o < origins; o++) {
-        emitters.emplace_back(NodeEngine::Transactional::WatermarkEmitter::create(o));
-    }
-
-    // preallocate watermarks for each transaction
-    std::vector<NodeEngine::Transactional::WatermarkBarrier> watermarkBarriers;
-    for (auto i = 1; i <= updates; i++) {
-        for (auto o = 0; o < origins; o++) {
-            auto watermarkEmitter = emitters[o];
-            watermarkEmitter->updateWatermark(i);
-            auto nextBarrier = watermarkEmitter->getNextWatermarkBarrier();
-            watermarkBarriers.emplace_back(nextBarrier);
-        }
-    }
-
-    for (auto currentWatermarkBarrier : watermarkBarriers) {
-        auto oldWatermark = watermarkManager->getCurrentWatermark();
-        ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
-        watermarkManager->updateWatermark(currentWatermarkBarrier);
-        ASSERT_LE(watermarkManager->getCurrentWatermark(), currentWatermarkBarrier.getTs());
-    }
-    ASSERT_EQ(watermarkManager->getCurrentWatermark(), watermarkBarriers.back().getTs());
+    ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
 }
 
 }// namespace NES
