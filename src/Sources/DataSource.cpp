@@ -66,7 +66,6 @@ DataSource::DataSource(const SchemaPtr& pSchema,
 }
 
 void DataSource::emitWorkFromSource(NodeEngine::TupleBuffer& buffer) {
-    generatedTuples += buffer.getNumberOfTuples();
 
     // set the origin id for this source
     buffer.setOriginId(operatorId);
@@ -76,9 +75,8 @@ void DataSource::emitWorkFromSource(NodeEngine::TupleBuffer& buffer) {
                                  .count());
     // Set the sequence number of this buffer.
     // A data source generates a monotonic increasing sequence number
-    generatedBuffers++;
-    buffer.setSequenceNumber(generatedBuffers);
-
+    maxSequenceNumber++;
+    buffer.setSequenceNumber(maxSequenceNumber);
     emitWork(buffer);
 }
 

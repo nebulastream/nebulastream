@@ -63,6 +63,10 @@ std::optional<NodeEngine::TupleBuffer> MonitoringSource::receiveData() {
     buf.setNumberOfTuples(1);
     NES_DEBUG("MonitoringSource: Generated buffer with 1 tuple and size " << schema->getSchemaSizeInBytes());
 
+    //update statistics
+    generatedTuples++;
+    generatedBuffers++;
+
     NES_DEBUG("MonitoringSource::Buffer content: " << UtilityFunctions::prettyPrintTupleBuffer(buf, schema));
 
     return buf;

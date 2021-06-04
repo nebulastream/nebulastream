@@ -222,7 +222,9 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     SchemaPtr schema;
-    uint64_t numBuffersToProcess = std::numeric_limits<decltype(numBuffersToProcess)>::max();
+    uint64_t generatedTuples;
+    uint64_t generatedBuffers;
+    uint64_t numBuffersToProcess= std::numeric_limits<decltype(numBuffersToProcess)>::max();
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate{};
     std::chrono::milliseconds gatheringInterval{0};
@@ -239,11 +241,10 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     void emitWorkFromSource(NodeEngine::TupleBuffer& buffer);
 
   private:
-    uint64_t generatedTuples;
-    uint64_t generatedBuffers;
     mutable std::mutex startStopMutex;
     std::atomic_bool running{false};
     std::shared_ptr<std::thread> thread{nullptr};
+    uint64_t maxSequenceNumber;
 
     /**
     * @brief running routine with a fix frequency
@@ -254,7 +255,6 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     * @brief running routine with a fix ingestion rate
     */
     void runningRoutineWithIngestionRate();
-
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;

@@ -74,6 +74,9 @@ void BinarySource::fillBuffer(NodeEngine::TupleBuffer& buf) {
     input.read(buf.getBuffer<char>(), uint64_to_read);
     uint64_t generated_tuples_this_pass = uint64_to_read / tuple_size;
     buf.setNumberOfTuples(generated_tuples_this_pass);
+
+    generatedTuples += generated_tuples_this_pass;
+    generatedBuffers++;
 }
 SourceType BinarySource::getType() const { return BINARY_SOURCE; }
 
