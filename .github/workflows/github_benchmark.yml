@@ -41,6 +41,12 @@ jobs:
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_benchmark_scheduled
+      - name: NES Workspace cleanup
+          if: ${{ always() }}
+          run: |
+            rm -f $GITHUB_WORKSPACE
+
+
   benchmark-triggered-job:
     if: "contains(github.event.inputs.trigger-value, 'trigger benchmark')"
     runs-on: [self-hosted, linux, X64, Benchmark]
@@ -61,3 +67,7 @@ jobs:
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_benchmark_triggered
+      - name: NES Workspace cleanup
+          if: ${{ always() }}
+          run: |
+            rm -f $GITHUB_WORKSPACE
