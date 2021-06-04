@@ -238,6 +238,10 @@ uint64_t BufferControlBlock::getWatermark() const noexcept { return watermark; }
 
 void BufferControlBlock::setWatermark(uint64_t watermark) { this->watermark = watermark; }
 
+uint64_t BufferControlBlock::getSequenceNumber() const noexcept { return sequenceNumber; }
+
+void BufferControlBlock::setSequenceNumber(uint64_t sequenceNumber) { this->sequenceNumber = sequenceNumber; }
+
 void BufferControlBlock::setCreationTimestamp(uint64_t ts) { this->creationTimestamp = ts; }
 
 uint64_t BufferControlBlock::getCreationTimestamp() const noexcept { return creationTimestamp; }

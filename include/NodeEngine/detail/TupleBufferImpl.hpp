@@ -119,6 +119,12 @@ class BufferControlBlock {
     void setWatermark(uint64_t watermark);
 
     /**
+    * @brief method to get the sequence number
+    * @return sequence number
+    */
+    uint64_t getSequenceNumber() const noexcept;
+
+    /**
      * @brief method to set the sequenceNumber
      * @param value
      */
@@ -191,7 +197,6 @@ class BufferControlBlock {
     std::mutex owningThreadsMutex;
     std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
 #endif
-    uint64_t getSequenceNumber();
 };
 
 /**

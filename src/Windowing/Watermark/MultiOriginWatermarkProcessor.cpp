@@ -25,7 +25,7 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(numberOfOrigins);
 }
 
-void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, BarrierSequenceNumber sequenceNumber, OriginId origenId) {
+void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origenId) {
     std::unique_lock lock(watermarkLatch);
     // insert new local watermark processor if the id is not present in the map
     if (localWatermarkProcessor.find(origenId) == localWatermarkProcessor.end()) {
