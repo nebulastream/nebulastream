@@ -244,7 +244,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     mutable std::mutex startStopMutex;
     std::atomic_bool running{false};
     std::shared_ptr<std::thread> thread{nullptr};
-    uint64_t maxSequenceNumber;
+    uint64_t maxSequenceNumber = 0;
 
     /**
     * @brief running routine with a fix frequency
