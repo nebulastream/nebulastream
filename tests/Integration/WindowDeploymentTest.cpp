@@ -326,7 +326,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -503,7 +503,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -594,7 +594,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -709,7 +709,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -906,7 +906,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -1011,7 +1011,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -1101,7 +1101,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -1206,7 +1206,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -1311,7 +1311,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(0);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -1789,7 +1789,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -1933,7 +1933,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
 
     sourceConfig->setSourceType("CSVSource");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(3);
     sourceConfig->setNumberOfBuffersToProduce(3);
     sourceConfig->setPhysicalStreamName("test_stream");
@@ -2164,7 +2164,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
     sourceConfig->setLogicalStreamName("car");
     sourceConfig->setPhysicalStreamName("car");
     sourceConfig->setSourceConfig("../tests/test_data/window.csv");
-    sourceConfig->setSourceFrequency(1);
+    sourceConfig->setSourceFrequency(0);
     sourceConfig->setNumberOfTuplesToProducePerBuffer(28);
     sourceConfig->setNumberOfBuffersToProduce(1);
     sourceConfig->setSkipHeader(false);
