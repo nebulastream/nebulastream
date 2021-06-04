@@ -13,16 +13,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Transactional/LocalWatermarkProcessor.hpp>
-namespace NES::NodeEngine::Transactional {
+#include <Windowing/Watermark/WatermarkProcessor.hpp>
+namespace NES::Windowing {
 
-LocalWatermarkProcessor::LocalWatermarkProcessor() = default;
+WatermarkProcessor::WatermarkProcessor() = default;
 
-void LocalWatermarkProcessor::updateWatermark(WatermarkBarrier& watermarkBarrier) {
+void WatermarkProcessor::updateWatermark(WatermarkTs ts, BarrierSequenceNumber sequenceNumber) {
     std::unique_lock lock(watermarkLatch);
 
     // emplace current watermark barrier in the update log
-    transactionLog.emplace(watermarkBarrier);
+    transactionLog.emplace(ts, sequenceNumber);
     // process all outstanding updates from the queue
     while (!transactionLog.empty()) {
         auto nextWatermarkUpdate = transactionLog.top();
@@ -30,18 +30,18 @@ void LocalWatermarkProcessor::updateWatermark(WatermarkBarrier& watermarkBarrier
         // Thus, we only check if the next update is the one, which we expect.
         // This implies, that each watermark barrier has to be received.
         // If the system looses a watermark barrier, the watermark processor will make no progress.
-        if (currentSequenceNumber + 1 != nextWatermarkUpdate.getSequenceNumber()) {
+        if (currentSequenceNumber + 1 != std::get<1>(nextWatermarkUpdate)) {
             // It is not the correct update, so we terminate here and can't further apply the next transaction.
             break;
         }
         // apply the current update
-        this->currentSequenceNumber = nextWatermarkUpdate.getSequenceNumber();
-        this->currentWatermark = nextWatermarkUpdate.getTs();
+        this->currentSequenceNumber = std::get<1>(nextWatermarkUpdate);
+        this->currentWatermark = std::get<0>(nextWatermarkUpdate);
         transactionLog.pop();
     }
 }
 
-WatermarkTs LocalWatermarkProcessor::getCurrentWatermark() const {
+WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
     std::unique_lock lock(watermarkLatch);
     return currentWatermark;
 }

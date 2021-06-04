@@ -30,6 +30,9 @@
 #endif
 
 namespace NES {
+using WatermarkTs = uint64_t;
+using OriginId = uint64_t;
+using SequenceNumber = uint64_t;
 
 namespace NodeEngine {
 class BufferManager;
@@ -152,10 +155,10 @@ class BufferControlBlock {
   private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
-    uint64_t watermark = 0;
-    uint64_t sequenceNumber = 0;
+    WatermarkTs watermark = 0;
+    SequenceNumber sequenceNumber = 0;
     int64_t creationTimestamp{};
-    uint64_t originId = 0;
+    OriginId originId = 0;
 
   public:
     MemorySegment* owner;

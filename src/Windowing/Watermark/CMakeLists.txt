@@ -14,6 +14,8 @@
 
 add_source_nes(
         Watermark.cpp
+        WatermarkProcessor.cpp
+        MultiOriginWatermarkProcessor.cpp
         EventTimeWatermarkGenerator.cpp
         IngestionTimeWatermarkGenerator.cpp
         WatermarkStrategy.cpp

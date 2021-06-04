@@ -14,15 +14,22 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKPROCESSOR_HPP_
-#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKPROCESSOR_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WATERMARK_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#define NES_INCLUDE_WINDOWING_WATERMARK_MULTIORIGINWATERMARKPROCESSOR_HPP_
 
-#include <NodeEngine/Transactional/LocalWatermarkProcessor.hpp>
-#include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
-namespace NES::NodeEngine::Transactional {
+
+namespace NES {
+using WatermarkTs = uint64_t;
+using OriginId = uint64_t;
+using SequenceNumber = uint64_t;
+}// namespace NES
+
+namespace NES::Windowing {
+
+class WatermarkProcessor;
 
 /**
  * @brief The watermark processor receives watermark barriers and provides the current watermark across multiple origins.
@@ -38,25 +45,25 @@ namespace NES::NodeEngine::Transactional {
  * <1>, <2>, <2>, <2>, <5>, <6>
  *
  */
-class WatermarkProcessor {
+class MultiOriginWatermarkProcessor {
   public:
     /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins
      */
-    explicit WatermarkProcessor(uint64_t numberOfOrigins);
+    explicit MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins);
 
     /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins
      */
-    static std::shared_ptr<WatermarkProcessor> create(uint64_t numberOfOrigins);
+    static std::shared_ptr<MultiOriginWatermarkProcessor> create(uint64_t numberOfOrigins);
 
     /**
      * @brief Processes a watermark barrier.
      * @param watermarkBarrier
      */
-    void updateWatermark(WatermarkBarrier watermarkBarrier);
+    void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId origin);
 
     /**
      * @brief Returns the visible watermark across all origins.
@@ -68,9 +75,9 @@ class WatermarkProcessor {
     mutable std::mutex watermarkLatch;
     const uint64_t numberOfOrigins;
     // The watermark processor maintains a local watermark processor for each origin.
-    std::map<uint64_t, std::unique_ptr<LocalWatermarkProcessor>> localWatermarkProcessor;
+    std::map<uint64_t, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
 };
 
-}// namespace NES::NodeEngine::Transactional
+}// namespace NES::Windowing
 
-#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_WATERMARKEMITTER_HPP_
+#endif//NES_INCLUDE_WINDOWING_WATERMARK_MULTIORIGINWATERMARKPROCESSOR_HPP_

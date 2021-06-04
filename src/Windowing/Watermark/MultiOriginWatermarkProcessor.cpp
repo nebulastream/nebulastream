@@ -14,31 +14,31 @@
     limitations under the License.
 */
 
-#include <NodeEngine/Transactional/WatermarkProcessor.hpp>
+#include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <Windowing/Watermark/WatermarkProcessor.hpp>
 #include <Util/Logger.hpp>
-namespace NES::NodeEngine::Transactional {
+namespace NES::Windowing {
 
-WatermarkProcessor::WatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {}
+MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {}
 
-std::shared_ptr<WatermarkProcessor> WatermarkProcessor::create(const uint64_t numberOfOrigins) {
-    return std::make_shared<WatermarkProcessor>(numberOfOrigins);
+std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const uint64_t numberOfOrigins) {
+    return std::make_shared<MultiOriginWatermarkProcessor>(numberOfOrigins);
 }
 
-void WatermarkProcessor::updateWatermark(WatermarkBarrier watermarkBarrier) {
+void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, BarrierSequenceNumber sequenceNumber, OriginId origenId) {
     std::unique_lock lock(watermarkLatch);
-    auto origenId = watermarkBarrier.getOrigin();
     // insert new local watermark processor if the id is not present in the map
     if (localWatermarkProcessor.find(origenId) == localWatermarkProcessor.end()) {
-        localWatermarkProcessor[origenId] = std::make_unique<LocalWatermarkProcessor>();
+        localWatermarkProcessor[origenId] = std::make_unique<WatermarkProcessor>();
     }
     NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
                     "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
                                                                          << " origins but we only expected  " << numberOfOrigins);
 
-    localWatermarkProcessor[origenId]->updateWatermark(watermarkBarrier);
+    localWatermarkProcessor[origenId]->updateWatermark(ts, sequenceNumber);
 }
 
-WatermarkTs WatermarkProcessor::getCurrentWatermark() const {
+WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
     std::unique_lock lock(watermarkLatch);
     // check if we already registered each expected origin in the local watermark processor map
     if (localWatermarkProcessor.size() != numberOfOrigins) {

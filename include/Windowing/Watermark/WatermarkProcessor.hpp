@@ -14,23 +14,29 @@
     limitations under the License.
 */
 
-#ifndef NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKPROCESSOR_HPP_
-#define NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKPROCESSOR_HPP_
+#ifndef NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKPROCESSOR_HPP_
+#define NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKPROCESSOR_HPP_
 
-#include <NodeEngine/Transactional/WatermarkBarrier.hpp>
 #include <mutex>
 #include <queue>
-namespace NES::NodeEngine::Transactional {
+
+namespace NES {
+using WatermarkTs = uint64_t;
+using OriginId = uint64_t;
+using SequenceNumber = uint64_t;
+}// namespace NES
+
+namespace NES::Windowing {
 
 /**
- * @brief This class implements a local watermark processor.
- * It processes all WatermarkBarriers from one specific origin and applies all updates in sequential order.
- * @assumptions This watermark processor assumes strictly monotonic WatermarkBarrier sequence numbers.
+ * @brief This class implements a watermark processor for a single origin.
+ * It processes all watermark updates from one specific origin and applies all updates in sequential order.
+ * @assumptions This watermark processor assumes strictly monotonic update sequence numbers.
  * To handle out of order processing, it stores in flight updates in a transaction log.
  */
-class LocalWatermarkProcessor {
+class WatermarkProcessor {
   public:
-    explicit LocalWatermarkProcessor();
+    explicit WatermarkProcessor();
 
     /**
      * @brief In this implementation, update watermark processes a watermark barrier and applies all
@@ -38,7 +44,7 @@ class LocalWatermarkProcessor {
      * To this end, it leverage the implicit sorting of the priority queue.
      * @param watermarkBarrier
      */
-    void updateWatermark(WatermarkBarrier& watermarkBarrier);
+    void updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber);
 
     /**
      * @brief Returns the current watermark.
@@ -48,18 +54,18 @@ class LocalWatermarkProcessor {
 
   private:
     struct WatermarkBarrierComparator {
-        bool operator()(WatermarkBarrier const& wb1, WatermarkBarrier const& wb2) {
+        bool operator()(std::tuple<WatermarkTs, SequenceNumber> const& wb1, std::tuple<WatermarkTs, SequenceNumber> const& wb2) {
             // return "true" if "wb1" is ordered before "wb2", for example:
-            return wb1.getSequenceNumber() > wb2.getSequenceNumber();
+            return std::get<1>(wb1) > std::get<1>(wb2);
         }
     };
     mutable std::mutex watermarkLatch;
     WatermarkTs currentWatermark{0};
-    BarrierSequenceNumber currentSequenceNumber{0};
+    SequenceNumber currentSequenceNumber{0};
     // Use a priority queue to keep track of all in flight transactions.
-    std::priority_queue<WatermarkBarrier, std::vector<WatermarkBarrier>, WatermarkBarrierComparator> transactionLog;
+    std::priority_queue<std::tuple<WatermarkTs, SequenceNumber>, std::vector<std::tuple<WatermarkTs, SequenceNumber>>, WatermarkBarrierComparator> transactionLog;
 };
 
 }// namespace NES::NodeEngine::Transactional
 
-#endif//NES_INCLUDE_NODEENGINE_TRANSACTIONAL_LOCALWATERMARKPROCESSOR_HPP_
+#endif//NES_INCLUDE_WINDOWING_WATERMARK_WATERMARKPROCESSOR_HPP_
