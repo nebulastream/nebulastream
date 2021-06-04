@@ -218,7 +218,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
                                                    aggregation,
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
-                                                   0,
+                                                   1,
                                                    trigger,
                                                    triggerAction,
                                                    0);
@@ -310,7 +310,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
                                                    aggregation,
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
-                                                   0,
+                                                   1,
                                                    trigger,
                                                    triggerAction,
                                                    0);
@@ -394,7 +394,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
                                                    aggregation,
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createSlicingWindowType(),
-                                                   0,
+                                                   1,
                                                    trigger,
                                                    triggerAction,
                                                    0);
@@ -561,7 +561,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
                                                    aggregation,
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createCompleteWindowType(),
-                                                   0,
+                                                   1,
                                                    trigger,
                                                    triggerAction,
                                                    0);
@@ -647,7 +647,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
                                                    aggregation,
                                                    TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
                                                    DistributionCharacteristic::createSlicingWindowType(),
-                                                   0,
+                                                   1,
                                                    trigger,
                                                    triggerAction,
                                                    0);
