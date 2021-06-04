@@ -22,9 +22,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
-//#include <CoordinatorRPCService.pb.h>
-//#include <GRPC/CoordinatorRPCClient.hpp>
-//#include <GRPC/WorkerRPCServer.hpp>
 
 namespace WorkerRPCServer
 {

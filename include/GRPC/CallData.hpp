@@ -25,12 +25,8 @@ namespace WorkerRPCServer
 
 namespace grpc{
  class ServerCompletionQueue;
-// class ServerAsyncResponseWriter;
 }
 
-//class ServerContext;
-//class RegisterQueryRequest;
-//class RegisterQueryReply;
 namespace NES {
 
 /**
@@ -61,26 +57,10 @@ class CallData {
     // The producer-consumer queue where for asynchronous server notifications.
     grpc::ServerCompletionQueue* completionQueue;
 
-    // Context for the rpc, allowing to tweak aspects of it such as the use
-    // of compression, authentication, as well as to send metadata back to the
-    // client.
-//    ServerContext* ctx;
-//
-//    // What we get from the client.
-//    RegisterQueryRequest* request;
-//
-//    // What we send back to the client.
-//    RegisterQueryReply* reply;
-
-    // The means to get back to the client.
-//    grpc::ServerAsyncResponseWriter<grpc::RegisterQueryReply> responder;
-
     // Let's implement a tiny state machine with the following states.
     enum CallStatus { CREATE, PROCESS, FINISH };
     CallStatus status;// The current serving state.
 };
-
-//typedef std::shared_ptr<CallData> CallDataPtr;
 
 }// namespace NES
 #endif//NES_SRC_GRPC_CALLDATA_HPP_
