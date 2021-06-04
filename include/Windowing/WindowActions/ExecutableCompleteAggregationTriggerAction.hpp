@@ -106,6 +106,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
             tupleBuffer.setWatermark(currentWatermark);
+            tupleBuffer.setOriginId(windowDefinition->getOriginId());
             //write remaining buffer
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
                       << this->windowDefinition->getDistributionType()->toString()
@@ -114,7 +115,7 @@ class ExecutableCompleteAggregationTriggerAction
                       << " originId=" << tupleBuffer.getOriginId() << "windowAction=" << toString()
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
             //forward buffer to next  pipeline stage
-            executionContext->dispatchBuffer(tupleBuffer);
+            this->emitBuffer(tupleBuffer);
         } else {
             tupleBuffer.release();
         }
