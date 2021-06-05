@@ -457,40 +457,39 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
-    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
-    EXPECT_TRUE(retStart1);
-
-    wrkConf->setRpcPort(port + 20);
-    wrkConf->setDataPort(port + 21);
     NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart2);
 
-    wrkConf->setRpcPort(port + 30);
-    wrkConf->setDataPort(port + 31);
-    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk3 = std::make_shared<NesWorker>(wrkConf, NodeType::Worker);
     bool retStart3 = wrk3->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart3);
-    wrk3->replaceParent(1, 2);
-    wrk3->addParent(3);
+
+    wrkConf->setRpcPort(port + 30);
+    wrkConf->setDataPort(port + 31);
+    NesWorkerPtr wrk4 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
+    bool retStart4 = wrk4->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart4);
+    wrk4->replaceParent(1, 2);
+    wrk4->addParent(3);
 
     TopologyPtr topo = crd->getTopology();
     ASSERT_EQ(topo->getRoot()->getId(), 1);
     ASSERT_EQ(topo->getRoot()->getChildren().size(), 2);
     ASSERT_EQ(topo->getRoot()->getChildren()[0]->getChildren().size(), 1);
     ASSERT_EQ(topo->getRoot()->getChildren()[1]->getChildren().size(), 1);
-    NES_DEBUG(crd->getStreamCatalog()->getPhysicalStreamAndSchemaAsString());
 
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/exdra.csv");
     srcConf->setNumberOfTuplesToProducePerBuffer(0);
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("exdra");
-    srcConf->setNumberOfBuffersToProduce(100);
+    srcConf->setNumberOfBuffersToProduce(3000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
-    wrk3->registerPhysicalStream(conf);
+    wrk4->registerPhysicalStream(conf);
     std::string filePath = "contTestOut.csv";
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
@@ -503,56 +502,44 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
         R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
-    auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    auto globalQueryPlan = crd->getGlobalQueryPlan();
+
+    ASSERT_TRUE(wrk2->getTopologyNodeId() == 2);
+    ASSERT_TRUE(wrk3->getTopologyNodeId() == 3);
+    ASSERT_TRUE(wrk4->getTopologyNodeId() == 4);
 
     auto globalExecutionPlan = crd->getGlobalExecutionPlan();
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
+    ASSERT_TRUE(!(globalExecutionPlan->checkIfExecutionNodeExists(3)));
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
 
-
-
-    auto exeNode = globalExecutionPlan->getExecutionNodeByNodeId(4);
-    auto queries = exeNode->getQuerySubPlans(1);
-    ASSERT_TRUE(queries.size() == 1);
-    QueryPlanPtr query = queries.at(0);
-    std::vector<SinkLogicalOperatorNodePtr> sinkOperators = query->getSinkOperators();
-    ASSERT_TRUE(sinkOperators.size() == 1);
-    SinkLogicalOperatorNodePtr sink = sinkOperators.at(0);
-    uint64_t sinkId = sink->getSinkDescriptor()->as<Network::NetworkSinkDescriptor>()->getGlobalId();
-    EXPECT_TRUE(sinkId == 5);
-
-    TopologyPtr topology = crd->getTopology();
-    Network::NodeLocation location (2,topology->findNodeWithId(2)->getIpAddress(),topology->findNodeWithId(2)->getDataPort());
-
-    ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(1));
-    auto qep = wrk1->getNodeEngine()->getDeployedQEP(3)->get();
-    EXPECT_TRUE(qep->getSinks().size() == 1);
-    auto physicalSinkOperator = qep->getSinks().at(0);
+    ASSERT_TRUE(wrk2->getNodeEngine()->getDeployedQEP(3));
 
     maintenanceService->submitMaintenanceRequest(2,2);
-    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
-    NES_DEBUG("After maintenanceService----------------------------------------------------------------------------------------------------");
-    ASSERT_TRUE(wrk3->isWorkerRunning());
+    sleep(5);
+
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
-//    auto querySubPlansOnNode3 = globalExecutionPlan->getExecutionNodeByNodeId(3)->getQuerySubPlans(1);
+    ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(3));
 //    queryService->validateAndQueueStopRequest(queryId);
 //    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
-    NES_INFO("QueryDeploymentTest: Stop worker 1");
-    bool retStopWrk1 = wrk1->stop(true);
-    EXPECT_TRUE(retStopWrk1);
-    NES_DEBUG("Worker1 stopped!");
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+    NES_DEBUG("Worker2 stopped!");
 
-//    NES_INFO("QueryDeploymentTest: Stop worker 2");
-//    bool retStopWrk2 = wrk2->stop(true);
-//    EXPECT_TRUE(retStopWrk2);
-//    NES_DEBUG("Worker2 stopped!");
-//
-//    NES_INFO("QueryDeploymentTest: Stop worker 2");
-//    bool retStopWrk3 = wrk3->stop(true);
-//    EXPECT_TRUE(retStopWrk3);
+    NES_INFO("QueryDeploymentTest: Stop worker 3");
+    bool retStopWrk3 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+    NES_DEBUG("Worker3 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 4");
+    bool retStopWrk4 = wrk4->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+    NES_DEBUG("Worker4 stopped!");
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);

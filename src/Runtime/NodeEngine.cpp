@@ -447,6 +447,7 @@ bool NodeEngine::bufferData(QueryId) { return true; }
 bool NodeEngine::updateNetworkSinks(uint64_t newNodeId, const std::string& newHostname, uint32_t newPort,
                                     const std::map<QuerySubPlanId, std::vector<uint64_t>>& queryToNetworkSinkIdsMap) {
 
+    NES_DEBUG("NodeEngine: Recieved request to update Network Sinks");
     NodeEnginePtr self = this->inherited1::shared_from_this();
     NodeLocationPOD pod{newNodeId, newHostname, newPort};
     std::unique_lock lock(engineMutex);
