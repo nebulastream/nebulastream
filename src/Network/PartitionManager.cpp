@@ -43,6 +43,17 @@ void PartitionManager::pinSubpartition(NesPartition partition) {
     NES_ASSERT2_FMT(false, "Cannot increment partition counter as partition does not exists " << partition);
 }
 
+void PartitionManager::unpinSubpartition(NesPartition partition) {
+    std::unique_lock lock(mutex);
+    auto it = partitions.find(partition);
+    if (it != partitions.end()) {
+        it->second.unpin();
+        return;
+    }
+    NES_ASSERT2_FMT(false, "Cannot increment partition counter as partition does not exists " << partition);
+
+}
+
 bool PartitionManager::registerSubpartition(NesPartition partition, DataEmitterPtr emitterPtr) {
     std::unique_lock lock(mutex);
     //check if partition is present
@@ -103,5 +114,6 @@ bool PartitionManager::isRegistered(NesPartition partition) const {
     std::shared_lock lock(mutex);
     return partitions.find(partition) != partitions.end();
 }
+
 
 }// namespace NES::Network

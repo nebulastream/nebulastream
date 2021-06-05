@@ -92,6 +92,12 @@ class PartitionManager {
     void pinSubpartition(NesPartition partition);
 
     /**
+     * @brief Decrement the subpartition counter
+     * @param partition the partition
+     */
+    void unpinSubpartition(NesPartition partition);
+
+    /**
      * @brief Unregisters a subpartition in the PartitionManager. If the subpartition does not exist or the current
      * counter is 0 an error is thrown.
      * @param the partition

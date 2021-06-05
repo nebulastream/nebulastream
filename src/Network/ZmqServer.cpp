@@ -265,6 +265,16 @@ void ZmqServer::messageHandlerEventLoop(const std::shared_ptr<ThreadBarrier>& ba
                     exchangeProtocol.onRemoveQEP(removeQEPMsg);
                     break;
                 }
+                case Messages::kDecrementPartitionCounter: {
+                    // if server receives a message that networkSinks have been updated
+                    zmq::message_t decrementEnvelope;
+                    auto optRetSize = dispatcherSocket.recv(decrementEnvelope, kZmqRecvDefault);
+                    NES_ASSERT2_FMT(optRetSize.has_value(), "Invalid recv size");
+                    auto decrementPartitionCounterMsg = *decrementEnvelope.data<Messages::DecrementPartitionCounterMessage>();
+                    NES_DEBUG("ZmqServer:RemoveQEPMessage received for channel " << decrementPartitionCounterMsg.getChannelId());
+                    exchangeProtocol.onDecrementPartitionCounter(decrementPartitionCounterMsg);
+                    break;
+                }
                 default: {
                     NES_ERROR("ZmqServer: received unknown message type");
                 }

@@ -168,8 +168,12 @@ void OutputChannel::shutdownZMQSocket(bool withMessagePropagation) {
         return;
     }
     if(withMessagePropagation) {
-        NES_DEBUG("OutputChanneel: Sending RemoveQEP Message to " << socketAddr);
+        NES_DEBUG("OutputChannel: Sending RemoveQEP Message to " << socketAddr);
         sendMessage<Messages::RemoveQEPMessage>(zmqSocket, channelId);
+    }
+    else{
+        NES_DEBUG("OutputChannel: must reduce paritionCounter on downstream source so EoS message propagation works correctly");
+        sendMessage<Messages::DecrementPartitionCounterMessage>(zmqSocket, channelId);
     }
     zmqSocket.close();
     NES_DEBUG("OutputChannel: Socket closed for " << channelId);

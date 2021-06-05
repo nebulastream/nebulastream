@@ -49,6 +49,8 @@ enum MessageType {
     kEventBuffer,
     /// message type when NetworkSinks are reconfigured to point elsewhere
     kRemoveQEP,
+    /// message type to decrement a partition counter
+    kDecrementPartitionCounter,
 };
 
 /// this enum defines the errors that can occur in the network stack logic
@@ -154,6 +156,15 @@ class RemoveQEPMessage : public ExchangeMessage {
     explicit RemoveQEPMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
 
 };
+
+class DecrementPartitionCounterMessage : public ExchangeMessage {
+  public:
+    static constexpr MessageType MESSAGE_TYPE = kDecrementPartitionCounter;
+
+    explicit DecrementPartitionCounterMessage(ChannelId channelId) : ExchangeMessage(channelId) {}
+
+};
+
 
 class DataBufferMessage {
   public:

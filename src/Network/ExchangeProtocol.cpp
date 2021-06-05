@@ -96,6 +96,20 @@ void ExchangeProtocol::onRemoveQEP(Messages::RemoveQEPMessage removeQEPMessage) 
     }
 
 }
+void ExchangeProtocol::onDecrementPartitionCounter(Messages::DecrementPartitionCounterMessage decrementMessage) {
+    if (partitionManager->isRegistered(decrementMessage.getChannelId().getNesPartition())) {
+        partitionManager->unpinSubpartition(decrementMessage.getChannelId().getNesPartition());
+            NES_DEBUG("ExchangeProtocol: Successfully decremented partition counter");
+        }
+        else{
+        NES_ERROR("ExchangeProtocol: decrementPartitionCounter message received from "
+                      << decrementMessage.getChannelId().toString() << " however the partition is not registered on this worker");
+        protocolListener->onServerError(Messages::ErrorMessage(decrementMessage.getChannelId(), Messages::kUnknownPartition));
+    }
+
+}
+
+
 
 std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }
 
