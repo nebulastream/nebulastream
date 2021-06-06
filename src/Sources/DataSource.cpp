@@ -177,7 +177,7 @@ bool DataSource::stop(bool graceful) {
             if (thread->joinable()) {
                 NES_DEBUG("DataSource::stop thread is joinable=" << thread->get_id());
                 // TODO this is only a workaround and will be replaced by the network stack upate
-                if (type == 0) {
+                if (type == 0) { //TODO: Is this an error? ZMQ_SOURCE enum is 1
                     NES_WARNING("DataSource::stop source hard cause of zmq_source");
                     auto* ptr = dynamic_cast<ZmqSource*>(this);
                     ptr->disconnect();
