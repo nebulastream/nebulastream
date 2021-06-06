@@ -554,7 +554,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
     }
     workQueue.clear();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableExclusiveBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableBuffers(), buffers_managed);
 }
 
 TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAllocation) {
@@ -635,7 +635,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     }
     workQueue.clear();
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableExclusiveBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers() + localPool->getAvailableBuffers(), buffers_managed);
 }
 
 }// namespace NES

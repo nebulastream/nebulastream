@@ -228,7 +228,7 @@ class SimpleBenchmarkSource : public DataSource {
         buf.setNumberOfTuples(curNumberOfTuplesPerBuffer);
 
         NES_DEBUG("SimpleBenchmarkSource: available buffer after creating one buffer are "
-                  << bufferManager->getAvailableExclusiveBuffers());
+                  << bufferManager->getAvailableBuffers());
         return buf;
     }
 

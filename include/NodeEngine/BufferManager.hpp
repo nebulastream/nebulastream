@@ -28,6 +28,11 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
+#include <folly/MPMCQueue.h>
+#include <folly/concurrency/UnboundedQueue.h>
+#endif
+
 namespace NES::NodeEngine {
 
 class TupleBuffer;
@@ -92,12 +97,10 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
   private:
     /**
      * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
-     * This is a one shot call. A second invocation of this call will fail.
-     * @param bufferSize
-     * @param numOfBuffers
+     * This is a one shot call. A second invocation of this call will fail
      * @param withAlignment
      */
-    void initialize(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment = 0);
+    void initialize(uint32_t withAlignment);
 
   public:
     /**
@@ -146,7 +149,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
     /**
      * @return Number of available buffers in the pool
      */
-    size_t getAvailableBuffers() const;
+    size_t getAvailableBuffers() const override;
 
     /**
      * @brief Create a local buffer manager that is assigned to one pipeline or thread
@@ -181,7 +184,11 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
   private:
     std::vector<detail::MemorySegment> allBuffers;
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::deque<detail::MemorySegment*> availableBuffers;
+#else
+    folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
+#endif
     std::vector<UnpooledBufferHolder> unpooledBuffers;
 
     mutable std::recursive_mutex availableBuffersMutex;

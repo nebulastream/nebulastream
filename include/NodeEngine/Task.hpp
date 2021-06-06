@@ -31,7 +31,7 @@ namespace NES::NodeEngine {
  * @Limitations:
  *    -
  */
-class Task {
+class alignas(64) Task {
   public:
     /**
      * @brief Task constructor
@@ -39,7 +39,7 @@ class Task {
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer& buf);
+    explicit Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buf);
 
     constexpr explicit Task() noexcept = default;
 
@@ -90,8 +90,9 @@ class Task {
     Execution::SuccessorExecutablePipeline pipeline{};
     TupleBuffer buf{};
     uint64_t id{std::numeric_limits<decltype(id)>::max()};
+    char padding[8];
 };
-
+static_assert(sizeof(Task)==64);
 }// namespace NES::NodeEngine
 
 #endif /* INCLUDE_NODEENGINE_TASK_H_ */

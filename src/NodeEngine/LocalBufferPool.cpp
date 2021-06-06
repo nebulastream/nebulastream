@@ -23,7 +23,7 @@ namespace NES::NodeEngine {
 LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
                                  std::deque<detail::MemorySegment*>&& buffers,
                                  size_t numberOfReservedBuffers)
-    : bufferManager(bufferManager), numberOfReservedBuffers(numberOfReservedBuffers) {
+    : bufferManager(bufferManager), exclusiveBuffers(numberOfReservedBuffers), numberOfReservedBuffers(numberOfReservedBuffers) {
 
     while (!buffers.empty()) {
         auto* memSegment = buffers.front();
@@ -31,7 +31,11 @@ LocalBufferPool::LocalBufferPool(const BufferManagerPtr& bufferManager,
         NES_VERIFY(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
         NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         exclusiveBuffers.emplace_back(memSegment);
+#else
+        exclusiveBuffers.write(memSegment);
+#endif
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         allSegments.emplace_back(memSegment);
 #endif
@@ -61,6 +65,7 @@ void LocalBufferPool::destroy() {
 
     NES_DEBUG("buffers before=" << ownedBufferManager->getAvailableBuffers()
                                 << " size of local buffers=" << exclusiveBuffers.size());
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     while (!exclusiveBuffers.empty()) {
         // return exclusive buffers to the global pool
         detail::MemorySegment* memSegment = exclusiveBuffers.front();
@@ -70,14 +75,28 @@ void LocalBufferPool::destroy() {
     }
     NES_DEBUG("buffers after=" << ownedBufferManager->getAvailableBuffers()
                                << " size of local buffers=" << exclusiveBuffers.size());
+#else
+    detail::MemorySegment* memSegment = nullptr;
+    while (exclusiveBuffers.read(memSegment)) {
+        // return exclusive buffers to the global pool
+        memSegment->controlBlock->resetBufferRecycler(ownedBufferManager.get());
+        ownedBufferManager->recyclePooledBuffer(memSegment);
+    }
+#endif
 }
 
-size_t LocalBufferPool::getAvailableExclusiveBuffers() const {
+size_t LocalBufferPool::getAvailableBuffers() const {
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(mutex);
     return exclusiveBuffers.size();
+#else
+    auto qSize = exclusiveBuffers.size();
+    return qSize > 0 ? qSize : 0;
+#endif
 }
 
 TupleBuffer LocalBufferPool::getBufferBlocking() {
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     {
         // try to get an exclusive buffer
         std::unique_lock lock(mutex);
@@ -98,9 +117,22 @@ TupleBuffer LocalBufferPool::getBufferBlocking() {
     }
     // TODO potential problem here: what if we are blocked here but one exclusive buffer is returned to the pool?
     return bufferManager.lock()->getBufferBlocking();
+#else
+    detail::MemorySegment* memSegment;
+    if (exclusiveBuffers.read(memSegment)) {
+        if (memSegment->controlBlock->prepare()) {
+            return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
+        } else {
+            NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter "
+                                        << memSegment->controlBlock->getReferenceCount());
+        }
+    }
+    return bufferManager.lock()->getBufferBlocking();
+#endif
 }
 
 void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(mutex);
     NES_VERIFY(memSegment, "null memory segment");
     if (!memSegment->isAvailable()) {
@@ -109,6 +141,14 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment) {
     }
     // add back an exclusive buffer to the local pool
     exclusiveBuffers.emplace_back(memSegment);
+#else
+    NES_VERIFY(memSegment, "null memory segment");
+    if (!memSegment->isAvailable()) {
+        NES_THROW_RUNTIME_ERROR(
+            "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
+    }
+    exclusiveBuffers.write(memSegment);
+#endif
 }
 
 void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*) {

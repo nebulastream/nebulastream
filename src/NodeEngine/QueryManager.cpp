@@ -31,8 +31,9 @@
 #include <stack>
 #include <utility>
 
+
 namespace NES::NodeEngine {
-using std::string;
+
 namespace detail {
 
 class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecutionContext {
@@ -87,7 +88,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 }// namespace detail
 
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
-static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 1024;
+static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 16 * 1024;
 #endif
 
 QueryManager::QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads)
@@ -426,7 +427,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
 
     for (const auto& source : copiedSources) {
         if (!std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
-            source->stop(true);
+            source->stop(graceful);
         }
     }
 #ifndef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
@@ -438,14 +439,26 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, bool 
     // TODO evaluate if we need to have this a wait instead of a get
     // TODO for instance we could wait N seconds and if the stopped is not succesful by then
     // TODO we need to trigger a hard local kill of a QEP
-    if (qep->getTerminationFuture().get() != Execution::ExecutableQueryPlanResult::Ok) {
-        NES_FATAL_ERROR("QueryManager: QEP " << qep->getQuerySubPlanId() << " could not be stopped");
-        ret = false;
+    auto terminationFuture = qep->getTerminationFuture();
+    auto terminationStatus = terminationFuture.wait_for(std::chrono::minutes(10));
+    switch (terminationStatus) {
+        case std::future_status::ready: {
+            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Ok) {
+                NES_FATAL_ERROR("QueryManager: QEP " << qep->getQuerySubPlanId() << " could not be stopped");
+                ret = false;
+            }
+            break;
+        }
+        case std::future_status::timeout:
+        case std::future_status::deferred: {
+            NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getQuerySubPlanId());
+            break;
+        }
     }
     if (ret) {
         addReconfigurationMessage(qep->getQuerySubPlanId(),
                                   ReconfigurationMessage(qep->getQuerySubPlanId(), Destroy, inherited1::shared_from_this()),
-                                  false);
+                                  true);
     }
     NES_DEBUG("QueryManager::stopQuery: query " << qep->getQuerySubPlanId() << " was "
                                                 << (ret ? "successful" : " not successful"));
@@ -457,7 +470,8 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueue() const {
     std::unique_lock workLock(workMutex);
     return taskQueue.size();
 #else
-    return taskQueue.size();
+    auto qSize = taskQueue.size();
+    return qSize > 0 ? qSize : 0;
 #endif
 }
 
@@ -855,7 +869,8 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         auto diff = now - creation;
         statistics->incLatencySum(diff);
 
-        statistics->incQueueSizeSum(taskQueue.size());
+        auto qSize = taskQueue.size();
+        statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
 
 #ifdef NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT
         statistics->addTimestampToLatencyValue(now, diff);

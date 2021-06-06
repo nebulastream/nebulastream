@@ -16,6 +16,8 @@
 #ifndef NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_
 #define NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_
 
+#include <cstddef>
+
 class AbstractBufferProvider {
   public:
     virtual ~AbstractBufferProvider() {
@@ -23,6 +25,8 @@ class AbstractBufferProvider {
     }
 
     virtual void destroy() = 0;
+
+    virtual size_t getAvailableBuffers() const = 0;
 };
 
 #endif//NES_INCLUDE_NODEENGINE_AbstractBufferProvider_HPP_

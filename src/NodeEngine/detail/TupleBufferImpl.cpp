@@ -95,22 +95,22 @@ BufferControlBlock::BufferControlBlock(MemorySegment* owner,
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples = that.numberOfTuples.load();
-    creationTimestamp = that.creationTimestamp.load();
+    numberOfTuples = that.numberOfTuples;
+    creationTimestamp = that.creationTimestamp;
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark = that.watermark.load();
-    originId = that.originId.load();
+    watermark = that.watermark;
+    originId = that.originId;
 }
 
 BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
     referenceCounter.store(that.referenceCounter.load());
-    numberOfTuples = that.numberOfTuples.load();
+    numberOfTuples = that.numberOfTuples;
     recycleCallback = that.recycleCallback;
     owner = that.owner;
-    watermark = that.watermark.load();
-    creationTimestamp = that.creationTimestamp.load();
-    originId = that.originId.load();
+    watermark = that.watermark;
+    creationTimestamp = that.creationTimestamp;
+    originId = that.originId;
     return *this;
 }
 
