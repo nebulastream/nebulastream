@@ -150,6 +150,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     bool registerQueryInNodeEngine(const QueryPlanPtr& queryPlan);
 
     /**
+     * @brief registers a query for reconfiguration process to start
+     * @param queryPlan: query sub plan to be registered
+     * @return true if succeeded, else false
+     */
+    bool registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryPlan);
+
+    /**
      * @brief ungregisters a query
      * @param queryIdto unregister query
      * @return true if succeeded, else false
@@ -278,6 +285,13 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     SourceDescriptorPtr createLogicalSourceDescriptor(const SourceDescriptorPtr& sourceDescriptor);
 
   private:
+    /**
+     * Compile Query Plan into executable query plan
+     * @param queryPlan to compile to Executable Query Plan
+     * @return Executable Plan if compilation successful else nullopt
+     */
+    std::optional<Execution::ExecutableQueryPlanPtr> compileQuery(QueryPlanPtr queryPlan);
+
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorExecutablePipeline;
