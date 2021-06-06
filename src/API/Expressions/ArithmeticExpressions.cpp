@@ -14,15 +14,15 @@
     limitations under the License.
 */
 
+#include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
-#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/PowExpressionNode.hpp>
+#include <Nodes/Expressions/ArithmeticalExpressions/SubExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 namespace NES {
 
@@ -50,7 +50,7 @@ ExpressionNodePtr ABS(ExpressionNodePtr exp) {
     // TODO: implement the ABS value in the coming compiler (unary operators are not planned for the legacy system), then remove this error
     NES_FATAL_ERROR("ArithmeticExpressions: Unary expressions available in C++ API but not supported in the "
                     "legacy compiler: ABS("
-                            << exp->toString() << ")");
+                    << exp->toString() << ")");
     NES_NOT_IMPLEMENTED();
     return AbsExpressionNode::create(exp);
 }
@@ -84,7 +84,9 @@ ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp) 
 
 ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return leftExp.getExpressionNode() / rightExp; }
 
-ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp) { return POWER(leftExp.getExpressionNode(), rightExp); }
+ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp) {
+    return POWER(leftExp.getExpressionNode(), rightExp);
+}
 
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp + rightExp.getExpressionNode(); }
 
@@ -94,7 +96,9 @@ ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp) 
 
 ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return leftExp / rightExp.getExpressionNode(); }
 
-ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp) { return POWER(leftExp, rightExp.getExpressionNode()); }
+ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp) {
+    return POWER(leftExp, rightExp.getExpressionNode());
+}
 
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp) {
     return leftExp.getExpressionNode() + rightExp.getExpressionNode();
@@ -115,7 +119,6 @@ ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionItem rightExp) {
 ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp) {
     return POWER(leftExp.getExpressionNode(), rightExp.getExpressionNode());
 }
-
 
 // calls of Unary operators with ExpressionItem
 ExpressionNodePtr ABS(ExpressionItem exp) { return ABS(exp.getExpressionNode()); }

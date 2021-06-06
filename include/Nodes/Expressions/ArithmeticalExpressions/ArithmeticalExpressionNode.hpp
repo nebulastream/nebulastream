@@ -21,10 +21,10 @@ namespace NES {
 /**
  * @brief This class just indicates that a node is an arithmetical expression.
  */
-    class ArithmeticalExpressionNode {
-    protected:
-        ArithmeticalExpressionNode() = default;
-    };
+class ArithmeticalExpressionNode {
+  protected:
+    ArithmeticalExpressionNode() = default;
+};
 
 }// namespace NES
 

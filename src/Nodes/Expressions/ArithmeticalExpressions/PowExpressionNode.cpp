@@ -41,8 +41,9 @@ void PowExpressionNode::inferStamp(SchemaPtr schema) {
     } else if (stamp->isFloat()) {
         stamp = DataTypeFactory::
             createDouble();// We could also create an "unsigned double" (as results of pow() is always non-negative), but this is very uncommon in programming languages.
-        NES_DEBUG("PowExpressionNode: Updated stamp from Float (assigned in ArithmeticalBinaryExpressionNode::inferStamp) to Double "
-                  "(FLOAT64).");
+        NES_DEBUG(
+            "PowExpressionNode: Updated stamp from Float (assigned in ArithmeticalBinaryExpressionNode::inferStamp) to Double "
+            "(FLOAT64).");
     }
 }
 
