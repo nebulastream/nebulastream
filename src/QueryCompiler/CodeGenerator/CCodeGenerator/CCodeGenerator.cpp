@@ -474,6 +474,7 @@ void CCodeGenerator::generateCodeForWatermarkUpdaterJoin(const PipelineContextPt
     auto updateAllWatermarkTsFunctionCall = FunctionCallStatement("updateMaxTs");
     updateAllWatermarkTsFunctionCall.addParameter(getWatermark(context->code->varDeclarationInputBuffer));
     updateAllWatermarkTsFunctionCall.addParameter(getOriginId(context->code->varDeclarationInputBuffer));
+    updateAllWatermarkTsFunctionCall.addParameter(getSequenceNumber(context->code->varDeclarationInputBuffer));
     auto tf = getTypeFactory();
 
     if (leftSide) {

@@ -38,6 +38,11 @@ class BaseExecutableJoinAction {
 
     virtual std::string toString() = 0;
 
+    void emitBuffer(NodeEngine::TupleBuffer& tupleBuffer) {
+        tupleBuffer.setSequenceNumber(++emitSequenceNumber);
+        weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
+    };
+
     virtual SchemaPtr getJoinSchema() = 0;
 
     virtual void setup(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint64_t originId) {
@@ -48,6 +53,7 @@ class BaseExecutableJoinAction {
     }
 
   protected:
+    std::atomic<uint64_t> emitSequenceNumber = 0;
     std::weak_ptr<NodeEngine::Execution::PipelineExecutionContext> weakExecutionContext;
     // sorry i need to do this to remind us of this hack
     // otherwise we ll file an issue and forget about it

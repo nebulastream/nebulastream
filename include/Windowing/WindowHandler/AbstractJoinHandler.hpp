@@ -23,6 +23,7 @@
 #include <Util/Logger.hpp>
 #include <Windowing/JoinForwardRefs.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
+#include <Windowing/Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <Windowing/WindowPolicies/BaseExecutableWindowTriggerPolicy.hpp>
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/ExecutableOnTimeTriggerPolicy.hpp>
@@ -107,69 +108,14 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     }
 
     /**
-     * @brief Gets the maximal processed ts per origin id.
-     * @param originId
-     * @param side
-     * @return max ts.
-     */
-    uint32_t getMaxTs(uint32_t originId, JoinSides side) {
-        switch (side) {
-            case leftSide: return originIdToMaxTsMapLeft[originId];
-            case rightSide: return originIdToMaxTsMapRight[originId];
-            default: NES_ERROR("getMaxTs: invalid side"); return 0;
-        }
-    };
-
-    /**
-     * @brief Gets number of mappings.
-     * @param side
-     * @return size of origin map.
-     */
-    uint64_t getNumberOfMappings(JoinSides side) {
-        switch (side) {
-            case leftSide: return originIdToMaxTsMapLeft.size();
-            case rightSide: return originIdToMaxTsMapRight.size();
-            default: NES_ERROR("getNumberOfMappings: invalid side"); return 0;
-        }
-    };
-
-    /**
      * @brief Calculate the min watermark for left or right side for among each input edge
      * @return MinAggregationDescriptor watermark
      */
     uint64_t getMinWatermark(JoinSides side) {
         if (side == leftSide) {
-            if (originIdToMaxTsMapLeft.size() == numberOfInputEdgesLeft) {
-                auto min =
-                    std::min_element(originIdToMaxTsMapLeft.begin(),
-                                     originIdToMaxTsMapLeft.end(),
-                                     [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-                                         return a.second < b.second;
-                                     });
-                NES_TRACE("getMinWatermark() originIdToMaxTsMapLeft return min=" << min->second);
-                return min->second;
-            }
-            NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
-                      "originIdToMaxTsMapLeft="
-                      << originIdToMaxTsMapLeft.size() << " expected mappings=" << numberOfInputEdgesLeft);
-            return 0;//TODO: we have to figure out how many downstream positions are there
-
+            return watermarkProcessorLeft->getCurrentWatermark();
         } else if (side == rightSide) {
-            if (originIdToMaxTsMapRight.size() == numberOfInputEdgesRight) {
-                auto min =
-                    std::min_element(originIdToMaxTsMapRight.begin(),
-                                     originIdToMaxTsMapRight.end(),
-                                     [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-                                         return a.second < b.second;
-                                     });
-                NES_TRACE("getMinWatermark() originIdToMaxTsMapRight return min=" << min->second);
-                return min->second;
-            }
-            NES_TRACE("getMinWatermark() return 0 because there is no mapping yet current number of mappings for "
-                      "originIdToMaxTsMapRight="
-                      << originIdToMaxTsMapRight.size() << " expected mappings=" << numberOfInputEdgesRight);
-            return 0;//TODO: we have to figure out how many downstream positions are there
-
+            return watermarkProcessorRight->getCurrentWatermark();
         } else {
             NES_THROW_RUNTIME_ERROR("getNumberOfMappings: invalid side");
             return -1;
@@ -181,7 +127,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
      * @param ts
      * @param originId
      */
-    virtual void updateMaxTs(uint64_t ts, uint64_t originId, bool leftSide) = 0;
+    virtual void updateMaxTs(WatermarkTs ts, OriginId originId,  SequenceNumber sequenceNumber,  bool leftSide) = 0;
 
   protected:
     LogicalJoinDefinitionPtr joinDefinition;
@@ -189,8 +135,8 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     std::atomic_bool running{false};
     Windowing::WindowManagerPtr windowManager;
     uint64_t originId{};
-    std::map<uint64_t, uint64_t> originIdToMaxTsMapLeft;
-    std::map<uint64_t, uint64_t> originIdToMaxTsMapRight;
+    std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarkProcessorLeft;
+    std::shared_ptr<Windowing::MultiOriginWatermarkProcessor> watermarkProcessorRight;
     uint64_t lastWatermark{};
     uint64_t numberOfInputEdgesLeft{};
     uint64_t numberOfInputEdgesRight{};

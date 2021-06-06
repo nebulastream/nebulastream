@@ -46,6 +46,8 @@ class JoinHandler : public AbstractJoinHandler {
         NES_ASSERT(this->joinDefinition, "invalid join definition");
         numberOfInputEdgesRight = this->joinDefinition->getNumberOfInputEdgesRight();
         numberOfInputEdgesLeft = this->joinDefinition->getNumberOfInputEdgesLeft();
+        this->watermarkProcessorLeft = Windowing::MultiOriginWatermarkProcessor::create(numberOfInputEdgesLeft);
+        this->watermarkProcessorRight = Windowing::MultiOriginWatermarkProcessor::create(numberOfInputEdgesRight);
         lastWatermark = 0;
         NES_TRACE("Created join handler with id=" << id);
     }
@@ -123,19 +125,6 @@ class JoinHandler : public AbstractJoinHandler {
         NES_DEBUG("JoinHandler " << id << ": run window action " << executableJoinAction->toString()
                                  << " forceFlush=" << forceFlush);
 
-        if (originIdToMaxTsMapLeft.size() < numberOfInputEdgesLeft || originIdToMaxTsMapRight.size() < numberOfInputEdgesRight) {
-            NES_DEBUG("JoinHandler "
-                      << id
-                      << ": trigger cannot be applied as we did not get one buffer per edge yet, originIdToMaxTsMapLeft size="
-                      << originIdToMaxTsMapLeft.size() << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft
-                      << " originIdToMaxTsMapRight size=" << originIdToMaxTsMapRight.size()
-                      << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
-            return;
-        }
-        NES_DEBUG("JoinHandler " << id << ": trigger applied for size=" << originIdToMaxTsMapLeft.size()
-                                 << " numberOfInputEdgesLeft=" << numberOfInputEdgesLeft << " originIdToMaxTsMapRight size="
-                                 << originIdToMaxTsMapRight.size() << " numberOfInputEdgesRight=" << numberOfInputEdgesRight);
-
         auto watermarkLeft = getMinWatermark(leftSide);
         auto watermarkRight = getMinWatermark(rightSide);
 
@@ -188,7 +177,7 @@ class JoinHandler : public AbstractJoinHandler {
      * @param ts
      * @param originId
      */
-    void updateMaxTs(uint64_t ts, uint64_t originId, bool isLeftSide) override {
+    void updateMaxTs(WatermarkTs ts, OriginId originId, SequenceNumber sequenceNumber, bool isLeftSide) override {
         std::unique_lock lock(mutex);
         std::string side = isLeftSide ? "leftSide" : "rightSide";
         NES_TRACE("JoinHandler " << id << ": updateAllMaxTs with ts=" << ts << " originId=" << originId << " side=" << side);
@@ -197,12 +186,11 @@ class JoinHandler : public AbstractJoinHandler {
             uint64_t afterMin = 0;
             if (isLeftSide) {
                 beforeMin = getMinWatermark(leftSide);
-                originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
+                watermarkProcessorLeft->updateWatermark(ts, sequenceNumber, originId);
                 afterMin = getMinWatermark(leftSide);
-
             } else {
                 beforeMin = getMinWatermark(rightSide);
-                originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
+                watermarkProcessorRight->updateWatermark(ts, sequenceNumber, originId);
                 afterMin = getMinWatermark(rightSide);
             }
 
@@ -212,9 +200,9 @@ class JoinHandler : public AbstractJoinHandler {
             }
         } else {
             if (isLeftSide) {
-                originIdToMaxTsMapLeft[originId] = std::max(originIdToMaxTsMapLeft[originId], ts);
+                watermarkProcessorLeft->updateWatermark(ts, sequenceNumber, originId);
             } else {
-                originIdToMaxTsMapRight[originId] = std::max(originIdToMaxTsMapRight[originId], ts);
+                watermarkProcessorRight->updateWatermark(ts, sequenceNumber, originId);
             }
         }
     }
