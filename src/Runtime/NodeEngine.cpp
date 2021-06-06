@@ -492,7 +492,10 @@ void NodeEngine::onRemoveQEP(Network::Messages::RemoveQEPMessage msg) {
     NES_DEBUG("Revieved RemoveQEP Message");
     // propagate updateNetworkSinkMessage to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject RemoveQEP for " << msg.getChannelId().getNesPartition());
-    queryManager->addRemoveQEP(msg.getChannelId().getNesPartition().getOperatorId());
+    auto sourceId = msg.getChannelId().getNesPartition().getOperatorId();
+      queryManager->addRemoveQEP(sourceId);
+//    auto qep = queryManager->sourceIdToExecutableQueryPlanMap[sourceId];
+//    queryManager->deregisterQuery(qep);
 }
 
 
