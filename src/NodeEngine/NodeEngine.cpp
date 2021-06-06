@@ -176,23 +176,29 @@ bool NodeEngine::deployQueryInNodeEngine(Execution::ExecutableQueryPlanPtr query
     return true;
 }
 
-bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
-    std::unique_lock lock(engineMutex);
+std::optional<Execution::ExecutableQueryPlanPtr> NodeEngine::compileQuery(QueryPlanPtr queryPlan) {
     QueryId queryId = queryPlan->getQueryId();
     QueryId querySubPlanId = queryPlan->getQuerySubPlanId();
-
     NES_INFO("Creating ExecutableQueryPlan for " << queryId << " " << querySubPlanId);
-
     auto request = QueryCompilation::QueryCompilationRequest::create(queryPlan, inherited1::shared_from_this());
     auto result = queryCompiler->compileQuery(request);
     try {
         auto executablePlan = result->getExecutableQueryPlan();
-        return registerQueryInNodeEngine(executablePlan);
+        return executablePlan;
     } catch (std::exception const& error) {
         NES_ERROR("Error while building query execution plan: " << error.what());
         NES_ASSERT(false, "Error while building query execution plan: " << error.what());
+        return std::nullopt;
+    }
+}
+
+bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
+    std::unique_lock lock(engineMutex);
+    auto maybeQep = compileQuery(queryPlan);
+    if (!maybeQep) {
         return false;
     }
+    return registerQueryInNodeEngine(*maybeQep);
 }
 
 bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan) {
@@ -223,6 +229,24 @@ bool NodeEngine::registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr que
         NES_DEBUG("NodeEngine: qep already exists. register failed" << querySubPlanId);
         return false;
     }
+}
+
+bool NodeEngine::registerQueryForReconfigurationInNodeEngine(QueryPlanPtr queryPlan) {
+    std::unique_lock lock(engineMutex);
+    if (reconfigurationQEPs.find(queryPlan->getQuerySubPlanId()) != reconfigurationQEPs.end()) {
+        NES_DEBUG("NodeEngine::registerQueryForReconfigurationInNodeEngine: query with subPlanId"
+                  << queryPlan->getQuerySubPlanId() << " already registered for reconfiguration.");
+        return false;
+    }
+    auto maybeQep = compileQuery(queryPlan);
+    if (!maybeQep) {
+        return false;
+    }
+    auto qep = *maybeQep;
+    NES_DEBUG("NodeEngine::registerQueryForReconfigurationInNodeEngine: adding qep with querySubPlanId: "
+              << qep->getQuerySubPlanId() << " into QEP pending reconfiguration.");
+    reconfigurationQEPs[qep->getQuerySubPlanId()] = qep;
+    return true;
 }
 
 bool NodeEngine::startQuery(QueryId queryId) {
