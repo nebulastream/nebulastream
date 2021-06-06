@@ -25,6 +25,10 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
+#include <folly/MPMCQueue.h>
+#include <folly/concurrency/UnboundedQueue.h>
+#endif
 
 namespace NES {
 
@@ -78,7 +82,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
      * @brief provide number of available exclusive buffers
      * @return number of available exclusive buffers
      */
-    size_t getAvailableExclusiveBuffers() const;
+    size_t getAvailableBuffers() const override;
 
     /**
      * @brief Recycle a pooled buffer that is might be exclusive to the pool
@@ -94,7 +98,11 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
 
   private:
     std::weak_ptr<BufferManager> bufferManager;
+#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::deque<detail::MemorySegment*> exclusiveBuffers;
+#else
+    folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
+#endif
     [[maybe_unused]] size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
     std::condition_variable cvar;

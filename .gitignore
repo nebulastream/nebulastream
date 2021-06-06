@@ -5,6 +5,9 @@
 .csv
 .log
 .DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
 .debs
 
 # Build files

@@ -13,6 +13,7 @@
 # limitations under the License.
 cmake_minimum_required(VERSION 3.18.0)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
 set(VCPKG_BINARY_VERSION v1)
 set(VCPKG_TARGET_TRIPLET x64-linux-nes)
 function(download_file url filename hash_type hash)
@@ -78,19 +79,19 @@ else ()
 endif ()
 
 project(NES CXX)
-
 message(STATUS "CMAKE_C_COMPILER=${CMAKE_C_COMPILER}")
 message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" OFF)
+option(CMAKE_USE_LATCH_FREE_BUFFER_MANAGER "Build using folly and lock-free MPMC queue for the buffer manager" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_CLANG_TIDY OFF)
 
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
 endif ()
-set(CMAKE_VERBOSE_MAKEFILE OFF)
+
 # Find project version
 include(cmake/GetSemanticVersion.cmake)
 
@@ -122,6 +123,9 @@ endif ()
 
 if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
+    if (CMAKE_USE_LATCH_FREE_BUFFER_MANAGER)
+        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_LATCH_FREE_BUFFER_MANAGER=1")
+    endif ()
 endif ()
 
 # enables tracing of stack traces if operator / expression nodes are created

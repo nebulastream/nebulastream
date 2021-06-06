@@ -47,6 +47,7 @@
 
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
 #include <folly/MPMCQueue.h>
+#include <folly/concurrency/UnboundedQueue.h>
 #endif
 
 namespace NES {
@@ -275,6 +276,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     mutable std::shared_mutex queryMutex;
 #ifdef NES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE
     folly::MPMCQueue<Task> taskQueue;
+//    folly::UMPMCQueue<Task, true> taskQueue;
 #else
     std::deque<Task> taskQueue;
     mutable std::mutex workMutex;

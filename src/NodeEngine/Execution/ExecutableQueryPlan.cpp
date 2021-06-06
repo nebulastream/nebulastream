@@ -182,6 +182,7 @@ bool ExecutableQueryPlan::stop() {
         // try to install ErrorState
     }
 
+    qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Error);
     sources.clear();
     pipelines.clear();
     sinks.clear();
