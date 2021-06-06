@@ -16,8 +16,8 @@
 
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_
-#include <Nodes/Expressions/UnaryExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Nodes/Expressions/UnaryExpressionNode.hpp>
 namespace NES {
 /**
  * @brief This node rresents a arithmetical expression.

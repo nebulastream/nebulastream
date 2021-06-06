@@ -20,7 +20,8 @@
 namespace NES {
 
 ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(DataTypePtr stamp) : UnaryExpressionNode(std::move(stamp)) {}
-ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(ArithmeticalUnaryExpressionNode* other) : UnaryExpressionNode(other) {}
+ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(ArithmeticalUnaryExpressionNode* other)
+    : UnaryExpressionNode(other) {}
 
 /**
  * @brief The current implementation of type inference for arithmetical expressions expects that both
