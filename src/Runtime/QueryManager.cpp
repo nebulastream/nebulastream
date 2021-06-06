@@ -1122,7 +1122,7 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task) {
                        "query plan " << qepId << " is not in valid state " << status);
             std::unique_lock lock(queryMutex);
             runningQEPs.erase(qepId);// note that this will release all shared pointers stored in a QEP object
-            NES_DEBUG("QueryManager: removed running QEP " << qepId);
+            NES_DEBUG("QueryManager: removed running QEP " << qepId << "on " << getNodeId());
             break;
         }
         default: {

@@ -111,7 +111,7 @@ void NetworkSink::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::Wo
 }
 
 void NetworkSink::postReconfigurationCallback(Runtime::ReconfigurationMessage& task) {
-    NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId);
+    NES_DEBUG("NetworkSink: postReconfigurationCallback() called " << nesPartition.toString() << " parent plan " << parentPlanId << " with type " << task.getType());
     NES::SinkMedium::postReconfigurationCallback(task);
     switch (task.getType()) {
         case Runtime::HardEndOfStream:

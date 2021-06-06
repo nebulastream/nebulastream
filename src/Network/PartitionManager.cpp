@@ -48,6 +48,7 @@ void PartitionManager::unpinSubpartition(NesPartition partition) {
     auto it = partitions.find(partition);
     if (it != partitions.end()) {
         it->second.unpin();
+        NES_DEBUG("PartitionManager: Unpinning SubpartitionCounter for " << it->first.toString() << " now at " << it->second.count());
         return;
     }
     NES_ASSERT2_FMT(false, "Cannot increment partition counter as partition does not exists " << partition);
@@ -76,6 +77,7 @@ bool PartitionManager::unregisterSubpartition(NesPartition partition) {
                     "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
 
     // safeguard
+    NES_DEBUG("Unregistering SubPartition");
     if (it->second.count() == 0) {
         NES_INFO("PartitionManager: Deleting " << partition.toString() << ", counter is at 0.");
         partitions.erase(it);

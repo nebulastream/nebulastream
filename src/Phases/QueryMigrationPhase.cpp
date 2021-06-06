@@ -94,11 +94,12 @@ bool QueryMigrationPhase::execute(MigrateQueryRequestPtr req) {
     uint64_t newNodeId = candidateTopologyNode->getId();
     std::string newHostname = candidateTopologyNode->getIpAddress();
     uint32_t newPort = candidateTopologyNode->getDataPort();
-    workerRPCClient->updateNetworkSinks(rpcAddress,newNodeId,newHostname,newPort,map);
+
 
 
 
     if(deploySuccess && startSuccess){
+        workerRPCClient->updateNetworkSinks(rpcAddress,newNodeId,newHostname,newPort,map);
         return true;
     }
     else{

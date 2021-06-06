@@ -129,6 +129,7 @@ bool OutputChannel::sendBuffer(Runtime::TupleBuffer& inputBuffer, uint64_t tuple
     if (payloadSize == 0) {
         return true;
     }
+    NES_DEBUG("OutputChannel: Senidng buffer to: " << socketAddr);
     sendMessage<Messages::DataBufferMessage, kZmqSendMore>(zmqSocket,
                                                            payloadSize,
                                                            numOfTuples,
@@ -168,11 +169,11 @@ void OutputChannel::shutdownZMQSocket(bool withMessagePropagation) {
         return;
     }
     if(withMessagePropagation) {
-        NES_DEBUG("OutputChannel: Sending RemoveQEP Message to " << socketAddr);
+        NES_DEBUG("OutputChannel: Sending RemoveQEP Message to " << channelId.toString() << " with address " << socketAddr);
         sendMessage<Messages::RemoveQEPMessage>(zmqSocket, channelId);
     }
     else{
-        NES_DEBUG("OutputChannel: must reduce paritionCounter on downstream source so EoS message propagation works correctly");
+        NES_DEBUG("OutputChannel: Sending DecrementPartitionCounter to "<< channelId.toString() << " with address " << socketAddr);
         sendMessage<Messages::DecrementPartitionCounterMessage>(zmqSocket, channelId);
     }
     zmqSocket.close();

@@ -81,16 +81,17 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
     }
 }
 void ExchangeProtocol::onRemoveQEP(Messages::RemoveQEPMessage removeQEPMessage) {
+    NES_DEBUG("ExchangeProtocol: onRemoveQEP : Node with channel " << removeQEPMessage.getChannelId().getNesPartition() <<" has recieved a RemoveQEP message");
     if (partitionManager->isRegistered(removeQEPMessage.getChannelId().getNesPartition())) {
         if (partitionManager->unregisterSubpartition(removeQEPMessage.getChannelId().getNesPartition())) {
             protocolListener->onRemoveQEP(removeQEPMessage);
         } else {
-            NES_DEBUG("ExchangeProtocol: updateNetworkSink message received from "
+            NES_DEBUG("ExchangeProtocol: removeQEP message received from "
                           << removeQEPMessage.getChannelId().toString() << " but there is still some active subpartition: "
                           << partitionManager->getSubpartitionCounter(removeQEPMessage.getChannelId().getNesPartition()));
         }
     } else {
-        NES_ERROR("ExchangeProtocol: updateNetworkSink message received from "
+        NES_ERROR("ExchangeProtocol: removeQEP message received from "
                       << removeQEPMessage.getChannelId().toString() << " however the partition is not registered on this worker");
         protocolListener->onServerError(Messages::ErrorMessage(removeQEPMessage.getChannelId(), Messages::kUnknownPartition));
     }

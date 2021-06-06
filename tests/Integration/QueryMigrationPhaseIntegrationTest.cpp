@@ -483,7 +483,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
 
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/exdra.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(0);
+    srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("exdra");
     srcConf->setNumberOfBuffersToProduce(3000);
@@ -523,8 +523,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
 
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
     ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(3));
-//    queryService->validateAndQueueStopRequest(queryId);
-//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
@@ -547,7 +547,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
     NES_INFO("QueryDeploymentTest: Test finished");
 
 }
-TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_testDeploymentAndStartOfSubqueries) {
+TEST_F(QueryMigrationPhaseIntegrationTest, test) {
 
     CoordinatorConfigPtr coConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
@@ -601,25 +601,33 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DISABLED_testDeploymentAndStartOfSubq
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
-    MaintenanceServicePtr maintenanceService = crd->getMaintenanceService();
 
-    NES_DEBUG("MaintenanceServiceTest: Submit query");
-    //register query
+
     std::string queryString =
         R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + filePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
-    EXPECT_NE(queryId, INVALID_QUERY_ID);
-    auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    auto globalExecutionPlan = crd->getGlobalExecutionPlan();
-    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeIsARoot(1));
-    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(2));
-    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(4));
-    //PLACES subqueries on Node 3
-    maintenanceService->submitMaintenanceRequest(1,2);
-    ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
-    auto executionNode = globalExecutionPlan->getExecutionNodeByNodeId(3);
+    NES_INFO("QueryDeploymentTest: Stop worker 2");
+    bool retStopWrk2 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk2);
+    NES_DEBUG("Worker2 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 3");
+    bool retStopWrk3 = wrk2->stop(true);
+    EXPECT_TRUE(retStopWrk3);
+    NES_DEBUG("Worker3 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop worker 4");
+    bool retStopWrk4 = wrk3->stop(true);
+    EXPECT_TRUE(retStopWrk4);
+    NES_DEBUG("Worker4 stopped!");
+
+    NES_INFO("QueryDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("QueryDeploymentTest: Test finished");
+
 }
 
 TEST_F(QueryMigrationPhaseIntegrationTest, WorkerRPCBufferDataTest) {

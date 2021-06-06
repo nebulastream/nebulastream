@@ -266,7 +266,7 @@ bool NodeEngine::stop(bool markQueriesAsFailed) {
         NES_WARNING("Runtime::stop: engine already stopped");
         return true;
     }
-    NES_DEBUG("Runtime::stop: going to stop the node engine");
+    NES_DEBUG("Runtime::stop: going to stop the node engine for " << queryManager->getNodeId());
     std::unique_lock lock(engineMutex);
     bool withError = false;
 

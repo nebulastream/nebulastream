@@ -231,6 +231,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                     queryManager->addReconfigurationMessage(querySubPlanId,
                                                              ReconfigurationMessage(querySubPlanId, Destroy, queryManager),
                                                             false);
+
                 }
                 else{
                     //TODO: add error handling
