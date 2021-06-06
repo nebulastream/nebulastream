@@ -80,6 +80,7 @@ class ExecutableSliceAggregationTriggerAction
         }
         auto executionContext = this->weakExecutionContext.lock();
         auto tupleBuffer = executionContext->allocateTupleBuffer();
+        tupleBuffer.setOriginId(windowDefinition->getOriginId());
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             NES_DEBUG("ExecutableSliceAggregationTriggerAction " << id << ": " << toString() << " check key=" << it.first
@@ -91,7 +92,6 @@ class ExecutableSliceAggregationTriggerAction
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
             //write remaining buffer
-            tupleBuffer.setOriginId(windowDefinition->getOriginId());
             NES_DEBUG("ExecutableSliceAggregationTriggerAction "
                       << id << ": Dispatch last buffer output buffer with " << tupleBuffer.getNumberOfTuples()
                       << " currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark

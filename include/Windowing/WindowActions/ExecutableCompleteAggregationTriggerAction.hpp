@@ -105,7 +105,6 @@ class ExecutableCompleteAggregationTriggerAction
         }
 
         if (tupleBuffer.getNumberOfTuples() != 0) {
-            tupleBuffer.setWatermark(currentWatermark);
             tupleBuffer.setOriginId(windowDefinition->getOriginId());
             //write remaining buffer
             NES_DEBUG("ExecutableCompleteAggregationTriggerAction ("
