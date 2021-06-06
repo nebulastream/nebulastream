@@ -136,9 +136,11 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     /**
      * @brief registers a query
      * @param query plan to register
+     * @param lazyQueryManagerRegistration if true, postpones query manager to caller
      * @return true if succeeded, else false
      */
-    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan);
+    bool registerQueryInNodeEngine(Execution::ExecutableQueryPlanPtr queryExecutionPlan,
+                                   bool lazyQueryManagerRegistration = false);
 
     /**
      * @brief registers a query
@@ -285,6 +287,8 @@ class NodeEngine : public Network::ExchangeProtocolListener,
      * @return Executable Plan if compilation successful else nullopt
      */
     std::optional<Execution::ExecutableQueryPlanPtr> compileQuery(QueryPlanPtr queryPlan);
+    bool registerQueryExecutionPlanInQueryManagerForSources(Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
+                                                            const std::vector<DataSourcePtr>& sources);
 
     std::vector<AbstractPhysicalStreamConfigPtr> configs;
     NodeStatsProviderPtr nodeStatsProvider;

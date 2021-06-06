@@ -49,6 +49,12 @@
 #include <folly/MPMCQueue.h>
 #endif
 
+namespace NES::Network::Messages {
+
+class QueryReconfigurationMessage;
+
+}// namespace NES::Network::Messages
+
 namespace NES {
 namespace NodeEngine {
 
@@ -88,8 +94,10 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @brief register a query by extracting sources, windows and sink and add them to
      * respective map
      * @param QueryExecutionPlan to be deployed
+     * @param Sources to register QEP against
+     * @return True if registration is successful else False
      */
-    bool registerQuery(Execution::ExecutableQueryPlanPtr qep);
+    bool registerQuery(Execution::ExecutableQueryPlanPtr qep, const std::vector<DataSourcePtr>& sources);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -150,6 +158,17 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @return bool indicating success
      */
     bool startQuery(Execution::ExecutableQueryPlanPtr qep, StateManagerPtr stateManager);
+
+    /**
+     * Start query via reconfiguration process for particular source
+     * @param newQep: QEP to start
+     * @param stateManager
+     * @param queryReconfigurationMessage: Messages received from network
+     * @return if true start of query for source via reconfiguration is successful
+     */
+    bool triggerQepStartReconfiguration(Execution::ExecutableQueryPlanPtr newQep,
+                                        StateManagerPtr stateManager,
+                                        Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
 
     /**
      * @brief method to start a query
@@ -243,6 +262,12 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      * @oaram reference to worker context
      */
     void completedWork(Task& task, WorkerContext& workerContext);
+
+    bool startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
+                              StateManagerPtr stateManager,
+                              const std::vector<DataSourcePtr>& sources);
+    void propagateReconfigurationViaQepSinks(const Execution::ExecutableQueryPlanPtr& qep,
+                                             const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
 
     ExecutionResult terminateLoop(WorkerContext&);
 
