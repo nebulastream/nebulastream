@@ -45,8 +45,7 @@ class BaseExecutableWindowAction {
     virtual std::string toString() = 0;
 
     void emitBuffer(NodeEngine::TupleBuffer& tupleBuffer) {
-        emitSequenceNumber++;
-        tupleBuffer.setSequenceNumber(emitSequenceNumber);
+        tupleBuffer.setSequenceNumber(++emitSequenceNumber);
         weakExecutionContext.lock()->dispatchBuffer(tupleBuffer);
     };
 

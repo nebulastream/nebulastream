@@ -176,26 +176,11 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                               << executableWindowAction->toString()
                                               << " distribution type=" << windowDefinition->getDistributionType()->toString()
                                               << " forceFlush=" << forceFlush);
-
-        if (originIdToMaxTsMap.size() != numberOfInputEdges) {
-            NES_DEBUG("AggregationWindowHandler("
-                      << handlerType << "," << id
-                      << "): trigger cannot be applied as we did not get one buffer per edge yet, size="
-                      << originIdToMaxTsMap.size() << " numberOfInputEdges=" << numberOfInputEdges);
-            return;
-        }
-
         uint64_t watermark = 0;
         if (!forceFlush) {
             watermark = getMinWatermark();
         } else {
-            auto max =
-                std::max_element(originIdToMaxTsMap.begin(),
-                                 originIdToMaxTsMap.end(),
-                                 [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
-                                     return a.second < b.second;
-                                 });
-
+            watermark = getMinWatermark();
             uint64_t windowSize = 0;
             if (windowDefinition->getWindowType()->isTumblingWindow()) {
                 TumblingWindow* window = dynamic_cast<TumblingWindow*>(windowDefinition->getWindowType().get());
@@ -208,9 +193,9 @@ class AggregationWindowHandler : public AbstractWindowHandler {
             }
 
             auto allowedLateness = windowManager->getAllowedLateness();
-            NES_DEBUG("For flushing maxWatermark = " << max->second << " window size=" << windowSize << " trigger ts ="
-                                                     << max->second + windowSize << " allowedLateness=" << allowedLateness);
-            watermark = max->second + windowSize + allowedLateness;
+            NES_DEBUG("For flushing maxWatermark = " << watermark << " window size=" << windowSize << " trigger ts ="
+                                                     << watermark + windowSize << " allowedLateness=" << allowedLateness);
+            watermark = watermark + windowSize + allowedLateness;
         }
 
         //In the following, find out the minimal watermark among the buffers/stores to know where

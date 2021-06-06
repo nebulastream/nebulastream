@@ -289,12 +289,14 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
-    string query = "Query::from(\"window\")"
-                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)))"
-                   ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
-                   ".window(SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5))) "
-                   ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
-                   ".sink(FileSinkDescriptor::create(\""
+    string query =
+        "Query::from(\"window\")"
+        ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)))"
+        ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"start\"), Milliseconds(0), Milliseconds()))"
+        ".window(SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5))) "
+        ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+        ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
@@ -493,6 +495,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
         .filter(Attribute("id") < 15)
         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
+        .assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("start"), Milliseconds(0), Milliseconds()))
         .window(SlidingWindow::of(EventTime(Attribute("start")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -604,6 +607,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Submit query");
     string query = R"(Query::from("window")
         .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
+        .assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("start"), Milliseconds(0), Milliseconds()))
         .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
@@ -714,8 +718,10 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     string query = R"(Query::from("window")
         .filter(Attribute("id") < 15)
         .window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
+        .assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("start"), Milliseconds(0), Milliseconds()))
         .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(1))).byKey(Attribute("id")).apply(Sum(Attribute("value")))
         .filter(Attribute("id") < 10)
+        .assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute("start"), Milliseconds(0), Milliseconds()))
         .window(TumblingWindow::of(EventTime(Attribute("start")), Seconds(2))).apply(Sum(Attribute("value")))
         .sink(FileSinkDescriptor::create(")"
         + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
