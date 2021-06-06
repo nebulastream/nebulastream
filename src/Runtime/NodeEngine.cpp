@@ -202,7 +202,8 @@ bool NodeEngine::registerQueryInNodeEngine(QueryPlanPtr queryPlan) {
     return registerQueryInNodeEngine(*maybeQep);
 }
 
-bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan) {
+bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
+                                           bool lazyQueryManagerRegistration) {
     std::unique_lock lock(engineMutex);
     QueryId queryId = queryExecutionPlan->getQueryId();
     QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
@@ -218,16 +219,23 @@ bool NodeEngine::registerQueryInNodeEngine(const Execution::ExecutableQueryPlanP
             (*found).second.push_back(querySubPlanId);
             NES_DEBUG("Runtime: register of QEP " << querySubPlanId << " added");
         }
-        if (queryManager->registerQuery(queryExecutionPlan)) {
-            deployedQEPs[querySubPlanId] = queryExecutionPlan;
-            NES_DEBUG("Runtime: register of subqep " << querySubPlanId << " succeeded");
-            return true;
+        if (!lazyQueryManagerRegistration) {
+            return registerQueryExecutionPlanInQueryManagerForSources(queryExecutionPlan, queryExecutionPlan->getSources());
         }
-        NES_DEBUG("Runtime: register of subqep " << querySubPlanId << " failed");
-        return false;
+    }
+    NES_DEBUG("NodeEngine: qep already exists. register failed" << querySubPlanId);
+    return false;
+}
 
+bool NodeEngine::registerQueryExecutionPlanInQueryManagerForSources(Execution::ExecutableQueryPlanPtr& queryExecutionPlan,
+                                                                    const std::vector<DataSourcePtr>& sources) {
+    QuerySubPlanId querySubPlanId = queryExecutionPlan->getQuerySubPlanId();
+    if (queryManager->registerQuery(queryExecutionPlan, sources)) {
+        deployedQEPs[querySubPlanId] = queryExecutionPlan;
+        NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " succeeded");
+        return true;
     } else {
-        NES_DEBUG("Runtime: qep already exists. register failed" << querySubPlanId);
+        NES_DEBUG("NodeEngine: register of subqep " << querySubPlanId << " failed");
         return false;
     }
 }
@@ -452,10 +460,11 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 }
 
 void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    std::unique_lock lock(engineMutex);
     for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
         auto foundQEPNeedingReplacement = deployedQEPs.find(element.first);
         if (foundQEPNeedingReplacement != deployedQEPs.end()) {
-            auto foundReplacementQEP = reconfigurationQEPs.find(element.second);
+            //            auto foundReplacementQEP = reconfigurationQEPs.find(element.second);
             // replace QEP
         }
     }
@@ -463,6 +472,15 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
         auto foundQueryReconfigurationQEP = reconfigurationQEPs.find(querySubPlanId);
         if (foundQueryReconfigurationQEP != reconfigurationQEPs.end()) {
             // start qep
+            auto qep = reconfigurationQEPs[querySubPlanId];
+            if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
+                if (!registerQueryInNodeEngine(qep, true)) {
+                    NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " added");
+                }
+            }
+            queryManager->triggerQepStartReconfiguration(reconfigurationQEPs[querySubPlanId],
+                                                         stateManager,
+                                                         queryReconfigurationMessage);
         }
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {

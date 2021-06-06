@@ -164,7 +164,7 @@ void QueryManager::destroy() {
     }
 }
 
-bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
+bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep, const std::vector<DataSourcePtr>& sources) {
     NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep->getQueryId() << " subquery=" << qep->getQuerySubPlanId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::registerQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
@@ -172,7 +172,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
     std::scoped_lock lock(queryMutex, statisticsMutex);
     // test if elements already exist
     NES_DEBUG("QueryManager: resolving sources for query " << qep);
-    for (const auto& source : qep->getSources()) {
+    for (const auto& source : sources) {
         // source already exists, add qep to source set if not there
         OperatorId sourceOperatorId = source->getOperatorId();
         sourceIdToSuccessorMap[sourceOperatorId] = source->getExecutableSuccessors();
@@ -204,6 +204,12 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep) {
 }
 
 bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, StateManagerPtr stateManager) {
+    return startQueryForSources(qep, stateManager, qep->getSources());
+}
+
+bool QueryManager::startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
+                                        StateManagerPtr stateManager,
+                                        const std::vector<DataSourcePtr>& sources) {
     NES_DEBUG("QueryManager::startQuery: query id " << qep->getQuerySubPlanId() << " " << qep->getQueryId());
     NES_ASSERT2_FMT(queryManagerStatus.load() == Running,
                     "QueryManager::startQuery: cannot accept new query id " << qep->getQuerySubPlanId() << " "
@@ -227,7 +233,7 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, Stat
     }
 
     // 3. start net sources
-    for (const auto& source : qep->getSources()) {
+    for (const auto& source : sources) {
         if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
             NES_DEBUG("QueryManager: start network source " << source << " str=" << source->toString());
             if (!source->start()) {
@@ -248,7 +254,7 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, Stat
     }
 
     // 5. start data sources
-    for (const auto& source : qep->getSources()) {
+    for (const auto& source : sources) {
         if (std::dynamic_pointer_cast<Network::NetworkSource>(source)) {
             continue;
             ;
@@ -266,6 +272,67 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep, Stat
         runningQEPs.emplace(qep->getQuerySubPlanId(), qep);
     }
     return true;
+}
+
+bool QueryManager::triggerQepStartReconfiguration(Execution::ExecutableQueryPlanPtr newQep,
+                                                  StateManagerPtr stateManager,
+                                                  Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
+    auto newQuerySubPlanId = newQep->getQuerySubPlanId();
+    auto sourceOperatorId = queryReconfigurationMessage.getChannelId().getNesPartition().getOperatorId();
+    auto allSources = newQep->getSources();
+    auto matchingSourcesItr = std::find_if(allSources.begin(), allSources.end(), [sourceOperatorId](DataSourcePtr src) {
+        return src->getOperatorId() == sourceOperatorId;
+    });
+    // Only respond to QueryReconfiguration Messages received from sources that can send data to QEP
+    if (matchingSourcesItr == allSources.end()) {
+        // This is quite possible when as, QEP can receive messages from multiple sink
+        NES_ERROR("QueryManager::triggerQepStartReconfiguration: QEP with subPlanId: "
+                  << newQuerySubPlanId << " does not have source with sourceOperatorId: " << sourceOperatorId);
+        return false;
+    }
+    std::vector<DataSourcePtr> matchingSources = {*matchingSourcesItr};
+    bool isRegistrationSuccessful = registerQuery(newQep, matchingSources);
+    if (!isRegistrationSuccessful) {
+        NES_ERROR("QueryManager::triggerQepStartReconfiguration: QEP registration failed for sourceOperatorId"
+                  << sourceOperatorId << " QEP for querySubPlanId " << newQuerySubPlanId);
+        return false;
+    }
+    if (runningQEPs.find(newQuerySubPlanId) != runningQEPs.end()) {
+        // QEP start and sink setup is done when reconfiguration message received first time to start QEP, hence we start up source alone
+        NES_DEBUG("QueryManager::triggerQepStartReconfiguration: QEP for querySubPlanId" << newQuerySubPlanId
+                                                                                         << " is already in Running State");
+        for (const auto& source : matchingSources) {
+            if (!source->start()) {
+                NES_WARNING("QueryManager::triggerQepStartReconfiguration: source "
+                            << source << " could not started as it is already running");
+            } else {
+                NES_DEBUG("QueryManager::triggerQepStartReconfiguration: source " << source << " started successfully");
+            }
+        }
+    } else {
+        // start QEP if not already started by an earlier reconfiguration message
+        bool isStartSuccessful = startQueryForSources(newQep, stateManager, matchingSources);
+        if (!isStartSuccessful) {
+            NES_ERROR("QueryManager::triggerQepStartReconfiguration: QEP start failed for sourceOperatorId"
+                      << sourceOperatorId << " QEP for querySubPlanId " << newQuerySubPlanId);
+            return false;
+        }
+    }
+    propagateReconfigurationViaQepSinks(newQep, queryReconfigurationMessage);
+    return true;
+}
+
+void QueryManager::propagateReconfigurationViaQepSinks(
+    const Execution::ExecutableQueryPlanPtr& qep,
+    const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage) {
+    auto qepSubPlanId = qep->getQuerySubPlanId();
+    for (auto sink : qep->getSinks()) {
+        NES_DEBUG("QueryManager::triggerQepStartReconfiguration: Propagate QueryReconfigurationMessage: "
+                  << " to sink: " << sink->toString() << " in QuerySubPlanId: " << qepSubPlanId);
+        auto reconfigurationMessage =
+            ReconfigurationMessage(qepSubPlanId, QueryReconfiguration, sink, queryReconfigurationMessage);
+        addReconfigurationMessage(qepSubPlanId, reconfigurationMessage, false);
+    }
 }
 
 bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep) {
