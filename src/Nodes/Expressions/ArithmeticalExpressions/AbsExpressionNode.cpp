@@ -38,16 +38,7 @@ void AbsExpressionNode::inferStamp(SchemaPtr schema) {
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
     // increase lower bound to 0
-    if (this->stamp->isFloat()) {
-        auto stamp = DataType::as<Float>(this->stamp);
-        auto newLowerBound = fmax(0, stamp->lowerBound);
-        this->stamp = DataTypeFactory::createFloat(stamp->getBits(), newLowerBound, stamp->upperBound);
-    } else if (this->stamp->isInteger()) {
-        auto stamp = DataType::as<Integer>(this->stamp);
-        auto newLowerBound = fmax(0, stamp->lowerBound);
-        this->stamp = DataTypeFactory::createInteger(stamp->getBits(), newLowerBound, stamp->upperBound);
-    }
-
+    stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, (int64_t) 0);
     NES_TRACE("AbsExpressionNode: increased the lower bound of stamp to 0: " << toString());
 }
 
