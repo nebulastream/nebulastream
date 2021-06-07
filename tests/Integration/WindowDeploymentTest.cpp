@@ -1903,6 +1903,143 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
+    struct Car {
+        double key;
+        uint64_t value1;
+        uint64_t value2;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createDouble())
+        ->addField("value1", DataTypeFactory::createUInt64())
+        ->addField("value2", DataTypeFactory::createUInt64())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    testHarness.pushElement<Car>({1.2, 2, 2, 1000}, 0);
+    testHarness.pushElement<Car>({1.5, 4, 4, 1500}, 0);
+    testHarness.pushElement<Car>({1.7, 5, 5, 2000}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        double key;
+        uint64_t value1;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 1.2, 2}, {1000, 2000, 1.5, 4}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
+    struct Car {
+        float key;
+        uint32_t value1;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createFloat())
+        ->addField("value1", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    testHarness.pushElement<Car>({1.2, 2, 1000}, 0);
+    testHarness.pushElement<Car>({1.5, 4, 1500}, 0);
+    testHarness.pushElement<Car>({1.7, 5, 2000}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        float key;
+        uint32_t value1;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 1.2, 2}, {1000, 2000, 1.5, 4}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithStringKey) {
+    struct __attribute__((packed)) Car {
+        std::array<char, 52> key;
+        uint32_t value1;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createFixedChar(52))
+        ->addField("value1", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value1"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    testHarness.pushElement<Car>({{"Key One"}, 2, 1000}, 0);
+    testHarness.pushElement<Car>({{"Key Two"}, 4, 1500}, 0);
+    testHarness.pushElement<Car>({{"Key Three"}, 5, 2000}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        std::string key;
+        uint32_t value1;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, "Key One", 2}, {1000, 2000, "Key Two", 4}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
 /*
  * @brief Test if the avg aggregation can be deployed
  */
