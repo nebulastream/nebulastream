@@ -26,8 +26,8 @@
 #include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
-#include <Util/Logger.hpp>
 #include <SerializableQueryPlan.pb.h>
+#include <Util/Logger.hpp>
 
 using namespace web;
 using namespace http;

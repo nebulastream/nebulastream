@@ -21,7 +21,6 @@
 #include <Topology/LinkProperty.hpp>
 #include <any>
 
-
 namespace NES {
 class NodeStats;
 typedef std::shared_ptr<NodeStats> NodeStatsPtr;

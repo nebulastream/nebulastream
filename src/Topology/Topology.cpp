@@ -17,8 +17,8 @@
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
-#include <deque>
 #include <algorithm>
+#include <deque>
 
 namespace NES {
 

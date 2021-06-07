@@ -28,12 +28,12 @@
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <Util/Logger.hpp>
 #include <iostream>
 #include <sys/stat.h>
-#include <thread>
-#include <CoordinatorRPCService.pb.h>
 #include <sys/types.h>
+#include <thread>
 #include <unistd.h>
 using namespace NES;
 using std::cout;
@@ -87,9 +87,7 @@ int main(int argc, char** argv) {
     NES_INFO("NESWORKERSTARTER: Start with port=" << workerConfig->getRpcPort()->getValue() << " localport="
                                                   << workerConfig->getDataPort()->getValue() << " pid=" << getpid()
                                                   << " coordinatorPort=" << workerConfig->getCoordinatorPort()->getValue());
-    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig,
-                                                   NesNodeType::Sensor
-    );
+    NesWorkerPtr wrk = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
 
     //register phy stream if necessary
     if (sourceConfig->getSourceType()->getValue() != "NoSource") {

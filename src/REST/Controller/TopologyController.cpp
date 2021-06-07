@@ -13,12 +13,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <vector>
 #include <Components/NesCoordinator.hpp>
 #include <REST/Controller/TopologyController.hpp>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <vector>
 using namespace web;
 using namespace http;
 

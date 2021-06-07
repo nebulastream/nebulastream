@@ -17,7 +17,6 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
-#include <vector>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
 #include <NodeEngine/ErrorListener.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
@@ -26,6 +25,7 @@
 #include <future>
 #include <string>
 #include <thread>
+#include <vector>
 
 namespace grpc {
 class Server;

@@ -23,7 +23,6 @@
  *    |_| \_| |______| |_____/
  *
  ********************************************************/
-#include <vector>
 #include <Components/NesCoordinator.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/CoordinatorConfig.hpp>
@@ -32,6 +31,7 @@
 #include <iostream>
 #include <map>
 #include <sys/stat.h>
+#include <vector>
 
 using namespace NES;
 using namespace std;

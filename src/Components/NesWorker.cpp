@@ -14,18 +14,18 @@
     limitations under the License.
 */
 
+#include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <CoordinatorRPCService.pb.h>
+#include <GRPC/CallData.hpp>
+#include <GRPC/CoordinatorRPCClient.hpp>
+#include <GRPC/WorkerRPCServer.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 #include <future>
 #include <signal.h>
 #include <utility>
-#include <GRPC/CoordinatorRPCClient.hpp>
-#include <CoordinatorRPCService.pb.h>
-#include <GRPC/WorkerRPCServer.hpp>
-#include <Components/NesWorker.hpp>
-#include <GRPC/CallData.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
@@ -243,18 +243,21 @@ bool NesWorker::connect() {
     auto nodeStats = nodeStatsProvider->getNodeStats();
 
     bool successPRCRegister = false;
-    if(type == NesNodeType::Sensor)
-    {
-        successPRCRegister =
-            coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, NodeType::Sensor, nodeStats);
-    }
-    else if(type == NesNodeType::Worker)
-    {
-        successPRCRegister =
-            coordinatorRpcClient->registerNode(localWorkerIp, localWorkerRpcPort, localWorkerZmqPort, numberOfSlots, NodeType::Worker, nodeStats);
-    }
-    else
-    {
+    if (type == NesNodeType::Sensor) {
+        successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
+                                                                localWorkerRpcPort,
+                                                                localWorkerZmqPort,
+                                                                numberOfSlots,
+                                                                NodeType::Sensor,
+                                                                nodeStats);
+    } else if (type == NesNodeType::Worker) {
+        successPRCRegister = coordinatorRpcClient->registerNode(localWorkerIp,
+                                                                localWorkerRpcPort,
+                                                                localWorkerZmqPort,
+                                                                numberOfSlots,
+                                                                NodeType::Worker,
+                                                                nodeStats);
+    } else {
         NES_NOT_IMPLEMENTED();
     }
     NES_DEBUG("NesWorker::connect() got id=" << coordinatorRpcClient->getId());

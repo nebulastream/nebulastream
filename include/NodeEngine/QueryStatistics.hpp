@@ -25,8 +25,7 @@ namespace NES::NodeEngine {
 
 class QueryStatistics {
   public:
-    QueryStatistics(uint64_t queryId, uint64_t subQueryId)
-        : queryId(queryId),subQueryId(subQueryId){};
+    QueryStatistics(uint64_t queryId, uint64_t subQueryId) : queryId(queryId), subQueryId(subQueryId){};
 
     /**
      * @brief getter for processedTasks
@@ -100,7 +99,6 @@ class QueryStatistics {
      * @return value
      */
     uint64_t getQueueSizeSum() const;
-
 
     /**
     * @brief increment processedWatermarks
