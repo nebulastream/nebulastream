@@ -21,10 +21,10 @@
 #include <Topology/LinkProperty.hpp>
 #include <any>
 
+
+namespace NES {
 class NodeStats;
 typedef std::shared_ptr<NodeStats> NodeStatsPtr;
-namespace NES {
-
 class TopologyNode;
 typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
 
