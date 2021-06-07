@@ -50,6 +50,10 @@ MonitoringPlan::MonitoringPlan(const SerializableMonitoringPlan& plan)
     NES_DEBUG("MonitoringPlan: Initializing from shippable protobuf object.");
 }
 
+MonitoringPlanPtr MonitoringPlan::DefaultPlan() {
+    return MonitoringPlan::create(std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric}));
+}
+
 MonitoringPlanPtr MonitoringPlan::create(const std::vector<MetricValueType>& metrics) {
     return std::make_shared<MonitoringPlan>(MonitoringPlan(metrics));
 }

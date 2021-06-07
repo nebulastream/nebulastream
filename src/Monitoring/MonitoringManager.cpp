@@ -43,7 +43,7 @@ MonitoringManager::~MonitoringManager() {
     topology.reset();
 }
 
-bool MonitoringManager::registerMonitoringPlan(std::vector<uint64_t> nodeIds, MonitoringPlanPtr monitoringPlan) {
+bool MonitoringManager::registerRemoteMonitoringPlans(std::vector<uint64_t> nodeIds, MonitoringPlanPtr monitoringPlan) {
     if (!monitoringPlan) {
         NES_ERROR("MonitoringManager: Register monitoring plan failed, no plan is provided.");
         return false;
@@ -62,10 +62,15 @@ bool MonitoringManager::registerMonitoringPlan(std::vector<uint64_t> nodeIds, Mo
             auto nodeGrpcPort = node->getGrpcPort();
             std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
 
-            //TODO: add a grpc call to send the plan to the given node
-            //workerClient->requestMonitoringData(destAddress, plan, tupleBuffer);
+            auto success = workerClient->registerMonitoringPlan(destAddress, monitoringPlan);
 
-            monitoringPlanMap.emplace({nodeId, monitoringPlan});
+            if (success) {
+                NES_DEBUG("MonitoringManager: Node with ID " + std::to_string(nodeId) + " registered successfully.");
+                monitoringPlanMap[nodeId] = monitoringPlan;
+            } else {
+                NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " failed to register plan over GRPC.");
+                return false;
+            }
         } else {
             NES_ERROR("MonitoringManager: Node with ID " + std::to_string(nodeId) + " does not exit.");
             return false;
@@ -74,23 +79,34 @@ bool MonitoringManager::registerMonitoringPlan(std::vector<uint64_t> nodeIds, Mo
     return true;
 }
 
-bool MonitoringManager::requestMonitoringData(uint64_t nodeId, TupleBuffer& tupleBuffer) {
-    if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
-        NES_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId) + " failed. No plan registered.");
-        return false;
-    }
+bool MonitoringManager::requestMonitoringData(uint64_t nodeId, NodeEngine::TupleBuffer& tupleBuffer) {
+    NES_DEBUG("MonitoringManager: Requesting metrics for node id=" + std::to_string(nodeId));
+    auto plan = getMonitoringPlan(nodeId);
 
-    NES_DEBUG("MonitoringManager: Requesting metrics for node id= " + std::to_string(nodeId));
+    //getMonitoringPlan(..) checks if node exists, so no further check necessary
     TopologyNodePtr node = topology->findNodeWithId(nodeId);
-
+    auto schemaSize = plan->createSchema()->getSchemaSizeInBytes();
     auto nodeIp = node->getIpAddress();
     auto nodeGrpcPort = node->getGrpcPort();
     std::string destAddress = nodeIp + ":" + std::to_string(nodeGrpcPort);
+    auto success = workerClient->requestMonitoringData(destAddress, tupleBuffer, schemaSize);
+    NES_DEBUG("MonitoringManager: Received monitoring data with status " + std::to_string(success));
+    return success;
+}
 
-    //TODO: add a grpc call to retrieve metrics of the given node
-    //workerClient->requestMonitoringData(destAddress, plan, tupleBuffer);
-
-    return true;
+MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
+    if (monitoringPlanMap.find(nodeId) == monitoringPlanMap.end()) {
+        TopologyNodePtr node = topology->findNodeWithId(nodeId);
+        if (node) {
+            NES_DEBUG("MonitoringManager: No registered plan found. Returning default plan for node " + std::to_string(nodeId));
+            return MonitoringPlan::DefaultPlan();
+        } else {
+            NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId) + " failed. Node does not exist in topology.");
+        }
+    }
+    else {
+        return monitoringPlanMap[nodeId];
+    }
 }
 
 }// namespace NES

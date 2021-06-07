@@ -48,7 +48,7 @@ class MonitoringManager {
      * @param monitoringPlan
      * @return True, if successful, else false
      */
-    bool registerMonitoringPlan(std::vector<uint64_t> nodeIds, MonitoringPlanPtr monitoringPlan);
+    bool registerRemoteMonitoringPlans(std::vector<uint64_t> nodeIds, MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Get the monitoring data for a given node.
@@ -58,13 +58,17 @@ class MonitoringManager {
      * @param tupleBuffer
      * @return
      */
-    bool requestMonitoringData(uint64_t nodeIds, NodeEngine::TupleBuffer& tupleBuffer);
+    bool requestMonitoringData(uint64_t nodeId, NodeEngine::TupleBuffer& tupleBuffer);
+
+    MonitoringPlanPtr getMonitoringPlan(uint64_t nodeId);
 
   private:
     std::unordered_map<uint64_t, MonitoringPlanPtr> monitoringPlanMap;
     WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
 };
+
+typedef std::shared_ptr<MonitoringManager> MonitoringManagerPtr;
 
 }// namespace NES
 

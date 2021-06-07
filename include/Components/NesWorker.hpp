@@ -33,6 +33,10 @@ namespace NES {
 class WorkerRPCServer;
 class CoordinatorRPCClient;
 typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
+
+class MonitoringAgent;
+typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
+
 enum NesNodeType : int { Worker, Sensor };
 class NesWorker {
   public:
@@ -177,6 +181,7 @@ class NesWorker {
     std::unique_ptr<grpc::ServerCompletionQueue> completionQueue;
 
     NodeEngine::NodeEnginePtr nodeEngine;
+    MonitoringAgentPtr monitoringAgent;
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
     PhysicalStreamConfigPtr conf;

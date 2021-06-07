@@ -29,7 +29,8 @@ service WorkerRPCService {
   rpc StartQuery (StartQueryRequest) returns (StartQueryReply) {}
   rpc StopQuery (StopQueryRequest) returns (StopQueryReply) {}
 
-  rpc RequestMonitoringData (MonitoringRequest) returns (MonitoringReply) {}
+  rpc RegisterMonitoring (MonitoringRegistrationRequest) returns (MonitoringRegistrationReply) {}
+  rpc GetMonitoringData (MonitoringDataRequest) returns (MonitoringDataReply) {}
 }
 
 message DeployQueryRequest {
@@ -81,11 +82,16 @@ message StopQueryReply {
   bool success = 1;
 }
 
-message MonitoringRequest {
+message MonitoringRegistrationRequest {
   NES.SerializableMonitoringPlan monitoringPlan = 1;
 }
 
-message MonitoringReply {
-  NES.SerializableSchema schema = 1;
-  bytes buffer = 2;
+message MonitoringRegistrationReply {
+}
+
+message MonitoringDataRequest {
+}
+
+message MonitoringDataReply {
+  bytes buffer = 1;
 }
