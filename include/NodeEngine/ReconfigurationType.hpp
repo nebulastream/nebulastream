@@ -30,7 +30,9 @@ enum ReconfigurationType : uint8_t {
     // use EndOfStream for reconfiguration tasks that communicate the end of stream event for a given query
     HardEndOfStream,
     // use QueryReconfiguration for reconfiguration tasks that reconfigure query execution plans of query
-    QueryReconfiguration
+    QueryReconfiguration,
+    // use StopViaReconfiguration for stopping QEP without propagating End Of Stream Messages (i.e) locally stop a QEP
+    StopViaReconfiguration
 };
 }
 
