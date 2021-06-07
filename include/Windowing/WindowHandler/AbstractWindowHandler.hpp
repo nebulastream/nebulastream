@@ -62,6 +62,8 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
 
     /**
     * @brief Starts thread to check if the window should be triggered.
+    * @param stateManager pointer to the current state manager
+    * @param localStateVariableId local id of a state on an engine node
     * @return boolean if the window thread is started
     */
     virtual bool start(NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) = 0;

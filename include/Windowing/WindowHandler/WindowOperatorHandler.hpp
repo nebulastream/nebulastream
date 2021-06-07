@@ -80,7 +80,8 @@ class WindowOperatorHandler : public NodeEngine::Execution::OperatorHandler {
     /**
     * @brief Starts window handler
      * @param pipelineExecutionContext pointer to the current pipeline execution context
-     * @param stateManager point to the current state manager
+     * @param localStateVariableId local id of a state on an engine node
+     * @param stateManager pointer to the current state manager
     */
     void start(NodeEngine::Execution::PipelineExecutionContextPtr pipelineExecutionContext,
                NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) override;
