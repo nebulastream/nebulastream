@@ -605,7 +605,7 @@ bool CCodeGenerator::generateCodeForCompleteWindow(
 
     // Read key value from record
     auto keyVariableDeclaration =
-        VariableDeclaration::create(tf->createDataType(DataTypeFactory::createInt64()),
+        VariableDeclaration::create(tf->createDataType(keyStamp),
                                     context->getInputSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator() + "key");
     auto recordHandler = context->getRecordHandler();
     if (window->isKeyed()) {
