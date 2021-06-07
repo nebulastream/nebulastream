@@ -38,9 +38,9 @@ jobs:
         run: |
           docker rm -f ${{ github.run_id }}_build
       - name: NES Workspace cleanup
-          if: ${{ always() }}
-          run: |
-            rm -f $GITHUB_WORKSPACE
+        if: ${{ always() }}
+        run: |
+          rm -f $GITHUB_WORKSPACE
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
@@ -144,9 +144,9 @@ jobs:
           external_repository: nebulastream/nes-server
           publish_branch: master
       - name: NES Workspace cleanup
-          if: ${{ always() }}
-          run: |
-            rm -f $GITHUB_WORKSPACE
+        if: ${{ always() }}
+        run: |
+          rm -f $GITHUB_WORKSPACE
       - name: Notify Slack
         uses: 8398a7/action-slack@v2
         with:
