@@ -1095,7 +1095,7 @@ class ILPPlacementTest : public testing::Test {
     TopologyPtr topologyForILP;
 };
 
-TEST_F(QueryPlacementTest, Z3Test) {
+TEST_F(ILPPlacementTest, Z3Test) {
     context c;
     optimize opt(c);
 
