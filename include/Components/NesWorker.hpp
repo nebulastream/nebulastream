@@ -19,27 +19,23 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
-#include <Plans/Query/QueryId.hpp>
-namespace WorkerRPCServer
-{
+namespace WorkerRPCServer {
 class Service;
 }
 class CoordinatorRPCClient;
 typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
 
-namespace grpc{
-    class Server;
-    class ServerCompletionQueue;
-};
+namespace grpc {
+class Server;
+class ServerCompletionQueue;
+};// namespace grpc
 
 class NodeEngine;
 namespace NES {
-enum NesNodeType : int {
-    Worker,
-    Sensor
-};
+enum NesNodeType : int { Worker, Sensor };
 class NesWorker {
   public:
     /**

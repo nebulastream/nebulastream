@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <GRPC/WorkerRPCServer.hpp>
 #include <GRPC/CallData.hpp>
+#include <GRPC/WorkerRPCServer.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -27,8 +27,8 @@ CallData::CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueu
 void CallData::proceed() {
     // What we get from the client.
     RegisterQueryRequest request;
-//
-//    // What we send back to the client.
+    //
+    //    // What we send back to the client.
     RegisterQueryReply reply;
 
     ServerContext ctx;

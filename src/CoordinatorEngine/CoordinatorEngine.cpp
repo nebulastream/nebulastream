@@ -18,12 +18,12 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <CoordinatorRPCService.pb.h>
+#include <NodeStats.pb.h>
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <CoordinatorRPCService.pb.h>
-#include <NodeStats.pb.h>
 
 namespace NES {
 
@@ -106,9 +106,9 @@ uint64_t CoordinatorEngine::registerNode(std::string address,
     }
 
     //TODO: this has to be refactored #1971
-//    if (nodeStats->IsInitialized()) {
-//        physicalNode->setNodeStats(std::make_shared<NodeStats>());
-//    }
+    //    if (nodeStats->IsInitialized()) {
+    //        physicalNode->setNodeStats(std::make_shared<NodeStats>());
+    //    }
 
     const TopologyNodePtr rootNode = topology->getRoot();
 

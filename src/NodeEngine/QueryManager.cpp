@@ -858,7 +858,7 @@ void QueryManager::completedWork(Task& task, WorkerContext&) {
         statistics->addTimestampToLatencyValue(now, diff);
 #endif
         statistics->incProcessedTuple(task.getNumberOfTuples());
-//        NES_ERROR("add queue size=" << taskQueue.size());
+        //        NES_ERROR("add queue size=" << taskQueue.size());
         statistics->incQueueSizeSum(taskQueue.size());
     } else {
         NES_FATAL_ERROR("queryToStatisticsMap not set, this should only happen for testing");

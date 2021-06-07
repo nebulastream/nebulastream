@@ -30,13 +30,9 @@ uint64_t QueryStatistics::getLatencySum() const { return latencySum.load(); }
 
 uint64_t QueryStatistics::getQueueSizeSum() const { return queueSizeSum.load(); }
 
-void QueryStatistics::setProcessedTasks(uint64_t processedTasks) {
-    this->processedTasks = processedTasks;
-}
+void QueryStatistics::setProcessedTasks(uint64_t processedTasks) { this->processedTasks = processedTasks; }
 
-void QueryStatistics::setProcessedTuple(uint64_t processedTuple) {
-    this->processedTuple = processedTuple;
-}
+void QueryStatistics::setProcessedTuple(uint64_t processedTuple) { this->processedTuple = processedTuple; }
 
 void QueryStatistics::incProcessedBuffers() { this->processedBuffers++; }
 
@@ -45,11 +41,9 @@ void QueryStatistics::incProcessedTasks() { this->processedTasks++; }
 void QueryStatistics::incProcessedWatermarks() { this->processedWatermarks++; }
 void QueryStatistics::incProcessedTuple(uint64_t tupleCnt) { this->processedTuple += tupleCnt; }
 void QueryStatistics::incLatencySum(uint64_t latency) { this->latencySum += latency; }
-void QueryStatistics::incQueueSizeSum(uint64_t size){ this->queueSizeSum += size; }
+void QueryStatistics::incQueueSizeSum(uint64_t size) { this->queueSizeSum += size; }
 
-void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) {
-    this->processedBuffers = processedBuffers;
-}
+void QueryStatistics::setProcessedBuffers(uint64_t processedBuffers) { this->processedBuffers = processedBuffers; }
 
 void QueryStatistics::addTimestampToLatencyValue(uint64_t now, uint64_t latency) { tsToLatencyMap[now].push_back(latency); }
 

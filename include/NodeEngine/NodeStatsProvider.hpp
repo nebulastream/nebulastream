@@ -20,7 +20,6 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
 
-
 namespace NES::NodeEngine {
 
 /**

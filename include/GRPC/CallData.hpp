@@ -17,13 +17,12 @@
 #ifndef NES_SRC_GRPC_CALLDATA_HPP_
 #define NES_SRC_GRPC_CALLDATA_HPP_
 
-namespace WorkerRPCServer
-{
-    class Service;
+namespace WorkerRPCServer {
+class Service;
 }
 
-namespace grpc{
- class ServerCompletionQueue;
+namespace grpc {
+class ServerCompletionQueue;
 }
 
 namespace NES {

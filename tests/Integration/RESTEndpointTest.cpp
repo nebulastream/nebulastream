@@ -16,6 +16,7 @@
 
 #include <gtest/gtest.h>
 
+#include "SerializableQueryPlan.pb.h"
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
@@ -26,7 +27,6 @@
 #include <Util/TestUtils.hpp>
 #include <cpprest/http_client.h>
 #include <iostream>
-#include "SerializableQueryPlan.pb.h"
 
 namespace NES {
 

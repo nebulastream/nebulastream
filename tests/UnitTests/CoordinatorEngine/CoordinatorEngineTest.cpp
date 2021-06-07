@@ -20,9 +20,9 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Configurations/ConfigOptions/SourceConfig.hpp>
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
+#include <CoordinatorRPCService.pb.h>
 #include <Topology/Topology.hpp>
 #include <Util/Logger.hpp>
-#include <CoordinatorRPCService.pb.h>
 
 #include <string>
 using namespace std;

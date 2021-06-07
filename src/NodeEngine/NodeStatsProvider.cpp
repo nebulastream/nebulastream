@@ -15,6 +15,7 @@
 */
 
 #if defined(__linux__)
+#include <NodeStats.pb.h>
 #include <ifaddrs.h>
 #include <linux/if_link.h>
 #include <net/if.h>
@@ -23,7 +24,6 @@
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
 #include <sys/sysinfo.h>
-#include <NodeStats.pb.h>
 
 #elif defined(__APPLE__) || defined(__MACH__)
 #else

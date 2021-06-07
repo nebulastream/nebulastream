@@ -17,7 +17,6 @@
 #ifndef NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 #define NES_INCLUDE_COORDINATORENGINE_COORDINATORENGINE_HPP_
 
-
 #include <memory>
 #include <mutex>
 enum NodeType : int;

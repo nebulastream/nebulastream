@@ -19,6 +19,7 @@
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -28,10 +29,9 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
-#include <thread>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
-#include <NodeEngine/NodeEngine.hpp>
+#include <thread>
 
 //GRPC Includes
 #include <Configurations/ConfigOption.hpp>
