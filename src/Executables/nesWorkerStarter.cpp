@@ -33,7 +33,8 @@
 #include <sys/stat.h>
 #include <thread>
 #include <CoordinatorRPCService.pb.h>
-
+#include <sys/types.h>
+#include <unistd.h>
 using namespace NES;
 using std::cout;
 using std::endl;
