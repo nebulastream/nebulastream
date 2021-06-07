@@ -56,12 +56,19 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     context c;
     optimize opt(c);
 
-    std::map<std::string, OperatorNodePtr> operatorNodes;
-    std::map<std::string, TopologyNodePtr> topologyNodes;
-    std::map<std::string, expr> placementVariables;
-    std::map<std::string, expr> distances;
+    std::map<std::string, OperatorNodePtr> operatorNodes;   // operatorID
+    std::map<std::string, TopologyNodePtr> topologyNodes;   // topologyID
+    std::map<std::string, expr> placementVariables;         // (operatorID,topologyID)
+    std::map<std::string, expr> distances;                  // operatorID
+    std::map<std::string, expr> utilizations;               // topologyID
 
-    expr cost = c.int_val(0);
+    for (auto& node : topologyPath){
+        TopologyNodePtr topologyNode = node->as<TopologyNode>();
+        std::string topologyID = std::to_string(topologyNode->getId());
+        utilizations.insert(std::make_pair(topologyID,c.int_val(0)));
+    }
+
+    expr cost_net = c.int_val(0);
     expr D_i_1 = c.int_val(0); // = D_i-1
     expr D_i = c.int_val(0);
     for (int i = 0; i < operatorPath.size(); i++) {
@@ -75,7 +82,7 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
             topologyNodes[topologyID] = topologyNode;
 
             // create placement variable and constraint to {0,1}
-            std::string variableID = operatorID + ";" + topologyID;
+            std::string variableID = operatorID + "," + topologyID;
             expr P_IJ = c.int_const(variableID.c_str());
             if (i == 0 && j == 0 || i == operatorPath.size() - 1 && j == topologyPath.size() - 1) {
                 opt.add(P_IJ == 1); // fix sources and sinks
@@ -89,6 +96,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
             int M = topologyPath.size() - j - 1;
             D_i = D_i + M * P_IJ;
             D_i_1 = D_i_1 - M * P_IJ;
+
+            std::any prop2 = operatorNode->getProperty("slots");
+            auto slots = std::any_cast<int>(prop2);
+            auto iterator = utilizations.find(topologyID);
+            iterator->second = iterator->second + slots * P_IJ;
         }
         opt.add(sum_i == 1);
         if (i > 0) {
@@ -98,12 +110,24 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
             std::string prevID = std::to_string(prevNode->getId());
             distances.insert(std::make_pair(prevID, D_i_1));
             opt.add(D_i_1 >= 0);
-            cost = cost + c.real_val(std::to_string(output).c_str()) * D_i_1;
+            cost_net = cost_net + c.real_val(std::to_string(output).c_str()) * D_i_1;
         }
         D_i_1 = D_i;
         D_i = c.int_val(0);
     }
-    opt.minimize(cost);
+
+    expr cost_ou = c.int_val(0);
+    for (auto const& [topologyID, utilization] : utilizations) {
+        std::string slackID = "S" + topologyID;
+        expr S_j = c.int_const(slackID.c_str());
+        TopologyNodePtr topologyNode = topologyNodes[topologyID]->as<TopologyNode>();
+        std::any prop = topologyNode->getNodeProperty("slots");
+        auto output = std::any_cast<int>(prop);
+        opt.add(S_j >= 0);
+        opt.add(utilization - S_j<= output);
+        cost_ou = cost_ou + S_j;
+    }
+    opt.minimize(1 * cost_net + 10000 * cost_ou);
     if (sat == opt.check()) {
         model m = opt.get_model();
         NES_INFO("ILPStrategy:\n" << m);
