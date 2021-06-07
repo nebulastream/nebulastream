@@ -28,6 +28,7 @@ bool Float::isEquals(DataTypePtr otherDataType) {
     }
     return false;
 }
+
 DataTypePtr Float::join(DataTypePtr otherDataType) {
     if (otherDataType->isFloat()) {
         auto otherFloat = as<Float>(otherDataType);
