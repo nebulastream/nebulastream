@@ -21,6 +21,7 @@
 #include <Monitoring/MetricValues/GroupedValues.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Monitoring/MonitoringManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Topology/Topology.hpp>
@@ -31,78 +32,80 @@
 
 namespace NES {
 
-MonitoringService::MonitoringService(WorkerRPCClientPtr workerClient,
-                                     TopologyPtr topology,
-                                     NodeEngine::BufferManagerPtr bufferManager)
-    : workerClient(workerClient), topology(topology), bufferManager(bufferManager) {
+MonitoringService::MonitoringService(TopologyPtr topology,
+                                     NodeEngine::BufferManagerPtr bufferManager,
+                                     MonitoringManagerPtr monitoringManager)
+    : topology(topology), bufferManager(bufferManager), monitoringManager(monitoringManager) {
     NES_DEBUG("MonitoringService: Initializing");
 }
 
 MonitoringService::~MonitoringService() {
     NES_DEBUG("MonitoringService: Shutting down");
-    workerClient.reset();
     topology.reset();
 }
 
-void MonitoringService::requestMonitoringData(const std::string& ipAddress,
-                                              int64_t grpcPort,
-                                              MonitoringPlanPtr plan,
-                                              NodeEngine::TupleBuffer& tupleBuffer) {
-    if (!plan) {
-        auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-        plan = MonitoringPlan::create(metrics);
+web::json::value MonitoringService::registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan) {
+    web::json::value metricsJson{};
+    auto root = topology->getRoot();
+
+    std::vector<uint64_t> nodeIds;
+    auto nodes = root->getAndFlattenAllChildren(false);
+    for (const auto& node : root->getAndFlattenAllChildren(false)) {
+        std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
+        nodeIds.emplace_back(tNode->getId());
     }
-    std::string destAddress = ipAddress + ":" + std::to_string(grpcPort);
-    NES_DEBUG("NesCoordinator: Requesting monitoring data from worker address= " + destAddress);
-    workerClient->requestMonitoringData(destAddress, plan, tupleBuffer);
+    auto success = monitoringManager->registerRemoteMonitoringPlans(nodeIds, monitoringPlan);
+    metricsJson["success"] = success;
+    return metricsJson;
 }
 
-web::json::value
-MonitoringService::requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan) {
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    requestMonitoringData(ipAddress, grpcPort, plan, tupleBuffer);
-    auto schema = plan->createSchema();
-    GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
-    tupleBuffer.release();
-    schema.reset();
-    return parsedValues.asJson();
-}
-
-web::json::value MonitoringService::requestMonitoringDataAsJson(int64_t nodeId, MonitoringPlanPtr plan) {
-    if (!plan) {
-        auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-        plan = MonitoringPlan::create(metrics);
-    }
-    NES_DEBUG("NesCoordinator: Requesting monitoring data from worker id= " + std::to_string(nodeId));
+web::json::value MonitoringService::requestMonitoringDataAsJson(uint64_t nodeId) {
+    NES_DEBUG("MonitoringService: Requesting monitoring data from worker id=" + std::to_string(nodeId));
     TopologyNodePtr node = topology->findNodeWithId(nodeId);
 
     if (node) {
-        auto nodeIp = node->getIpAddress();
-        auto nodeGrpcPort = node->getGrpcPort();
-        return requestMonitoringDataAsJson(nodeIp, nodeGrpcPort, plan);
+        auto tupleBuffer = bufferManager->getBufferBlocking();
+        auto success = monitoringManager->requestMonitoringData(nodeId, tupleBuffer);
+
+        if (success) {
+            NES_DEBUG("MonitoringService: Successfully received monitoring data from GRPC.");
+            auto plan = monitoringManager->getMonitoringPlan(nodeId);
+            auto schema = plan->createSchema();
+            GroupedValues parsedValues = plan->fromBuffer(schema, tupleBuffer);
+            auto jsonValues = parsedValues.asJson();
+            tupleBuffer.release();
+            return jsonValues;
+        } else {
+            std::string errorMsg = "MonitoringService: Error retrieving monitoring data from node " + nodeId;
+            NES_ERROR(errorMsg);
+            tupleBuffer.release();
+            throw std::runtime_error(errorMsg);
+        }
     } else {
         throw std::runtime_error("MonitoringService: Node with ID " + std::to_string(nodeId) + " does not exit.");
     }
 }
 
-web::json::value MonitoringService::requestMonitoringDataForAllNodesAsJson(MonitoringPlanPtr plan) {
+web::json::value MonitoringService::requestMonitoringDataFromAllNodesAsJson() {
     web::json::value metricsJson{};
     auto root = topology->getRoot();
-    metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId(), plan);
+    NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(root->getId()));
+    metricsJson[std::to_string(root->getId())] = requestMonitoringDataAsJson(root->getId());
+
+    NES_INFO("MonitoringService: Metrics from coordinator received \n" + metricsJson.serialize());
 
     for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
-        metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId(), plan);
+        NES_INFO("MonitoringService: Requesting metrics for node " + std::to_string(tNode->getId()));
+        metricsJson[std::to_string(tNode->getId())] = requestMonitoringDataAsJson(tNode->getId());
     }
+    NES_INFO("MonitoringService: Metrics from coordinator received \n" + metricsJson.serialize());
+
     return metricsJson;
 }
 
-utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port, MonitoringPlanPtr plan) {
-    if (!plan) {
-        auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-        plan = MonitoringPlan::create(metrics);
-    }
-    NES_DEBUG("NesCoordinator: Requesting monitoring data from worker id= " + std::to_string(nodeId));
+utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port) {
+    NES_DEBUG("MonitoringService: Requesting monitoring data from worker id= " + std::to_string(nodeId));
     TopologyNodePtr node = topology->findNodeWithId(nodeId);
 
     if (node) {
@@ -111,14 +114,14 @@ utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t
 
         utf8string metricsReturn;
         web::http::client::http_client clientQ1(address);
-        NES_INFO("MonitoringController: Executing metric request to prometheus node exporter on " + address);
+        NES_INFO("MonitoringService: Executing metric request to prometheus node exporter on " + address);
         clientQ1.request(web::http::methods::GET)
             .then([](const web::http::http_response& response) {
-                NES_INFO("MonitoringController: Extract metrics from prometheus node exporter response.");
+                NES_INFO("MonitoringService: Extract metrics from prometheus node exporter response.");
                 return response.extract_utf8string();
             })
             .then([&metricsReturn](const pplx::task<utf8string>& task) {
-                NES_INFO("MonitoringController: Set metrics return from node exporter responses.");
+                NES_INFO("MonitoringService: Set metrics return from node exporter responses.");
                 metricsReturn = task.get();
             })
             .wait();
@@ -128,16 +131,16 @@ utf8string MonitoringService::requestMonitoringDataViaPrometheusAsString(int64_t
     }
 }
 
-web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPrometheusAsJson(MonitoringPlanPtr plan) {
+web::json::value MonitoringService::requestMonitoringDataFromAllNodesViaPrometheusAsJson() {
     web::json::value metricsJson{};
     auto root = topology->getRoot();
     metricsJson[std::to_string(root->getId())] =
-        web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
+        web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100));
 
     for (const auto& node : root->getAndFlattenAllChildren(false)) {
         std::shared_ptr<TopologyNode> tNode = node->as<TopologyNode>();
         metricsJson[std::to_string(tNode->getId())] =
-            web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100, plan));
+            web::json::value::string(requestMonitoringDataViaPrometheusAsString(root->getId(), 9100));
     }
     return metricsJson;
 }

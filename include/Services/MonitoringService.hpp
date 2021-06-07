@@ -26,46 +26,26 @@ namespace NES {
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-class WorkerRPCClient;
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
-
 class Topology;
 typedef std::shared_ptr<Topology> TopologyPtr;
 
 class MonitoringPlan;
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 
+class MonitoringManager;
+typedef std::shared_ptr<MonitoringManager> MonitoringManagerPtr;
+
+
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
  */
 class MonitoringService {
   public:
-    explicit MonitoringService(WorkerRPCClientPtr workerClient, TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager);
-
+    explicit MonitoringService(TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager,
+                               MonitoringManagerPtr manager);
     ~MonitoringService();
 
-    /**
-     * @brief Requests from a remote worker node its monitoring data.
-     * @param ipAddress
-     * @param grpcPort
-     * @param the monitoring plan
-     * @param the buffer where the data will be written into
-     * @return the tuple buffer
-     */
-    void requestMonitoringData(const std::string& ipAddress,
-                               int64_t grpcPort,
-                               MonitoringPlanPtr plan,
-                               NodeEngine::TupleBuffer& tupleBuffer);
-
-    /**
-     * @brief Requests from a remote worker node its monitoring data.
-     * @param ipAddress
-     * @param grpcPort
-     * @param the monitoring plan
-     * @param the buffer where the data will be written into
-     * @return a tuple with the schema and tuplebuffer as json
-     */
-    web::json::value requestMonitoringDataAsJson(const std::string& ipAddress, int64_t grpcPort, MonitoringPlanPtr plan);
+    web::json::value registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan);
 
     /**
      * @brief Requests from a remote worker node its monitoring data.
@@ -74,7 +54,7 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringDataAsJson(int64_t nodeId, MonitoringPlanPtr plan);
+    web::json::value requestMonitoringDataAsJson(uint64_t nodeId);
 
     /**
      * @brief Requests from all remote worker nodes for monitoring data.
@@ -83,7 +63,7 @@ class MonitoringService {
      * @param the buffer where the data will be written into
      * @return a tuple with the schema and tuplebuffer
      */
-    web::json::value requestMonitoringDataForAllNodesAsJson(MonitoringPlanPtr plan);
+    web::json::value requestMonitoringDataFromAllNodesAsJson();
 
     /**
      * @brief Requests from a remote worker node its monitoring data via prometheus node exporter.
@@ -92,7 +72,7 @@ class MonitoringService {
      * @param the monitoring plan
      * @return the metrics as plain string
      */
-    utf8string requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port, MonitoringPlanPtr plan);
+    utf8string requestMonitoringDataViaPrometheusAsString(int64_t nodeId, int16_t port);
 
     /**
      * @brief Requests from a remote worker node its monitoring data via prometheus node exporter. Warning: It assumes the default port 9100, otherwise
@@ -100,12 +80,12 @@ class MonitoringService {
      * @param the monitoring plan
      * @return the metrics as json
      */
-    web::json::value requestMonitoringDataFromAllNodesViaPrometheusAsJson(MonitoringPlanPtr plan);
+    web::json::value requestMonitoringDataFromAllNodesViaPrometheusAsJson();
 
   private:
-    WorkerRPCClientPtr workerClient;
     TopologyPtr topology;
     NodeEngine::BufferManagerPtr bufferManager;
+    MonitoringManagerPtr monitoringManager;
 };
 
 typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;

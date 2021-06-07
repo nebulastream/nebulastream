@@ -14,25 +14,32 @@
     limitations under the License.
 */
 
+#include <API/Schema.hpp>
 #include <Monitoring/MetricValues/MetricValueType.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <Monitoring/MonitoringAgent.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-MonitoringAgent::MonitoringAgent() : catalog(MetricCatalog::NesMetrics()) {
+MonitoringAgent::MonitoringAgent()
+    : catalog(MetricCatalog::NesMetrics()), monitoringPlan(MonitoringPlan::DefaultPlan()),
+      schema(monitoringPlan->createSchema()) {
     NES_DEBUG("MonitoringAgent: Init with default monitoring plan");
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    monitoringPlan = MonitoringPlan::create(metrics);
-    schema = monitoringPlan->createSchema();
 }
 
 MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog)
     : monitoringPlan(monitoringPlan), catalog(catalog), schema(monitoringPlan->createSchema()) {
     NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString());
+}
+
+MonitoringAgentPtr MonitoringAgent::create() { return std::make_shared<MonitoringAgent>(); }
+
+MonitoringAgentPtr MonitoringAgent::create(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog) {
+    return std::make_shared<MonitoringAgent>(monitoringPlan, catalog);
 }
 
 SchemaPtr MonitoringAgent::registerMonitoringPlan(MonitoringPlanPtr monitoringPlan) {
@@ -41,14 +48,12 @@ SchemaPtr MonitoringAgent::registerMonitoringPlan(MonitoringPlanPtr monitoringPl
     return schema;
 }
 
-SchemaPtr MonitoringAgent::getMetrics(TupleBuffer& tupleBuffer) {
+bool MonitoringAgent::getMetrics(NodeEngine::TupleBuffer& tupleBuffer) {
     MetricGroupPtr metricGroup = monitoringPlan->createMetricGroup(catalog);
     metricGroup->getSample(tupleBuffer);
-    return schema;
+    return true;
 }
 
-SchemaPtr MonitoringAgent::getSchema() {
-    return schema;
-}
+SchemaPtr MonitoringAgent::getSchema() { return schema; }
 
 }// namespace NES

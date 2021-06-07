@@ -27,10 +27,13 @@ class MonitoringPlan;
 class TupleBuffer;
 class MetricCatalog;
 class Schema;
+class MonitoringAgent;
 
 typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 typedef std::shared_ptr<Schema> SchemaPtr;
+typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
+
 
 /**
  * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
@@ -39,6 +42,8 @@ class MonitoringAgent {
   public:
     MonitoringAgent();
     MonitoringAgent(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog);
+    static MonitoringAgentPtr create();
+    static MonitoringAgentPtr create(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog);
 
     /**
      * @brief Register a monitoring plan at the local worker. The plan is indicating which metrics to collect.
@@ -53,7 +58,7 @@ class MonitoringAgent {
      * @param tupleBuffer
      * @return the schema of the monitoring plan
      */
-    SchemaPtr getMetrics(NodeEngine::TupleBuffer& tupleBuffer);
+    bool getMetrics(NodeEngine::TupleBuffer& tupleBuffer);
 
     /**
      * @brief Return the schema based on the monitoring plan. If no schema is provided then the default schema is return, which

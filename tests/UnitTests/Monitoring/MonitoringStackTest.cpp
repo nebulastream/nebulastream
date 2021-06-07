@@ -82,7 +82,7 @@ class MonitoringStackTest : public testing::Test {
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
 };
 
-TEST_F(MonitoringStackTest, DISABLED_testCPUStats) {
+TEST_F(MonitoringStackTest, testCPUStats) {
     auto cpuStats = MetricUtils::CPUStats();
     CpuMetrics cpuMetrics = cpuStats.measure();
     EXPECT_TRUE(cpuMetrics.getNumCores() > 0);
@@ -95,7 +95,7 @@ TEST_F(MonitoringStackTest, DISABLED_testCPUStats) {
     NES_INFO("MonitoringStackTest: Idle " << cpuIdle.measure());
 }
 
-TEST_F(MonitoringStackTest, DISABLED_testMemoryStats) {
+TEST_F(MonitoringStackTest, testMemoryStats) {
     auto memStats = MetricUtils::MemoryStats();
     auto memMetrics = memStats.measure();
     EXPECT_TRUE(memMetrics.FREE_RAM > 0);
@@ -103,13 +103,13 @@ TEST_F(MonitoringStackTest, DISABLED_testMemoryStats) {
     NES_INFO("MonitoringStackTest: Total ram " << memMetrics.TOTAL_RAM / (1024 * 1024) << "gb");
 }
 
-TEST_F(MonitoringStackTest, DISABLED_testDiskStats) {
+TEST_F(MonitoringStackTest, testDiskStats) {
     auto diskStats = MetricUtils::DiskStats();
     auto diskMetrics = diskStats.measure();
     EXPECT_TRUE(diskMetrics.fBavail > 0);
 }
 
-TEST_F(MonitoringStackTest, DISABLED_testNetworkStats) {
+TEST_F(MonitoringStackTest, testNetworkStats) {
     auto networkStats = MetricUtils::NetworkStats();
     auto networkMetrics = networkStats.measure();
     EXPECT_TRUE(!networkMetrics.getInterfaceNames().empty());
@@ -119,7 +119,7 @@ TEST_F(MonitoringStackTest, DISABLED_testNetworkStats) {
     }
 }
 
-TEST_F(MonitoringStackTest, DISABLED_testMetric) {
+TEST_F(MonitoringStackTest, testMetric) {
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
     Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
     Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
@@ -164,7 +164,7 @@ TEST_F(MonitoringStackTest, DISABLED_testMetric) {
     EXPECT_TRUE(memStats.measure().TOTAL_RAM == memMetrics.measure().TOTAL_RAM);
 }
 
-TEST_F(MonitoringStackTest, DISABLED_testMetricGroup) {
+TEST_F(MonitoringStackTest, testMetricGroup) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
@@ -211,7 +211,7 @@ TEST_F(MonitoringStackTest, DISABLED_testMetricGroup) {
 /**
  * @brief Tests that the schema from the sample method and the metric group are the same, so that no inconsistencies occur
  */
-TEST_F(MonitoringStackTest, DISABLED_testIndependentSamplingAndGrouping) {
+TEST_F(MonitoringStackTest, testIndependentSamplingAndGrouping) {
     MetricGroupPtr metricGroup = MetricGroup::create();
 
     Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
@@ -242,7 +242,7 @@ TEST_F(MonitoringStackTest, DISABLED_testIndependentSamplingAndGrouping) {
     NES_INFO(metricGroup->createSchema()->toString());
 }
 
-TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromGrpcClient) {
+TEST_F(MonitoringStackTest, requestMonitoringDataFromGrpcClient) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
@@ -256,7 +256,7 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromGrpcClient) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
@@ -268,13 +268,14 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromGrpcClient) {
     // requesting the monitoring data
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
     auto plan = MonitoringPlan::create(metrics);
+    auto schema = plan->createSchema();
 
     std::string destAddress = "127.0.0.1:" + std::to_string(port + 10);
     auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto schema = crd->workerRpcClient->requestMonitoringData(destAddress, plan, tupleBuffer);
+    auto success = crd->workerRpcClient->requestMonitoringData(destAddress, tupleBuffer, schema->getSchemaSizeInBytes());
 
     NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
-    EXPECT_TRUE(schema->getSize() > 1);
+    EXPECT_TRUE(success);
     EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
     NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
 
@@ -287,7 +288,7 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromGrpcClient) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsBuffer) {
+TEST_F(MonitoringStackTest, requestMonitoringDataFromServiceAsJson) {
     crdConf->resetCoordinatorOptions();
     wrkConf->resetWorkerOptions();
 
@@ -301,7 +302,7 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsBuffer) {
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
     bool retStart1 = wrk1->start(false, false);
     EXPECT_TRUE(retStart1);
     NES_INFO("MonitoringStackTest: Worker1 started successfully");
@@ -316,66 +317,16 @@ TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsBuffer) {
     auto schema = plan->createSchema();
     EXPECT_TRUE(schema->getSize() > 1);
 
-    auto iterations = 50;
+    auto nodeNumber = 2;
+    auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
+    NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
-    for (int i = 0; i <= iterations; i++) {
-        auto tupleBuffer = bufferManager->getBufferBlocking();
+    EXPECT_EQ(jsons.size(), nodeNumber);
+    for (int i = 1; i <= nodeNumber; i++) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
                  + std::to_string(port + 10));
-        crd->getMonitoringService()->requestMonitoringData("127.0.0.1", port + 10, plan, tupleBuffer);
+        auto json = jsons[std::to_string(i)];
 
-        NES_INFO(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
-
-        EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
-        tupleBuffer.release();
-    }
-
-    NES_INFO("MonitoringStackTest: Stopping worker");
-    bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("MonitoringStackTest: stopping coordinator");
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(MonitoringStackTest, DISABLED_requestMonitoringDataFromServiceAsJson) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-
-    NES_INFO("MonitoringStackTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(false);
-    EXPECT_NE(port, 0);
-    NES_INFO("MonitoringStackTest: Coordinator started successfully");
-
-    NES_INFO("MonitoringStackTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
-    bool retStart1 = wrk1->start(false, false);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("MonitoringStackTest: Worker1 started successfully");
-
-    bool retConWrk1 = wrk1->connect();
-    EXPECT_TRUE(retConWrk1);
-    NES_INFO("MonitoringStackTest: Worker 1 connected ");
-
-    // requesting the monitoring data
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-    auto schema = plan->createSchema();
-    EXPECT_TRUE(schema->getSize() > 1);
-
-    auto iterations = 1;
-
-    for (int i = 0; i <= iterations; i++) {
-        NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
-                 + std::to_string(port + 10));
-        auto json = crd->getMonitoringService()->requestMonitoringDataAsJson("127.0.0.1", port + 10, plan);
-
-        NES_INFO(json.to_string());
         EXPECT_TRUE(json.has_field("disk"));
         EXPECT_EQ(json["disk"].size(), 5);
 

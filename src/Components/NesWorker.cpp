@@ -17,6 +17,10 @@
 #include <Components/NesWorker.hpp>
 #include <Configurations/ConfigOption.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
+#include <Monitoring/MetricValues/MetricValueType.hpp>
+#include <Monitoring/Metrics/MonitoringPlan.hpp>
+#include <Monitoring/MonitoringAgent.hpp>
+#include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <CoordinatorRPCService.pb.h>
 #include <GRPC/CallData.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
@@ -100,7 +104,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
 }
 
 void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom) {
-    WorkerRPCServer service(nodeEngine);
+    WorkerRPCServer service(nodeEngine, monitoringAgent);
     ServerBuilder builder;
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
@@ -138,6 +142,8 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                                                     numberOfBuffersInSourceLocalBufferPool,
                                                     numberOfBuffersPerPipeline);
         NES_DEBUG("NesWorker: Node engine started successfully");
+        monitoringAgent = MonitoringAgent::create();
+        NES_DEBUG("NesWorker: MonitoringAgent configured with default values");
     } catch (std::exception& err) {
         NES_ERROR("NesWorker: node engine could not be started");
         throw Exception("NesWorker error while starting node engine");
