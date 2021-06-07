@@ -94,11 +94,11 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
         if (i > 0) {
             OperatorNodePtr prevNode = operatorPath[i - 1]->as<OperatorNode>();
             std::any prop = prevNode->getProperty("output");
-            double output = std::any_cast<double>(prop);
+            auto output = std::any_cast<double>(prop);
             std::string prevID = std::to_string(prevNode->getId());
             distances.insert(std::make_pair(prevID, D_i_1));
             opt.add(D_i_1 >= 0);
-            cost = cost + output * D_i_1;
+            cost = cost + c.real_val(std::to_string(output).c_str()) * D_i_1;
         }
         D_i_1 = D_i;
         D_i = c.int_val(0);
