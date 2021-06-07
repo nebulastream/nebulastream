@@ -44,7 +44,7 @@ jobs:
       - name: NES Workspace cleanup
         if: ${{ always() }}
         run: |
-          rm -f $GITHUB_WORKSPACE
+          rm -rf $GITHUB_WORKSPACE
 
 
   benchmark-triggered-job:
@@ -70,4 +70,4 @@ jobs:
       - name: NES Workspace cleanup
         if: ${{ always() }}
         run: |
-          rm -f $GITHUB_WORKSPACE
+          rm -rf $GITHUB_WORKSPACE
