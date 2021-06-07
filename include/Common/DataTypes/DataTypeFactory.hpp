@@ -251,6 +251,13 @@ class DataTypeFactory {
      */
     static DataTypePtr copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound);
     static DataTypePtr copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound);
+    static DataTypePtr copyTypeAndDecreaseUpperBound(DataTypePtr stamp, double maxUpperBound);
+    static DataTypePtr copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound);
+    // functions to increase lower and decrease upper bound at the same time:
+    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound);
+    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound);
+    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, double maxUpperBound);
+    static DataTypePtr copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, int64_t maxUpperBound);
 };
 
 }// namespace NES
