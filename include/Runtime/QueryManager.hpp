@@ -172,6 +172,15 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
                                         Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
 
     /**
+     * Trigger stop of QEP via reconfiguration process
+     * @param qepToStop: QEP to stop
+     * @param queryReconfigurationMessage: Messages received from network
+     * @return if true stop of query for source via reconfiguration is successful
+     */
+    bool triggerQepStopReconfiguration(Execution::ExecutableQueryPlanPtr qepToStop,
+                                       Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage);
+
+    /**
      * @brief method to start a query
      * @param qep of the query to start
      * @param graceful stop the query gracefully or not
@@ -269,8 +278,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     bool startQueryForSources(Execution::ExecutableQueryPlanPtr& qep,
                               StateManagerPtr stateManager,
                               const std::vector<DataSourcePtr>& sources);
-    void propagateReconfigurationViaQepSinks(const Execution::ExecutableQueryPlanPtr& qep,
-                                             const Network::Messages::QueryReconfigurationMessage& queryReconfigurationMessage);
 
     ExecutionResult terminateLoop(WorkerContext&);
 
@@ -285,7 +292,6 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     // TODO remove these unnecessary structures
     std::map<OperatorId, Execution::ExecutableQueryPlanPtr> sourceIdToExecutableQueryPlanMap;
     std::map<OperatorId, std::vector<Execution::SuccessorExecutablePipeline>> sourceIdToSuccessorMap;
-    std::map<OperatorId, std::vector<OperatorId>> queryMapToOperatorId;
 
     std::unordered_map<QuerySubPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
