@@ -31,6 +31,7 @@
 #include <thread>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
+#include <NodeEngine/NodeEngine.hpp>
 
 //GRPC Includes
 #include <Configurations/ConfigOption.hpp>
