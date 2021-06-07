@@ -103,7 +103,6 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                                 }
 
                                 try {
-                                    //TODO: Add support of monitoring plan in the future
                                     auto metricPlain = monitoringService->requestMonitoringDataViaPrometheusAsString(nodeId, promPort);
                                     successMessageImpl(message, metricPlain);
                                 } catch (std::runtime_error& ex) {
@@ -117,7 +116,6 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                             return;
                         } else {
                             //otherwise get metrics from all nodes via prometheus
-                            //TODO: Add support of monitoring plan in the future
                             NES_DEBUG(
                                 "MonitoringController: handlePost -metrics: Querying all nodes via prometheus node exporter");
                             auto metricsJson = monitoringService->requestMonitoringDataFromAllNodesViaPrometheusAsJson();
