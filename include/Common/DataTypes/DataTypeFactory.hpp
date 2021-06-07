@@ -243,6 +243,14 @@ class DataTypeFactory {
      * @return DataTypePtr
      */
     static DataTypePtr createType(BasicType type);
+
+    /**
+     * @brief If the given Bound is tighter than the one on the given stamp, create a new stamp with tighter bounds. If not, return original stamp.
+     * @param stamp, [minLowerBound,] [maxUpperBound]
+     * @return DataTypePtr
+     */
+    static DataTypePtr copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound);
+    static DataTypePtr copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound);
 };
 
 }// namespace NES

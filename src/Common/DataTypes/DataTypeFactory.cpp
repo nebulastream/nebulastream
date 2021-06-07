@@ -25,6 +25,7 @@
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <Exceptions/InvalidArgumentException.hpp>
+#include <Util/Logger.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -153,6 +154,41 @@ DataTypePtr DataTypeFactory::createType(BasicType type) {
         default: return nullptr;
     }
     return DataTypePtr();
+}
+
+DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound) {
+    if (stamp->isFloat()) {
+        auto floatStamp = DataType::as<Float>(stamp);
+        if (floatStamp->lowerBound < minLowerBound) { return createFloat(floatStamp->getBits(), minLowerBound, floatStamp->upperBound); }
+    } else if (stamp->isInteger()) {
+        auto intStamp = DataType::as<Integer>(stamp);
+        if (intStamp->lowerBound < minLowerBound) {
+            NES_WARNING("DataTypeFactory: A Float is passed as the minimum lower bound of an Integer data type. Will be executed with the Floor of the Float argument instead.");
+            return createInteger(intStamp->getBits(), (int64_t) minLowerBound, intStamp->upperBound);
+        }
+    } else {
+        // non-numeric data types do not have a lower bound
+        NES_WARNING("DataTypeFactory: Can not increase a lower bound on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+    }
+    return stamp; // increase does not apply -> return shared pointer given as argument
+}
+
+DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound) {
+    if (stamp->isInteger()) {
+        auto intStamp = DataType::as<Integer>(stamp);
+        if (intStamp->lowerBound < minLowerBound) { return createInteger(intStamp->getBits(), minLowerBound, intStamp->upperBound); }
+    } else if (stamp->isFloat()) {
+        auto floatStamp = DataType::as<Float>(stamp);
+        if (floatStamp->lowerBound < minLowerBound) {
+            NES_INFO("DataTypeFactory: An Integer is passed as the minimum lower bound of a Float data type. Progresses with standard casting to Double.");
+            return createFloat(floatStamp->getBits(), (double) minLowerBound, floatStamp->upperBound);
+        }
+    } else {
+        // non-numeric data types do not have a lower bound
+        NES_WARNING("DataTypeFactory: Can not increase a lower bound on a non-numeric data type. Returning Original stamp."); // Todo: what is the appropriate handling here? Warning or even throw an error?
+    }
+    NES_INFO("DataTypeFactory: Increase of lower bound does not apply. Returning original stamp.");
+    return stamp; // increase does not apply -> return shared pointer given as argument
 }
 
 }// namespace NES
