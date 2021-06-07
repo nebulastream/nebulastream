@@ -207,6 +207,19 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             }
             break;
         }
+        case StopViaReconfiguration: {
+            NES_DEBUG("Executing StopViaReconfiguration on qep " << queryId << " " << querySubPlanId);
+            if (numOfProducers.fetch_sub(1) == 1) {
+                NES_DEBUG("Executing StopViaReconfiguration and going to stop for qep " << queryId << " " << querySubPlanId);
+                for (auto& sink : sinks) {
+                    sink->postReconfigurationCallback(task);
+                }
+                stop();
+            } else {
+                return;// we must not invoke end of stream on qep's sinks if the qep was not stopped
+            }
+            break;
+        }
         case SoftEndOfStream: {
             NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan "
                                                                                        << querySubPlanId);

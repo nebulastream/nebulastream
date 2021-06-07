@@ -461,6 +461,7 @@ void NodeEngine::onEndOfStream(Network::Messages::EndOfStreamMessage msg) {
 
 void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationMessage queryReconfigurationMessage) {
     std::unique_lock lock(engineMutex);
+    auto partition = queryReconfigurationMessage.getChannelId().getNesPartition();
     for (std::pair<QuerySubPlanId, QuerySubPlanId> element : queryReconfigurationMessage.getQuerySubPlansIdToReplace()) {
         auto foundQEPNeedingReplacement = deployedQEPs.find(element.first);
         if (foundQEPNeedingReplacement != deployedQEPs.end()) {
@@ -475,7 +476,7 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
             auto qep = reconfigurationQEPs[querySubPlanId];
             if (deployedQEPs.find(querySubPlanId) == deployedQEPs.end()) {
                 if (!registerQueryInNodeEngine(qep, true)) {
-                    NES_DEBUG("NodeEngine: register of QEP " << querySubPlanId << " added");
+                    NES_DEBUG("NodeEngine::onQueryReconfiguration: register of QEP " << querySubPlanId << " added");
                 }
             }
             queryManager->triggerQepStartReconfiguration(reconfigurationQEPs[querySubPlanId],
@@ -485,8 +486,14 @@ void NodeEngine::onQueryReconfiguration(Network::Messages::QueryReconfigurationM
     }
     for (auto querySubPlanId : queryReconfigurationMessage.getQuerySubPlansToStop()) {
         auto foundQEPToStop = deployedQEPs.find(querySubPlanId);
-        if (foundQEPToStop != reconfigurationQEPs.end()) {
-            // stop qep
+        if (foundQEPToStop != deployedQEPs.end()) {
+            if (partitionManager->isRegistered(partition)) {
+                partitionManager->unregisterSubpartition(partition);
+                queryManager->triggerQepStopReconfiguration(deployedQEPs[querySubPlanId], queryReconfigurationMessage);
+            } else {
+                NES_DEBUG("NodeEngine::onQueryReconfiguration: unregister of source partition "
+                          << partition << " failed as it's not registered.");
+            }
         }
     }
 }
