@@ -7,6 +7,7 @@
 
 #include <Nodes/Node.hpp>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <z3++.h>
 
 namespace NES {
 
@@ -38,6 +39,15 @@ class ILPStrategy : public BasePlacementStrategy {
 
     void placeOperators();
     std::vector<NodePtr> findPathToRoot(NodePtr sourceNode);
+    void addPath(z3::context& c,
+                 z3::optimize& opt,
+                 std::vector<NodePtr>& operatorPath,
+                 std::vector<NodePtr>& topologyPath,
+                 std::map<std::string, OperatorNodePtr>& operatorNodes,
+                 std::map<std::string, TopologyNodePtr>& topologyNodes,
+                 std::map<std::string, z3::expr>& placementVariables,
+                 std::map<std::string, z3::expr>& distances,
+                 std::map<std::string, z3::expr>& utilizations);
 };
 }// namespace NES::Optimizer
 
