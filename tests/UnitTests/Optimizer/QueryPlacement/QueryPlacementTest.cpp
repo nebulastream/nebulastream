@@ -1063,12 +1063,15 @@ class ILPPlacementTest : public testing::Test {
         topologyForILP = Topology::create();
 
         TopologyNodePtr rootNode = TopologyNode::create(1, "localhost", 123, 124, 4);
+        rootNode->addNodeProperty("slots", 1);
         topologyForILP->setAsRoot(rootNode);
 
         TopologyNodePtr middleNode = TopologyNode::create(2, "localhost", 123, 124, 4);
+        middleNode->addNodeProperty("slots", 10);
         topologyForILP->addNewPhysicalNodeAsChild(rootNode, middleNode);
 
         TopologyNodePtr sourceNode = TopologyNode::create(3, "localhost", 123, 124, 4);
+        sourceNode->addNodeProperty("slots", 10);
         topologyForILP->addNewPhysicalNodeAsChild(middleNode, sourceNode);
 
         std::string schema = "Schema::create()->addField(\"id\", BasicType::UINT32)"
@@ -1196,23 +1199,27 @@ TEST_F(ILPPlacementTest, testPlacingQueryWithILPStrategy) {
     std::map<std::string, std::any> srcProp;
     double srcout = 1000.0;
     srcProp.insert(std::make_pair("output", srcout));
+    srcProp.insert(std::make_pair("slots", 1));
 
     // adding property of the filter
     std::map<std::string, std::any> filterProp;
     double filterdmf = 0.5;
     double filterout = srcout * filterdmf;
     filterProp.insert(std::make_pair("output", filterout));
+    filterProp.insert(std::make_pair("slots", 1));
 
     // adding property of the map
     std::map<std::string, std::any> mapProp;
     double mapdmf = 4.0;
     double mapout = filterout * mapdmf;
     mapProp.insert(std::make_pair("output", mapout));
+    mapProp.insert(std::make_pair("slots", 1));
 
     // adding property of the sink
     std::map<std::string, std::any> sinkProp;
     double snkout = mapout;
     sinkProp.insert(std::make_pair("output", snkout));
+    sinkProp.insert(std::make_pair("slots", 1));
 
     // add properties in reverse order; Why?
     properties.push_back(sinkProp);
