@@ -66,9 +66,11 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
 
     /**
     * @brief Starts thread to check if the window should be triggered.
+    * @param stateManager pointer to the current state manager
+    * @param localStateVariableId local id of a state on an engine node
     * @return boolean if the window thread is started
     */
-    virtual bool start(NodeEngine::StateManagerPtr stateManager, uint32_t count) = 0;
+    virtual bool start(NodeEngine::StateManagerPtr stateManager, uint32_t localStateVariableId) = 0;
 
     /**
      * @brief Stops the window thread.

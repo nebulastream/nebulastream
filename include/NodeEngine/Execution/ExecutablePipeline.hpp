@@ -90,7 +90,7 @@ class ExecutablePipeline : public Reconfigurable {
     bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
 
     /**
-     * @brief Starts a pipeline stage and passes statemanager further to the operator handler
+     * @brief Starts a pipeline stage and passes statemanager and local state counter further to the operator handler
      * @param stateManager pointer to the current state manager
      * @return Success if pipeline stage started 
      */
