@@ -17,7 +17,6 @@
 #ifndef NES_SRC_GRPC_CALLDATA_HPP_
 #define NES_SRC_GRPC_CALLDATA_HPP_
 
-//#include <GRPC/WorkerRPCServer.hpp>
 namespace WorkerRPCServer
 {
     class Service;

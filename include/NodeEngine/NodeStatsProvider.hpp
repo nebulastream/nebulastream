@@ -19,7 +19,7 @@
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
-class NodeStats;
+
 
 namespace NES::NodeEngine {
 

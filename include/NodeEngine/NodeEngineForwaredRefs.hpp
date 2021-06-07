@@ -20,7 +20,7 @@
 #include <variant>
 
 namespace NES {
-
+class NodeStats;
 enum PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
 class PhysicalType;

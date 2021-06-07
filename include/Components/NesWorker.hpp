@@ -19,10 +19,9 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Configurations/ConfigOptions/WorkerConfig.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
-
+#include <Plans/Query/QueryId.hpp>
 namespace WorkerRPCServer
 {
 class Service;
@@ -35,6 +34,7 @@ namespace grpc{
     class ServerCompletionQueue;
 };
 
+class NodeEngine;
 namespace NES {
 enum NesNodeType : int {
     Worker,

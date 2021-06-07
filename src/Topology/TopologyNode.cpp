@@ -15,7 +15,8 @@
 */
 
 #include <Topology/TopologyNode.hpp>
-#include <NodeStats.pb.h>
+//#include <NodeStats.pb.h>
+#include <algorithm>
 
 namespace NES {
 

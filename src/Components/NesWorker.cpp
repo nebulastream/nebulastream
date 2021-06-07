@@ -25,6 +25,7 @@
 #include <GRPC/WorkerRPCServer.hpp>
 #include <Components/NesWorker.hpp>
 #include <GRPC/CallData.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
 using namespace std;
 volatile sig_atomic_t flag = 0;
