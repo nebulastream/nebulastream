@@ -57,7 +57,8 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
     Reconfigurable::postReconfigurationCallback(message);
     switch (message.getType()) {
         case Runtime::SoftEndOfStream:
-        case Runtime::HardEndOfStream: {
+        case Runtime::HardEndOfStream:
+        case NodeEngine::StopViaReconfiguration: {
             shutdown();
             break;
         }
