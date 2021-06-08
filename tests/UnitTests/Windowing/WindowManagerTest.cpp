@@ -297,6 +297,180 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     //    ASSERT_EQ(tuples[3], 1);
 }
 
+//TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithCharArrayKey) {
+//    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
+//    auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
+//
+//    auto aggregation = Sum(Attribute("id", UINT64));
+//    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+//    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+//
+//    auto windowDef =
+//        Windowing::LogicalWindowDefinition::create(Attribute("key"),
+//                                                   aggregation,
+//                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+//                                                   DistributionCharacteristic::createCompleteWindowType(),
+//                                                   0,
+//                                                   trigger,
+//                                                   triggerAction,
+//                                                   0);
+//    windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
+//    auto windowInputSchema = Schema::create();
+//    auto windowOutputSchema = Schema::create()
+//        ->addField(createField("start", UINT64))
+//        ->addField(createField("end", UINT64))
+//        ->addField("key", UINT64)
+//        ->addField("value", UINT64);
+//
+//    auto windowHandler =
+//        createWindowHandler<std::array<char, 32>, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
+//            windowDef,
+//            windowOutputSchema,
+//            0);
+//    windowHandler->start(nodeEngine->getStateManager());
+//    auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
+//    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
+//                                                                    nodeEngine->getBufferManager(),
+//                                                                    windowOperatorHandler);
+//
+//    windowHandler->setup(context);
+//
+//    auto windowState = windowHandler->getTypedWindowState();
+//    auto keyRef = windowState->get("Key One");
+//    keyRef.valueOrDefault(0);
+//    auto store = keyRef.value();
+//
+//    uint64_t ts = 7;
+//    windowHandler->updateMaxTs(ts, 0);
+//    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
+//    auto sliceIndex = store->getSliceIndexByTs(ts);
+//    auto& aggregates = store->getPartialAggregates();
+//    aggregates[sliceIndex]++;
+//    windowHandler->setLastWatermark(7);
+//    store->incrementRecordCnt(sliceIndex);
+//    //    store->setLastWatermark(7);
+//
+//    ts = 14;
+//    windowHandler->updateMaxTs(ts, 0);
+//    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
+//    sliceIndex = store->getSliceIndexByTs(ts);
+//    aggregates = store->getPartialAggregates();
+//    aggregates[sliceIndex]++;
+//    std::cout << aggregates[sliceIndex] << std::endl;
+//
+//    ASSERT_EQ(aggregates[sliceIndex], 1);
+//    auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+//
+//    auto windowAction =
+//        std::dynamic_pointer_cast<Windowing::ExecutableCompleteAggregationTriggerAction<std::array<char, 32>, uint64_t, uint64_t, uint64_t>>(
+//            windowHandler->getWindowAction());
+//    windowAction->aggregateWindows("Key One", store, windowDef, buf, ts, 7);
+//    windowAction->aggregateWindows("key One", store, windowDef, buf, ts, ts);
+//
+//    uint64_t tupleCnt = buf.getNumberOfTuples();
+//
+//    ASSERT_NE(buf.getBuffer(), nullptr);
+//    ASSERT_EQ(tupleCnt, 1);
+//
+//    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+//    std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
+//              << std::endl;
+//    ASSERT_EQ(tuples[0], 0);
+//    ASSERT_EQ(tuples[1], 10);
+//    ASSERT_EQ(tuples[2], 10);
+//    ASSERT_EQ(tuples[3], 1);
+//}
+
+TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithStringKey) {
+    PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
+    auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
+
+    auto aggregation = Sum(Attribute("id", UINT64));
+    WindowTriggerPolicyPtr trigger = OnTimeTriggerPolicyDescription::create(1000);
+    auto triggerAction = Windowing::CompleteAggregationTriggerActionDescriptor::create();
+
+    auto windowDef =
+        Windowing::LogicalWindowDefinition::create(Attribute("key"),
+                                                   aggregation,
+                                                   TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)),
+                                                   DistributionCharacteristic::createCompleteWindowType(),
+                                                   0,
+                                                   trigger,
+                                                   triggerAction,
+                                                   0);
+    windowDef->setDistributionCharacteristic(DistributionCharacteristic::createCompleteWindowType());
+    auto windowInputSchema = Schema::create();
+    auto windowOutputSchema = Schema::create()
+        ->addField(createField("start", UINT64))
+        ->addField(createField("end", UINT64))
+        ->addField("key", UINT64)
+        ->addField("value", UINT64);
+
+    auto windowHandler =
+        createWindowHandler<std::string, uint64_t, uint64_t, uint64_t, Windowing::ExecutableSumAggregation<uint64_t>>(
+            windowDef,
+            windowOutputSchema,
+            0);
+    windowHandler->start(nodeEngine->getStateManager());
+    auto windowOperatorHandler = WindowOperatorHandler::create(windowDef, windowOutputSchema, windowHandler);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(nodeEngine->getQueryManager(),
+                                                                    nodeEngine->getBufferManager(),
+                                                                    windowOperatorHandler);
+
+    windowHandler->setup(context);
+
+    auto windowState = windowHandler->getTypedWindowState();
+    auto keyRef = windowState->get("Key One");
+    keyRef.valueOrDefault(0);
+    auto store = keyRef.value();
+
+    uint64_t ts = 7;
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
+    auto sliceIndex = store->getSliceIndexByTs(ts);
+    auto& aggregates = store->getPartialAggregates();
+    aggregates[sliceIndex]++;
+    windowHandler->setLastWatermark(7);
+    store->incrementRecordCnt(sliceIndex);
+    //    store->setLastWatermark(7);
+
+    ts = 14;
+    windowHandler->updateMaxTs(ts, 0);
+    windowHandler->getWindowManager()->sliceStream(ts, store, 0);
+    sliceIndex = store->getSliceIndexByTs(ts);
+    aggregates = store->getPartialAggregates();
+    aggregates[sliceIndex]++;
+    std::cout << aggregates[sliceIndex] << std::endl;
+
+    ASSERT_EQ(aggregates[sliceIndex], 1);
+    auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
+
+    auto windowAction =
+        std::dynamic_pointer_cast<Windowing::ExecutableCompleteAggregationTriggerAction<std::string, uint64_t, uint64_t, uint64_t>>(
+            windowHandler->getWindowAction());
+    windowAction->aggregateWindows("Key One", store, windowDef, buf, ts, 7);
+    windowAction->aggregateWindows("key One", store, windowDef, buf, ts, ts);
+
+    uint64_t tupleCnt = buf.getNumberOfTuples();
+
+    ASSERT_NE(buf.getBuffer(), nullptr);
+    ASSERT_EQ(tupleCnt, 1);
+
+    struct OutputTuples {
+        uint64_t start;
+        uint64_t end;
+        std::string key;
+        uint32_t value;
+    };
+
+    OutputTuples* tuples = (OutputTuples*) buf.getBuffer();
+    NES_DEBUG("WindowManagerTest::TestWithstringKey: start=" << tuples[0].start << " end=" << tuples[0].end << " key='" << tuples[0].key << "' value=" << tuples[0].value);
+    ASSERT_EQ(tuples[0].start, 0);
+    ASSERT_EQ(tuples[0].end, 10);
+    ASSERT_EQ(tuples[0].key, "Key One");
+    ASSERT_EQ(tuples[0].value, 1);
+}
+
 TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
     auto nodeEngine = NodeEngine::create("127.0.0.1", 31341, conf);
