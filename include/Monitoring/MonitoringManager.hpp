@@ -60,6 +60,12 @@ class MonitoringManager {
      */
     bool requestMonitoringData(uint64_t nodeId, NodeEngine::TupleBuffer& tupleBuffer);
 
+    /**
+     * @brief Get the monitoring plan for a given node ID. If the node exists in the topology but has not a registered
+     * plan, MonitoringPlan::Default will be returned. If the node does not exist an NES exception is thrown.
+     * @param nodeId
+     * @return The monitoring plan
+     */
     MonitoringPlanPtr getMonitoringPlan(uint64_t nodeId);
 
   private:
