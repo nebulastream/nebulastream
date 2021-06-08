@@ -1995,6 +1995,102 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
+TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
+    struct Car {
+        bool key;
+        std::array<char, 3> value1;
+        uint32_t value2;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createBoolean())
+        ->addField("value1", DataTypeFactory::createFixedChar(3))
+        ->addField("value2", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    std::array<char, 3> charArrayValue = {'A', 'B', 'C'};
+    testHarness.pushElement<Car>({true, charArrayValue, 2, 1000}, 0);
+    testHarness.pushElement<Car>({false, charArrayValue, 4, 1500}, 0);
+    testHarness.pushElement<Car>({true, charArrayValue, 5, 2000}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        bool key;
+        uint32_t value1;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}, {1000, 2000, 0, 4}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
+TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
+    struct Car {
+        char key;
+        std::array<char, 3> value1;
+        uint32_t value2;
+        uint64_t timestamp;
+    };
+
+    auto carSchema = Schema::create()
+        ->addField("key", DataTypeFactory::createChar())
+        ->addField("value1", DataTypeFactory::createFixedChar(3))
+        ->addField("value2", DataTypeFactory::createUInt32())
+        ->addField("timestamp", DataTypeFactory::createUInt64());
+
+    ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
+
+    std::string queryWithWindowOperator =
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))))";
+    TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
+
+    testHarness.addMemorySource("car", carSchema, "car1");
+
+    ASSERT_EQ(testHarness.getWorkerCount(), 1);
+
+    std::array<char, 3> charArrayValue = {'A', 'B', 'C'};
+    testHarness.pushElement<Car>({'A', charArrayValue, 2, 1000}, 0);
+    testHarness.pushElement<Car>({'B', charArrayValue, 4, 1500}, 0);
+    testHarness.pushElement<Car>({'C', charArrayValue, 5, 2000}, 0);
+
+    struct Output {
+        uint64_t start;
+        uint64_t end;
+        char key;
+        uint32_t value1;
+
+        // overload the == operator to check if two instances are the same
+        bool operator==(Output const& rhs) const {
+            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+        }
+    };
+
+    std::vector<Output> expectedOutput = {{1000, 2000, 'A', 2}, {1000, 2000, 'B', 4}};
+    std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
+
+    EXPECT_EQ(actualOutput.size(), expectedOutput.size());
+    EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
+}
+
 TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithStringKey) {
     struct __attribute__((packed)) Car {
         std::array<char, 52> key;
