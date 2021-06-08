@@ -23,7 +23,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "StateId.hpp"
+#include <State/StateId.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
 namespace NES {
@@ -86,7 +86,7 @@ class StateVariable : public detail::Destroyable {
     typedef typename LockedStateBackend::iterator KeyValueRangeHandleIterator;
 
   private:
-    StateId name;
+    StateId stateId;
     StateBackend backend;
     std::function<Value(const Key&)> defaultCallback;
 
@@ -246,23 +246,23 @@ class StateVariable : public detail::Destroyable {
      * @param name of the state variable
      * @param defaultCallback a function that gets called when retrieving a value not present in the state
      */
-    explicit StateVariable(StateId name, std::function<Value(const Key&)> defaultCallback)
-        : name(std::move(name)), backend(), defaultCallback(defaultCallback) {
+    explicit StateVariable(StateId stateId, std::function<Value(const Key&)> defaultCallback)
+        : stateId(std::move(stateId)), backend(), defaultCallback(defaultCallback) {
         NES_ASSERT(this->defaultCallback, "invalid default callback");
     }
 
     /**
      * @brief Creates a new state variable
-     * @param name of the state variable
+     * @param stateId of the state variable
      */
-    explicit StateVariable(StateId name) : name(std::move(name)), backend(), defaultCallback(nullptr) {}
+    explicit StateVariable(StateId stateId) : stateId(std::move(stateId)), backend(), defaultCallback(nullptr) {}
 
     /**
      * @brief Copy Constructor of a state variable
      * @param other the param to copy
      */
     StateVariable(const StateVariable<Key, Value>& other)
-        : name(other.name), backend(other.backend), defaultCallback(other.defaultCallback) {
+        : stateId(other.stateId), backend(other.backend), defaultCallback(other.defaultCallback) {
         // nop
     }
 
@@ -286,7 +286,7 @@ class StateVariable : public detail::Destroyable {
      * @return the same state variable
      */
     StateVariable& operator=(const StateVariable<Key, Value>& other) {
-        name = other.name;
+        stateId = other.stateId;
         backend = other.backend;
         defaultCallback = other.defaultCallback;
     }
@@ -298,7 +298,7 @@ class StateVariable : public detail::Destroyable {
      * @return the same state variable
      */
     StateVariable& operator=(StateVariable<Key, Value>&& other) {
-        name = std::move(other.name);
+        stateId = std::move(other.stateId);
         backend = std::move(other.backend);
         return *this;
     }
