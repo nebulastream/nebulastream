@@ -17,16 +17,12 @@
 #ifndef NES_SRC_GRPC_CALLDATA_HPP_
 #define NES_SRC_GRPC_CALLDATA_HPP_
 
-namespace WorkerRPCServer {
-class Service;
-}
-
 namespace grpc {
 class ServerCompletionQueue;
 }
 
 namespace NES {
-
+class WorkerRPCServer;
 /**
  * @brief This is taken from https://github.com/grpc/grpc/tree/master/examples/cpp/helloworld
  *  Take in the "service" instance (in this case representing an asynchronous
@@ -40,7 +36,7 @@ class CallData {
      * @param service server to listen on
      * @param cq queue to listen on
      */
-    CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq);
+    CallData(WorkerRPCServer& service, grpc::ServerCompletionQueue* cq);
 
     /**
     * @brief Run method to process the call data through it different stages
@@ -50,7 +46,7 @@ class CallData {
   private:
     // The means of communication with the gRPC runtime for an asynchronous
     // server.
-    WorkerRPCServer::Service* service;
+    WorkerRPCServer& service;
 
     // The producer-consumer queue where for asynchronous server notifications.
     grpc::ServerCompletionQueue* completionQueue;

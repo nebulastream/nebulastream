@@ -22,11 +22,6 @@
 #include <Plans/Query/QueryId.hpp>
 #include <Topology/TopologyNodeId.hpp>
 #include <future>
-namespace WorkerRPCServer {
-class Service;
-}
-class CoordinatorRPCClient;
-typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
 
 namespace grpc {
 class Server;
@@ -35,6 +30,9 @@ class ServerCompletionQueue;
 
 class NodeEngine;
 namespace NES {
+class WorkerRPCServer;
+class CoordinatorRPCClient;
+typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
 enum NesNodeType : int { Worker, Sensor };
 class NesWorker {
   public:
@@ -172,7 +170,7 @@ class NesWorker {
    * @brief this method will start the GRPC Worker server which is responsible for reacting to calls
    */
     void buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom);
-    void handleRpcs(WorkerRPCServer::Service& service);
+    void handleRpcs(WorkerRPCServer& service);
 
     std::unique_ptr<grpc::Server> rpcServer;
     std::shared_ptr<std::thread> rpcThread;
