@@ -1995,7 +1995,7 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithBoolKey) {
     struct Car {
         bool key;
         std::array<char, 3> value1;
@@ -2012,7 +2012,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithWindowOperator =
-        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))))";
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
@@ -2025,25 +2025,22 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
     testHarness.pushElement<Car>({true, charArrayValue, 5, 2000}, 0);
 
     struct Output {
-        uint64_t start;
-        uint64_t end;
-        bool key;
-        uint32_t value1;
+        uint32_t value;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
-            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+            return (value == rhs.value);
         }
     };
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 1, 2}, {1000, 2000, 0, 4}};
+    std::vector<Output> expectedOutput = {{2}, {4}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
 
-TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWitCharKey) {
     struct Car {
         char key;
         std::array<char, 3> value1;
@@ -2060,7 +2057,7 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
     std::string queryWithWindowOperator =
-        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))))";
+        R"(Query::from("car").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).byKey(Attribute("key")).apply(Sum(Attribute("value2"))).project(Attribute("value2")))";
     TestHarness testHarness = TestHarness(queryWithWindowOperator, restPort, rpcPort);
 
     testHarness.addMemorySource("car", carSchema, "car1");
@@ -2073,18 +2070,15 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
     testHarness.pushElement<Car>({'C', charArrayValue, 5, 2000}, 0);
 
     struct Output {
-        uint64_t start;
-        uint64_t end;
-        char key;
-        uint32_t value1;
+        uint32_t value;
 
         // overload the == operator to check if two instances are the same
         bool operator==(Output const& rhs) const {
-            return (key == rhs.key && value1 == rhs.value1 && start == rhs.start && end == rhs.end);
+            return (value == rhs.value);
         }
     };
 
-    std::vector<Output> expectedOutput = {{1000, 2000, 'A', 2}, {1000, 2000, 'B', 4}};
+    std::vector<Output> expectedOutput = {{2}, {4}};
     std::vector<Output> actualOutput = testHarness.getOutput<Output>(expectedOutput.size(), "BottomUp");
 
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
