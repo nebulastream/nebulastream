@@ -59,7 +59,8 @@ void SinkMedium::postReconfigurationCallback(NodeEngine::ReconfigurationMessage&
     Reconfigurable::postReconfigurationCallback(message);
     switch (message.getType()) {
         case NodeEngine::SoftEndOfStream:
-        case NodeEngine::HardEndOfStream: {
+        case NodeEngine::HardEndOfStream:
+        case NodeEngine::StopViaReconfiguration: {
             shutdown();
             break;
         }

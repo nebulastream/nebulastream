@@ -131,6 +131,7 @@ class DummyExchangeProtocolListener : public ExchangeProtocolListener {
     void onDataBuffer(NesPartition, TupleBuffer&) override {}
     void onEndOfStream(Messages::EndOfStreamMessage) override {}
     void onServerError(Messages::ErrorMessage) override {}
+    void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
 
     void onChannelError(Messages::ErrorMessage) override {}
 };
@@ -173,6 +174,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
+            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
 
             void onChannelError(Messages::ErrorMessage) override {}
 
@@ -235,6 +237,7 @@ TEST_F(NetworkStackTest, testSendData) {
             }
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
+            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
 
             void onChannelError(Messages::ErrorMessage) override {}
         };
@@ -312,6 +315,7 @@ TEST_F(NetworkStackTest, testMassiveSending) {
                 }
                 bufferReceived++;
             }
+            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
             void onServerError(Messages::ErrorMessage) override {}
 
@@ -417,6 +421,7 @@ TEST_F(NetworkStackTest, testHandleUnregisteredBuffer) {
                 NES_INFO("NetworkStackTest: Channel error called!");
                 ASSERT_EQ(errorMsg.getErrorType(), Messages::kPartitionNotRegisteredError);
             }
+            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override {}
@@ -475,6 +480,8 @@ TEST_F(NetworkStackTest, testMassiveMultiSending) {
             void onServerError(Messages::ErrorMessage) override {}
 
             void onChannelError(Messages::ErrorMessage) override {}
+
+            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer& buffer) override {
                 for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
@@ -588,6 +595,8 @@ TEST_F(NetworkStackTest, testNetworkSink) {
             }
 
             void onChannelError(Messages::ErrorMessage) override {}
+
+            void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
 
             void onDataBuffer(NesPartition id, TupleBuffer&) override {
                 if (nesPartition == id) {
@@ -811,6 +820,8 @@ TEST_F(NetworkStackTest, testNetworkSourceSink) {
                 completed.set_exception(make_exception_ptr(runtime_error("Error")));
             }
         }
+
+        void onQueryReconfiguration(Messages::QueryReconfigurationMessage) override {}
 
         void onChannelError(Network::Messages::ErrorMessage message) override { NodeEngine::onChannelError(message); }
     };

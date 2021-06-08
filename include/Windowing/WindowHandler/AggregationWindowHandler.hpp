@@ -154,7 +154,8 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
         //switch between soft eos (state is drained) and hard eos (state is truncated)
         switch (task.getType()) {
-            case NodeEngine::SoftEndOfStream: {
+            case NodeEngine::SoftEndOfStream:
+            case NodeEngine::StopViaReconfiguration: {
                 flushInflightWindows();
                 break;
             }

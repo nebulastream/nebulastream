@@ -21,9 +21,11 @@
 #include <NodeEngine/Reconfigurable.hpp>
 #include <NodeEngine/ReconfigurationMessage.hpp>
 #include <Plans/Query/QuerySubPlanId.hpp>
+#include <functional>
 #include <memory>
 #include <variant>
 #include <vector>
+
 namespace NES::NodeEngine::Execution {
 
 /**
@@ -164,6 +166,9 @@ class ExecutablePipeline : public Reconfigurable {
     std::atomic<PipelineStatus> pipelineStatus;
     std::atomic<uint32_t> activeProducers;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
+    void handleSoftStop(ReconfigurationMessage& task,
+                        const std::weak_ptr<ExecutableQueryPlan>& targetQep,
+                        const std::function<std::any()>& userdataSupplier);
 };
 
 }// namespace NES::NodeEngine::Execution
