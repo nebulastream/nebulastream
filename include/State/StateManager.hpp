@@ -30,18 +30,17 @@ namespace NodeEngine {
  * This class is used as a singleton and creates StateVariable<K, V>, i.e., mutable data set of key-value pairs.
  * It performs basic garbage colletion of state variables upon termination.
  */
-
 class StateManager {
     using state_variable_base_type = detail::Destroyable*;
 
   private:
     std::mutex mutex;
     std::unordered_map<StateId, state_variable_base_type> stateVariables;
-    uint64_t node_id;
+    uint64_t nodeId;
 
   public:
-    explicit StateManager(uint64_t node_id) {
-        this->node_id = node_id;
+    explicit StateManager(uint64_t nodeId) {
+        this->nodeId = nodeId;
     }
 
     /**
@@ -53,12 +52,12 @@ class StateManager {
      * @return the state variable as a reference
      */
     template<typename Key, typename Value>
-    StateVariable<Key, Value>* registerStateWithDefault(const StateId& variableName,
+    StateVariable<Key, Value>* registerStateWithDefault(const StateId& variableStateId,
                                                         std::function<Value(const Key&)>&& defaultCallback) {
         std::unique_lock<std::mutex> lock(mutex);
-        auto state_var = new StateVariable<Key, Value>(variableName, std::move(defaultCallback));
-        stateVariables[variableName] = state_var;
-        return state_var;
+        auto stateVariable = new StateVariable<Key, Value>(variableStateId, std::move(defaultCallback));
+        stateVariables[variableStateId] = stateVariable;
+        return stateVariable;
     }
 
     /**
@@ -69,12 +68,13 @@ class StateManager {
      * @return the state variable as a reference
      */
     template<typename Key, typename Value>
-    StateVariable<Key, Value>* registerState(const StateId& variableName) {
+    StateVariable<Key, Value>* registerState(const StateId& variableStateId) {
         
         std::unique_lock<std::mutex> lock(mutex);
-        auto state_var = new StateVariable<Key, Value>(variableName);
-        stateVariables[variableName] = state_var;
-        return state_var;
+        auto stateVariable = new StateVariable<Key, Value>(variableStateId);
+        NES_ASSERT(stateVariables.find(variableStateId) == stateVariables.end(), "State variable with this id already exists");
+        stateVariables[variableStateId] = stateVariable;
+        return stateVariable;
     }
 
     /**
@@ -106,6 +106,7 @@ class StateManager {
      */
     template<typename Key, typename Value>
     void unRegisterState(const StateVariable<Key, Value>* variable) {
+        NES_ASSERT(variable, "State variable is null");
         std::unique_lock<std::mutex> lock(mutex);
         //we iterate over all state_variables and remove the variable if existent
         for (auto& [name, stateVar] : stateVariables) {
@@ -118,7 +119,7 @@ class StateManager {
     }
 
     const uint64_t getNodeId() {
-        return this->node_id;
+        return this->nodeId;
     }
 
     ~StateManager() { destroy(); }
