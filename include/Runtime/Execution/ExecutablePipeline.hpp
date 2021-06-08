@@ -21,9 +21,11 @@
 #include <Runtime/NodeEngineForwaredRefs.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
+#include <functional>
 #include <memory>
 #include <variant>
 #include <vector>
+
 namespace NES::Runtime::Execution {
 
 /**
@@ -165,6 +167,9 @@ class ExecutablePipeline : public Reconfigurable {
     std::atomic<uint32_t> activeProducers = 0;
     std::atomic<uint32_t> inProgressTasks = 0;
     std::vector<SuccessorExecutablePipeline> successorPipelines;
+    void handleSoftStop(ReconfigurationMessage& task,
+                        const std::weak_ptr<ExecutableQueryPlan>& targetQep,
+                        const std::function<std::any()>& userdataSupplier);
 };
 
 }// namespace NES::Runtime::Execution

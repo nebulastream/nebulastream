@@ -292,14 +292,16 @@ class JoinHandler : public AbstractJoinHandler {
         };
 
         switch (message.getType()) {
-            case Runtime::SoftEndOfStream: {
+            case Runtime::SoftEndOfStream:
+            case NodeEngine::StopViaReconfiguration: {
                 if (refCnt.fetch_sub(1) == 1) {
-                    NES_DEBUG("SoftEndOfStream received on join handler " << toString()
-                                                                          << ": going to flush in-flight windows and cleanup");
+                    NES_DEBUG("Received Message: " << message.getType() << " on join handler " << toString()
+                                                   << ": going to flush in-flight windows and cleanup");
                     flushInflightWindows();
                     cleanup();
                 } else {
-                    NES_DEBUG("SoftEndOfStream received on join handler " << toString() << ": ref counter is: " << refCnt.load());
+                    NES_DEBUG("Received Message: " << message.getType() << " on join handler " << toString()
+                                                   << ": ref counter is: " << refCnt.load());
                 }
                 break;
             }

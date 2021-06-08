@@ -21,6 +21,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <functional>
 #include <utility>
 
 namespace NES::Runtime::Execution {
@@ -155,48 +156,74 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
     switch (task.getType()) {
         case SoftEndOfStream: {
             auto targetQep = task.getUserData<std::weak_ptr<ExecutableQueryPlan>>();
-            //we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
-            auto prevProducerCounter = activeProducers.fetch_sub(1);
-            if (prevProducerCounter == 1) {//all producers sent EOS
-                NES_DEBUG("Requested reconfiguration of pipeline belonging to subplanId: " << querySubPlanId << " stage id: "
-                                                                                           << pipelineId << " reached prev=1");
-                for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
-                    operatorHandler->postReconfigurationCallback(task);
+            handleSoftStop(task, targetQep, [targetQep]() {
+                return std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep);
+            });
+            break;
+        }
+        case StopViaReconfiguration: {
+            auto stopMessage = task.getUserData<StopQueryMessagePtr>();
+            handleSoftStop(task, stopMessage->getTargetQep(), [stopMessage]() {
+                return std::make_any<StopQueryMessagePtr>(stopMessage);
+            });
+            break;
+        }
+        case HardEndOfStream: {
+            NES_DEBUG("Going to reconfigure pipeline belonging to subplanId: " << querySubPlanId << " stage id: " << pipelineId
+                                                                               << " got HardEndOfStream");
+            for (auto successorPipeline : successorPipelines) {
+                if (auto pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+                    (*pipe)->postReconfigurationCallback(task);
                 }
-                stop();
-                //it the current pipeline is the last pipeline in the qep and thus we reconfigure the qep
-                // TODO: The following code expects no broadcast operators.
-                // It is not clear how to shut down a qep in that case.
-                bool hasNonSinkSuccessor = false;
-                if (!successorPipelines.empty()) {
-                    for (auto successorPipeline : successorPipelines) {
-                        if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
-                            hasNonSinkSuccessor = true;
-                            auto queryManager = pipelineContext->getQueryManager();
-                            auto newReconf = ReconfigurationMessage(querySubPlanId,
-                                                                    SoftEndOfStream,
-                                                                    *pipe,
-                                                                    std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
-                            queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
-                            NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: "
-                                      << querySubPlanId << " stage id: " << (*pipe)->getPipelineId()
-                                      << " got SoftEndOfStream  with nextPipeline");
-                        }
-                    }
-                }
-                if (!hasNonSinkSuccessor) {
-                    //in this branch, we reoncfigure the next pipeline itself
+            }
+            pipelineContext.reset();
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+}
+void ExecutablePipeline::handleSoftStop(ReconfigurationMessage& task,
+                                        const std::weak_ptr<ExecutableQueryPlan>& targetQep,
+                                        const std::function<std::any()>& userdataSupplier) {
+    //we maintain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
+    auto taskType = task.getType();
+    auto prevProducerCounter = activeProducers.fetch_sub(1);
+    if (prevProducerCounter == 1) {//all producers sent EOS
+        NES_DEBUG("Requested reconfiguration via " << taskType << " of pipeline belonging to subplanId: " << querySubPlanId
+                                                   << " stage id: " << pipelineId << " reached prev=1");
+        for (const auto& operatorHandler : pipelineContext->getOperatorHandlers()) {
+            operatorHandler->postReconfigurationCallback(task);
+        }
+        stop();
+        // If the current pipeline is the last pipeline in the qep and thus we reconfigure the qep
+        // TODO: The following code expects no broadcast operators.
+        // It is not clear how to shut down a qep in that case.
+        bool hasNonSinkSuccessor = false;
+        if (!successorPipelines.empty()) {
+            for (auto successorPipeline : successorPipelines) {
+                if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline)) {
+                    hasNonSinkSuccessor = true;
                     auto queryManager = pipelineContext->getQueryManager();
-                    NES_ASSERT2_FMT(!targetQep.expired(),
-                                    "Invalid qep for reconfig of subplanId: " << querySubPlanId << " stage id: " << pipelineId);
-                    auto newReconf = ReconfigurationMessage(querySubPlanId,
-                                                            SoftEndOfStream,
-                                                            targetQep.lock(),
-                                                            std::make_any<std::weak_ptr<ExecutableQueryPlan>>(targetQep));
+                    auto newReconf = ReconfigurationMessage(querySubPlanId, task.getType(), *pipe, userdataSupplier());
                     queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
-                    NES_DEBUG("Going to triggering reconfig whole plan belonging to subplanId: "
-                              << querySubPlanId << " stage id: " << pipelineId << " got SoftEndOfStream on last pipeline");
+                    NES_DEBUG("Going to reconfigure next pipeline belonging to subplanId: "
+                              << querySubPlanId << " stage id: " << (*pipe)->getPipelineId() << " got " << taskType
+                              << " with nextPipeline");
                 }
+            }
+        }
+        if (!hasNonSinkSuccessor) {
+            //in this branch, we reconfigure the next pipeline itself
+            auto queryManager = pipelineContext->getQueryManager();
+            NES_ASSERT2_FMT(!targetQep.expired(),
+                            "Invalid qep for reconfig of subplanId: " << querySubPlanId << " stage id: " << pipelineId);
+            auto newReconf = ReconfigurationMessage(querySubPlanId, task.getType(), targetQep.lock(), userdataSupplier());
+            queryManager->addReconfigurationMessage(querySubPlanId, newReconf, false);
+            NES_DEBUG("Going to triggering reconfig whole plan belonging to subplanId: "
+                      << querySubPlanId << " stage id: " << pipelineId << " got " << taskType << " on last pipeline");
+        }
 
                 pipelineContext.reset();
             } else {

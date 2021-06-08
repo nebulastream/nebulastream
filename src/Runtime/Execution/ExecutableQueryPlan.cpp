@@ -195,9 +195,11 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
     //soft eos means we drain the state and hard means we truncate it
     switch (task.getType()) {
         case HardEndOfStream: {
-            NES_DEBUG("Executing HardEndOfStream on qep " << queryId << " " << querySubPlanId);
+            NES_DEBUG("ExecutableQueryPlan::postReconfigurationCallback: Received: " << task.getType() << " on qep " << queryId
+                                                                                     << " " << querySubPlanId);
             if (numOfProducers.fetch_sub(1) == 1) {
-                NES_DEBUG("Executing HardEndOfStream and going to stop for qep " << queryId << " " << querySubPlanId);
+                NES_DEBUG("ExecutableQueryPlan::postReconfigurationCallback: Executing hard stop via: "
+                          << task.getType() << " on qep " << queryId << " " << querySubPlanId);
                 for (auto& sink : sinks) {
                     sink->postReconfigurationCallback(task);
                 }
@@ -207,20 +209,8 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
             }
             break;
         }
+        case SoftEndOfStream:
         case StopViaReconfiguration: {
-            NES_DEBUG("Executing StopViaReconfiguration on qep " << queryId << " " << querySubPlanId);
-            if (numOfProducers.fetch_sub(1) == 1) {
-                NES_DEBUG("Executing StopViaReconfiguration and going to stop for qep " << queryId << " " << querySubPlanId);
-                for (auto& sink : sinks) {
-                    sink->postReconfigurationCallback(task);
-                }
-                stop();
-            } else {
-                return;// we must not invoke end of stream on qep's sinks if the qep was not stopped
-            }
-            break;
-        }
-        case SoftEndOfStream: {
             NES_DEBUG("QueryExecutionPlan: soft stop request received for query plan " << queryId << " sub plan "
                                                                                        << querySubPlanId);
             auto expected = Running;
