@@ -292,7 +292,7 @@ void NesCoordinator::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>>
     std::string address = rpcIp + ":" + std::to_string(rpcPort);
     builder.AddListeningPort(address, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
-    rpcServer = std::move(builder.BuildAndStart());
+    rpcServer = builder.BuildAndStart();
     prom->set_value(true);
     NES_DEBUG("NesCoordinator: buildAndStartGRPCServerServer listening on address=" << address);
     rpcServer->Wait();//blocking call

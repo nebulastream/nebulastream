@@ -74,11 +74,11 @@ bool NesWorker::setWithParent(std::string parentId) {
     return true;
 }
 
-void NesWorker::handleRpcs(WorkerRPCServer::Service& service) {
+void NesWorker::handleRpcs(WorkerRPCServer& service) {
     //TODO: somehow we need this although it is not called at all
     // Spawn a new CallData instance to serve new clients.
 
-    CallData call(&service, completionQueue.get());
+    CallData call(service, completionQueue.get());
     call.proceed();
     void* tag;// uniquely identifies a request.
     bool ok;  //

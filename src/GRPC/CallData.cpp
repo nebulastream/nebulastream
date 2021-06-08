@@ -19,7 +19,7 @@
 
 namespace NES {
 
-CallData::CallData(WorkerRPCServer::Service* service, grpc::ServerCompletionQueue* cq)
+CallData::CallData(WorkerRPCServer& service, grpc::ServerCompletionQueue* cq)
     : service(service), completionQueue(cq), status(CREATE) {
     // Invoke the serving logic right away.
 }
@@ -49,7 +49,7 @@ void CallData::proceed() {
         // Spawn a new CallData instance to serve new clients while we process
         // the one for this CallData. The instance will deallocate itself as
         // part of its FINISH state.
-        service->RegisterQuery(&ctx, &request, &reply);
+        service.RegisterQuery(&ctx, &request, &reply);
 
         // And we are done! Let the gRPC runtime know we've finished, using the
         // memory address of this instance as the uniquely identifying tag for
