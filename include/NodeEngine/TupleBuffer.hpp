@@ -90,7 +90,8 @@ class [[nodiscard]] TupleBuffer {
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] constexpr TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+    [[nodiscard]] constexpr TupleBuffer(TupleBuffer&& other) noexcept
+        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
         other.controlBlock = nullptr;
         other.ptr = nullptr;
         other.size = 0;
