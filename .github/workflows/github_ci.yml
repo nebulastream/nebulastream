@@ -19,6 +19,10 @@ jobs:
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     steps:
+      - uses: ../actions/workspace-cleanup
+        id: hello
+        with:
+           who-to-greet: 'Mona the Octocat'
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
