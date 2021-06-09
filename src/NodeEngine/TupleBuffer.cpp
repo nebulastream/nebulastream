@@ -27,9 +27,6 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
     auto memSegment = new detail::MemorySegment(ptr, length, parent, callback, true);
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }
-TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr) {
-    //nop
-}
 
 TupleBuffer::TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
     : controlBlock(controlBlock), ptr(ptr), size(size) {

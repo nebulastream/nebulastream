@@ -62,6 +62,8 @@ class [[nodiscard]] TupleBuffer {
     /// Utilize the wrapped-memory constructor and requires direct access to the control block for the ZMQ sink.
     friend class Network::OutputChannel;
 
+    explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept;
+
   public:
     /**
      * @brief Creates a TupleBuffer of length bytes starting at ptr address. The parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed, which must be done by the user.
@@ -72,7 +74,7 @@ class [[nodiscard]] TupleBuffer {
      */
     static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
 
-    TupleBuffer(const TupleBuffer& other) noexcept;
+    TupleBuffer(TupleBuffer const &other) noexcept;
 
     TupleBuffer(TupleBuffer&& other) noexcept;
 
@@ -80,43 +82,11 @@ class [[nodiscard]] TupleBuffer {
 
     TupleBuffer& operator=(TupleBuffer&& other) noexcept;
 
-    TupleBuffer() noexcept;
+    TupleBuffer() noexcept = default;
 
-    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept;
-
-  private:
-    explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept;
-
-  public:
     ~TupleBuffer() noexcept;
 
-    /**
-    * @return the content of the buffer as pointer to unsigned char
-    */
-    template<typename T = uint8_t> inline T* getBuffer() noexcept {
-        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
-        static_assert(ispow2<alignof(T)>);
-        return reinterpret_cast<T*>(ptr);
-    }
-
-    /**
-    * @return true if the interal pointer is not null
-    */
-    bool isValid() const noexcept;
-
-    TupleBuffer* operator&() = delete;
-
-    uint64_t getBufferSize() const noexcept;
-
-    uint64_t getNumberOfTuples() const noexcept;
-
-    void setNumberOfTuples(uint64_t numberOfTuples) noexcept;
-
-    /// @brief Print the buffer's address.
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept{
-        // TODO: C++2a: change to std::bit_cast
-        return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
-    }
+    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept;
 
     /**
     * @brief Increases the internal reference counter by one
@@ -130,6 +100,34 @@ class [[nodiscard]] TupleBuffer {
     */
     void release() noexcept;
 
+
+    /**
+    * @return the content of the buffer as pointer to unsigned char
+    */
+    template<typename T = uint8_t> inline T* getBuffer() noexcept {
+        static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
+        static_assert(ispow2<alignof(T)>);
+        return reinterpret_cast<T*>(ptr);
+    }
+
+    TupleBuffer* operator&() = delete;
+
+    /// @brief Print the buffer's address.
+    /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept{
+        return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
+    }
+
+    /**
+    * @return true if the interal pointer is not null
+    */
+    bool isValid() const noexcept;
+
+    uint64_t getBufferSize() const noexcept;
+
+    uint64_t getNumberOfTuples() const noexcept;
+
+    void setNumberOfTuples(uint64_t numberOfTuples) noexcept;
     /**
      * @brief method to get the watermark as a timestamp
      * @return watermark
@@ -172,7 +170,6 @@ class [[nodiscard]] TupleBuffer {
      */
     detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
-  private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
