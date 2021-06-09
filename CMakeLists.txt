@@ -144,6 +144,9 @@ include(cmake/Sanitizers.cmake)
 
 if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)
+    if(iwyu_path)
+      message(STATUS "IWYU enabled and found! Suggestions will be printed to stderr.")
+    endif()
 endif()
 
 if (NES_BUILD_BENCHMARKS)
