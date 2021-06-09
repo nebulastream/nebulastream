@@ -86,6 +86,15 @@ CompiledCodePtr Compiler::compile(const std::string& source) {
     flags = CompilerFlags::createOptimizingCompilerFlags();
 #endif
 #endif
+    // TODO: @Steffen: I am not sure if my build configuration is weird or if
+    //                 this might be a bug that can also affect others.
+    //                 For me, neither NES_DEBUG_MODE nor NES_RELEASE_MODE
+    //                 is set in my default debug build, which leads to random
+    //                 errors.
+    //                 Please either fix or add a NES assertion here.
+    if (!flags) {
+        flags = CompilerFlags::createDebuggingCompilerFlags();
+    }
 
     flags->addFlag("--shared");
     //    flags->addFlag("-xc++ ");
