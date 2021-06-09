@@ -42,7 +42,7 @@ namespace detail {
 
 class MemorySegment;
 
-#define PLACEHOLDER_LIKELY /* XXX: replace with [[likely]] when using C++ 2a */
+#define PLACEHOLDER_LIKELY   /* XXX: replace with [[likely]] when using C++ 2a */
 #define PLACEHOLDER_UNLIKELY /* XXX: replace with [[unlikely]] when using C++ 2a */
 
 /**

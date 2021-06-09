@@ -357,7 +357,8 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
 
         // We need to release reply's buffer (in case we handle the exception).
         reply.release_buffer();
-        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": " << status.error_message());
+        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
+                                                                                 << status.error_message());
     }
     return false;
 }

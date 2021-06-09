@@ -14,11 +14,11 @@
     limitations under the License.
 */
 
-#include <NodeEngine/TupleBuffer.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/MonitoringSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
