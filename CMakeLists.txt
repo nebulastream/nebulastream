@@ -84,6 +84,7 @@ message(STATUS "CMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}")
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" OFF)
+option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
@@ -141,7 +142,9 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wno-ignored-qualifiers -Wno-sign-compare -O3 -DNES_RELEASE_MODE=1")
 include(cmake/Sanitizers.cmake)
 
-find_program(iwyu_path NAMES include-what-you-use iwyu)
+if (ENABLE_IWYU)
+    find_program(iwyu_path NAMES include-what-you-use iwyu)
+endif()
 
 if (NES_BUILD_BENCHMARKS)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNES_BENCHMARKS_FLAG_MODE=1")
