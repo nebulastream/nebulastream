@@ -48,6 +48,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
       - name: NES Workspace cleanup
+        shell: bash
         if: ${{ always() }}
         run: |
           rm -rf $GITHUB_WORKSPACE
