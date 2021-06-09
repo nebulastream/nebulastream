@@ -78,10 +78,10 @@ MemorySegment::MemorySegment(uint8_t* ptr,
 MemorySegment::~MemorySegment() {
     if (ptr) {
 
-        /// XXX: @Ventura If we want to make `release` noexcept as we discussed, we need to make sure that the
-        ///               MemorySegment is noexcept destructible. I therefore transformed this error into an assertion
-        ///               (I also consider this to be consistent with our handeling of the referenceCount in
-        ///                the release function in general. Do you agree?).
+        /// XXX: If we want to make `release` noexcept as we discussed, we need to make sure that the
+        ///      MemorySegment is noexcept destructible. I therefore transformed this error into an assertion
+        ///      (I also consider this to be consistent with our handeling of the referenceCount in
+        ///      the release function in general. Do you agree?).
         {
             auto const refCnt = controlBlock->getReferenceCount();
             NES_ASSERT(refCnt == 0, "[MemorySegment] invalid reference counter" << refCnt << " on mem segment dtor");
