@@ -81,7 +81,7 @@ class [[nodiscard]] TupleBuffer {
     [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(TupleBuffer const& other) noexcept
+    [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept
         : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
         if (controlBlock) {
             controlBlock->retain();
@@ -90,7 +90,7 @@ class [[nodiscard]] TupleBuffer {
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+    [[nodiscard]] constexpr TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
         other.controlBlock = nullptr;
         other.ptr = nullptr;
         other.size = 0;
@@ -119,7 +119,7 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
-    [[nodiscard]] TupleBuffer& operator=(TupleBuffer&& other) noexcept {
+    [[nodiscard]] inline TupleBuffer& operator=(TupleBuffer&& other) noexcept {
 
         // Especially for rvalues, the following branch should most likely never be taken if the caller writes
         // reasonable code. Therefore, this branch is considered unlikely.
@@ -143,7 +143,7 @@ class [[nodiscard]] TupleBuffer {
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
-    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept {
+    inline friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept {
         // Enable ADL to spell out to onlookers how swap should be used.
         using std::swap;
 
@@ -153,7 +153,7 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief Increases the internal reference counter by one and return this.
-    TupleBuffer& retain() noexcept {
+    inline TupleBuffer& retain() noexcept {
         if (controlBlock) {
             controlBlock->retain();
         }
@@ -161,7 +161,7 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
-    void release() noexcept {
+    inline void release() noexcept {
         if (controlBlock) {
             controlBlock->release();
         }
@@ -185,34 +185,34 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief true if the interal pointer is not null
-    [[nodiscard]] bool isValid() const noexcept { return return ptr != nullptr; }
+    [[nodiscard]] constexpr bool isValid() const noexcept { return ptr != nullptr; }
 
     /// @brief get the buffer's size.
-    uint64_t getBufferSize() const noexcept { return size; }
+    inline uint64_t getBufferSize() const noexcept { return size; }
 
     /// @brief get the number of tuples stored.
-    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
+    [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
 
     /// @brief set the number of tuples stored.
-    void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
+    inline void setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
 
     /// @brief get the watermark as a timestamp
-    [[nodiscard]] uint64_t getWatermark() const noexcept { return controlBlock->getWatermark(); }
+    [[nodiscard]] constexpr uint64_t getWatermark() const noexcept { return controlBlock->getWatermark(); }
 
     /// @brief set the watermark from a timestamp
-    void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
+    inline void setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
 
     /// @brief get the creation timestamp as a timestamp
-    [[nodiscard]] uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
+    [[nodiscard]] constexpr uint64_t getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
 
     /// @brief set the creation timestamp with a timestamp
-    void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
+    inline void setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
 
     ///@brief get the buffer's origin id (the operator id that creates this buffer).
-    [[nodiscard]] uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }
+    [[nodiscard]] constexpr uint64_t getOriginId() const noexcept { return controlBlock->getOriginId(); }
 
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
-    void setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
+    inline void setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
 
   private:
     /**
