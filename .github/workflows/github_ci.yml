@@ -55,7 +55,10 @@ jobs:
         shell: bash
         if: ${{ always() }}
         run: |
-          rm -rf $GITHUB_WORKSPACE
+          git checkout --orphan orphan-branch
+          git branch -D $normal_branch
+          rm -rf .git/refs/tags/*
+          git gc
 
   release:
     runs-on: [self-hosted, linux, X64, Build]
