@@ -53,10 +53,13 @@ namespace NES::NodeEngine {
  */
 
 class [[nodiscard]] TupleBuffer {
+    /// Utilize the wrapped-memory constructor
     friend class BufferManager;
-    friend class detail::MemorySegment;
-    friend class LocalBufferPool;
     friend class FixedSizeBufferPool;
+    friend class LocalBufferPool;
+    friend class detail::MemorySegment;
+
+    /// Utilize the wrapped-memory constructor and requires direct access to the control block for the ZMQ sink.
     friend class Network::OutputChannel;
 
   public:
