@@ -246,10 +246,10 @@ class MemorySegment {
   private:
     /*
 
-     Layout of the mem segment
-     +-----------------------+-----------+--------------+-------------------------------+
-     | pointer to data  (8b) | size (4b) | padding (4b) | pointer to control block (8b) |
-     +------------+----------+-----------+--------------+--------------+----------------+
+     Layout of the mem segment (padding might be added differently depending on the compiler in-use).
+     +-----------------------+-----------+-------------------+-------------------------------+
+     | pointer to data  (8b) | size (4b) | likely 4b padding | pointer to control block (8b) |
+     +------------+----------+-----------+-------------------+---------+---------------------+
                   |                                                    |
      +------------+                                          +---------+
      |                                                       |
