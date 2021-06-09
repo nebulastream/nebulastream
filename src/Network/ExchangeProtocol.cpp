@@ -61,7 +61,6 @@ void ExchangeProtocol::onBuffer(NesPartition nesPartition, NodeEngine::TupleBuff
         partitionManager->getDataEmitter(nesPartition)->emitWork(buffer);
     } else {
         NES_ERROR("DataBuffer for " + nesPartition.toString() + " is not registered and was discarded!");
-        // buffer.release(); // XXX: why do we need this here? won't the caller release when TUpleBuffer goes out of scope?
     }
 }
 
