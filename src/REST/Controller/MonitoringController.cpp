@@ -103,7 +103,8 @@ void MonitoringController::handlePost(std::vector<utility::string_t> path, web::
                                 }
 
                                 try {
-                                    auto metricPlain = monitoringService->requestMonitoringDataViaPrometheusAsString(nodeId, promPort);
+                                    auto metricPlain =
+                                        monitoringService->requestMonitoringDataViaPrometheusAsString(nodeId, promPort);
                                     successMessageImpl(message, metricPlain);
                                 } catch (std::runtime_error& ex) {
                                     NES_ERROR("MonitoringController: POST metrics error: " << ex.what());

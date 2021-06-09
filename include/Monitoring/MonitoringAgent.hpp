@@ -34,7 +34,6 @@ typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
 typedef std::shared_ptr<Schema> SchemaPtr;
 typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
 
-
 /**
  * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.
  */
@@ -73,6 +72,6 @@ class MonitoringAgent {
     SchemaPtr schema;
 };
 
-}
+}// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_MONITORINGAGENT_HPP_

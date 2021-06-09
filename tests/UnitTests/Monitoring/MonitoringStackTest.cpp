@@ -53,9 +53,7 @@ class MonitoringStackTest : public testing::Test {
     static void TearDownTestCase() { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest class." << std::endl; }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override {
-        std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
-    }
+    void SetUp() override { std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl; }
 
     /* Will be called before a test is executed. */
     void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }

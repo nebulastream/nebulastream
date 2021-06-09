@@ -122,7 +122,7 @@ TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromServiceAsJso
     EXPECT_EQ(jsons.size(), nodeNumber);
     for (int i = 1; i <= nodeNumber; i++) {
         NES_INFO("MonitoringStackTest: Coordinator requesting monitoring data from worker 127.0.0.1:"
-                     + std::to_string(port + 10));
+                 + std::to_string(port + 10));
         auto json = jsons[std::to_string(i)];
 
         EXPECT_TRUE(json.has_field("disk"));

@@ -355,7 +355,7 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
         return true;
     } else {
         NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
-                                    + status.error_message());
+                                + status.error_message());
     }
     return false;
 }
