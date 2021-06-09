@@ -104,7 +104,7 @@ include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # C++ Standard
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
