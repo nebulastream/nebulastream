@@ -139,6 +139,9 @@ class [[nodiscard]] TupleBuffer {
     /// @brief Delete address-of operator to make it harder to circumvent reference counting mechanism with an l-value.
     TupleBuffer* operator&() = delete;
 
+    /// @brief Return if this is not valid.
+    [[nodiscard]] constexpr auto operator!() noexcept -> bool { return !isValid(); }
+
     /// @brief release the resource if necessary.
     inline ~TupleBuffer() noexcept { release(); }
 
