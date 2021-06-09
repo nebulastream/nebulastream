@@ -81,14 +81,14 @@ class [[nodiscard]] TupleBuffer {
     [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(TupleBuffer const &other) noexcept;
+    [[nodiscard]] TupleBuffer(TupleBuffer const& other) noexcept;
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
     [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept;
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    [[nodiscard]] TupleBuffer& operator=(TupleBuffer const &other) noexcept;
+    [[nodiscard]] TupleBuffer& operator=(TupleBuffer const& other) noexcept;
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
     [[nodiscard]] TupleBuffer& operator=(TupleBuffer&& other) noexcept;
@@ -110,7 +110,8 @@ class [[nodiscard]] TupleBuffer {
     void release() noexcept;
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
-    template<typename T = uint8_t> inline T* getBuffer() noexcept {
+    template<typename T = uint8_t>
+    inline T* getBuffer() noexcept {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
@@ -118,7 +119,7 @@ class [[nodiscard]] TupleBuffer {
 
     /// @brief Print the buffer's address.
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept{
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept {
         return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
     }
 
@@ -151,7 +152,6 @@ class [[nodiscard]] TupleBuffer {
 
     ///@brief set the buffer's origin id (the operator id that creates this buffer).
     void setOriginId(uint64_t id) noexcept;
-
 
   private:
     /**

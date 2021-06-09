@@ -15,9 +15,9 @@
 */
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/FixedSizeBufferPool.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 
 namespace NES::NodeEngine {
