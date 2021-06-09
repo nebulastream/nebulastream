@@ -52,7 +52,7 @@ namespace NES::NodeEngine {
  * Reminder: this class should be header-only to help inlining
  */
 
-class TupleBuffer {
+class [[nodiscard]] TupleBuffer {
     friend class BufferManager;
     friend class detail::MemorySegment;
     friend class LocalBufferPool;
