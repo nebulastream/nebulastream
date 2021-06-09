@@ -62,55 +62,59 @@ class [[nodiscard]] TupleBuffer {
     /// Utilize the wrapped-memory constructor and requires direct access to the control block for the ZMQ sink.
     friend class Network::OutputChannel;
 
-    explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept;
+    [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
+        : controlBlock(controlBlock), ptr(ptr), size(size) {}
 
   public:
+    /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
+    [[nodiscard]] constexpr TupleBuffer() noexcept = default;
+
     /**
-     * @brief Creates a TupleBuffer of length bytes starting at ptr address. The parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed, which must be done by the user.
-     * @param ptr
-     * @param length
-     * @param parent
-     * @return
+     * @brief Creates a TupleBuffer of length bytes starting at ptr address.
+     *
+     * @param ptr    resource's address.
+     * @param lenght the size of the allocated memory.
+     * @param parent will be notified of the buffer release. Only at that point, the ptr memory area can be freed,
+     *               which is the caller's responsability.
+     *
      */
-    static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
+    [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
 
-    TupleBuffer(TupleBuffer const &other) noexcept;
+    /// @brief Copy constructor: Increase the reference count associated to the control buffer.
+    [[nodiscard]] TupleBuffer(TupleBuffer const &other) noexcept;
 
-    TupleBuffer(TupleBuffer&& other) noexcept;
+    /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
+    /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
+    [[nodiscard]] TupleBuffer(TupleBuffer&& other) noexcept;
 
-    TupleBuffer& operator=(const TupleBuffer& other) noexcept;
+    /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
+    [[nodiscard]] TupleBuffer& operator=(TupleBuffer const &other) noexcept;
 
-    TupleBuffer& operator=(TupleBuffer&& other) noexcept;
+    /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
+    [[nodiscard]] TupleBuffer& operator=(TupleBuffer&& other) noexcept;
 
-    TupleBuffer() noexcept = default;
+    /// @brief Delete address-of operator to make it harder to circumvent reference counting mechanism with an l-value.
+    TupleBuffer* operator&() = delete;
 
-    ~TupleBuffer() noexcept;
+    /// @brief release the resource if necessary.
+    inline ~TupleBuffer() noexcept { release(); }
 
+    /// @brief Swap `lhs` and `rhs`.
+    /// @dev Accessible via ADL in an unqualified call.
     friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept;
 
-    /**
-    * @brief Increases the internal reference counter by one
-    * @return the same TupleBuffer object
-    */
+    /// @brief Increases the internal reference counter by one and return this.
     TupleBuffer& retain() noexcept;
 
-    /**
-    * @brief Decreases the internal reference counter by one. Note that if the buffer's counter reaches 0
-    * then the TupleBuffer is not usable any longer.
-    */
+    /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
     void release() noexcept;
 
-
-    /**
-    * @return the content of the buffer as pointer to unsigned char
-    */
+    /// @brief return the TupleBuffer's content as pointer to `T`.
     template<typename T = uint8_t> inline T* getBuffer() noexcept {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
     }
-
-    TupleBuffer* operator&() = delete;
 
     /// @brief Print the buffer's address.
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
@@ -118,51 +122,36 @@ class [[nodiscard]] TupleBuffer {
         return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
     }
 
-    /**
-    * @return true if the interal pointer is not null
-    */
-    bool isValid() const noexcept;
+    /// @brief true if the interal pointer is not null
+    [[nodiscard]] bool isValid() const noexcept;
 
+    /// @brief get the buffer's size.
     uint64_t getBufferSize() const noexcept;
 
-    uint64_t getNumberOfTuples() const noexcept;
+    /// @brief get the number of tuples stored.
+    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
 
+    /// @brief set the number of tuples stored.
     void setNumberOfTuples(uint64_t numberOfTuples) noexcept;
-    /**
-     * @brief method to get the watermark as a timestamp
-     * @return watermark
-     */
-    uint64_t getWatermark() const noexcept;
 
-    /**
-     * @brief method to set the watermark with a timestamp
-     * @param value timestamp
-     */
+    /// @brief get the watermark as a timestamp
+    [[nodiscard]] uint64_t getWatermark() const noexcept;
+
+    /// @brief set the watermark from a timestamp
     void setWatermark(uint64_t value) noexcept;
 
-    /**
-     * @brief method to set the watermark with a timestamp
-     * @param value timestamp
-     */
+    /// @brief get the creation timestamp as a timestamp
+    [[nodiscard]] uint64_t getCreationTimestamp() const noexcept;
+
+    /// @brief set the creation timestamp with a timestamp
     void setCreationTimestamp(uint64_t value) noexcept;
 
-    /**
-     * @brief method to get the creation timestamp
-     * @return ts
-     */
-    uint64_t getCreationTimestamp() const noexcept;
+    ///@brief get the buffer's origin id (the operator id that creates this buffer).
+    [[nodiscard]] uint64_t getOriginId() const noexcept;
 
-    /**
-     * @brief set the origin id for the buffer (the operator id that creates this buffer)
-     * @param origin id
-     */
+    ///@brief set the buffer's origin id (the operator id that creates this buffer).
     void setOriginId(uint64_t id) noexcept;
 
-    /**
-     * @brief returns the origin id of the buffer
-     * @return origin id
-     */
-    uint64_t getOriginId() const noexcept;
 
   private:
     /**

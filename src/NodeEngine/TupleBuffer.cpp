@@ -28,11 +28,6 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
     return TupleBuffer(memSegment->controlBlock, ptr, length);
 }
 
-TupleBuffer::TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
-    : controlBlock(controlBlock), ptr(ptr), size(size) {
-    // nop
-}
-
 TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
     if (controlBlock) {
         controlBlock->retain();
@@ -82,12 +77,12 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) noexcept {
     return *this;
 }
 
-TupleBuffer::~TupleBuffer() noexcept { release(); }
-
 bool TupleBuffer::isValid() const noexcept { return ptr != nullptr; }
 
 TupleBuffer& TupleBuffer::retain() noexcept {
-    controlBlock->retain();
+    if (controlBlock) {
+        controlBlock->retain();
+    }
     return *this;
 }
 
