@@ -26,6 +26,19 @@
 #include <State/StateId.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
+// TODO 1922: This is may not be the right place to place the hash specialization for std::array key
+template<class T, size_t N>
+struct std::hash<std::array<T, N>> {
+    auto operator() (const std::array<T, N>& key) const {
+        std::hash<T> hasher;
+        size_t result = 0;
+        for(size_t i = 0; i < N; ++i) {
+            result = result * 31 + hasher(key[i]); // TODO 1922: Need to explain why we use this hash function
+        }
+        return result;
+    }
+};
+
 namespace NES {
 namespace NodeEngine {
 namespace detail {
