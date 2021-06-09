@@ -249,7 +249,7 @@ bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
                                                                                << entry->getPhysicalName());
                 logicalToPhysicalStreamMapping[logStream.first].erase(physicalStreamName);
                 nameToPhysicalStream.erase(*physicalStreamName);
-                return true
+                return true;
             }
         }
     }
@@ -322,28 +322,28 @@ bool StreamCatalog::reset() {
     return true;
 }
 
-// BDAPRO needs adjustment : logicalToPhysicalStreamMapping no longer holds StreamCatalogEntryPtr but hashid as uint64_t
+// BDAPRO test this function
 std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     std::unique_lock lock(catalogMutex);
     std::stringstream ss;
     for (auto entry : logicalToPhysicalStreamMapping) {
         ss << "stream name=" << entry.first << " with " << entry.second.size() << " elements:";
-        for (StreamCatalogEntryPtr sce : entry.second) {
-            ss << sce->toString();
+        for (std::string physicalStreamName : entry.second) {
+            ss << nameToPhysicalStream[physicalStreamName]->toString();
         }
         ss << std::endl;
     }
     return ss.str();
 }
 
-// BDAPRO add level of indirection through physicalStreams - done
+// BDAPRO test this function
 std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(std::string logicalStreamName) {
-    std::vector<std::uint64_t> physicalStreamsHashIds = logicalToPhysicalStreamMapping[logicalStreamName];
+    std::vector<std::string> physicalStreamsNames = logicalToPhysicalStreamMapping[logicalStreamName];
     std::vector<StreamCatalogEntryPtr> physicalStreams;
 
     // Iterate over all hashIDs and retrieve respective StreamCatalogEntryPtr
-    for (auto id : physicalStreamsHashIds){
-        physicalStreams.push_back(hashIdToPhysicalStream[id]);
+    for (auto physicalStreamName : physicalStreamsNames){
+        physicalStreams.push_back(nameToPhysicalStream[physicalStreamName]);
     }
     return physicalStreams;
 }
