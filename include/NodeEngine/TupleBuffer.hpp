@@ -81,7 +81,8 @@ class [[nodiscard]] TupleBuffer {
     [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
-    [[nodiscard]] TupleBuffer(TupleBuffer const& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+    [[nodiscard]] TupleBuffer(TupleBuffer const& other) noexcept
+        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
         if (controlBlock) {
             controlBlock->retain();
         }
@@ -96,7 +97,7 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    [[nodiscard]] TupleBuffer& operator=(TupleBuffer const& other) noexcept{
+    [[nodiscard]] TupleBuffer& operator=(TupleBuffer const& other) noexcept {
 
         if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
             return *this;
@@ -142,7 +143,7 @@ class [[nodiscard]] TupleBuffer {
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
-    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept{
+    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept {
         // Enable ADL to spell out to onlookers how swap should be used.
         using std::swap;
 
@@ -160,7 +161,7 @@ class [[nodiscard]] TupleBuffer {
     }
 
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
-    void release() noexcept{
+    void release() noexcept {
         if (controlBlock) {
             controlBlock->release();
         }
