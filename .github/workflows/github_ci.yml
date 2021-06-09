@@ -19,6 +19,7 @@ jobs:
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
@@ -51,14 +52,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
-      - name: NES Workspace cleanup
-        shell: bash
-        if: ${{ always() }}
-        run: |
-          git checkout --orphan orphan-branch
-          git branch -D $normal_branch
-          rm -rf .git/refs/tags/*
-          git gc
 
   release:
     runs-on: [self-hosted, linux, X64, Build]
@@ -68,6 +61,7 @@ jobs:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
@@ -161,7 +155,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         if: always()
-      - name: NES Workspace cleanup
-        if: ${{ always() }}
-        run: |
-          rm -rf $GITHUB_WORKSPACE
