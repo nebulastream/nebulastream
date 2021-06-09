@@ -13,31 +13,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/CEP/PhysicalIterationCEPOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalIterationCEPOperator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
 namespace PhysicalOperators {
 
-PhysicalIterationCEPOperator::PhysicalIterationCEPOperator(OperatorId id,
-                                               SchemaPtr inputSchema,
-                                               SchemaPtr outputSchema)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(predicate) {}
+PhysicalIterationCEPOperator::PhysicalIterationCEPOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema,
+                                               uint64_t minIterations, uint64_t maxIterations)
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), minIterations(minIterations), maxIterations(maxIterations)  {}
 
-PhysicalOperatorPtr
-PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
-    return std::make_shared<PhysicalFilterOperator>(id, inputSchema, outputSchema, expression);
+PhysicalOperatorPtr PhysicalIterationCEPOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations) {
+    return std::make_shared<PhysicalIterationCEPOperator>(id, inputSchema, outputSchema, minIterations, maxIterations);
 }
 
-ExpressionNodePtr PhysicalFilterOperator::getPredicate() { return predicate; }
+uint64_t PhysicalIterationCEPOperator::getMaxIterations() { return maxIterations; }
 
-PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, expression);
+uint64_t PhysicalIterationCEPOperator::getMinIterations() { return minIterations; }
+
+PhysicalOperatorPtr PhysicalIterationCEPOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations) {
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, minIterations, maxIterations);
 }
 
-const std::string PhysicalFilterOperator::toString() const { return "PhysicalFilterOperator"; }
+const std::string PhysicalIterationCEPOperator::toString() const { return "PhysicalIterationCEPOperator"; }
 
-OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, inputSchema, outputSchema, getPredicate()); }
+OperatorNodePtr PhysicalIterationCEPOperator::copy() { return create(id, inputSchema, outputSchema, getMinIterations(), getMaxIterations()); }
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation
