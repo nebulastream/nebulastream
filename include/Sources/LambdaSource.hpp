@@ -16,10 +16,13 @@
 
 #ifndef INCLUDE_SOURCESINK_LambdaSource_HPP_
 #define INCLUDE_SOURCESINK_LambdaSource_HPP_
-#include <NodeEngine/TupleBuffer.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
 #include <chrono>
+
+namespace NES::NodeEngine {
+class TupleBuffer;
+}
 
 namespace NES {
 

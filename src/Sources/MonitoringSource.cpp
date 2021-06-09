@@ -14,6 +14,7 @@
     limitations under the License.
 */
 
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Monitoring/Metrics/MetricCatalog.hpp>
 #include <Monitoring/Metrics/MetricGroup.hpp>
 #include <Monitoring/Metrics/MonitoringPlan.hpp>
