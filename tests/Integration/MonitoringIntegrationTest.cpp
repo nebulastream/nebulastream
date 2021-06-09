@@ -43,113 +43,71 @@
 
 #define private public
 #include <Components/NesCoordinator.hpp>
+#include <cstdint>
 
+using std::cout;
+using std::endl;
+#define DEBUG_OUTPUT
 namespace NES {
 
 //FIXME: This is a hack to fix issue with unreleased RPC port after shutting down the servers while running tests in continuous succession
 // by assigning a different RPC port for each test case
-uint64_t rpcPort = 5000;
+// TODO use grpc async queue to fix this issue - I am currently increasing the rpc port by 30 on every test! this is very bad!
+uint64_t rpcPort = 4000;
+uint64_t restPort = 8081;
 
 class MonitoringIntegrationTest : public testing::Test {
   public:
-    NodeEngine::BufferManagerPtr bufferManager;
-    std::string ipAddress = "127.0.0.1";
-    uint64_t restPort = 8081;
-    CoordinatorConfigPtr crdConf;
-    WorkerConfigPtr wrkConf;
-
     static void SetUpTestCase() {
-        NES::setupLogging("MonitoringStackTest.log", NES::LOG_DEBUG);
-        NES_INFO("MonitoringStackTest: Setup MonitoringStackTest test class.");
+        NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
     }
 
-    static void TearDownTestCase() { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest class." << std::endl; }
+    void SetUp() { rpcPort = rpcPort + 30; }
 
-    /* Will be called before a  test is executed. */
-    void SetUp() override {
-        crdConf = CoordinatorConfig::create();
-        wrkConf = WorkerConfig::create();
-        crdConf->resetCoordinatorOptions();
-        wrkConf->resetWorkerOptions();
-        std::cout << "MonitoringStackTest: Setup MonitoringStackTest test case." << std::endl;
-        bufferManager = std::make_shared<NodeEngine::BufferManager>(4096, 10);
-        rpcPort = rpcPort + 30;
-        crdConf->setRpcPort(rpcPort);
-        wrkConf->setCoordinatorPort(rpcPort);
-    }
-
-    /* Will be called before a test is executed. */
-    void TearDown() override { std::cout << "MonitoringStackTest: Tear down MonitoringStackTest test case." << std::endl; }
+    void TearDown() { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
 };
 
-TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromGrpcClient) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
-
-    NES_INFO("MonitoringStackTest: Start coordinator");
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(false);
-    EXPECT_NE(port, 0);
-    NES_INFO("MonitoringStackTest: Coordinator started successfully");
-
-    NES_INFO("MonitoringStackTest: Start worker 1");
-    wrkConf->setCoordinatorPort(port);
-    wrkConf->setRpcPort(port + 10);
-    wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
-    bool retStart1 = wrk1->start(false, false);
-    EXPECT_TRUE(retStart1);
-    NES_INFO("MonitoringStackTest: Worker1 started successfully");
-
-    bool retConWrk1 = wrk1->connect();
-    EXPECT_TRUE(retConWrk1);
-    NES_INFO("MonitoringStackTest: Worker 1 connected ");
-
-    // requesting the monitoring data
-    auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
-    auto plan = MonitoringPlan::create(metrics);
-    auto schema = plan->createSchema();
-
-    std::string destAddress = "127.0.0.1:" + std::to_string(port + 10);
-    auto tupleBuffer = bufferManager->getBufferBlocking();
-    auto success = crd->workerRpcClient->requestMonitoringData(destAddress, tupleBuffer, schema->getSchemaSizeInBytes());
-
-    NES_INFO("MonitoringStackTest: Coordinator requested monitoring data from worker 127.0.0.1:" + std::to_string(port + 10));
-    EXPECT_TRUE(success);
-    EXPECT_TRUE(tupleBuffer.getNumberOfTuples() == 1);
-    NES_DEBUG(UtilityFunctions::prettyPrintTupleBuffer(tupleBuffer, schema));
-
-    NES_INFO("MonitoringStackTest: Stopping worker");
-    bool retStopWrk1 = wrk1->stop(false);
-    EXPECT_TRUE(retStopWrk1);
-
-    NES_INFO("MonitoringStackTest: stopping coordinator");
-    bool retStopCord = crd->stopCoordinator(false);
-    EXPECT_TRUE(retStopCord);
-}
-
 TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
-    crdConf->resetCoordinatorOptions();
-    wrkConf->resetWorkerOptions();
+    CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
+    WorkerConfigPtr wrkConf = WorkerConfig::create();
+    SourceConfigPtr srcConf = SourceConfig::create();
 
-    NES_INFO("MonitoringStackTest: Start coordinator");
+    crdConf->setRpcPort(rpcPort);
+    crdConf->setRestPort(restPort);
+    wrkConf->setCoordinatorPort(rpcPort);
+
+    cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(crdConf);
-    uint64_t port = crd->startCoordinator(false);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);
     EXPECT_NE(port, 0);
-    NES_INFO("MonitoringStackTest: Coordinator started successfully");
+    cout << "coordinator started successfully" << endl;
 
-    NES_INFO("MonitoringStackTest: Start worker 1");
+    cout << "start worker 1" << endl;
     wrkConf->setCoordinatorPort(port);
     wrkConf->setRpcPort(port + 10);
     wrkConf->setDataPort(port + 11);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NodeType::Sensor);
-    bool retStart1 = wrk1->start(false, false);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ false);
     EXPECT_TRUE(retStart1);
-    NES_INFO("MonitoringStackTest: Worker1 started successfully");
+    cout << "worker1 started successfully" << endl;
+
+    cout << "start worker 2" << endl;
+    wrkConf->setCoordinatorPort(port);
+    wrkConf->setRpcPort(port + 20);
+    wrkConf->setDataPort(port + 21);
+    NesWorkerPtr wrk2 = std::make_shared<NesWorker>(wrkConf, NesNodeType::Sensor);
+    bool retStart2 = wrk2->start(/**blocking**/ false, /**withConnect**/ false);
+    EXPECT_TRUE(retStart2);
+    cout << "worker2 started successfully" << endl;
 
     bool retConWrk1 = wrk1->connect();
     EXPECT_TRUE(retConWrk1);
-    NES_INFO("MonitoringStackTest: Worker 1 connected ");
+    cout << "worker 1 connected " << endl;
+
+    bool retConWrk2 = wrk2->connect();
+    EXPECT_TRUE(retConWrk2);
+    cout << "worker 2 connected " << endl;
 
     // requesting the monitoring data
     auto metrics = std::vector<MetricValueType>({CpuMetric, DiskMetric, MemoryMetric, NetworkMetric});
@@ -157,7 +115,7 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
     auto schema = plan->createSchema();
     EXPECT_TRUE(schema->getSize() > 1);
 
-    auto nodeNumber = 2;
+    auto nodeNumber = 3;
     auto jsons = crd->getMonitoringService()->requestMonitoringDataFromAllNodesAsJson();
     NES_INFO("MonitoringStackTest: Jsons received: \n" + jsons.serialize());
 
@@ -181,11 +139,12 @@ TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
         EXPECT_EQ(json["memory"].size(), 13);
     }
 
-    NES_INFO("MonitoringStackTest: Stopping worker");
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    NES_INFO("MonitoringStackTest: stopping coordinator");
+    bool retStopWrk2 = wrk2->stop(false);
+    EXPECT_TRUE(retStopWrk2);
+
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
