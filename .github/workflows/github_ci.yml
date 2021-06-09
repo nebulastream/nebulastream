@@ -19,7 +19,7 @@ jobs:
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     steps:
-      - uses: ./
+      - uses: ./.github/actions/workspace-cleanup
         id: hello
         with:
            who-to-greet: 'Mona the Octocat'
