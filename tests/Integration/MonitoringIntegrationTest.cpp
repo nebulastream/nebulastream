@@ -68,7 +68,7 @@ class MonitoringIntegrationTest : public testing::Test {
     void TearDown() { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
 };
 
-TEST_F(MonitoringIntegrationTest, requestMonitoringDataFromServiceAsJson) {
+TEST_F(MonitoringIntegrationTest, DISABLED_requestMonitoringDataFromServiceAsJson) {
     CoordinatorConfigPtr crdConf = CoordinatorConfig::create();
     WorkerConfigPtr wrkConf = WorkerConfig::create();
     SourceConfigPtr srcConf = SourceConfig::create();
