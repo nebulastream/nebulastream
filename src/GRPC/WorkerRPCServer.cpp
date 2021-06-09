@@ -95,15 +95,15 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
     }
 }
 
-Status WorkerRPCServer::RegisterMonitoring(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) {
+Status
+WorkerRPCServer::RegisterMonitoring(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) {
     try {
         NES_DEBUG("WorkerRPCServer::RegisterMonitoring: Got request");
         MonitoringPlanPtr plan = MonitoringPlan::create(request->monitoringplan());
         auto schema = monitoringAgent->registerMonitoringPlan(plan);
         if (schema) {
             return Status::OK;
-        }
-        else {
+        } else {
             return Status::CANCELLED;
         }
     } catch (std::exception& ex) {

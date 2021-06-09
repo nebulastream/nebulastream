@@ -35,14 +35,12 @@ typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
 class MonitoringManager;
 typedef std::shared_ptr<MonitoringManager> MonitoringManagerPtr;
 
-
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
  */
 class MonitoringService {
   public:
-    explicit MonitoringService(TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager,
-                               MonitoringManagerPtr manager);
+    explicit MonitoringService(TopologyPtr topology, NodeEngine::BufferManagerPtr bufferManager, MonitoringManagerPtr manager);
     ~MonitoringService();
 
     web::json::value registerMonitoringPlanToAllNodes(MonitoringPlanPtr monitoringPlan);

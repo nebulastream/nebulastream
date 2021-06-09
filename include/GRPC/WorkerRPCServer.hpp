@@ -42,9 +42,12 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
 
-    Status RegisterMonitoring(ServerContext* context, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply* reply) override;
+    Status RegisterMonitoring(ServerContext* context,
+                              const MonitoringRegistrationRequest* request,
+                              MonitoringRegistrationReply* reply) override;
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
+
   private:
     NodeEngine::NodeEnginePtr nodeEngine;
     MonitoringAgentPtr monitoringAgent;
