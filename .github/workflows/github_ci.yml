@@ -19,15 +19,15 @@ jobs:
     runs-on: [self-hosted, linux, X64, Build]
     timeout-minutes: 90
     steps:
-      - uses: ./.github/actions/workspace-cleanup
-        id: hello
-        with:
-           who-to-greet: 'Mona the Octocat'
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
           persist-credentials: 'false'
+      - uses: ./.github/actions/workspace-cleanup
+        id: hello
+        with:
+          who-to-greet: 'Mona the Octocat'
       - name: Fetch git history
         run: |
           git fetch --prune --unshallow --tags
