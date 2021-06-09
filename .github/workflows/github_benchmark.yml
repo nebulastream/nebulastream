@@ -17,6 +17,7 @@ jobs:
     runs-on: [self-hosted, linux, X64, Benchmark]
     timeout-minutes: 60
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
@@ -41,10 +42,6 @@ jobs:
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_benchmark_scheduled
-      - name: NES Workspace cleanup
-        if: ${{ always() }}
-        run: |
-          rm -rf $GITHUB_WORKSPACE
 
 
   benchmark-triggered-job:
@@ -52,6 +49,7 @@ jobs:
     runs-on: [self-hosted, linux, X64, Benchmark]
     timeout-minutes: 60
     steps:
+      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v2
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
@@ -67,7 +65,3 @@ jobs:
         if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_benchmark_triggered
-      - name: NES Workspace cleanup
-        if: ${{ always() }}
-        run: |
-          rm -rf $GITHUB_WORKSPACE
