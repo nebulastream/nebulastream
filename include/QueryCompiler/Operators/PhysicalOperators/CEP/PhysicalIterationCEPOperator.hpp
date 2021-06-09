@@ -13,8 +13,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
+#ifndef NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_ITERATIONPHYSICALOPERATOR_HPP_
+#define NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_ITERATIONPHYSICALOPERATOR_HPP_
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
@@ -25,9 +25,9 @@ namespace PhysicalOperators {
 /**
  * @brief Physical Iteration CEPoperator.
  */
-class PhysicalIterationCEPoperator : public PhysicalUnaryOperator {
+class PhysicalIterationCEPOperator : public PhysicalUnaryOperator {
   public:
-    PhysicalIterationCEPoperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
+    PhysicalIterationCEPOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
     static PhysicalOperatorPtr create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations);
     const std::string toString() const override;
@@ -53,4 +53,4 @@ class PhysicalIterationCEPoperator : public PhysicalUnaryOperator {
 }// namespace QueryCompilation
 }// namespace NES
 
-#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_FILTERPHYSICALOPERATOR_HPP_
+#endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_CEP_ITERATIONPHYSICALOPERATOR_HPP_
