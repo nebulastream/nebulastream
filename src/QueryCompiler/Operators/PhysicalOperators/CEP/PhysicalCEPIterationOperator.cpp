@@ -13,7 +13,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalIterationCEPOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/CEP/PhysicalCEPIterationOperator.hpp>
 
 namespace NES {
 namespace QueryCompilation {
@@ -25,7 +25,7 @@ PhysicalIterationCEPOperator::PhysicalIterationCEPOperator(OperatorId id, Schema
 
 PhysicalOperatorPtr
 PhysicalIterationCEPOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations) {
-    return std::make_shared<PhysicalIterationCEPOperator>(id, inputSchema, outputSchema, uint64_t minIterations, uint64_t maxIterations);
+    return std::make_shared<PhysicalIterationCEPOperator>(id, inputSchema, outputSchema, minIterations, maxIterations);
 }
 
 uint64_t PhysicalIterationCEPOperator::getMaxIterations() { return maxIterations; }
@@ -33,7 +33,7 @@ uint64_t PhysicalIterationCEPOperator::getMaxIterations() { return maxIterations
 uint64_t PhysicalIterationCEPOperator::getMinIterations() { return minIterations; }
 
 PhysicalOperatorPtr PhysicalIterationCEPOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t minIterations, uint64_t maxIterations) {
-    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, uint64_t minIterations, uint64_t maxIterations);
+    return create(UtilityFunctions::getNextOperatorId(), inputSchema, outputSchema, minIterations, maxIterations);
 }
 
 const std::string PhysicalIterationCEPOperator::toString() const { return "PhysicalIterationCEPOperator"; }
