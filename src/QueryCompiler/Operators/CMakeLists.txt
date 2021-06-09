@@ -21,4 +21,4 @@ add_source_nes(
 
 add_subdirectory(GeneratableOperators)
 add_subdirectory(PhysicalOperators)
-add_subdirectory(CEP)
+
