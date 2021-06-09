@@ -31,7 +31,7 @@ TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullpt
     //nop
 }
 
-TupleBuffer::TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size)
+TupleBuffer::TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
     : controlBlock(controlBlock), ptr(ptr), size(size) {
     // nop
 }
@@ -48,7 +48,7 @@ TupleBuffer::TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.cont
     other.size = 0;
 }
 
-TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
+TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept {
     if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
         return *this;
     }
@@ -69,7 +69,7 @@ TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
     return *this;
 }
 
-TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) {
+TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) noexcept {
 
     // Especially for rvalues, the following branch should most likely never be taken if the caller writes
     // reasonable code. Therefore, this branch is considered unlikely.
@@ -85,16 +85,16 @@ TupleBuffer& TupleBuffer::operator=(TupleBuffer&& other) {
     return *this;
 }
 
-TupleBuffer::~TupleBuffer() { release(); }
+TupleBuffer::~TupleBuffer() noexcept { release(); }
 
-bool TupleBuffer::isValid() const { return ptr != nullptr; }
+bool TupleBuffer::isValid() const noexcept { return ptr != nullptr; }
 
-TupleBuffer& TupleBuffer::retain() {
+TupleBuffer& TupleBuffer::retain() noexcept {
     controlBlock->retain();
     return *this;
 }
 
-void TupleBuffer::release() {
+void TupleBuffer::release() noexcept {
     if (controlBlock) {
         controlBlock->release();
     }
@@ -103,25 +103,25 @@ void TupleBuffer::release() {
     size = 0;
 }
 
-uint64_t TupleBuffer::getBufferSize() const { return size; }
+uint64_t TupleBuffer::getBufferSize() const noexcept { return size; }
 
-uint64_t TupleBuffer::getNumberOfTuples() const { return controlBlock->getNumberOfTuples(); }
+uint64_t TupleBuffer::getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
 
-void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) { controlBlock->setNumberOfTuples(numberOfTuples); }
+void TupleBuffer::setNumberOfTuples(uint64_t numberOfTuples) noexcept { controlBlock->setNumberOfTuples(numberOfTuples); }
 
-uint64_t TupleBuffer::getWatermark() const { return controlBlock->getWatermark(); }
+uint64_t TupleBuffer::getWatermark() const noexcept { return controlBlock->getWatermark(); }
 
-uint64_t TupleBuffer::getOriginId() const { return controlBlock->getOriginId(); }
+uint64_t TupleBuffer::getOriginId() const noexcept { return controlBlock->getOriginId(); }
 
-void TupleBuffer::setOriginId(uint64_t id) { controlBlock->setOriginId(id); }
+void TupleBuffer::setOriginId(uint64_t id) noexcept { controlBlock->setOriginId(id); }
 
-void TupleBuffer::setWatermark(uint64_t value) { controlBlock->setWatermark(value); }
+void TupleBuffer::setWatermark(uint64_t value) noexcept { controlBlock->setWatermark(value); }
 
-void TupleBuffer::setCreationTimestamp(uint64_t value) { controlBlock->setCreationTimestamp(value); }
+void TupleBuffer::setCreationTimestamp(uint64_t value) noexcept { controlBlock->setCreationTimestamp(value); }
 
 uint64_t TupleBuffer::getCreationTimestamp() const noexcept { return controlBlock->getCreationTimestamp(); }
 
-void swap(TupleBuffer& lhs, TupleBuffer& rhs) {
+void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept {
     // Enable ADL to spell out to onlookers how swap should be used.
     using std::swap;
 

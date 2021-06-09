@@ -36,19 +36,16 @@ class OutputChannel;
 
 namespace NES::NodeEngine {
 /**
- * @brief The TupleBuffer is the NES API that allows runtime components to access memory to store records
- * The purpose of the TupleBuffer is to zero memory allocations and enable batching. To zero the memory allocation
- * a BufferManager keeps a fixed set of fixed-size buffers that can be handed to components.
- * When a component is done with a buffer, it can be returned to the BufferManager.
- * However, the multi-threaded nature of NES execution engine introduces the challenge of reference counting: i.e.,
- * if a tuple buffer is shared among threads, we need to safely determine when the TupleBuffer can be returned to the
- * BufferManager. Our solution is as follows. We follow the same principle behind std::shared_ptr.
- * We use the TupleBuffer as a normal lvalue. Note that TupleBuffer* is forbidden and operator& of TupleBuffer is deleted.
- * We increase the reference counter of the TupleBuffer every time it gets passed via a copy ctor or a copy assignment
- * operator. When the dtor of a TupleBuffer is called then the reference counter is decreased.
- * To pass the TupleBuffer within a thread, a TupleBuffer& must be used.
- * To pass the TupleBuffer among thread, use TupleBuffer. Ensure the copy semantics is used. The move semantics is enabled
- * but that does not increase the internal counter.
+ * @brief The TupleBuffer allows runtime components to access memory to store records in a reference-counted and
+ * thread-safe manner.
+ *
+ * The purpose of the TupleBuffer is to zero memory allocations and enable batching.
+ * In order to zero the memory allocation, a BufferManager keeps a fixed set of fixed-size buffers that it hands out to
+ * components.
+ * A TupleBuffer's content is automatically recycled or deleted once its reference count reaches zero.
+ *
+ * Prefer passing the TupleBuffer by reference whenever possible, pass the TupleBuffer to another thread by value.
+ *
  * Important note: when a component is done with a TupleBuffer, it must be released. Not returning a TupleBuffer will
  * result in a runtime error that the BufferManager will raise by the termination of the NES program.
  *
@@ -76,19 +73,19 @@ class TupleBuffer {
 
     TupleBuffer(TupleBuffer&& other) noexcept;
 
-    TupleBuffer& operator=(const TupleBuffer& other);
+    TupleBuffer& operator=(const TupleBuffer& other) noexcept;
 
-    TupleBuffer& operator=(TupleBuffer&& other);
+    TupleBuffer& operator=(TupleBuffer&& other) noexcept;
 
     TupleBuffer() noexcept;
 
-    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs);
+    friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept;
 
   private:
-    explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size);
+    explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept;
 
   public:
-    ~TupleBuffer();
+    ~TupleBuffer() noexcept;
 
     /**
     * @return the content of the buffer as pointer to unsigned char
@@ -102,51 +99,51 @@ class TupleBuffer {
     /**
     * @return true if the interal pointer is not null
     */
-    bool isValid() const;
+    bool isValid() const noexcept;
 
     TupleBuffer* operator&() = delete;
 
-    /**
-    * @brief Increases the internal reference counter by one
-    * @return the same TupleBuffer object
-    */
-    TupleBuffer& retain();
+    uint64_t getBufferSize() const noexcept;
 
-    /**
-    * @brief Decreases the internal reference counter by one. Note that if the buffer's counter reaches 0
-    * then the TupleBuffer is not usable any longer.
-    */
-    void release();
+    uint64_t getNumberOfTuples() const noexcept;
 
-    uint64_t getBufferSize() const;
-
-    uint64_t getNumberOfTuples() const;
-
-    void setNumberOfTuples(uint64_t numberOfTuples);
+    void setNumberOfTuples(uint64_t numberOfTuples) noexcept;
 
     /// @brief Print the buffer's address.
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) {
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept{
         // TODO: C++2a: change to std::bit_cast
         return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
     }
 
     /**
+    * @brief Increases the internal reference counter by one
+    * @return the same TupleBuffer object
+    */
+    TupleBuffer& retain() noexcept;
+
+    /**
+    * @brief Decreases the internal reference counter by one. Note that if the buffer's counter reaches 0
+    * then the TupleBuffer is not usable any longer.
+    */
+    void release() noexcept;
+
+    /**
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
-    uint64_t getWatermark() const;
+    uint64_t getWatermark() const noexcept;
 
     /**
      * @brief method to set the watermark with a timestamp
      * @param value timestamp
      */
-    void setWatermark(uint64_t value);
+    void setWatermark(uint64_t value) noexcept;
 
     /**
      * @brief method to set the watermark with a timestamp
      * @param value timestamp
      */
-    void setCreationTimestamp(uint64_t value);
+    void setCreationTimestamp(uint64_t value) noexcept;
 
     /**
      * @brief method to get the creation timestamp
@@ -158,25 +155,24 @@ class TupleBuffer {
      * @brief set the origin id for the buffer (the operator id that creates this buffer)
      * @param origin id
      */
-    void setOriginId(uint64_t id);
+    void setOriginId(uint64_t id) noexcept;
 
     /**
      * @brief returns the origin id of the buffer
      * @return origin id
      */
-    uint64_t getOriginId() const;
+    uint64_t getOriginId() const noexcept;
 
   private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
-     * @return
      */
     detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
   private:
-    detail::BufferControlBlock* controlBlock;
-    uint8_t* ptr;
-    uint32_t size;
+    detail::BufferControlBlock* controlBlock = nullptr;
+    uint8_t* ptr = nullptr;
+    uint32_t size = 0;
 };
 
 }// namespace NES::NodeEngine
