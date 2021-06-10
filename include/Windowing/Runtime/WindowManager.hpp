@@ -20,6 +20,7 @@
 #include <Windowing/LogicalWindowDefinition.hpp>
 #include <Windowing/Runtime/SliceMetaData.hpp>
 #include <Windowing/WindowMeasures/TimeMeasure.hpp>
+#include <Windowing/Runtime/WindowSliceStore.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
@@ -62,8 +63,8 @@ class WindowManager {
         NES_DEBUG("WindowManager store" << id << ": sliceStream for ts=" << ts << " key=" << key
                                         << " allowedLateness=" << allowedLateness);
         // updates the maximal record ts
-        // check if the slice store is empty
-        if (store->empty()) {
+        // check if the slice store is empty or if the first slice has a larger ts then the current event.
+        if (store->empty() || store->getSliceMetadata().front().getStartTs() > ts) {
             // set last watermark to current ts for processing time
             if (ts < allowedLateness) {
                 store->nextEdge = windowType->calculateNextWindowEnd(0);
@@ -73,14 +74,14 @@ class WindowManager {
 
             if (windowType->isTumblingWindow()) {
                 auto* window = dynamic_cast<TumblingWindow*>(windowType.get());
-                store->appendSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
+                store->prependSlice(SliceMetaData(store->nextEdge - window->getSize().getTime(), store->nextEdge));
                 NES_DEBUG("WindowManager " << id
                                            << ": for TumblingWindow sliceStream empty store, set ts as LastWatermark, startTs="
                                            << store->nextEdge - window->getSize().getTime()
                                            << " nextWindowEnd=" << store->nextEdge << " key=" << key);
             } else if (windowType->isSlidingWindow()) {
                 auto* window = dynamic_cast<SlidingWindow*>(windowType.get());
-                store->appendSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
+                store->prependSlice(SliceMetaData(store->nextEdge - window->getSlide().getTime(), store->nextEdge));
                 NES_DEBUG("WindowManager " << id
                                            << ": for SlidingWindow  sliceStream empty store, set ts as LastWatermark, startTs="
                                            << store->nextEdge - window->getSlide().getTime()

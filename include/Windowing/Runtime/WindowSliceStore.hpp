@@ -45,8 +45,11 @@ class WindowSliceStore {
                 return i;
             }
         }
-        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts" << ts);
-        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts");
+        auto lastSlice = sliceMetaData.back();
+        NES_ERROR("getSliceIndexByTs for could not find a slice, this should not happen. current ts"
+                  << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
+        NES_THROW_RUNTIME_ERROR("getSliceIndexByTs for could not find a slice, this should not happen ts"
+                                << ts << " last slice " << lastSlice.getStartTs() << " - " << lastSlice.getEndTs());
         //TODO: change this back once we have the vector clocks
         return 0;
     }
@@ -60,6 +63,17 @@ class WindowSliceStore {
                   << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
         sliceMetaData.push_back(slice);
         partialAggregates.push_back(defaultValue);
+    }
+
+    /**
+    * @brief Prepend a new slice to the meta data vector and intitalises a new partial aggregate with the default value.
+    * @param slice
+    */
+    inline void prependSlice(SliceMetaData slice) {
+        NES_DEBUG("prependSlice "
+                      << " start=" << slice.getStartTs() << " end=" << slice.getEndTs());
+        sliceMetaData.emplace(sliceMetaData.begin(),slice);
+        partialAggregates.emplace(partialAggregates.begin(), defaultValue);
     }
 
     /**
