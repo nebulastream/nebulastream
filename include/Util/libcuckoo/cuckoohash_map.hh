@@ -2200,7 +2200,7 @@ public:
 
             // Advance the iterator to the next item in the table, or to the end
             // of the table. Returns the iterator at its old position.
-            const_iterator operator++(int) {
+            const const_iterator operator++(int) {
                 const_iterator old(*this);
                 ++(*this);
                 return old;
@@ -2233,7 +2233,7 @@ public:
             //! Move the iterator back to the previous item in the table.
             //! Returns the iterator at its old position. Behavior is undefined
             //! if the iterator is at the beginning.
-            const_iterator operator--(int) {
+            const const_iterator operator--(int) {
                 const_iterator old(*this);
                 --(*this);
                 return old;
@@ -2308,7 +2308,7 @@ public:
                 return *this;
             }
 
-            iterator operator++(int) {
+            const iterator operator++(int) {
                 iterator old(*this);
                 const_iterator::operator++();
                 return old;
@@ -2319,7 +2319,7 @@ public:
                 return *this;
             }
 
-            iterator operator--(int) {
+            const iterator operator--(int) {
                 iterator old(*this);
                 const_iterator::operator--();
                 return old;
