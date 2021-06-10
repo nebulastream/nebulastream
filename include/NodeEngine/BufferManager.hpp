@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#ifndef _BUFFER_MANAGER_H
+#ifndef BUFFER_MANAGER_H
 #define BUFFER_MANAGER_H
 
 #include <NodeEngine/AbstractBufferProvider.hpp>
@@ -28,9 +28,8 @@
 #include <mutex>
 #include <optional>
 #include <vector>
-namespace NES {
+namespace NES::NodeEngine {
 
-namespace NodeEngine {
 class TupleBuffer;
 namespace detail {
 class MemorySegment;
@@ -195,7 +194,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
     std::vector<std::shared_ptr<AbstractBufferProvider>> localBufferPools;
 };
-}// namespace NodeEngine
 
-}// namespace NES
-#endif
+}// namespace NES::NodeEngine
+
+#endif // BUFFER_MANAGER_H
