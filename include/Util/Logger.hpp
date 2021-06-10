@@ -27,11 +27,19 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/patternlayout.h>
 #include <mutex>
+#include <sstream>
 
 using namespace log4cxx;
 using namespace log4cxx::helpers;
 
 namespace NES {
+
+/// XXX: C++2a remove when format is available.
+/// To be used only for unperformat logging
+auto catString=[os=std::ostringstream{}](auto&& ...p) mutable {
+  (os << ... << std::forward<decltype(p)>(p) );
+  return os.str();
+};
 
 enum DebugLevel { LOG_NONE, LOG_ERROR, LOG_FATAL, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 

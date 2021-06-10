@@ -49,8 +49,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     if (executionNodes.empty()) {
-        NES_ERROR("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query " + std::to_string(queryId)
-                  + " is deployed");
+        NES_ERROR(catString("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query ", queryId," is deployed"));
         return false;
     }
 
@@ -60,7 +59,8 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: stop query successful");
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: stop query failed");
-        throw QueryUndeploymentException("Failed to stop the query " + queryId);
+        // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
+        throw QueryUndeploymentException(catString("Failed to stop the query ", queryId, '.'));
     }
 
     NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query");
@@ -69,7 +69,9 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
         NES_DEBUG("QueryUndeploymentPhase:removeQuery: undeploy query successful");
     } else {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
-        throw QueryUndeploymentException("Failed to undeploy the query " + queryId);
+        // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
+        throw QueryUndeploymentException(catString("Failed to stop the query ", queryId, '.'));
+
     }
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
@@ -87,7 +89,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
     //NOTE: the uncommented lines below have to be activated for async calls
     //    std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
-    for (ExecutionNodePtr executionNode : executionNodes) {
+    for (auto &&executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
         const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
