@@ -62,7 +62,7 @@ class [[nodiscard]] TupleBuffer {
     /// Utilize the wrapped-memory constructor and requires direct access to the control block for the ZMQ sink.
     friend class Network::OutputChannel;
 
-    [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
+    [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock * controlBlock, uint8_t * ptr, uint32_t size) noexcept
         : controlBlock(controlBlock), ptr(ptr), size(size) {}
 
   public:
@@ -78,7 +78,7 @@ class [[nodiscard]] TupleBuffer {
      *               which is the caller's responsability.
      *
      */
-    [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
+    [[nodiscard]] static TupleBuffer wrapMemory(uint8_t * ptr, size_t length, BufferRecycler * parent);
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept
@@ -90,7 +90,7 @@ class [[nodiscard]] TupleBuffer {
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] constexpr TupleBuffer(TupleBuffer&& other) noexcept
+    [[nodiscard]] constexpr TupleBuffer(TupleBuffer && other) noexcept
         : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
         other.controlBlock = nullptr;
         other.ptr = nullptr;
@@ -140,14 +140,14 @@ class [[nodiscard]] TupleBuffer {
     TupleBuffer* operator&() = delete;
 
     /// @brief Return if this is not valid.
-    [[nodiscard]] constexpr auto operator!() noexcept -> bool { return !isValid(); }
+    [[nodiscard]] constexpr auto operator!() noexcept->bool { return !isValid(); }
 
     /// @brief release the resource if necessary.
     inline ~TupleBuffer() noexcept { release(); }
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
-    inline friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept {
+    inline friend void swap(TupleBuffer & lhs, TupleBuffer & rhs) noexcept {
         // Enable ADL to spell out to onlookers how swap should be used.
         using std::swap;
 
