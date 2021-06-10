@@ -19,7 +19,8 @@
 namespace NES::NodeEngine {
 PhysicalField::PhysicalField(uint64_t bufferOffset) : bufferOffset(bufferOffset){};
 
-PhysicalField::~PhysicalField()= default;;
+PhysicalField::~PhysicalField() = default;
+;
 
 /**
  * @brief This function is only valid for ArrayPhysicalFields.

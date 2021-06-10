@@ -278,7 +278,7 @@ class ScalarImp : public TypeImp {
 class NodeImp {
 
   public:
-    NodeImp()  {}
+    NodeImp() {}
 
     ~NodeImp() { Clear(); }
 
@@ -321,7 +321,7 @@ class NodeImp {
     }
 
     Node::eType m_Type{Node::None};///< Type of node.
-    TypeImp* m_pImp{nullptr};   ///< Imp of type.
+    TypeImp* m_pImp{nullptr};      ///< Imp of type.
 };
 
 // Iterator implementation class
@@ -410,7 +410,7 @@ class MapConstIteratorImp : public IteratorImp {
 };
 
 // Iterator class
-Iterator::Iterator()  {}
+Iterator::Iterator() {}
 
 Iterator::~Iterator() {
     if (m_pImp) {
@@ -509,7 +509,7 @@ bool Iterator::operator==(const Iterator& it) {
 bool Iterator::operator!=(const Iterator& it) { return !(*this == it); }
 
 // Const Iterator class
-ConstIterator::ConstIterator()  {}
+ConstIterator::ConstIterator() {}
 
 ConstIterator::~ConstIterator() {
     if (m_pImp) {
@@ -885,11 +885,11 @@ class ReaderLine {
 
     static const unsigned char FlagMask[3];
 
-    std::string Data;    ///< Data of line.
-    size_t No;           ///< Line number.
-    size_t Offset;       ///< Offset to first character in data.
-    Node::eType Type;    ///< Type of line.
-    unsigned char Flags; ///< Flags of line.
+    std::string Data;             ///< Data of line.
+    size_t No;                    ///< Line number.
+    size_t Offset;                ///< Offset to first character in data.
+    Node::eType Type;             ///< Type of line.
+    unsigned char Flags;          ///< Flags of line.
     ReaderLine* NextLine{nullptr};///< Pointer to next line.
 };
 

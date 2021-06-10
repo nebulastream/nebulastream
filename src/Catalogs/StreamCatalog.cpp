@@ -176,8 +176,7 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
     } else {
         NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream"
                                                    << physicalStreamName << " from node " << hashId);
-        for (auto entry =
-                 logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
+        for (auto entry = logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
              entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
              entry++) {
             NES_DEBUG("test node id=" << entry->get()->getNode()->getId() << " phyStr=" << entry->get()->getPhysicalName());

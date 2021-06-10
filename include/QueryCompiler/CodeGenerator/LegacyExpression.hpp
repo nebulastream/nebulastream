@@ -29,7 +29,8 @@ enum class PredicateItemMutation { ATTRIBUTE, VALUE };
 
 class LegacyExpression {
   public:
-    virtual ~LegacyExpression()= default;;
+    virtual ~LegacyExpression() = default;
+    ;
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
     [[nodiscard]] virtual const std::string toString() const = 0;
     [[nodiscard]] virtual LegacyExpressionPtr copy() const = 0;

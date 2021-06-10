@@ -32,7 +32,8 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    SinkDescriptor()= default;;
+    SinkDescriptor() = default;
+    ;
 
     virtual ~SinkDescriptor() = default;
 

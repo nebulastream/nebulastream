@@ -24,7 +24,7 @@
 
 namespace NES {
 
-GlobalQueryPlan::GlobalQueryPlan()  {}
+GlobalQueryPlan::GlobalQueryPlan() {}
 
 GlobalQueryPlanPtr GlobalQueryPlan::create() { return std::make_shared<GlobalQueryPlan>(GlobalQueryPlan()); }
 

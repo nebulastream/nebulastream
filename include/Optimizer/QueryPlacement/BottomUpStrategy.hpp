@@ -35,7 +35,8 @@ namespace NES::Optimizer {
  */
 class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    ~BottomUpStrategy() override= default;;
+    ~BottomUpStrategy() override = default;
+    ;
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 

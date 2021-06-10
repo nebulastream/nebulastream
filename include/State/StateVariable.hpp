@@ -77,10 +77,10 @@ template<typename Key, typename Value, std::enable_if_t<std::is_integral<Value>:
 class StateVariable : public detail::Destroyable {
   private:
     using StateBackend = cuckoohash_map<Key, Value>;
-    using StateBackendRef = StateBackend &;
+    using StateBackendRef = StateBackend&;
     using StateBackendMappedType = typename cuckoohash_map<Key, Value>::mapped_type;
     using LockedStateBackend = typename cuckoohash_map<Key, Value>::locked_table;
-    using LockedStateBackendRef = LockedStateBackend &;
+    using LockedStateBackendRef = LockedStateBackend&;
     using KeyValueRangeHandleConstIterator = typename LockedStateBackend::const_iterator;
     using KeyValueRangeHandleIterator = typename LockedStateBackend::iterator;
 

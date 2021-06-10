@@ -592,8 +592,8 @@ class handle {
     T& operator->() { return _val; }
     const T& operator->() const { return _val; }
 
-    using ref_t = typename rm_ptr<T>::type &;
-    using const_ref_t = const typename rm_ptr<T>::type &;
+    using ref_t = typename rm_ptr<T>::type&;
+    using const_ref_t = const typename rm_ptr<T>::type&;
     ref_t operator*() { return *_val; }
     const_ref_t operator*() const { return *_val; }
     ref_t operator[](size_t idx) { return _val[idx]; }
@@ -615,7 +615,7 @@ struct demangler_impl {
 
 template<>
 struct demangler_impl<system_tag::current_tag> {
-    demangler_impl()  {}
+    demangler_impl() {}
 
     std::string demangle(const char* funcname) {
         using namespace details;
@@ -667,7 +667,7 @@ struct Trace {
     void* addr{nullptr};
     size_t idx{0};
 
-    Trace()  {}
+    Trace() {}
 
     explicit Trace(void* _addr, size_t _idx) : addr(_addr), idx(_idx) {}
 };
@@ -680,7 +680,7 @@ struct ResolvedTrace : public Trace {
         unsigned line{0};
         unsigned col{0};
 
-        SourceLoc()  {}
+        SourceLoc() {}
 
         bool operator==(const SourceLoc& b) const {
             return function == b.function && filename == b.filename && line == b.line && col == b.col;
@@ -728,7 +728,7 @@ class StackTraceImpl {
 
 class StackTraceImplBase {
   public:
-    StackTraceImplBase()  {}
+    StackTraceImplBase() {}
 
     [[nodiscard]] size_t thread_id() const { return _thread_id; }
 
@@ -1512,7 +1512,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libbfd> : public TraceResolverL
 template<>
 class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLinuxBase {
   public:
-    TraceResolverLinuxImpl()  {}
+    TraceResolverLinuxImpl() {}
 
     template<class ST>
     void load_stacktrace(ST&) {}
@@ -1665,7 +1665,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     }
 
   private:
-    using dwfl_handle_t = details::handle<Dwfl *, details::deleter<void, Dwfl *, &dwfl_end>>;
+    using dwfl_handle_t = details::handle<Dwfl*, details::deleter<void, Dwfl*, &dwfl_end>>;
     details::handle<Dwfl_Callbacks*, details::default_delete<Dwfl_Callbacks*>> _dwfl_cb;
     dwfl_handle_t _dwfl_handle;
     bool _dwfl_handle_initialized{false};
@@ -3623,8 +3623,8 @@ class Printer {
     int trace_context_size{7};
 
     Printer()
-        
-          {}
+
+    {}
 
     template<typename ST>
     FILE* print(ST& st, FILE* fp = stderr) {
@@ -3788,7 +3788,7 @@ class SignalHandling {
         return std::vector<int>(posix_signals, posix_signals + sizeof posix_signals / sizeof posix_signals[0]);
     }
 
-    SignalHandling(const std::vector<int>& posix_signals = make_default_signals())  {
+    SignalHandling(const std::vector<int>& posix_signals = make_default_signals()) {
         bool success = true;
 
         const size_t stack_size = 1024 * 1024 * 8;

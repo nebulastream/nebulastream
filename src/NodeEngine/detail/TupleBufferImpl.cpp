@@ -38,11 +38,11 @@ namespace detail {
 // ------------------ Core Mechanism for Buffer recycling ----------------------
 // -----------------------------------------------------------------------------
 
-MemorySegment::MemorySegment(const MemorySegment& other)  = default;
+MemorySegment::MemorySegment(const MemorySegment& other) = default;
 
 MemorySegment& MemorySegment::operator=(const MemorySegment& other) = default;
 
-MemorySegment::MemorySegment()  {}
+MemorySegment::MemorySegment() {}
 
 MemorySegment::MemorySegment(uint8_t* ptr,
                              uint32_t size,

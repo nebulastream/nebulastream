@@ -20,7 +20,7 @@
 
 namespace NES::Network {
 
-PartitionManager::PartitionEntry::PartitionEntry(DataEmitterPtr emitter) :  emitter(emitter) {
+PartitionManager::PartitionEntry::PartitionEntry(DataEmitterPtr emitter) : emitter(emitter) {
     // nop
 }
 

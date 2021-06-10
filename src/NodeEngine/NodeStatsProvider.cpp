@@ -37,7 +37,7 @@
 
 namespace NES::NodeEngine {
 
-NodeStatsProvider::NodeStatsProvider() :  nodeStats(std::make_shared<NodeStats>()) {}
+NodeStatsProvider::NodeStatsProvider() : nodeStats(std::make_shared<NodeStats>()) {}
 
 NodeStatsProviderPtr NodeStatsProvider::create() { return std::make_shared<NodeStatsProvider>(); }
 
