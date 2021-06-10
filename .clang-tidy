@@ -2,7 +2,8 @@
 # - Disable project-specific checks (abseil, fuchsia, goolge, zircon, llvm)
 # - Also disable modernization to trailing return types because this would cause a lot of unnecessary
 #   refactoring
-Checks:          '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-modernize-use-trailing-return-type,-llvm*'
+# - Implicit conversions sometimes make the code more readable
+Checks:          '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none
