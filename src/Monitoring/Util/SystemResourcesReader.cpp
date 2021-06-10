@@ -82,7 +82,7 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
     // alternatively also /sys/class/net/intf/statistics can be parsed
     auto output = NetworkMetrics();
 
-    FILE* fp = fopen("/proc/net/dev", "r");
+    FILE* fp = fopen("/proc/net/dev", "re");
     char buf[200], ifname[20];
     uint64_t rBytes, rPackets, rErrs, rDrop, rFifo, rFrame, rCompressed, rMulticast;
     uint64_t tBytes, tPackets, tErrs, tDrop, tFifo, tColls, tCarrier, tCompressed;
