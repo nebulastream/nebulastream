@@ -356,6 +356,7 @@ void DataSource::runningRoutineWithFrequency() {
         NES_DEBUG("DataSource " << operatorId << ": Data Source finished processing iteration " << cnt);
     }
     // inject reconfiguration task containing end of stream
+    NES_DEBUG("DataSource " << operatorId << ": Data Source add end of stream. Gracefully= " << wasGracefullyStopped);
     queryManager->addEndOfStream(shared_from_base<DataSource>(), wasGracefullyStopped);//
     bufferManager->destroy();
     queryManager.reset();
