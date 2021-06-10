@@ -19,8 +19,8 @@
 #include <mutex>
 #include <signal.h>
 
-static std::condition_variable _condition;
-static std::mutex _mutex;
+static std::condition_variable condition;
+static std::mutex mutex;
 
 namespace NES {
 
@@ -32,15 +32,15 @@ class InterruptHandler {
         std::cout << "handleUserInterrupt" << '\n';
         if (signal == SIGTERM) {
             std::cout << "SIGINT trapped ..." << '\n';
-            _condition.notify_one();
+            condition.notify_one();
         }
     }
 
     static void waitForUserInterrupt() {
         std::cout << "waitForUserInterrupt()" << '\n';
-        std::unique_lock<std::mutex> lock{_mutex};
+        std::unique_lock<std::mutex> lock{mutex};
         std::cout << "waitForUserInterrupt() got lock" << '\n';
-        _condition.wait(lock);
+        condition.wait(lock);
         std::cout << "user has signaled to interrupt program..." << '\n';
         lock.unlock();
     }

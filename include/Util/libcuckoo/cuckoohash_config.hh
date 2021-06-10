@@ -1,7 +1,7 @@
 /** \file */
 
 #ifndef _CUCKOOHASH_CONFIG_HH
-#define _CUCKOOHASH_CONFIG_HH
+#define CUCKOOHASH_CONFIG_HH
 
 #include <cstddef>
 #include <limits>

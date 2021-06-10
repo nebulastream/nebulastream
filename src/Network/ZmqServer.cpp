@@ -24,7 +24,7 @@
 #include <Util/ThreadNaming.hpp>
 #include <utility>
 
-#define TO_RAW_ZMQ_SOCKET static_cast<void*>
+#define TO_RAW_ZMQ_SOCKET (static_cast<void*>)
 
 namespace NES::Network {
 

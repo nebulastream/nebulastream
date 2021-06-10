@@ -1,7 +1,7 @@
 /** \file */
 
 #ifndef _CUCKOOHASH_UTIL_HH
-#define _CUCKOOHASH_UTIL_HH
+#define CUCKOOHASH_UTIL_HH
 
 #include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
 #include <exception>

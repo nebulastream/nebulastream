@@ -15,7 +15,7 @@
 */
 
 #ifndef _NODEENGINE_NODESTATSPROVIDER_HPP
-#define _NODEENGINE_NODESTATSPROVIDER_HPP
+#define NODEENGINE_NODESTATSPROVIDER_HPP
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <memory>
