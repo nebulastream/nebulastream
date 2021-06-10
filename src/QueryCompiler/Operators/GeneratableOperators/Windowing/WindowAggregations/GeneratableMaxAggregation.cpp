@@ -23,9 +23,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableMaxAggregation::GeneratableMaxAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
@@ -43,6 +41,4 @@ void GeneratableMaxAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto ifStatement = IF(partialRef < *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

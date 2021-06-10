@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     OperatorId id,
@@ -51,6 +49,4 @@ OperatorNodePtr PhysicalWatermarkAssignmentOperator::copy() {
     return create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
 }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

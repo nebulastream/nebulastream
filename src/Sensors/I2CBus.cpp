@@ -19,8 +19,7 @@
 #include <cstring>
 #include <fcntl.h>
 
-namespace NES {
-namespace Sensors {
+namespace NES::Sensors {
 
 I2CBus::I2CBus(const char* filename) : GenericBus(filename, BusType::I2C) { NES_INFO("I2CBus: Creating bus"); }
 
@@ -95,5 +94,4 @@ int I2CBus::rawI2CRdrw(uint8_t address, uint8_t readWriteOperation, uint8_t size
     return returnStatus;
 }
 
-}//namespace Sensors
 }//namespace NES

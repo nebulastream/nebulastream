@@ -16,13 +16,11 @@
 #include <Exceptions/NesRuntimeException.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <Util/Logger.hpp>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 QueryCompilationException::QueryCompilationException(std::string message)
     : NesRuntimeException(message, NES::NodeEngine::collectAndPrintStacktrace()) {
     NES_ERROR(message);
 }
 
-}// namespace QueryCompilation
 }// namespace NES

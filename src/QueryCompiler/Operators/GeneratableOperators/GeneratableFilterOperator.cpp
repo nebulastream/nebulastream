@@ -19,9 +19,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableFilterOperator::GeneratableFilterOperator(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema), predicate(predicate) {}
@@ -43,6 +41,4 @@ const std::string GeneratableFilterOperator::toString() const { return "Generata
 
 OperatorNodePtr GeneratableFilterOperator::copy() { return create(id, inputSchema, predicate); }
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

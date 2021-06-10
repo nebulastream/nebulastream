@@ -22,9 +22,7 @@
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableCountAggregation::GeneratableCountAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
@@ -42,6 +40,4 @@ void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr curren
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
 }
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

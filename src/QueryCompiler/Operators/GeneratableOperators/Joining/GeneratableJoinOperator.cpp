@@ -17,9 +17,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableJoinOperator::GeneratableJoinOperator(OperatorId id,
                                                  SchemaPtr inputSchema,
@@ -27,6 +25,4 @@ GeneratableJoinOperator::GeneratableJoinOperator(OperatorId id,
                                                  Join::JoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(operatorHandler) {}
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

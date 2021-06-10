@@ -26,8 +26,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <memory>
 #include <sstream>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 ArrayGeneratableType::ArrayGeneratableType(ArrayPhysicalTypePtr type, GeneratableDataTypePtr component)
     : type(type), component(component) {}
 
@@ -48,5 +47,4 @@ CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifie
     }
     return ptr;
 }
-}// namespace QueryCompilation
 }// namespace NES

@@ -18,8 +18,7 @@
 #include <Operators/LogicalOperators/Sources/NetworkSourceDescriptor.hpp>
 #include <utility>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 NetworkSourceDescriptor::NetworkSourceDescriptor(SchemaPtr schema, NesPartition nesPartition)
     : SourceDescriptor(schema), nesPartition(nesPartition) {}
@@ -40,5 +39,4 @@ std::string NetworkSourceDescriptor::toString() { return "NetworkSourceDescripto
 
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
 
-}// namespace Network
 }// namespace NES

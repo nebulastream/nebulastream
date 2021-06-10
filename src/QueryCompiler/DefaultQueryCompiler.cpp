@@ -37,8 +37,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 DefaultQueryCompiler::DefaultQueryCompiler(const QueryCompilerOptionsPtr options, const Phases::PhaseFactoryPtr phaseFactory)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
@@ -92,5 +91,4 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
     }
 }
 
-}// namespace QueryCompilation
 }// namespace NES

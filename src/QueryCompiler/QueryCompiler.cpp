@@ -15,10 +15,8 @@
 */
 #include <QueryCompiler/QueryCompiler.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 QueryCompiler::QueryCompiler(const QueryCompilerOptionsPtr options) : queryCompilerOptions(options) {}
 
-}// namespace QueryCompilation
 }// namespace NES

@@ -18,12 +18,10 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 BlockScopeStatementPtr BlockScopeStatement::create() { return std::make_shared<BlockScopeStatement>(); }
 
 const CodeExpressionPtr BlockScopeStatement::getCode() const {
     return std::make_shared<CodeExpression>("{" + CompoundStatement::getCode()->code_ + "}");
 }
-}// namespace QueryCompilation
 }// namespace NES

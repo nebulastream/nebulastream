@@ -15,6 +15,3 @@
 */
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 
-namespace NES {
-namespace QueryCompilation {}
-}// namespace NES

@@ -22,8 +22,7 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 LowerPhysicalToGeneratableOperatorsPtr
 LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators::create(GeneratableOperatorProviderPtr provider) {
@@ -51,5 +50,4 @@ OperatorPipelinePtr LowerPhysicalToGeneratableOperators::apply(OperatorPipelineP
     return operatorPipeline;
 }
 
-}// namespace QueryCompilation
 }// namespace NES

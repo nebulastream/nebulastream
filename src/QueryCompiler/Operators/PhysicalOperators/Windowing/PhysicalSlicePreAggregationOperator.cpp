@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalSlicePreAggregationOperator::create(SchemaPtr inputSchema,
                                                                 SchemaPtr outputSchema,
@@ -42,6 +40,4 @@ const std::string PhysicalSlicePreAggregationOperator::toString() const { return
 
 OperatorNodePtr PhysicalSlicePreAggregationOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

@@ -23,9 +23,7 @@
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableOperatorPtr
 GeneratableWatermarkAssignmentOperator::create(SchemaPtr inputSchema,
@@ -79,6 +77,4 @@ OperatorNodePtr GeneratableWatermarkAssignmentOperator::copy() {
     return create(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

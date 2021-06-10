@@ -16,8 +16,7 @@
 
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
@@ -50,5 +49,4 @@ std::chrono::seconds NetworkSinkDescriptor::getWaitTime() const { return waitTim
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
-}// namespace Network
 }// namespace NES

@@ -18,9 +18,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferEmit.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableBufferEmit::GeneratableBufferEmit(OperatorId id, SchemaPtr outputSchema)
     : OperatorNode(id), GeneratableOperator(id, outputSchema, outputSchema){};
@@ -40,6 +38,4 @@ const std::string GeneratableBufferEmit::toString() const { return "GeneratableB
 
 OperatorNodePtr GeneratableBufferEmit::copy() { return create(id, outputSchema); }
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

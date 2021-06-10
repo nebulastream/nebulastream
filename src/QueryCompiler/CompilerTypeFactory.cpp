@@ -33,8 +33,7 @@
 #include <QueryCompiler/GeneratableTypes/ReferenceDataType.hpp>
 #include <QueryCompiler/GeneratableTypes/UserDefinedDataType.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 GeneratableDataTypePtr GeneratableTypesFactory::createDataType(DataTypePtr type) {
     auto const physicalType = DefaultPhysicalTypeFactory().getPhysicalType(type);
     if (type->isArray()) {
@@ -70,5 +69,4 @@ GeneratableDataTypePtr GeneratableTypesFactory::createPointer(GeneratableDataTyp
 GeneratableDataTypePtr GeneratableTypesFactory::createReference(GeneratableDataTypePtr type) {
     return std::make_shared<ReferenceDataType>(type);
 }
-}// namespace QueryCompilation
 }// namespace NES

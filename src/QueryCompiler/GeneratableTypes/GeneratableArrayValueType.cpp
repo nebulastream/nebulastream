@@ -21,8 +21,7 @@
 #include <algorithm>
 #include <sstream>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept {
     bool const containsChars = valueType->dataType->isCharArray();
 
@@ -65,5 +64,4 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
 
     return std::make_shared<CodeExpression>(str.str());
 }
-}// namespace QueryCompilation
 }// namespace NES

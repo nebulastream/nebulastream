@@ -21,9 +21,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableMapOperator::GeneratableMapOperator(OperatorId id,
                                                SchemaPtr inputSchema,
@@ -55,7 +53,4 @@ const std::string GeneratableMapOperator::toString() const { return "Generatable
 
 OperatorNodePtr GeneratableMapOperator::copy() { return create(id, inputSchema, outputSchema, mapExpression); }
 
-}// namespace GeneratableOperators
-
-}// namespace QueryCompilation
 }// namespace NES

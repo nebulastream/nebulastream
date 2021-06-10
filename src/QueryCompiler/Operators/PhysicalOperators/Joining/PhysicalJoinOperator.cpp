@@ -15,14 +15,10 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalJoinOperator::PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler) : operatorHandler(operatorHandler){};
 
 Join::JoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler() { return operatorHandler; }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

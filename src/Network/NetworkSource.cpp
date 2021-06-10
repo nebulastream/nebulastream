@@ -18,8 +18,7 @@
 #include <Network/NetworkSource.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 NetworkSource::NetworkSource(SchemaPtr schema,
                              NodeEngine::BufferManagerPtr bufferManager,
@@ -67,5 +66,4 @@ void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::Que
 
 void NetworkSource::emitWork(NodeEngine::TupleBuffer& buffer) { DataSource::emitWork(buffer); }
 
-}// namespace Network
 }// namespace NES

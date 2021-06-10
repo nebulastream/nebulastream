@@ -17,13 +17,9 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableWindowAggregation.hpp>
 #include <utility>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableWindowAggregation::GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
     : aggregationDescriptor(std::move(aggregationDescriptor)) {}
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

@@ -18,8 +18,7 @@
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(compilerOptions) {}
 
@@ -38,5 +37,4 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                                             successors);
 }
 
-}// namespace QueryCompilation
 }// namespace NES

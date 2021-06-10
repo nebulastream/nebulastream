@@ -20,9 +20,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 GeneratableOperatorPtr GeneratableSlicePreAggregationOperator::create(OperatorId id,
                                                                       SchemaPtr inputSchema,
                                                                       SchemaPtr outputSchema,
@@ -65,6 +63,4 @@ OperatorNodePtr GeneratableSlicePreAggregationOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

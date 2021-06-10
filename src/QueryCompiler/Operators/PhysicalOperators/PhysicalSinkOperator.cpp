@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalSinkOperator::PhysicalSinkOperator(OperatorId id,
                                            SchemaPtr inputSchema,
@@ -41,6 +39,4 @@ const std::string PhysicalSinkOperator::toString() const { return "PhysicalSinkO
 
 OperatorNodePtr PhysicalSinkOperator::copy() { return create(id, inputSchema, outputSchema, sinkDescriptor); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

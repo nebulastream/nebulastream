@@ -16,8 +16,7 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/VarDeclStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 StatementType VarDeclStatement::getStamentType() const { return VAR_DEC_STMT; }
 
 const CodeExpressionPtr VarDeclStatement::getCode() const {
@@ -30,5 +29,4 @@ VarDeclStatement::VarDeclStatement(const VariableDeclaration& var_decl)
     : variableDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}
 
 VarDeclStatement::~VarDeclStatement() = default;
-}// namespace QueryCompilation
 }// namespace NES

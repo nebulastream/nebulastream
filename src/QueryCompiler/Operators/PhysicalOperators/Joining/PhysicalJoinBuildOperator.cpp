@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalJoinBuildOperator::create(SchemaPtr inputSchema,
                                                       SchemaPtr outputSchema,
@@ -50,6 +48,4 @@ OperatorNodePtr PhysicalJoinBuildOperator::copy() {
 
 JoinBuildSide PhysicalJoinBuildOperator::getBuildSide() { return joinBuildSide; }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

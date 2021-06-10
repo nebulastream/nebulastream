@@ -28,8 +28,7 @@
 #include <sstream>
 #include <string>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 Predicate::Predicate(const BinaryOperatorType& op,
                      const LegacyExpressionPtr left,
@@ -454,5 +453,4 @@ Predicate operator<<(const PredicateItem& lhs, const PredicateItem& rhs) {
 Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs) {
     return operator>>(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
-}// namespace QueryCompilation
 }//end namespace NES

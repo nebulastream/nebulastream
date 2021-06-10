@@ -25,8 +25,7 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 DefaultPipeliningPhase::DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy)
     : operatorFusionPolicy(operatorFusionPolicy) {}
@@ -174,5 +173,4 @@ void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
         processPipelineBreakerOperator(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
     }
 }
-}// namespace QueryCompilation
 }// namespace NES

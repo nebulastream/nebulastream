@@ -15,8 +15,6 @@
 */
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 Declaration::~Declaration() = default;
-}// namespace QueryCompilation
 }// namespace NES

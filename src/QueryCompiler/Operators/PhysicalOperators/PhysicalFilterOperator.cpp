@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
@@ -40,6 +38,4 @@ const std::string PhysicalFilterOperator::toString() const { return "PhysicalFil
 
 OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, inputSchema, outputSchema, getPredicate()); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

@@ -65,8 +65,7 @@
 #include <Windowing/WindowPolicies/BaseWindowTriggerPolicyDescriptor.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 CCodeGenerator::CCodeGenerator() : CodeGenerator(), compiler(Compiler::create()) {}
 
 StructDeclaration CCodeGenerator::getStructDeclarationFromSchema(std::string structName, SchemaPtr schema) {
@@ -2193,5 +2192,4 @@ VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr co
 
     return windowOperatorHandlerDeclaration;
 }
-}// namespace QueryCompilation
 }// namespace NES

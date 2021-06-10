@@ -47,15 +47,15 @@ RestEngine::RestEngine(StreamCatalogPtr streamCatalog,
 RestEngine::~RestEngine() { NES_DEBUG("~RestEngine()"); }
 
 void RestEngine::initRestOpHandlers() {
-    _listener.support(methods::GET, std::bind(&RestEngine::handleGet, this, std::placeholders::_1));
-    _listener.support(methods::PUT, std::bind(&RestEngine::handlePut, this, std::placeholders::_1));
-    _listener.support(methods::POST, std::bind(&RestEngine::handlePost, this, std::placeholders::_1));
-    _listener.support(methods::DEL, std::bind(&RestEngine::handleDelete, this, std::placeholders::_1));
-    _listener.support(methods::PATCH, std::bind(&RestEngine::handlePatch, this, std::placeholders::_1));
-    _listener.support(methods::MERGE, std::bind(&RestEngine::handleMerge, this, std::placeholders::_1));
-    _listener.support(methods::TRCE, std::bind(&RestEngine::handleTrace, this, std::placeholders::_1));
-    _listener.support(methods::HEAD, std::bind(&RestEngine::handleHead, this, std::placeholders::_1));
-    _listener.support(methods::OPTIONS, std::bind(&RestEngine::handlePreflightOptions, this, std::placeholders::_1));
+    _listener.support(methods::GET, [this](auto && PH1) { handleGet(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::PUT, [this](auto && PH1) { handlePut(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::POST, [this](auto && PH1) { handlePost(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::DEL, [this](auto && PH1) { handleDelete(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::PATCH, [this](auto && PH1) { handlePatch(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::MERGE, [this](auto && PH1) { handleMerge(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::TRCE, [this](auto && PH1) { handleTrace(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::HEAD, [this](auto && PH1) { handleHead(std::forward<decltype(PH1)>(PH1)); });
+    _listener.support(methods::OPTIONS, [this](auto && PH1) { handlePreflightOptions(std::forward<decltype(PH1)>(PH1)); });
 }
 
 void RestEngine::setEndpoint(const std::string& value) {

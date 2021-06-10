@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
                                                SchemaPtr inputSchema,
@@ -43,6 +41,4 @@ const std::string PhysicalSourceOperator::toString() const { return "PhysicalSou
 
 OperatorNodePtr PhysicalSourceOperator::copy() { return create(id, inputSchema, outputSchema, sourceDescriptor); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

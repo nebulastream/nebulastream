@@ -21,9 +21,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/Aggregations/GeneratableSumAggregation.hpp>
 #include <Windowing/WindowAggregations/WindowAggregationDescriptor.hpp>
 #include <utility>
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableSumAggregation::GeneratableSumAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
     : GeneratableWindowAggregation(std::move(aggregationDescriptor)) {}
@@ -44,6 +42,4 @@ void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto updatedPartial = partialRef.assign(sum);
     currentCode->addStatement(updatedPartial.copy());
 }
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

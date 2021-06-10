@@ -19,8 +19,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <algorithm>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 PipelineQueryPlanPtr PipelineQueryPlan::create(QueryId queryId, QuerySubPlanId querySubPlanId) {
     return std::make_shared<PipelineQueryPlan>(PipelineQueryPlan(queryId, querySubPlanId));
@@ -57,5 +56,4 @@ const std::vector<OperatorPipelinePtr>& PipelineQueryPlan::getPipelines() const 
 const QueryId PipelineQueryPlan::getQueryId() const { return queryId; }
 const QuerySubPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
-}// namespace QueryCompilation
 }// namespace NES

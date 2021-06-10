@@ -26,8 +26,7 @@
 #include <string>
 #include <utility>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 ConstructorDefinition::ConstructorDefinition(const std::string& functionName, bool isExplicit)
     : name(functionName), isExplicit(isExplicit) {}
 
@@ -104,5 +103,4 @@ ConstructorDefinitionPtr ConstructorDefinition::addVariableDeclaration(VariableD
     variablDeclarations.emplace_back(variableDeclaration);
     return shared_from_this();
 }
-}// namespace QueryCompilation
 }// namespace NES

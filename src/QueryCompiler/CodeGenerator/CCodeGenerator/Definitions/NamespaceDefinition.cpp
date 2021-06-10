@@ -21,8 +21,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 NamespaceDefinition::NamespaceDefinition(std::string name) : name(name) {}
 
 NamespaceDefinitionPtr NamespaceDefinition::create(std::string name) { return std::make_shared<NamespaceDefinition>(name); }
@@ -40,5 +39,4 @@ DeclarationPtr NamespaceDefinition::getDeclaration() {
 
     return NamespaceDeclaration::create(namespaceCode.str());
 }
-}// namespace QueryCompilation
 }// namespace NES

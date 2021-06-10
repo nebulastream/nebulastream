@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr
 PhysicalSliceMergingOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler) {
@@ -41,6 +39,4 @@ const std::string PhysicalSliceMergingOperator::toString() const { return "Physi
 
 OperatorNodePtr PhysicalSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

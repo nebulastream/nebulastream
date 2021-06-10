@@ -20,9 +20,7 @@
 #include <Network/ZmqServer.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-
-namespace Network {
+namespace NES::Network {
 
 NetworkManager::NetworkManager(const std::string& hostname,
                                uint16_t port,
@@ -80,5 +78,4 @@ OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation
                                  retryTimes);
 }
 
-}// namespace Network
 }// namespace NES

@@ -25,8 +25,7 @@
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 CodeGenerationPhasePtr CodeGenerationPhase::create() { return std::make_shared<CodeGenerationPhase>(); }
 
@@ -80,5 +79,4 @@ void CodeGenerationPhase::generate(OperatorNodePtr rootOperator,
     }
 }
 
-}// namespace QueryCompilation
 }// namespace NES

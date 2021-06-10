@@ -14,9 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalEmitOperator::PhysicalEmitOperator(OperatorId id, SchemaPtr inputSchema)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
@@ -32,6 +30,4 @@ const std::string PhysicalEmitOperator::toString() const { return "PhysicalEmitO
 
 OperatorNodePtr PhysicalEmitOperator::copy() { return create(id, inputSchema); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

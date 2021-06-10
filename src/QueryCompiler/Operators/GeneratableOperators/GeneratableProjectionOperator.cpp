@@ -18,9 +18,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableProjectionOperator::GeneratableProjectionOperator(OperatorId id,
                                                              SchemaPtr inputSchema,
@@ -49,6 +47,4 @@ const std::string GeneratableProjectionOperator::toString() const { return "Gene
 
 OperatorNodePtr GeneratableProjectionOperator::copy() { return create(id, inputSchema, outputSchema, expressions); }
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES
