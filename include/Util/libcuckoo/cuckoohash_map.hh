@@ -1,7 +1,7 @@
 /** \file */
 
 #ifndef _CUCKOOHASH_MAP_HH
-#define _CUCKOOHASH_MAP_HH
+#define CUCKOOHASH_MAP_HH
 
 #include <algorithm>
 #include <array>

@@ -34,11 +34,11 @@
 #include <vector>
 
 // Implementation access definitions.
-#define NODE_IMP static_cast<NodeImp*>(m_pImp)
-#define NODE_IMP_EXT(node) static_cast<NodeImp*>(node.m_pImp)
-#define TYPE_IMP static_cast<NodeImp*>(m_pImp)->m_pImp
+#define NODE_IMP (static_cast<NodeImp*>(m_pImp))
+#define NODE_IMP_EXT(node) (static_cast<NodeImp*>((node).m_pImp))
+#define TYPE_IMP (static_cast<NodeImp*>(m_pImp)->m_pImp)
 
-#define IT_IMP static_cast<IteratorImp*>(m_pImp)
+#define IT_IMP (static_cast<IteratorImp*>(m_pImp))
 
 namespace Yaml {
 class ReaderLine;

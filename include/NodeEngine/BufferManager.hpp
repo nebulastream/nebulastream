@@ -15,7 +15,7 @@
 */
 
 #ifndef _BUFFER_MANAGER_H
-#define _BUFFER_MANAGER_H
+#define BUFFER_MANAGER_H
 
 #include <NodeEngine/AbstractBufferProvider.hpp>
 #include <NodeEngine/BufferRecycler.hpp>
