@@ -20,7 +20,10 @@
 #include <NodeEngine/ExecutionResult.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+
 #include <memory>
+#include <limits>
+
 namespace NES::NodeEngine {
 
 /**
@@ -38,7 +41,7 @@ class Task {
      */
     explicit Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer& buf);
 
-    explicit Task();
+    constexpr explicit Task() noexcept = default;
 
     /**
      * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
@@ -84,9 +87,9 @@ class Task {
     TupleBuffer& getBufferRef();
 
   private:
-    Execution::SuccessorExecutablePipeline pipeline;
-    TupleBuffer buf;
-    uint64_t id{-1};
+    Execution::SuccessorExecutablePipeline pipeline{};
+    TupleBuffer buf{};
+    uint64_t id{std::numeric_limits<decltype(id)>::max()};
 };
 
 }// namespace NES::NodeEngine

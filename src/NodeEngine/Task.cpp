@@ -30,8 +30,6 @@ Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer& buffer)
     id = UtilityFunctions::getNextTaskId();
 }
 
-Task::Task() : pipeline(), buf() {}
-
 ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     // execute this task.
     // a task could be a executable pipeline, or a data sink.
