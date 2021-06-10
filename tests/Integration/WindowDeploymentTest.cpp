@@ -396,7 +396,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime_Concurrent) {
     workerConfig->setRpcPort(port + 10);
     workerConfig->setDataPort(port + 11);
     workerConfig->setNumWorkerThreads(4);
-    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NodeType::Sensor);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
     bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
     EXPECT_TRUE(retStart1);
     NES_INFO("WindowDeploymentTest: Worker1 started successfully");
