@@ -178,7 +178,7 @@ TEST_F(SinkTest, testNESBinaryFileSink) {
     cout << "load=" << schemaFile << endl;
     ifstream testFileSchema(schemaFile.c_str());
     EXPECT_TRUE(testFileSchema.good());
-    SerializableSchema* serializedSchema = new SerializableSchema();
+    auto* serializedSchema = new SerializableSchema();
     serializedSchema->ParsePartialFromIstream(&testFileSchema);
     SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
     //test SCHEMA
@@ -444,7 +444,7 @@ TEST_F(SinkTest, testBinaryZMQSink) {
         zmq_source->open();
         auto schemaData = zmq_source->receiveData();
         TupleBuffer bufSchema = schemaData.value();
-        SerializableSchema* serializedSchema = new SerializableSchema();
+        auto* serializedSchema = new SerializableSchema();
         serializedSchema->ParseFromArray(bufSchema.getBuffer(), bufSchema.getNumberOfTuples());
         SchemaPtr ptr = SchemaSerializationUtil::deserializeSchema(serializedSchema);
         EXPECT_EQ(ptr->toString(), test_schema->toString());

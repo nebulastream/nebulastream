@@ -287,7 +287,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowWithAvg) {
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
     ASSERT_EQ(tuples[0], 0);
@@ -371,7 +371,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindow) {
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
     ASSERT_EQ(tuples[0], 0);
@@ -452,7 +452,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindow) {
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
     ASSERT_EQ(tuples[0], 0);
@@ -538,7 +538,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCombiningWindow) {
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
     ASSERT_EQ(tuples[0], 0);
@@ -620,7 +620,7 @@ TEST_F(WindowManagerTest, testWindowTriggerCompleteWindowCheckRemoveSlices) {
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
     ASSERT_EQ(tuples[0], 0);
@@ -705,7 +705,7 @@ TEST_F(WindowManagerTest, testWindowTriggerSlicingWindowCheckRemoveSlices) {
     ASSERT_NE(buf.getBuffer(), nullptr);
     ASSERT_EQ(tupleCnt, 1);
 
-    uint64_t* tuples = (uint64_t*) buf.getBuffer();
+    auto* tuples = (uint64_t*) buf.getBuffer();
     std::cout << "tuples[0]=" << tuples[0] << " tuples[1=" << tuples[1] << " tuples[2=" << tuples[2] << " tuples[3=" << tuples[3]
               << std::endl;
     ASSERT_EQ(tuples[0], 0);

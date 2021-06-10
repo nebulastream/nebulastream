@@ -58,7 +58,7 @@ TEST(UtilFunctionTest, replaceOnceWithMultipleFindings) {
 TEST(UtilFunctionTest, splitWithStringDelimiterNothing) {
     std::vector<std::string> tokens;
     std::vector<std::string> test;
-    test.push_back("This is a random test line with no delimiter.");
+    test.emplace_back("This is a random test line with no delimiter.");
     std::string line = "This is a random test line with no delimiter.";
     std::string delimiter = "x";
     tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
@@ -68,8 +68,8 @@ TEST(UtilFunctionTest, splitWithStringDelimiterNothing) {
 TEST(UtilFunctionTest, splitWithStringDelimiterOnce) {
     std::vector<std::string> tokens;
     std::vector<std::string> test;
-    test.push_back("This is a random test line with ");
-    test.push_back(" delimiter.");
+    test.emplace_back("This is a random test line with ");
+    test.emplace_back(" delimiter.");
     std::string line = "This is a random test line with x delimiter.";
     std::string delimiter = "x";
     tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
@@ -79,9 +79,9 @@ TEST(UtilFunctionTest, splitWithStringDelimiterOnce) {
 TEST(UtilFunctionTest, splitWithStringDelimiterTwice) {
     std::vector<std::string> tokens;
     std::vector<std::string> test;
-    test.push_back("This is a random ");
-    test.push_back(" line with ");
-    test.push_back(" delimiter.");
+    test.emplace_back("This is a random ");
+    test.emplace_back(" line with ");
+    test.emplace_back(" delimiter.");
     std::string line = "This is a random x line with x delimiter.";
     std::string delimiter = "x";
     tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);
@@ -91,9 +91,9 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice) {
 TEST(UtilFunctionTest, splitWithOmittingEmptyLast) {
     std::vector<std::string> tokens;
     std::vector<std::string> test;
-    test.push_back("This is a random ");
-    test.push_back(" line with ");
-    test.push_back(" delimiter. ");
+    test.emplace_back("This is a random ");
+    test.emplace_back(" line with ");
+    test.emplace_back(" delimiter. ");
     std::string line = "This is a random x line with x delimiter. x";
     std::string delimiter = "x";
     tokens = UtilityFunctions::splitWithStringDelimiter(line, delimiter);

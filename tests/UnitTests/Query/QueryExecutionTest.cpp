@@ -218,7 +218,7 @@ class WindowSource : public NES::DefaultSource {
     }
 };
 
-typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
+using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
 class TestSink : public SinkMedium {
   public:

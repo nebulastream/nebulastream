@@ -226,7 +226,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
                 currentMs = rhs.currentMs;
                 ip = rhs.ip;
             }
-            std::string toString() const {
+            [[nodiscard]] std::string toString() const {
                 return "YsbRecord(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
                     + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
                     + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);

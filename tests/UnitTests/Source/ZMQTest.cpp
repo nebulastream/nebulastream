@@ -105,7 +105,7 @@ TEST_F(ZMQTest, testZmqSourceReceiveData) {
 
         // Test received data.
         uint64_t sum = 0;
-        uint32_t* tuple = (uint32_t*) tuple_buffer->getBuffer();
+        auto* tuple = (uint32_t*) tuple_buffer->getBuffer();
         for (uint64_t i = 0; i != 8; ++i) {
             sum += *(tuple++);
         }
