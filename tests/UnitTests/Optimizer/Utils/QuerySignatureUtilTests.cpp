@@ -52,7 +52,9 @@ class QuerySignatureUtilTests : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override { schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64); }
+    void SetUp() override {
+        schema = Schema::create()->addField("test$id", BasicType::UINT32)->addField("test$value", BasicType::UINT64);
+    }
 
     /* Will be called before a test is executed. */
     void TearDown() override { NES_INFO("Setup QuerySignatureUtilTests test case."); }
