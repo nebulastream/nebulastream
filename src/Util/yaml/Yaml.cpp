@@ -470,7 +470,7 @@ std::pair<const std::string&, Node&> Iterator::operator*() {
     return {g_EmptyString, g_NoneNode};
 }
 
-const Yaml::Iterator  Iterator::operator++(int) {
+const Yaml::Iterator Iterator::operator++(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator++; break;
         case MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator++; break;
@@ -479,7 +479,7 @@ const Yaml::Iterator  Iterator::operator++(int) {
     return *this;
 }
 
-const Yaml::Iterator  Iterator::operator--(int) {
+const Yaml::Iterator Iterator::operator--(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceIteratorImp*>(m_pImp)->m_Iterator--; break;
         case MapType: static_cast<MapIteratorImp*>(m_pImp)->m_Iterator--; break;
@@ -570,7 +570,7 @@ std::pair<const std::string&, const Node&> ConstIterator::operator*() {
     return {g_EmptyString, g_NoneNode};
 }
 
-const Yaml::ConstIterator  ConstIterator::operator++(int) {
+const Yaml::ConstIterator ConstIterator::operator++(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator++; break;
         case MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator++; break;
@@ -579,7 +579,7 @@ const Yaml::ConstIterator  ConstIterator::operator++(int) {
     return *this;
 }
 
-const Yaml::ConstIterator  ConstIterator::operator--(int) {
+const Yaml::ConstIterator ConstIterator::operator--(int) {
     switch (m_Type) {
         case SequenceType: static_cast<SequenceConstIteratorImp*>(m_pImp)->m_Iterator--; break;
         case MapType: static_cast<MapConstIteratorImp*>(m_pImp)->m_Iterator--; break;
