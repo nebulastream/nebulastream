@@ -197,4 +197,4 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
 }// namespace NES::NodeEngine
 
-#endif // BUFFER_MANAGER_H
+#endif// BUFFER_MANAGER_H
