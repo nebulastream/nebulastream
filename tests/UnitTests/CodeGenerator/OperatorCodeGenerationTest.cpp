@@ -143,9 +143,9 @@ class SelectionDataGenSource : public GeneratorSource {
         auto buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
 
-        assert(buf.getBuffer() != NULL);
+        assert(buf.getBuffer() != nullptr);
 
-        InputTuple* tuples = (InputTuple*) buf.getBuffer();
+        auto* tuples = (InputTuple*) buf.getBuffer();
         for (uint32_t i = 0; i < tupleCnt; i++) {
             tuples[i].id = i;
             tuples[i].value = i * 2;
@@ -203,7 +203,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize() / sizeof(InputTuple);
 
-        InputTuple* tuples = buf.getBuffer<InputTuple>();
+        auto* tuples = buf.getBuffer<InputTuple>();
 
         for (uint32_t i = 0; i < tupleCnt; i++) {
             tuples[i].id = i;
@@ -259,9 +259,9 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = 10;
 
-        assert(buf.getBuffer() != NULL);
+        assert(buf.getBuffer() != nullptr);
 
-        InputTuple* tuples = (InputTuple*) buf.getBuffer();
+        auto* tuples = (InputTuple*) buf.getBuffer();
 
         for (uint32_t i = 0; i < tupleCnt; i++) {
             tuples[i].key = i % 2;
@@ -300,9 +300,9 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = 10;
 
-        assert(buf.getBuffer() != NULL);
+        assert(buf.getBuffer() != nullptr);
 
-        WindowTuple* tuples = (WindowTuple*) buf.getBuffer();
+        auto* tuples = (WindowTuple*) buf.getBuffer();
 
         for (uint32_t i = 0; i < tupleCnt; i++) {
             tuples[i].start = i;

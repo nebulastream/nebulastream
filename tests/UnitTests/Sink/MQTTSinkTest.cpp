@@ -274,7 +274,7 @@ TEST_F(MQTTTSinkTest, DISABLED_testMQTTConnectToBrokerSynchronously) {
                                    msgDelay,
                                    qualityOfService,
                                    asynchronousClient);
-    MQTTSink* testSink = dynamic_cast<MQTTSink*>(mqttSink.get());
+    auto* testSink = dynamic_cast<MQTTSink*>(mqttSink.get());
 
     bool connectedToBroker = testSink->connect();
     ASSERT_EQ(true, connectedToBroker);

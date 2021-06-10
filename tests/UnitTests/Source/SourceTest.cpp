@@ -95,26 +95,13 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
     bool truthy_entry;
 };
 
-typedef const DataSourcePtr (*createFileSourceFuncPtr)(SchemaPtr,
-                                                       NodeEngine::BufferManagerPtr bufferManager,
-                                                       NodeEngine::QueryManagerPtr queryManager,
-                                                       const std::string&);
+using createFileSourceFuncPtr = const DataSourcePtr (*)(SchemaPtr, NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, const std::string &);
 
-typedef const DataSourcePtr (*createSenseSourceFuncPtr)(SchemaPtr,
-                                                        NodeEngine::BufferManagerPtr bufferManager,
-                                                        NodeEngine::QueryManagerPtr queryManager,
-                                                        const std::string&,
-                                                        uint64_t,
-                                                        uint64_t,
-                                                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>);
+typedef const DataS;
+using createSenseSourceFuncPtr = const DataSourcePtr (*)(SchemaPtr, NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, const std::string &, uint64_t, uint64_t, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>);
 
-typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr,
-                                                      NodeEngine::BufferManagerPtr bufferManager,
-                                                      NodeEngine::QueryManagerPtr queryManager,
-                                                      const std::string&,
-                                                      const std::string&,
-                                                      uint64_t,
-                                                      uint64_t);
+typedef const DataSo;
+using createCSVSourceFuncPtr = const DataSourcePtr (*)(const SchemaPtr, NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, const std::string &, const std::string &, uint64_t, uint64_t);
 
 class SourceTest : public testing::Test {
   public:
@@ -605,7 +592,7 @@ TEST_F(SourceTest, testLambdaSource) {
             ip = rhs.ip;
         }
 
-        std::string toString() const {
+        [[nodiscard]] std::string toString() const {
             return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
                 + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
                 + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
@@ -665,7 +652,7 @@ TEST_F(SourceTest, testLambdaSource) {
                 ip = rhs.ip;
             }
 
-            std::string toString() const {
+            [[nodiscard]] std::string toString() const {
                 return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
                     + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
                     + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
@@ -679,7 +666,7 @@ TEST_F(SourceTest, testLambdaSource) {
             ysbRecords[i].adType = 0;
             ysbRecords[i].campaignId = rand() % 10000;
             ysbRecords[i].eventType = (currentEventType++) % 3;
-            ysbRecords[i].currentMs = time(0);
+            ysbRecords[i].currentMs = time(nullptr);
             ysbRecords[i].ip = 0x01020304;
             std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(Record)
                       << " addr=" << &ysbRecords[i] << std::endl;
@@ -753,7 +740,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
             ip = rhs.ip;
         }
 
-        std::string toString() const {
+        [[nodiscard]] std::string toString() const {
             return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
                 + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
                 + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
@@ -813,7 +800,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
                 ip = rhs.ip;
             }
 
-            std::string toString() const {
+            [[nodiscard]] std::string toString() const {
                 return "Record(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
                     + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
                     + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
@@ -827,7 +814,7 @@ TEST_F(SourceTest, testLambdaSourceWithIngestionRate) {
             ysbRecords[i].adType = 0;
             ysbRecords[i].campaignId = rand() % 10000;
             ysbRecords[i].eventType = (currentEventType++) % 3;
-            ysbRecords[i].currentMs = time(0);
+            ysbRecords[i].currentMs = time(nullptr);
             ysbRecords[i].ip = 0x01020304;
             std::cout << "Write rec i=" << i << " content=" << ysbRecords[i].toString() << " size=" << sizeof(Record)
                       << " addr=" << &ysbRecords[i] << std::endl;
@@ -1034,7 +1021,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
         };
 
         auto records = buffer.getBuffer<Record>();
-        auto ts = time(0);
+        auto ts = time(nullptr);
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
@@ -1052,7 +1039,7 @@ TEST_F(SourceTest, testTwoLambdaSources) {
         };
 
         auto records = buffer.getBuffer<Record>();
-        auto ts = time(0);
+        auto ts = time(nullptr);
         for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
@@ -1133,7 +1120,7 @@ TEST_F(SourceTest, testTwoLambdaSourcesMultiThread) {
             };
 
             auto records = buffer.getBuffer<Record>();
-            auto ts = time(0);
+            auto ts = time(nullptr);
             for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
                 records[u].id = u;
                 //values between 0..9 and the predicate is > 5 so roughly 50% selectivity

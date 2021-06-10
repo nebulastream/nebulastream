@@ -357,7 +357,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerTimeout) {
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
         auto buf = bufferManager->getBufferBlocking();
-        uint32_t* writer = buf.getBuffer<uint32_t>();
+        auto* writer = buf.getBuffer<uint32_t>();
         for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
             writer[k] = k;
         }
@@ -489,7 +489,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
                 auto buf = localPool->getBufferBlocking();
-                uint32_t* writer = buf.getBuffer<uint32_t>();
+                auto* writer = buf.getBuffer<uint32_t>();
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     writer[k] = k;
                 }
@@ -512,7 +512,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
                 auto buf = workQueue.front();
                 workQueue.pop_front();
                 lock.unlock();
-                uint32_t* reader = buf.getBuffer<uint32_t>();
+                auto* reader = buf.getBuffer<uint32_t>();
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     ASSERT_EQ(reader[k], k);
                 }
@@ -528,7 +528,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPool) {
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
         auto buf = bufferManager->getBufferBlocking();
-        uint32_t* writer = buf.getBuffer<uint32_t>();
+        auto* writer = buf.getBuffer<uint32_t>();
         for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
             writer[k] = k;
         }
@@ -565,7 +565,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
             for (int j = 0; j < max_buffer; ++j) {
                 std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
                 auto buf = bufferManager->getBufferBlocking();
-                uint32_t* writer = buf.getBuffer<uint32_t>();
+                auto* writer = buf.getBuffer<uint32_t>();
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     writer[k] = k;
                 }
@@ -591,7 +591,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
                 lock.unlock();
                 auto copied_buf = localPool->getBufferBlocking();
                 memcpy(copied_buf.getBuffer(), buf.getBuffer(), buf.getBufferSize());
-                uint32_t* reader = copied_buf.getBuffer<uint32_t>();
+                auto* reader = copied_buf.getBuffer<uint32_t>();
                 for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
                     ASSERT_EQ(reader[k], k);
                 }
@@ -607,7 +607,7 @@ TEST_F(BufferManagerTest, bufferManagerMtProducerConsumerLocalPoolWithExtraAlloc
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
         auto buf = bufferManager->getBufferBlocking();
-        uint32_t* writer = buf.getBuffer<uint32_t>();
+        auto* writer = buf.getBuffer<uint32_t>();
         for (uint32_t k = 0; k < (buffer_size / sizeof(uint32_t) - 1); ++k) {
             writer[k] = k;
         }
