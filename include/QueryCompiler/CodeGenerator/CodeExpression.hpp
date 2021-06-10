@@ -20,17 +20,18 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <type_traits>
 
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 class CodeExpression {
   public:
-    inline CodeExpression(std::string code) noexcept : code_(std::move(code)) {}
-    inline CodeExpression(std::string&& code) noexcept : code_(std::move(code)) {}
+    template<typename T, typename = std::enable_if_t<std::is_constructible_v<std::string, std::decay_t<T>>>>
+    inline CodeExpression(T&& code) noexcept : code_(std::forward<T>(code)) {}
     std::string const code_;
 };
 
 const CodeExpressionPtr combine(const CodeExpressionPtr lhs, const CodeExpressionPtr rhs);
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
