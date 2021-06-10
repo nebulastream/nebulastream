@@ -1,6 +1,6 @@
 /** \file */
 
-#ifndef _CUCKOOHASH_CONFIG_HH
+#ifndef CUCKOOHASH_CONFIG_HH
 #define CUCKOOHASH_CONFIG_HH
 
 #include <cstddef>
@@ -28,4 +28,4 @@ constexpr size_t LIBCUCKOO_NO_MAXIMUM_HASHPOWER =
 //! set LIBCUCKOO_DEBUG to 1 to enable debug output
 #define LIBCUCKOO_DEBUG 0
 
-#endif // _CUCKOOHASH_CONFIG_HH
+#endif // CUCKOOHASH_CONFIG_HH

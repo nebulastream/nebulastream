@@ -1,6 +1,6 @@
 /** \file */
 
-#ifndef _CUCKOOHASH_UTIL_HH
+#ifndef CUCKOOHASH_UTIL_HH
 #define CUCKOOHASH_UTIL_HH
 
 #include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
@@ -126,4 +126,4 @@ private:
     const size_t hashpower_;
 };
 
-#endif // _CUCKOOHASH_UTIL_HH
+#endif // CUCKOOHASH_UTIL_HH
