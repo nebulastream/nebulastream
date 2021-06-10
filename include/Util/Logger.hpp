@@ -44,24 +44,15 @@ auto catString = [os = std::ostringstream{}](auto&&... p) mutable {
 enum DebugLevel { LOG_NONE, LOG_ERROR, LOG_FATAL, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
 
 static std::string getDebugLevelAsString(DebugLevel level) {
-    switch(level) {
-        case LOG_NONE:
-            return "LOG_NONE";
-        case LOG_WARNING:
-            return "LOG_WARNING";
-        case LOG_ERROR:
-        return "LOG_ERROR";
-        case LOG_FATAL:
-        return "LOG_FATAL";
-        case LOG_DEBUG:
-        return "LOG_DEBUG";
-        case LOG_INFO:
-        return "LOG_INFO";
-        case LOG_TRACE:
-        return "LOG_TRACE";
-        default:
-        return "UNKNOWN";
-
+    switch (level) {
+        case LOG_NONE: return "LOG_NONE";
+        case LOG_WARNING: return "LOG_WARNING";
+        case LOG_ERROR: return "LOG_ERROR";
+        case LOG_FATAL: return "LOG_FATAL";
+        case LOG_DEBUG: return "LOG_DEBUG";
+        case LOG_INFO: return "LOG_INFO";
+        case LOG_TRACE: return "LOG_TRACE";
+        default: return "UNKNOWN";
     }
 }
 
