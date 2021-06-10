@@ -34,7 +34,7 @@ class ConstructorDefinition : public std::enable_shared_from_this<ConstructorDef
      * @param functionName the name of the constructor/class
      * @param isExplicit if the ctor must be marked as explicit
      */
-    ConstructorDefinition(const std::string& functionName, bool isExplicit);
+    ConstructorDefinition(std::string  functionName, bool isExplicit);
 
     /**
      * @brief Factory to create the constructor definition.

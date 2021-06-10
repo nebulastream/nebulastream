@@ -42,6 +42,7 @@
 #include <stdarg.h>
 
 #include <API/WindowedQuery.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -69,7 +70,7 @@ JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, Exp
 
 }// namespace JoinOperatorBuilder
 
-Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
+Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
 
 Query::Query(const Query& query) = default;
 

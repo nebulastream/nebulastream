@@ -19,10 +19,11 @@
 #include <Util/SharedLibrary.hpp>
 #include <filesystem>
 #include <iostream>
+#include <utility>
 namespace NES {
 
-SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, const std::string& baseName)
-    : CompiledCode(), library(library), baseFileName(baseName){};
+SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, std::string  baseName)
+    : CompiledCode(), library(std::move(library)), baseFileName(std::move(baseName)){};
 SystemCompilerCompiledCode::~SystemCompilerCompiledCode() { cleanUp(); }
 
 void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name) {

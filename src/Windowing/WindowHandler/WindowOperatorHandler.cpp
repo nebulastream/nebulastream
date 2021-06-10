@@ -16,6 +16,7 @@
 #include <State/StateManager.hpp>
 #include <Windowing/WindowHandler/AbstractWindowHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <utility>
 namespace NES::Windowing {
 
 WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPtr windowDefinition,
@@ -29,12 +30,12 @@ WindowOperatorHandlerPtr WindowOperatorHandler::create(LogicalWindowDefinitionPt
 }
 
 WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition, SchemaPtr resultSchema)
-    : windowDefinition(windowDefinition), resultSchema(resultSchema) {}
+    : windowDefinition(std::move(windowDefinition)), resultSchema(std::move(resultSchema)) {}
 
 WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition,
                                              SchemaPtr resultSchema,
                                              AbstractWindowHandlerPtr windowHandler)
-    : windowDefinition(windowDefinition), windowHandler(windowHandler), resultSchema(resultSchema) {}
+    : windowDefinition(std::move(windowDefinition)), windowHandler(std::move(windowHandler)), resultSchema(std::move(resultSchema)) {}
 
 LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() { return windowDefinition; }
 

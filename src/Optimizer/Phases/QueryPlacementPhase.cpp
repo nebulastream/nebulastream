@@ -19,6 +19,7 @@
 #include <Optimizer/QueryPlacement/PlacementStrategyFactory.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
@@ -26,8 +27,8 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
                                          StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(globalExecutionPlan), topology(topology), typeInferencePhase(typeInferencePhase),
-      streamCatalog(streamCatalog) {
+    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)), typeInferencePhase(std::move(typeInferencePhase)),
+      streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 

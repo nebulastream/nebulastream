@@ -16,13 +16,14 @@
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 namespace NES::QueryCompilation {
 
 ExecutableOperator::ExecutableOperator(OperatorId id,
                                        NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                        std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers)
-    : OperatorNode(id), UnaryOperatorNode(id), executablePipelineStage(executablePipelineStage),
-      operatorHandlers(operatorHandlers) {}
+    : OperatorNode(id), UnaryOperatorNode(id), executablePipelineStage(std::move(executablePipelineStage)),
+      operatorHandlers(std::move(operatorHandlers)) {}
 
 OperatorNodePtr ExecutableOperator::create(NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
                                            std::vector<NodeEngine::Execution::OperatorHandlerPtr> operatorHandlers) {

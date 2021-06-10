@@ -18,6 +18,7 @@
 #define NES_INCLUDE_DATATYPES_PHYSICALTYPES_ARRAYPHYSICALTYPE_HPP_
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -34,7 +35,7 @@ class ArrayPhysicalType final : public PhysicalType {
      * @param component the physical component type of this array.
      */
     inline ArrayPhysicalType(DataTypePtr type, uint64_t length, PhysicalTypePtr component) noexcept
-        : PhysicalType(type), length(length), physicalComponentType(component) {}
+        : PhysicalType(type), length(length), physicalComponentType(std::move(component)) {}
 
     /**
      * @brief Factory function to create a new ArrayType Physical Type.

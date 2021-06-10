@@ -19,6 +19,7 @@
 
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 namespace NES {
 namespace QueryCompilation {
@@ -35,10 +36,10 @@ class GeneratableArrayValueType final : public GeneratableValueType {
      * @param values the values of the value type
      */
     inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string>&& values) noexcept
-        : valueType(valueTypePtr), values(std::move(values)) {}
+        : valueType(std::move(valueTypePtr)), values(std::move(values)) {}
 
-    inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string> const& values) noexcept
-        : valueType(valueTypePtr), values(values) {}
+    inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string>  values) noexcept
+        : valueType(std::move(valueTypePtr)), values(std::move(values)) {}
 
     /**
      * @brief Generates code expresion, which represents this value.

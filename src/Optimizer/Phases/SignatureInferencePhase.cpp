@@ -18,12 +18,13 @@
 #include <Optimizer/Phases/SignatureInferencePhase.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
 SignatureInferencePhase::SignatureInferencePhase(z3::ContextPtr context, bool computeStringSignature)
-    : context(context), computeStringSignature(computeStringSignature) {
+    : context(std::move(context)), computeStringSignature(computeStringSignature) {
     NES_DEBUG("SignatureInferencePhase()");
 }
 

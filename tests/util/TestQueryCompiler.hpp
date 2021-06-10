@@ -23,6 +23,7 @@
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <utility>
 namespace NES {
 
 namespace TestUtils {
@@ -36,7 +37,7 @@ class TestSourceDescriptor : public SourceDescriptor {
                                     NodeEngine::NodeEnginePtr,
                                     size_t,
                                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>)> createSourceFunction)
-        : SourceDescriptor(schema), createSourceFunction(createSourceFunction) {}
+        : SourceDescriptor(schema), createSourceFunction(std::move(std::move(createSourceFunction))) {}
     DataSourcePtr create(OperatorId operatorId,
                          SourceDescriptorPtr sourceDescriptor,
                          NodeEngine::NodeEnginePtr nodeEngine,
@@ -59,7 +60,7 @@ class TestSourceDescriptor : public SourceDescriptor {
 
 class TestSinkDescriptor : public SinkDescriptor {
   public:
-    TestSinkDescriptor(DataSinkPtr dataSink) : sink(dataSink) {}
+    TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(std::move(dataSink))) {}
     DataSinkPtr getSink() { return sink; }
     ~TestSinkDescriptor() override = default;
     std::string toString() override { return std::string(); }

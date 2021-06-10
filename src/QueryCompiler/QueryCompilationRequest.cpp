@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/QueryCompilationRequest.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
@@ -22,7 +23,7 @@ QueryCompilationRequestPtr QueryCompilationRequest::create(QueryPlanPtr queryPla
 }
 
 QueryCompilationRequest::QueryCompilationRequest(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine)
-    : queryPlan(queryPlan), nodeEngine(nodeEngine), debug(false), optimize(false), dumpQueryPlans(false) {}
+    : queryPlan(std::move(queryPlan)), nodeEngine(std::move(nodeEngine)), debug(false), optimize(false), dumpQueryPlans(false) {}
 
 void QueryCompilationRequest::enableDump() { this->dumpQueryPlans = true; }
 

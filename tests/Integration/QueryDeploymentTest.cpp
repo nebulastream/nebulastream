@@ -92,7 +92,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     remove(outputFilePath.c_str());
 
     //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -123,8 +123,8 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query=" << query);
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -251,7 +251,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     remove(outputFilePath.c_str());
 
     //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -283,7 +283,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -422,7 +422,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorker) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -490,7 +490,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerUsingTopDownStrategy) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -562,8 +562,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorker) {
     std::string outputFilePath = "testDeployTwoWorker.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -650,8 +650,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerUsingTopDownStrategy) {
     remove(outputFilePath.c_str());
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -730,8 +730,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
     std::string outputFilePath = "test.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -797,8 +797,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -889,8 +889,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"stream\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -969,8 +969,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"stream\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -1049,8 +1049,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"stream\").filter(Attribute(\"id\") < 5).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -1102,8 +1102,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     std::string outputFilePath = "test.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").project(Attribute(\"id\")).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").project(Attribute("id")).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -1169,8 +1169,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").project(Attribute(\"asd\")).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").project(Attribute("asd")).sink(FileSinkDescriptor::create(")"
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
@@ -1225,8 +1225,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployOneWorkerFileOutput) {
 
     std::string outputFilePath = "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -1301,8 +1301,8 @@ TEST_F(QueryDeploymentTest, testDeployUndeployTwoWorkerFileOutput) {
     std::string outputFilePath = "test.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -1395,11 +1395,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     std::string outputFilePath2 = "test2.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query1 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath1
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query1 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
-    string query2 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath2
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
@@ -1504,11 +1504,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     std::string outputFilePath2 = "test2.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query1 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath1
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query1 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 = queryService->validateAndQueueAddRequest(query1, "BottomUp");
-    string query2 = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath2
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = queryService->validateAndQueueAddRequest(query2, "BottomUp");
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
@@ -1650,7 +1650,7 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     string query =
         R"(Query::from("window").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"OVERWRITE\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "OVERWRITE"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 

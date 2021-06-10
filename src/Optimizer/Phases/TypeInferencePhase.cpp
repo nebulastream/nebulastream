@@ -21,10 +21,11 @@
 #include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
-TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {
+TypeInferencePhase::TypeInferencePhase(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("TypeInferencePhase()");
 }
 

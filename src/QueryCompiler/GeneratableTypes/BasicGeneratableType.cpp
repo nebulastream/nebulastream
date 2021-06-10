@@ -20,8 +20,9 @@
 #include <Util/Logger.hpp>
 #include <memory>
 #include <sstream>
+#include <utility>
 namespace NES::QueryCompilation {
-BasicGeneratableType::BasicGeneratableType(BasicPhysicalTypePtr type) : GeneratableDataType(), type(type) {}
+BasicGeneratableType::BasicGeneratableType(BasicPhysicalTypePtr type) : GeneratableDataType(), type(std::move(type)) {}
 
 const CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
     // A basic type need no type definition.

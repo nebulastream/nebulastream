@@ -16,6 +16,7 @@
 
 #include <Catalogs/LambdaSourceStreamConfig.hpp>
 #include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -29,7 +30,7 @@ LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     uint64_t numBuffersToProcess,
     uint64_t gatheringValue,
     std::string gatheringMode)
-    : PhysicalStreamConfig(SourceConfig::create()), sourceType(sourceType), generationFunction(std::move(generationFunction)) {
+    : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)), generationFunction(std::move(generationFunction)) {
     // nop
     this->physicalStreamName = physicalStreamName;
     this->logicalStreamName = logicalStreamName;

@@ -29,13 +29,14 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/http_client.h>
+#include <utility>
 
 namespace NES {
 
 MonitoringService::MonitoringService(TopologyPtr topology,
                                      NodeEngine::BufferManagerPtr bufferManager,
                                      MonitoringManagerPtr monitoringManager)
-    : topology(topology), bufferManager(bufferManager), monitoringManager(monitoringManager) {
+    : topology(std::move(topology)), bufferManager(std::move(bufferManager)), monitoringManager(std::move(monitoringManager)) {
     NES_DEBUG("MonitoringService: Initializing");
 }
 

@@ -16,6 +16,7 @@
 #include <State/StateManager.hpp>
 #include <Windowing/WindowHandler/AbstractJoinHandler.hpp>
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
+#include <utility>
 namespace NES::Join {
 
 JoinOperatorHandlerPtr
@@ -28,14 +29,14 @@ JoinOperatorHandlerPtr JoinOperatorHandler::create(LogicalJoinDefinitionPtr join
 }
 
 JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema)
-    : joinDefinition(joinDefinition), resultSchema(resultSchema) {
+    : joinDefinition(std::move(joinDefinition)), resultSchema(std::move(resultSchema)) {
     NES_DEBUG("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema)");
 }
 
 JoinOperatorHandler::JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition,
                                          SchemaPtr resultSchema,
                                          AbstractJoinHandlerPtr joinHandler)
-    : joinDefinition(joinDefinition), joinHandler(joinHandler), resultSchema(resultSchema) {
+    : joinDefinition(std::move(joinDefinition)), joinHandler(std::move(joinHandler)), resultSchema(std::move(resultSchema)) {
     NES_DEBUG("JoinOperatorHandler(LogicalJoinDefinitionPtr joinDefinition, SchemaPtr resultSchema, AbstractJoinHandlerPtr "
               "joinHandler)");
 }

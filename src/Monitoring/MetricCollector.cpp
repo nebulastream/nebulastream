@@ -17,11 +17,12 @@
 #include <Monitoring/MetricCollector.hpp>
 #include <Monitoring/Protocols/SamplingProtocol.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
 MetricCollector::MetricCollector(const MetricGroup& metricGroup, SamplingProtocolPtr samplingProtocol)
-    : metricGroup(metricGroup), samplingProtocol(samplingProtocol) {
+    : metricGroup(metricGroup), samplingProtocol(std::move(samplingProtocol)) {
     NES_DEBUG("MetricCollector: Init()");
     NES_NOT_IMPLEMENTED();
 }

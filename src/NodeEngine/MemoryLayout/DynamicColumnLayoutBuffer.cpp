@@ -15,6 +15,7 @@
 */
 
 #include <NodeEngine/MemoryLayout/DynamicColumnLayoutBuffer.hpp>
+#include <utility>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 uint64_t DynamicColumnLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t fieldIndex, const bool boundaryChecks) {
@@ -35,7 +36,7 @@ DynamicColumnLayoutBuffer::DynamicColumnLayoutBuffer(TupleBuffer tupleBuffer,
                                                      uint64_t capacity,
                                                      std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                                                      std::vector<COL_OFFSET_SIZE> columnOffsets)
-    : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(dynamicColLayout) {
+    : DynamicLayoutBuffer(tupleBuffer, capacity), columnOffsets(std::move(columnOffsets)), dynamicColLayout(std::move(dynamicColLayout)) {
     this->basePointer = tupleBuffer.getBuffer<uint8_t>();
 }
 

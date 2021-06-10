@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CodeGenerator.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableProjectionOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
@@ -24,7 +25,7 @@ GeneratableProjectionOperator::GeneratableProjectionOperator(OperatorId id,
                                                              SchemaPtr inputSchema,
                                                              SchemaPtr outputSchema,
                                                              std::vector<ExpressionNodePtr> expressions)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), expressions(expressions) {}
+    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), expressions(std::move(expressions)) {}
 
 GeneratableOperatorPtr GeneratableProjectionOperator::create(OperatorId id,
                                                              SchemaPtr inputSchema,

@@ -22,10 +22,11 @@
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <Util/Logger.hpp>
 #include <assert.h>
+#include <utility>
 
 namespace NES::NodeEngine {
 
-PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(schemaPtr){};
+PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(std::move(schemaPtr)){};
 
 PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) { return std::make_shared<PhysicalSchema>(schema); }
 

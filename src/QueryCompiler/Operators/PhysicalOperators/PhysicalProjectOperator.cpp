@@ -14,13 +14,14 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
+#include <utility>
 namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalProjectOperator::PhysicalProjectOperator(OperatorId id,
                                                  SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
                                                  std::vector<ExpressionNodePtr> expressions)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), expressions(expressions) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), expressions(std::move(expressions)) {}
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(OperatorId id,
                                                     SchemaPtr inputSchema,

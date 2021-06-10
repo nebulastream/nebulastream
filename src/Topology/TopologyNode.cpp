@@ -17,11 +17,12 @@
 #include <Topology/TopologyNode.hpp>
 //#include <NodeStats.pb.h>
 #include <algorithm>
+#include <utility>
 
 namespace NES {
 
 TopologyNode::TopologyNode(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources)
-    : id(id), ipAddress(ipAddress), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0) {}
+    : id(id), ipAddress(std::move(ipAddress)), grpcPort(grpcPort), dataPort(dataPort), resources(resources), usedResources(0) {}
 
 TopologyNodePtr
 TopologyNode::create(uint64_t id, std::string ipAddress, uint32_t grpcPort, uint32_t dataPort, uint16_t resources) {

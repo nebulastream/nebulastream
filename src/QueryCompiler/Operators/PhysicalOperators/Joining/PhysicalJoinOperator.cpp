@@ -14,10 +14,11 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
-PhysicalJoinOperator::PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler) : operatorHandler(operatorHandler){};
+PhysicalJoinOperator::PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler) : operatorHandler(std::move(operatorHandler)){};
 
 Join::JoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler() { return operatorHandler; }
 

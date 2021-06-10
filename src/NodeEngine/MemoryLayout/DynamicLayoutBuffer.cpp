@@ -15,11 +15,12 @@
 */
 
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
+#include <utility>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
 DynamicLayoutBuffer::DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
-    : tupleBuffer(tupleBuffer), capacity(capacity) {}
+    : tupleBuffer(std::move(tupleBuffer)), capacity(capacity) {}
 
 uint64_t DynamicLayoutBuffer::getCapacity() { return capacity; }
 uint64_t DynamicLayoutBuffer::getNumberOfRecords() { return numberOfRecords; }

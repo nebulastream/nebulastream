@@ -24,11 +24,12 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
 DefaultPipeliningPhase::DefaultPipeliningPhase(OperatorFusionPolicyPtr operatorFusionPolicy)
-    : operatorFusionPolicy(operatorFusionPolicy) {}
+    : operatorFusionPolicy(std::move(operatorFusionPolicy)) {}
 
 PipeliningPhasePtr DefaultPipeliningPhase::create(OperatorFusionPolicyPtr operatorFusionPolicy) {
     return std::make_shared<DefaultPipeliningPhase>(operatorFusionPolicy);

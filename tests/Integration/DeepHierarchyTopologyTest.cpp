@@ -143,8 +143,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndAllSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -349,8 +349,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -549,8 +549,8 @@ TEST_F(DeepHierarchyTopologyTest, testOutputAndNoSensors) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -739,8 +739,8 @@ TEST_F(DeepHierarchyTopologyTest, testSimpleQueryWithTwoLevelTreeWithDefaultSour
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1020,8 +1020,8 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testSimpleQueryWithThreeLevelTreeWith
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1330,7 +1330,7 @@ TEST_F(DeepHierarchyTopologyTest, testSelectProjectThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"testStream\").filter(Attribute(\"val1\") < "
                    "3).project(Attribute(\"val3\")).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1597,7 +1597,7 @@ TEST_F(DeepHierarchyTopologyTest, testWindowThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1707,7 +1707,7 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
     ASSERT_NE(wrk1TopologyNodeId, INVALID_TOPOLOGY_NODE_ID);
 
     //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -1858,8 +1858,8 @@ TEST_F(DeepHierarchyTopologyTest, DISABLED_testUnionThreeLevel) {
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
 
     NES_DEBUG("DeepTopologyHierarchyTest: Submit query");
-    string query = "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath
-        + "\", \"CSV_FORMAT\", \"APPEND\"));";
+    string query = R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

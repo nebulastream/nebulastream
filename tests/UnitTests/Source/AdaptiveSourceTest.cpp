@@ -27,6 +27,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace NES {
 using NodeEngine::TupleBuffer;
@@ -63,7 +64,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
                          1,
                          12,
                          DataSource::GatheringMode::FREQUENCY_MODE),
-          filePath(filePath) {
+          filePath(std::move(filePath)) {
         this->intervalIncrease = std::chrono::milliseconds(intervalIncrease);
     };
 

@@ -104,7 +104,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerCentralTumblingWindowQueryEventT
     string query = "Query::from(\"exdra\").window(TumblingWindow::of(EventTime(Attribute(\"metadata_generated\")), "
                    "Seconds(10))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"features_properties_capacity\")))"
                    ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -262,7 +262,7 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
     string query = "Query::from(\"ysb\").window(TumblingWindow::of(EventTime(Attribute(\"current_ms\")), "
                    "Milliseconds(10))).byKey(Attribute(\"campaign_id\")).apply(Sum(Attribute(\"user_id\"))).sink("
                    "FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -341,7 +341,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -429,7 +429,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowEventTimeWithTimeUnit) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\"), Seconds()), "
                    "Minutes(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -521,7 +521,7 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
     string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)))"
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -631,7 +631,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTime) 
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -732,7 +732,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedTumblingWindowQueryEventTimeTi
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\"), Seconds()), "
                    "Minutes(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -834,7 +834,7 @@ TEST_F(WindowDeploymentTest, testDeployOneWorkerDistributedSlidingWindowQueryEve
     string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)))"
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -937,7 +937,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"windowStream\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1027,7 +1027,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)))"
                    ".apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -1133,7 +1133,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowEventTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"windowStream\").window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), "
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1239,7 +1239,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeySlidingWindowEventTime) {
     //size slide
     string query = "Query::from(\"window\").window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(10),Seconds(5)))"
                    ".apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -1329,7 +1329,7 @@ TEST_F(WindowDeploymentTest, testCentralWindowIngestionTimeIngestionTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(IngestionTime(), "
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1416,7 +1416,7 @@ TEST_F(WindowDeploymentTest, testDistributedWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(IngestionTime(), "
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1496,7 +1496,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"windowStream\").window(TumblingWindow::of(IngestionTime(), "
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1586,7 +1586,7 @@ TEST_F(WindowDeploymentTest, testDistributedNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"windowStream\").window(TumblingWindow::of(IngestionTime(), "
                    "Seconds(1))).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -1714,7 +1714,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -1859,7 +1859,7 @@ TEST_F(WindowDeploymentTest, testDeployDistributedWithMergingTumblingWindowQuery
     NES_INFO("WindowDeploymentTest: Submit query");
     string query = "Query::from(\"window\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
                    "Seconds(1))).byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

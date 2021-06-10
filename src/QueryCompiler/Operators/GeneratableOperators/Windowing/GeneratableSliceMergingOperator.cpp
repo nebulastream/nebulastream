@@ -19,6 +19,7 @@
 #include <QueryCompiler/PipelineContext.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 GeneratableOperatorPtr GeneratableSliceMergingOperator::create(OperatorId id,
@@ -43,7 +44,7 @@ GeneratableSliceMergingOperator::GeneratableSliceMergingOperator(OperatorId id,
                                                                  Windowing::WindowOperatorHandlerPtr operatorHandler,
                                                                  GeneratableWindowAggregationPtr windowAggregation)
     : OperatorNode(id), GeneratableWindowOperator(id, inputSchema, outputSchema, operatorHandler),
-      windowAggregation(windowAggregation) {}
+      windowAggregation(std::move(windowAggregation)) {}
 
 void GeneratableSliceMergingOperator::generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     auto windowDefinition = operatorHandler->getWindowDefinition();

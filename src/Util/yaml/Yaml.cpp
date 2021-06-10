@@ -30,6 +30,7 @@
 #include <memory>
 #include <sstream>
 #include <stdarg.h>
+#include <utility>
 #include <vector>
 
 // Implementation access definitions.
@@ -827,12 +828,12 @@ class ReaderLine {
         * @breif Constructor.
         *
         */
-    ReaderLine(const std::string& data = "",
+    ReaderLine(std::string  data = "",
                const size_t no = 0,
                const size_t offset = 0,
                const Node::eType type = Node::None,
                const unsigned char flags = 0)
-        : Data(data), No(no), Offset(offset), Type(type), Flags(flags) {}
+        : Data(std::move(data)), No(no), Offset(offset), Type(type), Flags(flags) {}
 
     enum eFlag {
         LiteralScalarFlag,///< Literal scalar type, defined as "|".

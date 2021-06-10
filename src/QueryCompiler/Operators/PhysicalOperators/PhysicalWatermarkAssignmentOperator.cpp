@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -23,7 +24,7 @@ PhysicalWatermarkAssignmentOperator::PhysicalWatermarkAssignmentOperator(
     SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema),
-      watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
+      watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor)) {}
 PhysicalOperatorPtr
 PhysicalWatermarkAssignmentOperator::create(OperatorId id,
                                             SchemaPtr inputSchema,

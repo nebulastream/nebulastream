@@ -26,7 +26,7 @@ MemorySourceDescriptor::MemorySourceDescriptor(SchemaPtr schema,
                                                uint64_t numBuffersToProcess,
                                                uint64_t gatheringValue,
                                                DataSource::GatheringMode gatheringMode)
-    : SourceDescriptor(std::move(schema)), memoryArea(memoryArea), memoryAreaSize(memoryAreaSize),
+    : SourceDescriptor(std::move(schema)), memoryArea(std::move(memoryArea)), memoryAreaSize(memoryAreaSize),
       numBuffersToProcess(numBuffersToProcess), gatheringValue(gatheringValue), gatheringMode(gatheringMode) {
     NES_ASSERT(this->memoryArea != nullptr && this->memoryAreaSize > 0, "invalid memory area");
 }

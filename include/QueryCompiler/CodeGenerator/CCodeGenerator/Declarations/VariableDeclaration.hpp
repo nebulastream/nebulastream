@@ -46,7 +46,7 @@ class VariableDeclaration : public Declaration {
     ~VariableDeclaration() override;
 
   private:
-    VariableDeclaration(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
+    VariableDeclaration(GeneratableDataTypePtr type, std::string  identifier, ValueTypePtr value = nullptr);
     GeneratableDataTypePtr type_;
     std::string identifier_;
     ValueTypePtr init_value_;

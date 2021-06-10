@@ -29,6 +29,7 @@
 #include <Util/Logger.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
@@ -38,7 +39,7 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
                                                        z3::ContextPtr z3Context,
                                                        bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
-    : enableQueryMerging(enableQueryMerging), queryCatalog(queryCatalog), globalQueryPlan(globalQueryPlan), z3Context(z3Context) {
+    : enableQueryMerging(enableQueryMerging), queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     bool applyRulesImprovingSharingIdentification = false;

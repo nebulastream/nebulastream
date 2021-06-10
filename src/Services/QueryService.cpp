@@ -30,6 +30,7 @@
 #include <WorkQueues/NESRequestQueue.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <WorkQueues/RequestTypes/StopQueryRequest.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -37,7 +38,7 @@ QueryService::QueryService(QueryCatalogPtr queryCatalog,
                            NESRequestQueuePtr queryRequestQueue,
                            StreamCatalogPtr streamCatalog,
                            bool enableSemanticQueryValidation)
-    : queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
+    : queryCatalog(std::move(queryCatalog)), queryRequestQueue(std::move(queryRequestQueue)),
       enableSemanticQueryValidation(enableSemanticQueryValidation) {
     NES_DEBUG("QueryService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();

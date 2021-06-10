@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -21,7 +22,7 @@ PhysicalSourceOperator::PhysicalSourceOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                SourceDescriptorPtr sourceDescriptor)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), sourceDescriptor(sourceDescriptor) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), sourceDescriptor(std::move(sourceDescriptor)) {}
 
 PhysicalOperatorPtr PhysicalSourceOperator::create(OperatorId id,
                                                    SchemaPtr inputSchema,

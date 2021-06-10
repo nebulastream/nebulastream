@@ -24,11 +24,12 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES {
 
 CoordinatorEngine::CoordinatorEngine(StreamCatalogPtr streamCatalog, TopologyPtr topology)
-    : streamCatalog(streamCatalog), topology(topology), registerDeregisterNode(), addRemoveLogicalStream(),
+    : streamCatalog(std::move(streamCatalog)), topology(std::move(topology)), registerDeregisterNode(), addRemoveLogicalStream(),
       addRemovePhysicalStream() {
     NES_DEBUG("CoordinatorEngine()");
 }

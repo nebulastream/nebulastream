@@ -29,7 +29,7 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
                                    ExpressionStatmentPtr condition,
                                    ExpressionStatmentPtr advance,
                                    const std::vector<StatementPtr>& loop_body)
-    : varDeclaration(varDeclaration), condition(std::move(condition)), advance(std::move(advance)),
+    : varDeclaration(std::move(varDeclaration)), condition(std::move(condition)), advance(std::move(advance)),
       body(new CompoundStatement()) {
     for (const auto& stmt : loop_body) {
         if (stmt)

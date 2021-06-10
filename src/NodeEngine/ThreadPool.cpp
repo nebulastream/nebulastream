@@ -24,10 +24,11 @@
 #include <Util/ThreadNaming.hpp>
 #include <functional>
 #include <string.h>
+#include <utility>
 namespace NES::NodeEngine {
 
 ThreadPool::ThreadPool(uint64_t nodeId, QueryManagerPtr queryManager, uint32_t numThreads)
-    : running(false), numThreads(numThreads), nodeId(nodeId), threads(), queryManager(queryManager) {}
+    : running(false), numThreads(numThreads), nodeId(nodeId), threads(), queryManager(std::move(queryManager)) {}
 
 ThreadPool::~ThreadPool() {
     NES_DEBUG("Threadpool: Destroying Thread Pool");

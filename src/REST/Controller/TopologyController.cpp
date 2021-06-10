@@ -18,13 +18,14 @@
 #include <Topology/Topology.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 #include <vector>
 using namespace web;
 using namespace http;
 
 namespace NES {
 
-TopologyController::TopologyController(TopologyPtr topology) : topology(topology) {}
+TopologyController::TopologyController(TopologyPtr topology) : topology(std::move(topology)) {}
 
 void TopologyController::handleGet(std::vector<utility::string_t> paths, http_request message) {
     NES_DEBUG("TopologyController: GET Topology");

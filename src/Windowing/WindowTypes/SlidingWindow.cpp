@@ -18,11 +18,12 @@
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/SlidingWindow.hpp>
+#include <utility>
 
 namespace NES::Windowing {
 
 SlidingWindow::SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : WindowType(timeCharacteristic), size(size), slide(slide) {}
+    : WindowType(timeCharacteristic), size(std::move(size)), slide(std::move(slide)) {}
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));

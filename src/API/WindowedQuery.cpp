@@ -42,6 +42,7 @@
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
 #include <iostream>
 #include <stdarg.h>
+#include <utility>
 
 namespace NES {
 
@@ -51,7 +52,7 @@ WindowOperatorBuilder::WindowedQuery Query::window(const Windowing::WindowTypePt
 
 namespace WindowOperatorBuilder {
 WindowedQuery::WindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType)
-    : originalQuery(originalQuery), windowType(windowType) {}
+    : originalQuery(originalQuery), windowType(std::move(windowType)) {}
 
 //KeyedWindowedQuery keyBy(ExpressionItem onKey);
 KeyedWindowedQuery WindowedQuery::byKey(ExpressionItem onKey) const {
@@ -63,7 +64,7 @@ Query& WindowedQuery::apply(const Windowing::WindowAggregationPtr aggregation) {
 }
 
 KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTypePtr windowType, ExpressionItem onKey)
-    : originalQuery(originalQuery), windowType(windowType), onKey(onKey) {}
+    : originalQuery(originalQuery), windowType(std::move(windowType)), onKey(onKey) {}
 
 Query& KeyedWindowedQuery::apply(Windowing::WindowAggregationPtr aggregation) {
     return originalQuery.windowByKey(onKey, windowType, aggregation);

@@ -17,6 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/TypeCastExprStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 StatementType TypeCastExprStatement::getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
@@ -32,7 +33,7 @@ const CodeExpressionPtr TypeCastExprStatement::getCode() const {
 const ExpressionStatmentPtr TypeCastExprStatement::copy() const { return std::make_shared<TypeCastExprStatement>(*this); }
 
 TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type)
-    : expression(expr.copy()), dataType(type) {}
+    : expression(expr.copy()), dataType(std::move(type)) {}
 
 TypeCastExprStatement::~TypeCastExprStatement() = default;
 }// namespace NES::QueryCompilation

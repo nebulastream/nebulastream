@@ -35,6 +35,7 @@
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
 #include <memory>
+#include <utility>
 
 namespace NES::Windowing {
 
@@ -64,7 +65,7 @@ class ExecutableCompleteAggregationTriggerAction
         SchemaPtr outputSchema,
         uint64_t id,
         PartialAggregateType partialAggregateTypeInitialValue)
-        : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id),
+        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(executableWindowAggregation)), id(id),
           partialAggregateTypeInitialValue(partialAggregateTypeInitialValue) {
 
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()

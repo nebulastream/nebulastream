@@ -27,15 +27,16 @@
 #include <Util/Logger.hpp>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
 Predicate::Predicate(const BinaryOperatorType& op,
                      const LegacyExpressionPtr left,
                      const LegacyExpressionPtr right,
-                     const std::string& functionCallOverload,
+                     std::string  functionCallOverload,
                      bool bracket)
-    : op(op), left(left), right(right), bracket(bracket), functionCallOverload(functionCallOverload) {}
+    : op(op), left(left), right(right), bracket(bracket), functionCallOverload(std::move(functionCallOverload)) {}
 
 Predicate::Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload("") {}
@@ -114,14 +115,14 @@ bool Predicate::equals(const LegacyExpression& _rhs) const {
     }
 }
 
-PredicateItem::PredicateItem(AttributeFieldPtr attribute) : mutation(PredicateItemMutation::ATTRIBUTE), attribute(attribute) {}
+PredicateItem::PredicateItem(AttributeFieldPtr attribute) : mutation(PredicateItemMutation::ATTRIBUTE), attribute(std::move(attribute)) {}
 BinaryOperatorType Predicate::getOperatorType() const { return op; }
 
 const LegacyExpressionPtr Predicate::getLeft() const { return left; }
 
 const LegacyExpressionPtr Predicate::getRight() const { return right; }
 
-PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutation::VALUE), value(value) {}
+PredicateItem::PredicateItem(ValueTypePtr value) : mutation(PredicateItemMutation::VALUE), value(std::move(value)) {}
 
 PredicateItem::PredicateItem(int8_t val)
     : mutation(PredicateItemMutation::VALUE),

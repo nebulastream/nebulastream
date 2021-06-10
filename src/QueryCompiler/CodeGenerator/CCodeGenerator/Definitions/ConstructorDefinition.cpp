@@ -27,8 +27,8 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-ConstructorDefinition::ConstructorDefinition(const std::string& functionName, bool isExplicit)
-    : name(functionName), isExplicit(isExplicit) {}
+ConstructorDefinition::ConstructorDefinition(std::string  functionName, bool isExplicit)
+    : name(std::move(functionName)), isExplicit(isExplicit) {}
 
 ConstructorDefinitionPtr ConstructorDefinition::create(const std::string& functionName, bool isExplicit) {
     return std::make_shared<ConstructorDefinition>(functionName, isExplicit);

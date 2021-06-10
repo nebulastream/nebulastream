@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -21,7 +22,7 @@ PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                Windowing::WindowOperatorHandlerPtr handler)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), operatorHandler(handler){};
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), operatorHandler(std::move(handler)){};
 
 Windowing::WindowOperatorHandlerPtr PhysicalWindowOperator::getOperatorHandler() const { return operatorHandler; }
 

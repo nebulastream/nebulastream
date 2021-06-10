@@ -19,6 +19,7 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
@@ -27,7 +28,7 @@ LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(Physica
     return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
 }
 
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider) : provider(provider) {}
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider) : provider(std::move(provider)) {}
 
 QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();

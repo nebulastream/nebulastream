@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 using namespace std;
 
@@ -31,7 +32,7 @@ namespace NES {
 SenseSource::SenseSource(SchemaPtr schema,
                          NodeEngine::BufferManagerPtr bufferManager,
                          NodeEngine::QueryManagerPtr queryManager,
-                         const std::string& udsf,
+                         std::string  udsf,
                          OperatorId operatorId,
                          size_t numSourceLocalBuffers,
                          std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
@@ -42,7 +43,7 @@ SenseSource::SenseSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  DataSource::GatheringMode::FREQUENCY_MODE,
                  successors),
-      udsf(udsf) {}
+      udsf(std::move(udsf)) {}
 
 std::optional<NodeEngine::TupleBuffer> SenseSource::receiveData() {
     NES_DEBUG("SenseSource::receiveData called");

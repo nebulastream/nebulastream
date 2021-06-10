@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -21,7 +22,7 @@ PhysicalMapOperator::PhysicalMapOperator(OperatorId id,
                                          SchemaPtr inputSchema,
                                          SchemaPtr outputSchema,
                                          FieldAssignmentExpressionNodePtr mapExpression)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), mapExpression(mapExpression) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), mapExpression(std::move(mapExpression)) {}
 
 FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() { return mapExpression; }
 

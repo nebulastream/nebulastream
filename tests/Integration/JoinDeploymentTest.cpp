@@ -118,7 +118,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
     string query =
         R"(Query::from("window").as("w1").joinWith(Query::from("window").as("w2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -230,7 +230,7 @@ TEST_F(JoinDeploymentTest, testJoinWithSameSchemaTumblingWindow) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id")).equalsTo(Attribute("id")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -350,7 +350,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentSchemaNamesButSameInputTumblingW
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -471,7 +471,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamTumblingWindow) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -592,7 +592,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentNumberOfAttributesTumblingWindow
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -717,7 +717,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamDifferentSpeedTumblingWind
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -853,7 +853,7 @@ TEST_F(JoinDeploymentTest, testJoinWithThreeSources) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1010,7 +1010,7 @@ TEST_F(JoinDeploymentTest, testJoinWithFourSources) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
         Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1157,7 +1157,7 @@ TEST_F(JoinDeploymentTest, testJoinWithDifferentStreamSlidingWindow) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(
          SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1283,7 +1283,7 @@ TEST_F(JoinDeploymentTest, testSlidingWindowDifferentAttributes) {
     string query =
         R"(Query::from("window1").joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(
          SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1435,7 +1435,7 @@ TEST_F(JoinDeploymentTest, DISABLED_testJoinBenchmarkQuery) {
     string query =
         R"(Query::from("input1").joinWith(Query::from("input2")).where(Attribute("id")).equalsTo(Attribute("id")).window(
          TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(100))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 

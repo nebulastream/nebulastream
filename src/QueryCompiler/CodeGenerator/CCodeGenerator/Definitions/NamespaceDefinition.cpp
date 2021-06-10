@@ -22,7 +22,7 @@
 #include <string>
 #include <utility>
 namespace NES::QueryCompilation {
-NamespaceDefinition::NamespaceDefinition(std::string name) : name(name) {}
+NamespaceDefinition::NamespaceDefinition(std::string name) : name(std::move(name)) {}
 
 NamespaceDefinitionPtr NamespaceDefinition::create(std::string name) { return std::make_shared<NamespaceDefinition>(name); }
 

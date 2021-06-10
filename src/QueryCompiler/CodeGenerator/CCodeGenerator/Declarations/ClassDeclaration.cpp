@@ -25,9 +25,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace NES::QueryCompilation {
-ClassDeclaration::ClassDeclaration(ClassDefinitionPtr classDefinition) : classDefinition(classDefinition) {}
+ClassDeclaration::ClassDeclaration(ClassDefinitionPtr classDefinition) : classDefinition(std::move(classDefinition)) {}
 
 ClassDeclarationPtr ClassDeclaration::create(ClassDefinitionPtr classDefinition) {
     return std::make_shared<ClassDeclaration>(classDefinition);

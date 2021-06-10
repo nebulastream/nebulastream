@@ -21,6 +21,7 @@
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToGeneratableOperators.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
@@ -30,7 +31,7 @@ LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators::create
 }
 
 LowerPhysicalToGeneratableOperators::LowerPhysicalToGeneratableOperators(GeneratableOperatorProviderPtr provider)
-    : provider(provider) {}
+    : provider(std::move(provider)) {}
 
 PipelineQueryPlanPtr LowerPhysicalToGeneratableOperators::apply(PipelineQueryPlanPtr pipelinedQueryPlan) {
     for (auto pipeline : pipelinedQueryPlan->getPipelines()) {

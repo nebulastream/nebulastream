@@ -123,7 +123,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralTumblingWindow) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -241,7 +241,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedTumblingWindow) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -339,7 +339,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentCentralSlidingWindow) {
                    ".byKey(Attribute(\"id\"))"
                    ".apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -458,7 +458,7 @@ TEST_F(AssignWatermarkTest, testWatermarkAssignmentDistributedSlidingWindow) {
         ".byKey(Attribute(\"id\"))"
         ".apply(Sum(Attribute(\"value\")))"
         ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();

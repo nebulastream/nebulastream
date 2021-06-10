@@ -92,7 +92,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
     remove(outputFilePath.c_str());
 
     //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -124,7 +124,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingBottomUp) {
 
     NES_INFO("UnionDeploymentTest: Submit query");
     string query =
-        "Query::from(\"car\").unionWith(Query::from(\"truck\")).sink(FileSinkDescriptor::create(\"" + outputFilePath + "\"));";
+        R"(Query::from("car").unionWith(Query::from("truck")).sink(FileSinkDescriptor::create(")" + outputFilePath + "\"));";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
@@ -279,7 +279,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDown) {
     remove(outputFilePath.c_str());
 
     //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -466,7 +466,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testDeployTwoWorkerMergeUsingTopDownWithDif
     remove(outputFilePath.c_str());
 
     //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -654,7 +654,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
     remove(outputFilePath.c_str());
 
     //register logical stream
-    std::string testSchema = "Schema::create()->addField(\"id\", BasicType::UINT32)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema = R"(Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName = "testSchema.hpp";
     std::ofstream out(testSchemaFileName);
     out << testSchema;
@@ -671,7 +671,7 @@ TEST_F(UnionDeploymentTest, DISABLED_testMergeTwoDifferentStreams) {
 
     wrk1->registerPhysicalStream(confCar);
 
-    std::string testSchema2 = "Schema::create()->addField(\"id\", BasicType::UINT16)->addField(\"value\", BasicType::UINT64);";
+    std::string testSchema2 = R"(Schema::create()->addField("id", BasicType::UINT16)->addField("value", BasicType::UINT64);)";
     std::string testSchemaFileName2 = "testSchema2.hpp";
     std::ofstream out2(testSchemaFileName2);
     out2 << testSchema2;

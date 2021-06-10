@@ -16,9 +16,10 @@
 
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/PointerDataType.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
-PointerDataType::PointerDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(baseType) {}
+PointerDataType::PointerDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(std::move(baseType)) {}
 
 const CodeExpressionPtr PointerDataType::getCode() const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "*");

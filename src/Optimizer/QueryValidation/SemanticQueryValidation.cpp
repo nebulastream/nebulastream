@@ -25,11 +25,12 @@
 #include <Optimizer/QueryValidation/SemanticQueryValidation.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <string.h>
+#include <utility>
 #include <z3++.h>
 
 namespace NES::Optimizer {
 
-SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {}
+SemanticQueryValidation::SemanticQueryValidation(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {}
 
 SemanticQueryValidationPtr SemanticQueryValidation::create(StreamCatalogPtr scp) {
     return std::make_shared<SemanticQueryValidation>(scp);

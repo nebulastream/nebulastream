@@ -18,12 +18,13 @@
 #include <Windowing/Runtime/WindowState.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
+#include <utility>
 #include <vector>
 
 namespace NES::Windowing {
 
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
-    : WindowType(timeCharacteristic), size(size) {}
+    : WindowType(timeCharacteristic), size(std::move(size)) {}
 
 WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));

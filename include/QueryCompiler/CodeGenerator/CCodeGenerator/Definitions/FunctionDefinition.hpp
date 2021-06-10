@@ -29,7 +29,7 @@ namespace QueryCompilation {
 class FunctionDefinition : public std::enable_shared_from_this<FunctionDefinition> {
 
   public:
-    FunctionDefinition(const std::string& functionName);
+    FunctionDefinition(std::string  functionName);
 
     /**
      * @brief Factory to create the function definition.

@@ -19,11 +19,12 @@
 #include <Sinks/Formats/SinkFormat.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
+#include <utility>
 
 namespace NES {
 
 SinkFormat::SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
-    : schema(schema), bufferManager(bufferManager) {}
+    : schema(std::move(schema)), bufferManager(std::move(bufferManager)) {}
 
 SchemaPtr SinkFormat::getSchemaPtr() { return schema; }
 

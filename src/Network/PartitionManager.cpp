@@ -17,10 +17,11 @@
 #include <Network/PartitionManager.hpp>
 #include <NodeEngine/Execution/DataEmitter.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Network {
 
-PartitionManager::PartitionEntry::PartitionEntry(DataEmitterPtr emitter) : emitter(emitter) {
+PartitionManager::PartitionEntry::PartitionEntry(DataEmitterPtr emitter) : emitter(std::move(emitter)) {
     // nop
 }
 

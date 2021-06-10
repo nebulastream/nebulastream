@@ -216,7 +216,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
     //register query
     std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(PrintSinkDescriptor::create());";
+        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -284,7 +284,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintWithL
 
     //register query
     std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(PrintSinkDescriptor::create());";
+        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(PrintSinkDescriptor::create());)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -355,7 +355,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
     //register query
     std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(FileSinkDescriptor::create(\"" + outputFilePath
+        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(")" + outputFilePath
         + "\")); ";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -482,7 +482,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFileW
 
     //register query
     std::string queryString =
-        "Query::from(\"testStream\").filter(Attribute(\"campaign_id\") < 42).sink(FileSinkDescriptor::create(\"" + outputFilePath
+        R"(Query::from("testStream").filter(Attribute("campaign_id") < 42).sink(FileSinkDescriptor::create(")" + outputFilePath
         + "\")); ";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -615,7 +615,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register query
-    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"val1\") < 2).sink(PrintSinkDescriptor::create()); ";
+    std::string queryString = R"(Query::from("testStream").filter(Attribute("val1") < 2).sink(PrintSinkDescriptor::create()); )";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
@@ -694,7 +694,7 @@ TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
 
     //register query
-    std::string queryString = "Query::from(\"testStream\").filter(Attribute(\"val1\") < 10).sink(FileSinkDescriptor::create(\""
+    std::string queryString = R"(Query::from("testStream").filter(Attribute("val1") < 10).sink(FileSinkDescriptor::create(")"
         + outputFilePath + "\")); ";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
@@ -1294,7 +1294,7 @@ TEST_F(ContinuousSourceTest, testExdraUseCaseWithOutput) {
     //register query
     NES_INFO("ContinuousSourceTest: Deploy query");
     std::string queryString =
-        "Query::from(\"exdra\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\" , \"CSV_FORMAT\", \"APPEND\"));";
+        R"(Query::from("exdra").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(" , "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     NES_INFO("ContinuousSourceTest: Wait on result");

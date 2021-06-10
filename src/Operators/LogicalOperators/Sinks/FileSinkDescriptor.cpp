@@ -16,6 +16,7 @@
 
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/OperatorNode.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -28,7 +29,7 @@ SinkDescriptorPtr FileSinkDescriptor::create(std::string fileName, std::string s
 }
 
 FileSinkDescriptor::FileSinkDescriptor(std::string fileName, std::string sinkFormat, bool append)
-    : fileName(fileName), sinkFormat(sinkFormat), append(append) {}
+    : fileName(std::move(fileName)), sinkFormat(std::move(sinkFormat)), append(append) {}
 
 const std::string& FileSinkDescriptor::getFileName() const { return fileName; }
 

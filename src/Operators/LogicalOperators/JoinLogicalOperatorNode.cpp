@@ -22,12 +22,13 @@
 #include <Util/Logger.hpp>
 #include <Windowing/LogicalJoinDefinition.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
+#include <utility>
 #include <z3++.h>
 
 namespace NES {
 
 JoinLogicalOperatorNode::JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
-    : OperatorNode(id), LogicalBinaryOperatorNode(id), joinDefinition(joinDefinition) {}
+    : OperatorNode(id), LogicalBinaryOperatorNode(id), joinDefinition(std::move(joinDefinition)) {}
 
 bool JoinLogicalOperatorNode::isIdentical(NodePtr rhs) const {
     return equal(rhs) && rhs->as<JoinLogicalOperatorNode>()->getId() == id;

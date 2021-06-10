@@ -100,7 +100,7 @@ class StateVariable : public detail::Destroyable {
 
       private:
         explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback)
-            : backend(backend), key(key), defaultCallback(defaultCallback) {}
+            : backend(backend), key(key), defaultCallback(std::move(defaultCallback)) {}
 
       public:
         /**
@@ -246,7 +246,7 @@ class StateVariable : public detail::Destroyable {
      * @param defaultCallback a function that gets called when retrieving a value not present in the state
      */
     explicit StateVariable(std::string name, std::function<Value(const Key&)> defaultCallback)
-        : name(std::move(name)), backend(), defaultCallback(defaultCallback) {
+        : name(std::move(name)), backend(), defaultCallback(std::move(defaultCallback)) {
         NES_ASSERT(this->defaultCallback, "invalid default callback");
     }
 

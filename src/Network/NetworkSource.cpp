@@ -17,6 +17,7 @@
 #include <Network/NesPartition.hpp>
 #include <Network/NetworkSource.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::Network {
 
@@ -34,7 +35,7 @@ NetworkSource::NetworkSource(SchemaPtr schema,
                  numSourceLocalBuffers,
                  DataSource::FREQUENCY_MODE,
                  successors),
-      networkManager(networkManager), nesPartition(nesPartition) {
+      networkManager(std::move(networkManager)), nesPartition(nesPartition) {
     NES_INFO("NetworkSource: Initializing NetworkSource for " << nesPartition.toString());
     NES_ASSERT(this->networkManager, "Invalid network manager");
 }

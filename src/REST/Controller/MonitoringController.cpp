@@ -25,11 +25,12 @@
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/http_client.h>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace NES {
 
-MonitoringController::MonitoringController(MonitoringServicePtr mService) : monitoringService(mService) {
+MonitoringController::MonitoringController(MonitoringServicePtr mService) : monitoringService(std::move(mService)) {
     NES_DEBUG("MonitoringController: Initializing");
 }
 

@@ -16,6 +16,7 @@
 
 #include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -24,7 +25,7 @@ SinkDescriptorPtr ZmqSinkDescriptor::create(std::string host, uint16_t port, boo
 }
 
 ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, bool internal)
-    : host(host), port(port), internal(internal) {}
+    : host(std::move(host)), port(port), internal(internal) {}
 
 const std::string& ZmqSinkDescriptor::getHost() const { return host; }
 uint16_t ZmqSinkDescriptor::getPort() const { return port; }

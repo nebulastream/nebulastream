@@ -16,6 +16,7 @@
 
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
@@ -23,6 +24,6 @@ GeneratableJoinOperator::GeneratableJoinOperator(OperatorId id,
                                                  SchemaPtr inputSchema,
                                                  SchemaPtr outputSchema,
                                                  Join::JoinOperatorHandlerPtr operatorHandler)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(operatorHandler) {}
+    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(std::move(operatorHandler)) {}
 
 }// namespace NES::QueryCompilation::GeneratableOperators

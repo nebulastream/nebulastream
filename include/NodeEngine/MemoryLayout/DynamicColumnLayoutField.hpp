@@ -65,7 +65,7 @@ class DynamicColumnLayoutField {
      * @param dynamicColumnLayoutBuffer
      */
     DynamicColumnLayoutField(T* basePointer, DynamicColumnLayoutBufferPtr dynamicColumnLayoutBuffer)
-        : basePointer(basePointer), dynamicColumnLayoutBuffer(dynamicColumnLayoutBuffer){};
+        : basePointer(basePointer), dynamicColumnLayoutBuffer(std::move(dynamicColumnLayoutBuffer)){};
 
     T* basePointer;
     DynamicColumnLayoutBufferPtr dynamicColumnLayoutBuffer;
