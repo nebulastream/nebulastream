@@ -43,21 +43,21 @@ using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressi
  */
 class ExpressionItem {
   public:
-    ExpressionItem(int8_t value);
-    ExpressionItem(uint8_t value);
-    ExpressionItem(int16_t value);
-    ExpressionItem(uint16_t value);
-    ExpressionItem(int32_t value);
-    ExpressionItem(uint32_t value);
-    ExpressionItem(int64_t value);
-    ExpressionItem(uint64_t value);
-    ExpressionItem(float value);
-    ExpressionItem(double value);
-    ExpressionItem(bool value);
-    ExpressionItem(const char* value);
-    ExpressionItem(std::string const& value);
-    ExpressionItem(ValueTypePtr value);
-    ExpressionItem(ExpressionNodePtr ref);
+    ExpressionItem(int8_t value);            //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint8_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(int16_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint16_t value);          //NOLINT(google-explicit-constructor)
+    ExpressionItem(int32_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint32_t value);          //NOLINT(google-explicit-constructor)
+    ExpressionItem(int64_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint64_t value);          //NOLINT(google-explicit-constructor)
+    ExpressionItem(float value);             //NOLINT(google-explicit-constructor)
+    ExpressionItem(double value);            //NOLINT(google-explicit-constructor)
+    ExpressionItem(bool value);              //NOLINT(google-explicit-constructor)
+    ExpressionItem(const char* value);       //NOLINT(google-explicit-constructor)
+    ExpressionItem(std::string const& value);//NOLINT(google-explicit-constructor)
+    ExpressionItem(ValueTypePtr value);      //NOLINT(google-explicit-constructor)
+    ExpressionItem(ExpressionNodePtr ref);   //NOLINT(google-explicit-constructor)
 
     FieldAssignmentExpressionNodePtr operator=(ExpressionItem);
     FieldAssignmentExpressionNodePtr operator=(ExpressionNodePtr);
