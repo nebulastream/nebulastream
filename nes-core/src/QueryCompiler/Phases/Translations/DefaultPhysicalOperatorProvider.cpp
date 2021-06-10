@@ -213,6 +213,7 @@ void DefaultPhysicalOperatorProvider::lowerInferModelOperator(QueryPlanPtr, Logi
                                                                                             inferModelOperator->getModel(),
                                                                                             inferModelOperator->getInputFieldsAsPtr(),
                                                                                             inferModelOperator->getOutputFieldsAsPtr());
+    operatorNode->replace(physicalInferModelOperator);
 }
 
 void DefaultPhysicalOperatorProvider::lowerMapOperator(const QueryPlanPtr&, const LogicalOperatorNodePtr& operatorNode) {

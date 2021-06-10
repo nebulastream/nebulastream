@@ -18,8 +18,11 @@
 #define NES_TENSORFLOWADAPTER_HPP
 
 #include <memory>
-//#include <tensorflow/lite/interpreter.h>
 #include <vector>
+
+namespace tflite {
+    class Interpreter;
+}
 
 namespace NES {
 
@@ -30,13 +33,13 @@ class TensorflowAdapter {
   public:
     static SemanticQueryValidationPtr create();
     TensorflowAdapter();
-    void infer(std::vector<float> v);
+    void infer(int n, ...);
     float getResultAt(int i);
     void initializeModel(std::string model);
     void pass() {}
   private:
+    std::unique_ptr<tflite::Interpreter> interpreter;
     float* output{};
-    std::string model;
 };
 
 }// namespace NES
