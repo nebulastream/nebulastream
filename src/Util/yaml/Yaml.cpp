@@ -109,8 +109,8 @@ class SequenceImp : public TypeImp {
 
   public:
     ~SequenceImp() override {
-        for (auto it = m_Sequence.begin(); it != m_Sequence.end(); it++) {
-            delete it->second;
+        for (auto & it : m_Sequence) {
+            delete it.second;
         }
     }
 
@@ -160,8 +160,8 @@ class SequenceImp : public TypeImp {
     }
 
     Node* PushFront() override {
-        for (auto it = m_Sequence.cbegin(); it != m_Sequence.cend(); it++) {
-            m_Sequence[it->first + 1] = it->second;
+        for (auto it : m_Sequence) {
+            m_Sequence[it.first + 1] = it.second;
         }
 
         Node* pNode = new Node;
@@ -200,8 +200,8 @@ class MapImp : public TypeImp {
 
   public:
     ~MapImp() override {
-        for (auto it = m_Map.begin(); it != m_Map.end(); it++) {
-            delete it->second;
+        for (auto & it : m_Map) {
+            delete it.second;
         }
     }
 
@@ -1460,9 +1460,7 @@ class ParseImp {
         *
         */
     void Print() {
-        for (auto it = m_Lines.begin(); it != m_Lines.end(); it++) {
-
-            ReaderLine* pLine = *it;
+        for (auto pLine : m_Lines) {
 
             // Print type
             if (pLine->Type == Node::SequenceType) {
@@ -1523,8 +1521,8 @@ class ParseImp {
         *
         */
     void ClearLines() {
-        for (auto it = m_Lines.begin(); it != m_Lines.end(); it++) {
-            delete *it;
+        for (auto & m_Line : m_Lines) {
+            delete m_Line;
         }
         m_Lines.clear();
     }
@@ -1795,8 +1793,8 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
             }
             stream << "\n";
 
-            for (auto it = lines.begin(); it != lines.end(); it++) {
-                stream << std::string(level, ' ') << (*it) << "\n";
+            for (auto & line : lines) {
+                stream << std::string(level, ' ') << line << "\n";
             }
         } break;
 
@@ -2008,8 +2006,7 @@ void CopyNode(const Node& from, Node& to) {
 bool ShouldBeCited(const std::string& key) { return key.find_first_of("\":{}[],&*#?|-<>=!%@") != std::string::npos; }
 
 void AddEscapeTokens(std::string& input, const std::string& tokens) {
-    for (auto it = tokens.begin(); it != tokens.end(); it++) {
-        const char token = *it;
+    for (char token : tokens) {
         const std::string replace = std::string("\\") + std::string(1, token);
         size_t found = input.find_first_of(token);
         while (found != std::string::npos) {

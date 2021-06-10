@@ -21,6 +21,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
+#include <memory>
 
 namespace NES::QueryCompilation {
 const GeneratableDataTypePtr VariableDeclaration::getType() const { return type_; }
@@ -44,7 +45,7 @@ const Code VariableDeclaration::getCode() const {
     return str.str();
 }
 
-const CodeExpressionPtr VariableDeclaration::getIdentifier() const { return CodeExpressionPtr(new CodeExpression(identifier_)); }
+const CodeExpressionPtr VariableDeclaration::getIdentifier() const { return std::make_shared<CodeExpression>(identifier_); }
 
 const GeneratableDataTypePtr VariableDeclaration::getDataType() const { return type_; }
 

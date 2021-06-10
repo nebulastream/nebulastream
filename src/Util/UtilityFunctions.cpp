@@ -53,11 +53,11 @@ namespace NES {
 
 std::string UtilityFunctions::escapeJson(const std::string& s) {
     std::ostringstream o;
-    for (auto c = s.cbegin(); c != s.cend(); c++) {
-        if (*c == '"' || *c == '\\' || ('\x00' <= *c && *c <= '\x1f')) {
-            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) *c;
+    for (char c : s) {
+        if (c == '"' || c == '\\' || ('\x00' <= c && c <= '\x1f')) {
+            o << "\\u" << std::hex << std::setw(4) << std::setfill('0') << (int) c;
         } else {
-            o << *c;
+            o << c;
         }
     }
     return o.str();
@@ -224,8 +224,8 @@ std::string UtilityFunctions::generateIdString() {
         {false, false, false, false, true, false, true, false, true, false, true, false, false, false, false, false};
 
     std::string res;
-    for (int i = 0; i < 16; i++) {
-        if (dash[i])
+    for (bool i : dash) {
+        if (i)
             res += "-";
         res += v[dist(rng)];
         res += v[dist(rng)];

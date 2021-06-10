@@ -3342,9 +3342,9 @@ class SourceFile {
         //    a colon-separated list of path prefixes.  Try prepending each
         //    to the given path until a valid file is found.
         const std::vector<std::string>& prefixes = get_paths_from_env_variable();
-        for (size_t i = 0; i < prefixes.size(); ++i) {
+        for (const auto & prefixe : prefixes) {
             // Double slashes (//) should not be a problem.
-            std::string new_path = prefixes[i] + '/' + path;
+            std::string new_path = prefixe + '/' + path;
             _file.reset(new std::ifstream(new_path.c_str()));
             if (is_open())
                 break;
@@ -3736,15 +3736,15 @@ class Printer {
 
         lines_t lines = _snippets.get_snippet(source_loc.filename, source_loc.line, static_cast<unsigned>(context_size));
 
-        for (auto it = lines.begin(); it != lines.end(); ++it) {
-            if (it->first == source_loc.line) {
+        for (auto & line : lines) {
+            if (line.first == source_loc.line) {
                 colorize.set_color(color_code);
                 os << indent << ">";
             } else {
                 os << indent << " ";
             }
-            os << std::setw(4) << it->first << ": " << it->second << "\n";
-            if (it->first == source_loc.line) {
+            os << std::setw(4) << line.first << ": " << line.second << "\n";
+            if (line.first == source_loc.line) {
                 colorize.set_color(Color::reset);
             }
         }
@@ -3805,12 +3805,12 @@ class SignalHandling {
             success = false;
         }
 
-        for (size_t i = 0; i < posix_signals.size(); ++i) {
+        for (int posix_signal : posix_signals) {
             struct sigaction action;
             memset(&action, 0, sizeof action);
             action.sa_flags = static_cast<int>(SA_SIGINFO | SA_ONSTACK | SA_NODEFER | SA_RESETHAND);
             sigfillset(&action.sa_mask);
-            sigdelset(&action.sa_mask, posix_signals[i]);
+            sigdelset(&action.sa_mask, posix_signal);
 #if defined(__clang__)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdisabled-macro-expansion"
@@ -3820,7 +3820,7 @@ class SignalHandling {
 #pragma clang diagnostic pop
 #endif
 
-            int r = sigaction(posix_signals[i], &action, nullptr);
+            int r = sigaction(posix_signal, &action, nullptr);
             if (r < 0)
                 success = false;
         }
