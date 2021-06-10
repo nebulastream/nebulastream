@@ -14,15 +14,12 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <bitset>
-#include <cstring>
 #include <exception>
 #include <iostream>
-#include <sstream>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #include <NodeEngine/internal/backtrace.hpp>

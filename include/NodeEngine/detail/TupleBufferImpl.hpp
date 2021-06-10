@@ -208,7 +208,7 @@ class MemorySegment {
 
     MemorySegment& operator=(const MemorySegment& other);
 
-    MemorySegment();
+    MemorySegment() noexcept = default;
 
     explicit MemorySegment(uint8_t* ptr,
                            uint32_t size,

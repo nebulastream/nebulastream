@@ -60,8 +60,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithSingleFilter) {
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLogicalExpression) {
     NES_INFO("Satisfiable Query with logical expression");
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") > 10 && Attribute("value") < 100); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") > 10 && Attribute("value") < 100); )";
 
     CallValidation(queryString);
 }
@@ -70,8 +69,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLogicalExpression) {
 TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLogicalExpression) {
     NES_INFO("Unatisfiable Query with logical expression");
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 10 && Attribute("value") > 100); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") < 10 && Attribute("value") > 100); )";
 
     TestForException(queryString);
 }
@@ -80,8 +78,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLogicalExpression) {
 TEST_F(SemanticQueryValidationTest, satisfiableQueryWithMultipleFilters) {
     NES_INFO("Satisfiable Query with multiple filters");
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("id") > 10).filter(Attribute("value") > 10); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10).filter(Attribute("value") > 10); )";
 
     CallValidation(queryString);
 }
@@ -103,8 +100,7 @@ TEST_F(SemanticQueryValidationTest, satisfiableQueryWithLaterAddedFilters) {
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("id") > 10).filter(Attribute("value") < 10); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10).filter(Attribute("value") < 10); )";
 
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
 
@@ -123,8 +119,7 @@ TEST_F(SemanticQueryValidationTest, unsatisfiableQueryWithLaterAddedFilters) {
     StreamCatalogPtr streamCatalogPtr = std::make_shared<StreamCatalog>();
     auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(streamCatalogPtr);
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("id") > 100).filter(Attribute("value") < 10); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 100).filter(Attribute("value") < 10); )";
 
     QueryPtr filterQuery = UtilityFunctions::createQueryFromCodeString(queryString);
 

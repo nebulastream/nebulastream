@@ -1102,8 +1102,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     std::string outputFilePath = "test.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("default_logical").project(Attribute("id")).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query = R"(Query::from("default_logical").project(Attribute("id")).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
