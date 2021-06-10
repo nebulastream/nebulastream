@@ -14,7 +14,7 @@
     limitations under the License.
 */
 
-#ifndef _NODEENGINE_NODESTATSPROVIDER_HPP
+#ifndef NODEENGINE_NODESTATSPROVIDER_HPP
 #define NODEENGINE_NODESTATSPROVIDER_HPP
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
@@ -109,4 +109,5 @@ class NodeStatsProvider {
 using NodeStatsProviderPtr = std::shared_ptr<NodeStatsProvider>;
 
 }// namespace NES::NodeEngine
-#endif
+
+#endif // NODEENGINE_NODESTATSPROVIDER_HPP
