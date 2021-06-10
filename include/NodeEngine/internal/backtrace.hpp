@@ -3342,7 +3342,7 @@ class SourceFile {
         //    a colon-separated list of path prefixes.  Try prepending each
         //    to the given path until a valid file is found.
         const std::vector<std::string>& prefixes = get_paths_from_env_variable();
-        for (const auto & prefixe : prefixes) {
+        for (const auto& prefixe : prefixes) {
             // Double slashes (//) should not be a problem.
             std::string new_path = prefixe + '/' + path;
             _file.reset(new std::ifstream(new_path.c_str()));
@@ -3736,7 +3736,7 @@ class Printer {
 
         lines_t lines = _snippets.get_snippet(source_loc.filename, source_loc.line, static_cast<unsigned>(context_size));
 
-        for (auto & line : lines) {
+        for (auto& line : lines) {
             if (line.first == source_loc.line) {
                 colorize.set_color(color_code);
                 os << indent << ">";
