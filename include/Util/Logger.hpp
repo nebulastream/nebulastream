@@ -324,13 +324,13 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << (TEXT));                             \
+            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << (TEXT));                           \
             {                                                                                                                    \
                 auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
-                __os << " error message: " << (TEXT);                                                                              \
+                __os << " error message: " << (TEXT);                                                                            \
                 NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
             }                                                                                                                    \
         }                                                                                                                        \
@@ -342,13 +342,13 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 #define NES_ASSERT(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << (TEXT));                             \
+            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << (TEXT));                           \
             {                                                                                                                    \
                 auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
-                __os << " error message: " << (TEXT);                                                                              \
+                __os << " error message: " << (TEXT);                                                                            \
                 NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
             }                                                                                                                    \
         }                                                                                                                        \

@@ -19,9 +19,8 @@
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <memory>
 #include <string>
-#include <utility>
 #include <type_traits>
-
+#include <utility>
 
 namespace NES::QueryCompilation {
 
