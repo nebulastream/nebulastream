@@ -97,10 +97,8 @@ struct __attribute__((packed)) everyBooleanTypeRecord {
 
 using createFileSourceFuncPtr = const DataSourcePtr (*)(SchemaPtr, NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, const std::string &);
 
-typedef const DataS;
 using createSenseSourceFuncPtr = const DataSourcePtr (*)(SchemaPtr, NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, const std::string &, uint64_t, uint64_t, std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>);
 
-typedef const DataSo;
 using createCSVSourceFuncPtr = const DataSourcePtr (*)(const SchemaPtr, NodeEngine::BufferManagerPtr, NodeEngine::QueryManagerPtr, const std::string &, const std::string &, uint64_t, uint64_t);
 
 class SourceTest : public testing::Test {
