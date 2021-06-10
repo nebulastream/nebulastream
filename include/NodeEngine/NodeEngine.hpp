@@ -99,7 +99,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                         uint64_t numberOfBuffersInSourceLocalBufferPool,
                         uint64_t numberOfBuffersPerPipeline);
 
-    virtual ~NodeEngine();
+    ~NodeEngine() override;
 
     NodeEngine() = delete;
     NodeEngine(const NodeEngine&) = delete;

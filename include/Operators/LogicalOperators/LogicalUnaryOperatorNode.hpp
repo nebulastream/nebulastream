@@ -34,7 +34,7 @@ class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperato
     * @throws Exception if the schema could not be infers correctly or if the inferred types are not valid.
     * @return true if schema was correctly inferred
     */
-    virtual bool inferSchema() override;
+    bool inferSchema() override;
 };
 }// namespace NES
 

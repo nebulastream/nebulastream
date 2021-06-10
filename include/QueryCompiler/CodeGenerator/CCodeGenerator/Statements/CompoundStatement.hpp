@@ -25,15 +25,15 @@ class CompoundStatement : public Statement {
   public:
     CompoundStatement();
 
-    virtual StatementType getStamentType() const override;
+    StatementType getStamentType() const override;
 
-    virtual const CodeExpressionPtr getCode() const override;
+    const CodeExpressionPtr getCode() const override;
 
     const StatementPtr createCopy() const override;
 
     void addStatement(StatementPtr stmt);
 
-    virtual ~CompoundStatement() override;
+    ~CompoundStatement() override;
 
   private:
     std::vector<StatementPtr> statements;

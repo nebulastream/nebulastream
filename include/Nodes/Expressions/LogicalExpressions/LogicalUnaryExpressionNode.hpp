@@ -33,7 +33,7 @@ class LogicalUnaryExpressionNode : public UnaryExpressionNode, public LogicalExp
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
     */
-    ExpressionNodePtr copy() = 0;
+    ExpressionNodePtr copy() override = 0;
 
   protected:
     explicit LogicalUnaryExpressionNode(LogicalUnaryExpressionNode* other);

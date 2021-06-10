@@ -42,7 +42,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
      * @Note must be public because of boost serialize
      */
-    virtual ~SinkMedium();
+    ~SinkMedium() override;
 
     /**
      * @brief virtual method to setup sink

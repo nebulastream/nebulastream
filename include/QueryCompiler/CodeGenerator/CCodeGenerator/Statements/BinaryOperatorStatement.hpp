@@ -44,17 +44,17 @@ class BinaryOperatorStatement : public ExpressionStatment {
 
     StatementPtr assignToVariable(const VarRefStatement& lhs);
 
-    virtual StatementType getStamentType() const;
+    StatementType getStamentType() const override;
 
-    virtual const CodeExpressionPtr getCode() const;
+    const CodeExpressionPtr getCode() const override;
 
-    virtual const ExpressionStatmentPtr copy() const;
+    const ExpressionStatmentPtr copy() const override;
 
     //  BinaryOperatorStatement operator [](const ExpressionStatment &ref){
     //    return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
     //  }
 
-    virtual ~BinaryOperatorStatement();
+    ~BinaryOperatorStatement() override;
 
   private:
     ExpressionStatmentPtr lhs_;

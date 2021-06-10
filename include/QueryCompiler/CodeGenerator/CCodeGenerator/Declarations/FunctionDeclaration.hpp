@@ -30,8 +30,8 @@ class FunctionDeclaration : public Declaration {
     FunctionDeclaration(Code code);
     static FunctionDeclarationPtr create(Code code);
 
-    virtual const GeneratableDataTypePtr getType() const override;
-    virtual const std::string getIdentifierName() const override;
+    const GeneratableDataTypePtr getType() const override;
+    const std::string getIdentifierName() const override;
 
     const Code getTypeDefinitionCode() const override;
 

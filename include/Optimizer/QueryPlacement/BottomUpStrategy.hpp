@@ -35,9 +35,9 @@ namespace NES::Optimizer {
  */
 class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    ~BottomUpStrategy(){};
+    ~BottomUpStrategy() override{};
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
+    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
     static std::unique_ptr<BottomUpStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                     TopologyPtr topology,

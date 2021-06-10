@@ -54,7 +54,7 @@ class ExecutablePipeline : public Reconfigurable {
                                 std::vector<SuccessorExecutablePipeline> successorPipelines,
                                 bool reconfiguration);
 
-    ~ExecutablePipeline();
+    ~ExecutablePipeline() override;
 
     /**
      * @brief Factory method to create a new executable pipeline.

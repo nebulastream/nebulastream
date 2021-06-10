@@ -52,7 +52,7 @@ class JoinOperatorHandler : public NodeEngine::Execution::OperatorHandler {
      */
     void setJoinHandler(AbstractJoinHandlerPtr joinHandler);
 
-    virtual ~JoinOperatorHandler() { NES_DEBUG("~JoinOperatorHandler()"); }
+    ~JoinOperatorHandler() override { NES_DEBUG("~JoinOperatorHandler()"); }
 
     /**
      * @brief Returns a casted join handler

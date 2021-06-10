@@ -29,8 +29,8 @@ class NamespaceDeclaration : public Declaration {
   public:
     NamespaceDeclaration(Code code);
     static NamespaceDeclarationPtr create(Code code);
-    virtual const GeneratableDataTypePtr getType() const override;
-    virtual const std::string getIdentifierName() const override;
+    const GeneratableDataTypePtr getType() const override;
+    const std::string getIdentifierName() const override;
     const Code getTypeDefinitionCode() const override;
     const Code getCode() const override;
     const DeclarationPtr copy() const override;

@@ -25,9 +25,9 @@ namespace NES::Optimizer {
 class TopDownStrategy : public BasePlacementStrategy {
 
   public:
-    ~TopDownStrategy() = default;
+    ~TopDownStrategy() override = default;
 
-    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan);
+    bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 
     static std::unique_ptr<TopDownStrategy> create(GlobalExecutionPlanPtr globalExecutionPlan,
                                                    TopologyPtr topology,

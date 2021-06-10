@@ -24,15 +24,15 @@ namespace QueryCompilation {
 
 class TypeCastExprStatement : public ExpressionStatment {
   public:
-    StatementType getStamentType() const;
+    StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const;
+    const CodeExpressionPtr getCode() const override;
 
-    const ExpressionStatmentPtr copy() const;
+    const ExpressionStatmentPtr copy() const override;
 
     TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type);
 
-    ~TypeCastExprStatement();
+    ~TypeCastExprStatement() override;
 
   private:
     ExpressionStatmentPtr expression;

@@ -28,7 +28,7 @@ namespace NES {
 class BroadcastLogicalOperatorNode : public ExchangeOperatorNode, public LogicalOperatorNode {
   public:
     explicit BroadcastLogicalOperatorNode(OperatorId id);
-    ~BroadcastLogicalOperatorNode() = default;
+    ~BroadcastLogicalOperatorNode() override = default;
 
     bool inferSchema() override;
     bool equal(const NodePtr rhs) const override;

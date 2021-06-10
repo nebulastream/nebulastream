@@ -31,7 +31,7 @@ namespace Execution {
 class OperatorHandler : public Reconfigurable {
   public:
     OperatorHandler() = default;
-    virtual ~OperatorHandler() { NES_DEBUG("~OperatorHandler()"); }
+    ~OperatorHandler() override { NES_DEBUG("~OperatorHandler()"); }
 
     /**
      * @brief Starts the operator handler.

@@ -85,7 +85,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @brief dtor
      * @return
      */
-    ~NesCoordinator();
+    ~NesCoordinator() override;
 
     /**
      * @brief start rpc server: rest server, and one worker <

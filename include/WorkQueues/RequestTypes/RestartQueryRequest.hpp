@@ -37,7 +37,7 @@ class RestartQueryRequest : public NESRequest {
      */
     static RestartQueryRequestPtr create(QueryId queryId);
 
-    virtual ~RestartQueryRequest() = default;
+    ~RestartQueryRequest() override = default;
 
     std::string toString() override;
 

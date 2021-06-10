@@ -33,7 +33,7 @@ namespace NodeEngine {
 */
 class Reconfigurable : public NES::detail::virtual_enable_shared_from_this<Reconfigurable> {
   public:
-    virtual ~Reconfigurable() {
+    ~Reconfigurable() override {
         // nop
     }
 

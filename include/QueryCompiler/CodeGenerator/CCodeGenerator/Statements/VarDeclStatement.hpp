@@ -25,13 +25,13 @@ class VarDeclStatement : public ExpressionStatment {
   public:
     VarDeclStatement(const VariableDeclaration& var_decl);
 
-    virtual StatementType getStamentType() const;
+    StatementType getStamentType() const override;
 
-    virtual const CodeExpressionPtr getCode() const;
+    const CodeExpressionPtr getCode() const override;
 
-    virtual const ExpressionStatmentPtr copy() const;
+    const ExpressionStatmentPtr copy() const override;
 
-    virtual ~VarDeclStatement();
+    ~VarDeclStatement() override;
 
   private:
     std::shared_ptr<VariableDeclaration> variableDeclaration;

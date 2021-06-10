@@ -56,7 +56,7 @@ class MQTTSink : public SinkMedium {
              uint64_t messageDelay,
              const MQTTSinkDescriptor::ServiceQualities qualityOfService,
              bool asynchronousClient);
-    ~MQTTSink();
+    ~MQTTSink() override;
 
     bool writeData(NodeEngine::TupleBuffer& input_buffer, NodeEngine::WorkerContextRef) override;
     void setup() override { connect(); };

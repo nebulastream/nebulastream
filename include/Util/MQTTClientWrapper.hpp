@@ -77,8 +77,8 @@ class MQTTClientWrapper {
      */
     class UserCallback : public virtual mqtt::callback {
       public:
-        void connection_lost(const std::string& cause);
-        void delivery_complete(mqtt::delivery_token_ptr tok);
+        void connection_lost(const std::string& cause) override;
+        void delivery_complete(mqtt::delivery_token_ptr tok) override;
     };
 
     /**

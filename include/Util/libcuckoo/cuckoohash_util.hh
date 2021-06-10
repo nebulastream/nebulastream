@@ -82,7 +82,7 @@ public:
     /**
      * @return a descriptive error message
      */
-    virtual const char *what() const noexcept override {
+    const char *what() const noexcept override {
         return "Automatic expansion triggered when load factor was below "
                "minimum threshold";
     }
@@ -113,7 +113,7 @@ public:
     /**
      * @return a descriptive error message
      */
-    virtual const char *what() const noexcept override {
+    const char *what() const noexcept override {
         return "Expansion beyond maximum hashpower";
     }
 

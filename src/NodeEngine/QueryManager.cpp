@@ -60,7 +60,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
     }
 
     ExecutionResult
-    execute(TupleBuffer& buffer, Execution::PipelineExecutionContext& pipelineContext, WorkerContextRef workerContext) {
+    execute(TupleBuffer& buffer, Execution::PipelineExecutionContext& pipelineContext, WorkerContextRef workerContext) override {
         NES_TRACE("QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread "
                   << workerContext.getId());
         auto queryManager = pipelineContext.getQueryManager();
@@ -364,7 +364,7 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
         // nop
     }
 
-    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) {
+    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) override {
         return ExecutionResult::AllFinished;
     }
 };

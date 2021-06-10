@@ -57,7 +57,7 @@ class JoinHandler : public AbstractJoinHandler {
         return std::make_shared<JoinHandler>(joinDefinition, executablePolicyTrigger, executableJoinAction, id);
     }
 
-    virtual ~JoinHandler() { NES_TRACE("~JoinHandler()"); }
+    ~JoinHandler() override { NES_TRACE("~JoinHandler()"); }
 
     /**
    * @brief Starts thread to check if the window should be triggered.

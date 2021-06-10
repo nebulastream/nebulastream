@@ -47,7 +47,7 @@ class NetworkSink : public SinkMedium {
                          std::chrono::seconds waitTime = std::chrono::seconds(5),
                          uint8_t retryTimes = 10);
 
-    ~NetworkSink();
+    ~NetworkSink() override;
 
     /**
      * @brief Writes data to the underlying output channel

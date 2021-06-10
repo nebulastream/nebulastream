@@ -53,7 +53,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
                                  std::deque<detail::MemorySegment*>&& availableBuffers,
                                  size_t numberOfReservedBuffers);
 
-    ~FixedSizeBufferPool();
+    ~FixedSizeBufferPool() override;
 
     /**
      * @brief Destroys this buffer pool and returns own buffers to global pool

@@ -77,7 +77,7 @@ class ExecutableQueryPlan : public Reconfigurable {
                                          std::vector<ExecutablePipelinePtr> pipelines,
                                          QueryManagerPtr queryManager,
                                          BufferManagerPtr bufferManager);
-    ~ExecutableQueryPlan();
+    ~ExecutableQueryPlan() override;
 
     /**
      * @brief Increment the number of producers for this qep

@@ -30,7 +30,7 @@ namespace NES {
 class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
   public:
     explicit JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id);
-    ~JoinLogicalOperatorNode() = default;
+    ~JoinLogicalOperatorNode() override = default;
 
     /**
     * @brief get join definition.

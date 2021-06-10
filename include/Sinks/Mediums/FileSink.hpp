@@ -41,7 +41,7 @@ class FileSink : public SinkMedium {
     /**
      * @brief dtor
      */
-    ~FileSink();
+    ~FileSink() override;
 
     /**
      * @brief method to override virtual setup function

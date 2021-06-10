@@ -102,7 +102,7 @@ class DistributeWindowRule : public BaseRewriteRule {
      * @param queryPlan: the original non-expanded query plan
      * @return expanded logical query plan
      */
-    QueryPlanPtr apply(QueryPlanPtr queryPlan);
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
     explicit DistributeWindowRule();

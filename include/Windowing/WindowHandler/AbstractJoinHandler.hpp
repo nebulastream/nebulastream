@@ -56,7 +56,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
         // nop
     }
 
-    virtual ~AbstractJoinHandler() { NES_DEBUG("~AbstractJoinHandler()"); }
+    ~AbstractJoinHandler() override { NES_DEBUG("~AbstractJoinHandler()"); }
 
     template<class Type>
     auto as() {
