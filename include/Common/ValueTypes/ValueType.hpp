@@ -32,7 +32,7 @@ typedef std::shared_ptr<ValueType> ValueTypePtr;
 /// @brief Representation of a user-defined constant in the NES type system.
 class [[nodiscard]] ValueType {
   public:
-    [[nodiscard]] inline ValueType(DataTypePtr&& type) : dataType(std::move(type)) {}
+    [[nodiscard]] inline ValueType(DataTypePtr && type) : dataType(std::move(type)) {}
 
     /// @brief Checks if two values are equal
     virtual bool isEquals(ValueTypePtr valueType) const noexcept = 0;
