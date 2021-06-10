@@ -34,7 +34,7 @@ using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 class AttributeField {
   public:
     AttributeField() = default;
-    AttributeField(std::string  name, DataTypePtr dataType);
+    AttributeField(std::string name, DataTypePtr dataType);
 
     /**
      * @brief Factory method to create a new field

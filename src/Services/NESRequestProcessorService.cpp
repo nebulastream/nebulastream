@@ -55,8 +55,8 @@ NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr gl
                                                        NESRequestQueuePtr queryRequestQueue,
                                                        bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
-      globalQueryPlan(globalQueryPlan) {
+    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog),
+      queryRequestQueue(std::move(queryRequestQueue)), globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");
     typeInferencePhase = Optimizer::TypeInferencePhase::create(streamCatalog);

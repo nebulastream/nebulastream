@@ -26,7 +26,7 @@ namespace QueryCompilation {
 
 class CodeExpression {
   public:
-    inline CodeExpression(std::string  code) noexcept : code_(std::move(code)) {}
+    inline CodeExpression(std::string code) noexcept : code_(std::move(code)) {}
     inline CodeExpression(std::string&& code) noexcept : code_(std::move(code)) {}
     std::string const code_;
 };

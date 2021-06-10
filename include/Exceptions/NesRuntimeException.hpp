@@ -37,13 +37,13 @@ class NesRuntimeException : virtual public std::exception {
      *  @param msg The error message
      *  @param stacktrace Error stacktrace
      */
-    explicit NesRuntimeException(std::string  msg, std::string&& stacktrace);
+    explicit NesRuntimeException(std::string msg, std::string&& stacktrace);
 
     /** Constructor
     *  @param msg The error message
     *  @param stacktrace Error stacktrace
     */
-    explicit NesRuntimeException(std::string  msg, const std::string& stacktrace);
+    explicit NesRuntimeException(std::string msg, const std::string& stacktrace);
 
     /** Destructor.
      *  Virtual to allow for subclassing.

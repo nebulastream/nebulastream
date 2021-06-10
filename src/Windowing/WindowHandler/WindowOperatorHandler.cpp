@@ -35,7 +35,8 @@ WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDe
 WindowOperatorHandler::WindowOperatorHandler(LogicalWindowDefinitionPtr windowDefinition,
                                              SchemaPtr resultSchema,
                                              AbstractWindowHandlerPtr windowHandler)
-    : windowDefinition(std::move(windowDefinition)), windowHandler(std::move(windowHandler)), resultSchema(std::move(resultSchema)) {}
+    : windowDefinition(std::move(windowDefinition)), windowHandler(std::move(windowHandler)),
+      resultSchema(std::move(resultSchema)) {}
 
 LogicalWindowDefinitionPtr WindowOperatorHandler::getWindowDefinition() { return windowDefinition; }
 

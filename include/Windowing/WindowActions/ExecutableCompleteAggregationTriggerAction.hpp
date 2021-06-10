@@ -65,8 +65,8 @@ class ExecutableCompleteAggregationTriggerAction
         SchemaPtr outputSchema,
         uint64_t id,
         PartialAggregateType partialAggregateTypeInitialValue)
-        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(executableWindowAggregation)), id(id),
-          partialAggregateTypeInitialValue(partialAggregateTypeInitialValue) {
+        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(std::move(executableWindowAggregation)),
+          id(id), partialAggregateTypeInitialValue(partialAggregateTypeInitialValue) {
 
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction intialized with schema:" << outputSchema->toString()
                                                                                        << " id=" << id);

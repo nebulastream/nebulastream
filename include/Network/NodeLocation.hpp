@@ -25,7 +25,7 @@ namespace Network {
 
 class NodeLocation {
   public:
-    explicit NodeLocation(NodeId nodeId, std::string  hostname, uint32_t port)
+    explicit NodeLocation(NodeId nodeId, std::string hostname, uint32_t port)
         : nodeId(nodeId), hostname(std::move(hostname)), port(port) {}
 
     [[nodiscard]] std::string createZmqURI() const { return "tcp://" + hostname + ":" + std::to_string(port); }

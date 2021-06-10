@@ -30,7 +30,8 @@ namespace NES {
 QueryUndeploymentPhase::QueryUndeploymentPhase(TopologyPtr topology,
                                                GlobalExecutionPlanPtr globalExecutionPlan,
                                                WorkerRPCClientPtr workerRpcClient)
-    : topology(std::move(topology)), globalExecutionPlan(std::move(globalExecutionPlan)), workerRPCClient(std::move(workerRpcClient)) {
+    : topology(std::move(topology)), globalExecutionPlan(std::move(globalExecutionPlan)),
+      workerRPCClient(std::move(workerRpcClient)) {
     NES_DEBUG("QueryUndeploymentPhase()");
 }
 

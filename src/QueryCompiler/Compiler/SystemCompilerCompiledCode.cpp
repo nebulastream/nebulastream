@@ -22,7 +22,7 @@
 #include <utility>
 namespace NES {
 
-SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, std::string  baseName)
+SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library, std::string baseName)
     : CompiledCode(), library(std::move(library)), baseFileName(std::move(baseName)){};
 SystemCompilerCompiledCode::~SystemCompilerCompiledCode() { cleanUp(); }
 

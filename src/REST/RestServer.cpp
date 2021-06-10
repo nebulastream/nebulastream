@@ -39,13 +39,13 @@ RestServer::RestServer(std::string host,
                        MonitoringServicePtr monitoringService,
                        GlobalQueryPlanPtr globalQueryPlan)
     : host(std::move(host)), port(port), restEngine(std::make_shared<RestEngine>(streamCatalog,
-                                                                      coordinator,
-                                                                      queryCatalog,
-                                                                      topology,
-                                                                      globalExecutionPlan,
-                                                                      queryService,
-                                                                      monitoringService,
-                                                                      globalQueryPlan)) {}
+                                                                                 coordinator,
+                                                                                 queryCatalog,
+                                                                                 topology,
+                                                                                 globalExecutionPlan,
+                                                                                 queryService,
+                                                                                 monitoringService,
+                                                                                 globalQueryPlan)) {}
 
 RestServer::~RestServer() { NES_DEBUG("~RestServer()"); }
 

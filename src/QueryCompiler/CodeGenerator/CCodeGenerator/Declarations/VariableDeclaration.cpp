@@ -54,7 +54,7 @@ const DeclarationPtr VariableDeclaration::copy() const { return std::make_shared
 
 VariableDeclaration::~VariableDeclaration() = default;
 
-VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, std::string  identifier, ValueTypePtr value)
+VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, std::string identifier, ValueTypePtr value)
     : type_(std::move(type)), identifier_(std::move(identifier)), init_value_(std::move(value)) {}
 
 VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)

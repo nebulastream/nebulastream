@@ -30,7 +30,7 @@ IFStatement::IFStatement(const Statement& cond_expr, const Statement& cond_true_
     trueCaseStatement->addStatement(cond_true_stmt.createCopy());
 }
 
-IFStatement::IFStatement(StatementPtr  cond_expr, const StatementPtr& cond_true_stmt)
+IFStatement::IFStatement(StatementPtr cond_expr, const StatementPtr& cond_true_stmt)
     : conditionalExpression(std::move(cond_expr)), trueCaseStatement(new CompoundStatement()) {
     trueCaseStatement->addStatement(cond_true_stmt);
 }
