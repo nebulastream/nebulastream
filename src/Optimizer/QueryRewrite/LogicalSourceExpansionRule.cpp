@@ -28,7 +28,8 @@
 
 namespace NES::Optimizer {
 
-LogicalSourceExpansionRule::LogicalSourceExpansionRule(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {}
+LogicalSourceExpansionRule::LogicalSourceExpansionRule(StreamCatalogPtr streamCatalog)
+    : streamCatalog(std::move(streamCatalog)) {}
 
 LogicalSourceExpansionRulePtr LogicalSourceExpansionRule::create(StreamCatalogPtr streamCatalog) {
     return std::make_shared<LogicalSourceExpansionRule>(LogicalSourceExpansionRule(streamCatalog));

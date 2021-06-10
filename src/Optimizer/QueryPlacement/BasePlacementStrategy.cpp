@@ -36,8 +36,9 @@ BasePlacementStrategy::BasePlacementStrategy(GlobalExecutionPlanPtr globalExecut
                                              TopologyPtr topologyPtr,
                                              TypeInferencePhasePtr typeInferencePhase,
                                              StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)), typeInferencePhase(std::move(typeInferencePhase)),
-      streamCatalog(std::move(streamCatalog)), pinnedOperatorLocationMap(), operatorToExecutionNodeMap() {}
+    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topologyPtr)),
+      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)), pinnedOperatorLocationMap(),
+      operatorToExecutionNodeMap() {}
 
 void BasePlacementStrategy::mapPinnedOperatorToTopologyNodes(QueryId queryId,
                                                              std::vector<SourceLogicalOperatorNodePtr> sourceOperators) {

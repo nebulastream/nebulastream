@@ -38,7 +38,7 @@ class GeneratableArrayValueType final : public GeneratableValueType {
     inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string>&& values) noexcept
         : valueType(std::move(valueTypePtr)), values(std::move(values)) {}
 
-    inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string>  values) noexcept
+    inline GeneratableArrayValueType(ValueTypePtr valueTypePtr, std::vector<std::string> values) noexcept
         : valueType(std::move(valueTypePtr)), values(std::move(values)) {}
 
     /**

@@ -27,8 +27,8 @@ QueryPlacementPhase::QueryPlacementPhase(GlobalExecutionPlanPtr globalExecutionP
                                          TopologyPtr topology,
                                          TypeInferencePhasePtr typeInferencePhase,
                                          StreamCatalogPtr streamCatalog)
-    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)), typeInferencePhase(std::move(typeInferencePhase)),
-      streamCatalog(std::move(streamCatalog)) {
+    : globalExecutionPlan(std::move(globalExecutionPlan)), topology(std::move(topology)),
+      typeInferencePhase(std::move(typeInferencePhase)), streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("QueryPlacementPhase()");
 }
 

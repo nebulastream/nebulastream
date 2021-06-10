@@ -36,8 +36,8 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
                                                    uint64_t numBuffersToProcess,
                                                    uint64_t gatheringValue,
                                                    std::string gatheringMode)
-    : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
-      memoryAreaSize(memoryAreaSize) {
+    : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)),
+      memoryArea(memoryArea, detail::MemoryAreaDeleter()), memoryAreaSize(memoryAreaSize) {
     // nop
     this->physicalStreamName = physicalStreamName;
     this->logicalStreamName = logicalStreamName;

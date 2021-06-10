@@ -54,7 +54,8 @@ std::string detail::VizGraph::serialize() {
     return ss.str();
 }
 
-detail::VizNode::VizNode(std::string id, std::string label, std::string parent) : id(std::move(id)), label(std::move(label)), parent(std::move(parent)) {}
+detail::VizNode::VizNode(std::string id, std::string label, std::string parent)
+    : id(std::move(id)), label(std::move(label)), parent(std::move(parent)) {}
 
 void detail::VizNode::addProperty(std::tuple<std::string, std::string> item) { properties.emplace_back(item); }
 
@@ -84,7 +85,8 @@ std::string detail::VizNode::serialize() {
     return ss.str();
 }
 
-detail::VizEdge::VizEdge(std::string id, std::string source, std::string target) : id(std::move(id)), source(std::move(source)), target(std::move(target)) {}
+detail::VizEdge::VizEdge(std::string id, std::string source, std::string target)
+    : id(std::move(id)), source(std::move(source)), target(std::move(target)) {}
 
 std::string detail::VizEdge::serialize() {
     std::stringstream ss;

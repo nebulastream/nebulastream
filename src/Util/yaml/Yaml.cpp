@@ -828,7 +828,7 @@ class ReaderLine {
         * @breif Constructor.
         *
         */
-    ReaderLine(std::string  data = "",
+    ReaderLine(std::string data = "",
                const size_t no = 0,
                const size_t offset = 0,
                const Node::eType type = Node::None,

@@ -39,7 +39,8 @@ GlobalQueryPlanUpdatePhase::GlobalQueryPlanUpdatePhase(QueryCatalogPtr queryCata
                                                        z3::ContextPtr z3Context,
                                                        bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
-    : enableQueryMerging(enableQueryMerging), queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)), z3Context(std::move(z3Context)) {
+    : enableQueryMerging(enableQueryMerging), queryCatalog(std::move(queryCatalog)), globalQueryPlan(std::move(globalQueryPlan)),
+      z3Context(std::move(z3Context)) {
     queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, queryMergerRule);
     typeInferencePhase = TypeInferencePhase::create(streamCatalog);
     bool applyRulesImprovingSharingIdentification = false;

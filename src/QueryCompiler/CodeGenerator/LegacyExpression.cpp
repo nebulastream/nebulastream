@@ -34,7 +34,7 @@ namespace NES::QueryCompilation {
 Predicate::Predicate(const BinaryOperatorType& op,
                      const LegacyExpressionPtr left,
                      const LegacyExpressionPtr right,
-                     std::string  functionCallOverload,
+                     std::string functionCallOverload,
                      bool bracket)
     : op(op), left(left), right(right), bracket(bracket), functionCallOverload(std::move(functionCallOverload)) {}
 
@@ -115,7 +115,8 @@ bool Predicate::equals(const LegacyExpression& _rhs) const {
     }
 }
 
-PredicateItem::PredicateItem(AttributeFieldPtr attribute) : mutation(PredicateItemMutation::ATTRIBUTE), attribute(std::move(attribute)) {}
+PredicateItem::PredicateItem(AttributeFieldPtr attribute)
+    : mutation(PredicateItemMutation::ATTRIBUTE), attribute(std::move(attribute)) {}
 BinaryOperatorType Predicate::getOperatorType() const { return op; }
 
 const LegacyExpressionPtr Predicate::getLeft() const { return left; }

@@ -26,7 +26,7 @@ using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
 
 class SystemCompilerCompiledCode : public CompiledCode {
   public:
-    SystemCompilerCompiledCode(SharedLibraryPtr library, std::string  baseName);
+    SystemCompilerCompiledCode(SharedLibraryPtr library, std::string baseName);
 
     static CompiledCodePtr create(SharedLibraryPtr library, const std::string& baseName);
 

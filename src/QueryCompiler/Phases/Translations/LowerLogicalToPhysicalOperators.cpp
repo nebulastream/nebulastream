@@ -28,7 +28,8 @@ LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(Physica
     return std::make_shared<LowerLogicalToPhysicalOperators>(provider);
 }
 
-LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider) : provider(std::move(provider)) {}
+LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators(PhysicalOperatorProviderPtr provider)
+    : provider(std::move(provider)) {}
 
 QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     std::vector<NodePtr> nodes = QueryPlanIterator(queryPlan).snapshot();

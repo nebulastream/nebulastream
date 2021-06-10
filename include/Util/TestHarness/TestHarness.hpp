@@ -79,8 +79,8 @@ class TestHarness {
                 uint16_t rpcPort = 4000,
                 uint64_t memSrcFrequency = 0,
                 uint64_t memSrcNumBuffToProcess = 1)
-        : ipAddress("127.0.0.1"), queryWithoutSink(std::move(queryWithoutSink)), bufferSize(4096), memSrcFrequency(memSrcFrequency),
-          memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
+        : ipAddress("127.0.0.1"), queryWithoutSink(std::move(queryWithoutSink)), bufferSize(4096),
+          memSrcFrequency(memSrcFrequency), memSrcNumBuffToProcess(memSrcNumBuffToProcess) {
         NES_INFO("TestHarness: Start coordinator");
         crdConf = CoordinatorConfig::create();
         crdConf->resetCoordinatorOptions();

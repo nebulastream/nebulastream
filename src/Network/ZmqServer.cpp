@@ -28,7 +28,7 @@
 
 namespace NES::Network {
 
-ZmqServer::ZmqServer(std::string  hostname,
+ZmqServer::ZmqServer(std::string hostname,
                      uint16_t port,
                      uint16_t numNetworkThreads,
                      ExchangeProtocol& exchangeProtocol,

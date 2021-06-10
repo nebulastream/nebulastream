@@ -42,7 +42,7 @@ class Predicate : public LegacyExpression {
     Predicate(const BinaryOperatorType& op,
               const LegacyExpressionPtr left,
               const LegacyExpressionPtr right,
-              std::string  functionCallOverload,
+              std::string functionCallOverload,
               bool bracket = true);
     Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket = true);
 

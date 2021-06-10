@@ -24,8 +24,8 @@ QueryCatalogEntry::QueryCatalogEntry(QueryId queryId,
                                      std::string queryPlacementStrategy,
                                      QueryPlanPtr queryPlanPtr,
                                      QueryStatus queryStatus)
-    : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)), queryPlanPtr(std::move(queryPlanPtr)),
-      queryStatus(queryStatus) {}
+    : queryId(queryId), queryString(std::move(queryString)), queryPlacementStrategy(std::move(queryPlacementStrategy)),
+      queryPlanPtr(std::move(queryPlanPtr)), queryStatus(queryStatus) {}
 
 QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
