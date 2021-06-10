@@ -17,14 +17,21 @@
 #include <chrono>
 #include <thread>
 
+#include <gtest/gtest.h>
+
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
+#include <NodeEngine/Execution/ExecutablePipelineStage.hpp>
+#include <NodeEngine/Execution/PipelineExecutionContext.hpp>
 #include <Services/QueryService.hpp>
+#include <Sinks/SinkCreator.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/TestUtils.hpp>
-#include <gtest/gtest.h>
+
+using namespace NES::NodeEngine;
+using namespace NES::NodeEngine::Execution;
 
 namespace NES {
 
@@ -115,6 +122,89 @@ class MillisecondIntervalTest : public testing::Test {
 
     Runtime::NodeEnginePtr nodeEngine{nullptr};
 };// MillisecondIntervalTest
+
+class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExecutionContext {
+  public:
+    MockedPipelineExecutionContext(NodeEngine::QueryManagerPtr queryManager,
+                                   NodeEngine::BufferManagerPtr bufferManager,
+                                   DataSinkPtr sink)
+        : PipelineExecutionContext(
+        0,
+        std::move(queryManager),
+        std::move(bufferManager),
+        [sink](TupleBuffer& buffer, NodeEngine::WorkerContextRef worker) {
+          sink->writeData(buffer, worker);
+        },
+        [sink](TupleBuffer&) {
+        },
+        std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>()),
+        12){
+        // nop
+    };
+};
+
+class MockedExecutablePipeline : public ExecutablePipelineStage {
+  public:
+    std::atomic<uint64_t> count = 0;
+    std::promise<bool> completedPromise;
+
+    ExecutionResult
+    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& wctx) override {
+        count += inputTupleBuffer.getNumberOfTuples();
+
+        TupleBuffer outputBuffer = pipelineExecutionContext.allocateTupleBuffer();
+        auto arr = outputBuffer.getBufferAs<uint32_t>();
+        arr[0] = static_cast<uint32_t>(count.load());
+        outputBuffer.setNumberOfTuples(count);
+        pipelineExecutionContext.emitBuffer(outputBuffer, wctx);
+        completedPromise.set_value(true);
+        return ExecutionResult::Ok;
+    }
+};
+
+TEST_F(MillisecondIntervalTest, testPipelinedCSVSource) {
+    std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+    auto queryId = 1;
+    const std::string& del = ",";
+    double frequency = 550;
+    SchemaPtr schema = Schema::create()
+        ->addField("user_id", DataTypeFactory::createFixedChar(16))
+        ->addField("page_id", DataTypeFactory::createFixedChar(16))
+        ->addField("campaign_id", DataTypeFactory::createFixedChar(16))
+        ->addField("ad_type", DataTypeFactory::createFixedChar(9))
+        ->addField("event_type", DataTypeFactory::createFixedChar(9))
+        ->addField("current_ms", UINT64)
+        ->addField("ip", INT32);
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
+    uint64_t numberOfBuffers = 1;
+    uint64_t numberOfTuplesToProcess = numberOfBuffers * (buffer_size / tuple_size);
+
+    auto sink = createCSVFileSink(schema, 0, this->nodeEngine, "qep1.txt", false);
+    auto context = std::make_shared<MockedPipelineExecutionContext>(this->nodeEngine->getQueryManager(),
+                                                                    this->nodeEngine->getBufferManager(),
+                                                                    sink);
+    auto executableStage = std::make_shared<MockedExecutablePipeline>();
+    auto pipeline = ExecutablePipeline::create(0, queryId, context,
+                                               executableStage, 1,
+                                               {sink});
+    auto source = createCSVFileSource(schema, this->nodeEngine->getBufferManager(),
+                                      this->nodeEngine->getQueryManager(), path_to_file,
+                                      del, numberOfTuplesToProcess, numberOfBuffers,
+                                      frequency, false, 1,
+                                      12, {pipeline});
+    auto executionPlan = ExecutableQueryPlan::create(queryId,
+                                                     queryId,
+                                                     {source},
+                                                     {sink},
+                                                     {pipeline},
+                                                     this->nodeEngine->getQueryManager(),
+                                                     this->nodeEngine->getBufferManager());
+    EXPECT_TRUE(this->nodeEngine->registerQueryInNodeEngine(executionPlan));
+    EXPECT_TRUE(this->nodeEngine->startQuery(1));
+    EXPECT_EQ(this->nodeEngine->getQueryStatus(1), ExecutableQueryPlanStatus::Running);
+    executableStage->completedPromise.get_future().get();
+}
 
 TEST_F(MillisecondIntervalTest, DISABLED_testCSVSourceWithOneLoopOverFileSubSecond) {
     PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
