@@ -85,6 +85,7 @@ option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
+option(ENABLE_CLANG_TIDY OFF)
 
 if (POLICY CMP0004)
     cmake_policy(SET CMP0004 OLD)
@@ -149,6 +150,10 @@ if (ENABLE_IWYU)
     else()
       message(WARNING "IWYU is enabled but not found! You will not get any suggestions")
     endif()
+endif()
+
+if (${ENABLE_CLANG_TIDY})
+    set(CMAKE_CXX_CLANG_TIDY clang-tidy)
 endif()
 
 if (NES_BUILD_BENCHMARKS)
