@@ -54,10 +54,10 @@ class TypeInferencePhaseTest : public testing::Test {
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() { NES_INFO("Setup TypeInferencePhaseTest test case."); }
+    void SetUp() override { NES_INFO("Setup TypeInferencePhaseTest test case."); }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Tear down TypeInferencePhaseTest test case."); }
+    void TearDown() override { NES_INFO("Tear down TypeInferencePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down TypeInferencePhaseTest test class."); }

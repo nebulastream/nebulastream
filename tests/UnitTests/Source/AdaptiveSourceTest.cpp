@@ -67,7 +67,7 @@ class MockCSVAdaptiveSource : public AdaptiveSource {
         this->intervalIncrease = std::chrono::milliseconds(intervalIncrease);
     };
 
-    ~MockCSVAdaptiveSource() = default;
+    ~MockCSVAdaptiveSource() override = default;
 
     std::string filePath;
     std::chrono::milliseconds intervalIncrease;

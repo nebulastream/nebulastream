@@ -23,12 +23,12 @@ using namespace z3;
 namespace NES {
 class DISABLED_Z3ValidationTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("Z3ValidationTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup Z3ValidationTest test class.");
     }
 
-    void TearDown() { NES_INFO("Tear down Z3ValidationTest test class."); }
+    void TearDown() override { NES_INFO("Tear down Z3ValidationTest test class."); }
 
     const uint64_t buffers_managed = 10;
     const uint64_t buffer_size = 4 * 1024;

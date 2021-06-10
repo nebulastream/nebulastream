@@ -52,7 +52,7 @@ class StringSignatureBasedCompleteQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -67,7 +67,7 @@ class StringSignatureBasedCompleteQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup StringSignatureBasedCompleteQueryMergerRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup StringSignatureBasedCompleteQueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down StringSignatureBasedCompleteQueryMergerRuleTest test class."); }

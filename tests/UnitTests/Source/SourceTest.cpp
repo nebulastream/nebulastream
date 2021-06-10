@@ -118,7 +118,7 @@ typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const SchemaPtr,
 
 class SourceTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         this->nodeEngine = NodeEngine::create("127.0.0.1", 31337, streamConf);
     }
@@ -130,7 +130,7 @@ class SourceTest : public testing::Test {
         NES_INFO("Setup SourceTest test class.");
     }
 
-    void TearDown() {
+    void TearDown() override {
         nodeEngine->stop();
         nodeEngine = nullptr;
     }

@@ -34,9 +34,9 @@ class ExpressionNodeTest : public testing::Test {
   public:
     static void SetUpTestCase() { setupLogging(); }
 
-    void SetUp() {}
+    void SetUp() override {}
 
-    void TearDown() { NES_DEBUG("Tear down ExpressionNodeTest Test."); }
+    void TearDown() override { NES_DEBUG("Tear down ExpressionNodeTest Test."); }
 
   protected:
     static void setupLogging() {

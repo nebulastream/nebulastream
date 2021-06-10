@@ -80,7 +80,7 @@ class MillisecondIntervalTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down MillisecondIntervalTest test class."); }
 
-    void SetUp() {
+    void SetUp() override {
 
         restPort = restPort + 3;
         rpcPort = rpcPort + 40;
@@ -107,7 +107,7 @@ class MillisecondIntervalTest : public testing::Test {
         NES_INFO("Setup MillisecondIntervalTest class.");
     }
 
-    void TearDown() {
+    void TearDown() override {
         nodeEngine->stop();
         nodeEngine = nullptr;
         NES_INFO("Tear down MillisecondIntervalTest test case.");

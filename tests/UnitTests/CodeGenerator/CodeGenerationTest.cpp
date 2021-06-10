@@ -71,14 +71,14 @@ class CodeGenerationTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::NodeEngine::create("127.0.0.1", 6262, streamConf, 1, 4096, 1024, 12, 12);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
+    void TearDown() override {
         std::cout << "Tear down CodeGenerationTest test case." << std::endl;
         nodeEngine->stop();
     }

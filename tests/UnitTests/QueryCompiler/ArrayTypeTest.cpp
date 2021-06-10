@@ -30,9 +30,9 @@ class ArrayTypeTest : public testing::Test {
         NES_INFO("Setup ArrayType test class.");
     }
 
-    void SetUp() {}
+    void SetUp() override {}
 
-    void TearDown() { NES_DEBUG("Tear down ArrayType Test."); }
+    void TearDown() override { NES_DEBUG("Tear down ArrayType Test."); }
 
   protected:
 };

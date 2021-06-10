@@ -48,7 +48,7 @@ class QueryPlanIteratorTest : public testing::Test {
         NES_INFO("Setup QueryPlanIteratorTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
@@ -76,7 +76,7 @@ class QueryPlanIteratorTest : public testing::Test {
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
     }
 
-    void TearDown() { NES_DEBUG("Tear down QueryPlanIteratorTest Test."); }
+    void TearDown() override { NES_DEBUG("Tear down QueryPlanIteratorTest Test."); }
 
   protected:
     DumpContextPtr dumpContext;

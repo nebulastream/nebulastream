@@ -47,12 +47,12 @@ class ContinuousSourceTest : public testing::Test {
         NES_INFO("Setup ContinuousSourceTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { std::cout << "Tear down ContinuousSourceTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down ContinuousSourceTest class." << std::endl; }
 };
 
 TEST_F(ContinuousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {

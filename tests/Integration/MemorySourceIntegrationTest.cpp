@@ -42,7 +42,7 @@ class MemorySourceIntegrationTest : public testing::Test {
         NES_INFO("Setup MemorySourceIntegrationTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

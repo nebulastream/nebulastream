@@ -80,7 +80,7 @@ class NetworkStackTest : public testing::Test {
 
 class TestSink : public SinkMedium {
   public:
-    SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     TestSink(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager)
         : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), 0){};

@@ -45,12 +45,12 @@ class AssignWatermarkTest : public testing::Test {
         NES_INFO("Setup AssignWatermarkTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { std::cout << "Tear down AssignWatermarkTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down AssignWatermarkTest class." << std::endl; }
 
     std::string ipAddress = "127.0.0.1";
 };

@@ -41,9 +41,9 @@ class WorkerCoordinatorStarterTest : public testing::Test {
         NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
     }
 
-    void SetUp() { rpcPort = rpcPort + 30; }
+    void SetUp() override { rpcPort = rpcPort + 30; }
 
-    void TearDown() { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl; }
 };
 
 TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {

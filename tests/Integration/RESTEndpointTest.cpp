@@ -42,7 +42,7 @@ class RESTEndpointTest : public testing::Test {
         NES_INFO("Setup RESTEndpointTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

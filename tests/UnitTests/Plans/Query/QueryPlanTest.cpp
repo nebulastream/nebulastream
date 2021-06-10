@@ -30,13 +30,13 @@ class QueryPlanTest : public testing::Test {
 
   public:
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("QueryPlanTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryPlanTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup QueryPlanTest test case."); }
+    void TearDown() override { NES_INFO("Setup QueryPlanTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down QueryPlanTest test class."); }

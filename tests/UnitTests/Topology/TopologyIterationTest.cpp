@@ -27,7 +27,7 @@ class TopologyIteratorTest : public testing::Test {
   public:
     static void SetUpTestCase() { setupLogging(); }
 
-    void SetUp() {
+    void SetUp() override {
         rootNode = TopologyNode::create(0, "localhost", 4000, 5000, 4);
         mid1 = TopologyNode::create(1, "localhost", 4001, 5001, 4);
         mid2 = TopologyNode::create(2, "localhost", 4002, 5002, 4);
@@ -38,7 +38,7 @@ class TopologyIteratorTest : public testing::Test {
         src4 = TopologyNode::create(7, "localhost", 4007, 5007, 4);
     }
 
-    void TearDown() { NES_DEBUG("Tear down TopologyIteratorTest Test."); }
+    void TearDown() override { NES_DEBUG("Tear down TopologyIteratorTest Test."); }
 
   protected:
     static void setupLogging() {

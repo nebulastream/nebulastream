@@ -45,12 +45,12 @@ class QueryDeploymentTest : public testing::Test {
         NES_INFO("Setup QueryDeploymentTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { NES_INFO("Tear down QueryDeploymentTest class."); }
+    void TearDown() override { NES_INFO("Tear down QueryDeploymentTest class."); }
 };
 
 /**

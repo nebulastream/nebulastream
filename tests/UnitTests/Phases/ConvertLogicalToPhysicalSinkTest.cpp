@@ -36,12 +36,12 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 
     static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSinkTest test class." << std::endl; }
 
-    void SetUp() {
+    void SetUp() override {
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 12345, conf);
     }
 
-    void TearDown() {
+    void TearDown() override {
         nodeEngine->stop();
         nodeEngine.reset();
     }

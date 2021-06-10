@@ -37,14 +37,14 @@ class TupleBufferTest : public testing::Test {
     static void SetUpTestCase() { std::cout << "Setup TupleBufferTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("TupleBufferTest.log", NES::LOG_DEBUG);
         std::cout << "Setup TupleBufferTest test case." << std::endl;
         bufferManager = std::make_shared<NodeEngine::BufferManager>(1024, 1024);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down TupleBufferTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down TupleBufferTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TupleBufferTest test class." << std::endl; }

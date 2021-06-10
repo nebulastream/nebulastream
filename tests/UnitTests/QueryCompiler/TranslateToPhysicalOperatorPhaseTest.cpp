@@ -70,7 +70,7 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
         NES_INFO("Setup TranslateToPhysicalOperatorPhaseTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
         pred2 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "2"));
@@ -130,7 +130,7 @@ class TranslateToPhysicalOperatorPhaseTest : public testing::Test {
         mapOp = LogicalOperatorFactory::createMapOperator(Attribute("id") = 10);
     }
 
-    void TearDown() { NES_DEBUG("Tear down TranslateToPhysicalOperatorPhase Test."); }
+    void TearDown() override { NES_DEBUG("Tear down TranslateToPhysicalOperatorPhase Test."); }
 
   protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;

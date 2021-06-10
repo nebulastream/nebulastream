@@ -39,7 +39,7 @@ class MultiWorkerTest : public testing::Test {
         NES_INFO("Setup MultiWorkerTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }

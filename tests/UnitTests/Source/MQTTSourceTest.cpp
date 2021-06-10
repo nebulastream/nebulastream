@@ -54,7 +54,7 @@ class MQTTSourceTest : public testing::Test {
         NES_DEBUG("MQTTSOURCETEST::SetUpTestCase()");
     }
 
-    void SetUp() {
+    void SetUp() override {
         NES_DEBUG("MQTTSOURCETEST::SetUp() MQTTSourceTest cases set up.");
 
         test_schema = Schema::create()->addField("var", UINT32);
@@ -71,7 +71,7 @@ class MQTTSourceTest : public testing::Test {
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() {
+    void TearDown() override {
         nodeEngine->stop();
         nodeEngine.reset();
         NES_DEBUG("MQTTSOURCETEST::TearDown() Tear down MQTTSourceTest");

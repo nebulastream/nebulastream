@@ -57,7 +57,7 @@ class QueryTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
 
         sourceConfig = SourceConfig::create();
         sourceConfig->setSourceConfig("");
@@ -69,7 +69,7 @@ class QueryTest : public testing::Test {
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryTest test class."); }
 
-    void TearDown() {}
+    void TearDown() override {}
 };
 
 TEST_F(QueryTest, testQueryFilter) {

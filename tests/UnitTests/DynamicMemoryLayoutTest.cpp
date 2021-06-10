@@ -35,7 +35,7 @@ class DynamicMemoryLayoutTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;
 
-    void SetUp() {
+    void SetUp() override {
         NESLogger->removeAllAppenders();
         NES::setupLogging("DynamicMemoryLayoutTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");

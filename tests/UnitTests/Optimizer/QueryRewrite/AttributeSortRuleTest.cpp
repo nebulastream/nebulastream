@@ -42,10 +42,10 @@ class AttributeSortRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() { schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64); }
+    void SetUp() override { schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64); }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup AttributeSortRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup AttributeSortRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down FilterPushDownTest test class."); }

@@ -52,7 +52,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -67,7 +67,7 @@ class Z3SignatureBasedPartialQueryMergerRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup Z3SignatureBasedPartialQueryMergerRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down Z3SignatureBasedPartialQueryMergerRuleTest test class."); }

@@ -46,7 +46,7 @@ class SimplePatternTest : public testing::Test {
         NES_INFO("Setup SimplePatternTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
         coConf = CoordinatorConfig::create();
@@ -58,7 +58,7 @@ class SimplePatternTest : public testing::Test {
         wrkConf->setCoordinatorPort(rpcPort);
     }
 
-    void TearDown() { std::cout << "Tear down SimplePatternTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down SimplePatternTest class." << std::endl; }
     uint64_t restPort = 8081;
 };
 

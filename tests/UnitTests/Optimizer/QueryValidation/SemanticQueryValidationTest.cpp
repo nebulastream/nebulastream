@@ -27,11 +27,11 @@ namespace NES {
 
 class SemanticQueryValidationTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("SemanticQueryValidationTest.log", NES::LOG_NONE);
         NES_INFO("Setup SemanticQueryValidationTest class.");
     }
-    void TearDown() { NES_INFO("Tear down SemanticQueryValidationTest class."); }
+    void TearDown() override { NES_INFO("Tear down SemanticQueryValidationTest class."); }
 
     void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
 

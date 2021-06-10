@@ -61,7 +61,7 @@ class QueryExecutionTest : public testing::Test {
         NES_DEBUG("QueryExecutionTest: Setup QueryCatalogTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         // create test input buffer
         windowSchema = Schema::create()
                            ->addField("test$key", BasicType::INT64)
@@ -76,7 +76,7 @@ class QueryExecutionTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
+    void TearDown() override {
         NES_DEBUG("QueryExecutionTest: Tear down QueryExecutionTest test case.");
         nodeEngine->stop();
     }
@@ -275,7 +275,7 @@ class TestSink : public SinkMedium {
         return resultBuffers.size();
     }
 
-    SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
     void cleanupBuffers() { resultBuffers.clear(); }
 

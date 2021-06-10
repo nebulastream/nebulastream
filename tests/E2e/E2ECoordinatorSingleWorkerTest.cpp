@@ -56,7 +56,7 @@ class E2ECoordinatorSingleWorkerTest : public testing::Test {
         NES_INFO("Setup E2e test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         cout << "setUp" << endl;
         rpcPort += 10;
         dataPort += 10;

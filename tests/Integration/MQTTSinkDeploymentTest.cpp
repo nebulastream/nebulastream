@@ -47,7 +47,7 @@ class MQTTSinkDeploymentTest : public testing::Test {
         NES_INFO("Setup MQTTSinkDeploymentTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
 
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
@@ -59,7 +59,7 @@ class MQTTSinkDeploymentTest : public testing::Test {
         wrkConf->setCoordinatorPort(rpcPort);
     }
 
-    void TearDown() { NES_INFO("Tear down MQTTSinkDeploymentTest class."); }
+    void TearDown() override { NES_INFO("Tear down MQTTSinkDeploymentTest class."); }
 };
 
 /**

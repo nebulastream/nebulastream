@@ -35,7 +35,7 @@ class AllowedLatenessTest : public testing::Test {
         NES_INFO("Setup AllowedLatenessTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         // window-out-of-order.csv contains 12 rows
         SourceConfigPtr outOfOrderSourceConfig = SourceConfig::create();
         outOfOrderSourceConfig->setSourceType("CSVSource");
@@ -72,7 +72,7 @@ class AllowedLatenessTest : public testing::Test {
                           ->addField("timestamp", DataTypeFactory::createUInt64());
     }
 
-    void TearDown() { std::cout << "Tear down AllowedLatenessTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down AllowedLatenessTest class." << std::endl; }
 
     std::string testName = "AllowedLatenessTest";
 

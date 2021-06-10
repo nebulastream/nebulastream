@@ -57,12 +57,12 @@ using NodeEngine::TupleBuffer;
 
 class WindowManagerTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
     }
 
-    void TearDown() { std::cout << "Tear down WindowManager test class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down WindowManager test class." << std::endl; }
 
     const uint64_t buffers_managed = 10;
     const uint64_t buffer_size = 4 * 1024;

@@ -46,7 +46,7 @@ class UpdateTopologyRemoteTest : public testing::Test {
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
 
-    void SetUp() { rpcPort = rpcPort + 30; }
+    void SetUp() override { rpcPort = rpcPort + 30; }
 
     static void TearDownTestCase() { std::cout << "Tear down UpdateTopologyRemoteTest test class." << std::endl; }
 };

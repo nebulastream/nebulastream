@@ -61,9 +61,9 @@ class QueryCompilerTest : public testing::Test {
         NES_INFO("Setup QueryCompilerTest test class.");
     }
 
-    void SetUp() {}
+    void SetUp() override {}
 
-    void TearDown() { NES_DEBUG("Tear down QueryCompilerTest Test."); }
+    void TearDown() override { NES_DEBUG("Tear down QueryCompilerTest Test."); }
 };
 
 /**

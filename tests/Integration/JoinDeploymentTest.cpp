@@ -44,12 +44,12 @@ class JoinDeploymentTest : public testing::Test {
         NES_INFO("Setup JoinDeploymentTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down JoinDeploymentTest class." << std::endl; }
 };
 
 /**

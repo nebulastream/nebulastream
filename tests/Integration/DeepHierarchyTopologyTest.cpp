@@ -41,12 +41,12 @@ class DeepHierarchyTopologyTest : public testing::Test {
         NES_INFO("Setup DeepTopologyHierarchyTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
+    void TearDown() override { NES_DEBUG("TearDown DeepTopologyHierarchyTest test class."); }
 };
 
 /**
