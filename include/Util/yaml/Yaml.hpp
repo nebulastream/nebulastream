@@ -253,13 +253,13 @@ class Iterator {
         * @breif Post-increment operator.
         *
         */
-    const Yaml::Iterator  operator++(int);
+    const Yaml::Iterator operator++(int);
 
     /**
         * @breif Post-decrement operator.
         *
         */
-    const Yaml::Iterator  operator--(int);
+    const Yaml::Iterator operator--(int);
 
     /**
         * @breif Check if iterator is equal to other iterator.
@@ -324,13 +324,13 @@ class ConstIterator {
         * @breif Post-increment operator.
         *
         */
-    const Yaml::ConstIterator  operator++(int);
+    const Yaml::ConstIterator operator++(int);
 
     /**
         * @breif Post-decrement operator.
         *
         */
-    const Yaml::ConstIterator  operator--(int);
+    const Yaml::ConstIterator operator--(int);
 
     /**
         * @breif Check if iterator is equal to other iterator.

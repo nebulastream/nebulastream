@@ -110,4 +110,4 @@ using NodeStatsProviderPtr = std::shared_ptr<NodeStatsProvider>;
 
 }// namespace NES::NodeEngine
 
-#endif // NODEENGINE_NODESTATSPROVIDER_HPP
+#endif// NODEENGINE_NODESTATSPROVIDER_HPP

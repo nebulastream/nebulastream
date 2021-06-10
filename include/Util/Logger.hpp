@@ -36,9 +36,9 @@ namespace NES {
 
 /// XXX: C++2a remove when format is available.
 /// To be used only for unperformat logging
-auto catString=[os=std::ostringstream{}](auto&& ...p) mutable {
-  (os << ... << std::forward<decltype(p)>(p) );
-  return os.str();
+auto catString = [os = std::ostringstream{}](auto&&... p) mutable {
+    (os << ... << std::forward<decltype(p)>(p));
+    return os.str();
 };
 
 enum DebugLevel { LOG_NONE, LOG_ERROR, LOG_FATAL, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE };
@@ -332,13 +332,13 @@ void invokeErrorHandlers(std::string buffer, std::string&& stacktrace);
 #define NES_VERIFY(CONDITION, TEXT)                                                                                              \
     do {                                                                                                                         \
         if (!(CONDITION)) {                                                                                                      \
-            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                           \
+            LOG4CXX_ERROR(NES::NESLogger, "NES Fatal Error on " #CONDITION << " message: " << TEXT);                             \
             {                                                                                                                    \
                 auto __stacktrace = NES::NodeEngine::collectAndPrintStacktrace();                                                \
                 std::stringbuf __buffer;                                                                                         \
                 std::ostream __os(&__buffer);                                                                                    \
                 __os << "Failed assertion on " #CONDITION;                                                                       \
-                __os << " error message: " << TEXT;                                                                            \
+                __os << " error message: " << TEXT;                                                                              \
                 NES::NodeEngine::invokeErrorHandlers(__buffer.str(), std::move(__stacktrace));                                   \
             }                                                                                                                    \
         }                                                                                                                        \
