@@ -25,4 +25,4 @@ CodeGenerator::~CodeGenerator() = default;
 
 CompilerTypesFactoryPtr CodeGenerator::getTypeFactory() { return std::make_shared<GeneratableTypesFactory>(); }
 FunctionCallStatementPtr CodeGenerator::call(std::string function) { return FunctionCallStatement::create(function); }
-}// namespace NES
+}// namespace NES::QueryCompilation

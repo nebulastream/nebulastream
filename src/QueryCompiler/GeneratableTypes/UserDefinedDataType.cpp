@@ -28,4 +28,4 @@ const CodeExpressionPtr UserDefinedDataType::getCode() const {
 }
 
 CodeExpressionPtr UserDefinedDataType::getDeclarationCode(std::string) const { return getCode(); }
-}// namespace NES
+}// namespace NES::QueryCompilation

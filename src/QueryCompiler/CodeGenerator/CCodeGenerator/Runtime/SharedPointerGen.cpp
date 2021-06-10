@@ -26,4 +26,4 @@ GeneratableDataTypePtr SharedPointerGen::createSharedPtrType(GeneratableDataType
 StatementPtr SharedPointerGen::makeShared(GeneratableDataTypePtr type) {
     return FunctionCallStatement::create("std::make_shared<" + type->getTypeDefinitionCode()->code_ + ">");
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

@@ -30,4 +30,4 @@ const std::string PhysicalScanOperator::toString() const { return "PhysicalScanO
 
 OperatorNodePtr PhysicalScanOperator::copy() { return create(id, outputSchema); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

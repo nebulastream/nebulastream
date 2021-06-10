@@ -53,4 +53,4 @@ const std::string GeneratableJoinSinkOperator::toString() const { return "Genera
 
 OperatorNodePtr GeneratableJoinSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

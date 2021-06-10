@@ -39,4 +39,4 @@ const std::string PhysicalWindowSinkOperator::toString() const { return "Physica
 
 OperatorNodePtr PhysicalWindowSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

@@ -28,4 +28,4 @@ DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
     return ConvertLogicalToPhysicalSink::createDataSink(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

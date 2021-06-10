@@ -27,4 +27,4 @@ GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, S
 void GeneratableOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
 void GeneratableOperator::generateClose(CodeGeneratorPtr, PipelineContextPtr) {}
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

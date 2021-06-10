@@ -37,4 +37,4 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>());
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

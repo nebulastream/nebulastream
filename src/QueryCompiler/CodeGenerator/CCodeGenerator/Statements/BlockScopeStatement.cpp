@@ -24,4 +24,4 @@ BlockScopeStatementPtr BlockScopeStatement::create() { return std::make_shared<B
 const CodeExpressionPtr BlockScopeStatement::getCode() const {
     return std::make_shared<CodeExpression>("{" + CompoundStatement::getCode()->code_ + "}");
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

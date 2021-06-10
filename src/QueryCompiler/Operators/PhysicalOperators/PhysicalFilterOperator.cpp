@@ -38,4 +38,4 @@ const std::string PhysicalFilterOperator::toString() const { return "PhysicalFil
 
 OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, inputSchema, outputSchema, getPredicate()); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

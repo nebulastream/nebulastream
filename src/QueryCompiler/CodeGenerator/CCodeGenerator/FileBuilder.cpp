@@ -66,4 +66,4 @@ CodeFile FileBuilder::build() {
     file.code = declations.str();
     return file;
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

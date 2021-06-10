@@ -37,4 +37,4 @@ QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

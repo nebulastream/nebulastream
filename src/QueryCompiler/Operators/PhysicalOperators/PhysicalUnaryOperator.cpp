@@ -23,4 +23,4 @@ PhysicalUnaryOperator::PhysicalUnaryOperator(OperatorId id, SchemaPtr inputSchem
     UnaryOperatorNode::setOutputSchema(outputSchema);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

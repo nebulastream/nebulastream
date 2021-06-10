@@ -47,4 +47,4 @@ const std::string GeneratableProjectionOperator::toString() const { return "Gene
 
 OperatorNodePtr GeneratableProjectionOperator::copy() { return create(id, inputSchema, outputSchema, expressions); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

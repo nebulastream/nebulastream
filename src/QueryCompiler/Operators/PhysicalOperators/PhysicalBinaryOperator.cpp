@@ -24,4 +24,4 @@ PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSche
     BinaryOperatorNode::setOutputSchema(outputSchema);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

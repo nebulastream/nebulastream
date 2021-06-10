@@ -109,7 +109,7 @@ class SequenceImp : public TypeImp {
 
   public:
     ~SequenceImp() override {
-        for (auto & it : m_Sequence) {
+        for (auto& it : m_Sequence) {
             delete it.second;
         }
     }
@@ -200,7 +200,7 @@ class MapImp : public TypeImp {
 
   public:
     ~MapImp() override {
-        for (auto & it : m_Map) {
+        for (auto& it : m_Map) {
             delete it.second;
         }
     }
@@ -1521,7 +1521,7 @@ class ParseImp {
         *
         */
     void ClearLines() {
-        for (auto & m_Line : m_Lines) {
+        for (auto& m_Line : m_Lines) {
             delete m_Line;
         }
         m_Lines.clear();
@@ -1793,7 +1793,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
             }
             stream << "\n";
 
-            for (auto & line : lines) {
+            for (auto& line : lines) {
                 stream << std::string(level, ' ') << line << "\n";
             }
         } break;

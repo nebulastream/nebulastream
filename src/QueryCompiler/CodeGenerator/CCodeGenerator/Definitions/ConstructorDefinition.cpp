@@ -71,11 +71,11 @@ DeclarationPtr ConstructorDefinition::getDeclaration() {
     }
 
     function << std::endl << "/* variable declarations */" << std::endl;
-    for (auto & variablDeclaration : variablDeclarations) {
+    for (auto& variablDeclaration : variablDeclarations) {
         function << variablDeclaration.getCode() << ";";
     }
     function << std::endl << "/* statements section */" << std::endl;
-    for (auto & statement : statements) {
+    for (auto& statement : statements) {
         function << statement->getCode()->code_ << ";";
     }
     function << "}";
@@ -103,4 +103,4 @@ ConstructorDefinitionPtr ConstructorDefinition::addVariableDeclaration(VariableD
     variablDeclarations.emplace_back(variableDeclaration);
     return shared_from_this();
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

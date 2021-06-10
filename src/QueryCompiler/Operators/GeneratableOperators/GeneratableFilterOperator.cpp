@@ -41,4 +41,4 @@ const std::string GeneratableFilterOperator::toString() const { return "Generata
 
 OperatorNodePtr GeneratableFilterOperator::copy() { return create(id, inputSchema, predicate); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

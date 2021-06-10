@@ -45,4 +45,4 @@ const CodeExpressionPtr IFStatement::getCode() const {
 const StatementPtr IFStatement::createCopy() const { return std::make_shared<IFStatement>(*this); }
 
 const CompoundStatementPtr IFStatement::getCompoundStatement() { return trueCaseStatement; }
-}// namespace NES
+}// namespace NES::QueryCompilation

@@ -36,4 +36,4 @@ GeneratedCode::GeneratedCode()
       typeDeclarations() {
     // nop
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

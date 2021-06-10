@@ -41,4 +41,4 @@ const std::string PhysicalMapOperator::toString() const { return "PhysicalMapOpe
 
 OperatorNodePtr PhysicalMapOperator::copy() { return create(id, inputSchema, outputSchema, getMapExpression()); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

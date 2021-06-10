@@ -70,4 +70,4 @@ const uint64_t PipelineContext::getHandlerIndex(NodeEngine::Execution::OperatorH
 const std::vector<NodeEngine::Execution::OperatorHandlerPtr> PipelineContext::getOperatorHandlers() {
     return this->operatorHandlers;
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

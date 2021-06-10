@@ -32,4 +32,4 @@ const CodeExpressionPtr ContinueStatement::getCode() const {
 const StatementPtr ContinueStatement::createCopy() const { return std::make_shared<ContinueStatement>(*this); }
 
 ContinueStatement::~ContinueStatement() = default;
-}// namespace NES
+}// namespace NES::QueryCompilation

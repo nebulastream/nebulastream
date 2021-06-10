@@ -36,4 +36,4 @@ ExpressionStatmentPtr RecordHandler::getAttribute(std::string name) {
     }
     return this->statementMap[name];
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

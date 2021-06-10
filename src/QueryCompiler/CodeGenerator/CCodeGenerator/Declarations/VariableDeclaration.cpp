@@ -69,4 +69,4 @@ VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::str
     auto typeFactory = GeneratableTypesFactory();
     return VariableDeclaration(typeFactory.createDataType(type), identifier, value);
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

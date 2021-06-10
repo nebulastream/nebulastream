@@ -53,4 +53,4 @@ CodeExpressionPtr BasicGeneratableType::getDeclarationCode(std::string identifie
     str << " " << identifier;
     return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

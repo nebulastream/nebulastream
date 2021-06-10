@@ -86,4 +86,4 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
 
 std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }
 
-}// namespace NES
+}// namespace NES::Network

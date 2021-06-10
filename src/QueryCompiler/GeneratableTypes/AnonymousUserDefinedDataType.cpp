@@ -32,4 +32,4 @@ CodeExpressionPtr AnonymousUserDefinedDataType::getDeclarationCode(std::string i
 }
 
 const CodeExpressionPtr AnonymousUserDefinedDataType::getCode() const { return std::make_shared<CodeExpression>(name); }
-}// namespace NES
+}// namespace NES::QueryCompilation

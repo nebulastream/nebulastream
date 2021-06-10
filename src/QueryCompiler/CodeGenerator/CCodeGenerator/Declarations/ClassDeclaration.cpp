@@ -97,4 +97,4 @@ std::string ClassDeclaration::generateBaseClassNames() const {
 }
 
 const DeclarationPtr ClassDeclaration::copy() const { return std::make_shared<ClassDeclaration>(*this); }
-}// namespace NES
+}// namespace NES::QueryCompilation

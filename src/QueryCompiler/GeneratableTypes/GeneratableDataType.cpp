@@ -27,4 +27,4 @@ StatementPtr GeneratableDataType::getStmtCopyAssignment(const AssignmentStatemen
         VarRef(assignmentStatement.rhs_field_var));
     return target.assign(source).copy();
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

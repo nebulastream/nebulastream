@@ -2192,4 +2192,4 @@ VariableDeclaration CCodeGenerator::getJoinOperatorHandler(PipelineContextPtr co
 
     return windowOperatorHandlerDeclaration;
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

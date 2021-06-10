@@ -26,4 +26,4 @@ GeneratableBasicValueType::GeneratableBasicValueType(BasicValuePtr basicValue)
 CodeExpressionPtr GeneratableBasicValueType::getCodeExpression() const noexcept {
     return std::make_shared<CodeExpression>(value->value);
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

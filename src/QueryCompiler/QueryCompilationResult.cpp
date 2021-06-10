@@ -40,4 +40,4 @@ bool QueryCompilationResult::hasError() { return exception.has_value(); }
 
 std::exception_ptr QueryCompilationResult::getError() { return exception.value(); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

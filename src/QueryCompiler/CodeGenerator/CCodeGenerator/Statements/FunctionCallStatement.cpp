@@ -47,4 +47,4 @@ FunctionCallStatement::FunctionCallStatement(const std::string functionname) : f
 FunctionCallStatementPtr FunctionCallStatement::create(const std::string functionname) {
     return std::make_shared<FunctionCallStatement>(functionname);
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

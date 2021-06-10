@@ -46,4 +46,4 @@ OperatorNodePtr PhysicalJoinSinkOperator::copy() {
     return create(id, leftInputSchema, rightInputSchema, outputSchema, operatorHandler);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

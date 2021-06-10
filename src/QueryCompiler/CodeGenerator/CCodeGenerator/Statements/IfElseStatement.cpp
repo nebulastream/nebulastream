@@ -26,4 +26,4 @@ StatementType IfElseStatement::getStamentType() const { return IF_STMT; }
 const StatementPtr IfElseStatement::createCopy() const { return std::make_shared<IfElseStatement>(*this); }
 
 IfElseStatement::~IfElseStatement() noexcept = default;
-}// namespace NES
+}// namespace NES::QueryCompilation

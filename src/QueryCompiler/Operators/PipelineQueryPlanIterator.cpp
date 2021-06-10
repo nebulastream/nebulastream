@@ -71,4 +71,4 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
     }
     return *this;
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

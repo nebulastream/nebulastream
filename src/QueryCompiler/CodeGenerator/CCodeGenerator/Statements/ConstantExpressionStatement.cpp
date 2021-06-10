@@ -33,4 +33,4 @@ const ExpressionStatmentPtr ConstantExpressionStatement::copy() const {
 }
 
 ConstantExpressionStatement::ConstantExpressionStatement(GeneratableValueTypePtr val) : constantValue(std::move(val)) {}
-}// namespace NES
+}// namespace NES::QueryCompilation

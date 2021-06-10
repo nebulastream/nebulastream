@@ -39,4 +39,4 @@ const std::string PhysicalSinkOperator::toString() const { return "PhysicalSinkO
 
 OperatorNodePtr PhysicalSinkOperator::copy() { return create(id, inputSchema, outputSchema, sinkDescriptor); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

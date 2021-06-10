@@ -64,4 +64,4 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
 
     return std::make_shared<CodeExpression>(str.str());
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

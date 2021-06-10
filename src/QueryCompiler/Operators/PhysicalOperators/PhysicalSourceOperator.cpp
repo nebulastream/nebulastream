@@ -41,4 +41,4 @@ const std::string PhysicalSourceOperator::toString() const { return "PhysicalSou
 
 OperatorNodePtr PhysicalSourceOperator::copy() { return create(id, inputSchema, outputSchema, sourceDescriptor); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

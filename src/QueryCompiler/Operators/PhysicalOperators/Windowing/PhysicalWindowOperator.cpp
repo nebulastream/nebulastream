@@ -25,4 +25,4 @@ PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
 
 Windowing::WindowOperatorHandlerPtr PhysicalWindowOperator::getOperatorHandler() const { return operatorHandler; }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

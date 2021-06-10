@@ -50,4 +50,4 @@ OperatorPipelinePtr LowerPhysicalToGeneratableOperators::apply(OperatorPipelineP
     return operatorPipeline;
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

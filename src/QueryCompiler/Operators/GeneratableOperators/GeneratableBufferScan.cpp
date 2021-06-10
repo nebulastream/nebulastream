@@ -43,4 +43,4 @@ const std::string GeneratableBufferScan::toString() const { return "GeneratableB
 
 OperatorNodePtr GeneratableBufferScan::copy() { return create(id, inputSchema); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

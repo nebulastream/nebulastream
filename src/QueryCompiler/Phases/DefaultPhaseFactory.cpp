@@ -73,4 +73,4 @@ DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsP
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
-}// namespace NES
+}// namespace NES::QueryCompilation::Phases

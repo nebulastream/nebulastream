@@ -453,4 +453,4 @@ Predicate operator<<(const PredicateItem& lhs, const PredicateItem& rhs) {
 Predicate operator>>(const PredicateItem& lhs, const PredicateItem& rhs) {
     return operator>>(dynamic_cast<const LegacyExpression&>(lhs), dynamic_cast<const LegacyExpression&>(rhs));
 }
-}//end namespace NES
+}// namespace NES::QueryCompilation

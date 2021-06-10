@@ -66,4 +66,4 @@ void NetworkSource::runningRoutine(NodeEngine::BufferManagerPtr, NodeEngine::Que
 
 void NetworkSource::emitWork(NodeEngine::TupleBuffer& buffer) { DataSource::emitWork(buffer); }
 
-}// namespace NES
+}// namespace NES::Network

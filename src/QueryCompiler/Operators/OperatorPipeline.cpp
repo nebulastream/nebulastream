@@ -108,4 +108,4 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
 const uint64_t OperatorPipeline::getPipelineId() const { return id; }
 QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

@@ -173,4 +173,4 @@ void DefaultPipeliningPhase::process(PipelineQueryPlanPtr pipeline,
         processPipelineBreakerOperator(pipeline, pipelineOperatorMap, currentPipeline, currentOperators);
     }
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

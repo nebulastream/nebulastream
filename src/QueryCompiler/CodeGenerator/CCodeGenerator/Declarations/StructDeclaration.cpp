@@ -106,4 +106,4 @@ VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string&
 }
 
 StructDeclaration::~StructDeclaration() = default;
-}// namespace NES
+}// namespace NES::QueryCompilation

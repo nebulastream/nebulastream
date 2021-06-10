@@ -47,4 +47,4 @@ CodeExpressionPtr ArrayGeneratableType::getDeclarationCode(std::string identifie
     }
     return ptr;
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

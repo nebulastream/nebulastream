@@ -30,4 +30,4 @@ const std::string PhysicalEmitOperator::toString() const { return "PhysicalEmitO
 
 OperatorNodePtr PhysicalEmitOperator::copy() { return create(id, inputSchema); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

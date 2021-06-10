@@ -40,4 +40,4 @@ const std::string PhysicalSlicePreAggregationOperator::toString() const { return
 
 OperatorNodePtr PhysicalSlicePreAggregationOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

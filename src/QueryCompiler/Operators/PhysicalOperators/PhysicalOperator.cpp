@@ -18,4 +18,4 @@ namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperator::PhysicalOperator(OperatorId id) : OperatorNode(id) {}
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

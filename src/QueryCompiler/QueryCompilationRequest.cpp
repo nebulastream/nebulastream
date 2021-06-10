@@ -40,4 +40,4 @@ QueryPlanPtr QueryCompilationRequest::getQueryPlan() { return queryPlan; }
 
 NodeEngine::NodeEnginePtr QueryCompilationRequest::getNodeEngine() { return nodeEngine; }
 
-}// namespace NES
+}// namespace NES::QueryCompilation
