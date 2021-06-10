@@ -15,8 +15,7 @@
 */
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 QueryCompilationRequestPtr QueryCompilationRequest::create(QueryPlanPtr queryPlan, NodeEngine::NodeEnginePtr nodeEngine) {
     return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(queryPlan, nodeEngine));
@@ -41,5 +40,4 @@ QueryPlanPtr QueryCompilationRequest::getQueryPlan() { return queryPlan; }
 
 NodeEngine::NodeEnginePtr QueryCompilationRequest::getNodeEngine() { return nodeEngine; }
 
-}// namespace QueryCompilation
 }// namespace NES

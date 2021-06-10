@@ -18,8 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 CompoundStatement::CompoundStatement() : statements() {}
 
 const StatementPtr CompoundStatement::createCopy() const { return std::make_shared<CompoundStatement>(*this); }
@@ -40,5 +39,4 @@ void CompoundStatement::addStatement(StatementPtr stmt) {
 }
 
 CompoundStatement::~CompoundStatement() = default;
-}// namespace QueryCompilation
 }// namespace NES

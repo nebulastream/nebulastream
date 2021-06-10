@@ -17,8 +17,7 @@
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 OperatorPipeline::OperatorPipeline(uint64_t pipelineId, Type pipelineType)
     : id(pipelineId), queryPlan(QueryPlan::create()), pipelineType(pipelineType) {}
@@ -109,5 +108,4 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
 const uint64_t OperatorPipeline::getPipelineId() const { return id; }
 QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
 
-}// namespace QueryCompilation
 }// namespace NES

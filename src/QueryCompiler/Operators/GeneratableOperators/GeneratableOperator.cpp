@@ -16,9 +16,7 @@
 
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema)
     : OperatorNode(id), UnaryOperatorNode(id) {
@@ -29,6 +27,4 @@ GeneratableOperator::GeneratableOperator(OperatorId id, SchemaPtr inputSchema, S
 void GeneratableOperator::generateOpen(CodeGeneratorPtr, PipelineContextPtr) {}
 
 void GeneratableOperator::generateClose(CodeGeneratorPtr, PipelineContextPtr) {}
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
                                                SchemaPtr inputSchema,
@@ -27,6 +25,4 @@ PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
 
 Windowing::WindowOperatorHandlerPtr PhysicalWindowOperator::getOperatorHandler() const { return operatorHandler; }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

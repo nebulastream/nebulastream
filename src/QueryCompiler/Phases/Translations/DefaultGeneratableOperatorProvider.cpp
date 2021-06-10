@@ -51,8 +51,7 @@
 #include <Windowing/WindowAggregations/SumAggregationDescriptor.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 GeneratableOperatorProviderPtr DefaultGeneratableOperatorProvider::create() {
     return std::make_shared<DefaultGeneratableOperatorProvider>();
@@ -240,5 +239,4 @@ void DefaultGeneratableOperatorProvider::lowerJoinSink(QueryPlanPtr queryPlan,
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
 }
 
-}// namespace QueryCompilation
 }// namespace NES

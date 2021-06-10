@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema)
     : OperatorNode(id), PhysicalOperator(id), BinaryOperatorNode(id) {
@@ -26,6 +24,4 @@ PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSche
     BinaryOperatorNode::setOutputSchema(outputSchema);
 }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

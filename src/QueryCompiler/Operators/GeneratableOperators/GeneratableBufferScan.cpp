@@ -18,9 +18,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableBufferScan.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableBufferScan::GeneratableBufferScan(OperatorId id, SchemaPtr inputSchema)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema) {}
@@ -45,6 +43,4 @@ const std::string GeneratableBufferScan::toString() const { return "GeneratableB
 
 OperatorNodePtr GeneratableBufferScan::copy() { return create(id, inputSchema); }
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

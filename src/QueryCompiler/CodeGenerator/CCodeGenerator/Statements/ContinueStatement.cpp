@@ -17,8 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ContinueStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 ContinueStatement::ContinueStatement() = default;
 
 StatementType ContinueStatement::getStamentType() const { return RETURN_STMT; }
@@ -33,5 +32,4 @@ const CodeExpressionPtr ContinueStatement::getCode() const {
 const StatementPtr ContinueStatement::createCopy() const { return std::make_shared<ContinueStatement>(*this); }
 
 ContinueStatement::~ContinueStatement() = default;
-}// namespace QueryCompilation
 }// namespace NES

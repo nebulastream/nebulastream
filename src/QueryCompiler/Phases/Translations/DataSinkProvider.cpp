@@ -16,8 +16,7 @@
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 DataSinkProviderPtr DataSinkProvider::create() { return std::make_shared<DataSinkProvider>(); }
 
@@ -29,5 +28,4 @@ DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
     return ConvertLogicalToPhysicalSink::createDataSink(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlanId);
 }
 
-}// namespace QueryCompilation
 }// namespace NES

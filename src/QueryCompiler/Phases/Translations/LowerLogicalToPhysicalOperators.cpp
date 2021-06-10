@@ -20,8 +20,7 @@
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 LowerLogicalToPhysicalOperatorsPtr
 LowerLogicalToPhysicalOperators::LowerLogicalToPhysicalOperators::create(PhysicalOperatorProviderPtr provider) {
@@ -38,5 +37,4 @@ QueryPlanPtr LowerLogicalToPhysicalOperators::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-}// namespace QueryCompilation
 }// namespace NES

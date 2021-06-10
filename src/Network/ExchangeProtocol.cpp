@@ -19,8 +19,7 @@
 #include <Network/NetworkSource.hpp>
 #include <utility>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 // Important invariant: never leak the protocolListener pointer
 // there is a hack that disables the reference counting
@@ -87,5 +86,4 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
 
 std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const { return partitionManager; }
 
-}// namespace Network
 }// namespace NES

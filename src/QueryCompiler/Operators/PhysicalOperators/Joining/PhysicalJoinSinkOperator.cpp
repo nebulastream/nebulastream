@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinSinkOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr PhysicalJoinSinkOperator::create(SchemaPtr leftInputSchema,
                                                      SchemaPtr rightInputSchema,
@@ -48,6 +46,4 @@ OperatorNodePtr PhysicalJoinSinkOperator::copy() {
     return create(id, leftInputSchema, rightInputSchema, outputSchema, operatorHandler);
 }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

@@ -19,9 +19,7 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <utility>
 
-namespace NES {
-
-namespace Network {
+namespace NES::Network {
 
 NetworkSink::NetworkSink(SchemaPtr schema,
                          QuerySubPlanId parentPlanId,
@@ -105,5 +103,4 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
         }
     }
 }
-}// namespace Network
 }// namespace NES

@@ -19,8 +19,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/FileBuilder.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 FileBuilder FileBuilder::create(const std::string&) {
     FileBuilder builder;
     builder.declations << "#include <QueryCompiler/GeneratableTypes/Array.hpp>\n"
@@ -67,5 +66,4 @@ CodeFile FileBuilder::build() {
     file.code = declations.str();
     return file;
 }
-}// namespace QueryCompilation
 }// namespace NES

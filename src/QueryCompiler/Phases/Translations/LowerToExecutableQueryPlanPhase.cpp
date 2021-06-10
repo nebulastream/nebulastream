@@ -38,8 +38,7 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <variant>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
                                                                  DataSourceProviderPtr sourceProvider)
     : sinkProvider(sinkProvider), sourceProvider(sourceProvider){};
@@ -236,5 +235,4 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
     return executablePipeline;
 }
 
-}// namespace QueryCompilation
 }// namespace NES

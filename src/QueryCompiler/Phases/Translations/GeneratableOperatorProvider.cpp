@@ -15,6 +15,3 @@
 */
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 
-namespace NES {
-namespace QueryCompilation {}
-}// namespace NES

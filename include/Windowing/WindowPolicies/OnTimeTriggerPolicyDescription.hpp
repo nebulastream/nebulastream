@@ -24,6 +24,8 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
   public:
     static WindowTriggerPolicyPtr create(uint64_t triggerTimeInMs);
 
+    virtual ~OnTimeTriggerPolicyDescription() noexcept = default;
+
     /**
      * @brief method to get the policy type
      * @return
@@ -39,7 +41,7 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
     std::string toString() override;
 
   protected:
-    OnTimeTriggerPolicyDescription(uint64_t triggerTimeInMs);
+    explicit OnTimeTriggerPolicyDescription(uint64_t triggerTimeInMs);
     uint64_t triggerTimeInMs;
 };
 

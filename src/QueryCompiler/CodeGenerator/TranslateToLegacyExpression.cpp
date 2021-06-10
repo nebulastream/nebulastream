@@ -39,9 +39,7 @@
 #include <QueryCompiler/CodeGenerator/LegacyExpression.hpp>
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <utility>
-namespace NES {
-
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 TranslateToLegacyExpressionPtr TranslateToLegacyExpression::create() { return std::make_shared<TranslateToLegacyExpression>(); }
 
 TranslateToLegacyExpression::TranslateToLegacyExpression() = default;
@@ -178,5 +176,4 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(Exp
     NES_NOT_IMPLEMENTED();
     ;
 }
-}// namespace QueryCompilation
 }// namespace NES

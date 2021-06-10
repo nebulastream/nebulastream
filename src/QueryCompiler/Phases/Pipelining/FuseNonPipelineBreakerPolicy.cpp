@@ -24,8 +24,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSlicePreAggregationOperator.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 OperatorFusionPolicyPtr FuseNonPipelineBreakerPolicy::create() { return std::make_shared<FuseNonPipelineBreakerPolicy>(); }
 
@@ -38,5 +37,4 @@ bool FuseNonPipelineBreakerPolicy::isFusible(PhysicalOperators::PhysicalOperator
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()
             || physicalOperator->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>());
 }
-}// namespace QueryCompilation
 }// namespace NES

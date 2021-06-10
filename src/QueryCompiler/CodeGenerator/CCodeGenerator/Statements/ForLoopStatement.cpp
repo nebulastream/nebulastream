@@ -24,8 +24,7 @@
 #include <string>
 #include <utility>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
                                    ExpressionStatmentPtr condition,
                                    ExpressionStatmentPtr advance,
@@ -62,5 +61,4 @@ void ForLoopStatement::addStatement(StatementPtr stmt) {
 }
 
 ForLoopStatement::~ForLoopStatement() = default;
-}// namespace QueryCompilation
 }// namespace NES

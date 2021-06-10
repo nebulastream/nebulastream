@@ -25,8 +25,7 @@
 
 #define TO_RAW_ZMQ_SOCKET static_cast<void*>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 ZmqServer::ZmqServer(const std::string& hostname,
                      uint16_t port,
@@ -274,5 +273,4 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
     }
 }
 
-}// namespace Network
 }// namespace NES

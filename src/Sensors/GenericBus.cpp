@@ -17,8 +17,7 @@
 #include <Sensors/GenericBus.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace Sensors {
+namespace NES::Sensors {
 
 GenericBus::GenericBus(const char* filename, BusType type) : fileName(filename), busType(type) {
     NES_INFO("Sensor Bus: Initializing " << type << " bus at " << filename);
@@ -34,5 +33,4 @@ bool GenericBus::read(int addr, int size, unsigned char* buffer) { return this->
 
 BusType GenericBus::getType() { return this->busType; }
 
-}//namespace Sensors
 }//namespace NES

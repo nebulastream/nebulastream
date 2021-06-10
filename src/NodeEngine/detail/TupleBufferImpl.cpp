@@ -30,9 +30,7 @@
 #include <thread>
 #endif
 
-namespace NES::NodeEngine {
-
-namespace detail {
+namespace NES::NodeEngine::detail {
 
 // -----------------------------------------------------------------------------
 // ------------------ Core Mechanism for Buffer recycling ----------------------
@@ -259,7 +257,5 @@ void zmqBufferRecyclingCallback(void*, void* hint) {
     auto controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
     controlBlock->release();
 }
-
-}// namespace detail
 
 }// namespace NES::NodeEngine

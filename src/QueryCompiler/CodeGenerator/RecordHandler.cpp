@@ -16,8 +16,7 @@
 #include <QueryCompiler/CodeGenerator/RecordHandler.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 RecordHandlerPtr RecordHandler::create() { return std::make_shared<RecordHandler>(); }
 
 void RecordHandler::registerAttribute(std::string name, ExpressionStatmentPtr variableAccessStatement) {
@@ -37,5 +36,4 @@ ExpressionStatmentPtr RecordHandler::getAttribute(std::string name) {
     }
     return this->statementMap[name];
 }
-}// namespace QueryCompilation
 }// namespace NES

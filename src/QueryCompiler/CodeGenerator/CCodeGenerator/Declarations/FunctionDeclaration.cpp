@@ -17,8 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/FunctionDeclaration.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 FunctionDeclaration::FunctionDeclaration(Code code) : functionCode(code) {}
 
 FunctionDeclarationPtr FunctionDeclaration::create(Code code) { return std::make_shared<FunctionDeclaration>(code); }
@@ -30,5 +29,4 @@ const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
 
 const Code FunctionDeclaration::getCode() const { return functionCode; }
 const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
-}// namespace QueryCompilation
 }// namespace NES

@@ -19,8 +19,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <utility>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 ConstantExpressionStatement::~ConstantExpressionStatement() = default;
 
 StatementType ConstantExpressionStatement::getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
@@ -34,5 +33,4 @@ const ExpressionStatmentPtr ConstantExpressionStatement::copy() const {
 }
 
 ConstantExpressionStatement::ConstantExpressionStatement(GeneratableValueTypePtr val) : constantValue(std::move(val)) {}
-}// namespace QueryCompilation
 }// namespace NES

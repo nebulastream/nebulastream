@@ -15,8 +15,7 @@
 */
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 bool QueryCompilerOptions::isOperatorFusionEnabled() { return operatorFusion; }
 
@@ -35,5 +34,4 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     return std::make_shared<QueryCompilerOptions>(options);
 }
 
-}// namespace QueryCompilation
 }// namespace NES

@@ -17,9 +17,7 @@
 #include <QueryCompiler/Operators/GeneratableOperators/Windowing/GeneratableWindowOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableWindowOperator::GeneratableWindowOperator(OperatorId id,
                                                      SchemaPtr inputSchema,
@@ -27,6 +25,4 @@ GeneratableWindowOperator::GeneratableWindowOperator(OperatorId id,
                                                      Windowing::WindowOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(operatorHandler) {}
 
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
 }// namespace NES

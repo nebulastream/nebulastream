@@ -17,8 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ReturnStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 ReturnStatement::ReturnStatement(StatementPtr statement) : statement(statement) {}
 
 StatementPtr ReturnStatement::create(StatementPtr statement) { return std::make_shared<ReturnStatement>(statement); }
@@ -34,5 +33,4 @@ const CodeExpressionPtr ReturnStatement::getCode() const {
 const StatementPtr ReturnStatement::createCopy() const { return std::make_shared<ReturnStatement>(*this); }
 
 ReturnStatement::~ReturnStatement() = default;
-}// namespace QueryCompilation
 }// namespace NES

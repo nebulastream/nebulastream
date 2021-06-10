@@ -18,8 +18,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 PipelineQueryPlanIterator::PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)){};
 
 PipelineQueryPlanIterator::iterator PipelineQueryPlanIterator::begin() { return iterator(queryPlan); }
@@ -72,5 +71,4 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
     }
     return *this;
 }
-}// namespace QueryCompilation
 }// namespace NES

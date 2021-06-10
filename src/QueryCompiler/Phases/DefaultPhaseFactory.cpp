@@ -30,9 +30,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace Phases {
+namespace NES::QueryCompilation::Phases {
 
 PhaseFactoryPtr DefaultPhaseFactory::create() { return std::make_shared<DefaultPhaseFactory>(); }
 
@@ -75,6 +73,4 @@ DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsP
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
 }
-}// namespace Phases
-}// namespace QueryCompilation
 }// namespace NES

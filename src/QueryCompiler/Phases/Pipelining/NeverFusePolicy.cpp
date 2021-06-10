@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Phases/Pipelining/NeverFusePolicy.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 bool NeverFusePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; }
 OperatorFusionPolicyPtr NeverFusePolicy::create() { return std::make_shared<NeverFusePolicy>(); }
-}// namespace QueryCompilation
 }// namespace NES

@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalOperatorPtr
 PhysicalWindowSinkOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler) {
@@ -41,6 +39,4 @@ const std::string PhysicalWindowSinkOperator::toString() const { return "Physica
 
 OperatorNodePtr PhysicalWindowSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

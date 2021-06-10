@@ -17,8 +17,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/NamespaceDeclaration.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableDataType.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 NamespaceDeclaration::NamespaceDeclaration(Code code) : namespaceCode(code) {}
 
 NamespaceDeclarationPtr NamespaceDeclaration::create(Code code) { return std::make_shared<NamespaceDeclaration>(code); }
@@ -30,5 +29,4 @@ const Code NamespaceDeclaration::getTypeDefinitionCode() const { return Code(); 
 
 const Code NamespaceDeclaration::getCode() const { return namespaceCode; }
 const DeclarationPtr NamespaceDeclaration::copy() const { return std::make_shared<NamespaceDeclaration>(*this); }
-}// namespace QueryCompilation
 }// namespace NES

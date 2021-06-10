@@ -25,8 +25,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 AddScanAndEmitPhasePtr AddScanAndEmitPhase::create() { return std::make_shared<AddScanAndEmitPhase>(); }
 
@@ -69,5 +68,4 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     return pipeline;
 }
 
-}// namespace QueryCompilation
 }// namespace NES

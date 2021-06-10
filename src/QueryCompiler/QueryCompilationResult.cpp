@@ -16,8 +16,7 @@
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <exception>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 QueryCompilationResult::QueryCompilationResult(NodeEngine::Execution::ExecutableQueryPlanPtr executableQueryPlan)
     : executableQueryPlan(executableQueryPlan) {}
@@ -41,5 +40,4 @@ bool QueryCompilationResult::hasError() { return exception.has_value(); }
 
 std::exception_ptr QueryCompilationResult::getError() { return exception.value(); }
 
-}// namespace QueryCompilation
 }// namespace NES

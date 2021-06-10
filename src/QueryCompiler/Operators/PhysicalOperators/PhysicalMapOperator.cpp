@@ -15,9 +15,7 @@
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 PhysicalMapOperator::PhysicalMapOperator(OperatorId id,
                                          SchemaPtr inputSchema,
@@ -43,6 +41,4 @@ const std::string PhysicalMapOperator::toString() const { return "PhysicalMapOpe
 
 OperatorNodePtr PhysicalMapOperator::copy() { return create(id, inputSchema, outputSchema, getMapExpression()); }
 
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
 }// namespace NES

@@ -16,8 +16,7 @@
 #include <Operators/OperatorNode.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 ExecutableOperator::ExecutableOperator(OperatorId id,
                                        NodeEngine::Execution::ExecutablePipelineStagePtr executablePipelineStage,
@@ -41,5 +40,4 @@ const std::string ExecutableOperator::toString() const { return "ExecutableOpera
 
 OperatorNodePtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
 
-}// namespace QueryCompilation
 }// namespace NES

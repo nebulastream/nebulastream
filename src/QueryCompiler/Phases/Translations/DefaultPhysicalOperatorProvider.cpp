@@ -46,8 +46,7 @@
 #include <Windowing/WindowHandler/JoinOperatorHandler.hpp>
 #include <Windowing/WindowHandler/WindowOperatorHandler.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 PhysicalOperatorProviderPtr DefaultPhysicalOperatorProvider::create() {
     return std::make_shared<DefaultPhysicalOperatorProvider>();
@@ -269,5 +268,4 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(QueryPlanPtr, LogicalO
     }
 }
 
-}// namespace QueryCompilation
 }// namespace NES

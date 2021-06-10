@@ -23,8 +23,7 @@
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
 #include <Util/Logger.hpp>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 
 OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string address)
     : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(address), isClosed(false) {
@@ -162,5 +161,4 @@ void OutputChannel::close() {
     isClosed = true;
 }
 
-}// namespace Network
 }// namespace NES

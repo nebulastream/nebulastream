@@ -20,8 +20,7 @@
 #include <Util/Logger.hpp>
 #include <memory>
 #include <sstream>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 BasicGeneratableType::BasicGeneratableType(BasicPhysicalTypePtr type) : GeneratableDataType(), type(type) {}
 
 const CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
@@ -54,6 +53,4 @@ CodeExpressionPtr BasicGeneratableType::getDeclarationCode(std::string identifie
     str << " " << identifier;
     return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
 }
-}// namespace QueryCompilation
-
 }// namespace NES
