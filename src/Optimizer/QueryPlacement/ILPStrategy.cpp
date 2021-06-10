@@ -59,6 +59,19 @@ void ILPStrategy::addPath(context& c,
         std::string operatorID = std::to_string(operatorNode->getId());
 
         if(operatorNodes.find(operatorID) != operatorNodes.end()) {
+            expr path_constraint = c.int_val(0);
+            for (int j = 0; j < topologyPath.size(); j++) {
+                TopologyNodePtr topologyNode = topologyPath[j]->as<TopologyNode>();
+                std::string topologyID = std::to_string(topologyNode->getId());
+                topologyNodes[topologyID] = topologyNode;
+
+                std::string variableID = operatorID + "," + topologyID;
+                auto iter = placementVariables.find(variableID);
+                if(iter != placementVariables.end()) {
+                    path_constraint = path_constraint + iter->second;
+                }
+            }
+            opt.add(path_constraint == 1);
             break; // all following nodes already created
         }
 
