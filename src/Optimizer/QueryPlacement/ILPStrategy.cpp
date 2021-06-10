@@ -104,11 +104,7 @@ void ILPStrategy::addPath(context& c,
 bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     const QueryId queryId = queryPlan->getQueryId();
 
-    SourceLogicalOperatorNodePtr sourceOperatorNode = queryPlan->getSourceOperators()[0];
-    std::string streamName = sourceOperatorNode->getSourceDescriptor()->getStreamName();
-    TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
-    std::vector<NodePtr> operatorPath = findPathToRoot(sourceOperatorNode);
-    std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
+    std::vector<SourceLogicalOperatorNodePtr> sourceOperators = queryPlan->getSourceOperators();
 
     context c;
     optimize opt(c);
@@ -119,7 +115,13 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     std::map<std::string, expr> positions;                  // operatorID
     std::map<std::string, expr> utilizations;               // topologyID
 
-    addPath(c, opt, operatorPath, topologyPath, operatorNodes, topologyNodes, placementVariables, positions, utilizations);
+    for (const auto& sourceNode : sourceOperators) {
+        std::string streamName = sourceNode->getSourceDescriptor()->getStreamName();
+        TopologyNodePtr sourceToplogyNode = streamCatalog->getSourceNodesForLogicalStream(streamName)[0];
+        std::vector<NodePtr> operatorPath = findPathToRoot(sourceNode);
+        std::vector<NodePtr> topologyPath = findPathToRoot(sourceToplogyNode);
+        addPath(c, opt, operatorPath, topologyPath, operatorNodes, topologyNodes, placementVariables, positions, utilizations);
+    }
 
     // calculate network cost
     expr cost_net = c.int_val(0);
