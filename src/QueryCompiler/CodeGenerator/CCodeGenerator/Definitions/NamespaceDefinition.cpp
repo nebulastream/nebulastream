@@ -39,4 +39,4 @@ DeclarationPtr NamespaceDefinition::getDeclaration() {
 
     return NamespaceDeclaration::create(namespaceCode.str());
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

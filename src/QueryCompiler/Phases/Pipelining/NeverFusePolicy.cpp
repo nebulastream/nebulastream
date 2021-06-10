@@ -18,4 +18,4 @@
 namespace NES::QueryCompilation {
 bool NeverFusePolicy::isFusible(PhysicalOperators::PhysicalOperatorPtr) { return true; }
 OperatorFusionPolicyPtr NeverFusePolicy::create() { return std::make_shared<NeverFusePolicy>(); }
-}// namespace NES
+}// namespace NES::QueryCompilation

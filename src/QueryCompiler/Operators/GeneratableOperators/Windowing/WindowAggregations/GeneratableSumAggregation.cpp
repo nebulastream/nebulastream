@@ -42,4 +42,4 @@ void GeneratableSumAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto updatedPartial = partialRef.assign(sum);
     currentCode->addStatement(updatedPartial.copy());
 }
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

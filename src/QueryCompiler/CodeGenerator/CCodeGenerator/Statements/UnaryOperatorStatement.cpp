@@ -81,4 +81,4 @@ UnaryOperatorStatement operator~(const ExpressionStatment& ref) { return UnaryOp
 UnaryOperatorStatement operator!(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, LOGICAL_NOT_OP); }
 
 UnaryOperatorStatement sizeOf(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP); }
-}// namespace NES
+}// namespace NES::QueryCompilation

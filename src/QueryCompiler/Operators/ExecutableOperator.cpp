@@ -40,4 +40,4 @@ const std::string ExecutableOperator::toString() const { return "ExecutableOpera
 
 OperatorNodePtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

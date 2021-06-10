@@ -62,4 +62,4 @@ OperatorNodePtr GeneratableSliceMergingOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

@@ -38,4 +38,4 @@ const std::string GeneratableBufferEmit::toString() const { return "GeneratableB
 
 OperatorNodePtr GeneratableBufferEmit::copy() { return create(id, outputSchema); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

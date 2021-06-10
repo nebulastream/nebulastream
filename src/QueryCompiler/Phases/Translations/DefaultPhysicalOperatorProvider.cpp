@@ -268,4 +268,4 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(QueryPlanPtr, LogicalO
     }
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

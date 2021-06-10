@@ -239,4 +239,4 @@ void DefaultGeneratableOperatorProvider::lowerJoinSink(QueryPlanPtr queryPlan,
     queryPlan->replaceOperator(operatorNode, generatableJoinOperator);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

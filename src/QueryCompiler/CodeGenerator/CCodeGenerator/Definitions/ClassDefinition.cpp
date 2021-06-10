@@ -37,4 +37,4 @@ void ClassDefinition::addConstructor(ConstructorDefinitionPtr function) { public
 DeclarationPtr ClassDefinition::getDeclaration() { return ClassDeclaration::create(shared_from_this()); }
 
 void ClassDefinition::addBaseClass(std::string baseClassName) { baseClasses.emplace_back(baseClassName); }
-}// namespace NES
+}// namespace NES::QueryCompilation

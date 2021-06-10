@@ -41,4 +41,4 @@ void GeneratableMinAggregation::compileLiftCombine(CompoundStatementPtr currentC
     auto ifStatement = IF(partialRef > *fieldReference, partialRef.assign(fieldReference));
     currentCode->addStatement(ifStatement.createCopy());
 }
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

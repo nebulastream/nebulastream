@@ -53,4 +53,4 @@ const std::string GeneratableMapOperator::toString() const { return "Generatable
 
 OperatorNodePtr GeneratableMapOperator::copy() { return create(id, inputSchema, outputSchema, mapExpression); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

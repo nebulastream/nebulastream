@@ -79,4 +79,4 @@ void CodeGenerationPhase::generate(OperatorNodePtr rootOperator,
     }
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

@@ -31,4 +31,4 @@ const CodeExpressionPtr CommentStatement::getCode() const {
 const StatementPtr CommentStatement::createCopy() const { return std::make_shared<CommentStatement>(*this); }
 
 CommentStatement::~CommentStatement() = default;
-}// namespace NES
+}// namespace NES::QueryCompilation

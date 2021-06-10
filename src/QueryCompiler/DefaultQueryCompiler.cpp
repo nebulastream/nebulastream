@@ -91,4 +91,4 @@ QueryCompilationResultPtr DefaultQueryCompiler::compileQuery(QueryCompilationReq
     }
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

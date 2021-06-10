@@ -49,4 +49,4 @@ void GeneratableAvgAggregation::compileLiftCombine(CompoundStatementPtr currentC
     currentCode->addStatement(updateSumStatement.copy());
     currentCode->addStatement(updateCountStatement.copy());
 }
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

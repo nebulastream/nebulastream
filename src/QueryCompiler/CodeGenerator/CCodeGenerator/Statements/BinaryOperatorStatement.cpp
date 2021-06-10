@@ -188,4 +188,4 @@ BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const Expressi
 BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs) {
     return BinaryOperatorStatement(lhs, BITWISE_RIGHT_SHIFT_OP, rhs);
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

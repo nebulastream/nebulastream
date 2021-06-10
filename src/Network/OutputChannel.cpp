@@ -161,4 +161,4 @@ void OutputChannel::close() {
     isClosed = true;
 }
 
-}// namespace NES
+}// namespace NES::Network

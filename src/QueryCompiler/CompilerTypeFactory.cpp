@@ -69,4 +69,4 @@ GeneratableDataTypePtr GeneratableTypesFactory::createPointer(GeneratableDataTyp
 GeneratableDataTypePtr GeneratableTypesFactory::createReference(GeneratableDataTypePtr type) {
     return std::make_shared<ReferenceDataType>(type);
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

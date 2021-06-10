@@ -28,4 +28,4 @@ CodeExpressionPtr ReferenceDataType::getDeclarationCode(std::string identifier) 
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "& " + identifier);
 }
 const CodeExpressionPtr ReferenceDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }
-}// namespace NES
+}// namespace NES::QueryCompilation

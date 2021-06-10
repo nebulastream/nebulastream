@@ -25,4 +25,4 @@ GeneratableJoinOperator::GeneratableJoinOperator(OperatorId id,
                                                  Join::JoinOperatorHandlerPtr operatorHandler)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), operatorHandler(operatorHandler) {}
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

@@ -22,4 +22,4 @@ namespace NES::QueryCompilation::GeneratableOperators {
 GeneratableWindowAggregation::GeneratableWindowAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor)
     : aggregationDescriptor(std::move(aggregationDescriptor)) {}
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

@@ -14,4 +14,3 @@
     limitations under the License.
 */
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
-

@@ -40,4 +40,4 @@ const std::string PhysicalProjectOperator::toString() const { return "PhysicalPr
 
 OperatorNodePtr PhysicalProjectOperator::copy() { return create(id, inputSchema, outputSchema, getExpressions()); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

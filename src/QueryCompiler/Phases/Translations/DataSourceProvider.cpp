@@ -37,4 +37,4 @@ DataSourcePtr DataSourceProvider::lower(OperatorId operatorId,
                                                             successors);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

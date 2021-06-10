@@ -29,4 +29,4 @@ PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, SchemaPt
 const std::string PhysicalDemultiplexOperator::toString() const { return "PhysicalDemultiplexOperator"; }
 OperatorNodePtr PhysicalDemultiplexOperator::copy() { return create(id, inputSchema); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

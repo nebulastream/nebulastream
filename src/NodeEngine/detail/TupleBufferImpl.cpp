@@ -258,4 +258,4 @@ void zmqBufferRecyclingCallback(void*, void* hint) {
     controlBlock->release();
 }
 
-}// namespace NES::NodeEngine
+}// namespace NES::NodeEngine::detail

@@ -61,4 +61,4 @@ const std::string GeneratableJoinBuildOperator::toString() const { return "Gener
 
 OperatorNodePtr GeneratableJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler, buildSide); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

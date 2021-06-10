@@ -103,4 +103,4 @@ void NetworkSink::postReconfigurationCallback(NodeEngine::ReconfigurationMessage
         }
     }
 }
-}// namespace NES
+}// namespace NES::Network

@@ -176,4 +176,4 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformLogicalExpressions(Exp
     NES_NOT_IMPLEMENTED();
     ;
 }
-}// namespace NES
+}// namespace NES::QueryCompilation

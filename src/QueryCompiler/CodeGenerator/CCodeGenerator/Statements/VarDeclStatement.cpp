@@ -29,4 +29,4 @@ VarDeclStatement::VarDeclStatement(const VariableDeclaration& var_decl)
     : variableDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}
 
 VarDeclStatement::~VarDeclStatement() = default;
-}// namespace NES
+}// namespace NES::QueryCompilation

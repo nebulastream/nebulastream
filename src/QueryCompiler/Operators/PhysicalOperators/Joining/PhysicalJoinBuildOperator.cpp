@@ -48,4 +48,4 @@ OperatorNodePtr PhysicalJoinBuildOperator::copy() {
 
 JoinBuildSide PhysicalJoinBuildOperator::getBuildSide() { return joinBuildSide; }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

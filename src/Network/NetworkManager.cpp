@@ -78,4 +78,4 @@ OutputChannelPtr NetworkManager::registerSubpartitionProducer(const NodeLocation
                                  retryTimes);
 }
 
-}// namespace NES
+}// namespace NES::Network

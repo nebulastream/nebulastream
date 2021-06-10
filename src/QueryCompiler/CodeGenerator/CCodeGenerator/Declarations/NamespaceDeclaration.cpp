@@ -29,4 +29,4 @@ const Code NamespaceDeclaration::getTypeDefinitionCode() const { return Code(); 
 
 const Code NamespaceDeclaration::getCode() const { return namespaceCode; }
 const DeclarationPtr NamespaceDeclaration::copy() const { return std::make_shared<NamespaceDeclaration>(*this); }
-}// namespace NES
+}// namespace NES::QueryCompilation

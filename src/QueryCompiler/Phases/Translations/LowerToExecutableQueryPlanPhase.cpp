@@ -235,4 +235,4 @@ NodeEngine::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPha
     return executablePipeline;
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

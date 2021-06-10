@@ -94,4 +94,4 @@ int I2CBus::rawI2CRdrw(uint8_t address, uint8_t readWriteOperation, uint8_t size
     return returnStatus;
 }
 
-}//namespace NES
+}// namespace NES::Sensors

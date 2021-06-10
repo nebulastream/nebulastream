@@ -29,4 +29,4 @@ const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
 
 const Code FunctionDeclaration::getCode() const { return functionCode; }
 const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
-}// namespace NES
+}// namespace NES::QueryCompilation

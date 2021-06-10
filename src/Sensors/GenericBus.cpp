@@ -33,4 +33,4 @@ bool GenericBus::read(int addr, int size, unsigned char* buffer) { return this->
 
 BusType GenericBus::getType() { return this->busType; }
 
-}//namespace NES
+}// namespace NES::Sensors

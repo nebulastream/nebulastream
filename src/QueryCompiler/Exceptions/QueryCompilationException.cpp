@@ -23,4 +23,4 @@ QueryCompilationException::QueryCompilationException(std::string message)
     NES_ERROR(message);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

@@ -34,4 +34,4 @@ QueryCompilerOptionsPtr QueryCompilerOptions::createDefaultOptions() {
     return std::make_shared<QueryCompilerOptions>(options);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

@@ -40,4 +40,4 @@ void GeneratableCountAggregation::compileLiftCombine(CompoundStatementPtr curren
     currentCode->addStatement(std::make_shared<BinaryOperatorStatement>(updatedPartial));
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

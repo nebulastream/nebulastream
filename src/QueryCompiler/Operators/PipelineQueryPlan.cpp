@@ -56,4 +56,4 @@ const std::vector<OperatorPipelinePtr>& PipelineQueryPlan::getPipelines() const 
 const QueryId PipelineQueryPlan::getQueryId() const { return queryId; }
 const QuerySubPlanId PipelineQueryPlan::getQuerySubPlanId() const { return querySubPlanId; }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

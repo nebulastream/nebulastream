@@ -39,4 +39,4 @@ const std::string PhysicalSliceMergingOperator::toString() const { return "Physi
 
 OperatorNodePtr PhysicalSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

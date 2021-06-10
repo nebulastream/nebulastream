@@ -49,4 +49,4 @@ std::chrono::seconds NetworkSinkDescriptor::getWaitTime() const { return waitTim
 
 uint8_t NetworkSinkDescriptor::getRetryTimes() const { return retryTimes; }
 
-}// namespace NES
+}// namespace NES::Network

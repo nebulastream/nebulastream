@@ -273,4 +273,4 @@ void ZmqServer::messageHandlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, 
     }
 }
 
-}// namespace NES
+}// namespace NES::Network

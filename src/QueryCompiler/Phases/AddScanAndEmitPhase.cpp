@@ -68,4 +68,4 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
     return pipeline;
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation

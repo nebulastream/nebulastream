@@ -39,4 +39,4 @@ const std::string PhysicalSliceSinkOperator::toString() const { return "Physical
 
 OperatorNodePtr PhysicalSliceSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

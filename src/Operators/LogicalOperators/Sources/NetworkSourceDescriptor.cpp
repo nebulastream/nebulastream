@@ -39,4 +39,4 @@ std::string NetworkSourceDescriptor::toString() { return "NetworkSourceDescripto
 
 NesPartition NetworkSourceDescriptor::getNesPartition() const { return nesPartition; }
 
-}// namespace NES
+}// namespace NES::Network

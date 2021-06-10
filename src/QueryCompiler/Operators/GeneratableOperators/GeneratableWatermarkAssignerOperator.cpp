@@ -77,4 +77,4 @@ OperatorNodePtr GeneratableWatermarkAssignmentOperator::copy() {
     return create(id, inputSchema, outputSchema, watermarkStrategyDescriptor);
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators

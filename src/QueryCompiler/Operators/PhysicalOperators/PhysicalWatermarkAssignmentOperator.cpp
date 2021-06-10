@@ -49,4 +49,4 @@ OperatorNodePtr PhysicalWatermarkAssignmentOperator::copy() {
     return create(id, inputSchema, outputSchema, getWatermarkStrategyDescriptor());
 }
 
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators

@@ -35,4 +35,4 @@ TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, Gen
     : expression(expr.copy()), dataType(type) {}
 
 TypeCastExprStatement::~TypeCastExprStatement() = default;
-}// namespace NES
+}// namespace NES::QueryCompilation

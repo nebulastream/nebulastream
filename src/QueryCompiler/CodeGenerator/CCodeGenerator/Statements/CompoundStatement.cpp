@@ -39,4 +39,4 @@ void CompoundStatement::addStatement(StatementPtr stmt) {
 }
 
 CompoundStatement::~CompoundStatement() = default;
-}// namespace NES
+}// namespace NES::QueryCompilation
