@@ -26,7 +26,7 @@ I2CBus::I2CBus(const char* filename) : GenericBus(filename, BusType::I2C) { NES_
 I2CBus::~I2CBus() { NES_DEBUG("I2CBus: Destroying bus"); }
 
 bool I2CBus::initBus(int address) {
-    if ((this->file = open(this->fileName, O_RDWR)) < 0) {
+    if ((this->file = open(this->fileName, O_RDWR | O_CLOEXEC)) < 0) {
         // Failed to open bus
         // TODO: use proper logging
         return false;
