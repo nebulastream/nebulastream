@@ -441,7 +441,7 @@ class TestUtils {
                     continue;
                 }
 
-                for (auto & expectedline : expectedlines) {
+                for (auto& expectedline : expectedlines) {
                     if (content.find(expectedline) != std::string::npos) {
                         found++;
                     }
