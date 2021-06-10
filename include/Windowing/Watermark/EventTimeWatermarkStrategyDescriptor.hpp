@@ -25,7 +25,7 @@
 namespace NES::Windowing {
 
 class EventTimeWatermarkStrategyDescriptor;
-typedef std::shared_ptr<EventTimeWatermarkStrategyDescriptor> EventTimeWatermarkStrategyDescriptorPtr;
+using EventTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<EventTimeWatermarkStrategyDescriptor>;
 
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor {
   public:

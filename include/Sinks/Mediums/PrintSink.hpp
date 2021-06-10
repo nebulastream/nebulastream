@@ -79,7 +79,7 @@ class PrintSink : public SinkMedium {
   private:
     std::ostream& outputStream;
 };
-typedef std::shared_ptr<PrintSink> PrintSinkPtr;
+using PrintSinkPtr = std::shared_ptr<PrintSink>;
 }// namespace NES
 
 #endif// PRINTSINK_HPP

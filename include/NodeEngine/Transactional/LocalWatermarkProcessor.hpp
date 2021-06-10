@@ -54,8 +54,8 @@ class LocalWatermarkProcessor {
         }
     };
     mutable std::mutex watermarkLatch;
-    WatermarkTs currentWatermark;
-    BarrierSequenceNumber currentSequenceNumber;
+    WatermarkTs currentWatermark{0};
+    BarrierSequenceNumber currentSequenceNumber{0};
     // Use a priority queue to keep track of all in flight transactions.
     std::priority_queue<WatermarkBarrier, std::vector<WatermarkBarrier>, WatermarkBarrierComparator> transactionLog;
 };

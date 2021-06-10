@@ -33,7 +33,7 @@ class ExchangeProtocol;
  *
  */
 class OutputChannel;
-typedef std::unique_ptr<OutputChannel> OutputChannelPtr;
+using OutputChannelPtr = std::unique_ptr<OutputChannel>;
 
 class OutputChannel {
   public:

@@ -25,16 +25,16 @@
 namespace NES {
 
 class SharedLibrary;
-typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
+using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
 
 class CompiledCode;
-typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
+using CompiledCodePtr = std::shared_ptr<CompiledCode>;
 
 class Compiler;
-typedef std::shared_ptr<Compiler> CompilerPtr;
+using CompilerPtr = std::shared_ptr<Compiler>;
 
 class CompilerFlags;
-typedef std::shared_ptr<CompilerFlags> CompilerFlagsPtr;
+using CompilerFlagsPtr = std::shared_ptr<CompilerFlags>;
 
 /**
  * @brief The Compiler compiles a source code fragment to a dynamic library.

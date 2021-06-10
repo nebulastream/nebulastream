@@ -24,7 +24,7 @@
 namespace NES {
 
 class CompilerFlags;
-typedef std::shared_ptr<CompilerFlags> CompilerFlagsPtr;
+using CompilerFlagsPtr = std::shared_ptr<CompilerFlags>;
 
 class CompilerFlags {
   public:

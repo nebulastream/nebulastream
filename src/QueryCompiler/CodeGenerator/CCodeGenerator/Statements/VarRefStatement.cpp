@@ -29,6 +29,6 @@ VarRefStatement::VarRefStatement(const VariableDeclaration& var_decl)
 
 VarRefStatement::VarRefStatement(VariableDeclarationPtr varDeclaration) : varDeclaration(std::move(varDeclaration)) {}
 
-VarRefStatement::~VarRefStatement() {}
+VarRefStatement::~VarRefStatement() = default;
 }// namespace QueryCompilation
 }// namespace NES

@@ -29,13 +29,13 @@ namespace NES {
  */
 
 class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
+using ValueTypePtr = std::shared_ptr<ValueType>;
 
 class FieldAssignmentExpressionNode;
-typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
+using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
 /**
  * @brief A expression item represents the leaf in an expression tree.

@@ -32,51 +32,51 @@ class Server;
 }
 namespace NES {
 class NESRequestQueue;
-typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
+using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class RestServer;
-typedef std::shared_ptr<RestServer> RestServerPtr;
+using RestServerPtr = std::shared_ptr<RestServer>;
 
 class CoordinatorEngine;
-typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
+using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
 
 class QueryDeployer;
-typedef std::shared_ptr<QueryDeployer> QueryDeployerPtr;
+using QueryDeployerPtr = std::shared_ptr<QueryDeployer>;
 
 class NesWorker;
-typedef std::shared_ptr<NesWorker> NesWorkerPtr;
+using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 class NESRequestProcessorService;
-typedef std::shared_ptr<NESRequestProcessorService> QueryRequestProcessorServicePtr;
+using QueryRequestProcessorServicePtr = std::shared_ptr<NESRequestProcessorService>;
 
 class QueryService;
-typedef std::shared_ptr<QueryService> QueryServicePtr;
+using QueryServicePtr = std::shared_ptr<QueryService>;
 
 class MonitoringService;
-typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
+using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class WorkerRPCClient;
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-    typedef detail::virtual_enable_shared_from_this<NesCoordinator> inherited0;
-    typedef ErrorListener inherited1;
+    using inherited0 = detail::virtual_enable_shared_from_this<NesCoordinator>;
+    using inherited1 = ErrorListener;
 
   public:
     explicit NesCoordinator(CoordinatorConfigPtr coordinatorConfig);
@@ -196,7 +196,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     NESRequestQueuePtr queryRequestQueue;
     GlobalQueryPlanPtr globalQueryPlan;
 };
-typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
+using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
 }// namespace NES
 #endif /* INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_ */

@@ -28,11 +28,11 @@ class ForLoopStatement : public Statement {
                      ExpressionStatmentPtr advance,
                      const std::vector<StatementPtr>& loop_body = std::vector<StatementPtr>());
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
 
     void addStatement(StatementPtr stmt);
 
@@ -47,7 +47,7 @@ class ForLoopStatement : public Statement {
     CompoundStatementPtr body;
 };
 
-typedef ForLoopStatement FOR;
+using FOR = ForLoopStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

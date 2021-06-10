@@ -42,7 +42,7 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
     explicit LogicalStreamSourceDescriptor(std::string streamName);
 };
 
-typedef std::shared_ptr<LogicalStreamSourceDescriptor> LogicalStreamSourceDescriptorPtr;
+using LogicalStreamSourceDescriptorPtr = std::shared_ptr<LogicalStreamSourceDescriptor>;
 
 }// namespace NES
 

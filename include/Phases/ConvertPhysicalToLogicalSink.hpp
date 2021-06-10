@@ -22,10 +22,10 @@
 namespace NES {
 
 class SinkDescriptor;
-typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
+using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 class SinkMedium;
-typedef std::shared_ptr<SinkMedium> DataSinkPtr;
+using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 /**
  * @brief This class is responsible for creating the Logical sink from physical sink

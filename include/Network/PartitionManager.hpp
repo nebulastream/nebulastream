@@ -24,11 +24,11 @@
 
 namespace NES {
 class DataEmitter;
-typedef std::shared_ptr<DataEmitter> DataEmitterPtr;
+using DataEmitterPtr = std::shared_ptr<DataEmitter>;
 
 namespace Network {
 class NetworkSource;
-typedef std::shared_ptr<NetworkSource> NetworkSourcePtr;
+using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
 
 /**
  * @brief this class keeps track of all ready partitions (and their subpartitions)
@@ -51,7 +51,7 @@ class PartitionManager {
         /**
          * @return the refcnt of the partition
          */
-        uint64_t count() const;
+        [[nodiscard]] uint64_t count() const;
 
         /**
          * @brief increment ref cnt by 1
@@ -69,7 +69,7 @@ class PartitionManager {
         DataEmitterPtr getEmitter();
 
       private:
-        uint64_t partitionCounter;
+        uint64_t partitionCounter{0};
         DataEmitterPtr emitter;
     };
 
@@ -130,7 +130,7 @@ class PartitionManager {
     std::unordered_map<NesPartition, PartitionEntry> partitions;
     mutable std::shared_mutex mutex;
 };
-typedef std::shared_ptr<PartitionManager> PartitionManagerPtr;
+using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
 }// namespace Network
 }// namespace NES
 

@@ -82,7 +82,7 @@ public:
     /**
      * @return a descriptive error message
      */
-    const char *what() const noexcept override {
+    [[nodiscard]] const char *what() const noexcept override {
         return "Automatic expansion triggered when load factor was below "
                "minimum threshold";
     }
@@ -90,7 +90,7 @@ public:
     /**
      * @return the load factor of the table when the exception was thrown
      */
-    double load_factor() const { return load_factor_; }
+    [[nodiscard]] double load_factor() const { return load_factor_; }
 
 private:
     const double load_factor_;
@@ -113,14 +113,14 @@ public:
     /**
      * @return a descriptive error message
      */
-    const char *what() const noexcept override {
+    [[nodiscard]] const char *what() const noexcept override {
         return "Expansion beyond maximum hashpower";
     }
 
     /**
      * @return the hashpower we were trying to expand to
      */
-    size_t hashpower() const { return hashpower_; }
+    [[nodiscard]] size_t hashpower() const { return hashpower_; }
 
 private:
     const size_t hashpower_;

@@ -255,7 +255,7 @@ size_t BufferManager::getAvailableBuffers() const {
     return availableBuffers.size();
 }
 
-BufferManager::UnpooledBufferHolder::UnpooledBufferHolder() : size(0), free(false) { segment.reset(); }
+BufferManager::UnpooledBufferHolder::UnpooledBufferHolder()  { segment.reset(); }
 
 BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(uint32_t bufferSize) : size(bufferSize), free(false) {
     segment.reset();

@@ -73,13 +73,13 @@ std::optional<NodeEngine::TupleBuffer> MQTTSource::receiveData() {
             NES_DEBUG("Waiting for messages on topic: '" << topic << "'");
 
             time_t timeout = 10;// 10 seconds time out
-            time_t start = time(0);
+            time_t start = time(nullptr);
             time_t end = start + timeout;
             auto buffer = bufferManager->getBufferBlocking();
 
             while (start < end) {
                 //ToDo: handle what happens if no data arrives
-                start = time(0);
+                start = time(nullptr);
                 auto msg = client->consume_message();
                 NES_DEBUG("Client consume message: '" << msg->get_payload_str() << "'");
                 fillBuffer(buffer, msg->get_payload_str());

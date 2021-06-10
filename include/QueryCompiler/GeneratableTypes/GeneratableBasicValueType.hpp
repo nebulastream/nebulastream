@@ -33,7 +33,7 @@ class GeneratableBasicValueType final : public GeneratableValueType {
     * @brief Generate the code expression for this value type.
     * @return CodeExpressionPtr
     */
-    CodeExpressionPtr getCodeExpression() const noexcept final;
+    [[nodiscard]] CodeExpressionPtr getCodeExpression() const noexcept final;
 
   private:
     BasicValuePtr value;

@@ -21,7 +21,7 @@
 namespace NES {
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 
 /**
  * @brief Depth-First iterator for node trees.

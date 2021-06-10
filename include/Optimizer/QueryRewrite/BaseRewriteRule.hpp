@@ -22,7 +22,7 @@
 
 namespace NES {
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 }// namespace NES
 
 namespace NES::Optimizer {

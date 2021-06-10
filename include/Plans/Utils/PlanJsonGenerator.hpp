@@ -23,13 +23,13 @@
 namespace NES {
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 /**
  * @brief This is a utility class to convert different plans into JSON

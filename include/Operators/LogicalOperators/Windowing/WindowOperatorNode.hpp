@@ -23,7 +23,7 @@
 namespace NES {
 
 class WindowOperatorNode;
-typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
+using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
 
 /**
  * @brief Window operator, which defines the window definition.

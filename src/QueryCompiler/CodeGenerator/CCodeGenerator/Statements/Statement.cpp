@@ -18,6 +18,6 @@
 
 namespace NES {
 namespace QueryCompilation {
-Statement::~Statement() {}
+Statement::~Statement() = default;
 }// namespace QueryCompilation
 }// namespace NES

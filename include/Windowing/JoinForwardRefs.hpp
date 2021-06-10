@@ -20,13 +20,13 @@
 
 namespace NES::Join {
 class LogicalJoinDefinition;
-typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
+using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 
 class JoinActionDescriptor;
-typedef std::shared_ptr<JoinActionDescriptor> JoinActionDescriptorPtr;
+using JoinActionDescriptorPtr = std::shared_ptr<JoinActionDescriptor>;
 
 class AbstractJoinHandler;
-typedef std::shared_ptr<AbstractJoinHandler> AbstractJoinHandlerPtr;
+using AbstractJoinHandlerPtr = std::shared_ptr<AbstractJoinHandler>;
 
 template<class KeyType, class InputTypeLeft, class InputTypeRight>
 class ExecutableNestedLoopJoinTriggerAction;
@@ -40,10 +40,10 @@ template<class KeyType, class InputTypeLeft, class InputTypeRight>
 using BaseExecutableJoinActionPtr = std::shared_ptr<BaseExecutableJoinAction<KeyType, InputTypeLeft, InputTypeRight>>;
 
 class BaseJoinActionDescriptor;
-typedef std::shared_ptr<BaseJoinActionDescriptor> BaseJoinActionDescriptorPtr;
+using BaseJoinActionDescriptorPtr = std::shared_ptr<BaseJoinActionDescriptor>;
 
 class JoinOperatorHandler;
-typedef std::shared_ptr<JoinOperatorHandler> JoinOperatorHandlerPtr;
+using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
 }// namespace NES::Join
 #endif//NES_INCLUDE_JOIN_JOINFORWARDREFS_HPP_

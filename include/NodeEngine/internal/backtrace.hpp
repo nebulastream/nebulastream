@@ -394,7 +394,7 @@ namespace backward {
 namespace details {
 template<typename K, typename V>
 struct hashtable {
-    typedef std::unordered_map<K, V> type;
+    using type = std::unordered_map<K, V>;
 };
 using std::move;
 }// namespace details
@@ -441,7 +441,7 @@ struct windows_tag;
 struct unknown_tag;
 
 #if defined(BACKWARD_SYSTEM_LINUX)
-typedef linux_tag current_tag;
+using current_tag = linux_tag;
 #elif defined(BACKWARD_SYSTEM_DARWIN)
 typedef darwin_tag current_tag;
 #elif defined(BACKWARD_SYSTEM_WINDOWS)
@@ -461,7 +461,7 @@ struct libdwarf;
 struct backtrace_symbol;
 
 #if BACKWARD_HAS_DW == 1
-typedef libdw current;
+using current = libdw;
 #elif BACKWARD_HAS_BFD == 1
 typedef libbfd current;
 #elif BACKWARD_HAS_DWARF == 1
@@ -493,17 +493,17 @@ namespace details {
 
 template<typename T>
 struct rm_ptr {
-    typedef T type;
+    using type = T;
 };
 
 template<typename T>
 struct rm_ptr<T*> {
-    typedef T type;
+    using type = T;
 };
 
 template<typename T>
 struct rm_ptr<const T*> {
-    typedef const T type;
+    using type = const T;
 };
 
 template<typename R, typename T, R (*F)(T)>
@@ -523,7 +523,7 @@ template<typename T, typename Deleter = deleter<void, void*, &::free>>
 class handle {
     struct dummy;
     T _val;
-    bool _empty;
+    bool _empty{true};
 
 #ifdef BACKWARD_ATLEAST_CXX11
     handle(const handle&) = delete;
@@ -537,7 +537,7 @@ class handle {
         }
     }
 
-    explicit handle() : _val(), _empty(true) {}
+    explicit handle() : _val() {}
     explicit handle(T val) : _val(val), _empty(false) {
         if (!_val)
             _empty = true;
@@ -592,8 +592,8 @@ class handle {
     T& operator->() { return _val; }
     const T& operator->() const { return _val; }
 
-    typedef typename rm_ptr<T>::type& ref_t;
-    typedef const typename rm_ptr<T>::type& const_ref_t;
+    using ref_t = typename rm_ptr<T>::type &;
+    using const_ref_t = const typename rm_ptr<T>::type &;
     ref_t operator*() { return *_val; }
     const_ref_t operator*() const { return *_val; }
     ref_t operator[](size_t idx) { return _val[idx]; }
@@ -615,7 +615,7 @@ struct demangler_impl {
 
 template<>
 struct demangler_impl<system_tag::current_tag> {
-    demangler_impl() : _demangle_buffer_length(0) {}
+    demangler_impl()  {}
 
     std::string demangle(const char* funcname) {
         using namespace details;
@@ -629,7 +629,7 @@ struct demangler_impl<system_tag::current_tag> {
 
   private:
     details::handle<char*> _demangle_buffer;
-    size_t _demangle_buffer_length;
+    size_t _demangle_buffer_length{0};
 };
 
 #endif// BACKWARD_SYSTEM_LINUX || BACKWARD_SYSTEM_DARWIN
@@ -664,10 +664,10 @@ inline std::vector<std::string> split_source_prefixes(const std::string& s) {
 /*************** A TRACE ***************/
 
 struct Trace {
-    void* addr;
-    size_t idx;
+    void* addr{nullptr};
+    size_t idx{0};
 
-    Trace() : addr(nullptr), idx(0) {}
+    Trace()  {}
 
     explicit Trace(void* _addr, size_t _idx) : addr(_addr), idx(_idx) {}
 };
@@ -677,10 +677,10 @@ struct ResolvedTrace : public Trace {
     struct SourceLoc {
         std::string function;
         std::string filename;
-        unsigned line;
-        unsigned col;
+        unsigned line{0};
+        unsigned col{0};
 
-        SourceLoc() : line(0), col(0) {}
+        SourceLoc()  {}
 
         bool operator==(const SourceLoc& b) const {
             return function == b.function && filename == b.filename && line == b.line && col == b.col;
@@ -705,7 +705,7 @@ struct ResolvedTrace : public Trace {
     // An optionals list of "inliners". All the successive sources location
     // from where the source location of the trace (the attribute right above)
     // is inlined. It is especially useful when you compiled with optimization.
-    typedef std::vector<SourceLoc> source_locs_t;
+    using source_locs_t = std::vector<SourceLoc>;
     source_locs_t inliners;
 
     ResolvedTrace() : Trace() {}
@@ -718,19 +718,19 @@ struct ResolvedTrace : public Trace {
 template<typename TAG>
 class StackTraceImpl {
   public:
-    size_t size() const { return 0; }
+    [[nodiscard]] size_t size() const { return 0; }
     Trace operator[](size_t) const { return Trace(); }
     size_t load_here(size_t = 0) { return 0; }
     size_t load_from(void*, size_t = 0) { return 0; }
-    size_t thread_id() const { return 0; }
+    [[nodiscard]] size_t thread_id() const { return 0; }
     void skip_n_firsts(size_t) {}
 };
 
 class StackTraceImplBase {
   public:
-    StackTraceImplBase() : _thread_id(0), _skip(0) {}
+    StackTraceImplBase()  {}
 
-    size_t thread_id() const { return _thread_id; }
+    [[nodiscard]] size_t thread_id() const { return _thread_id; }
 
     void skip_n_firsts(size_t n) { _skip = n; }
 
@@ -756,23 +756,23 @@ class StackTraceImplBase {
 #endif
     }
 
-    size_t skip_n_firsts() const { return _skip; }
+    [[nodiscard]] size_t skip_n_firsts() const { return _skip; }
 
   private:
-    size_t _thread_id;
-    size_t _skip;
+    size_t _thread_id{0};
+    size_t _skip{0};
 };
 
 class StackTraceImplHolder : public StackTraceImplBase {
   public:
-    size_t size() const { return _stacktrace.size() ? _stacktrace.size() - skip_n_firsts() : 0; }
+    [[nodiscard]] size_t size() const { return _stacktrace.size() ? _stacktrace.size() - skip_n_firsts() : 0; }
     Trace operator[](size_t idx) const {
         if (idx >= size()) {
             return Trace();
         }
         return Trace(_stacktrace[idx + skip_n_firsts()], idx);
     }
-    void* const* begin() const {
+    [[nodiscard]] void* const* begin() const {
         if (size()) {
             return &_stacktrace[skip_n_firsts()];
         }
@@ -1512,7 +1512,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libbfd> : public TraceResolverL
 template<>
 class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLinuxBase {
   public:
-    TraceResolverLinuxImpl() : _dwfl_handle_initialized(false) {}
+    TraceResolverLinuxImpl()  {}
 
     template<class ST>
     void load_stacktrace(ST&) {}
@@ -1520,14 +1520,14 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     ResolvedTrace resolve(ResolvedTrace trace) {
         using namespace details;
 
-        Dwarf_Addr trace_addr = (Dwarf_Addr) trace.addr;
+        auto trace_addr = (Dwarf_Addr) trace.addr;
 
         if (!_dwfl_handle_initialized) {
             // initialize dwfl...
             _dwfl_cb.reset(new Dwfl_Callbacks);
             _dwfl_cb->find_elf = &dwfl_linux_proc_find_elf;
             _dwfl_cb->find_debuginfo = &dwfl_standard_find_debuginfo;
-            _dwfl_cb->debuginfo_path = 0;
+            _dwfl_cb->debuginfo_path = nullptr;
 
             _dwfl_handle.reset(dwfl_begin(_dwfl_cb.get()));
             _dwfl_handle_initialized = true;
@@ -1539,7 +1539,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
             // ...from the current process.
             dwfl_report_begin(_dwfl_handle.get());
             int r = dwfl_linux_proc_report(_dwfl_handle.get(), getpid());
-            dwfl_report_end(_dwfl_handle.get(), NULL, NULL);
+            dwfl_report_end(_dwfl_handle.get(), nullptr, nullptr);
             if (r < 0) {
                 return trace;
             }
@@ -1556,7 +1556,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
         if (mod) {
             // now that we found it, lets get the name of it, this will be the
             // full path to the running binary or one of the loaded library.
-            const char* module_name = dwfl_module_info(mod, 0, 0, 0, 0, 0, 0, 0);
+            const char* module_name = dwfl_module_info(mod, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
             if (module_name) {
                 trace.object_filename = module_name;
             }
@@ -1644,7 +1644,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
         Dwarf_Line* srcloc = dwarf_getsrc_die(cudie, trace_addr - mod_bias);
 
         if (srcloc) {
-            const char* srcfile = dwarf_linesrc(srcloc, 0, 0);
+            const char* srcfile = dwarf_linesrc(srcloc, nullptr, nullptr);
             if (srcfile) {
                 trace.source.filename = srcfile;
             }
@@ -1665,10 +1665,10 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
     }
 
   private:
-    typedef details::handle<Dwfl*, details::deleter<void, Dwfl*, &dwfl_end>> dwfl_handle_t;
+    using dwfl_handle_t = details::handle<Dwfl *, details::deleter<void, Dwfl *, &dwfl_end>>;
     details::handle<Dwfl_Callbacks*, details::default_delete<Dwfl_Callbacks*>> _dwfl_cb;
     dwfl_handle_t _dwfl_handle;
-    bool _dwfl_handle_initialized;
+    bool _dwfl_handle_initialized{false};
 
     // defined here because in C++98, template function cannot take locally
     // defined types... grrr.
@@ -1740,7 +1740,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
 
     static Dwarf_Die* find_fundie_by_pc(Dwarf_Die* parent_die, Dwarf_Addr pc, Dwarf_Die* result) {
         if (dwarf_child(parent_die, result) != 0) {
-            return 0;
+            return nullptr;
         }
 
         Dwarf_Die* die = result;
@@ -1767,7 +1767,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
                 }
             }
         } while (dwarf_siblingof(die, result) == 0);
-        return 0;
+        return nullptr;
     }
 
     template<typename CB>
@@ -1807,23 +1807,23 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
         dwarf_formsdata(dwarf_attr(die, DW_AT_call_file, &attr_mem), &file_idx);
 
         if (file_idx == 0) {
-            return 0;
+            return nullptr;
         }
 
         Dwarf_Die die_mem;
-        Dwarf_Die* cudie = dwarf_diecu(die, &die_mem, 0, 0);
+        Dwarf_Die* cudie = dwarf_diecu(die, &die_mem, nullptr, nullptr);
         if (!cudie) {
-            return 0;
+            return nullptr;
         }
 
-        Dwarf_Files* files = 0;
+        Dwarf_Files* files = nullptr;
         size_t nfiles;
         dwarf_getsrcfiles(cudie, &files, &nfiles);
         if (!files) {
-            return 0;
+            return nullptr;
         }
 
-        return dwarf_filesrc(files, file_idx, 0, 0);
+        return dwarf_filesrc(files, file_idx, nullptr, nullptr);
     }
 };
 #endif// BACKWARD_HAS_DW == 1
@@ -3334,9 +3334,9 @@ class TraceResolver : public TraceResolverImpl<system_tag::current_tag> {};
 
 class SourceFile {
   public:
-    typedef std::vector<std::pair<unsigned, std::string>> lines_t;
+    using lines_t = std::vector<std::pair<unsigned int, std::string>>;
 
-    SourceFile() {}
+    SourceFile() = default;
     SourceFile(const std::string& path) {
         // 1. If BACKWARD_CXX_SOURCE_PREFIXES is set then assume it contains
         //    a colon-separated list of path prefixes.  Try prepending each
@@ -3354,7 +3354,7 @@ class SourceFile {
             _file.reset(new std::ifstream(path.c_str()));
         }
     }
-    bool is_open() const { return _file->is_open(); }
+    [[nodiscard]] bool is_open() const { return _file->is_open(); }
 
     lines_t& get_lines(unsigned line_start, unsigned line_count, lines_t& lines) {
         using namespace std;
@@ -3467,7 +3467,7 @@ class SourceFile {
 
 class SnippetFactory {
   public:
-    typedef SourceFile::lines_t lines_t;
+    using lines_t = SourceFile::lines_t;
 
     lines_t get_snippet(const std::string& filename, unsigned line_start, unsigned context_size) {
 
@@ -3507,11 +3507,11 @@ class SnippetFactory {
     }
 
   private:
-    typedef details::hashtable<std::string, SourceFile>::type src_files_t;
+    using src_files_t = details::hashtable<std::string, SourceFile>::type;
     src_files_t _src_files;
 
     SourceFile& get_src_file(const std::string& filename) {
-        src_files_t::iterator it = _src_files.find(filename);
+        auto it = _src_files.find(filename);
         if (it != _src_files.end()) {
             return it->second;
         }
@@ -3615,16 +3615,16 @@ class Colorize {
 
 class Printer {
   public:
-    bool snippet;
-    ColorMode::type color_mode;
-    bool address;
-    bool object;
-    int inliner_context_size;
-    int trace_context_size;
+    bool snippet{true};
+    ColorMode::type color_mode{ColorMode::automatic};
+    bool address{false};
+    bool object{false};
+    int inliner_context_size{5};
+    int trace_context_size{7};
 
     Printer()
-        : snippet(true), color_mode(ColorMode::automatic), address(false), object(false), inliner_context_size(5),
-          trace_context_size(7) {}
+        
+          {}
 
     template<typename ST>
     FILE* print(ST& st, FILE* fp = stderr) {
@@ -3732,11 +3732,11 @@ class Printer {
                        Color::type color_code,
                        int context_size) {
         using namespace std;
-        typedef SnippetFactory::lines_t lines_t;
+        using lines_t = SnippetFactory::lines_t;
 
         lines_t lines = _snippets.get_snippet(source_loc.filename, source_loc.line, static_cast<unsigned>(context_size));
 
-        for (lines_t::const_iterator it = lines.begin(); it != lines.end(); ++it) {
+        for (auto it = lines.begin(); it != lines.end(); ++it) {
             if (it->first == source_loc.line) {
                 colorize.set_color(color_code);
                 os << indent << ">";
@@ -3788,7 +3788,7 @@ class SignalHandling {
         return std::vector<int>(posix_signals, posix_signals + sizeof posix_signals / sizeof posix_signals[0]);
     }
 
-    SignalHandling(const std::vector<int>& posix_signals = make_default_signals()) : _loaded(false) {
+    SignalHandling(const std::vector<int>& posix_signals = make_default_signals())  {
         bool success = true;
 
         const size_t stack_size = 1024 * 1024 * 8;
@@ -3828,10 +3828,10 @@ class SignalHandling {
         _loaded = success;
     }
 
-    bool loaded() const { return _loaded; }
+    [[nodiscard]] bool loaded() const { return _loaded; }
 
     static void handleSignal(int, siginfo_t* info, void* _ctx) {
-        ucontext_t* uctx = static_cast<ucontext_t*>(_ctx);
+        auto* uctx = static_cast<ucontext_t*>(_ctx);
 
         StackTrace st;
         void* error_addr = nullptr;
@@ -3875,7 +3875,7 @@ class SignalHandling {
 
   private:
     details::handle<char*> _stack_content;
-    bool _loaded;
+    bool _loaded{false};
 
 #ifdef __GNUC__
     __attribute__((noreturn))

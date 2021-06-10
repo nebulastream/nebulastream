@@ -25,7 +25,7 @@
 namespace NES {
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
  * @brief This class is responsible for creating the physical sink from Logical sink description

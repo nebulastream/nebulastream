@@ -24,16 +24,16 @@
 namespace NES {
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class MonitoringPlan;
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
 class MonitoringManager;
-typedef std::shared_ptr<MonitoringManager> MonitoringManagerPtr;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
@@ -86,7 +86,7 @@ class MonitoringService {
     MonitoringManagerPtr monitoringManager;
 };
 
-typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
+using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 }// namespace NES
 

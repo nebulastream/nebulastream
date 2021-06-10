@@ -71,7 +71,7 @@ class FieldAccessExpressionNode : public ExpressionNode {
     std::string fieldName;
 };
 
-typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
+using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 
 }// namespace NES
 

@@ -22,10 +22,10 @@
 namespace NES {
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class PhysicalType;
-typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
 /**
  * @brief The physical data type represents the physical representation of a NES data type.
@@ -38,7 +38,7 @@ class PhysicalType {
      * @brief Returns the number of bytes occupied by this data type.
      * @return u_int64_t
      */
-    virtual uint64_t size() const = 0;
+    [[nodiscard]] virtual uint64_t size() const = 0;
 
     /**
      * @brief Converts the binary representation of this value to a string.
@@ -51,22 +51,22 @@ class PhysicalType {
      * @brief Returns the string representation of this physical data type.
      * @return string
      */
-    virtual std::string toString() const noexcept = 0;
+    [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
     /**
      * @brief Indicates if this is a basic data type.
      * @return true if type is basic type
      */
-    virtual bool isBasicType() const noexcept { return false; }
+    [[nodiscard]] virtual bool isBasicType() const noexcept { return false; }
 
     /**
      * @brief Indicates if this is a array data type.
      * @return true if type is array
      */
-    virtual bool isArrayType() const noexcept { return false; };
+    [[nodiscard]] virtual bool isArrayType() const noexcept { return false; };
 
     /// @brief true only for arrays which contain chars as their immediate child type.
-    virtual bool isCharArrayType() const noexcept { return false; };
+    [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };
 
     /// Type that is contained by this PhysicalType container
     DataTypePtr const type;

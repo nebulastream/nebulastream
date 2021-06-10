@@ -21,26 +21,26 @@
 
 namespace z3 {
 class expr;
-typedef std::shared_ptr<expr> ExprPtr;
+using ExprPtr = std::shared_ptr<expr>;
 
 class context;
-typedef std::shared_ptr<context> ContextPtr;
+using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES {
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
+using ValueTypePtr = std::shared_ptr<ValueType>;
 
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class Z3ExprAndFieldMap;
-typedef std::shared_ptr<Z3ExprAndFieldMap> Z3ExprAndFieldMapPtr;
+using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
 
 /**
  * @brief This class is used for converting a data field or value into Z3 expression.

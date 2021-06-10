@@ -55,9 +55,9 @@ public:
      */
     class bucket {
     public:
-        bucket() noexcept : occupied_{} {}
+        bucket() noexcept  {}
 
-        const value_type &kvpair(size_type ind) const {
+        [[nodiscard]] const value_type &kvpair(size_type ind) const {
             return *static_cast<const value_type *>(
                     static_cast<const void *>(&values_[ind]));
         }
@@ -65,22 +65,22 @@ public:
             return *static_cast<value_type *>(static_cast<void *>(&values_[ind]));
         }
 
-        const key_type &key(size_type ind) const {
+        [[nodiscard]] const key_type &key(size_type ind) const {
             return storage_kvpair(ind).first;
         }
         key_type &&movable_key(size_type ind) {
             return std::move(storage_kvpair(ind).first);
         }
 
-        const mapped_type &mapped(size_type ind) const {
+        [[nodiscard]] const mapped_type &mapped(size_type ind) const {
             return storage_kvpair(ind).second;
         }
         mapped_type &mapped(size_type ind) { return storage_kvpair(ind).second; }
 
-        partial_t partial(size_type ind) const { return partials_[ind]; }
+        [[nodiscard]] partial_t partial(size_type ind) const { return partials_[ind]; }
         partial_t &partial(size_type ind) { return partials_[ind]; }
 
-        bool occupied(size_type ind) const { return occupied_[ind]; }
+        [[nodiscard]] bool occupied(size_type ind) const { return occupied_[ind]; }
         bool &occupied(size_type ind) { return occupied_[ind]; }
 
     private:
@@ -88,7 +88,7 @@ public:
 
         using storage_value_type = std::pair<Key, T>;
 
-        const storage_value_type &storage_kvpair(size_type ind) const {
+        [[nodiscard]] const storage_value_type &storage_kvpair(size_type ind) const {
             return *static_cast<const storage_value_type *>(
                     static_cast<const void *>(&values_[ind]));
         }
@@ -102,7 +102,7 @@ public:
                 SLOT_PER_BUCKET>
                 values_;
         std::array<partial_t, SLOT_PER_BUCKET> partials_;
-        std::array<bool, SLOT_PER_BUCKET> occupied_;
+        std::array<bool, SLOT_PER_BUCKET> occupied_{};
     };
 
     libcuckoo_bucket_container(size_type hp, const allocator_type &allocator)
@@ -179,7 +179,7 @@ public:
         std::swap(buckets_, bc.buckets_);
     }
 
-    size_type hashpower() const {
+    [[nodiscard]] size_type hashpower() const {
         return hashpower_.load(std::memory_order_acquire);
     }
 
@@ -187,9 +187,9 @@ public:
         hashpower_.store(val, std::memory_order_release);
     }
 
-    size_type size() const { return size_type(1) << hashpower(); }
+    [[nodiscard]] size_type size() const { return size_type(1) << hashpower(); }
 
-    allocator_type get_allocator() const { return allocator_; }
+    [[nodiscard]] allocator_type get_allocator() const { return allocator_; }
 
     bucket &operator[](size_type i) { return buckets_[i]; }
     const bucket &operator[](size_type i) const { return buckets_[i]; }

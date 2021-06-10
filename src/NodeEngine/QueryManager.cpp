@@ -52,7 +52,7 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
 };
 
 class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
-    typedef Execution::ExecutablePipelineStage base;
+    using base = Execution::ExecutablePipelineStage;
 
   public:
     explicit ReconfigurationEntryPointPipelineStage() : base(Unary) {
@@ -357,7 +357,7 @@ bool QueryManager::failQuery(Execution::ExecutableQueryPlanPtr) {
 
 namespace detail {
 class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineStage {
-    typedef Execution::ExecutablePipelineStage base;
+    using base = Execution::ExecutablePipelineStage;
 
   public:
     explicit PoisonPillEntryPointPipelineStage() : base(Unary) {

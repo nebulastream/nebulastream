@@ -27,7 +27,7 @@
 
 namespace NES::Optimizer {
 
-StringSignatureBasedCompleteQueryMergerRule::StringSignatureBasedCompleteQueryMergerRule() {}
+StringSignatureBasedCompleteQueryMergerRule::StringSignatureBasedCompleteQueryMergerRule() = default;
 
 StringSignatureBasedCompleteQueryMergerRule::~StringSignatureBasedCompleteQueryMergerRule() {
     NES_DEBUG("~StringSignatureBasedCompleteQueryMergerRule()");

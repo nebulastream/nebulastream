@@ -19,7 +19,7 @@
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
 DynamicLayoutBuffer::DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
-    : tupleBuffer(tupleBuffer), capacity(capacity), numberOfRecords(0) {}
+    : tupleBuffer(tupleBuffer), capacity(capacity) {}
 
 uint64_t DynamicLayoutBuffer::getCapacity() { return capacity; }
 uint64_t DynamicLayoutBuffer::getNumberOfRecords() { return numberOfRecords; }

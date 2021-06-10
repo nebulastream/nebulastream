@@ -19,7 +19,7 @@
 #include <sstream>
 namespace NES {
 namespace QueryCompilation {
-ContinueStatement::ContinueStatement() {}
+ContinueStatement::ContinueStatement() = default;
 
 StatementType ContinueStatement::getStamentType() const { return RETURN_STMT; }
 
@@ -32,6 +32,6 @@ const CodeExpressionPtr ContinueStatement::getCode() const {
 
 const StatementPtr ContinueStatement::createCopy() const { return std::make_shared<ContinueStatement>(*this); }
 
-ContinueStatement::~ContinueStatement() {}
+ContinueStatement::~ContinueStatement() = default;
 }// namespace QueryCompilation
 }// namespace NES

@@ -23,7 +23,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-typedef uint64_t FIELD_SIZE;
+using FIELD_SIZE = uint64_t;
 
 /**
  * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.

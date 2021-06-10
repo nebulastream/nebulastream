@@ -34,7 +34,7 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
     * @brief getter for the time in ms
     * @return time in ms between two triggers
     */
-    uint64_t getTriggerTimeInMs() const;
+    [[nodiscard]] uint64_t getTriggerTimeInMs() const;
 
     std::string toString() override;
 
@@ -43,6 +43,6 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
     uint64_t triggerTimeInMs;
 };
 
-typedef std::shared_ptr<OnTimeTriggerPolicyDescription> OnTimeTriggerDescriptionPtr;
+using OnTimeTriggerDescriptionPtr = std::shared_ptr<OnTimeTriggerPolicyDescription>;
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WINDOWING_WINDOWPOLICIES_TIMETRIGGERDESCRIPTION_HPP_

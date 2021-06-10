@@ -155,7 +155,7 @@ class MQTTSink : public SinkMedium {
 
     MQTTClientWrapperPtr client;
 };
-typedef std::shared_ptr<MQTTSink> MQTTSinkPtr;
+using MQTTSinkPtr = std::shared_ptr<MQTTSink>;
 
 }// namespace NES
 #endif

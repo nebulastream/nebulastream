@@ -26,16 +26,16 @@
 namespace NES {
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class TopologyNode;
-typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class ExecutionNode;
-typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 /**
  * This class contains information about the physical node, a map of query sub plans that need to be executed

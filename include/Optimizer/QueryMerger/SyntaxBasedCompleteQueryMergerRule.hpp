@@ -24,22 +24,22 @@
 namespace NES {
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class GlobalQueryNode;
-typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
+using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class SyntaxBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQueryMergerRulePtr;
+using SyntaxBasedCompleteQueryMergerRulePtr = std::shared_ptr<SyntaxBasedCompleteQueryMergerRule>;
 
 /**
  * @brief SyntaxBasedEqualQueryMergerRule is responsible for merging together all the equivalent chains of Global Query Nodes within the Global Query Plan such that, after running this rule

@@ -2076,7 +2076,7 @@ BinaryOperatorStatement CCodeGenerator::setOriginId(VariableDeclaration tupleBuf
     return VarRef(tupleBufferVariable).accessRef(setOriginIdFunctionCall);
 }
 
-CCodeGenerator::~CCodeGenerator(){};
+CCodeGenerator::~CCodeGenerator()= default;;
 
 BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(VariableDeclaration pipelineContext,
                                                         VariableDeclaration tupleBufferVariable,

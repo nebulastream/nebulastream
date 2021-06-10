@@ -33,7 +33,7 @@ namespace NES::Optimizer {
 
 FilterPushDownRulePtr FilterPushDownRule::create() { return std::make_shared<FilterPushDownRule>(FilterPushDownRule()); }
 
-FilterPushDownRule::FilterPushDownRule() {}
+FilterPushDownRule::FilterPushDownRule() = default;
 
 QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlan) {
 

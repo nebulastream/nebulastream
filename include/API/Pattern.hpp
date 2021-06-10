@@ -33,19 +33,19 @@
 namespace NES {
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class SourceLogicalOperatorNode;
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 class SinkLogicalOperatorNode;
-typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 /**
  * User interface to specify a pattern query.
@@ -71,7 +71,7 @@ class Pattern : public Query {
      */
     Pattern& sink(const SinkDescriptorPtr sinkDescriptor) override;
 
-    const std::string& getPatternName() const;
+    [[nodiscard]] const std::string& getPatternName() const;
     void setPatternName(const std::string& patternName);
 
   private:
@@ -81,7 +81,7 @@ class Pattern : public Query {
     std::string patternName;
 };
 
-typedef std::shared_ptr<Pattern> PatternPtr;
+using PatternPtr = std::shared_ptr<Pattern>;
 
 }// namespace NES
 

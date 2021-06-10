@@ -27,18 +27,18 @@ class ContinueStatement : public Statement {
   public:
     ContinueStatement();
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
 
     ~ContinueStatement() override;
 
   private:
 };
 
-typedef ContinueStatement Continue;
+using Continue = ContinueStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

@@ -31,18 +31,18 @@ class ClassDeclaration : public Declaration {
     ClassDeclaration(ClassDefinitionPtr classDefinition);
     static ClassDeclarationPtr create(ClassDefinitionPtr classDefinition);
 
-    const GeneratableDataTypePtr getType() const override;
-    const std::string getIdentifierName() const override;
+    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] const std::string getIdentifierName() const override;
 
-    const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] const Code getTypeDefinitionCode() const override;
 
-    const Code getCode() const override;
-    const DeclarationPtr copy() const override;
+    [[nodiscard]] const Code getCode() const override;
+    [[nodiscard]] const DeclarationPtr copy() const override;
 
   private:
     std::string generateFunctions(std::vector<FunctionDefinitionPtr>& functions) const;
     std::string generateConstructors(std::vector<ConstructorDefinitionPtr>& functions) const;
-    std::string generateBaseClassNames() const;
+    [[nodiscard]] std::string generateBaseClassNames() const;
     ClassDefinitionPtr classDefinition;
 };
 }// namespace QueryCompilation

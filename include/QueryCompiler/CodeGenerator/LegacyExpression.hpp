@@ -29,11 +29,11 @@ enum class PredicateItemMutation { ATTRIBUTE, VALUE };
 
 class LegacyExpression {
   public:
-    virtual ~LegacyExpression(){};
+    virtual ~LegacyExpression()= default;;
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const = 0;
-    virtual const std::string toString() const = 0;
-    virtual LegacyExpressionPtr copy() const = 0;
-    virtual bool equals(const LegacyExpression& rhs) const = 0;
+    [[nodiscard]] virtual const std::string toString() const = 0;
+    [[nodiscard]] virtual LegacyExpressionPtr copy() const = 0;
+    [[nodiscard]] virtual bool equals(const LegacyExpression& rhs) const = 0;
 };
 
 class Predicate : public LegacyExpression {
@@ -46,12 +46,12 @@ class Predicate : public LegacyExpression {
     Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket = true);
 
     const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
-    const std::string toString() const override;
-    LegacyExpressionPtr copy() const override;
-    bool equals(const LegacyExpression& rhs) const override;
-    BinaryOperatorType getOperatorType() const;
-    const LegacyExpressionPtr getLeft() const;
-    const LegacyExpressionPtr getRight() const;
+    [[nodiscard]] const std::string toString() const override;
+    [[nodiscard]] LegacyExpressionPtr copy() const override;
+    [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
+    [[nodiscard]] BinaryOperatorType getOperatorType() const;
+    [[nodiscard]] const LegacyExpressionPtr getLeft() const;
+    [[nodiscard]] const LegacyExpressionPtr getRight() const;
 
   private:
     Predicate() = default;
@@ -82,15 +82,15 @@ class PredicateItem : public LegacyExpression {
     PredicateItem(const char* val);
 
     const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
-    const std::string toString() const override;
-    LegacyExpressionPtr copy() const override;
+    [[nodiscard]] const std::string toString() const override;
+    [[nodiscard]] LegacyExpressionPtr copy() const override;
 
-    bool equals(const LegacyExpression& rhs) const override;
+    [[nodiscard]] bool equals(const LegacyExpression& rhs) const override;
 
-    bool isStringType() const;
-    const DataTypePtr getDataTypePtr() const;
+    [[nodiscard]] bool isStringType() const;
+    [[nodiscard]] const DataTypePtr getDataTypePtr() const;
     AttributeFieldPtr getAttributeField() { return this->attribute; };
-    const ValueTypePtr& getValue() const;
+    [[nodiscard]] const ValueTypePtr& getValue() const;
 
   private:
     PredicateItem() = default;
@@ -99,7 +99,7 @@ class PredicateItem : public LegacyExpression {
     ValueTypePtr value = nullptr;
 };
 
-typedef std::shared_ptr<PredicateItem> PredicateItemPtr;
+using PredicateItemPtr = std::shared_ptr<PredicateItem>;
 
 class Field : public PredicateItem {
   public:
@@ -109,7 +109,7 @@ class Field : public PredicateItem {
     std::string _name;
 };
 
-typedef std::shared_ptr<Field> FieldPtr;
+using FieldPtr = std::shared_ptr<Field>;
 
 const PredicatePtr createPredicate(const LegacyExpression& expression);
 

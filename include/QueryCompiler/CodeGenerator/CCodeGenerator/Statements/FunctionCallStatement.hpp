@@ -24,12 +24,12 @@ class FunctionCallStatement : public ExpressionStatment {
   public:
     FunctionCallStatement(const std::string functionname);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
     static FunctionCallStatementPtr create(const std::string functionname);
 
-    const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
     virtual void addParameter(const ExpressionStatment& expr);
     virtual void addParameter(ExpressionStatmentPtr expr);

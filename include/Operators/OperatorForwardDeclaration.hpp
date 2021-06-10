@@ -20,42 +20,42 @@
 namespace NES {
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class FieldAssignmentExpressionNode;
-typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
+using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
 class FilterLogicalOperatorNode;
-typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
 
 class JoinLogicalOperatorNode;
-typedef std::shared_ptr<JoinLogicalOperatorNode> JoinLogicalOperatorNodePtr;
+using JoinLogicalOperatorNodePtr = std::shared_ptr<JoinLogicalOperatorNode>;
 
 class UnionLogicalOperatorNode;
-typedef std::shared_ptr<UnionLogicalOperatorNode> UnionLogicalOperatorNodePtr;
+using UnionLogicalOperatorNodePtr = std::shared_ptr<UnionLogicalOperatorNode>;
 
 class ExpressionItem;
 
 class ProjectionLogicalOperatorNode;
-typedef std::shared_ptr<ProjectionLogicalOperatorNode> ProjectionLogicalOperatorNodePtr;
+using ProjectionLogicalOperatorNodePtr = std::shared_ptr<ProjectionLogicalOperatorNode>;
 
 class MapLogicalOperatorNode;
-typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
+using MapLogicalOperatorNodePtr = std::shared_ptr<MapLogicalOperatorNode>;
 
 class WindowLogicalOperatorNode;
-typedef std::shared_ptr<WindowLogicalOperatorNode> WindowLogicalOperatorNodePtr;
+using WindowLogicalOperatorNodePtr = std::shared_ptr<WindowLogicalOperatorNode>;
 
 class WatermarkAssignerLogicalOperatorNode;
-typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
+using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
 
 class SourceLogicalOperatorNode;
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 }// namespace NES
 #endif//NES_INCLUDE_OPERATORS_LOGICALOPERATORS_OPERATORFORWARDDECLARATION_HPP_

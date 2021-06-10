@@ -40,7 +40,7 @@ using std::string;
 namespace NES {
 
 class NodeStats;
-typedef std::shared_ptr<NodeStats> NodeStatsPtr;
+using NodeStatsPtr = std::shared_ptr<NodeStats>;
 
 /**
  * @brief this is a util class for the tests

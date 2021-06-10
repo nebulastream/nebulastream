@@ -26,7 +26,7 @@
 namespace NES {
 class Schema;
 class MonitoringPlan;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 }// namespace NES
 
 namespace web {

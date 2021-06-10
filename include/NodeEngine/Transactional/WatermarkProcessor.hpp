@@ -60,7 +60,7 @@ class WatermarkProcessor {
      * @brief Returns the visible watermark across all origins.
      * @return WatermarkTs
      */
-    WatermarkTs getCurrentWatermark() const;
+    [[nodiscard]] WatermarkTs getCurrentWatermark() const;
 
   private:
     const uint64_t numberOfOrigins;

@@ -59,7 +59,7 @@ class SourceLogicalOperatorNode : public LogicalUnaryOperatorNode {
     SchemaPtr projectSchema;
 };
 
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 }// namespace NES
 
 #endif// SOURCE_LOGICAL_OPERATOR_NODE_HPP

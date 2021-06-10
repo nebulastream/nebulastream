@@ -33,20 +33,20 @@ using grpc::Status;
 namespace NES {
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class MonitoringPlan;
 
 class MonitoringPlan;
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-typedef std::shared_ptr<CompletionQueue> CompletionQueuePtr;
+using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
 enum RpcClientModes { Register, Unregister, Start, Stop };
 
@@ -158,7 +158,7 @@ class WorkerRPCClient {
 
   private:
 };
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 }// namespace NES
 

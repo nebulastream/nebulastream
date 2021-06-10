@@ -28,6 +28,6 @@ NesRuntimeException::NesRuntimeException(const std::string& msg, const std::stri
     errorMessage.append(stacktrace);
 }
 
-const char* NesRuntimeException::what() const throw() { return errorMessage.c_str(); }
+const char* NesRuntimeException::what() const noexcept { return errorMessage.c_str(); }
 
 }// namespace NES

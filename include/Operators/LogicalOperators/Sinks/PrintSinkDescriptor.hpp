@@ -39,7 +39,7 @@ class PrintSinkDescriptor : public SinkDescriptor {
     explicit PrintSinkDescriptor();
 };
 
-typedef std::shared_ptr<PrintSinkDescriptor> PrintSinkDescriptorPtr;
+using PrintSinkDescriptorPtr = std::shared_ptr<PrintSinkDescriptor>;
 
 }// namespace NES
 

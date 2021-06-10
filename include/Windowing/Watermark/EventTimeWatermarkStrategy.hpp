@@ -22,7 +22,7 @@
 namespace NES::Windowing {
 
 class EventTimeWatermarkStrategy;
-typedef std::shared_ptr<EventTimeWatermarkStrategy> EventTimeWatermarkStrategyPtr;
+using EventTimeWatermarkStrategyPtr = std::shared_ptr<EventTimeWatermarkStrategy>;
 
 class EventTimeWatermarkStrategy : public WatermarkStrategy {
   public:

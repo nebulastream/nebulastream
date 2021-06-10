@@ -24,7 +24,7 @@
 namespace NES {
 
 class SinkDescriptor;
-typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
+using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 /**
  * @brief This class is used for representing the description of a sink operator
@@ -32,7 +32,7 @@ typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
-    SinkDescriptor(){};
+    SinkDescriptor()= default;;
 
     virtual ~SinkDescriptor() = default;
 

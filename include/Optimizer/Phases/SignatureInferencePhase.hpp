@@ -21,18 +21,18 @@
 
 namespace z3 {
 class context;
-typedef std::shared_ptr<context> ContextPtr;
+using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES {
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class SignatureInferencePhase;
-typedef std::shared_ptr<SignatureInferencePhase> SignatureInferencePhasePtr;
+using SignatureInferencePhasePtr = std::shared_ptr<SignatureInferencePhase>;
 
 /**
  * @brief This class is responsible for computing the Z3 expression for all operators within a query
@@ -58,7 +58,7 @@ class SignatureInferencePhase {
      * @brief Get shared instance of z3 context
      * @return context
      */
-    z3::ContextPtr getContext() const;
+    [[nodiscard]] z3::ContextPtr getContext() const;
 
     ~SignatureInferencePhase();
 

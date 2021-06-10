@@ -25,11 +25,11 @@ namespace QueryCompilation {
 
 class ConstantExpressionStatement : public ExpressionStatment {
   public:
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
     ConstantExpressionStatement(GeneratableValueTypePtr val);
 
@@ -39,7 +39,7 @@ class ConstantExpressionStatement : public ExpressionStatment {
     GeneratableValueTypePtr constantValue;
 };
 
-typedef ConstantExpressionStatement Constant;
+using Constant = ConstantExpressionStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

@@ -25,7 +25,7 @@
 namespace NES {
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 
 class Node : public std::enable_shared_from_this<Node> {
   public:
@@ -383,8 +383,8 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * Helper parameters for cycle detection
      */
-    bool visited;
-    bool recStack;
+    bool visited{false};
+    bool recStack{false};
 
     /**
      * @brief Stores the stacktrace while node creation.

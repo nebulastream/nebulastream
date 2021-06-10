@@ -22,10 +22,10 @@
 namespace NES::Optimizer {
 
 class SignatureEqualityUtil;
-typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
+using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 
 class StringSignatureBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<StringSignatureBasedCompleteQueryMergerRule> StringSignatureBasedCompleteQueryMergerRulePtr;
+using StringSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<StringSignatureBasedCompleteQueryMergerRule>;
 
 /**
  * @brief StringSignatureBasedEqualQueryMergerRule is responsible for merging together all equal Queries within the Global Query Plan, such that, after running this rule

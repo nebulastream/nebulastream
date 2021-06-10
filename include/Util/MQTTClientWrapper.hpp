@@ -94,7 +94,7 @@ class MQTTClientWrapper {
     int qualityOfService;
     std::shared_ptr<mqtt::topic> sendTopic;
 };
-typedef std::shared_ptr<MQTTClientWrapper> MQTTClientWrapperPtr;
+using MQTTClientWrapperPtr = std::shared_ptr<MQTTClientWrapper>;
 
 }// namespace NES
 #endif//NES_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_

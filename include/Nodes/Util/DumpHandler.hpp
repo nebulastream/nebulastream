@@ -24,7 +24,7 @@
 namespace NES {
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 
 /**
  * @brief Implemented by classes that provide an visualization of passed nodes. The format and client required to consume the visualizations
@@ -58,7 +58,7 @@ class DumpHandler {
     virtual void dump(std::string context, std::string scope, QueryCompilation::PipelineQueryPlanPtr pipelineQueryPlan) = 0;
 };
 
-typedef std::shared_ptr<DumpHandler> DebugDumpHandlerPtr;
+using DebugDumpHandlerPtr = std::shared_ptr<DumpHandler>;
 
 }// namespace NES
 

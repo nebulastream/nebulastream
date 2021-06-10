@@ -28,10 +28,10 @@ class [[nodiscard]] BasicValue final : public ValueType {
         : ValueType(std::move(type)), value(std::move(value)) {}
 
     /// @brief Returns a string representation of this value.
-    std::string toString() const noexcept final;
+    [[nodiscard]] std::string toString() const noexcept final;
 
     /// @brief Checks if two values are equal.
-    bool isEquals(ValueTypePtr valueType) const noexcept final;
+    [[nodiscard]] bool isEquals(ValueTypePtr valueType) const noexcept final;
 
     std::string value;
 };

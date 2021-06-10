@@ -21,13 +21,13 @@
 
 namespace NES {
 class NesCoordinator;
-typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
+using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class QueryCatalogController : public BaseController {
 
@@ -42,6 +42,6 @@ class QueryCatalogController : public BaseController {
     GlobalQueryPlanPtr globalQueryPlan;
 };
 
-typedef std::shared_ptr<QueryCatalogController> QueryCatalogControllerPtr;
+using QueryCatalogControllerPtr = std::shared_ptr<QueryCatalogController>;
 }// namespace NES
 #endif//NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_

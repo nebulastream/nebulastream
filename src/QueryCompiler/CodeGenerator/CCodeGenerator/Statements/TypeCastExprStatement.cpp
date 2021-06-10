@@ -35,6 +35,6 @@ const ExpressionStatmentPtr TypeCastExprStatement::copy() const { return std::ma
 TypeCastExprStatement::TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type)
     : expression(expr.copy()), dataType(type) {}
 
-TypeCastExprStatement::~TypeCastExprStatement() {}
+TypeCastExprStatement::~TypeCastExprStatement() = default;
 }// namespace QueryCompilation
 }// namespace NES

@@ -22,7 +22,7 @@
 
 namespace NES::Windowing {
 class WindowAggregationDescriptor;
-typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
+using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 }// namespace NES::Windowing
 
@@ -31,7 +31,7 @@ namespace NES {
 class BinaryOperatorStatement;
 class StructDeclaration;
 class CompoundStatement;
-typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
+using CompoundStatementPtr = std::shared_ptr<CompoundStatement>;
 namespace QueryCompilation {
 namespace GeneratableOperators {
 class GeneratableWindowAggregation {

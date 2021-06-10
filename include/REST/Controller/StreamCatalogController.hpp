@@ -24,7 +24,7 @@
 
 namespace NES {
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class StreamCatalogController : public BaseController {
 
@@ -38,7 +38,7 @@ class StreamCatalogController : public BaseController {
   private:
     StreamCatalogPtr streamCatalog;
 };
-typedef std::shared_ptr<StreamCatalogController> StreamCatalogControllerPtr;
+using StreamCatalogControllerPtr = std::shared_ptr<StreamCatalogController>;
 
 }// namespace NES
 

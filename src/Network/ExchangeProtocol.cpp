@@ -33,7 +33,7 @@ ExchangeProtocol::ExchangeProtocol(std::shared_ptr<PartitionManager> partitionMa
     NES_DEBUG("ExchangeProtocol: Initializing ExchangeProtocol()");
 }
 
-ExchangeProtocol::~ExchangeProtocol() {}
+ExchangeProtocol::~ExchangeProtocol() = default;
 
 Messages::ServerReadyMessage ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg) {
     // check if the partition is registered via the partition manager or wait until this is not done

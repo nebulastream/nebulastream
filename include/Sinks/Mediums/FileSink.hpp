@@ -83,7 +83,7 @@ class FileSink : public SinkMedium {
     std::string filePath;
     std::ofstream outputFile;
 };
-typedef std::shared_ptr<FileSink> FileSinkPtr;
+using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
 
 #endif// FileSink_HPP

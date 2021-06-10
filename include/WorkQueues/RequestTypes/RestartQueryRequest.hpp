@@ -22,7 +22,7 @@
 namespace NES {
 
 class RestartQueryRequest;
-typedef std::shared_ptr<RestartQueryRequest> RestartQueryRequestPtr;
+using RestartQueryRequestPtr = std::shared_ptr<RestartQueryRequest>;
 
 /**
  * @brief This request restarts a query with provided id

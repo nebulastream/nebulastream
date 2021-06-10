@@ -49,7 +49,7 @@ class NesThread {
         inline ThreadId();
         inline ~ThreadId();
 
-        inline uint32_t getId() const { return id; }
+        [[nodiscard]] inline uint32_t getId() const { return id; }
 
       private:
         uint32_t id;

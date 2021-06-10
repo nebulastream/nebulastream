@@ -74,7 +74,7 @@ class SinkFormat {
     NodeEngine::BufferManagerPtr bufferManager;
 };
 
-typedef std::shared_ptr<SinkFormat> SinkFormatPtr;
+using SinkFormatPtr = std::shared_ptr<SinkFormat>;
 
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_SINKFORMAT_HPP_

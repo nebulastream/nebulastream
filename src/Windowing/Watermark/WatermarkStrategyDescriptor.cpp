@@ -18,5 +18,5 @@
 
 namespace NES::Windowing {
 
-WatermarkStrategyDescriptor::WatermarkStrategyDescriptor() {}
+WatermarkStrategyDescriptor::WatermarkStrategyDescriptor() = default;
 }//namespace NES::Windowing

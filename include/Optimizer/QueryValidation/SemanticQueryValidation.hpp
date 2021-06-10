@@ -21,17 +21,17 @@
 
 namespace NES {
 class schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class Query;
-typedef std::shared_ptr<Query> QueryPtr;
+using QueryPtr = std::shared_ptr<Query>;
 
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class SemanticQueryValidation;
-typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
+using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
 /**
  * @brief This class is responsible for Semantic Query Validation
@@ -77,7 +77,7 @@ class SemanticQueryValidation {
     static SemanticQueryValidationPtr create(StreamCatalogPtr scp);
 };
 
-typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
+using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
 }// namespace NES::Optimizer
 

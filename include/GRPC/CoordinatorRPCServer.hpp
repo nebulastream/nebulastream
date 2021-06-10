@@ -27,7 +27,7 @@ using grpc::Status;
 namespace NES {
 
 class CoordinatorEngine;
-typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
+using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
 
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:

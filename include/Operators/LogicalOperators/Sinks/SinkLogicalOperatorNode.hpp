@@ -24,7 +24,7 @@
 namespace NES {
 
 class SinkLogicalOperatorNode;
-typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
 /**
  * @brief Node representing logical sink operator

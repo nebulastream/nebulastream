@@ -37,6 +37,6 @@ class LinkProperty {
     uint64_t latency;
 };
 
-typedef std::shared_ptr<LinkProperty> LinkPropertyPtr;
+using LinkPropertyPtr = std::shared_ptr<LinkProperty>;
 
 #endif//NES_LINKPROPERTY_HPP

@@ -21,7 +21,7 @@
 namespace NES {
 
 class FieldAssignmentExpressionNode;
-typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
+using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 /**
  * @brief A FieldAssignmentExpression represents the assignment of an expression result to a specific field.
  */

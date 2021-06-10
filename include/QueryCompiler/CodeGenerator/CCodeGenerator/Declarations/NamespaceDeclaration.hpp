@@ -29,11 +29,11 @@ class NamespaceDeclaration : public Declaration {
   public:
     NamespaceDeclaration(Code code);
     static NamespaceDeclarationPtr create(Code code);
-    const GeneratableDataTypePtr getType() const override;
-    const std::string getIdentifierName() const override;
-    const Code getTypeDefinitionCode() const override;
-    const Code getCode() const override;
-    const DeclarationPtr copy() const override;
+    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] const std::string getIdentifierName() const override;
+    [[nodiscard]] const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] const Code getCode() const override;
+    [[nodiscard]] const DeclarationPtr copy() const override;
 
   private:
     Code namespaceCode;

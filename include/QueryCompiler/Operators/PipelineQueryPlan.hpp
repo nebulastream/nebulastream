@@ -49,19 +49,19 @@ class PipelineQueryPlan {
      * @brief Gets a list of source pipelines, which only contain a single physical source operator
      * @return std::vector<OperatorPipelinePtr>
      */
-    const std::vector<OperatorPipelinePtr> getSourcePipelines() const;
+    [[nodiscard]] const std::vector<OperatorPipelinePtr> getSourcePipelines() const;
 
     /**
      * @brief Gets a list of sink pipelines, which only contain a single physical sink operator
      * @return std::vector<OperatorPipelinePtr>
      */
-    const std::vector<OperatorPipelinePtr> getSinkPipelines() const;
+    [[nodiscard]] const std::vector<OperatorPipelinePtr> getSinkPipelines() const;
 
     /**
      * @brief Gets a list of all pipelines.
      * @return std::vector<OperatorPipelinePtr>
      */
-    const std::vector<OperatorPipelinePtr>& getPipelines() const;
+    [[nodiscard]] const std::vector<OperatorPipelinePtr>& getPipelines() const;
 
     /**
      * @brief Remove a particular pipeline from the query plan
@@ -73,13 +73,13 @@ class PipelineQueryPlan {
      * @brief Gets the query id
      * @return QueryId
      */
-    const QueryId getQueryId() const;
+    [[nodiscard]] const QueryId getQueryId() const;
 
     /**
      * @brief Gets the query sub plan id
      * @return QuerySubPlanId
      */
-    const QuerySubPlanId getQuerySubPlanId() const;
+    [[nodiscard]] const QuerySubPlanId getQuerySubPlanId() const;
 
   private:
     PipelineQueryPlan(const QueryId queryId, const QuerySubPlanId querySubPlanId);

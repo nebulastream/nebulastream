@@ -42,7 +42,7 @@ class Integer : public Numeric {
     /**
     * @brief Checks if this data type is Integer.
     */
-    bool isInteger() const final { return true; }
+    [[nodiscard]] bool isInteger() const final { return true; }
 
     /**
     * @brief Checks if two data types are equal.

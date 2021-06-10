@@ -26,10 +26,10 @@
 namespace NES {
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class NESExecutionPlan;
-typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
+using NESExecutionPlanPtr = std::shared_ptr<NESExecutionPlan>;
 
 /**
  * @brief Represents various states the user query goes through.
@@ -81,31 +81,31 @@ class QueryCatalogEntry {
      * @brief method to get the id of the query
      * @return query id
      */
-    QueryId getQueryId() const noexcept;
+    [[nodiscard]] QueryId getQueryId() const noexcept;
 
     /**
      * @brief method to get the string of the query
      * @return query string
      */
-    std::string getQueryString() const;
+    [[nodiscard]] std::string getQueryString() const;
 
     /**
      * @brief method to get the query plan
      * @return pointer to the query plan
      */
-    const QueryPlanPtr getQueryPlan() const;
+    [[nodiscard]] const QueryPlanPtr getQueryPlan() const;
 
     /**
      * @brief method to get the status of the query
      * @return query status
      */
-    QueryStatus getQueryStatus() const;
+    [[nodiscard]] QueryStatus getQueryStatus() const;
 
     /**
      * @brief method to get the status of the query as string
      * @return query status: as string
      */
-    std::string getQueryStatusAsString() const;
+    [[nodiscard]] std::string getQueryStatusAsString() const;
 
     /**
      * @brief method to set the status of the query
@@ -117,7 +117,7 @@ class QueryCatalogEntry {
       * @brief Get name of the query placement strategy
       * @return query placement strategy
       */
-    const std::string& getQueryPlacementStrategy() const;
+    [[nodiscard]] const std::string& getQueryPlacementStrategy() const;
 
     /**
      * @brief create a copy of query catalog entry.
@@ -137,7 +137,7 @@ class QueryCatalogEntry {
     QueryStatus queryStatus;
     std::string failureReason;
 };
-typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
+using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
 }// namespace NES
 
 #endif//NES_INCLUDE_CATALOGS_QUERYCATALOGENTRY_HPP_

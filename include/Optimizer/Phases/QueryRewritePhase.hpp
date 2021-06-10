@@ -22,28 +22,28 @@
 namespace NES {
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class QueryRewritePhase;
-typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
+using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
 class FilterPushDownRule;
-typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
+using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
 
 class RenameStreamToProjectOperatorRule;
-typedef std::shared_ptr<RenameStreamToProjectOperatorRule> RenameStreamToProjectOperatorRulePtr;
+using RenameStreamToProjectOperatorRulePtr = std::shared_ptr<RenameStreamToProjectOperatorRule>;
 
 class ProjectBeforeUnionOperatorRule;
-typedef std::shared_ptr<ProjectBeforeUnionOperatorRule> ProjectBeforeUnionOperatorRulePtr;
+using ProjectBeforeUnionOperatorRulePtr = std::shared_ptr<ProjectBeforeUnionOperatorRule>;
 
 class AttributeSortRule;
-typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
+using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
 
 class BinaryOperatorSortRule;
-typedef std::shared_ptr<BinaryOperatorSortRule> BinaryOperatorSortRulePtr;
+using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
 
 /**
  * @brief This phase is responsible for re-writing the query plan

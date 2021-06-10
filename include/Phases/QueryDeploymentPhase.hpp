@@ -25,16 +25,16 @@
 namespace NES {
 
 class WorkerRPCClient;
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class ExecutionNode;
-typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class QueryDeploymentPhase;
-typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
+using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 
 /**
  * @brief The query deployment phase is responsible for deploying the query plan for a query to respective worker nodes.

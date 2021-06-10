@@ -92,7 +92,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
     uint32_t retryTimes;
 };
 
-typedef std::shared_ptr<NetworkSinkDescriptor> NetworkSinkDescriptorPtr;
+using NetworkSinkDescriptorPtr = std::shared_ptr<NetworkSinkDescriptor>;
 
 }// namespace Network
 }// namespace NES

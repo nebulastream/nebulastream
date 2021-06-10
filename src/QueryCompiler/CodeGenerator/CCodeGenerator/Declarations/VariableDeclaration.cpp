@@ -51,7 +51,7 @@ const GeneratableDataTypePtr VariableDeclaration::getDataType() const { return t
 
 const DeclarationPtr VariableDeclaration::copy() const { return std::make_shared<VariableDeclaration>(*this); }
 
-VariableDeclaration::~VariableDeclaration() {}
+VariableDeclaration::~VariableDeclaration() = default;
 
 VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value)
     : type_(type), identifier_(identifier), init_value_(value) {}

@@ -21,13 +21,13 @@
 namespace NES {
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 /**
  * @brief this indicates an expression, which is a parameter for a FilterOperator or a MapOperator.
@@ -80,6 +80,6 @@ class ExpressionNode : public Node {
      */
     DataTypePtr stamp;
 };
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 }// namespace NES
 #endif//NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_HPP_

@@ -41,7 +41,7 @@ class Float final : public Numeric {
     /**
     * @brief Checks if this data type is Float.
     */
-    bool isFloat() const final { return true; }
+    [[nodiscard]] bool isFloat() const final { return true; }
 
     /**
     * @brief Checks if two data types are equal.

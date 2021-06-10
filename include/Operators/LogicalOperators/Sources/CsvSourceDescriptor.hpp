@@ -109,7 +109,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
     bool skipHeader;
 };
 
-typedef std::shared_ptr<CsvSourceDescriptor> CsvSourceDescriptorPtr;
+using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;
 
 }// namespace NES
 

@@ -27,19 +27,19 @@
 namespace NES {
 
 class Stream;
-typedef std::shared_ptr<Stream> StreamPtr;
+using StreamPtr = std::shared_ptr<Stream>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class SourceLogicalOperatorNode;
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 class SinkLogicalOperatorNode;
-typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
 /**
  * @brief The query plan encapsulates a set of operators and provides a set of utility functions.
@@ -199,7 +199,7 @@ class QueryPlan {
      * Get the queryId for the plan
      * @return query Id of the plan
      */
-    QueryId getQueryId() const;
+    [[nodiscard]] QueryId getQueryId() const;
 
     /**
      * @brief get query sub plan id

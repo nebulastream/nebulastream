@@ -86,7 +86,7 @@ class ZmqSource : public DataSource {
     /**
      * @brief default constructor required for boost serialization
      */
-    ZmqSource();
+    ZmqSource() = delete;
 
     /**
      * @brief method to connect zmq using the address and port specified before
@@ -114,6 +114,6 @@ class ZmqSource : public DataSource {
     zmq::socket_t socket;
 };
 
-typedef std::shared_ptr<ZmqSource> ZmqSourcePtr;
+using ZmqSourcePtr = std::shared_ptr<ZmqSource>;
 }// namespace NES
 #endif// ZMQSOURCE_HPP

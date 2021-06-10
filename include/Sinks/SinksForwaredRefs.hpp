@@ -19,7 +19,7 @@
 namespace NES {
 
 class SinkMedium;
-typedef std::shared_ptr<SinkMedium> DataSinkPtr;
+using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 }// namespace NES
 

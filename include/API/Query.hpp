@@ -39,25 +39,25 @@
 namespace NES {
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class SourceLogicalOperatorNode;
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 class SinkLogicalOperatorNode;
-typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class WindowType;
-typedef std::shared_ptr<WindowType> WindowTypePtr;
+using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowAggregationDescriptor;
-typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationPtr;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 using namespace NES::API;
 using namespace NES::Windowing;
@@ -83,7 +83,7 @@ class Join {
      * @param onLeftKey
      * @return object of type JoinWhere on which equalsTo function is defined and can be called.
      */
-    JoinWhere where(ExpressionItem onLeftKey) const;
+    [[nodiscard]] JoinWhere where(ExpressionItem onLeftKey) const;
 
   private:
     const Query& subQueryRhs;
@@ -105,7 +105,7 @@ class JoinWhere {
      * @param onRightKey
      * @return object of type JoinCondition on which windowing & the original joinWith function can be called.
      */
-    JoinCondition equalsTo(ExpressionItem onRightKey) const;
+    [[nodiscard]] JoinCondition equalsTo(ExpressionItem onRightKey) const;
 
   private:
     const Query& subQueryRhs;
@@ -129,7 +129,7 @@ class JoinCondition {
      * @param windowType
      * @return the query with the result of the original joinWith function is returned.
      */
-    Query& window(const Windowing::WindowTypePtr windowType) const;
+    [[nodiscard]] Query& window(const Windowing::WindowTypePtr windowType) const;
 
   private:
     const Query& subQueryRhs;
@@ -286,7 +286,7 @@ class Query {
                        const Windowing::WindowAggregationPtr aggregation);
 };
 
-typedef std::shared_ptr<Query> QueryPtr;
+using QueryPtr = std::shared_ptr<Query>;
 
 }// namespace NES
 

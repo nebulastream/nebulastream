@@ -132,8 +132,8 @@ class CircularBuffer {
     // front/end, access begin or end ptr
     reference front() noexcept { return *begin(); }
     reference back() noexcept { return *(end() - 1); }
-    const_reference front() const noexcept { return *begin(); }
-    const_reference back() const noexcept { return *(end() - 1); }
+    [[nodiscard]] const_reference front() const noexcept { return *begin(); }
+    [[nodiscard]] const_reference back() const noexcept { return *(end() - 1); }
 
     // size-capacity
     [[nodiscard]] uint64_type size() const noexcept { return currentSize; }
@@ -144,16 +144,16 @@ class CircularBuffer {
     // iterators
     iterator begin() noexcept { return iterator(0, this); }
     iterator end() noexcept { return iterator(size(), this); }
-    const_iterator cbegin() const noexcept { return const_iterator(0, this); }
-    const_iterator cend() const noexcept { return const_iterator(size(), this); }
-    const_iterator begin() const noexcept { return cbegin(); }
-    const_iterator end() const noexcept { return cend(); }
+    [[nodiscard]] const_iterator cbegin() const noexcept { return const_iterator(0, this); }
+    [[nodiscard]] const_iterator cend() const noexcept { return const_iterator(size(), this); }
+    [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
+    [[nodiscard]] const_iterator end() const noexcept { return cend(); }
 
     // random-access: [] and at
     reference operator[](uint64_type idx) { return buffer[(head + idx) % maxSize]; }
     reference at(uint64_type idx) { return buffer[(head + idx) % maxSize]; }
     const_reference operator[](const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
-    const_reference at(const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
+    [[nodiscard]] const_reference at(const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
 
     // modifiers: push and emplace front
     template<bool b = true, typename = std::enable_if_t<b && std::is_copy_assignable<T>::value>>
@@ -212,9 +212,9 @@ class CircularBuffer {
 
     // front and back, with wrap-around, for assignment
     reference front_() noexcept { return buffer[head]; }
-    const_reference front_() const noexcept { return buffer[head]; }
+    [[nodiscard]] const_reference front_() const noexcept { return buffer[head]; }
     reference back_() noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
-    const_reference back_() const noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
+    [[nodiscard]] const_reference back_() const noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
 
     void incrementHeadDecrSize() noexcept {
         head = (head + 1) % maxSize;

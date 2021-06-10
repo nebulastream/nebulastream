@@ -21,7 +21,7 @@
 namespace NES::Windowing {
 
 class DistributionCharacteristic;
-typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPtr;
+using DistributionCharacteristicPtr = std::shared_ptr<DistributionCharacteristic>;
 
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.

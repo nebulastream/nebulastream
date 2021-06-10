@@ -100,13 +100,13 @@ class NodeStatsProvider {
     std::string getClientPort();
 
   private:
-    long nbrProcessors;
+    long nbrProcessors{0};
     std::shared_ptr<NodeStats> nodeStats;
     std::string clientName;
     std::string clientPort;
 };
 
-typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;
+using NodeStatsProviderPtr = std::shared_ptr<NodeStatsProvider>;
 
 }// namespace NES::NodeEngine
 #endif

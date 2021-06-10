@@ -23,12 +23,12 @@
 
 namespace z3 {
 class expr;
-typedef std::shared_ptr<expr> ExprPtr;
+using ExprPtr = std::shared_ptr<expr>;
 }// namespace z3
 
 namespace NES::Optimizer {
 class Z3ExprAndFieldMap;
-typedef std::shared_ptr<Z3ExprAndFieldMap> Z3ExprAndFieldMapPtr;
+using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
 
 /**
  * @brief This class is responsible for holding the Z3 expression and a map of attribute name to corresponding z3 expression

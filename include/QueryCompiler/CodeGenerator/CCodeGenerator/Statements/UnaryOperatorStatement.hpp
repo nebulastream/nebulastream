@@ -29,11 +29,11 @@ class UnaryOperatorStatement : public ExpressionStatment {
   public:
     UnaryOperatorStatement(const ExpressionStatment& expr, const UnaryOperatorType& op, BracketMode bracket_mode = NO_BRACKETS);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
     ~UnaryOperatorStatement() override;
 

@@ -38,27 +38,27 @@ class NesPartition {
      * @brief getter for the queryId
      * @return the queryId
      */
-    QueryId getQueryId() const { return queryId; }
+    [[nodiscard]] QueryId getQueryId() const { return queryId; }
 
     /**
      * @brief getter for the operatorId
      * @return the operatorId
      */
-    OperatorId getOperatorId() const { return operatorId; }
+    [[nodiscard]] OperatorId getOperatorId() const { return operatorId; }
 
     /**
      * @brief getter for the partitionId
      * @return the partitionId
      */
-    PartitionId getPartitionId() const { return partitionId; }
+    [[nodiscard]] PartitionId getPartitionId() const { return partitionId; }
 
     /**
      * @brief getter for the getSubpartitionId
      * @return the subpartitionId
      */
-    SubpartitionId getSubpartitionId() const { return subpartitionId; }
+    [[nodiscard]] SubpartitionId getSubpartitionId() const { return subpartitionId; }
 
-    std::string toString() const {
+    [[nodiscard]] std::string toString() const {
         return std::to_string(queryId) + "::" + std::to_string(operatorId) + "::" + std::to_string(partitionId)
             + "::" + std::to_string(subpartitionId);
     }

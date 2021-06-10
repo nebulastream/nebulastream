@@ -91,7 +91,7 @@ class WindowedJoinSliceListStore {
  * @param pos the position till we want to remove slices.
  */
     inline void removeSlicesUntil(uint64_t watermark) {
-        std::vector<SliceMetaData>::iterator itSlice = sliceMetaData.begin();
+        auto itSlice = sliceMetaData.begin();
         auto itAggs = content.begin();
         for (; itSlice != sliceMetaData.end(); ++itSlice) {
             if (itSlice->getEndTs() > watermark) {

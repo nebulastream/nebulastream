@@ -66,7 +66,7 @@ class ZmqSink : public SinkMedium {
     bool connect();
     bool disconnect();
 };
-typedef std::shared_ptr<ZmqSink> ZmqSinkPtr;
+using ZmqSinkPtr = std::shared_ptr<ZmqSink>;
 }// namespace NES
 
 #endif// ZMQSINK_HPP

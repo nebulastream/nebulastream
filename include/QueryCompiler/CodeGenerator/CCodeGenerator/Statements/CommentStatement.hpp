@@ -28,11 +28,11 @@ class CommentStatement : public Statement {
   public:
     CommentStatement(const std::string comment);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
 
     ~CommentStatement() override;
 
@@ -40,7 +40,7 @@ class CommentStatement : public Statement {
     std::string comment;
 };
 
-typedef CommentStatement Comment;
+using Comment = CommentStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

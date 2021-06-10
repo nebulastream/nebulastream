@@ -72,7 +72,7 @@ const CodeExpressionPtr UnaryOperatorStatement::getCode() const {
 
 const ExpressionStatmentPtr UnaryOperatorStatement::copy() const { return std::make_shared<UnaryOperatorStatement>(*this); }
 
-UnaryOperatorStatement::~UnaryOperatorStatement() {}
+UnaryOperatorStatement::~UnaryOperatorStatement() = default;
 
 UnaryOperatorStatement operator&(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, ADDRESS_OF_OP); }
 UnaryOperatorStatement operator*(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, DEREFERENCE_POINTER_OP); }

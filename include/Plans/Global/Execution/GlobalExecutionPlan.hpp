@@ -28,10 +28,10 @@ using namespace web;
 namespace NES {
 
 class ExecutionNode;
-typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 /**
  * This class holds the global execution plan for the NES system. The nodes in this graph are represented by ExecutionNode class.

@@ -22,16 +22,16 @@
 namespace NES {
 
 class Integer;
-typedef std::shared_ptr<Integer> IntegerPtr;
+using IntegerPtr = std::shared_ptr<Integer>;
 
 class ArrayType;
-typedef std::shared_ptr<ArrayType> ArrayPtr;
+using ArrayPtr = std::shared_ptr<ArrayType>;
 
 class Float;
-typedef std::shared_ptr<Float> FloatPtr;
+using FloatPtr = std::shared_ptr<Float>;
 
 class Char;
-typedef std::shared_ptr<Char> CharPtr;
+using CharPtr = std::shared_ptr<Char>;
 
 /**
  * @brief This is a default physical type factory, which maps nes types to common x86 types.

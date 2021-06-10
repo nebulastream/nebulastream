@@ -39,7 +39,7 @@ class NullOutputSinkDescriptor : public SinkDescriptor {
     explicit NullOutputSinkDescriptor();
 };
 
-typedef std::shared_ptr<NullOutputSinkDescriptor> NullOutputSinkDescriptorPtr;
+using NullOutputSinkDescriptorPtr = std::shared_ptr<NullOutputSinkDescriptor>;
 
 }// namespace NES
 

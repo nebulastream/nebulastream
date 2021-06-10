@@ -28,46 +28,46 @@
 namespace NES {
 
 class NESExecutionPlan;
-typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
+using NESExecutionPlanPtr = std::shared_ptr<NESExecutionPlan>;
 
 class ExecutionNode;
-typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class NESTopologyEntry;
-typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
+using NESTopologyEntryPtr = std::shared_ptr<NESTopologyEntry>;
 
 class NESTopologyGraph;
-typedef std::shared_ptr<NESTopologyGraph> NESTopologyGraphPtr;
+using NESTopologyGraphPtr = std::shared_ptr<NESTopologyGraph>;
 
 class LogicalOperatorNode;
-typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
+using LogicalOperatorNodePtr = std::shared_ptr<LogicalOperatorNode>;
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class SourceLogicalOperatorNode;
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class TypeInferencePhase;
-typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.

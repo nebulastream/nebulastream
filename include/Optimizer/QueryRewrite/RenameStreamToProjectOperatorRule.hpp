@@ -22,7 +22,7 @@
 namespace NES::Optimizer {
 
 class RenameStreamToProjectOperatorRule;
-typedef std::shared_ptr<RenameStreamToProjectOperatorRule> RenameStreamToProjectOperatorRulePtr;
+using RenameStreamToProjectOperatorRulePtr = std::shared_ptr<RenameStreamToProjectOperatorRule>;
 
 /**
  * @brief This rule is responsible for transforming Stream Rename operator to the projection operator

@@ -22,7 +22,7 @@ namespace NES {
 namespace detail {
 /// base class for enabling enable_shared_from_this in classes with multiple super-classes that inherit enable_shared_from_this
 struct virtual_enable_shared_from_this_base : std::enable_shared_from_this<virtual_enable_shared_from_this_base> {
-    virtual ~virtual_enable_shared_from_this_base() {}
+    virtual ~virtual_enable_shared_from_this_base() = default;
 };
 
 /// concrete class for enabling enable_shared_from_this in classes with multiple super-classes that inherit enable_shared_from_this

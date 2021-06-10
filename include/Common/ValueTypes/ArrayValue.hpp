@@ -29,10 +29,10 @@ class [[nodiscard]] ArrayValue final : public ValueType {
         : ValueType(std::move(type)), values(std::move(values)) {}
 
     /// @brief Returns a string representation of this value
-    std::string toString() const noexcept final;
+    [[nodiscard]] std::string toString() const noexcept final;
 
     /// @brief Checks if two values are equal
-    bool isEquals(ValueTypePtr other) const noexcept final;
+    [[nodiscard]] bool isEquals(ValueTypePtr other) const noexcept final;
 
     std::vector<std::string> const values;
 };

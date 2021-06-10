@@ -25,25 +25,25 @@ class StructDeclaration : public Declaration {
   public:
     static StructDeclaration create(const std::string& type_name, const std::string& variable_name);
 
-    const GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
 
-    const std::string getIdentifierName() const override;
+    [[nodiscard]] const std::string getIdentifierName() const override;
 
-    const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] const Code getTypeDefinitionCode() const override;
 
-    const Code getCode() const override;
+    [[nodiscard]] const Code getCode() const override;
 
-    uint32_t getTypeSizeInBytes() const;
+    [[nodiscard]] uint32_t getTypeSizeInBytes() const;
 
-    const std::string getTypeName() const;
+    [[nodiscard]] const std::string getTypeName() const;
 
-    const DeclarationPtr copy() const override;
+    [[nodiscard]] const DeclarationPtr copy() const override;
 
-    DeclarationPtr getField(const std::string& field_name) const;
+    [[nodiscard]] DeclarationPtr getField(const std::string& field_name) const;
 
-    const bool containsField(const std::string& field_name, const DataTypePtr dataType) const;
+    [[nodiscard]] const bool containsField(const std::string& field_name, const DataTypePtr dataType) const;
 
-    VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
+    [[nodiscard]] VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
 
     StructDeclaration& addField(const Declaration& decl);
     StructDeclaration& makeStructCompact();

@@ -22,7 +22,7 @@
 namespace NES {
 
 class SharedLibrary;
-typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
+using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
 
 class SystemCompilerCompiledCode : public CompiledCode {
   public:

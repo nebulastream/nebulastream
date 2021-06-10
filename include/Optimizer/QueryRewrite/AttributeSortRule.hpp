@@ -29,7 +29,7 @@ class ConstantValueExpressionNode;
 namespace NES::Optimizer {
 
 class AttributeSortRule;
-typedef std::shared_ptr<AttributeSortRule> AttributeSortRulePtr;
+using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
 
 /**
  * @brief This rule is only used for evaluating efficiency of query merging using string based signature computation. This rule

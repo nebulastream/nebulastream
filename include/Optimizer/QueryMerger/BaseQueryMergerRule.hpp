@@ -21,7 +21,7 @@
 
 namespace NES {
 class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -34,6 +34,6 @@ class BaseQueryMergerRule {
      */
     virtual bool apply(GlobalQueryPlanPtr globalQueryPlan) = 0;
 };
-typedef std::shared_ptr<BaseQueryMergerRule> BaseQueryMergerRulePtr;
+using BaseQueryMergerRulePtr = std::shared_ptr<BaseQueryMergerRule>;
 }// namespace NES::Optimizer
 #endif//NES_BASEQUERYMERGERRULE_HPP

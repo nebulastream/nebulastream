@@ -30,7 +30,7 @@ using NodeEngine::Execution::PipelineExecutionContext;
  * To this end, it ensures that the compiled code is correctly destructed.
  */
 class CompiledExecutablePipelineStage : public NodeEngine::Execution::ExecutablePipelineStage {
-    typedef NodeEngine::Execution::ExecutablePipelineStage base;
+    using base = NodeEngine::Execution::ExecutablePipelineStage;
 
   public:
     /**

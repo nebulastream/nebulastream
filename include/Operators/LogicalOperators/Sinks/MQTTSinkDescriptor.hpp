@@ -142,7 +142,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     bool asynchronousClient;
 };
 
-typedef std::shared_ptr<MQTTSinkDescriptor> MQTTSinkDescriptorPtr;
+using MQTTSinkDescriptorPtr = std::shared_ptr<MQTTSinkDescriptor>;
 
 }// namespace NES
 

@@ -31,25 +31,25 @@ class QueryStatistics {
      * @brief getter for processedTasks
      * @return processedTasks
      */
-    uint64_t getProcessedTasks() const;
+    [[nodiscard]] uint64_t getProcessedTasks() const;
 
     /**
    * @brief getter for processedTuple
    * @return processedTuple
    */
-    uint64_t getProcessedTuple() const;
+    [[nodiscard]] uint64_t getProcessedTuple() const;
 
     /**
    * @brief getter for processedBuffers
    * @return processedBuffers
    */
-    uint64_t getProcessedBuffers() const;
+    [[nodiscard]] uint64_t getProcessedBuffers() const;
 
     /**
     * @brief getter for processedWatermarks
     * @return processedBuffers
     */
-    uint64_t getProcessedWatermarks() const;
+    [[nodiscard]] uint64_t getProcessedWatermarks() const;
 
     /**
     * @brief setter for processedTasks
@@ -87,7 +87,7 @@ class QueryStatistics {
      * @brief get sum of all latencies
      * @return value
      */
-    uint64_t getLatencySum() const;
+    [[nodiscard]] uint64_t getLatencySum() const;
 
     /**
     * @brief increment queue size sum
@@ -98,7 +98,7 @@ class QueryStatistics {
      * @brief get sum of all queue sizes
      * @return value
      */
-    uint64_t getQueueSizeSum() const;
+    [[nodiscard]] uint64_t getQueueSizeSum() const;
 
     /**
     * @brief increment processedWatermarks
@@ -121,13 +121,13 @@ class QueryStatistics {
     * @brief get the query id of this queriy
     * @return queryId
     */
-    uint64_t getQueryId() const;
+    [[nodiscard]] uint64_t getQueryId() const;
 
     /**
      * @brief get the sub id of this qep (the pipeline stage)
      * @return subqueryID
      */
-    uint64_t getSubQueryId() const;
+    [[nodiscard]] uint64_t getSubQueryId() const;
 
     /**
      * Add for the current time stamp (now) a new latency value
@@ -154,7 +154,7 @@ class QueryStatistics {
     std::map<uint64_t, std::vector<uint64_t>> tsToLatencyMap;
 };
 
-typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
+using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 }// namespace NES::NodeEngine
 

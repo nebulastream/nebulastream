@@ -60,7 +60,7 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     const std::chrono::milliseconds frequency;
 };
 
-typedef std::shared_ptr<DefaultSourceDescriptor> DefaultSourceDescriptorPtr;
+using DefaultSourceDescriptorPtr = std::shared_ptr<DefaultSourceDescriptor>;
 
 }// namespace NES
 

@@ -32,10 +32,10 @@ class NodeEngine;
 namespace NES {
 class WorkerRPCServer;
 class CoordinatorRPCClient;
-typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
+using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
 class MonitoringAgent;
-typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
+using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 enum NesNodeType : int { Worker, Sensor };
 class NesWorker {
@@ -165,7 +165,7 @@ class NesWorker {
      * @brief Method to check if a worker is still running
      * @return running status of the worker
      */
-    bool isWorkerRunning() const noexcept;
+    [[nodiscard]] bool isWorkerRunning() const noexcept;
 
     uint64_t getWorkerId();
 
@@ -210,7 +210,7 @@ class NesWorker {
      */
     bool waitForConnect();
 };
-typedef std::shared_ptr<NesWorker> NesWorkerPtr;
+using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 }// namespace NES
 #endif /* INCLUDE_COMPONENTS_NESWORKER_HPP_ */

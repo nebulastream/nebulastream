@@ -94,7 +94,7 @@ class ThreadPool {
     std::shared_ptr<QueryManager> queryManager;
 };
 
-typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;
+using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
 
 }// namespace NES::NodeEngine
 

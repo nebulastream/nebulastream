@@ -28,46 +28,46 @@
 
 namespace NES {
 class MonitoringService;
-typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
+using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class QueryService;
-typedef std::shared_ptr<QueryService> QueryServicePtr;
+using QueryServicePtr = std::shared_ptr<QueryService>;
 
 class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class QueryController;
-typedef std::shared_ptr<QueryController> QueryControllerPtr;
+using QueryControllerPtr = std::shared_ptr<QueryController>;
 
 class QueryCatalogController;
-typedef std::shared_ptr<QueryCatalogController> QueryCatalogControllerPtr;
+using QueryCatalogControllerPtr = std::shared_ptr<QueryCatalogController>;
 
 class StreamCatalogController;
-typedef std::shared_ptr<StreamCatalogController> StreamCatalogControllerPtr;
+using StreamCatalogControllerPtr = std::shared_ptr<StreamCatalogController>;
 
 class ConnectivityController;
-typedef std::shared_ptr<ConnectivityController> ConnectivityControllerPtr;
+using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
 
 class MonitoringController;
-typedef std::shared_ptr<MonitoringController> MonitoringControllerPtr;
+using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
 
 class TopologyController;
-typedef std::shared_ptr<TopologyController> TopologyControllerPtr;
+using TopologyControllerPtr = std::shared_ptr<TopologyController>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class NesCoordinator;
-typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
+using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class RestEngine : public BaseController {
 
@@ -101,7 +101,7 @@ class RestEngine : public BaseController {
     void handleMerge(http_request request);
     void initRestOpHandlers();
     void setEndpoint(const std::string& value);
-    std::string endpoint() const;
+    [[nodiscard]] std::string endpoint() const;
     pplx::task<void> accept();
     pplx::task<void> shutdown();
     std::vector<utility::string_t> splitPath(utility::string_t path);
@@ -118,5 +118,5 @@ class RestEngine : public BaseController {
     TopologyControllerPtr topologyController;
 };
 
-typedef std::shared_ptr<RestEngine> RestEnginePtr;
+using RestEnginePtr = std::shared_ptr<RestEngine>;
 }// namespace NES

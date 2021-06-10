@@ -22,7 +22,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-typedef uint64_t FIELD_OFFSET;
+using FIELD_OFFSET = uint64_t;
 
 /**
  * @brief This class derives from DynamicMemoryLayout. It implements abstract bind() function as well as adding fieldOffsets as a new member

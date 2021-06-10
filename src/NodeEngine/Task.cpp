@@ -30,7 +30,7 @@ Task::Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer& buffer)
     id = UtilityFunctions::getNextTaskId();
 }
 
-Task::Task() : pipeline(), buf(), id(-1) {}
+Task::Task() : pipeline(), buf() {}
 
 ExecutionResult Task::operator()(WorkerContextRef workerContext) {
     // execute this task.

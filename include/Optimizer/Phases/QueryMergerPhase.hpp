@@ -23,7 +23,7 @@
 
 namespace z3 {
 class context;
-typedef std::shared_ptr<context> ContextPtr;
+using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Optimizer {
@@ -49,13 +49,13 @@ static const std::map<std::string, QueryMergerRule> stringToMergerRuleEnum{
 };
 
 class QueryMergerPhase;
-typedef std::shared_ptr<QueryMergerPhase> QueryMergerPhasePtr;
+using QueryMergerPhasePtr = std::shared_ptr<QueryMergerPhase>;
 
 class SyntaxBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<SyntaxBasedCompleteQueryMergerRule> SyntaxBasedCompleteQueryMergerRulePtr;
+using SyntaxBasedCompleteQueryMergerRulePtr = std::shared_ptr<SyntaxBasedCompleteQueryMergerRule>;
 
 class Z3SignatureBasedCompleteQueryMergerRule;
-typedef std::shared_ptr<Z3SignatureBasedCompleteQueryMergerRule> Z3SignatureBasedCompleteQueryMergerRulePtr;
+using Z3SignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<Z3SignatureBasedCompleteQueryMergerRule>;
 
 class QueryMergerPhase {
 

@@ -24,99 +24,99 @@ class NodeStats;
 enum PipelineStageArity : uint8_t { Unary, BinaryLeft, BinaryRight };
 
 class PhysicalType;
-typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class SinkMedium;
-typedef std::shared_ptr<SinkMedium> DataSinkPtr;
+using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 class DataSource;
-typedef std::shared_ptr<DataSource> DataSourcePtr;
+using DataSourcePtr = std::shared_ptr<DataSource>;
 
 namespace NodeEngine {
 
 class TupleBuffer;
 
 class PhysicalField;
-typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
+using PhysicalFieldPtr = std::shared_ptr<PhysicalField>;
 template<class ValueType>
 class BasicPhysicalField;
 class ArrayPhysicalField;
 
 class PhysicalSchema;
-typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
+using PhysicalSchemaPtr = std::shared_ptr<PhysicalSchema>;
 
 class TupleBuffer;
 
 class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
 class LocalBufferPool;
-typedef std::shared_ptr<LocalBufferPool> LocalBufferPoolPtr;
+using LocalBufferPoolPtr = std::shared_ptr<LocalBufferPool>;
 
 class FixedSizeBufferPool;
-typedef std::shared_ptr<FixedSizeBufferPool> FixedSizeBufferPoolPtr;
+using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
 
 class WorkerContext;
-typedef WorkerContext& WorkerContextRef;
+using WorkerContextRef = WorkerContext &;
 
 class NodeStatsProvider;
-typedef std::shared_ptr<NodeStatsProvider> NodeStatsProviderPtr;
+using NodeStatsProviderPtr = std::shared_ptr<NodeStatsProvider>;
 
 class NodeEngine;
-typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 class QueryManager;
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 class StateManager;
-typedef std::shared_ptr<StateManager> StateManagerPtr;
+using StateManagerPtr = std::shared_ptr<StateManager>;
 
 class QueryStatistics;
-typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
+using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 class ReconfigurationMessage;
 
 namespace Execution {
 
 class OperatorHandler;
-typedef std::shared_ptr<OperatorHandler> OperatorHandlerPtr;
+using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 
 class ExecutablePipeline;
-typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
+using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 
 class ExecutableQueryPlan;
-typedef std::shared_ptr<ExecutableQueryPlan> ExecutableQueryPlanPtr;
+using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
-typedef std::variant<DataSinkPtr, ExecutablePipelinePtr> SuccessorExecutablePipeline;
-typedef std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>> PredecessorExecutablePipeline;
+using SuccessorExecutablePipeline = std::variant<DataSinkPtr, ExecutablePipelinePtr>;
+using PredecessorExecutablePipeline = std::variant<std::weak_ptr<DataSource>, std::weak_ptr<ExecutablePipeline>>;
 
 class ExecutablePipelineStage;
-typedef std::shared_ptr<ExecutablePipelineStage> ExecutablePipelineStagePtr;
+using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 
 class PipelineExecutionContext;
-typedef std::shared_ptr<PipelineExecutionContext> PipelineExecutionContextPtr;
+using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 
 }// namespace Execution
 
 namespace DynamicMemoryLayout {
 
 class DynamicMemoryLayout;
-typedef std::shared_ptr<DynamicMemoryLayout> DynamicMemoryLayoutPtr;
+using DynamicMemoryLayoutPtr = std::shared_ptr<DynamicMemoryLayout>;
 
 class DynamicColumnLayout;
-typedef std::shared_ptr<DynamicColumnLayout> DynamicColumnLayoutPtr;
+using DynamicColumnLayoutPtr = std::shared_ptr<DynamicColumnLayout>;
 
 class DynamicColumnLayoutBuffer;
-typedef std::shared_ptr<DynamicColumnLayoutBuffer> DynamicColumnLayoutBufferPtr;
+using DynamicColumnLayoutBufferPtr = std::shared_ptr<DynamicColumnLayoutBuffer>;
 
 class DynamicRowLayout;
-typedef std::shared_ptr<DynamicRowLayout> DynamicRowLayoutPtr;
+using DynamicRowLayoutPtr = std::shared_ptr<DynamicRowLayout>;
 
 class DynamicRowLayoutBuffer;
-typedef std::shared_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
+using DynamicRowLayoutBufferPtr = std::shared_ptr<DynamicRowLayoutBuffer>;
 
 }// namespace DynamicMemoryLayout
 
@@ -124,7 +124,7 @@ typedef std::shared_ptr<DynamicRowLayoutBuffer> DynamicRowLayoutBufferPtr;
 
 namespace QueryCompilation {
 class QueryCompiler;
-typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
+using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 }// namespace QueryCompilation
 
 }// namespace NES

@@ -44,11 +44,11 @@ class BinaryOperatorStatement : public ExpressionStatment {
 
     StatementPtr assignToVariable(const VarRefStatement& lhs);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
     //  BinaryOperatorStatement operator [](const ExpressionStatment &ref){
     //    return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);

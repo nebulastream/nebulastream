@@ -75,7 +75,7 @@ class MemorySource : public GeneratorSource {
     uint64_t currentPositionInBytes;
 };
 
-typedef std::shared_ptr<MemorySource> MemorySourcePtr;
+using MemorySourcePtr = std::shared_ptr<MemorySource>;
 
 }// namespace NES
 

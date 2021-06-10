@@ -71,6 +71,6 @@ class SenseSource : public DataSource {
     std::string udsf;
 };
 
-typedef std::shared_ptr<SenseSource> SenseSourcePtr;
+using SenseSourcePtr = std::shared_ptr<SenseSource>;
 
 }// namespace NES

@@ -22,13 +22,13 @@
 
 namespace NES {
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class QueryPlacementRefinementPhase;
-typedef std::shared_ptr<QueryPlacementRefinementPhase> QueryPlacementRefinementPhasePtr;
+using QueryPlacementRefinementPhasePtr = std::shared_ptr<QueryPlacementRefinementPhase>;
 
 /**
  * @brief This phase is responsible for refinement of the query plan

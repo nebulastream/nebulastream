@@ -82,7 +82,7 @@ bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr query
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(channel);
 
     // Call object to store rpc data
-    AsyncClientCall<RegisterQueryReply>* call = new AsyncClientCall<RegisterQueryReply>;
+    auto* call = new AsyncClientCall<RegisterQueryReply>;
 
     // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
     // an instance to store in "call" but does not actually start the RPC
@@ -114,19 +114,19 @@ bool WorkerRPCClient::checkAsyncResult(std::map<CompletionQueuePtr, uint64_t> qu
             // The tag in this example is the memory location of the call object
             bool status = false;
             if (mode == Register) {
-                AsyncClientCall<RegisterQueryReply>* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
+                auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
             } else if (mode == Unregister) {
-                AsyncClientCall<UnregisterQueryReply>* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
+                auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
             } else if (mode == Start) {
-                AsyncClientCall<StartQueryReply>* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
+                auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
             } else if (mode == Stop) {
-                AsyncClientCall<StopQueryReply>* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
+                auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
                 status = call->status.ok();
                 delete call;
             } else {
@@ -157,7 +157,7 @@ bool WorkerRPCClient::unregisterQueryAsync(std::string address, QueryId queryId,
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
 
     // Call object to store rpc data
-    AsyncClientCall<UnregisterQueryReply>* call = new AsyncClientCall<UnregisterQueryReply>;
+    auto* call = new AsyncClientCall<UnregisterQueryReply>;
 
     // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
     // an instance to store in "call" but does not actually start the RPC
@@ -238,7 +238,7 @@ bool WorkerRPCClient::startQueryAsyn(std::string address, QueryId queryId, Compl
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
 
     // Call object to store rpc data
-    AsyncClientCall<StartQueryReply>* call = new AsyncClientCall<StartQueryReply>;
+    auto* call = new AsyncClientCall<StartQueryReply>;
 
     // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
     // an instance to store in "call" but does not actually start the RPC
@@ -294,7 +294,7 @@ bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, Compl
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
 
     // Call object to store rpc data
-    AsyncClientCall<StopQueryReply>* call = new AsyncClientCall<StopQueryReply>;
+    auto* call = new AsyncClientCall<StopQueryReply>;
 
     // workerStub->PrepareAsyncRegisterQuery() creates an RPC object, returning
     // an instance to store in "call" but does not actually start the RPC

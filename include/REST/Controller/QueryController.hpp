@@ -32,17 +32,17 @@
 namespace NES {
 
 class NesCoordinator;
-typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
-typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
+using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
+using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class QueryController : public BaseController {
   public:
@@ -81,6 +81,6 @@ class QueryController : public BaseController {
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
 
-typedef std::shared_ptr<QueryController> QueryControllerPtr;
+using QueryControllerPtr = std::shared_ptr<QueryController>;
 
 }// namespace NES

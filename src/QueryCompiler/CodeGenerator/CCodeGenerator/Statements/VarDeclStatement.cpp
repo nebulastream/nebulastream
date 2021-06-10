@@ -29,6 +29,6 @@ const ExpressionStatmentPtr VarDeclStatement::copy() const { return std::make_sh
 VarDeclStatement::VarDeclStatement(const VariableDeclaration& var_decl)
     : variableDeclaration(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}
 
-VarDeclStatement::~VarDeclStatement() {}
+VarDeclStatement::~VarDeclStatement() = default;
 }// namespace QueryCompilation
 }// namespace NES

@@ -31,7 +31,7 @@ class GeneratableValueType {
      * @brief Generate the code expression for this value type.
      * @return CodeExpressionPtr
      */
-    virtual CodeExpressionPtr getCodeExpression() const noexcept = 0;
+    [[nodiscard]] virtual CodeExpressionPtr getCodeExpression() const noexcept = 0;
 };
 }// namespace QueryCompilation
 }// namespace NES

@@ -24,13 +24,13 @@
 namespace NES {
 
 class CoordinatorConfig;
-typedef std::shared_ptr<CoordinatorConfig> CoordinatorConfigPtr;
+using CoordinatorConfigPtr = std::shared_ptr<CoordinatorConfig>;
 
 template<class T>
 class ConfigOption;
-typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
-typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
-typedef std::shared_ptr<ConfigOption<bool>> BoolConfigOption;
+using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
+using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
+using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
  * @brief ConfigOptions for Coordinator

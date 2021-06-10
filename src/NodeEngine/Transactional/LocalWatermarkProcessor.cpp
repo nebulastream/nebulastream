@@ -16,7 +16,7 @@
 #include <NodeEngine/Transactional/LocalWatermarkProcessor.hpp>
 namespace NES::NodeEngine::Transactional {
 
-LocalWatermarkProcessor::LocalWatermarkProcessor() : currentWatermark(0), currentSequenceNumber(0) {}
+LocalWatermarkProcessor::LocalWatermarkProcessor()  {}
 
 void LocalWatermarkProcessor::updateWatermark(WatermarkBarrier& watermarkBarrier) {
     std::unique_lock lock(watermarkLatch);

@@ -21,7 +21,7 @@
 namespace NES {
 
 class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
+using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /**
  * @brief This expression node represents a constant value and a fixed data type.
