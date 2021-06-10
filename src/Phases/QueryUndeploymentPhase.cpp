@@ -49,7 +49,7 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
     std::vector<ExecutionNodePtr> executionNodes = globalExecutionPlan->getExecutionNodesByQueryId(queryId);
 
     if (executionNodes.empty()) {
-        NES_ERROR(catString("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query ", queryId," is deployed"));
+        NES_ERROR(catString("QueryUndeploymentPhase: Unable to find ExecutionNodes where the query ", queryId, " is deployed"));
         return false;
     }
 
@@ -71,7 +71,6 @@ bool QueryUndeploymentPhase::execute(const QueryId queryId) {
         NES_ERROR("QueryUndeploymentPhase:removeQuery: undeploy query failed");
         // XXX: C++2a: Modernize to std::format("Failed to stop the query {}.", queryId)
         throw QueryUndeploymentException(catString("Failed to stop the query ", queryId, '.'));
-
     }
 
     const std::map<uint64_t, uint32_t>& resourceMap = globalExecutionPlan->getMapOfTopologyNodeIdToOccupiedResource(queryId);
@@ -89,7 +88,7 @@ bool QueryUndeploymentPhase::stopQuery(QueryId queryId, std::vector<ExecutionNod
     //NOTE: the uncommented lines below have to be activated for async calls
     //    std::map<CompletionQueuePtr, uint64_t> completionQueues;
 
-    for (auto &&executionNode : executionNodes) {
+    for (auto&& executionNode : executionNodes) {
         CompletionQueuePtr queueForExecutionNode = std::make_shared<CompletionQueue>();
         const auto& nesNode = executionNode->getTopologyNode();
         auto ipAddress = nesNode->getIpAddress();
