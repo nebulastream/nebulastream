@@ -104,7 +104,8 @@ class TestSink : public SinkMedium {
 
     void shutdown() override{};
 
-    ~TestSink() override= default;;
+    ~TestSink() override = default;
+    ;
 
   public:
     std::mutex m;
