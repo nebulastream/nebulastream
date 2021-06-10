@@ -118,8 +118,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsTest) {
         }
     }
 
-    for (auto i = 0; i < watermarkBarriers.size(); i++) {
-        auto currentWatermarkBarrier = watermarkBarriers[i];
+    for (auto currentWatermarkBarrier : watermarkBarriers) {
         auto oldWatermark = watermarkManager->getCurrentWatermark();
         ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
         watermarkManager->updateWatermark(currentWatermarkBarrier);
@@ -148,8 +147,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkUpdaterMultipleOriginsOutofOrd
     std::mt19937 g(rd());
     std::shuffle(watermarkBarriers.begin(), watermarkBarriers.end(), g);
 
-    for (auto i = 0; i < watermarkBarriers.size(); i++) {
-        auto currentWatermarkBarrier = watermarkBarriers[i];
+    for (auto currentWatermarkBarrier : watermarkBarriers) {
         auto oldWatermark = watermarkManager->getCurrentWatermark();
         ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
         watermarkManager->updateWatermark(currentWatermarkBarrier);
@@ -220,8 +218,7 @@ TEST_F(WatermarkManagerTest, singleThreadWatermarkEmitterAndUpdaterTest) {
         }
     }
 
-    for (auto i = 0; i < watermarkBarriers.size(); i++) {
-        auto currentWatermarkBarrier = watermarkBarriers[i];
+    for (auto currentWatermarkBarrier : watermarkBarriers) {
         auto oldWatermark = watermarkManager->getCurrentWatermark();
         ASSERT_LT(oldWatermark, currentWatermarkBarrier.getTs());
         watermarkManager->updateWatermark(currentWatermarkBarrier);
