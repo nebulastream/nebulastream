@@ -483,14 +483,14 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
 
     srcConf->setSourceType("CSVSource");
     srcConf->setSourceConfig("../tests/test_data/exdra.csv");
-    srcConf->setNumberOfTuplesToProducePerBuffer(1); // when set to 0 it breaks
+    srcConf->setNumberOfTuplesToProducePerBuffer(0); // when set to 0 it breaks
     srcConf->setPhysicalStreamName("test_stream");
     srcConf->setLogicalStreamName("exdra");
-    srcConf->setNumberOfBuffersToProduce(3000);
+    srcConf->setNumberOfBuffersToProduce(1000);
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk4->registerPhysicalStream(conf);
-    std::string filePath = "contTestOut.csv";
+    std::string filePath = "withMigration.csv";
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -523,8 +523,8 @@ TEST_F(QueryMigrationPhaseIntegrationTest, DiamondTopologySingleQuerySecondStrat
 
     ASSERT_TRUE(globalExecutionPlan->checkIfExecutionNodeExists(3));
     ASSERT_TRUE(wrk3->getNodeEngine()->getDeployedQEP(3));
-    queryService->validateAndQueueStopRequest(queryId);
-    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+//    queryService->validateAndQueueStopRequest(queryId);
+//    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
 
     NES_INFO("QueryDeploymentTest: Stop worker 2");
     bool retStopWrk2 = wrk2->stop(true);
@@ -597,7 +597,7 @@ TEST_F(QueryMigrationPhaseIntegrationTest, test) {
     //register physical stream
     PhysicalStreamConfigPtr conf = PhysicalStreamConfig::create(srcConf);
     wrk3->registerPhysicalStream(conf);
-    std::string filePath = "contTestOut.csv";
+    std::string filePath = "withoutMigration.csv";
     remove(filePath.c_str());
     QueryServicePtr queryService = crd->getQueryService();
     QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
@@ -608,20 +608,20 @@ TEST_F(QueryMigrationPhaseIntegrationTest, test) {
     QueryId queryId = queryService->validateAndQueueAddRequest(queryString, "BottomUp");
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
+    NES_INFO("QueryDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+    NES_DEBUG("Worker1 stopped!");
+
     NES_INFO("QueryDeploymentTest: Stop worker 2");
-    bool retStopWrk2 = wrk1->stop(true);
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
     NES_DEBUG("Worker2 stopped!");
 
     NES_INFO("QueryDeploymentTest: Stop worker 3");
-    bool retStopWrk3 = wrk2->stop(true);
+    bool retStopWrk3 = wrk3->stop(true);
     EXPECT_TRUE(retStopWrk3);
     NES_DEBUG("Worker3 stopped!");
-
-    NES_INFO("QueryDeploymentTest: Stop worker 4");
-    bool retStopWrk4 = wrk3->stop(true);
-    EXPECT_TRUE(retStopWrk4);
-    NES_DEBUG("Worker4 stopped!");
 
     NES_INFO("QueryDeploymentTest: Stop Coordinator");
     bool retStopCord = crd->stopCoordinator(true);
