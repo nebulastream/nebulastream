@@ -398,27 +398,19 @@ bool CCodeGenerator::generateCodeForInferModel(PipelineContextPtr context, std::
     auto generateTensorFlowInitCall = call("tensorflowAdapter->initializeModel(\"" + model +"\"); \n tensorflowAdapter->pass");
     code->variableInitStmts.push_back(generateTensorFlowInitCall);
 
-    auto inputVectorDeclaration = VariableDeclaration::create(tf->createAnonymusDataType("auto"), "inputVector");
-    auto inputVectorCreateCall = call("std::vector<float>");
-    auto inputVectorDeclStatement = VarDeclStatement(inputVectorDeclaration).assign(inputVectorCreateCall);
-    code->variableInitStmts.push_back(inputVectorDeclStatement.copy());
+    auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
+    generateTensorFlowInferCall->addParameter(Constant(tf->createValueType(DataTypeFactory::createBasicValue((uint64_t) inputFields.size()))));
 
     for (auto f : inputFields){
-        auto pushbackCall = call("inputVector.push_back");
         auto field = f->getExpressionNode()->as<FieldAccessExpressionNode>();
         auto attrField = AttributeField::create(field->getFieldName(), field->getStamp());
         auto variableDeclaration = VariableDeclaration::create(DataTypeFactory::createFloat(), attrField->getName());
-        pushbackCall->addParameter(
+        generateTensorFlowInferCall->addParameter(
             VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)]
                 .accessRef(VarRef(variableDeclaration)));
-        code->currentCodeInsertionPoint->addStatement(pushbackCall);
     }
 
-    auto generateTensorFlowInferCall = call("tensorflowAdapter->infer");
-    generateTensorFlowInferCall->addParameter(VarRef(inputVectorDeclaration));
     code->currentCodeInsertionPoint->addStatement(generateTensorFlowInferCall);
-
-    code->currentCodeInsertionPoint->addStatement(call("inputVector.clear"));
 
     for (int i = 0; i < outputFields.size(); ++i) {
         auto field = outputFields.at(i)->getExpressionNode()->as<FieldAccessExpressionNode>();

@@ -20,6 +20,8 @@
 #include "tensorflow/lite/model.h"
 #include "tensorflow/lite/optional_debug_tools.h"
 #include <iostream>
+#include <stdio.h>
+#include <stdarg.h>
 
 #define TFLITE_MINIMAL_CHECK(x)                              \
   if (!(x)) {                                                \
@@ -29,9 +31,20 @@
 
 NES::TensorflowAdapter::TensorflowAdapter() {}
 
-void NES::TensorflowAdapter::initializeModel(std::string m){
-    model = m;
+void NES::TensorflowAdapter::initializeModel(std::string model){
     std::cout << "INITIALIZING MODEL: " << model << std::endl;
+
+    std::unique_ptr<tflite::FlatBufferModel> ml_model =
+        tflite::FlatBufferModel::BuildFromFile(model.c_str());
+
+    tflite::ops::builtin::BuiltinOpResolver resolver;
+    tflite::InterpreterBuilder builder(*ml_model, resolver);
+
+    builder(&interpreter);
+    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
+
+    // Allocate tensor buffers.
+    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
 }
 
 NES::SemanticQueryValidationPtr NES::TensorflowAdapter::create() {
@@ -42,24 +55,17 @@ float NES::TensorflowAdapter::getResultAt(int i) {
     return output[i];
 }
 
-void NES::TensorflowAdapter::infer(std::vector<float> v){
-    std::unique_ptr<tflite::FlatBufferModel> ml_model =
-        tflite::FlatBufferModel::BuildFromFile(model.c_str());
-
-    tflite::ops::builtin::BuiltinOpResolver resolver;
-    tflite::InterpreterBuilder builder(*ml_model, resolver);
-    std::unique_ptr<tflite::Interpreter> interpreter;
-    builder(&interpreter);
-    TFLITE_MINIMAL_CHECK(interpreter != nullptr);
-
-    // Allocate tensor buffers.
-    TFLITE_MINIMAL_CHECK(interpreter->AllocateTensors() == kTfLiteOk);
+void NES::TensorflowAdapter::infer(int n, ...){
+    va_list vl;
+    va_start(vl, n);
 
     float* input = interpreter->typed_input_tensor<float>(0);
 
-    for (int i = 0; i < v.size(); ++i) {
-        input[i] = v.at(i);
+    for (int i = 0; i < n; ++i) {
+        input[i] = (float) va_arg(vl, double);
     }
+
+    va_end(vl);
 
     // Run inference
     TFLITE_MINIMAL_CHECK(interpreter->Invoke() == kTfLiteOk);
