@@ -2270,4 +2270,111 @@ TEST_F(ConcurrentWindowDeploymentTest, testDeploymentOfWindowWithCountAggregatio
     EXPECT_EQ(actualOutput.size(), expectedOutput.size());
     EXPECT_THAT(actualOutput, ::testing::UnorderedElementsAreArray(expectedOutput));
 }
+
+/**
+ * @brief test central tumbling window and event time
+ */
+TEST_F(ConcurrentWindowDeploymentTest, testLongWindow) {
+    CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();
+    WorkerConfigPtr workerConfig = WorkerConfig::create();
+    SourceConfigPtr sourceConfig = SourceConfig::create();
+
+    coordinatorConfig->setRpcPort(rpcPort);
+    coordinatorConfig->setRestPort(restPort);
+    workerConfig->setCoordinatorPort(rpcPort);
+    workerConfig->setNumWorkerThreads(workerThreads);
+
+    NES_INFO("WindowDeploymentTest: Start coordinator");
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
+    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    EXPECT_NE(port, 0);
+    NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
+
+    NES_DEBUG("WindowDeploymentTest: Start worker 1");
+    workerConfig->setCoordinatorPort(port);
+    workerConfig->setRpcPort(port + 10);
+    workerConfig->setDataPort(port + 11);
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>(workerConfig, NesNodeType::Sensor);
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true);
+    EXPECT_TRUE(retStart1);
+    NES_INFO("WindowDeploymentTest: Worker1 started successfully");
+
+    QueryServicePtr queryService = crd->getQueryService();
+    QueryCatalogPtr queryCatalog = crd->getQueryCatalog();
+
+    auto schema = Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);
+
+    std::string input = R"(Schema::create()->addField("key", UINT64)->addField("value", UINT64)->addField("ts", UINT64);)";
+    std::string testSchemaFileName = "Schema.hpp";
+    std::ofstream out(testSchemaFileName);
+    out << input;
+    out.close();
+    NES_ASSERT(crd->getNesWorker()->registerLogicalStream("schema", testSchemaFileName), "failed to create logical stream ysb");
+    std::atomic<int> recordCounter = 0;
+    auto func = [&recordCounter](NES::NodeEngine::TupleBuffer& buffer, uint64_t) {
+        struct __attribute__((packed)) Record {
+            Record() = default;
+            Record(uint64_t key, uint64_t value, uint64_t ts) : key(key), value(value), ts(ts) {}
+
+            uint64_t key;
+            uint64_t value;
+            uint64_t ts;
+
+            Record(const Record& rhs) {
+                key = rhs.key;
+                value = rhs.value;
+                ts = rhs.ts;
+            }
+            std::string toString() const {
+                return "Record(key=" + std::to_string(key) + ", value=" + std::to_string(value) + ", ts=" + std::to_string(ts);
+            }
+        };
+
+        auto records = buffer.getBuffer<Record>();
+        auto ts = (recordCounter) / 100;
+        for (auto u = 0u; u < 100; ++u) {
+            //                    memset(&records, 0, sizeof(YsbRecord));
+            records[u].key = recordCounter % 10;
+            records[u].value = 1;
+            records[u].ts = ts;
+            recordCounter++;
+        }
+        NES_WARNING("Lambda last entry is=" << records[100 - 1].toString());
+        buffer.setNumberOfTuples(100);
+        return;
+    };
+
+    std::string outputFilePath = "source.out";
+    NES::AbstractPhysicalStreamConfigPtr conf =
+        NES::LambdaSourceStreamConfig::create("LambdaSource", "Source_phy", "schema", func, 100, 0, "frequency");
+
+    wrk1->registerPhysicalStream(conf);
+
+    NES_INFO("WindowDeploymentTest: Submit query");
+    string query = "Query::from(\"schema\").window(TumblingWindow::of(EventTime(Attribute(\"ts\")), "
+                   "Milliseconds(10))).byKey(Attribute(\"key\")).apply(Sum(Attribute(\"value\"))).sink("
+                   "FileSinkDescriptor::create(\""
+        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+
+    QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
+    //todo will be removed once the new window source is in place
+    GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
+    EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
+
+    EXPECT_TRUE(TestUtils::checkIfOutputFileIsNotEmtpy(1, outputFilePath));
+
+    queryService->validateAndQueueStopRequest(queryId);
+    EXPECT_TRUE(TestUtils::checkStoppedOrTimeout(queryId, queryCatalog));
+
+    //here we can only check if the file exists and has some content
+
+    NES_INFO("WindowDeploymentTest: Stop worker 1");
+    bool retStopWrk1 = wrk1->stop(true);
+    EXPECT_TRUE(retStopWrk1);
+
+    NES_INFO("WindowDeploymentTest: Stop Coordinator");
+    bool retStopCord = crd->stopCoordinator(true);
+    EXPECT_TRUE(retStopCord);
+    NES_INFO("WindowDeploymentTest: Test finished");
+}
 }// namespace NES

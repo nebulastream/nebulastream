@@ -160,7 +160,7 @@ class ExecutableCompleteAggregationTriggerAction
 
         //trigger a window operator
         for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
-            NES_TRACE("ExecutableCompleteAggregationTriggerAction"
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction"
                       << id << ": (" << this->windowDefinition->getDistributionType()->toString() << "): trigger sliceid="
                       << sliceId << " start=" << slices[sliceId].getStartTs() << " end=" << slices[sliceId].getEndTs());
         }
@@ -174,7 +174,7 @@ class ExecutableCompleteAggregationTriggerAction
                       << id << " (" << this->windowDefinition->getDistributionType()->toString()
                       << "): trigger Complete or combining window for slices=" << slices.size() << " windows=" << windows.size());
         } else {
-            NES_TRACE("ExecutableCompleteAggregationTriggerAction "
+            NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
                       << id << ": aggregateWindows No trigger because NOT currentWatermark=" << currentWatermark
                       << " > lastWatermark=" << lastWatermark);
         }
@@ -195,7 +195,7 @@ class ExecutableCompleteAggregationTriggerAction
             for (uint64_t windowId = 0; windowId < windows.size(); windowId++) {
                 auto window = windows[windowId];
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
-                NES_TRACE("ExecutableCompleteAggregationTriggerAction "
+                NES_DEBUG("ExecutableCompleteAggregationTriggerAction "
                           << id << ": (" << this->windowDefinition->getDistributionType()->toString() << "): key=" << key
                           << " window.getStartTs()=" << window.getStartTs() << " slices[sliceId].getStartTs()="
                           << slices[sliceId].getStartTs() << " window.getEndTs()=" << window.getEndTs()

@@ -56,7 +56,7 @@ LambdaSource::LambdaSource(
         NES_THROW_RUNTIME_ERROR("Mode not implemented " << gatheringMode);
     }
     numberOfTuplesToProduce = this->globalBufferManager->getBufferSize() / this->schema->getSchemaSizeInBytes();
-    wasGracefullyStopped = false;
+    wasGracefullyStopped = true;
 }
 
 std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
@@ -71,10 +71,10 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
 
     NES_ASSERT2_FMT(numberOfTuplesToProduce * schema->getSchemaSizeInBytes() <= buffer->getBufferSize(),
                     "value to write is larger than the buffer");
-
+    buffer->setNumberOfTuples(numberOfTuplesToProduce);
     generationFunction(buffer.value(), numberOfTuplesToProduce);
 
-    buffer->setNumberOfTuples(numberOfTuplesToProduce);
+
     generatedTuples += buffer->getNumberOfTuples();
     generatedBuffers++;
 
