@@ -441,8 +441,8 @@ class TestUtils {
                     continue;
                 }
 
-                for (uint64_t i = 0; i < expectedlines.size(); i++) {
-                    if (content.find(expectedlines[i]) != std::string::npos) {
+                for (auto & expectedline : expectedlines) {
+                    if (content.find(expectedline) != std::string::npos) {
                         found++;
                     }
                 }

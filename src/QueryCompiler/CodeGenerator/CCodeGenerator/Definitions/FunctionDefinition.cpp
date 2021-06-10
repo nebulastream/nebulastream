@@ -62,12 +62,12 @@ DeclarationPtr FunctionDefinition::getDeclaration() {
     function << "){";
 
     function << std::endl << "/* variable declarations */" << std::endl;
-    for (uint64_t i = 0; i < variablDeclarations.size(); ++i) {
-        function << variablDeclarations[i].getCode() << ";";
+    for (auto & variablDeclaration : variablDeclarations) {
+        function << variablDeclaration.getCode() << ";";
     }
     function << std::endl << "/* statements section */" << std::endl;
-    for (uint64_t i = 0; i < statements.size(); ++i) {
-        function << statements[i]->getCode()->code_ << ";";
+    for (auto & statement : statements) {
+        function << statement->getCode()->code_ << ";";
     }
     function << "}";
 

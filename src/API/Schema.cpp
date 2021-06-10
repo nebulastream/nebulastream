@@ -81,9 +81,9 @@ void Schema::removeField(AttributeFieldPtr field) {
 }
 
 void Schema::replaceField(const std::string& name, DataTypePtr type) {
-    for (auto i = 0; i < fields.size(); i++) {
-        if (fields[i]->getName() == name) {
-            fields[i] = AttributeField::create(name, type);
+    for (auto & field : fields) {
+        if (field->getName() == name) {
+            field = AttributeField::create(name, type);
             return;
         }
     }

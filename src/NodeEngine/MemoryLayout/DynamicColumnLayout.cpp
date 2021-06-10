@@ -54,9 +54,9 @@ DynamicColumnLayoutBufferPtr DynamicColumnLayout::bind(TupleBuffer tupleBuffer) 
 
     uint64_t capacity = tupleBuffer.getBufferSize() / recordSize;
     uint64_t offsetCounter = 0;
-    for (auto it = fieldSizes.begin(); it != fieldSizes.end(); ++it) {
+    for (unsigned long & fieldSize : fieldSizes) {
         columnOffsets.emplace_back(offsetCounter);
-        offsetCounter += (*it) * capacity;
+        offsetCounter += fieldSize * capacity;
     }
     return std::make_shared<DynamicColumnLayoutBuffer>(tupleBuffer, capacity, this->shared_from_this(), columnOffsets);
 }
