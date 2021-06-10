@@ -22,13 +22,14 @@
 #include <REST/Controller/QueryCatalogController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
 QueryCatalogController::QueryCatalogController(QueryCatalogPtr queryCatalog,
                                                NesCoordinatorWeakPtr coordinator,
                                                GlobalQueryPlanPtr globalQueryPlan)
-    : queryCatalog(queryCatalog), coordinator(coordinator), globalQueryPlan(globalQueryPlan) {
+    : queryCatalog(std::move(queryCatalog)), coordinator(std::move(coordinator)), globalQueryPlan(std::move(globalQueryPlan)) {
     NES_DEBUG("QueryCatalogController()");
 }
 

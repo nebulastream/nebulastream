@@ -40,7 +40,7 @@ class StatementBuilder {
     static StatementBuilder create(const std::string& struct_name);
 };
 
-FunctionDefinition::FunctionDefinition(const std::string& functionName) : name(functionName) {}
+FunctionDefinition::FunctionDefinition(std::string  functionName) : name(std::move(functionName)) {}
 
 FunctionDefinitionPtr FunctionDefinition::create(const std::string& functionName) {
     return std::make_shared<FunctionDefinition>(functionName);

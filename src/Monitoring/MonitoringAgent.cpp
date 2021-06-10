@@ -22,6 +22,7 @@
 #include <Monitoring/MonitoringAgent.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -32,7 +33,7 @@ MonitoringAgent::MonitoringAgent()
 }
 
 MonitoringAgent::MonitoringAgent(MonitoringPlanPtr monitoringPlan, MetricCatalogPtr catalog)
-    : monitoringPlan(monitoringPlan), catalog(catalog), schema(monitoringPlan->createSchema()) {
+    : monitoringPlan(monitoringPlan), catalog(std::move(catalog)), schema(monitoringPlan->createSchema()) {
     NES_DEBUG("MonitoringAgent: Init with monitoring plan " + monitoringPlan->toString());
 }
 

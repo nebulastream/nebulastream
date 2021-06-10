@@ -45,7 +45,7 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 
     auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create();
 
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); ";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100); )";
 
     syntacticQueryValidation->checkValidity(queryString);
 }
@@ -54,7 +54,7 @@ TEST_F(SyntacticQueryValidationTest, validQueryTest) {
 TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
     NES_INFO("Missing semicolon test");
 
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100) ";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100) )";
 
     TestForException(queryString);
 }
@@ -63,7 +63,7 @@ TEST_F(SyntacticQueryValidationTest, missingSemicolonTest) {
 TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
     NES_INFO("Typo in filter test");
 
-    std::string queryString = "Query::from(\"default_logical\").fliter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100); ";
+    std::string queryString = R"(Query::from("default_logical").fliter(Attribute("id") > 10 && Attribute("id") < 100); )";
 
     TestForException(queryString);
 }
@@ -72,7 +72,7 @@ TEST_F(SyntacticQueryValidationTest, typoInFilterTest) {
 TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
     NES_INFO("Missing closing parenthesis test");
 
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 && Attribute(\"id\") < 100; ";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 && Attribute("id") < 100; )";
 
     TestForException(queryString);
 }
@@ -81,7 +81,7 @@ TEST_F(SyntacticQueryValidationTest, missingClosingParenthesisTest) {
 TEST_F(SyntacticQueryValidationTest, invalidBoolOperatorTest) {
     NES_INFO("Invalid bool operator test");
 
-    std::string queryString = "Query::from(\"default_logical\").filter(Attribute(\"id\") > 10 & Attribute(\"id\") < 100); ";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("id") > 10 & Attribute("id") < 100); )";
 
     TestForException(queryString);
 }

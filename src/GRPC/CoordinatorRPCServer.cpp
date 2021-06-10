@@ -17,9 +17,10 @@
 #include <CoordinatorEngine/CoordinatorEngine.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 using namespace NES;
 
-CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine) : coordinatorEngine(coordinatorEngine){};
+CoordinatorRPCServer::CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine) : coordinatorEngine(std::move(coordinatorEngine)){};
 
 Status CoordinatorRPCServer::RegisterNode(ServerContext*, const RegisterNodeRequest* request, RegisterNodeReply* reply) {
     NES_DEBUG("CoordinatorEngine::RegisterNode: request =" << request);

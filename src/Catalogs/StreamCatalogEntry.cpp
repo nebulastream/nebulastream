@@ -17,6 +17,7 @@
 #include <Catalogs/StreamCatalogEntry.hpp>
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -24,11 +25,11 @@ StreamCatalogEntry::StreamCatalogEntry(std::string sourceType,
                                        std::string physicalStreamName,
                                        std::string logicalStreamName,
                                        TopologyNodePtr node)
-    : sourceType(sourceType), physicalStreamName(physicalStreamName), logicalStreamName(logicalStreamName), node(node) {}
+    : sourceType(std::move(sourceType)), physicalStreamName(std::move(physicalStreamName)), logicalStreamName(std::move(logicalStreamName)), node(std::move(node)) {}
 
 StreamCatalogEntry::StreamCatalogEntry(AbstractPhysicalStreamConfigPtr config, TopologyNodePtr node)
     : sourceType(config->getSourceType()), physicalStreamName(config->getPhysicalStreamName()),
-      logicalStreamName(config->getLogicalStreamName()), node(node) {
+      logicalStreamName(config->getLogicalStreamName()), node(std::move(node)) {
     // nop
 }
 

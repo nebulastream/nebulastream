@@ -51,7 +51,7 @@ class StructDeclaration : public Declaration {
     ~StructDeclaration() override;
 
   private:
-    StructDeclaration(const std::string& type_name, const std::string& variable_name);
+    StructDeclaration(std::string  type_name, std::string  variable_name);
     std::string type_name_;
     std::string variable_name_;
     std::vector<DeclarationPtr> decls_;

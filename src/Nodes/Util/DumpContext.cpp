@@ -16,10 +16,11 @@
 
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/DumpHandler.hpp>
+#include <utility>
 
 namespace NES {
 
-DumpContext::DumpContext(std::string contextIdentifier) : context(contextIdentifier) {}
+DumpContext::DumpContext(std::string contextIdentifier) : context(std::move(contextIdentifier)) {}
 
 DumpContextPtr DumpContext::create() { return std::make_shared<DumpContext>("NullContext"); }
 

@@ -14,6 +14,7 @@
     limitations under the License.
 */
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::PhysicalOperators {
 
@@ -21,7 +22,7 @@ PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                ExpressionNodePtr predicate)
-    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(predicate) {}
+    : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), predicate(std::move(predicate)) {}
 
 PhysicalOperatorPtr
 PhysicalFilterOperator::create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression) {

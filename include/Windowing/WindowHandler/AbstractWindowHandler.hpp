@@ -48,7 +48,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
 
   public:
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
-        : windowDefinition(windowDefinition), running(false) {
+        : windowDefinition(std::move(windowDefinition)), running(false) {
         // nop
     }
 

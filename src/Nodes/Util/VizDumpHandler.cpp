@@ -25,10 +25,11 @@
 #include <Util/UtilityFunctions.hpp>
 #include <filesystem>
 #include <iostream>
+#include <utility>
 
 namespace NES {
 
-detail::VizGraph::VizGraph(std::string name) : name(name) {}
+detail::VizGraph::VizGraph(std::string name) : name(std::move(name)) {}
 
 std::string detail::VizGraph::serialize() {
     std::stringstream ss;
@@ -53,7 +54,7 @@ std::string detail::VizGraph::serialize() {
     return ss.str();
 }
 
-detail::VizNode::VizNode(std::string id, std::string label, std::string parent) : id(id), label(label), parent(parent) {}
+detail::VizNode::VizNode(std::string id, std::string label, std::string parent) : id(std::move(id)), label(std::move(label)), parent(std::move(parent)) {}
 
 void detail::VizNode::addProperty(std::tuple<std::string, std::string> item) { properties.emplace_back(item); }
 
@@ -68,7 +69,7 @@ std::string detail::VizNode::serialize() {
           "\"label\":\""
        << label << "\",";
     if (!parent.empty()) {
-        ss << "\"parent\":\"" << parent << "\",";
+        ss << R"("parent":")" << parent << "\",";
     }
     ss << "\"properties\":[";
     for (auto& tuple : properties) {
@@ -83,7 +84,7 @@ std::string detail::VizNode::serialize() {
     return ss.str();
 }
 
-detail::VizEdge::VizEdge(std::string id, std::string source, std::string target) : id(id), source(source), target(target) {}
+detail::VizEdge::VizEdge(std::string id, std::string source, std::string target) : id(std::move(id)), source(std::move(source)), target(std::move(target)) {}
 
 std::string detail::VizEdge::serialize() {
     std::stringstream ss;
@@ -93,11 +94,11 @@ std::string detail::VizEdge::serialize() {
        << "\","
           "\"source\":\""
        << source << "\","
-       << "\"target\":\"" << target << "\"}}";
+       << R"("target":")" << target << "\"}}";
     return ss.str();
 }
 
-VizDumpHandler::VizDumpHandler(std::string rootDir) : DumpHandler(), rootDir(rootDir) {}
+VizDumpHandler::VizDumpHandler(std::string rootDir) : DumpHandler(), rootDir(std::move(rootDir)) {}
 
 DebugDumpHandlerPtr VizDumpHandler::create() {
     std::string path = std::filesystem::current_path();

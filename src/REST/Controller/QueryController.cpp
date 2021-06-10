@@ -28,6 +28,7 @@
 #include <REST/std_service.hpp>
 #include <SerializableQueryPlan.pb.h>
 #include <Util/Logger.hpp>
+#include <utility>
 
 using namespace web;
 using namespace http;
@@ -39,7 +40,7 @@ QueryController::QueryController(QueryServicePtr queryService,
                                  QueryCatalogPtr queryCatalog,
                                  TopologyPtr topology,
                                  GlobalExecutionPlanPtr globalExecutionPlan)
-    : topology(topology), queryService(queryService), queryCatalog(queryCatalog), globalExecutionPlan(globalExecutionPlan) {}
+    : topology(std::move(topology)), queryService(std::move(queryService)), queryCatalog(std::move(queryCatalog)), globalExecutionPlan(std::move(globalExecutionPlan)) {}
 
 void QueryController::handleGet(vector<utility::string_t> path, http_request request) {
 

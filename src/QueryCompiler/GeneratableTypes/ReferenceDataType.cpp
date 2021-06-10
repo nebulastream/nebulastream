@@ -16,9 +16,10 @@
 
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <QueryCompiler/GeneratableTypes/ReferenceDataType.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
-ReferenceDataType::ReferenceDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(baseType) {}
+ReferenceDataType::ReferenceDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(std::move(baseType)) {}
 
 const CodeExpressionPtr ReferenceDataType::getCode() const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "&");

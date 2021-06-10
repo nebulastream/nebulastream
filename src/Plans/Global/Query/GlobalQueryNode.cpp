@@ -17,12 +17,13 @@
 #include <Operators/OperatorNode.hpp>
 #include <Plans/Global/Query/GlobalQueryNode.hpp>
 #include <algorithm>
+#include <utility>
 
 namespace NES {
 
 GlobalQueryNode::GlobalQueryNode(uint64_t id) : id(id) {}
 
-GlobalQueryNode::GlobalQueryNode(uint64_t id, OperatorNodePtr operatorNode) : id(id), operatorNode(operatorNode) {}
+GlobalQueryNode::GlobalQueryNode(uint64_t id, OperatorNodePtr operatorNode) : id(id), operatorNode(std::move(operatorNode)) {}
 
 GlobalQueryNodePtr GlobalQueryNode::createEmpty(uint64_t id) { return std::make_shared<GlobalQueryNode>(GlobalQueryNode(id)); }
 

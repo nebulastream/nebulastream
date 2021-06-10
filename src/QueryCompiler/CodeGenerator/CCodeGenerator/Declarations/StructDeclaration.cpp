@@ -18,6 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/VariableDeclaration.hpp>
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 StructDeclaration StructDeclaration::create(const std::string& type_name, const std::string& variable_name) {
@@ -92,8 +93,8 @@ StructDeclaration& StructDeclaration::makeStructCompact() {
     return *this;
 }
 
-StructDeclaration::StructDeclaration(const std::string& type_name, const std::string& variable_name)
-    : type_name_(type_name), variable_name_(variable_name), decls_(), packed_struct_(false) {}
+StructDeclaration::StructDeclaration(std::string  type_name, std::string  variable_name)
+    : type_name_(std::move(type_name)), variable_name_(std::move(variable_name)), decls_(), packed_struct_(false) {}
 
 VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const {
     DeclarationPtr decl = getField(field_name);

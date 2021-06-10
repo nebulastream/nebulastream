@@ -31,7 +31,7 @@ NetworkSink::NetworkSink(SchemaPtr schema,
                          std::chrono::seconds waitTime,
                          uint8_t retryTimes)
     : SinkMedium(std::make_shared<NesFormat>(schema, bufferManager), parentPlanId), networkManager(std::move(networkManager)),
-      nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(queryManager), waitTime(waitTime),
+      nodeLocation(nodeLocation), nesPartition(nesPartition), queryManager(std::move(queryManager)), waitTime(waitTime),
       retryTimes(retryTimes) {
     NES_ASSERT(this->networkManager, "Invalid network manager");
     NES_DEBUG("NetworkSink: Created NetworkSink for partition " << nesPartition << " location " << nodeLocation.createZmqURI());

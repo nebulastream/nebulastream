@@ -15,6 +15,7 @@
 */
 
 #include <Operators/LogicalOperators/Sinks/NetworkSinkDescriptor.hpp>
+#include <utility>
 
 namespace NES::Network {
 
@@ -22,7 +23,7 @@ NetworkSinkDescriptor::NetworkSinkDescriptor(NodeLocation nodeLocation,
                                              NesPartition nesPartition,
                                              std::chrono::seconds waitTime,
                                              uint32_t retryTimes)
-    : nodeLocation(nodeLocation), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes) {}
+    : nodeLocation(std::move(nodeLocation)), nesPartition(nesPartition), waitTime(waitTime), retryTimes(retryTimes) {}
 
 SinkDescriptorPtr NetworkSinkDescriptor::create(NodeLocation nodeLocation,
                                                 NesPartition nesPartition,

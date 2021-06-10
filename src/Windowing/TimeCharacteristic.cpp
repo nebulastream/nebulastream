@@ -21,12 +21,13 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/TimeCharacteristic.hpp>
 #include <Windowing/WindowMeasures/TimeUnit.hpp>
+#include <utility>
 
 namespace NES::Windowing {
 
 TimeCharacteristic::TimeCharacteristic(Type type) : type(type), unit(API::Milliseconds()) {}
 TimeCharacteristic::TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit)
-    : type(type), field(field), unit(unit) {}
+    : type(type), field(std::move(field)), unit(std::move(unit)) {}
 
 TimeCharacteristicPtr TimeCharacteristic::createEventTime(ExpressionItem fieldValue, TimeUnit unit) {
     auto keyExpression = fieldValue.getExpressionNode();

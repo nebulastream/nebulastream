@@ -16,6 +16,7 @@
 
 #include <Catalogs/MemorySourceStreamConfig.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -35,7 +36,7 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
                                                    uint64_t numBuffersToProcess,
                                                    uint64_t gatheringValue,
                                                    std::string gatheringMode)
-    : PhysicalStreamConfig(SourceConfig::create()), sourceType(sourceType), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
+    : PhysicalStreamConfig(SourceConfig::create()), sourceType(std::move(sourceType)), memoryArea(memoryArea, detail::MemoryAreaDeleter()),
       memoryAreaSize(memoryAreaSize) {
     // nop
     this->physicalStreamName = physicalStreamName;

@@ -334,7 +334,7 @@ TEST_F(RenameTest, testCentralWindowEventTime) {
         ".project(Attribute(\"id\").rename(\"newId\"), Attribute(\"timestamp\"), Attribute(\"value\").rename(\"newValue\"))"
         ".window(TumblingWindow::of(EventTime(Attribute(\"timestamp\")), Seconds(1)))"
         ".byKey(Attribute(\"newId\")).apply(Sum(Attribute(\"newValue\"))).sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     //todo will be removed once the new window source is in place
@@ -453,7 +453,7 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentStreamTumblingWindow) {
             .joinWith(Query::from("window2").project(Attribute("id2").rename("id2New"), Attribute("timestamp")))
             .where(Attribute("id1New")).equalsTo(Attribute("id2New")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),
             Milliseconds(1000))).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 

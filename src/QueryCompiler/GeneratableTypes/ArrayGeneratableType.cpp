@@ -26,9 +26,10 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableTypesFactory.hpp>
 #include <memory>
 #include <sstream>
+#include <utility>
 namespace NES::QueryCompilation {
 ArrayGeneratableType::ArrayGeneratableType(ArrayPhysicalTypePtr type, GeneratableDataTypePtr component)
-    : type(type), component(component) {}
+    : type(std::move(type)), component(std::move(component)) {}
 
 const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(""); }
 

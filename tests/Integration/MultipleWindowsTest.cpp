@@ -295,7 +295,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
                    ".window(SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5))) "
                    ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");
@@ -397,7 +397,7 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
                    ".window(SlidingWindow::of(EventTime(Attribute(\"end\")),Seconds(10),Seconds(5))).byKey(Attribute(\"id\")). "
                    "apply(Sum(Attribute(\"value\")))"
                    ".sink(FileSinkDescriptor::create(\""
-        + outputFilePath + "\",\"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
     NES_DEBUG("wait start");

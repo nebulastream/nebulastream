@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <typeinfo>
+#include <utility>
 
 namespace NES {
 
@@ -111,7 +112,7 @@ class ConfigOption {
      * @param description default value of the object
      */
     ConfigOption(std::string name, T value, std::string description)
-        : name(name), description(description), value(value), defaultValue(value) {}
+        : name(std::move(name)), description(std::move(description)), value(value), defaultValue(value) {}
 
     std::string name;
     std::string description;

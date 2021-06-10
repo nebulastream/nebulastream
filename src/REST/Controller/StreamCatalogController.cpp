@@ -18,12 +18,13 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 using namespace web;
 using namespace http;
 
 namespace NES {
-StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog) : streamCatalog(streamCatalog) {
+StreamCatalogController::StreamCatalogController(StreamCatalogPtr streamCatalog) : streamCatalog(std::move(streamCatalog)) {
     NES_DEBUG("StreamCatalogController()");
 }
 

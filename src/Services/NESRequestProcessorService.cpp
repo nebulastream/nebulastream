@@ -41,6 +41,7 @@
 #include <WorkQueues/RequestTypes/NESRequest.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
 #include <exception>
+#include <utility>
 #include <z3++.h>
 
 namespace NES {
@@ -54,7 +55,7 @@ NESRequestProcessorService::NESRequestProcessorService(GlobalExecutionPlanPtr gl
                                                        NESRequestQueuePtr queryRequestQueue,
                                                        bool enableQueryMerging,
                                                        Optimizer::QueryMergerRule queryMergerRule)
-    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(queryRequestQueue),
+    : queryProcessorStatusLock(), queryProcessorRunning(true), queryCatalog(queryCatalog), queryRequestQueue(std::move(queryRequestQueue)),
       globalQueryPlan(globalQueryPlan) {
 
     NES_DEBUG("QueryRequestProcessorService()");

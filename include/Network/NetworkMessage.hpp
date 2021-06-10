@@ -71,7 +71,7 @@ class MessageHeader {
 
 class ExchangeMessage {
   public:
-    explicit ExchangeMessage(ChannelId channelId) : channelId(channelId) {}
+    explicit ExchangeMessage(ChannelId channelId) : channelId(std::move(channelId)) {}
 
     [[nodiscard]] const ChannelId& getChannelId() const { return channelId; }
 

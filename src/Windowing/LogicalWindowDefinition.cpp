@@ -36,7 +36,7 @@ LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggr
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(nullptr),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(triggerAction), allowedLateness(allowedLateness) {
+      triggerAction(std::move(triggerAction)), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
@@ -50,7 +50,7 @@ LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr on
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(std::move(onKey)),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(triggerAction), allowedLateness(allowedLateness) {
+      triggerAction(std::move(triggerAction)), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 

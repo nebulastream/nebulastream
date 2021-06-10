@@ -15,11 +15,12 @@
 */
 
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
+#include <utility>
 
 namespace NES::Optimizer {
 
 Z3ExprAndFieldMap::Z3ExprAndFieldMap(z3::ExprPtr expr, std::map<std::string, z3::ExprPtr> fieldMap)
-    : expr(expr), fieldMap(fieldMap) {}
+    : expr(std::move(expr)), fieldMap(std::move(fieldMap)) {}
 
 z3::ExprPtr Z3ExprAndFieldMap::getExpr() { return expr; }
 

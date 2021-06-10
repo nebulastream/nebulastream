@@ -31,7 +31,7 @@ using namespace NES;
 class CoordinatorEngineTest : public testing::Test {
   public:
     std::string queryString =
-        "Query::from(\"default_logical\").filter(Attribute(\"value\") < 42).sink(PrintSinkDescriptor::create()); ";
+        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup NES Coordinator test class." << std::endl; }

@@ -18,14 +18,15 @@
 #define NES_INCLUDE_NETWORK_NODELOCATION_HPP_
 
 #include <Network/NesPartition.hpp>
+#include <utility>
 
 namespace NES {
 namespace Network {
 
 class NodeLocation {
   public:
-    explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint32_t port)
-        : nodeId(nodeId), hostname(hostname), port(port) {}
+    explicit NodeLocation(NodeId nodeId, std::string  hostname, uint32_t port)
+        : nodeId(nodeId), hostname(std::move(hostname)), port(port) {}
 
     [[nodiscard]] std::string createZmqURI() const { return "tcp://" + hostname + ":" + std::to_string(port); }
 

@@ -17,6 +17,7 @@
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipelineStage.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 namespace NES {
 
 // TODO this might change across OS
@@ -31,7 +32,7 @@ using CreateFunctionPtr = NodeEngine::Execution::ExecutablePipelineStagePtr (*)(
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr compiledCode,
                                                                  PipelineStageArity arity,
                                                                  std::string sourceCode)
-    : base(arity), compiledCode(compiledCode), currentExecutionStage(NotInitialized), sourceCode(sourceCode) {
+    : base(arity), compiledCode(compiledCode), currentExecutionStage(NotInitialized), sourceCode(std::move(sourceCode)) {
     auto createFunction = compiledCode->getFunctionPointer<CreateFunctionPtr>(MANGELED_ENTRY_POINT);
     this->executablePipelineStage = (*createFunction)();
 }

@@ -23,11 +23,12 @@
 #include <Monitoring/MonitoringAgent.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <utility>
 
 namespace NES {
 
 WorkerRPCServer::WorkerRPCServer(NodeEngine::NodeEnginePtr nodeEngine, MonitoringAgentPtr monitoringAgent)
-    : nodeEngine(nodeEngine), monitoringAgent(monitoringAgent) {
+    : nodeEngine(std::move(nodeEngine)), monitoringAgent(std::move(monitoringAgent)) {
     NES_DEBUG("WorkerRPCServer::WorkerRPCServer()");
 }
 

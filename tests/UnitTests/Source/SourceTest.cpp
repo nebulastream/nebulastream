@@ -915,7 +915,7 @@ TEST_F(SourceTest, testIngestionRateFromQuery) {
     std::string outputFilePath = "testIngestionRateFromQuery.out";
     remove(outputFilePath.c_str());
     string query =
-        "Query::from(\"input1\").sink(FileSinkDescriptor::create(\"" + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        R"(Query::from("input1").sink(FileSinkDescriptor::create(")" + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     NES::QueryServicePtr queryService = crd->getQueryService();
     auto queryCatalog = crd->getQueryCatalog();

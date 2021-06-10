@@ -24,6 +24,7 @@
 #include <iostream>
 
 #include <Components/NesCoordinator.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -37,7 +38,7 @@ RestServer::RestServer(std::string host,
                        QueryServicePtr queryService,
                        MonitoringServicePtr monitoringService,
                        GlobalQueryPlanPtr globalQueryPlan)
-    : host(host), port(port), restEngine(std::make_shared<RestEngine>(streamCatalog,
+    : host(std::move(host)), port(port), restEngine(std::make_shared<RestEngine>(streamCatalog,
                                                                       coordinator,
                                                                       queryCatalog,
                                                                       topology,

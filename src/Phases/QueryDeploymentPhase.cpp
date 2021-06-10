@@ -23,10 +23,11 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <WorkerRPCService.grpc.pb.h>
+#include <utility>
 namespace NES {
 
 QueryDeploymentPhase::QueryDeploymentPhase(GlobalExecutionPlanPtr globalExecutionPlan, WorkerRPCClientPtr workerRpcClient)
-    : workerRPCClient(workerRpcClient), globalExecutionPlan(globalExecutionPlan) {
+    : workerRPCClient(std::move(workerRpcClient)), globalExecutionPlan(std::move(globalExecutionPlan)) {
     NES_DEBUG("QueryDeploymentPhase()");
 }
 

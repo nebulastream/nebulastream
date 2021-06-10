@@ -31,6 +31,7 @@
 #include <Windowing/WindowTypes/TumblingWindow.hpp>
 #include <Windowing/WindowTypes/WindowType.hpp>
 #include <Windowing/WindowingForwardRefs.hpp>
+#include <utility>
 
 namespace NES::Windowing {
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
@@ -59,7 +60,7 @@ class ExecutableSliceAggregationTriggerAction
             executableWindowAggregation,
         SchemaPtr outputSchema,
         uint64_t id)
-        : windowDefinition(windowDefinition), executableWindowAggregation(executableWindowAggregation), id(id) {
+        : windowDefinition(std::move(windowDefinition)), executableWindowAggregation(executableWindowAggregation), id(id) {
 
         this->windowSchema = outputSchema;
 

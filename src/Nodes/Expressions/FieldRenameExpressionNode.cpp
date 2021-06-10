@@ -25,7 +25,7 @@
 
 namespace NES {
 FieldRenameExpressionNode::FieldRenameExpressionNode(FieldAccessExpressionNodePtr originalField, std::string newFieldName)
-    : ExpressionNode(originalField->getStamp()), originalField(originalField), newFieldName(newFieldName){};
+    : ExpressionNode(originalField->getStamp()), originalField(originalField), newFieldName(std::move(newFieldName)){};
 
 FieldRenameExpressionNode::FieldRenameExpressionNode(FieldRenameExpressionNode* other)
     : FieldRenameExpressionNode(other->getOriginalField(), other->getNewFieldName()){};

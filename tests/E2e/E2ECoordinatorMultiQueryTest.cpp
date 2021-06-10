@@ -94,17 +94,17 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
-    ssQuery1 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery1 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
     ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ssQuery1 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ssQuery1 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery1 << R"());","strategyName" : "BottomUp"})";
     NES_INFO("string submit for query1=" << ssQuery1.str());
 
     std::stringstream ssQuery2;
-    ssQuery2 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery2 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
     ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ssQuery2 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ssQuery2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery2 << R"());","strategyName" : "BottomUp"})";
     NES_INFO("string submit for query2=" << ssQuery2.str());
 
     web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(restPort));
@@ -189,24 +189,24 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
     EXPECT_TRUE(TestUtils::waitForWorkers(restPort, timeout, 1));
 
     std::stringstream ssQuery1;
-    ssQuery1 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery1 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
     ssQuery1 << pathQuery1;
-    ssQuery1 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ssQuery1 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ssQuery1 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery1 << R"());","strategyName" : "BottomUp"})";
     NES_INFO("string submit for query1=" << ssQuery1.str());
 
     std::stringstream ssQuery2;
-    ssQuery2 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery2 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
     ssQuery2 << pathQuery2;
-    ssQuery2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ssQuery2 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ssQuery2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery2 << R"());","strategyName" : "BottomUp"})";
     NES_INFO("string submit for query2=" << ssQuery2.str());
 
     std::stringstream ssQuery3;
-    ssQuery3 << "{\"userQuery\" : \"Query::from(\\\"default_logical\\\").sink(FileSinkDescriptor::create(\\\"";
+    ssQuery3 << R"({"userQuery" : "Query::from(\"default_logical\").sink(FileSinkDescriptor::create(\")";
     ssQuery3 << pathQuery3;
-    ssQuery3 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ssQuery3 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ssQuery3 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssQuery3 << R"());","strategyName" : "BottomUp"})";
     NES_INFO("string submit for query3=" << ssQuery3.str());
 
     web::json::value jsonReturnQ1 = TestUtils::startQueryViaRest(ssQuery1.str(), std::to_string(restPort));
@@ -306,10 +306,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
 
     std::stringstream ssPattern1;
     ssPattern1 << "{\"pattern\" : ";
-    ssPattern1 << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"velocity\\\") > 100).sink(FileSinkDescriptor::create(\\\"";
+    ssPattern1 << R"("Pattern::from(\"QnV\").filter(Attribute(\"velocity\") > 100).sink(FileSinkDescriptor::create(\")";
     ssPattern1 << pathPattern1;
-    ssPattern1 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ssPattern1 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ssPattern1 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssPattern1 << R"());","strategyName" : "BottomUp"})";
     ssPattern1 << endl;
 
     NES_INFO("pattern1 string submit=" << ssPattern1.str());
@@ -317,10 +317,10 @@ TEST_F(E2ECoordinatorMultiQueryTest, DISABLED_testTwoPatternsWithFileOutput) {
 
     std::stringstream ssPattern2;
     ssPattern2 << "{\"pattern\" : ";
-    ssPattern2 << "\"Pattern::from(\\\"QnV\\\").filter(Attribute(\\\"quantity\\\") > 10).sink(FileSinkDescriptor::create(\\\"";
+    ssPattern2 << R"("Pattern::from(\"QnV\").filter(Attribute(\"quantity\") > 10).sink(FileSinkDescriptor::create(\")";
     ssPattern2 << pathPattern2;
-    ssPattern2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ssPattern2 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ssPattern2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ssPattern2 << R"());","strategyName" : "BottomUp"})";
     ssPattern2 << endl;
 
     NES_INFO("pattern2 string submit=" << ssPattern2.str());
@@ -420,8 +420,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ss << "\"Query::from(\\\"window\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(10)))"
           ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ss << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ss << R"());","strategyName" : "BottomUp"})";
     ss << endl;
 
     NES_INFO("query 1 string submit=" << ss.str());
@@ -431,8 +431,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ss2 << "\"Query::from(\\\"window\\\").window(TumblingWindow::of(EventTime(Attribute(\\\"timestamp\\\")), Seconds(20)))"
            ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
-    ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ss2 << R"());","strategyName" : "BottomUp"})";
     ss2 << endl;
 
     NES_INFO("query 2 string submit=" << ss2.str());
@@ -531,8 +531,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
           "Seconds(5)))"
           ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss << outputFilePath;
-    ss << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ss << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ss << R"());","strategyName" : "BottomUp"})";
     ss << endl;
 
     NES_INFO("query 1 string submit=" << ss.str());
@@ -543,8 +543,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
            "Seconds(10)))"
            ".byKey(Attribute(\\\"id\\\")).apply(Sum(Attribute(\\\"value\\\"))).sink(FileSinkDescriptor::create(\\\"";
     ss2 << outputFilePath2;
-    ss2 << "\\\", \\\"CSV_FORMAT\\\", \\\"APPEND\\\"";
-    ss2 << "));\",\"strategyName\" : \"BottomUp\"}";
+    ss2 << R"(\", \"CSV_FORMAT\", \"APPEND\")";
+    ss2 << R"());","strategyName" : "BottomUp"})";
     ss2 << endl;
 
     NES_INFO("query 2 string submit=" << ss2.str());

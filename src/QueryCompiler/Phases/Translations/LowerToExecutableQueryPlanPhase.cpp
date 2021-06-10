@@ -36,12 +36,13 @@
 #include <QueryCompiler/Phases/Translations/GeneratableOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <utility>
 #include <variant>
 
 namespace NES::QueryCompilation {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider,
                                                                  DataSourceProviderPtr sourceProvider)
-    : sinkProvider(sinkProvider), sourceProvider(sourceProvider){};
+    : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)){};
 
 LowerToExecutableQueryPlanPhasePtr LowerToExecutableQueryPlanPhase::create(DataSinkProviderPtr sinkProvider,
                                                                            DataSourceProviderPtr sourceProvider) {

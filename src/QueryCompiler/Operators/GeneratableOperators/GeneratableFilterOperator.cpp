@@ -18,11 +18,12 @@
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableFilterOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
 GeneratableFilterOperator::GeneratableFilterOperator(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema), predicate(predicate) {}
+    : OperatorNode(id), GeneratableOperator(id, inputSchema, inputSchema), predicate(std::move(predicate)) {}
 
 GeneratableOperatorPtr GeneratableFilterOperator::create(SchemaPtr inputSchema, ExpressionNodePtr predicate) {
     return create(UtilityFunctions::getNextOperatorId(), inputSchema, predicate);

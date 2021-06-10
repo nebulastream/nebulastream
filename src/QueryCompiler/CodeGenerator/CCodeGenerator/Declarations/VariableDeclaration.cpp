@@ -22,6 +22,7 @@
 #include <QueryCompiler/GeneratableTypes/GeneratableValueType.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
+#include <utility>
 
 namespace NES::QueryCompilation {
 const GeneratableDataTypePtr VariableDeclaration::getType() const { return type_; }
@@ -53,8 +54,8 @@ const DeclarationPtr VariableDeclaration::copy() const { return std::make_shared
 
 VariableDeclaration::~VariableDeclaration() = default;
 
-VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value)
-    : type_(type), identifier_(identifier), init_value_(value) {}
+VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, std::string  identifier, ValueTypePtr value)
+    : type_(std::move(type)), identifier_(std::move(identifier)), init_value_(std::move(value)) {}
 
 VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
     : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_) {}

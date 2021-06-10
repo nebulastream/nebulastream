@@ -34,7 +34,7 @@ ExecutablePipeline::ExecutablePipeline(uint64_t pipelineId,
     : pipelineId(pipelineId), querySubPlanId(qepId), executablePipelineStage(std::move(executablePipelineStage)),
       pipelineContext(std::move(pipelineExecutionContext)), reconfiguration(reconfiguration),
       pipelineStatus(reconfiguration ? PipelineStatus::PipelineRunning : PipelineStatus::PipelineCreated),
-      activeProducers(numOfProducingPipelines), successorPipelines(successorPipelines) {
+      activeProducers(numOfProducingPipelines), successorPipelines(std::move(successorPipelines)) {
     // nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext && numOfProducingPipelines > 0,
                "Wrong pipeline stage argument");

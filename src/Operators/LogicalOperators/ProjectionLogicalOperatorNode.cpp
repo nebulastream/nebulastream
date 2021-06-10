@@ -21,11 +21,12 @@
 #include <Operators/LogicalOperators/ProjectionLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
 ProjectionLogicalOperatorNode::ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, uint64_t id)
-    : OperatorNode(id), LogicalUnaryOperatorNode(id), expressions(expressions) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), expressions(std::move(expressions)) {}
 
 std::vector<ExpressionNodePtr> ProjectionLogicalOperatorNode::getExpressions() { return expressions; }
 

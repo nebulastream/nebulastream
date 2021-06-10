@@ -17,10 +17,11 @@
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <sstream>
+#include <utility>
 
 namespace NES {
 
-AttributeField::AttributeField(const std::string& name, DataTypePtr dataType) : name(name), dataType(dataType) {}
+AttributeField::AttributeField(std::string  name, DataTypePtr dataType) : name(std::move(name)), dataType(std::move(dataType)) {}
 
 AttributeFieldPtr AttributeField::create(std::string name, DataTypePtr dataType) {
     return std::make_shared<AttributeField>(name, dataType);

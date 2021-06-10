@@ -20,6 +20,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Sinks/Formats/FormatType.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -38,7 +39,7 @@ class FormatIterator {
         using difference_type = std::ptrdiff_t;
 
         explicit Iterator(uint64_t currentSeek, NodeEngine::TupleBuffer buffer, SchemaPtr schema, FormatTypes sinkFormatType)
-            : buffer(buffer), sinkFormatType(sinkFormatType) {
+            : buffer(std::move(buffer)), sinkFormatType(sinkFormatType) {
             auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
             // Iterate over all fields of a tuple. Store sizes in fieldOffsets, to calculate correct offsets in the step below.

@@ -22,6 +22,7 @@
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategy.hpp>
 #include <Windowing/Watermark/IngestionTimeWatermarkStrategyDescriptor.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
@@ -47,7 +48,7 @@ GeneratableWatermarkAssignmentOperator::GeneratableWatermarkAssignmentOperator(
     SchemaPtr outputSchema,
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor)
     : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema),
-      watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
+      watermarkStrategyDescriptor(std::move(watermarkStrategyDescriptor)) {}
 
 void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     if (auto eventTimeWatermarkStrategyDescriptor =

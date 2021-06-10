@@ -17,10 +17,11 @@
 #include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation {
 
-DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(compilerOptions) {}
+DataSourceProvider::DataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(std::move(compilerOptions)) {}
 
 DataSourceProviderPtr QueryCompilation::DataSourceProvider::create(QueryCompilerOptionsPtr compilerOptions) {
     return std::make_shared<DataSourceProvider>(compilerOptions);

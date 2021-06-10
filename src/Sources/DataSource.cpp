@@ -29,6 +29,7 @@
 
 #include <Sources/DataSource.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <utility>
 #include <zconf.h>
 namespace NES {
 
@@ -54,7 +55,7 @@ DataSource::DataSource(const SchemaPtr pSchema,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : queryManager(queryManager), globalBufferManager(bufferManager), executableSuccessors(executableSuccessors),
+    : queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)), executableSuccessors(std::move(executableSuccessors)),
       operatorId(operatorId), schema(pSchema), generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX),
       numSourceLocalBuffers(numSourceLocalBuffers), gatheringInterval(0),
       gatheringMode(gatheringMode), NodeEngine::Reconfigurable(), wasGracefullyStopped(false), running(false), thread(nullptr),

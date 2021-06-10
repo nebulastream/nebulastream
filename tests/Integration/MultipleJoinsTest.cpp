@@ -154,7 +154,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamTumblingWindowOnCoodinato
         .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -322,7 +322,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamTumblingWindowDis
         .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -497,7 +497,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
         .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .joinWith(Query::from("window4")).where(Attribute("id1")).equalsTo(Attribute("id4")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -673,7 +673,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamTumblingWindowOnCoodinator
         .joinWith((Query::from("window3")).joinWith(Query::from("window4")).where(Attribute("id3")).equalsTo(Attribute("id4")).window(TumblingWindow::of(EventTime(Attribute("timestamp"))
         ,Milliseconds(1000)))).where(Attribute("id1")).equalsTo(Attribute("id4")).window(TumblingWindow::of(EventTime(Attribute("timestamp")),Milliseconds(1000)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -833,7 +833,7 @@ TEST_F(MultipleJoinsTest, testJoins2WithDifferentStreamSlidingWindowOnCoodinator
         .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1010,7 +1010,7 @@ TEST_F(MultipleJoinsTest, DISABLED_testJoin2WithDifferentStreamSlidingWindowDist
         .joinWith(Query::from("window2")).where(Attribute("id1")).equalsTo(Attribute("id2")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "BottomUp");
 
@@ -1194,7 +1194,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorS
         .joinWith(Query::from("window3")).where(Attribute("id1")).equalsTo(Attribute("id3")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .joinWith(Query::from("window4")).where(Attribute("id1")).equalsTo(Attribute("id4")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 
@@ -1391,7 +1391,7 @@ TEST_F(MultipleJoinsTest, testJoin3WithDifferentStreamSlidingWindowOnCoodinatorN
         .joinWith((Query::from("window3")).joinWith(Query::from("window4")).where(Attribute("id3")).equalsTo(Attribute("id4")).window(SlidingWindow::of(EventTime(Attribute("timestamp"))
         ,Seconds(1),Milliseconds(500)))).where(Attribute("id1")).equalsTo(Attribute("id4")).window(SlidingWindow::of(EventTime(Attribute("timestamp")),Seconds(1),Milliseconds(500)))
         .sink(FileSinkDescriptor::create(")"
-        + outputFilePath + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = queryService->validateAndQueueAddRequest(query, "TopDown");
 

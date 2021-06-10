@@ -29,11 +29,12 @@
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <cpprest/http_client.h>
+#include <utility>
 
 namespace NES {
 
 MonitoringManager::MonitoringManager(WorkerRPCClientPtr workerClient, TopologyPtr topology)
-    : workerClient(workerClient), topology(topology) {
+    : workerClient(std::move(workerClient)), topology(std::move(topology)) {
     NES_DEBUG("MonitoringManager: Init");
 }
 

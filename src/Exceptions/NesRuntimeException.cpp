@@ -15,15 +15,16 @@
 */
 
 #include <Exceptions/NesRuntimeException.hpp>
+#include <utility>
 
 namespace NES {
 
-NesRuntimeException::NesRuntimeException(const std::string& msg, std::string&& stacktrace) : errorMessage(msg) {
+NesRuntimeException::NesRuntimeException(std::string  msg, std::string&& stacktrace) : errorMessage(std::move(msg)) {
     errorMessage.append(":: callstack:\n");
     errorMessage.append(std::move(stacktrace));
 }
 
-NesRuntimeException::NesRuntimeException(const std::string& msg, const std::string& stacktrace) : errorMessage(msg) {
+NesRuntimeException::NesRuntimeException(std::string  msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {
     errorMessage.append(":: callstack:\n");
     errorMessage.append(stacktrace);
 }

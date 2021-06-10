@@ -15,6 +15,7 @@
 */
 
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
+#include <utility>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
@@ -33,7 +34,7 @@ uint64_t DynamicRowLayoutBuffer::calcOffset(uint64_t recordIndex, uint64_t field
 DynamicRowLayoutBuffer::DynamicRowLayoutBuffer(TupleBuffer tupleBuffer,
                                                uint64_t capacity,
                                                std::shared_ptr<DynamicRowLayout> dynamicRowLayout)
-    : DynamicLayoutBuffer(tupleBuffer, capacity), dynamicRowLayout(dynamicRowLayout),
+    : DynamicLayoutBuffer(tupleBuffer, capacity), dynamicRowLayout(std::move(dynamicRowLayout)),
       basePointer(tupleBuffer.getBuffer<uint8_t>()) {
     // this->basePointer = tupleBuffer.getBuffer<uint8_t>();
 }

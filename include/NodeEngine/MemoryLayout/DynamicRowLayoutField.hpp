@@ -20,6 +20,7 @@
 #include <NodeEngine/MemoryLayout/DynamicMemoryLayout.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayoutBuffer.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
+#include <utility>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
@@ -72,7 +73,7 @@ class DynamicRowLayoutField {
                           FIELD_SIZE fieldIndex,
                           FIELD_SIZE recordSize)
         : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer),
-          dynamicRowLayoutBuffer(dynamicRowLayoutBuffer){};
+          dynamicRowLayoutBuffer(std::move(dynamicRowLayoutBuffer)){};
 
     const FIELD_SIZE fieldIndex;
     const FIELD_SIZE recordSize;

@@ -17,13 +17,14 @@
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Windowing/Watermark/EventTimeWatermarkStrategyDescriptor.hpp>
+#include <utility>
 
 namespace NES::Windowing {
 
 EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField,
                                                                            TimeMeasure allowedLateness,
                                                                            TimeUnit unit)
-    : onField(onField), allowedLateness(allowedLateness), unit(unit) {}
+    : onField(onField), allowedLateness(std::move(allowedLateness)), unit(std::move(unit)) {}
 
 WatermarkStrategyDescriptorPtr
 EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit) {

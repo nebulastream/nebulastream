@@ -16,11 +16,12 @@
 
 #include <Plans/Query/QueryPlan.hpp>
 #include <WorkQueues/RequestTypes/RunQueryRequest.hpp>
+#include <utility>
 
 namespace NES {
 
 RunQueryRequest::RunQueryRequest(QueryPlanPtr queryPlan, std::string queryPlacementStrategy)
-    : NESRequest(queryPlan->getQueryId()), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy) {}
+    : NESRequest(queryPlan->getQueryId()), queryPlan(queryPlan), queryPlacementStrategy(std::move(queryPlacementStrategy)) {}
 
 RunQueryRequestPtr RunQueryRequest::create(QueryPlanPtr queryPlan, std::string queryPlacementStrategy) {
     return std::make_shared<RunQueryRequest>(RunQueryRequest(queryPlan, queryPlacementStrategy));

@@ -17,8 +17,9 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
+#include <utility>
 namespace NES {
-ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(stamp) {}
+ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(std::move(stamp)) {}
 
 bool ExpressionNode::isPredicate() { return stamp->isBoolean(); }
 

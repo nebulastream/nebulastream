@@ -18,6 +18,7 @@
 #define NES_INCLUDE_DATATYPES_PHYSICALTYPES_PHYSICALTYPES_HPP_
 
 #include <memory>
+#include <utility>
 
 namespace NES {
 
@@ -32,7 +33,7 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
  */
 class PhysicalType {
   public:
-    inline PhysicalType(DataTypePtr type) noexcept : type(type) {}
+    inline PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) {}
 
     /**
      * @brief Returns the number of bytes occupied by this data type.

@@ -20,6 +20,7 @@
 #include <QueryCompiler/CodeGenerator/TranslateToLegacyExpression.hpp>
 #include <QueryCompiler/Operators/GeneratableOperators/GeneratableMapOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <utility>
 
 namespace NES::QueryCompilation::GeneratableOperators {
 
@@ -27,7 +28,7 @@ GeneratableMapOperator::GeneratableMapOperator(OperatorId id,
                                                SchemaPtr inputSchema,
                                                SchemaPtr outputSchema,
                                                FieldAssignmentExpressionNodePtr mapExpression)
-    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), mapExpression(mapExpression) {}
+    : OperatorNode(id), GeneratableOperator(id, inputSchema, outputSchema), mapExpression(std::move(mapExpression)) {}
 
 GeneratableOperatorPtr
 GeneratableMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression) {
