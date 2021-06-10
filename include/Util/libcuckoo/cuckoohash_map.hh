@@ -1,6 +1,6 @@
 /** \file */
 
-#ifndef _CUCKOOHASH_MAP_HH
+#ifndef CUCKOOHASH_MAP_HH
 #define CUCKOOHASH_MAP_HH
 
 #include <algorithm>
@@ -2751,4 +2751,4 @@ namespace std {
 
 } // namespace std
 
-#endif // _CUCKOOHASH_MAP_HH
+#endif // CUCKOOHASH_MAP_HH
