@@ -27,20 +27,20 @@ template<typename SumType, std::enable_if_t<std::is_arithmetic<SumType>::value, 
 class AVGPartialType {
   public:
     explicit AVGPartialType(SumType sum) : sum(sum), count(1) {}
-    explicit AVGPartialType() : sum(0), count(0) {}
+    explicit AVGPartialType() : sum(0) {}
 
-    SumType getSum() const { return sum; }
-    int64_t getCount() const { return count; }
+    [[nodiscard]] SumType getSum() const { return sum; }
+    [[nodiscard]] int64_t getCount() const { return count; }
 
     void addToSum(SumType value) { sum += value; }
     void addToCount(int64_t value = 1) { count += value; }
 
   private:
     SumType sum;
-    int64_t count;
+    int64_t count{0};
 };
 
-typedef double AVGResultType;
+using AVGResultType = double;
 
 /**
  * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.

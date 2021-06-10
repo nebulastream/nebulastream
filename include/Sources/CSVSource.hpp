@@ -107,7 +107,7 @@ class CSVSource : public DataSource {
     bool skipHeader;
 };
 
-typedef std::shared_ptr<CSVSource> CSVSourcePtr;
+using CSVSourcePtr = std::shared_ptr<CSVSource>;
 }// namespace NES
 
 #endif /* INCLUDE_CSVSOURCE_H_ */

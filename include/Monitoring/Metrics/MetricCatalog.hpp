@@ -25,7 +25,7 @@
 namespace NES {
 class Metric;
 class MetricCatalog;
-typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
+using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
 
 class MetricCatalog {
   public:

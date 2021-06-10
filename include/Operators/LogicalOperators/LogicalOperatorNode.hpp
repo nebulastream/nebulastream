@@ -23,14 +23,14 @@
 
 namespace z3 {
 class expr;
-typedef std::shared_ptr<expr> ExprPtr;
+using ExprPtr = std::shared_ptr<expr>;
 class context;
-typedef std::shared_ptr<context> ContextPtr;
+using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Optimizer {
 class QuerySignature;
-typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
+using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 }// namespace NES::Optimizer
 
 namespace NES {

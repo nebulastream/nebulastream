@@ -30,7 +30,7 @@ class Numeric : public DataType {
     * @brief Checks if this data type is Numeric.
     * @return bool
     */
-    bool isNumeric() const final { return true; }
+    [[nodiscard]] bool isNumeric() const final { return true; }
 
     /**
      * @brief Gets the bit size of this type.

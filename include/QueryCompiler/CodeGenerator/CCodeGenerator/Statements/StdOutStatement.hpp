@@ -27,11 +27,11 @@ class StdOutStatement : public Statement {
   public:
     StdOutStatement(const std::string message);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
 
     ~StdOutStatement() override;
 
@@ -39,7 +39,7 @@ class StdOutStatement : public Statement {
     std::string message;
 };
 
-typedef StdOutStatement StdOut;
+using StdOut = StdOutStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

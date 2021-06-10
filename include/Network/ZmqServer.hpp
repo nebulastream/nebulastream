@@ -73,7 +73,7 @@ class ZmqServer : public boost::noncopyable {
      * Checks if the server is running
      * @return
      */
-    bool isServerRunning() const { return isRunning; }
+    [[nodiscard]] bool isServerRunning() const { return isRunning; }
 
   private:
     /**

@@ -39,7 +39,7 @@ class DefaultSource : public GeneratorSource {
     std::optional<NodeEngine::TupleBuffer> receiveData() override;
 };
 
-typedef std::shared_ptr<DefaultSource> DefaultSourcePtr;
+using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_DEFAULTSOURCE_HPP_ */

@@ -23,14 +23,14 @@ namespace QueryCompilation {
 
 class ExpressionStatment : public Statement {
   public:
-    StatementType getStamentType() const override = 0;
-    const CodeExpressionPtr getCode() const override = 0;
+    [[nodiscard]] StatementType getStamentType() const override = 0;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override = 0;
     /** @brief virtual copy constructor */
-    virtual const ExpressionStatmentPtr copy() const = 0;
+    [[nodiscard]] virtual const ExpressionStatmentPtr copy() const = 0;
     /** @brief virtual copy constructor of base class
      *  todo create one unified version, having this twice is problematic
     */
-    const StatementPtr createCopy() const final;
+    [[nodiscard]] const StatementPtr createCopy() const final;
 
     BinaryOperatorStatement assign(const ExpressionStatment& ref);
     BinaryOperatorStatement assign(ExpressionStatmentPtr ref);

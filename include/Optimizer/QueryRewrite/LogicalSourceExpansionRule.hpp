@@ -24,18 +24,18 @@
 namespace NES {
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
 class LogicalSourceExpansionRule;
-typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
+using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
 /**
  * @brief This class will expand the logical query graph by adding information about the physical sources and expand the

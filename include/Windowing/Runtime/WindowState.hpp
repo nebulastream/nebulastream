@@ -33,12 +33,12 @@ class WindowState {
      * @brief Returns the window start.
      * @return uint64_t
      */
-    uint64_t getStartTs() const;
+    [[nodiscard]] uint64_t getStartTs() const;
     /**
     * @brief Returns the window end.
     * @return uint64_t
     */
-    uint64_t getEndTs() const;
+    [[nodiscard]] uint64_t getEndTs() const;
 
   private:
     uint64_t start;

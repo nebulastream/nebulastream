@@ -18,7 +18,7 @@
 
 namespace NES::Windowing {
 
-IngestionTimeWatermarkStrategyDescriptor::IngestionTimeWatermarkStrategyDescriptor() {}
+IngestionTimeWatermarkStrategyDescriptor::IngestionTimeWatermarkStrategyDescriptor() = default;
 
 WatermarkStrategyDescriptorPtr IngestionTimeWatermarkStrategyDescriptor::create() {
     return std::make_shared<IngestionTimeWatermarkStrategyDescriptor>(Windowing::IngestionTimeWatermarkStrategyDescriptor());

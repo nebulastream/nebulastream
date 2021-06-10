@@ -19,7 +19,7 @@
 #include <chrono>
 namespace NES::Windowing {
 
-IngestionTimeWatermarkGenerator::IngestionTimeWatermarkGenerator() {}
+IngestionTimeWatermarkGenerator::IngestionTimeWatermarkGenerator() = default;
 
 uint64_t IngestionTimeWatermarkGenerator::getWatermark() {
     auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();

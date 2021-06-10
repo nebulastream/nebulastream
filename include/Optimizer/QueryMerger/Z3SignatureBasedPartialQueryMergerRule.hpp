@@ -22,10 +22,10 @@
 namespace NES::Optimizer {
 
 class SignatureEqualityUtil;
-typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
+using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 
 class Z3SignatureBasedPartialQueryMergerRule;
-typedef std::shared_ptr<Z3SignatureBasedPartialQueryMergerRule> Z3SignatureBasedPartialQueryMergerRulePtr;
+using Z3SignatureBasedPartialQueryMergerRulePtr = std::shared_ptr<Z3SignatureBasedPartialQueryMergerRule>;
 
 /**
  * @brief SignatureBasedPartialQueryMergerRule is responsible for merging together all Queries sharing a common upstream operator

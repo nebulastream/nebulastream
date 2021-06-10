@@ -37,7 +37,7 @@ class SamplingProtocol {
     std::function<MetricGroupPtr()> samplingFunc;
 };
 
-typedef std::shared_ptr<SamplingProtocol> SamplingProtocolPtr;
+using SamplingProtocolPtr = std::shared_ptr<SamplingProtocol>;
 
 }// namespace NES
 

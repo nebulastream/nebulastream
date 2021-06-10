@@ -156,14 +156,14 @@ class LogicalWindowDefinition {
     /**
      * @brief getter/setter for on trigger policy
      */
-    WindowTriggerPolicyPtr getTriggerPolicy() const;
+    [[nodiscard]] WindowTriggerPolicyPtr getTriggerPolicy() const;
     void setTriggerPolicy(WindowTriggerPolicyPtr triggerPolicy);
 
     /**
     * @brief getter for on trigger action
      * @return trigger action
     */
-    WindowActionDescriptorPtr getTriggerAction() const;
+    [[nodiscard]] WindowActionDescriptorPtr getTriggerAction() const;
 
     std::string toString();
 
@@ -179,8 +179,8 @@ class LogicalWindowDefinition {
     uint64_t allowedLateness;
 
   public:
-    uint64_t getAllowedLateness() const;
-    uint64_t getOriginId() const;
+    [[nodiscard]] uint64_t getAllowedLateness() const;
+    [[nodiscard]] uint64_t getOriginId() const;
     void setOriginId(uint64_t originId);
 };
 

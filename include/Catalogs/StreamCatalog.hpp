@@ -28,7 +28,7 @@
 namespace NES {
 
 class LogicalStream;
-typedef std::shared_ptr<LogicalStream> LogicalStreamPtr;
+using LogicalStreamPtr = std::shared_ptr<LogicalStream>;
 
 /**
  * @brief the stream catalog handles the mapping of logical to physical streams
@@ -192,6 +192,6 @@ class StreamCatalog {
 
     void addDefaultStreams();
 };
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 }// namespace NES
 #endif /* INCLUDE_CATALOGS_STREAMCATALOG_HPP_ */

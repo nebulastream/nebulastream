@@ -21,21 +21,21 @@
 
 namespace z3 {
 class expr;
-typedef std::shared_ptr<expr> ExprPtr;
+using ExprPtr = std::shared_ptr<expr>;
 
 class context;
-typedef std::shared_ptr<context> ContextPtr;
+using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES {
 class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class Z3ExprAndFieldMap;
-typedef std::shared_ptr<Z3ExprAndFieldMap> Z3ExprAndFieldMapPtr;
+using Z3ExprAndFieldMapPtr = std::shared_ptr<Z3ExprAndFieldMap>;
 /**
  * @brief This class is responsible for taking input as a logical expression and generating an equivalent Z3 expression.
  */

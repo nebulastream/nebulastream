@@ -57,7 +57,7 @@ class AbstractPhysicalStreamConfig {
     virtual const std::string getLogicalStreamName() = 0;
 };
 
-typedef std::shared_ptr<AbstractPhysicalStreamConfig> AbstractPhysicalStreamConfigPtr;
+using AbstractPhysicalStreamConfigPtr = std::shared_ptr<AbstractPhysicalStreamConfig>;
 
 }// namespace NES
 #endif//NES_INCLUDE_CATALOGS_ABSTRACTPHYSICALSTREAMCONFIG_HPP_

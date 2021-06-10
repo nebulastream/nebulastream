@@ -21,20 +21,20 @@
 
 namespace NES {
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class WindowOperatorNode;
-typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
+using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
 
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class DistributeWindowRule;
-typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
+using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
 
 /**
  * @brief This rule will replace the logical window operator with either a centralized or distributed implementation.

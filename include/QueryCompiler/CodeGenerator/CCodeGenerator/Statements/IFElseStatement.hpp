@@ -23,9 +23,9 @@ class IfElseStatement : public Statement {
   public:
     IfElseStatement(const Statement& cond_true, const Statement& cond_false);
 
-    StatementType getStamentType() const override;
-    const CodeExpressionPtr getCode() const override;
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
     ~IfElseStatement() override;
 };
 }// namespace QueryCompilation

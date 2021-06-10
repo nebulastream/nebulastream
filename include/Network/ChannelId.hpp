@@ -29,11 +29,11 @@ class ChannelId {
         // nop
     }
 
-    NesPartition getNesPartition() const { return nesPartition; }
+    [[nodiscard]] NesPartition getNesPartition() const { return nesPartition; }
 
-    uint64_t getThreadId() const { return threadId; }
+    [[nodiscard]] uint64_t getThreadId() const { return threadId; }
 
-    std::string toString() const { return nesPartition.toString() + "(threadId=" + std::to_string(threadId) + ")"; }
+    [[nodiscard]] std::string toString() const { return nesPartition.toString() + "(threadId=" + std::to_string(threadId) + ")"; }
 
     friend std::ostream& operator<<(std::ostream& os, const ChannelId& channelId) { return os << channelId.toString(); }
 

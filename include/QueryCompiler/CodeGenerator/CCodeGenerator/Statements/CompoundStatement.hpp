@@ -25,11 +25,11 @@ class CompoundStatement : public Statement {
   public:
     CompoundStatement();
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
 
     void addStatement(StatementPtr stmt);
 
@@ -39,7 +39,7 @@ class CompoundStatement : public Statement {
     std::vector<StatementPtr> statements;
 };
 
-typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
+using CompoundStatementPtr = std::shared_ptr<CompoundStatement>;
 }// namespace QueryCompilation
 }// namespace NES
 

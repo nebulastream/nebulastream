@@ -21,7 +21,7 @@
 
 namespace NES {
 
-typedef uint64_t Timestamp;
+using Timestamp = uint64_t;
 
 Timestamp getTimestamp();
 

@@ -71,7 +71,7 @@ class BinarySource : public DataSource {
     uint64_t tuple_size;
 };
 
-typedef std::shared_ptr<BinarySource> BinarySourcePtr;
+using BinarySourcePtr = std::shared_ptr<BinarySource>;
 
 }// namespace NES
 #endif /* INCLUDE_BINARYSOURCE_H_ */

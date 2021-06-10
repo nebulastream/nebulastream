@@ -76,13 +76,13 @@ class Destroyable {
 template<typename Key, typename Value, std::enable_if_t<std::is_integral<Value>::value || std::is_pointer<Value>::value, int> = 0>
 class StateVariable : public detail::Destroyable {
   private:
-    typedef cuckoohash_map<Key, Value> StateBackend;
-    typedef StateBackend& StateBackendRef;
-    typedef typename cuckoohash_map<Key, Value>::mapped_type StateBackendMappedType;
-    typedef typename cuckoohash_map<Key, Value>::locked_table LockedStateBackend;
-    typedef LockedStateBackend& LockedStateBackendRef;
-    typedef typename LockedStateBackend::const_iterator KeyValueRangeHandleConstIterator;
-    typedef typename LockedStateBackend::iterator KeyValueRangeHandleIterator;
+    using StateBackend = cuckoohash_map<Key, Value>;
+    using StateBackendRef = StateBackend &;
+    using StateBackendMappedType = typename cuckoohash_map<Key, Value>::mapped_type;
+    using LockedStateBackend = typename cuckoohash_map<Key, Value>::locked_table;
+    using LockedStateBackendRef = LockedStateBackend &;
+    using KeyValueRangeHandleConstIterator = typename LockedStateBackend::const_iterator;
+    using KeyValueRangeHandleIterator = typename LockedStateBackend::iterator;
 
   private:
     std::string name;

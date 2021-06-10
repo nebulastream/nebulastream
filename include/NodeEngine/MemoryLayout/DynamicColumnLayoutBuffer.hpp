@@ -24,7 +24,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-typedef uint64_t COL_OFFSET_SIZE;
+using COL_OFFSET_SIZE = uint64_t;
 
 /**
  * @brief This class is dervied from DynamicLayoutBuffer. As such, it implements the abstract methods and also implements pushRecord() and readRecord() as templated methods.
@@ -48,7 +48,7 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
      * @param fieldName
      * @return field index from the fieldName
      */
-    std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
+    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
         return dynamicColLayout->getFieldIndexFromName(fieldName);
     };
 

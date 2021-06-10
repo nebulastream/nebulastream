@@ -47,7 +47,7 @@ class BinarySourceDescriptor : public SourceDescriptor {
     std::string filePath;
 };
 
-typedef std::shared_ptr<BinarySourceDescriptor> BinarySourceDescriptorPtr;
+using BinarySourceDescriptorPtr = std::shared_ptr<BinarySourceDescriptor>;
 
 }// namespace NES
 

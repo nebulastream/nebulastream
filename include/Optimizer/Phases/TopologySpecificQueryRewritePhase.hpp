@@ -22,25 +22,25 @@
 namespace NES {
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class TopologySpecificQueryRewritePhase;
-typedef std::shared_ptr<TopologySpecificQueryRewritePhase> TopologySpecificQueryRewritePhasePtr;
+using TopologySpecificQueryRewritePhasePtr = std::shared_ptr<TopologySpecificQueryRewritePhase>;
 
 class LogicalSourceExpansionRule;
-typedef std::shared_ptr<LogicalSourceExpansionRule> LogicalSourceExpansionRulePtr;
+using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
 class DistributeWindowRule;
-typedef std::shared_ptr<DistributeWindowRule> DistributeWindowRulePtr;
+using DistributeWindowRulePtr = std::shared_ptr<DistributeWindowRule>;
 
 class DistributeJoinRule;
-typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
+using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
 
 /**
  * @brief This phase is responsible for re-writing the query plan based on the topology information

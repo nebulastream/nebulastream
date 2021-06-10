@@ -50,7 +50,7 @@ class WatermarkAssignerLogicalOperatorNode : public LogicalUnaryOperatorNode {
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 
-typedef std::shared_ptr<WatermarkAssignerLogicalOperatorNode> WatermarkAssignerLogicalOperatorNodePtr;
+using WatermarkAssignerLogicalOperatorNodePtr = std::shared_ptr<WatermarkAssignerLogicalOperatorNode>;
 
 }// namespace NES
 

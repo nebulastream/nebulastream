@@ -24,10 +24,10 @@
 namespace NES {
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
+using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /// @brief Representation of a user-defined constant in the NES type system.
 class [[nodiscard]] ValueType {
@@ -35,10 +35,10 @@ class [[nodiscard]] ValueType {
     [[nodiscard]] inline ValueType(DataTypePtr&& type) : dataType(std::move(type)) {}
 
     /// @brief Checks if two values are equal
-    virtual bool isEquals(ValueTypePtr valueType) const noexcept = 0;
+    [[nodiscard]] virtual bool isEquals(ValueTypePtr valueType) const noexcept = 0;
 
     /// @brief Returns a string representation of this value
-    virtual std::string toString() const noexcept = 0;
+    [[nodiscard]] virtual std::string toString() const noexcept = 0;
 
     template<class CheckedType>
     auto as() {

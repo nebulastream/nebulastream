@@ -24,11 +24,11 @@ namespace QueryCompilation {
 
 class TypeCastExprStatement : public ExpressionStatment {
   public:
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
     TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type);
 
@@ -39,7 +39,7 @@ class TypeCastExprStatement : public ExpressionStatment {
     GeneratableDataTypePtr dataType;
 };
 
-typedef TypeCastExprStatement TypeCast;
+using TypeCast = TypeCastExprStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

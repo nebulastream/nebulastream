@@ -91,11 +91,11 @@ OperationFatalException::OperationFatalException(const std::string& message) : E
 class TypeImp {
 
   public:
-    virtual ~TypeImp() {}
+    virtual ~TypeImp() = default;
 
-    virtual const std::string& GetData() const = 0;
+    [[nodiscard]] virtual const std::string& GetData() const = 0;
     virtual bool SetData(const std::string& data) = 0;
-    virtual size_t GetSize() const = 0;
+    [[nodiscard]] virtual size_t GetSize() const = 0;
     virtual Node* GetNode(const size_t index) = 0;
     virtual Node* GetNode(const std::string& key) = 0;
     virtual Node* Insert(const size_t index) = 0;
@@ -114,11 +114,11 @@ class SequenceImp : public TypeImp {
         }
     }
 
-    const std::string& GetData() const override { return g_EmptyString; }
+    [[nodiscard]] const std::string& GetData() const override { return g_EmptyString; }
 
     bool SetData(const std::string&) override { return false; }
 
-    size_t GetSize() const override { return m_Sequence.size(); }
+    [[nodiscard]] size_t GetSize() const override { return m_Sequence.size(); }
 
     Node* GetNode(const size_t index) override {
         auto it = m_Sequence.find(index);
@@ -205,11 +205,11 @@ class MapImp : public TypeImp {
         }
     }
 
-    const std::string& GetData() const override { return g_EmptyString; }
+    [[nodiscard]] const std::string& GetData() const override { return g_EmptyString; }
 
     bool SetData(const std::string&) override { return false; }
 
-    size_t GetSize() const override { return m_Map.size(); }
+    [[nodiscard]] size_t GetSize() const override { return m_Map.size(); }
 
     Node* GetNode(const size_t) override { return nullptr; }
 
@@ -246,16 +246,16 @@ class MapImp : public TypeImp {
 class ScalarImp : public TypeImp {
 
   public:
-    ~ScalarImp() override {}
+    ~ScalarImp() override = default;
 
-    const std::string& GetData() const override { return m_Value; }
+    [[nodiscard]] const std::string& GetData() const override { return m_Value; }
 
     bool SetData(const std::string& data) override {
         m_Value = data;
         return true;
     }
 
-    size_t GetSize() const override { return 0; }
+    [[nodiscard]] size_t GetSize() const override { return 0; }
 
     Node* GetNode(const size_t) override { return nullptr; }
 
@@ -278,7 +278,7 @@ class ScalarImp : public TypeImp {
 class NodeImp {
 
   public:
-    NodeImp() : m_Type(Node::None), m_pImp(nullptr) {}
+    NodeImp()  {}
 
     ~NodeImp() { Clear(); }
 
@@ -320,17 +320,17 @@ class NodeImp {
         }
     }
 
-    Node::eType m_Type;///< Type of node.
-    TypeImp* m_pImp;   ///< Imp of type.
+    Node::eType m_Type{Node::None};///< Type of node.
+    TypeImp* m_pImp{nullptr};   ///< Imp of type.
 };
 
 // Iterator implementation class
 class IteratorImp {
 
   public:
-    virtual ~IteratorImp() {}
+    virtual ~IteratorImp() = default;
 
-    virtual Node::eType GetType() const = 0;
+    [[nodiscard]] virtual Node::eType GetType() const = 0;
     virtual void InitBegin(SequenceImp* pSequenceImp) = 0;
     virtual void InitEnd(SequenceImp* pSequenceImp) = 0;
     virtual void InitBegin(MapImp* pMapImp) = 0;
@@ -340,7 +340,7 @@ class IteratorImp {
 class SequenceIteratorImp : public IteratorImp {
 
   public:
-    Node::eType GetType() const override { return Node::SequenceType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::SequenceType; }
 
     void InitBegin(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.begin(); }
 
@@ -358,7 +358,7 @@ class SequenceIteratorImp : public IteratorImp {
 class MapIteratorImp : public IteratorImp {
 
   public:
-    Node::eType GetType() const override { return Node::MapType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::MapType; }
 
     void InitBegin(SequenceImp*) override {}
 
@@ -376,7 +376,7 @@ class MapIteratorImp : public IteratorImp {
 class SequenceConstIteratorImp : public IteratorImp {
 
   public:
-    Node::eType GetType() const override { return Node::SequenceType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::SequenceType; }
 
     void InitBegin(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.begin(); }
 
@@ -394,7 +394,7 @@ class SequenceConstIteratorImp : public IteratorImp {
 class MapConstIteratorImp : public IteratorImp {
 
   public:
-    Node::eType GetType() const override { return Node::MapType; }
+    [[nodiscard]] Node::eType GetType() const override { return Node::MapType; }
 
     void InitBegin(SequenceImp*) override {}
 
@@ -410,7 +410,7 @@ class MapConstIteratorImp : public IteratorImp {
 };
 
 // Iterator class
-Iterator::Iterator() : m_Type(None), m_pImp(nullptr) {}
+Iterator::Iterator()  {}
 
 Iterator::~Iterator() {
     if (m_pImp) {
@@ -509,7 +509,7 @@ bool Iterator::operator==(const Iterator& it) {
 bool Iterator::operator!=(const Iterator& it) { return !(*this == it); }
 
 // Const Iterator class
-ConstIterator::ConstIterator() : m_Type(None), m_pImp(nullptr) {}
+ConstIterator::ConstIterator()  {}
 
 ConstIterator::~ConstIterator() {
     if (m_pImp) {
@@ -832,7 +832,7 @@ class ReaderLine {
                const size_t offset = 0,
                const Node::eType type = Node::None,
                const unsigned char flags = 0)
-        : Data(data), No(no), Offset(offset), Type(type), Flags(flags), NextLine(nullptr) {}
+        : Data(data), No(no), Offset(offset), Type(type), Flags(flags) {}
 
     enum eFlag {
         LiteralScalarFlag,///< Literal scalar type, defined as "|".
@@ -868,7 +868,7 @@ class ReaderLine {
         * @breif Get flag value.
         *
         */
-    bool GetFlag(const eFlag flag) const { return Flags & FlagMask[static_cast<size_t>(flag)]; }
+    [[nodiscard]] bool GetFlag(const eFlag flag) const { return Flags & FlagMask[static_cast<size_t>(flag)]; }
 
     /**
         * @breif Copy and replace scalar flags from another ReaderLine.
@@ -890,7 +890,7 @@ class ReaderLine {
     size_t Offset;       ///< Offset to first character in data.
     Node::eType Type;    ///< Type of line.
     unsigned char Flags; ///< Flags of line.
-    ReaderLine* NextLine;///< Pointer to next line.
+    ReaderLine* NextLine{nullptr};///< Pointer to next line.
 };
 
 const unsigned char ReaderLine::FlagMask[3] = {0x01, 0x02, 0x04};
@@ -907,7 +907,7 @@ class ParseImp {
         * @breif Default constructor.
         *
         */
-    ParseImp() {}
+    ParseImp() = default;
 
     /**
         * @breif Destructor.
@@ -1023,7 +1023,7 @@ class ParseImp {
                 }
             }
 
-            ReaderLine* pLine = new ReaderLine(line, lineNo, startOffset);
+            auto* pLine = new ReaderLine(line, lineNo, startOffset);
             m_Lines.push_back(pLine);
         }
     }
@@ -1178,7 +1178,7 @@ class ParseImp {
         if (IsBlockScalar(value, pLine->No, dummyBlockFlags) == true) {
             newLineOffset = pLine->Offset;
         }
-        ReaderLine* pNewLine = new ReaderLine(value, pLine->No, newLineOffset, Node::ScalarType);
+        auto* pNewLine = new ReaderLine(value, pLine->No, newLineOffset, Node::ScalarType);
         it = m_Lines.insert(it, pNewLine);
 
         // Return false in order to handle next line(scalar value).
@@ -1198,12 +1198,12 @@ class ParseImp {
 
         size_t parentOffset = pLine->Offset;
         if (pLine != m_Lines.front()) {
-            std::list<ReaderLine*>::iterator lastIt = it;
+            auto lastIt = it;
             --lastIt;
             parentOffset = (*lastIt)->Offset;
         }
 
-        std::list<ReaderLine*>::iterator lastNotEmpty = it++;
+        auto lastNotEmpty = it++;
 
         // Find last empty lines
         while (it != m_Lines.end()) {
@@ -1348,7 +1348,7 @@ class ParseImp {
 
         // Find parent offset
         if (it != m_Lines.begin()) {
-            std::list<ReaderLine*>::iterator parentIt = it;
+            auto parentIt = it;
             --parentIt;
             parentOffset = (*parentIt)->Offset;
         }
@@ -1363,7 +1363,7 @@ class ParseImp {
 
         // Not a block scalar, cut end spaces/tabs
         if (isBlockScalar == false) {
-            while (1) {
+            while (true) {
                 pLine = *it;
 
                 if (parentOffset != 0 && pLine->Offset <= parentOffset) {
@@ -1742,7 +1742,7 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
 
         } break;
         case Node::ScalarType: {
-            const std::string value = node.As<std::string>();
+            const auto value = node.As<std::string>();
 
             // Empty scalar
             if (value.size() == 0) {
@@ -1885,7 +1885,7 @@ size_t FindNotCited(const std::string& input, char token, size_t& preQuoteCount)
     size_t quoteStart = 0;
     size_t quoteEnd = 0;
     while (FindQuote(input, quoteStart, quoteEnd, quoteEnd)) {
-        quotes.push_back({quoteStart, quoteEnd});
+        quotes.emplace_back(quoteStart, quoteEnd);
 
         if (quoteEnd + 1 == input.size()) {
             break;

@@ -21,19 +21,19 @@
 
 namespace z3 {
 class solver;
-typedef std::shared_ptr<solver> SolverPtr;
+using SolverPtr = std::shared_ptr<solver>;
 
 class context;
-typedef std::shared_ptr<context> ContextPtr;
+using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Optimizer {
 
 class QuerySignature;
-typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
+using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
 class SignatureEqualityUtil;
-typedef std::shared_ptr<SignatureEqualityUtil> SignatureEqualityUtilPtr;
+using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 
 /**
  * @brief This is a utility to compare two signatures

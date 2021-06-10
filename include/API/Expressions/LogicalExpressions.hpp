@@ -24,7 +24,7 @@ namespace NES {
 
 class ExpressionNode;
 class ExpressionItem;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 /**
  * @brief Defines common logical operations between expression nodes.

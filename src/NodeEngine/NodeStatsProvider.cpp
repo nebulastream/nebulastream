@@ -37,7 +37,7 @@
 
 namespace NES::NodeEngine {
 
-NodeStatsProvider::NodeStatsProvider() : nbrProcessors(0), nodeStats(std::make_shared<NodeStats>()) {}
+NodeStatsProvider::NodeStatsProvider() :  nodeStats(std::make_shared<NodeStats>()) {}
 
 NodeStatsProviderPtr NodeStatsProvider::create() { return std::make_shared<NodeStatsProvider>(); }
 
@@ -134,8 +134,8 @@ void NodeStatsProvider::readNetworkStats() {
     std::map<std::string, int> keeper;
 
     int n = 0;
-    for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
-        if (ifa->ifa_addr == NULL)
+    for (ifa = ifaddr; ifa != nullptr; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr == nullptr)
             continue;
 
         strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
@@ -161,21 +161,21 @@ void NodeStatsProvider::readNetworkStats() {
         interface->set_name(ifa->ifa_name);
 
         if (family == AF_INET) {
-            s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+            s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
             if (s != 0) {
                 NES_ERROR("NodeProperties: could not read Network statistics: getnameinfo failed");
                 continue;
             }
             interface->set_host(host);
         } else if (family == AF_INET6) {
-            s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, NULL, 0, NI_NUMERICHOST);
+            s = getnameinfo(ifa->ifa_addr, sizeof(struct sockaddr_in6), host, NI_MAXHOST, nullptr, 0, NI_NUMERICHOST);
             if (s != 0) {
                 NES_ERROR("NodeProperties: could not read Network statistics: getnameinfo failed");
                 continue;
             }
             interface->set_host6(host);
-        } else if (family == AF_PACKET && ifa->ifa_data != NULL) {
-            struct rtnl_link_stats* stats = (struct rtnl_link_stats*) (ifa->ifa_data);
+        } else if (family == AF_PACKET && ifa->ifa_data != nullptr) {
+            auto* stats = (struct rtnl_link_stats*) (ifa->ifa_data);
             interface->set_tx_packets(stats->tx_packets);
             interface->set_tx_bytes(stats->tx_bytes);
             interface->set_tx_dropped(stats->tx_packets);

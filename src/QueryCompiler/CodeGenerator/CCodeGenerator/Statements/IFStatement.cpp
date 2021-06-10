@@ -21,7 +21,7 @@
 
 namespace NES {
 namespace QueryCompilation {
-IFStatement::~IFStatement() {}
+IFStatement::~IFStatement() = default;
 
 IFStatement::IFStatement(const Statement& cond_expr)
     : conditionalExpression(cond_expr.createCopy()), trueCaseStatement(new CompoundStatement()) {}

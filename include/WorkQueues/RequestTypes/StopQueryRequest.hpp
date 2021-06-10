@@ -22,7 +22,7 @@
 namespace NES {
 
 class StopQueryRequest;
-typedef std::shared_ptr<StopQueryRequest> StopQueryRequestPtr;
+using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
 
 /**
  * @brief This request is used for stopping a running query in NES cluster

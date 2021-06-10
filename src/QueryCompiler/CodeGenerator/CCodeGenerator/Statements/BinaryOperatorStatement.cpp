@@ -107,7 +107,7 @@ const CodeExpressionPtr BinaryOperatorStatement::getCode() const {
 
 const ExpressionStatmentPtr BinaryOperatorStatement::copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
 
-BinaryOperatorStatement::~BinaryOperatorStatement() {}
+BinaryOperatorStatement::~BinaryOperatorStatement() = default;
 
 /** \brief small utility operator overloads to make code generation simpler and */
 

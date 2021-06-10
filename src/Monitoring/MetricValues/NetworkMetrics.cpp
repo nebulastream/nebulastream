@@ -27,7 +27,7 @@
 
 namespace NES {
 
-NetworkMetrics::NetworkMetrics() : interfaceNum(0) {}
+NetworkMetrics::NetworkMetrics()  {}
 
 NetworkValues NetworkMetrics::getNetworkValue(uint64_t interfaceNo) const {
     if (interfaceNo >= getInterfaceNum()) {

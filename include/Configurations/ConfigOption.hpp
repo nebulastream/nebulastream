@@ -55,7 +55,7 @@ class ConfigOption {
      * @brief converts the value of this object into a string
      * @return string of the value of this object
      */
-    std::string getValueAsString() const { return string(value); };
+    [[nodiscard]] std::string getValueAsString() const { return string(value); };
 
     /**
      * @brief get the name of the ConfigOption Object
@@ -67,7 +67,7 @@ class ConfigOption {
      * @brief get the value of the ConfigOption Object
      * @return the value of the config if not set then default value
      */
-    T getValue() const { return value; };
+    [[nodiscard]] T getValue() const { return value; };
 
     /**
      * @brief sets the value
@@ -79,13 +79,13 @@ class ConfigOption {
      * @brief get the description of this parameter
      * @return description of the config
      */
-    const std::string getDescription() const { return description; };
+    [[nodiscard]] const std::string getDescription() const { return description; };
 
     /**
      * @brief get the default value of this parameter
      * @return: the default value
      */
-    T getDefaultValue() const { return defaultValue; };
+    [[nodiscard]] T getDefaultValue() const { return defaultValue; };
 
     /**
      * @brief perform equality check between two config options
@@ -96,7 +96,7 @@ class ConfigOption {
         if (this == other) {
             return true;
         } else if (other.has_value() && other.type() == typeid(ConfigOption)) {
-            ConfigOption<T> that = (ConfigOption<T>) other;
+            auto that = (ConfigOption<T>) other;
             return this->name == that.name && this->description == that.description && this->value == that.value
                 && this->defaultValue == that.defaultValue;
         }

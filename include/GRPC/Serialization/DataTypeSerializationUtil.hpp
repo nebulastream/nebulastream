@@ -24,10 +24,10 @@ namespace NES {
 class ArrayType;
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
+using ValueTypePtr = std::shared_ptr<ValueType>;
 
 class SerializableDataType;
 class SerializableDataValue;

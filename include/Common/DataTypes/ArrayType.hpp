@@ -39,12 +39,12 @@ class ArrayType : public DataType {
     /**
      * @brief Checks if this data type is an ArrayType.
      */
-    bool isArray() const final { return true; }
+    [[nodiscard]] bool isArray() const final { return true; }
 
     /**
      * @brief Checks if this data type is an ArrayType.
      */
-    bool isCharArray() const final { return component->isChar(); }
+    [[nodiscard]] bool isCharArray() const final { return component->isChar(); }
 
     /**
      * @brief Checks if two data types are equal.

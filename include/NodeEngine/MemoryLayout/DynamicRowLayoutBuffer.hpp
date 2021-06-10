@@ -44,7 +44,7 @@ class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
      * @param fieldName
      * @return field index from the fieldName
      */
-    std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
+    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const {
         return dynamicRowLayout->getFieldIndexFromName(fieldName);
     };
     /**
@@ -215,7 +215,7 @@ std::tuple<Types...> DynamicRowLayoutBuffer::readRecord(uint64_t recordIndex) {
     std::tuple<Types...> retTuple;
 
     uint64_t offSet = (recordIndex * this->getRecordSize());
-    uint8_t* address = const_cast<uint8_t*>(basePointer + offSet);
+    auto* address = const_cast<uint8_t*>(basePointer + offSet);
 
     copyTupleFieldsFromBuffer(retTuple, address);
 

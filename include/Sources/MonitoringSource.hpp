@@ -23,13 +23,13 @@
 namespace NES {
 
 class MonitoringPlan;
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
 class MetricGroup;
-typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
+using MetricGroupPtr = std::shared_ptr<MetricGroup>;
 
 class MetricCatalog;
-typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
+using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
 
 class MonitoringSource : public DefaultSource {
   public:
@@ -59,7 +59,7 @@ class MonitoringSource : public DefaultSource {
     MetricGroupPtr metricGroup;
 };
 
-typedef std::shared_ptr<MonitoringSource> MonitoringSourcePtr;
+using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;
 };// namespace NES
 
 #endif//NES_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_

@@ -23,22 +23,22 @@
 
 namespace NES::Optimizer {
 class SyntacticQueryValidation;
-typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
+using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 
 class SemanticQueryValidation;
-typedef std::shared_ptr<SemanticQueryValidation> SemanticQueryValidationPtr;
+using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 }// namespace NES::Optimizer
 
 namespace NES {
 
 class QueryService;
-typedef std::shared_ptr<QueryService> QueryServicePtr;
+using QueryServicePtr = std::shared_ptr<QueryService>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class NESRequestQueue;
-typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
+using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
 
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queries.

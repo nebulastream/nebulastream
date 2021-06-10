@@ -189,7 +189,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         if (!forceFlush) {
             watermark = getMinWatermark();
         } else {
-            std::map<uint64_t, uint64_t>::iterator max =
+            auto max =
                 std::max_element(originIdToMaxTsMap.begin(),
                                  originIdToMaxTsMap.end(),
                                  [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {

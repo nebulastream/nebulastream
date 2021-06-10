@@ -53,7 +53,7 @@ namespace NES {
 namespace NodeEngine {
 
 class ThreadPool;
-typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;// TODO consider moving this atomic in c++20
+using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this atomic in c++20
 
 /**
  * @brief the query manager is the central class to process queries.
@@ -66,8 +66,8 @@ typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;// TODO consider moving this a
  *    - statistics do not cover intermediate buffers
  */
 class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager>, public Reconfigurable {
-    typedef NES::detail::virtual_enable_shared_from_this<QueryManager> inherited0;
-    typedef Reconfigurable inherited1;
+    using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager>;
+    using inherited1 = Reconfigurable;
 
     enum QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
 
@@ -280,7 +280,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
     std::atomic<QueryManagerStatus> queryManagerStatus;
 };
 
-typedef std::shared_ptr<QueryManager> QueryManagerPtr;
+using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 }// namespace NodeEngine
 }// namespace NES

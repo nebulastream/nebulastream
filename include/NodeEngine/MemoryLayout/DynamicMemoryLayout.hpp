@@ -22,7 +22,7 @@
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 
-typedef uint64_t FIELD_SIZE;
+using FIELD_SIZE = uint64_t;
 
 /**
  * @brief This abstract class is the base class for DynamicRowLayout and DynamicColumnLayout.
@@ -43,33 +43,33 @@ class DynamicMemoryLayout {
      * @param fieldName
      * @return either field index for fieldName or empty optinal
      */
-    std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const;
+    [[nodiscard]] std::optional<uint64_t> getFieldIndexFromName(std::string fieldName) const;
 
     /**
      * @brief Abstract copy method
      * @return copied version
      */
-    virtual DynamicMemoryLayoutPtr copy() const = 0;
+    [[nodiscard]] virtual DynamicMemoryLayoutPtr copy() const = 0;
 
     /**
      * @return true if boundaries are actively being checked
      */
-    bool isCheckBoundaryFieldChecks() const;
+    [[nodiscard]] bool isCheckBoundaryFieldChecks() const;
 
     /**
      * @return number of current records
      */
-    uint64_t getRecordSize() const;
+    [[nodiscard]] uint64_t getRecordSize() const;
 
     /**
      * @return reference of field sizes vector
      */
-    const std::vector<FIELD_SIZE>& getFieldSizes() const;
+    [[nodiscard]] const std::vector<FIELD_SIZE>& getFieldSizes() const;
 
   protected:
     explicit DynamicMemoryLayout();
-    bool checkBoundaryFieldChecks;
-    uint64_t recordSize;
+    bool checkBoundaryFieldChecks{true};
+    uint64_t recordSize{0};
     std::vector<FIELD_SIZE> fieldSizes;
     std::map<std::string, uint64_t> nameFieldIndexMap;
 };

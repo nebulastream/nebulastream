@@ -32,7 +32,7 @@ namespace NES {
 class NodeStats;
 
 class PhysicalStreamConfig;
-typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
+using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 class CoordinatorRPCClient {
   public:
@@ -127,7 +127,7 @@ class CoordinatorRPCClient {
     std::shared_ptr<::grpc::Channel> rpcChannel;
     std::unique_ptr<CoordinatorRPCService::Stub> coordinatorStub;
 };
-typedef std::shared_ptr<CoordinatorRPCClient> CoordinatorRPCClientPtr;
+using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
 }// namespace NES
 #endif//

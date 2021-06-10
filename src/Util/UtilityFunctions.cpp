@@ -137,8 +137,8 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
             NES_ERROR("Compilation of query code failed! Code: " << code.str());
         }
 
-        typedef Query (*CreateQueryFunctionPtr)();
-        CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>("_ZN3NES11createQueryEv");
+        using CreateQueryFunctionPtr = Query (*)();
+        auto func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>("_ZN3NES11createQueryEv");
         if (!func) {
             NES_ERROR("UtilityFunctions: Error retrieving function! Symbol not found!");
         }
@@ -194,8 +194,8 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& queryCodeSni
             NES_ERROR("Compilation of schema code failed! Code: " << code.str());
         }
 
-        typedef Schema (*CreateSchemaFunctionPtr)();
-        CreateSchemaFunctionPtr func = compiled_code->getFunctionPointer<CreateSchemaFunctionPtr>(
+        using CreateSchemaFunctionPtr = Schema (*)();
+        auto func = compiled_code->getFunctionPointer<CreateSchemaFunctionPtr>(
             "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
         if (!func) {
             NES_ERROR("Error retrieving function! Symbol not found!");
@@ -220,7 +220,7 @@ std::string UtilityFunctions::generateIdString() {
     std::uniform_int_distribution<int> dist(0, 15);
 
     const char* v = "0123456789abcdef";
-    const bool dash[] = {0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0};
+    const bool dash[] = {false, false, false, false, true, false, true, false, true, false, true, false, false, false, false, false};
 
     std::string res;
     for (int i = 0; i < 16; i++) {
@@ -408,7 +408,7 @@ uint64_t UtilityFunctions::getNextTopologyNodeId() {
 }
 
 uint64_t UtilityFunctions::getNextNodeEngineId() {
-    static std::atomic_uint64_t id = time(NULL) ^ getpid();
+    static std::atomic_uint64_t id = time(nullptr) ^ getpid();
     return ++id;
 }
 

@@ -23,7 +23,7 @@
 namespace NES {
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -35,7 +35,7 @@ namespace NES::Optimizer {
  */
 class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    ~BottomUpStrategy() override{};
+    ~BottomUpStrategy() override= default;;
 
     bool updateGlobalExecutionPlan(QueryPlanPtr queryPlan) override;
 

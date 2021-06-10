@@ -43,8 +43,8 @@ namespace NES::Windowing {
  */
 class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<AbstractWindowHandler>,
                               public NodeEngine::Reconfigurable {
-    typedef detail::virtual_enable_shared_from_this<AbstractWindowHandler> inherited0;
-    typedef NodeEngine::Reconfigurable inherited1;
+    using inherited0 = detail::virtual_enable_shared_from_this<AbstractWindowHandler>;
+    using inherited1 = NodeEngine::Reconfigurable;
 
   public:
     explicit AbstractWindowHandler(LogicalWindowDefinitionPtr windowDefinition)
@@ -133,7 +133,7 @@ class AbstractWindowHandler : public detail::virtual_enable_shared_from_this<Abs
      */
     uint64_t getMinWatermark() {
         if (originIdToMaxTsMap.size() == numberOfInputEdges) {
-            std::map<uint64_t, uint64_t>::iterator min =
+            auto min =
                 std::min_element(originIdToMaxTsMap.begin(),
                                  originIdToMaxTsMap.end(),
                                  [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {

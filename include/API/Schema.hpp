@@ -27,7 +27,7 @@
 
 namespace NES {
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class Schema {
   public:
@@ -50,7 +50,7 @@ class Schema {
      * @note The containing AttributeFields may still reference the same objects.
      * @return A copy of the Schema
      */
-    SchemaPtr copy() const;
+    [[nodiscard]] SchemaPtr copy() const;
 
     /**
      * @brief Copy all fields of otherSchema into this schema.
@@ -127,13 +127,13 @@ class Schema {
      * @brief Returns the number of fields in the schema.
      * @return uint64_t
      */
-    uint64_t getSize() const;
+    [[nodiscard]] uint64_t getSize() const;
 
     /**
      * @brief Returns the number of bytes all fields in this schema occupy.
      * @return uint64_t
      */
-    uint64_t getSchemaSizeInBytes() const;
+    [[nodiscard]] uint64_t getSchemaSizeInBytes() const;
 
     /**
      * @brief Checks if two Schemas are equal to each other.
@@ -157,13 +157,13 @@ class Schema {
     */
     bool contains(const std::string& fieldName);
 
-    const std::string toString() const;
+    [[nodiscard]] const std::string toString() const;
 
     /**
      * @brief Method to return the stream name qualifier, thus everything that is before $
      * @return string
      */
-    const std::string getStreamNameQualifier() const;
+    [[nodiscard]] const std::string getStreamNameQualifier() const;
 
     /**
      * @brief method to get the qualifier of the stream without $

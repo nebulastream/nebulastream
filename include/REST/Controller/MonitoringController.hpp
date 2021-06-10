@@ -23,7 +23,7 @@
 namespace NES {
 
 class MonitoringService;
-typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
+using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 class MonitoringController : public BaseController {
 
@@ -48,7 +48,7 @@ class MonitoringController : public BaseController {
     MonitoringServicePtr monitoringService;
 };
 
-typedef std::shared_ptr<MonitoringController> MonitoringControllerPtr;
+using MonitoringControllerPtr = std::shared_ptr<MonitoringController>;
 
 }// namespace NES
 

@@ -74,19 +74,19 @@ class LogicalJoinDefinition {
     /**
      * @brief getter for on trigger policy
      */
-    Windowing::WindowTriggerPolicyPtr getTriggerPolicy() const;
+    [[nodiscard]] Windowing::WindowTriggerPolicyPtr getTriggerPolicy() const;
 
     /**
      * @brief getter for on trigger action
      * @return trigger action
     */
-    BaseJoinActionDescriptorPtr getTriggerAction() const;
+    [[nodiscard]] BaseJoinActionDescriptorPtr getTriggerAction() const;
 
     /**
      * @brief getter for on distribution type
      * @return distributionType
     */
-    Windowing::DistributionCharacteristicPtr getDistributionType() const;
+    [[nodiscard]] Windowing::DistributionCharacteristicPtr getDistributionType() const;
 
     /**
      * @brief number of input edges. Need to define a clear concept for this
@@ -118,7 +118,7 @@ class LogicalJoinDefinition {
      * @brief Getter of the output stream schema
      * @return the output stream schema
      */
-    SchemaPtr getOutputSchema() const;
+    [[nodiscard]] SchemaPtr getOutputSchema() const;
 
     void setNumberOfInputEdgesLeft(uint64_t numberOfInputEdgesLeft);
     void setNumberOfInputEdgesRight(uint64_t numberOfInputEdgesRight);
@@ -137,6 +137,6 @@ class LogicalJoinDefinition {
     uint64_t numberOfInputEdgesRight;
 };
 
-typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
+using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 }// namespace NES::Join
 #endif//NES_INCLUDE_JOIN_LOGICALJOINDEFINITION_HPP_

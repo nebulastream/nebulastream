@@ -31,6 +31,6 @@ const CodeExpressionPtr StdOutStatement::getCode() const {
 
 const StatementPtr StdOutStatement::createCopy() const { return std::make_shared<StdOutStatement>(*this); }
 
-StdOutStatement::~StdOutStatement() {}
+StdOutStatement::~StdOutStatement() = default;
 }// namespace QueryCompilation
 }// namespace NES

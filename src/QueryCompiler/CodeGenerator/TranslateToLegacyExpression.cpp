@@ -44,7 +44,7 @@ namespace NES {
 namespace QueryCompilation {
 TranslateToLegacyExpressionPtr TranslateToLegacyExpression::create() { return std::make_shared<TranslateToLegacyExpression>(); }
 
-TranslateToLegacyExpression::TranslateToLegacyExpression() {}
+TranslateToLegacyExpression::TranslateToLegacyExpression() = default;
 
 /**
  * Translate the expression node into the corresponding user api expression of the legacy api.

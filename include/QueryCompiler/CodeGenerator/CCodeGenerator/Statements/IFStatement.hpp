@@ -29,11 +29,11 @@ class IFStatement : public Statement {
 
     IFStatement(const StatementPtr& cond_expr, const StatementPtr& cond_true_stmt);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
 
     const CompoundStatementPtr getCompoundStatement();
 
@@ -44,7 +44,7 @@ class IFStatement : public Statement {
     CompoundStatementPtr trueCaseStatement;
 };
 
-typedef IFStatement IF;
+using IF = IFStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

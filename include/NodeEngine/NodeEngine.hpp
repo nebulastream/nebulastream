@@ -37,10 +37,10 @@
 namespace NES {
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class PhysicalStreamConfig;
-typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
+using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 }// namespace NES
 
@@ -58,9 +58,9 @@ class NodeEngine : public Network::ExchangeProtocolListener,
                    public NES::detail::virtual_enable_shared_from_this<NodeEngine>,
                    public ErrorListener {
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-    typedef Network::ExchangeProtocolListener inherited0;
-    typedef virtual_enable_shared_from_this<NodeEngine> inherited1;
-    typedef ErrorListener inherited2;
+    using inherited0 = Network::ExchangeProtocolListener;
+    using inherited1 = virtual_enable_shared_from_this<NodeEngine>;
+    using inherited2 = ErrorListener;
 
   public:
     enum NodeEngineQueryStatus { started, stopped, registered };
@@ -286,7 +286,7 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     uint32_t numberOfBuffersPerPipeline;
 };
 
-typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
+using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 }// namespace NES::NodeEngine
 #endif// NODE_ENGINE_H

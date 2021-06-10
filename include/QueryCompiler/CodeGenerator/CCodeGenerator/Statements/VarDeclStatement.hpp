@@ -25,11 +25,11 @@ class VarDeclStatement : public ExpressionStatment {
   public:
     VarDeclStatement(const VariableDeclaration& var_decl);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
     ~VarDeclStatement() override;
 

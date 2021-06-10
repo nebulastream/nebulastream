@@ -20,7 +20,7 @@
 #include <memory>
 namespace NES::Windowing {
 
-typedef uint64_t CountType;
+using CountType = uint64_t;
 
 /**
  * @brief A executable window aggregation, which is typed for the correct input, partial, and final data types.

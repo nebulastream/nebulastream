@@ -28,7 +28,7 @@
 namespace NES {
 
 class NESRequest;
-typedef std::shared_ptr<NESRequest> NESRequestPtr;
+using NESRequestPtr = std::shared_ptr<NESRequest>;
 
 /**
  * @brief This is a wrapper around a Deque for submitting arbitrary requests for the RequestProcessorService
@@ -69,7 +69,7 @@ class NESRequestQueue {
      * @brief Check if there are new request available
      * @return true if there are new requests
      */
-    bool isNewRequestAvailable() const;
+    [[nodiscard]] bool isNewRequestAvailable() const;
 
     /**
      * @brief Change status of new request availability
@@ -83,6 +83,6 @@ class NESRequestQueue {
     std::condition_variable availabilityTrigger;
     std::deque<NESRequestPtr> requestQueue;
 };
-typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
+using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
 }// namespace NES
 #endif//NES_NESREQUESTQUEUE_HPP

@@ -77,7 +77,7 @@ class MetricGroup {
     std::unordered_map<std::string, Metric> metricMap;
 };
 
-typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
+using MetricGroupPtr = std::shared_ptr<MetricGroup>;
 }// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICS_METRICGROUP_HPP_

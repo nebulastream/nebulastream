@@ -26,14 +26,14 @@
 namespace NES {
 
 class SharedLibrary;
-typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
+using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
 
 class SharedLibrary {
   public:
     ~SharedLibrary();
 
     static SharedLibraryPtr load(const std::string& file_path);
-    void* getSymbol(const std::string& mangeled_symbol_name) const;
+    [[nodiscard]] void* getSymbol(const std::string& mangeled_symbol_name) const;
 
     template<typename Function>
     Function getFunction(const std::string& mangeled_symbol_name) const {

@@ -50,7 +50,7 @@ CSVSource::CSVSource(SchemaPtr schema,
     this->gatheringInterval = std::chrono::milliseconds(frequency);
     tupleSize = schema->getSchemaSizeInBytes();
 
-    char* path = realpath(filePath.c_str(), NULL);
+    char* path = realpath(filePath.c_str(), nullptr);
     NES_DEBUG("CSVSource: Opening path " << path);
     input.open(path);
 

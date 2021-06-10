@@ -25,43 +25,43 @@
 namespace NES {
 
 class AttributeField;
-typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
+using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 class ExpressionNode;
-typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class FieldAccessExpressionNode;
-typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
+using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 
 class ExpressionItem;
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 }// namespace NES
 
 namespace NES::Windowing {
 
 class WindowOperatorHandler;
-typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
+using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
 
 class BaseExecutableWindowTriggerPolicy;
-typedef std::shared_ptr<BaseExecutableWindowTriggerPolicy> BaseExecutableWindowTriggerPolicyPtr;
+using BaseExecutableWindowTriggerPolicyPtr = std::shared_ptr<BaseExecutableWindowTriggerPolicy>;
 
 class ExecutableOnTimeTriggerPolicy;
-typedef std::shared_ptr<ExecutableOnTimeTriggerPolicy> ExecutableOnTimeTriggerPtr;
+using ExecutableOnTimeTriggerPtr = std::shared_ptr<ExecutableOnTimeTriggerPolicy>;
 
 class ExecutableOnWatermarkChangeTriggerPolicy;
-typedef std::shared_ptr<ExecutableOnWatermarkChangeTriggerPolicy> ExecutableOnWatermarkChangeTriggerPolicyPtr;
+using ExecutableOnWatermarkChangeTriggerPolicyPtr = std::shared_ptr<ExecutableOnWatermarkChangeTriggerPolicy>;
 
 class BaseWindowTriggerPolicyDescriptor;
-typedef std::shared_ptr<BaseWindowTriggerPolicyDescriptor> WindowTriggerPolicyPtr;
+using WindowTriggerPolicyPtr = std::shared_ptr<BaseWindowTriggerPolicyDescriptor>;
 
 class BaseWindowActionDescriptor;
-typedef std::shared_ptr<BaseWindowActionDescriptor> WindowActionDescriptorPtr;
+using WindowActionDescriptorPtr = std::shared_ptr<BaseWindowActionDescriptor>;
 
 class AbstractWindowHandler;
-typedef std::shared_ptr<AbstractWindowHandler> AbstractWindowHandlerPtr;
+using AbstractWindowHandlerPtr = std::shared_ptr<AbstractWindowHandler>;
 
 template<class KeyType, class InputType, class PartialAggregateType, class FinalAggregateType>
 class BaseExecutableWindowAction;
@@ -82,17 +82,17 @@ using ExecutableSliceAggregationTriggerActionPtr =
     std::shared_ptr<ExecutableSliceAggregationTriggerAction<KeyType, InputType, PartialAggregateType, FinalAggregateType>>;
 
 class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
 
 class WindowAggregationDescriptor;
-typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationPtr;
+using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 template<typename InputType, typename PartialAggregateType, typename FinalAggregateName>
 class ExecutableWindowAggregation;
 //typedef std::shared_ptr<ExecutableWindowAggregation> ExecutableWindowAggregationPtr;
 
 class WindowManager;
-typedef std::shared_ptr<WindowManager> WindowManagerPtr;
+using WindowManagerPtr = std::shared_ptr<WindowManager>;
 
 template<class PartialAggregateType>
 class WindowSliceStore;
@@ -103,37 +103,37 @@ class WindowedJoinSliceListStore;
 class SliceMetaData;
 
 class WindowType;
-typedef std::shared_ptr<WindowType> WindowTypePtr;
+using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class TumblingWindow;
-typedef std::shared_ptr<TumblingWindow> TumblingWindowPtr;
+using TumblingWindowPtr = std::shared_ptr<TumblingWindow>;
 
 class SlidingWindow;
-typedef std::shared_ptr<SlidingWindow> SlidingWindowPtr;
+using SlidingWindowPtr = std::shared_ptr<SlidingWindow>;
 
 class TimeMeasure;
 
 class TimeCharacteristic;
-typedef std::shared_ptr<TimeCharacteristic> TimeCharacteristicPtr;
+using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 class DistributionCharacteristic;
-typedef std::shared_ptr<DistributionCharacteristic> DistributionCharacteristicPtr;
+using DistributionCharacteristicPtr = std::shared_ptr<DistributionCharacteristic>;
 
-inline uint64_t getTsFromClock() { return time(NULL) * 1000; }
+inline uint64_t getTsFromClock() { return time(nullptr) * 1000; }
 
 class WindowAggregationDescriptor;
-typedef std::shared_ptr<WindowAggregationDescriptor> WindowAggregationDescriptorPtr;
+using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 class WindowState;
 
 class WatermarkStrategy;
-typedef std::shared_ptr<WatermarkStrategy> WatermarkStrategyPtr;
+using WatermarkStrategyPtr = std::shared_ptr<WatermarkStrategy>;
 
 class EventTimeWatermarkStrategy;
-typedef std::shared_ptr<EventTimeWatermarkStrategy> EventTimeWatermarkStrategyPtr;
+using EventTimeWatermarkStrategyPtr = std::shared_ptr<EventTimeWatermarkStrategy>;
 
 class WatermarkStrategyDescriptor;
-typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
+using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
 }// namespace NES::Windowing
 

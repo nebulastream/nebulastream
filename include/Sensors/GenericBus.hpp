@@ -119,7 +119,7 @@ class GenericBus {
     virtual bool readData(int address, int size, unsigned char* buffer) = 0;
 };
 
-typedef std::shared_ptr<GenericBus> GenericBusPtr;
+using GenericBusPtr = std::shared_ptr<GenericBus>;
 
 }//namespace Sensors
 }//namespace NES

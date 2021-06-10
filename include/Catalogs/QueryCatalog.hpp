@@ -138,7 +138,7 @@ class QueryCatalog {
     std::map<uint64_t, QueryCatalogEntryPtr> queries;
 };
 
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace NES
 
 #endif /* INCLUDE_CATALOGS_QUERYCATALOG_HPP_ */

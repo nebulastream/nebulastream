@@ -26,7 +26,7 @@ static constexpr auto MANGELED_ENTRY_POINT = "_ZN3NES6createEv";
 #error "unsupported platform/OS"
 #endif
 
-typedef NodeEngine::Execution::ExecutablePipelineStagePtr (*CreateFunctionPtr)();
+using CreateFunctionPtr = NodeEngine::Execution::ExecutablePipelineStagePtr (*)();
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(CompiledCodePtr compiledCode,
                                                                  PipelineStageArity arity,

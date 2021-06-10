@@ -44,7 +44,7 @@ class GeneratableArrayValueType final : public GeneratableValueType {
      * @brief Generates code expresion, which represents this value.
      * @return
      */
-    CodeExpressionPtr getCodeExpression() const noexcept final;
+    [[nodiscard]] CodeExpressionPtr getCodeExpression() const noexcept final;
 
   private:
     ValueTypePtr const valueType;

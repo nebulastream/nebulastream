@@ -26,10 +26,10 @@
 namespace NES {
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class GlobalQueryNode;
-typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
+using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
 
 /**
  * @brief This class encapsulates the logical operator shared by a set of queries.

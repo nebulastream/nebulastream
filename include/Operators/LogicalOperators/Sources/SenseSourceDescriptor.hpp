@@ -44,7 +44,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
     std::string udfs;
 };
 
-typedef std::shared_ptr<SenseSourceDescriptor> SenseSourceDescriptorPtr;
+using SenseSourceDescriptorPtr = std::shared_ptr<SenseSourceDescriptor>;
 
 }// namespace NES
 

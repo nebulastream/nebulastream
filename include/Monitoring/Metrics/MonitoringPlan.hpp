@@ -34,9 +34,9 @@ class SerializableMonitoringPlan;
 class MonitoringPlan;
 class MetricCatalog;
 
-typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
-typedef std::shared_ptr<MetricGroup> MetricGroupPtr;
+using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+using MetricGroupPtr = std::shared_ptr<MetricGroup>;
 
 /**
  * @brief The MonitoringPlan is a config class to represent what metrics shall be collected and how.
@@ -64,13 +64,13 @@ class MonitoringPlan {
      * @param metric
      * @return true if contained, else false
      */
-    bool hasMetric(MetricValueType metric) const;
+    [[nodiscard]] bool hasMetric(MetricValueType metric) const;
 
     /**
      * @brief creates a MetricGroup out of the MonitoringPlan;
      * @return
      */
-    MetricGroupPtr createMetricGroup(MetricCatalogPtr catalog) const;
+    [[nodiscard]] MetricGroupPtr createMetricGroup(MetricCatalogPtr catalog) const;
 
     /**
      * @brief
@@ -90,9 +90,9 @@ class MonitoringPlan {
      * @brief Creates a serializable monitoring plan according to the Protobuf definition.
      * @return the serializable monitoring plan
      */
-    SerializableMonitoringPlan serialize() const;
+    [[nodiscard]] SerializableMonitoringPlan serialize() const;
 
-    std::string toString() const;
+    [[nodiscard]] std::string toString() const;
 
     friend std::ostream& operator<<(std::ostream&, const MonitoringPlan&);
 
@@ -115,7 +115,7 @@ class MonitoringPlan {
     bool diskMetrics;
 };
 
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
 }// namespace NES
 

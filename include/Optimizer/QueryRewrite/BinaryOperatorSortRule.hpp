@@ -22,14 +22,14 @@
 namespace NES {
 
 class BinaryOperatorNode;
-typedef std::shared_ptr<BinaryOperatorNode> BinaryOperatorNodePtr;
+using BinaryOperatorNodePtr = std::shared_ptr<BinaryOperatorNode>;
 
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class BinaryOperatorSortRule;
-typedef std::shared_ptr<BinaryOperatorSortRule> BinaryOperatorSortRulePtr;
+using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
 
 /**
  * @brief This rule sorts children of a binary operators (Join and Union) by qualifier name.

@@ -19,7 +19,7 @@
 
 namespace NES {
 
-CompilerFlags::CompilerFlags() {}
+CompilerFlags::CompilerFlags() = default;
 
 CompilerFlagsPtr CompilerFlags::create() { return std::make_shared<CompilerFlags>(CompilerFlags()); }
 

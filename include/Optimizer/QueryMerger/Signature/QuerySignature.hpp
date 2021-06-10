@@ -24,13 +24,13 @@
 
 namespace z3 {
 class expr;
-typedef std::shared_ptr<expr> ExprPtr;
+using ExprPtr = std::shared_ptr<expr>;
 }// namespace z3
 
 namespace NES::Optimizer {
 
 class QuerySignature;
-typedef std::shared_ptr<QuerySignature> QuerySignaturePtr;
+using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 
 /**
  * @brief This class is responsible for holding the signature of a query plan. The signature of a query plan is used for comparing

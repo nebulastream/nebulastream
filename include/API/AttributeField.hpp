@@ -23,10 +23,10 @@
 namespace NES {
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class AttributeField;
-typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
+using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 /**
  * @brief Represents a typed field in a schema.
@@ -44,13 +44,13 @@ class AttributeField {
      */
     static AttributeFieldPtr create(std::string name, DataTypePtr dataType);
 
-    DataTypePtr getDataType() const;
+    [[nodiscard]] DataTypePtr getDataType() const;
 
-    std::string getName() const;
+    [[nodiscard]] std::string getName() const;
 
     void setName(std::string newName);
 
-    const std::string toString() const;
+    [[nodiscard]] const std::string toString() const;
     bool isEqual(AttributeFieldPtr attr);
 
     /**

@@ -88,7 +88,7 @@ void writeToBuffer(const MemoryMetrics& metrics, NodeEngine::TupleBuffer& buf, u
  */
 SchemaPtr getSchema(const MemoryMetrics& metric, const std::string& prefix);
 
-typedef std::shared_ptr<MemoryMetrics> MemoryMetricsPtr;
+using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
 }// namespace NES
 
 #endif//NES_INCLUDE_MONITORING_METRICVALUES_MEMORYMETRICS_HPP_

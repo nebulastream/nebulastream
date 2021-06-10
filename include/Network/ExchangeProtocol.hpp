@@ -78,7 +78,7 @@ class ExchangeProtocol {
      * @brief getter for the PartitionManager
      * @return the PartitionManager
      */
-    std::shared_ptr<PartitionManager> getPartitionManager() const;
+    [[nodiscard]] std::shared_ptr<PartitionManager> getPartitionManager() const;
 
   private:
     std::shared_ptr<PartitionManager> partitionManager;

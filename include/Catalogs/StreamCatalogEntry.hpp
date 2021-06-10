@@ -25,10 +25,10 @@
 namespace NES {
 
 class TopologyNode;
-typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class StreamCatalogEntry;
-typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
+using StreamCatalogEntryPtr = std::shared_ptr<StreamCatalogEntry>;
 
 /**
  * @brief one entry in the catalog contains

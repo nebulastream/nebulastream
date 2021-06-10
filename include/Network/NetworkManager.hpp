@@ -74,7 +74,7 @@ class NetworkManager {
      * @param nesPartition to check
      * @return true if the partition is registered
      */
-    bool isPartitionRegistered(NesPartition nesPartition) const;
+    [[nodiscard]] bool isPartitionRegistered(NesPartition nesPartition) const;
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to
@@ -118,7 +118,7 @@ class NetworkManager {
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;
 };
-typedef std::shared_ptr<NetworkManager> NetworkManagerPtr;
+using NetworkManagerPtr = std::shared_ptr<NetworkManager>;
 
 }// namespace Network
 }// namespace NES

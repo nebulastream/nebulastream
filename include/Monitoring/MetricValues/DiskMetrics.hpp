@@ -58,7 +58,7 @@ class DiskMetrics {
     uint64_t fBavail;
 };
 
-typedef std::shared_ptr<DiskMetrics> DiskMetricsPtr;
+using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
 
 /**
  * @brief The serialize method to write DiskMetrics into the given Schema and TupleBuffer. The prefix specifies a string

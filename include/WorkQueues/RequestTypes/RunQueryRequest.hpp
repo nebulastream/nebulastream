@@ -22,10 +22,10 @@
 namespace NES {
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class RunQueryRequest;
-typedef std::shared_ptr<RunQueryRequest> RunQueryRequestPtr;
+using RunQueryRequestPtr = std::shared_ptr<RunQueryRequest>;
 
 /**
  * @brief This request is used for running a new query in NES cluster

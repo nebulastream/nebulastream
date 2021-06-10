@@ -23,11 +23,11 @@ class VarRefStatement : public ExpressionStatment {
   public:
     VariableDeclarationPtr varDeclaration;
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
     VarRefStatement(const VariableDeclaration& var_decl);
 
@@ -36,7 +36,7 @@ class VarRefStatement : public ExpressionStatment {
     ~VarRefStatement() override;
 };
 
-typedef VarRefStatement VarRef;
+using VarRef = VarRefStatement;
 }// namespace QueryCompilation
 }// namespace NES
 

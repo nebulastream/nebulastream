@@ -25,7 +25,7 @@
 
 namespace mqtt {
 class async_client;
-typedef std::shared_ptr<async_client> async_clientPtr;
+using async_clientPtr = std::shared_ptr<async_client>;
 }// namespace mqtt
 
 namespace NES {
@@ -114,7 +114,7 @@ class MQTTSource : public DataSource {
     /**
      * @brief default constructor required for boost serialization
      */
-    MQTTSource();
+    MQTTSource() = delete;
 
     /**
      * @brief method to connect zmq using the host and port specified before
@@ -143,7 +143,7 @@ class MQTTSource : public DataSource {
     mqtt::async_clientPtr client;
 };
 
-typedef std::shared_ptr<MQTTSource> MQTTSourcePtr;
+using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
 }// namespace NES
 #endif//NES_MQTTSOURCE_HPP
 #endif

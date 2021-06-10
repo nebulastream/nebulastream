@@ -23,20 +23,20 @@
 namespace NES {
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 
 class DumpHandler;
-typedef std::shared_ptr<DumpHandler> DebugDumpHandlerPtr;
+using DebugDumpHandlerPtr = std::shared_ptr<DumpHandler>;
 
 class DumpContext;
-typedef std::shared_ptr<DumpContext> DumpContextPtr;
+using DumpContextPtr = std::shared_ptr<DumpContext>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 namespace QueryCompilation {
 class PipelineQueryPlan;
-typedef std::shared_ptr<PipelineQueryPlan> PipelineQueryPlanPtr;
+using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 }// namespace QueryCompilation
 
 /**

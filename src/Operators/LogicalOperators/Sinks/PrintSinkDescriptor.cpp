@@ -18,7 +18,7 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor() {}
+PrintSinkDescriptor::PrintSinkDescriptor() = default;
 
 SinkDescriptorPtr PrintSinkDescriptor::create() { return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor()); }
 

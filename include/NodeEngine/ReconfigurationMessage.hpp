@@ -29,7 +29,7 @@
 namespace NES::NodeEngine {
 
 class Reconfigurable;
-typedef std::shared_ptr<Reconfigurable> ReconfigurablePtr;
+using ReconfigurablePtr = std::shared_ptr<Reconfigurable>;
 
 /**
  * @brief this class contains the description of the reconfiguration that
@@ -115,19 +115,19 @@ class ReconfigurationMessage {
      * @brief get the reconfiguration type
      * @return the reconfiguration type
      */
-    ReconfigurationType getType() const { return type; }
+    [[nodiscard]] ReconfigurationType getType() const { return type; }
 
     /**
      * @brief get the target plan id
      * @return the plan id
      */
-    QuerySubPlanId getParentPlanId() const { return parentPlanId; }
+    [[nodiscard]] QuerySubPlanId getParentPlanId() const { return parentPlanId; }
 
     /**
      * @brief get the target instance to reconfigura
      * @return the target instance
      */
-    ReconfigurablePtr getInstance() const { return instance; };
+    [[nodiscard]] ReconfigurablePtr getInstance() const { return instance; };
 
     /**
      * @brief issue a synchronization barrier for all threads
@@ -150,7 +150,7 @@ class ReconfigurationMessage {
      * @return the user data value or error if that is not set
      */
     template<typename T>
-    T getUserData() const {
+    [[nodiscard]] T getUserData() const {
         NES_ASSERT2_FMT(userdata.has_value(), "invalid userdata");
         return std::any_cast<T>(userdata);
     }

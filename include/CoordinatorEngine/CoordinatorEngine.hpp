@@ -22,12 +22,12 @@
 enum NodeType : int;
 namespace NES {
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 class NodeStats;
-typedef std::shared_ptr<NodeStats> NodeStatsPtr;
+using NodeStatsPtr = std::shared_ptr<NodeStats>;
 class CoordinatorEngine {
 
   public:
@@ -119,7 +119,7 @@ class CoordinatorEngine {
     std::mutex addRemovePhysicalStream;
 };
 
-typedef std::shared_ptr<CoordinatorEngine> CoordinatorEnginePtr;
+using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
 
 }// namespace NES
 

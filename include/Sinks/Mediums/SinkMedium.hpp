@@ -133,7 +133,7 @@ class SinkMedium : public NodeEngine::Reconfigurable {
     std::mutex writeMutex;
 };
 
-typedef std::shared_ptr<SinkMedium> DataSinkPtr;
+using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 }// namespace NES
 

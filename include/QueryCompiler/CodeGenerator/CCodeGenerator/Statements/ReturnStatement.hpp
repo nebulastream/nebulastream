@@ -28,11 +28,11 @@ class ReturnStatement : public Statement {
     static StatementPtr create(StatementPtr statement);
     ReturnStatement(StatementPtr statement);
 
-    StatementType getStamentType() const override;
+    [[nodiscard]] StatementType getStamentType() const override;
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 
-    const StatementPtr createCopy() const override;
+    [[nodiscard]] const StatementPtr createCopy() const override;
 
     ~ReturnStatement() override;
 

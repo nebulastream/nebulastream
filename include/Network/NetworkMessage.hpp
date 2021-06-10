@@ -57,11 +57,11 @@ class MessageHeader {
     explicit MessageHeader(MessageType msgType, uint32_t msgLength)
         : magicNumber(NES_NETWORK_MAGIC_NUMBER), msgType(msgType), msgLength(msgLength) {}
 
-    nes_magic_number_t getMagicNumber() const { return magicNumber; }
+    [[nodiscard]] nes_magic_number_t getMagicNumber() const { return magicNumber; }
 
-    MessageType getMsgType() const { return msgType; }
+    [[nodiscard]] MessageType getMsgType() const { return msgType; }
 
-    uint32_t getMsgLength() const { return msgLength; }
+    [[nodiscard]] uint32_t getMsgLength() const { return msgLength; }
 
   private:
     const nes_magic_number_t magicNumber;
@@ -73,7 +73,7 @@ class ExchangeMessage {
   public:
     explicit ExchangeMessage(ChannelId channelId) : channelId(channelId) {}
 
-    const ChannelId& getChannelId() const { return channelId; }
+    [[nodiscard]] const ChannelId& getChannelId() const { return channelId; }
 
   private:
     const ChannelId channelId;
@@ -97,18 +97,18 @@ class ServerReadyMessage : public ExchangeMessage {
      * @brief check if the message does not contain any error
      * @return true if no error was raised
      */
-    bool isOk() const { return withError == kNoError; }
+    [[nodiscard]] bool isOk() const { return withError == kNoError; }
 
     /**
      * @brief this checks if the message contains a PartitionNotRegisteredError
      * @return true if the message contains a PartitionNotRegisteredError
      */
-    bool isPartitionNotFound() const { return withError == kPartitionNotRegisteredError; }
+    [[nodiscard]] bool isPartitionNotFound() const { return withError == kPartitionNotRegisteredError; }
 
     /**
      * @return the underlying error
      */
-    ErrorType getErrorType() const { return withError; }
+    [[nodiscard]] ErrorType getErrorType() const { return withError; }
 
   private:
     const ErrorType withError{kNoError};
@@ -120,7 +120,7 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     explicit EndOfStreamMessage(ChannelId channelId, bool graceful = true) : ExchangeMessage(channelId), graceful(graceful) {}
 
-    bool isGraceful() const { return graceful; }
+    [[nodiscard]] bool isGraceful() const { return graceful; }
 
   private:
     bool graceful;
@@ -132,9 +132,9 @@ class ErrorMessage : public ExchangeMessage {
 
     explicit ErrorMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), error(error){};
 
-    ErrorType getErrorType() const { return error; }
+    [[nodiscard]] ErrorType getErrorType() const { return error; }
 
-    std::string getErrorTypeAsString() const {
+    [[nodiscard]] std::string getErrorTypeAsString() const {
         if (error == ErrorType::kPartitionNotRegisteredError) {
             return "PartitionNotRegisteredError";
         } else {
@@ -169,7 +169,7 @@ class NesNetworkError : public std::runtime_error {
   public:
     explicit NesNetworkError(ErrorMessage& msg) : std::runtime_error(msg.getErrorTypeAsString()), msg(msg) {}
 
-    const ErrorMessage& getErrorMessage() const { return msg; }
+    [[nodiscard]] const ErrorMessage& getErrorMessage() const { return msg; }
 
   private:
     const ErrorMessage msg;

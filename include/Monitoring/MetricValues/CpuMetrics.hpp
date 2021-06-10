@@ -35,13 +35,13 @@ class CpuMetrics {
      * @param cpuCore core number
      * @return the cpu metrics
      */
-    CpuValues getValues(unsigned int cpuCore) const;
+    [[nodiscard]] CpuValues getValues(unsigned int cpuCore) const;
 
     /**
      * @brief Returns the total cpu metrics summed up across all cores
      * @return The cpu values for all cores
      */
-    CpuValues getTotal() const;
+    [[nodiscard]] CpuValues getTotal() const;
 
     /**
      * @brief The destructor to deallocate space.
@@ -52,7 +52,7 @@ class CpuMetrics {
      * @brief Returns the number of cores of the node
      * @return core numbers
      */
-    uint16_t getNumCores() const;
+    [[nodiscard]] uint16_t getNumCores() const;
 
     /**
      * @brief Parses a CpuMetrics objects from a given Schema and TupleBuffer.

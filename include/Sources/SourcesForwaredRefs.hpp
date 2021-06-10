@@ -20,7 +20,7 @@
 namespace NES {
 
 class DataSource;
-typedef std::shared_ptr<DataSource> DataSourcePtr;
+using DataSourcePtr = std::shared_ptr<DataSource>;
 }// namespace NES
 
 #endif//NES_INCLUDE_SOURCES_SOURCESFORWAREDREFS_HPP_

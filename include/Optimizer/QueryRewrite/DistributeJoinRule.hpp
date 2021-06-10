@@ -21,20 +21,20 @@
 
 namespace NES {
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class WindowOperatorNode;
-typedef std::shared_ptr<WindowOperatorNode> WindowOperatorNodePtr;
+using WindowOperatorNodePtr = std::shared_ptr<WindowOperatorNode>;
 
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class DistributeJoinRule;
-typedef std::shared_ptr<DistributeJoinRule> DistributeJoinRulePtr;
+using DistributeJoinRulePtr = std::shared_ptr<DistributeJoinRule>;
 
 /**
  * @brief This rule currently only set the right number of join input edges

@@ -231,14 +231,14 @@ void Compiler::callSystemCompiler(CompilerFlagsPtr flags, std::string const& fil
     // Calling the compiler in a new process
     fp = popen(compilerCall.str().c_str(), "r");
 
-    if (fp == NULL) {
+    if (fp == nullptr) {
         NES_ERROR("Compiler: failed to run command\n");
         return;
     }
 
     // Collecting the output of the compiler to a string stream
     std::ostringstream strstream;
-    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+    while (fgets(buffer, sizeof(buffer), fp) != nullptr) {
         strstream << buffer;
     }
 

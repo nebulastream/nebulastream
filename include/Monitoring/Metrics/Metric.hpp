@@ -78,7 +78,7 @@ class Metric {
      * @return the value
      */
     template<typename T>
-    T& getValue() const {
+    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] T& getValue() const {
         return dynamic_cast<model<T>*>(self.get())->data;
     }
 
@@ -112,8 +112,8 @@ class Metric {
      */
     struct concept_t {
         virtual ~concept_t() = default;
-        virtual std::unique_ptr<concept_t> copy() const = 0;
-        virtual MetricType getType() const = 0;
+        [[nodiscard]] virtual std::unique_ptr<concept_t> copy() const = 0;
+        [[nodiscard]] virtual MetricType getType() const = 0;
 
         /**
          * @brief The serialize concept to enable polymorphism across different metrics to make them serializable.
@@ -131,9 +131,9 @@ class Metric {
     struct model final : concept_t {
         explicit model(T x) : data(std::move(x)){};
 
-        std::unique_ptr<concept_t> copy() const override { return std::make_unique<model>(*this); }
+        [[nodiscard]] std::unique_ptr<concept_t> copy() const override { return std::make_unique<model>(*this); }
 
-        MetricType getType() const override { return getMetricType(data); }
+        [[nodiscard]] MetricType getType() const override { return getMetricType(data); }
 
         void writeToBufferConcept(NodeEngine::TupleBuffer& buf, uint64_t byteOffset) override {
             writeToBuffer(data, buf, byteOffset);

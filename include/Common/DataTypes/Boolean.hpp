@@ -28,7 +28,7 @@ class Boolean final : public DataType {
     /**
     * @brief Checks if this data type is Boolean.
     */
-    bool isBoolean() const final { return true; }
+    [[nodiscard]] bool isBoolean() const final { return true; }
 
     /**
      * @brief Checks if two data types are equal.

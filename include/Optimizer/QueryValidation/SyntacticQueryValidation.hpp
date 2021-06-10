@@ -21,13 +21,13 @@
 namespace NES {
 
 class Query;
-typedef std::shared_ptr<Query> QueryPtr;
+using QueryPtr = std::shared_ptr<Query>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class SyntacticQueryValidation;
-typedef std::shared_ptr<SyntacticQueryValidation> SyntacticQueryValidationPtr;
+using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 
 /**
  * @brief This class is responsible for Syntactic Query Validation

@@ -25,11 +25,11 @@ namespace QueryCompilation {
 
 class Declaration {
   public:
-    virtual const GeneratableDataTypePtr getType() const = 0;
-    virtual const std::string getIdentifierName() const = 0;
-    virtual const Code getTypeDefinitionCode() const = 0;
-    virtual const Code getCode() const = 0;
-    virtual const DeclarationPtr copy() const = 0;
+    [[nodiscard]] virtual const GeneratableDataTypePtr getType() const = 0;
+    [[nodiscard]] virtual const std::string getIdentifierName() const = 0;
+    [[nodiscard]] virtual const Code getTypeDefinitionCode() const = 0;
+    [[nodiscard]] virtual const Code getCode() const = 0;
+    [[nodiscard]] virtual const DeclarationPtr copy() const = 0;
     virtual ~Declaration();
 };
 

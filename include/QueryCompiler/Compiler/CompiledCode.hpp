@@ -21,7 +21,7 @@
 namespace NES {
 
 class CompiledCode;
-typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
+using CompiledCodePtr = std::shared_ptr<CompiledCode>;
 
 class CompiledCode {
   public:

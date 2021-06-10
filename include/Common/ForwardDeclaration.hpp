@@ -22,13 +22,13 @@
 namespace NES {
 
 class DataSource;
-typedef std::shared_ptr<DataSource> DataSourcePtr;
+using DataSourcePtr = std::shared_ptr<DataSource>;
 
 class QueryCompiler;
-typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
+using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 }// namespace NES
 

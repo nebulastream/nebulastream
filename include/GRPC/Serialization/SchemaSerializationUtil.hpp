@@ -22,10 +22,10 @@
 namespace NES {
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class SerializableSchema;
-typedef std::shared_ptr<SerializableSchema> SerializableSchemaPtr;
+using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
 
 /**
  * @brief The SchemaSerializationUtil offers functionality to serialize and de-serialize schemas to the

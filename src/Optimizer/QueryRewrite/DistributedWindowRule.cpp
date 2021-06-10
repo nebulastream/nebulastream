@@ -27,7 +27,7 @@
 
 namespace NES::Optimizer {
 
-DistributeWindowRule::DistributeWindowRule() {}
+DistributeWindowRule::DistributeWindowRule() = default;
 
 DistributeWindowRulePtr DistributeWindowRule::create() { return std::make_shared<DistributeWindowRule>(DistributeWindowRule()); }
 

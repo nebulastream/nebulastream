@@ -26,7 +26,7 @@ class ReportingProtocol {
   public:
     ReportingProtocol(std::function<void(MetricGroup&)>&& reportingFunc);
 
-    bool canReceive() const;
+    [[nodiscard]] bool canReceive() const;
 
     void receive(MetricGroup& metricGroup);
 

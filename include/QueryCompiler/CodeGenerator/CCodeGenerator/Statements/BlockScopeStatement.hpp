@@ -31,7 +31,7 @@ class BlockScopeStatement : public CompoundStatement {
   public:
     static BlockScopeStatementPtr create();
 
-    const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] const CodeExpressionPtr getCode() const override;
 };
 }// namespace QueryCompilation
 }// namespace NES

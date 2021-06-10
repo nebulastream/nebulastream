@@ -27,7 +27,7 @@
 
 namespace NES {
 
-Schema::Schema() {}
+Schema::Schema() = default;
 
 SchemaPtr Schema::create() { return std::make_shared<Schema>(); }
 

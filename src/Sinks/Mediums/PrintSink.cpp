@@ -25,7 +25,7 @@ namespace NES {
 PrintSink::PrintSink(SinkFormatPtr format, QuerySubPlanId parentPlanId, std::ostream& pOutputStream)
     : SinkMedium(format, parentPlanId), outputStream(pOutputStream) {}
 
-PrintSink::~PrintSink() {}
+PrintSink::~PrintSink() = default;
 
 SinkMediumTypes PrintSink::getSinkMediumType() { return PRINT_SINK; }
 

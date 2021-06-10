@@ -27,7 +27,7 @@ namespace NES {
  */
 class Counter {
   public:
-    Counter(){};
+    Counter()= default;;
 
     /**
 	 * Increment the current count by 1.
@@ -40,7 +40,7 @@ class Counter {
     virtual void dec() = 0;
 };
 
-typedef std::shared_ptr<Counter> CounterPtr;
+using CounterPtr = std::shared_ptr<Counter>;
 
 }// namespace NES
 

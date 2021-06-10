@@ -192,7 +192,7 @@ class [[nodiscard]] TupleBuffer {
     [[nodiscard]] constexpr bool isValid() const noexcept { return ptr != nullptr; }
 
     /// @brief get the buffer's size.
-    inline uint64_t getBufferSize() const noexcept { return size; }
+    [[nodiscard]] inline uint64_t getBufferSize() const noexcept { return size; }
 
     /// @brief get the number of tuples stored.
     [[nodiscard]] constexpr uint64_t getNumberOfTuples() const noexcept { return controlBlock->getNumberOfTuples(); }
@@ -222,7 +222,7 @@ class [[nodiscard]] TupleBuffer {
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      */
-    detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
+    [[nodiscard]] detail::BufferControlBlock* getControlBlock() const { return controlBlock; }
 
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;

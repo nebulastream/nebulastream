@@ -106,6 +106,6 @@ VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string&
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 }
 
-StructDeclaration::~StructDeclaration() {}
+StructDeclaration::~StructDeclaration() = default;
 }// namespace QueryCompilation
 }// namespace NES

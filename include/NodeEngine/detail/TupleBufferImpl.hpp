@@ -83,7 +83,7 @@ class BufferControlBlock {
     /**
      * @return get the reference counter
      */
-    int32_t getReferenceCount() const noexcept;
+    [[nodiscard]] int32_t getReferenceCount() const noexcept;
 
     /**
      * @brief Decrease the reference counter by one.
@@ -96,7 +96,7 @@ class BufferControlBlock {
     * Note that this is going to be deprecated in future NES versions
     * @return the tuple size stored in the companion buffer
     */
-    uint64_t getNumberOfTuples() const noexcept;
+    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept;
 
     /**
      * @brief set the tuple size stored in the companion buffer
@@ -107,7 +107,7 @@ class BufferControlBlock {
      * @brief method to get the watermark as a timestamp
      * @return watermark
      */
-    uint64_t getWatermark() const noexcept;
+    [[nodiscard]] uint64_t getWatermark() const noexcept;
 
     /**
    * @brief method to set the watermark with a timestamp
@@ -119,7 +119,7 @@ class BufferControlBlock {
      * @brief get id where this buffer was created
      * @return origin id
      */
-    uint64_t getOriginId() const noexcept;
+    [[nodiscard]] uint64_t getOriginId() const noexcept;
 
     /**
      * @brief set originId
@@ -137,7 +137,7 @@ class BufferControlBlock {
      * @brief method to get the creation timestamp
      * @return ts
      */
-    uint64_t getCreationTimestamp() const noexcept;
+    [[nodiscard]] uint64_t getCreationTimestamp() const noexcept;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     void dumpOwningThreadInfo();
@@ -241,7 +241,7 @@ class MemorySegment {
      * @brief The size of the memory segment
      * @return
      */
-    uint32_t getSize() const { return size; }
+    [[nodiscard]] uint32_t getSize() const { return size; }
 
   private:
     /*
@@ -259,9 +259,9 @@ class MemorySegment {
      +----------------------------+-------------------------+----------------------------+
      */
 
-    uint8_t* ptr;
-    uint32_t size;
-    detail::BufferControlBlock* controlBlock;
+    uint8_t* ptr{nullptr};
+    uint32_t size{0};
+    detail::BufferControlBlock* controlBlock{nullptr};
 };
 
 /**

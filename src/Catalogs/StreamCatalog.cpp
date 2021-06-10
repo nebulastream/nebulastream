@@ -176,7 +176,7 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, std::str
     } else {
         NES_DEBUG("StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream"
                                                    << physicalStreamName << " from node " << hashId);
-        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry =
+        for (auto entry =
                  logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
              entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
              entry++) {
@@ -206,7 +206,7 @@ bool StreamCatalog::removePhysicalStreamByHashId(uint64_t hashId) {
     std::unique_lock lock(catalogMutex);
     for (auto logStream : logicalToPhysicalStreamMapping) {
         NES_DEBUG("StreamCatalog: check log stream " << logStream.first);
-        for (std::vector<StreamCatalogEntryPtr>::const_iterator entry = logicalToPhysicalStreamMapping[logStream.first].cbegin();
+        for (auto entry = logicalToPhysicalStreamMapping[logStream.first].cbegin();
              entry != logicalToPhysicalStreamMapping[logStream.first].cend();
              entry++) {
             if (entry->get()->getNode()->getId() == hashId) {

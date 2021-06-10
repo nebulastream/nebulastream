@@ -254,7 +254,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     void runningRoutineWithIngestionRate();
 };
 
-typedef std::shared_ptr<DataSource> DataSourcePtr;
+using DataSourcePtr = std::shared_ptr<DataSource>;
 
 }// namespace NES
 

@@ -23,9 +23,9 @@
 
 namespace NES {
 class NodeStats;
-typedef std::shared_ptr<NodeStats> NodeStatsPtr;
+using NodeStatsPtr = std::shared_ptr<NodeStats>;
 class TopologyNode;
-typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 /**
  * @brief This class represents information about a physical node participating in the NES infrastructure

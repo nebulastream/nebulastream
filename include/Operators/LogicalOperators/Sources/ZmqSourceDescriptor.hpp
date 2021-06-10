@@ -57,7 +57,7 @@ class ZmqSourceDescriptor : public SourceDescriptor {
     uint16_t port;
 };
 
-typedef std::shared_ptr<ZmqSourceDescriptor> ZmqSourceDescriptorPtr;
+using ZmqSourceDescriptorPtr = std::shared_ptr<ZmqSourceDescriptor>;
 
 }// namespace NES
 

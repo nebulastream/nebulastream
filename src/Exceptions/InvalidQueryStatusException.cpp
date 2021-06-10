@@ -29,6 +29,6 @@ InvalidQueryStatusException::InvalidQueryStatusException(std::vector<QueryStatus
         + queryStatusToStringMap[actualStatus];
 }
 
-const char* InvalidQueryStatusException::what() const throw() { return message.c_str(); }
+const char* InvalidQueryStatusException::what() const noexcept { return message.c_str(); }
 
 }// namespace NES

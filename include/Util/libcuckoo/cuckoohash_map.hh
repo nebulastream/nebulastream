@@ -823,7 +823,7 @@ private:
     LIBCUCKOO_SQUELCH_PADDING_WARNING
     class LIBCUCKOO_ALIGNAS(64) spinlock {
         public:
-        spinlock() : elem_counter_(0), is_migrated_(true) { lock_.clear(); }
+        spinlock()  { lock_.clear(); }
 
         spinlock(const spinlock &other)
         : elem_counter_(other.elem_counter()),
@@ -849,15 +849,15 @@ private:
         }
 
         counter_type &elem_counter() noexcept { return elem_counter_; }
-        counter_type elem_counter() const noexcept { return elem_counter_; }
+        [[nodiscard]] counter_type elem_counter() const noexcept { return elem_counter_; }
 
         bool &is_migrated() noexcept { return is_migrated_; }
-        bool is_migrated() const noexcept { return is_migrated_; }
+        [[nodiscard]] bool is_migrated() const noexcept { return is_migrated_; }
 
         private:
         std::atomic_flag lock_;
-        counter_type elem_counter_;
-        bool is_migrated_;
+        counter_type elem_counter_{0};
+        bool is_migrated_{true};
     };
 
     template <typename U>
@@ -887,7 +887,7 @@ private:
 
     class TwoBuckets {
     public:
-        TwoBuckets() {}
+        TwoBuckets() = default;
         TwoBuckets(size_type i1_, size_type i2_, locked_table_mode)
                 : i1(i1_), i2(i2_) {}
         TwoBuckets(locks_t &locks, size_type i1_, size_type i2_, normal_mode)
@@ -1333,11 +1333,11 @@ private:
     // elements only define a sequence of alternate hashings for different hash
     // values, we only need to keep track of the hash values being moved, rather
     // than the keys themselves.
-    typedef struct {
+    using CuckooRecord = struct {
         size_type bucket;
         size_type slot;
         hash_value hv;
-    } CuckooRecord;
+    };
 
     // The maximum number of items in a cuckoo BFS path. It determines the
     // maximum number of slots we search when cuckooing.
@@ -1573,7 +1573,7 @@ private:
                       " MAX_BFS_PATH_LEN - 1");
         static_assert(-1 >= std::numeric_limits<decltype(depth)>::min(),
                       "The depth type must be able to hold a value of -1");
-        b_slot() {}
+        b_slot() = default;
         b_slot(const size_type b, const uint16_t p, const decltype(depth) d)
                 : bucket(b), pathcode(p), depth(d) {
             assert(d < MAX_BFS_PATH_LEN);
@@ -1597,9 +1597,9 @@ private:
             return x;
         }
 
-        bool empty() const { return first_ == last_; }
+        [[nodiscard]] bool empty() const { return first_ == last_; }
 
-        bool full() const { return last_ == MAX_CUCKOO_COUNT; }
+        [[nodiscard]] bool full() const { return last_ == MAX_CUCKOO_COUNT; }
 
     private:
         // The size of the BFS queue. It holds just enough elements to fulfill a
@@ -2163,7 +2163,7 @@ public:
             using reference = typename locked_table::const_reference;
             using iterator_category = std::bidirectional_iterator_tag;
 
-            const_iterator() {}
+            const_iterator() = default;
 
             // Return true if the iterators are from the same locked table and
             // location, false otherwise.
@@ -2286,7 +2286,7 @@ public:
             using pointer = typename cuckoohash_map::pointer;
             using reference = typename cuckoohash_map::reference;
 
-            iterator() {}
+            iterator() = default;
 
             bool operator==(const iterator &it) const {
                 return const_iterator::operator==(it);
@@ -2384,37 +2384,37 @@ public:
          *
          * @return true if it still has ownership, false otherwise
          */
-        bool is_active() const { return static_cast<bool>(all_locks_manager_); }
+        [[nodiscard]] bool is_active() const { return static_cast<bool>(all_locks_manager_); }
 
-        hasher hash_function() const { return map_.get().hash_function(); }
+        [[nodiscard]] hasher hash_function() const { return map_.get().hash_function(); }
 
-        key_equal key_eq() const { return map_.get().key_eq(); }
+        [[nodiscard]] key_equal key_eq() const { return map_.get().key_eq(); }
 
-        allocator_type get_allocator() const { return map_.get().get_allocator(); }
+        [[nodiscard]] allocator_type get_allocator() const { return map_.get().get_allocator(); }
 
-        size_type hashpower() const { return map_.get().hashpower(); }
+        [[nodiscard]] size_type hashpower() const { return map_.get().hashpower(); }
 
-        size_type bucket_count() const { return map_.get().bucket_count(); }
+        [[nodiscard]] size_type bucket_count() const { return map_.get().bucket_count(); }
 
-        bool empty() const { return map_.get().empty(); }
+        [[nodiscard]] bool empty() const { return map_.get().empty(); }
 
-        size_type size() const { return map_.get().size(); }
+        [[nodiscard]] size_type size() const { return map_.get().size(); }
 
-        size_type capacity() const { return map_.get().capacity(); }
+        [[nodiscard]] size_type capacity() const { return map_.get().capacity(); }
 
-        double load_factor() const { return map_.get().load_factor(); }
+        [[nodiscard]] double load_factor() const { return map_.get().load_factor(); }
 
         void minimum_load_factor(const double mlf) {
             map_.get().minimum_load_factor(mlf);
         }
 
-        double minimum_load_factor() const {
+        [[nodiscard]] double minimum_load_factor() const {
             return map_.get().minimum_load_factor();
         }
 
         void maximum_hashpower(size_type mhp) { map_.get().maximum_hashpower(mhp); }
 
-        size_type maximum_hashpower() const {
+        [[nodiscard]] size_type maximum_hashpower() const {
             return map_.get().maximum_hashpower();
         }
 
@@ -2422,7 +2422,7 @@ public:
             map_.get().max_num_worker_threads(extra_threads);
         }
 
-        size_type max_num_worker_threads() const {
+        [[nodiscard]] size_type max_num_worker_threads() const {
             return map_.get().max_num_worker_threads();
         }
 
@@ -2440,11 +2440,11 @@ public:
 
         iterator begin() { return iterator(map_.get().buckets_, 0, 0); }
 
-        const_iterator begin() const {
+        [[nodiscard]] const_iterator begin() const {
             return const_iterator(map_.get().buckets_, 0, 0);
         }
 
-        const_iterator cbegin() const { return begin(); }
+        [[nodiscard]] const_iterator cbegin() const { return begin(); }
 
         /**
          * Returns an iterator past the end of the table.
@@ -2459,14 +2459,14 @@ public:
                             static_cast<size_type>(end_pos.second));
         }
 
-        const_iterator end() const {
+        [[nodiscard]] const_iterator end() const {
             const auto end_pos = const_iterator::end_pos(map_.get().buckets_);
             return const_iterator(map_.get().buckets_,
                                   static_cast<size_type>(end_pos.first),
                                   static_cast<size_type>(end_pos.second));
         }
 
-        const_iterator cend() const { return end(); }
+        [[nodiscard]] const_iterator cend() const { return end(); }
 
         /**@}*/
 
@@ -2680,7 +2680,7 @@ public:
 
         buckets_t &buckets() { return map_.get().buckets_; }
 
-        const buckets_t &buckets() const { return map_.get().buckets_; }
+        [[nodiscard]] const buckets_t &buckets() const { return map_.get().buckets_; }
 
         void maybe_resize_locks(size_type new_bucket_count) {
             map_.get().maybe_resize_locks(new_bucket_count);

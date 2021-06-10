@@ -69,7 +69,7 @@ class I2CBus : public GenericBus {
     int rawI2CRdrw(uint8_t address, uint8_t readWriteOperation, uint8_t size, unsigned char* buffer);
 };
 
-typedef std::shared_ptr<I2CBus> I2CBusPtr;
+using I2CBusPtr = std::shared_ptr<I2CBus>;
 
 }//namespace Sensors
 }//namespace NES

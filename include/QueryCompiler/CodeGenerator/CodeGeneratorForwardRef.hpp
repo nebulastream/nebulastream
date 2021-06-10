@@ -20,115 +20,115 @@
 namespace NES {
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class ValueType;
-typedef std::shared_ptr<ValueType> ValueTypePtr;
+using ValueTypePtr = std::shared_ptr<ValueType>;
 
 class BasicValue;
-typedef std::shared_ptr<BasicValue> BasicValuePtr;
+using BasicValuePtr = std::shared_ptr<BasicValue>;
 
 class AttributeField;
-typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
+using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 namespace Windowing {
 
 class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
 
 }// namespace Windowing
 
 namespace QueryCompilation {
 
-typedef std::string Code;
+using Code = std::string;
 
 class GeneratedCode;
-typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
+using GeneratedCodePtr = std::shared_ptr<GeneratedCode>;
 
 class CodeGenerator;
-typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
+using CodeGeneratorPtr = std::shared_ptr<CodeGenerator>;
 
 class TranslateToLegacyExpression;
-typedef std::shared_ptr<TranslateToLegacyExpression> TranslateToLegacyExpressionPtr;
+using TranslateToLegacyExpressionPtr = std::shared_ptr<TranslateToLegacyExpression>;
 
 class PipelineContext;
-typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+using PipelineContextPtr = std::shared_ptr<PipelineContext>;
 
 class Predicate;
-typedef std::shared_ptr<Predicate> PredicatePtr;
+using PredicatePtr = std::shared_ptr<Predicate>;
 
 class GeneratableTypesFactory;
-typedef std::shared_ptr<GeneratableTypesFactory> CompilerTypesFactoryPtr;
+using CompilerTypesFactoryPtr = std::shared_ptr<GeneratableTypesFactory>;
 
 class LegacyExpression;
-typedef std::shared_ptr<LegacyExpression> LegacyExpressionPtr;
+using LegacyExpressionPtr = std::shared_ptr<LegacyExpression>;
 
 class CodeExpression;
-typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
+using CodeExpressionPtr = std::shared_ptr<CodeExpression>;
 
 class GeneratableDataType;
-typedef std::shared_ptr<GeneratableDataType> GeneratableDataTypePtr;
+using GeneratableDataTypePtr = std::shared_ptr<GeneratableDataType>;
 
 class GeneratableValueType;
-typedef std::shared_ptr<GeneratableValueType> GeneratableValueTypePtr;
+using GeneratableValueTypePtr = std::shared_ptr<GeneratableValueType>;
 
 class FunctionDefinition;
-typedef std::shared_ptr<FunctionDefinition> FunctionDefinitionPtr;
+using FunctionDefinitionPtr = std::shared_ptr<FunctionDefinition>;
 
 class ConstructorDefinition;
-typedef std::shared_ptr<ConstructorDefinition> ConstructorDefinitionPtr;
+using ConstructorDefinitionPtr = std::shared_ptr<ConstructorDefinition>;
 
 class ConstructorDeclaration;
-typedef std::shared_ptr<ConstructorDeclaration> ConstructorDeclarationPtr;
+using ConstructorDeclarationPtr = std::shared_ptr<ConstructorDeclaration>;
 
 class AssignmentStatement;
 
 class StructDeclaration;
-typedef std::shared_ptr<StructDeclaration> StructDeclarationPtr;
+using StructDeclarationPtr = std::shared_ptr<StructDeclaration>;
 
 class NamespaceDefinition;
-typedef std::shared_ptr<NamespaceDefinition> NamespaceDefinitionPtr;
+using NamespaceDefinitionPtr = std::shared_ptr<NamespaceDefinition>;
 
 class ClassDefinition;
-typedef std::shared_ptr<ClassDefinition> ClassDefinitionPtr;
+using ClassDefinitionPtr = std::shared_ptr<ClassDefinition>;
 
 class Declaration;
-typedef std::shared_ptr<Declaration> DeclarationPtr;
+using DeclarationPtr = std::shared_ptr<Declaration>;
 
 class FunctionDeclaration;
-typedef std::shared_ptr<FunctionDeclaration> FunctionDeclarationPtr;
+using FunctionDeclarationPtr = std::shared_ptr<FunctionDeclaration>;
 
 class ClassDeclaration;
-typedef std::shared_ptr<ClassDeclaration> ClassDeclarationPtr;
+using ClassDeclarationPtr = std::shared_ptr<ClassDeclaration>;
 
 class NamespaceDeclaration;
-typedef std::shared_ptr<NamespaceDeclaration> NamespaceDeclarationPtr;
+using NamespaceDeclarationPtr = std::shared_ptr<NamespaceDeclaration>;
 
 class Statement;
-typedef std::shared_ptr<Statement> StatementPtr;
+using StatementPtr = std::shared_ptr<Statement>;
 
 class BinaryOperatorStatement;
 
 class FunctionCallStatement;
-typedef std::shared_ptr<FunctionCallStatement> FunctionCallStatementPtr;
+using FunctionCallStatementPtr = std::shared_ptr<FunctionCallStatement>;
 
 class CompoundStatement;
-typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
+using CompoundStatementPtr = std::shared_ptr<CompoundStatement>;
 
 class VarRefStatement;
-typedef std::shared_ptr<VarRefStatement> VarRefStatementPtr;
+using VarRefStatementPtr = std::shared_ptr<VarRefStatement>;
 
 class VariableDeclaration;
-typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
+using VariableDeclarationPtr = std::shared_ptr<VariableDeclaration>;
 
 class ExpressionStatment;
-typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
+using ExpressionStatmentPtr = std::shared_ptr<ExpressionStatment>;
 
 class BlockScopeStatement;
-typedef std::shared_ptr<BlockScopeStatement> BlockScopeStatementPtr;
+using BlockScopeStatementPtr = std::shared_ptr<BlockScopeStatement>;
 
 class RecordHandler;
-typedef std::shared_ptr<RecordHandler> RecordHandlerPtr;
+using RecordHandlerPtr = std::shared_ptr<RecordHandler>;
 }// namespace QueryCompilation
 }// namespace NES
 

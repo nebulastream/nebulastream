@@ -22,10 +22,10 @@
 namespace NES {
 
 class DataType;
-typedef std::shared_ptr<DataType> DataTypePtr;
+using DataTypePtr = std::shared_ptr<DataType>;
 
 class PhysicalType;
-typedef std::shared_ptr<PhysicalType> PhysicalTypePtr;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
 /**
  * @brief The physical type factory converts a nes data type into a physical representation.

@@ -19,7 +19,7 @@
 
 namespace NES::Windowing {
 
-IngestionTimeWatermarkStrategy::IngestionTimeWatermarkStrategy() {}
+IngestionTimeWatermarkStrategy::IngestionTimeWatermarkStrategy() = default;
 IngestionTimeWatermarkStrategyPtr IngestionTimeWatermarkStrategy::create() {
     return std::make_shared<IngestionTimeWatermarkStrategy>();
 }

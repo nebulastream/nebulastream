@@ -127,7 +127,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
     std::string topic;
 };
 
-typedef std::shared_ptr<MQTTSourceDescriptor> MQTTSourceDescriptorPtr;
+using MQTTSourceDescriptorPtr = std::shared_ptr<MQTTSourceDescriptor>;
 
 }// namespace NES
 

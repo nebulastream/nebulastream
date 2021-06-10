@@ -86,7 +86,7 @@ class Task {
   private:
     Execution::SuccessorExecutablePipeline pipeline;
     TupleBuffer buf;
-    uint64_t id;
+    uint64_t id{-1};
 };
 
 }// namespace NES::NodeEngine

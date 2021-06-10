@@ -24,7 +24,7 @@
 namespace NES {
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 /**
  * @brief The LogicalStream wraps the stream name and the schema.
@@ -48,7 +48,7 @@ class LogicalStream {
     SchemaPtr schema;
 };
 
-typedef std::shared_ptr<LogicalStream> LogicalStreamPtr;
+using LogicalStreamPtr = std::shared_ptr<LogicalStream>;
 
 }// namespace NES
 #endif//STREAM_HPP

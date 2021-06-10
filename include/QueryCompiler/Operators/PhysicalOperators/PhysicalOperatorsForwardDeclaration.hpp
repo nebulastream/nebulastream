@@ -20,22 +20,22 @@ namespace NES {
 
 namespace Join {
 class LogicalJoinDefinition;
-typedef std::shared_ptr<LogicalJoinDefinition> LogicalJoinDefinitionPtr;
+using LogicalJoinDefinitionPtr = std::shared_ptr<LogicalJoinDefinition>;
 
 class JoinOperatorHandler;
-typedef std::shared_ptr<JoinOperatorHandler> JoinOperatorHandlerPtr;
+using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 }// namespace Join
 
 namespace Windowing {
 
 class LogicalWindowDefinition;
-typedef std::shared_ptr<LogicalWindowDefinition> LogicalWindowDefinitionPtr;
+using LogicalWindowDefinitionPtr = std::shared_ptr<LogicalWindowDefinition>;
 
 class WindowOperatorHandler;
-typedef std::shared_ptr<WindowOperatorHandler> WindowOperatorHandlerPtr;
+using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
 
 class WatermarkStrategyDescriptor;
-typedef std::shared_ptr<WatermarkStrategyDescriptor> WatermarkStrategyDescriptorPtr;
+using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
 }// namespace Windowing
 
@@ -44,58 +44,58 @@ namespace QueryCompilation {
 namespace PhysicalOperators {
 
 class PhysicalOperator;
-typedef std::shared_ptr<PhysicalOperator> PhysicalOperatorPtr;
+using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 
 class PhysicalFilterOperator;
-typedef std::shared_ptr<PhysicalFilterOperator> PhysicalFilterOperatorPtr;
+using PhysicalFilterOperatorPtr = std::shared_ptr<PhysicalFilterOperator>;
 
 class PhysicalMapOperator;
-typedef std::shared_ptr<PhysicalMapOperator> PhysicalMapOperatorPtr;
+using PhysicalMapOperatorPtr = std::shared_ptr<PhysicalMapOperator>;
 
 class PhysicalMultiplexOperator;
-typedef std::shared_ptr<PhysicalMultiplexOperator> PhysicalMultiplexOperatorPtr;
+using PhysicalMultiplexOperatorPtr = std::shared_ptr<PhysicalMultiplexOperator>;
 
 class PhysicalDemultiplexOperator;
-typedef std::shared_ptr<PhysicalDemultiplexOperator> PhysicalDemultiplexOperatorPtr;
+using PhysicalDemultiplexOperatorPtr = std::shared_ptr<PhysicalDemultiplexOperator>;
 
 class PhysicalProjectOperator;
-typedef std::shared_ptr<PhysicalProjectOperator> PhysicalProjectOperatorPtr;
+using PhysicalProjectOperatorPtr = std::shared_ptr<PhysicalProjectOperator>;
 
 class PhysicalSinkOperator;
-typedef std::shared_ptr<PhysicalSinkOperator> PhysicalSinkOperatorPtr;
+using PhysicalSinkOperatorPtr = std::shared_ptr<PhysicalSinkOperator>;
 
 class PhysicalSourceOperator;
-typedef std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperatorPtr;
+using PhysicalSourceOperatorPtr = std::shared_ptr<PhysicalSourceOperator>;
 
 class PhysicalUnaryOperator;
-typedef std::shared_ptr<PhysicalUnaryOperator> PhysicalUnaryOperatorPtr;
+using PhysicalUnaryOperatorPtr = std::shared_ptr<PhysicalUnaryOperator>;
 
 class PhysicalBinaryOperator;
-typedef std::shared_ptr<PhysicalBinaryOperator> PhysicalBinaryOperatorPtr;
+using PhysicalBinaryOperatorPtr = std::shared_ptr<PhysicalBinaryOperator>;
 
 class PhysicalWatermarkAssignmentOperator;
-typedef std::shared_ptr<PhysicalWatermarkAssignmentOperator> PhysicalWatermarkAssignmentOperatorPtr;
+using PhysicalWatermarkAssignmentOperatorPtr = std::shared_ptr<PhysicalWatermarkAssignmentOperator>;
 
 class PhysicalSliceMergingOperator;
-typedef std::shared_ptr<PhysicalSliceMergingOperator> PhysicalSliceMergingOperatorPtr;
+using PhysicalSliceMergingOperatorPtr = std::shared_ptr<PhysicalSliceMergingOperator>;
 
 class PhysicalSlicePreAggregationOperator;
-typedef std::shared_ptr<PhysicalSlicePreAggregationOperator> PhysicalSlicePreAggregationOperatorPtr;
+using PhysicalSlicePreAggregationOperatorPtr = std::shared_ptr<PhysicalSlicePreAggregationOperator>;
 
 class PhysicalSliceSinkOperator;
-typedef std::shared_ptr<PhysicalSliceSinkOperator> PhysicalSliceSinkOperatorPtr;
+using PhysicalSliceSinkOperatorPtr = std::shared_ptr<PhysicalSliceSinkOperator>;
 
 class PhysicalWindowSinkOperator;
-typedef std::shared_ptr<PhysicalWindowSinkOperator> PhysicalWindowSinkOperatorPtr;
+using PhysicalWindowSinkOperatorPtr = std::shared_ptr<PhysicalWindowSinkOperator>;
 
 class PhysicalJoinBuildOperator;
-typedef std::shared_ptr<PhysicalJoinBuildOperator> PhysicalJoinBuildOperatorPtr;
+using PhysicalJoinBuildOperatorPtr = std::shared_ptr<PhysicalJoinBuildOperator>;
 
 class PhysicalWatermarkAssignmentOperator;
-typedef std::shared_ptr<PhysicalWatermarkAssignmentOperator> PhysicalWatermarkAssignmentOperatorPtr;
+using PhysicalWatermarkAssignmentOperatorPtr = std::shared_ptr<PhysicalWatermarkAssignmentOperator>;
 
 class PhysicalJoinSinkOperator;
-typedef std::shared_ptr<PhysicalJoinSinkOperator> PhysicalJoinSinkOperatorPtr;
+using PhysicalJoinSinkOperatorPtr = std::shared_ptr<PhysicalJoinSinkOperator>;
 
 }// namespace PhysicalOperators
 }// namespace QueryCompilation

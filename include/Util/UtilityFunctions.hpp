@@ -38,22 +38,22 @@
  */
 namespace NES {
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class Query;
-typedef std::shared_ptr<Query> QueryPtr;
+using QueryPtr = std::shared_ptr<Query>;
 
 class TopologyNode;
-typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class UtilityFunctions {
   public:

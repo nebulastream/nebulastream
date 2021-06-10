@@ -23,13 +23,13 @@
 namespace NES {
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 }// namespace NES
 
 namespace NES::Optimizer {
@@ -57,10 +57,10 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
 };
 
 class TypeInferencePhase;
-typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 class BasePlacementStrategy;
-typedef std::shared_ptr<BasePlacementStrategy> BasePlacementStrategyPtr;
+using BasePlacementStrategyPtr = std::shared_ptr<BasePlacementStrategy>;
 
 class PlacementStrategyFactory {
 

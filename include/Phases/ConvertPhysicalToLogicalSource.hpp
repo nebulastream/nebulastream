@@ -20,10 +20,10 @@
 namespace NES {
 
 class SourceDescriptor;
-typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
+using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 
 class DataSource;
-typedef std::shared_ptr<DataSource> DataSourcePtr;
+using DataSourcePtr = std::shared_ptr<DataSource>;
 
 /**
  * @brief This class is responsible for creating the Logical source from physical sources

@@ -51,16 +51,16 @@ class ArrayPhysicalType final : public PhysicalType {
     * @brief Indicates if this is a array data type.
     * @return true if type is array
     */
-    bool isArrayType() const noexcept final { return true; }
+    [[nodiscard]] bool isArrayType() const noexcept final { return true; }
 
     /// @brief Return if this array directly contains chars.
-    bool isCharArrayType() const noexcept final;
+    [[nodiscard]] bool isCharArrayType() const noexcept final;
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
      * @return u_int64_t
      */
-    uint64_t size() const final;
+    [[nodiscard]] uint64_t size() const final;
 
     /**
      * @brief Converts the binary representation of this value to a string.
@@ -73,7 +73,7 @@ class ArrayPhysicalType final : public PhysicalType {
      * @brief Returns the string representation of this physical data type.
      * @return string
      */
-    std::string toString() const noexcept final;
+    [[nodiscard]] std::string toString() const noexcept final;
 
     /// Fixed number of elements of type `physicalComponentType` contained in the array.
     uint64_t const length;

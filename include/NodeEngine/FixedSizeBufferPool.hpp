@@ -30,7 +30,7 @@ namespace NES {
 
 namespace NodeEngine {
 class BufferManager;
-typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+using BufferManagerPtr = std::shared_ptr<BufferManager>;
 class TupleBuffer;
 namespace detail {
 class MemorySegment;

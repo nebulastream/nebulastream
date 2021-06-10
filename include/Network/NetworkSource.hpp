@@ -91,7 +91,7 @@ class NetworkSource : public DataSource {
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;
 };
-typedef std::shared_ptr<NetworkSource> NetworkSourcePtr;
+using NetworkSourcePtr = std::shared_ptr<NetworkSource>;
 
 }// namespace Network
 }// namespace NES

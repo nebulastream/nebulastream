@@ -28,7 +28,7 @@ namespace NodeEngine {
  * It performs basic garbage colletion of state variables upon termination.
  */
 class StateManager {
-    typedef detail::Destroyable* state_variable_base_type;
+    using state_variable_base_type = detail::Destroyable *;
 
   private:
     std::mutex mutex;

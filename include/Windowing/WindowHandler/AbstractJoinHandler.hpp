@@ -46,8 +46,8 @@ enum JoinSides { leftSide = 0, rightSide = 1 };
  */
 class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<AbstractJoinHandler>,
                             public NodeEngine::Reconfigurable {
-    typedef detail::virtual_enable_shared_from_this<AbstractJoinHandler> inherited0;
-    typedef NodeEngine::Reconfigurable inherited1;
+    using inherited0 = detail::virtual_enable_shared_from_this<AbstractJoinHandler>;
+    using inherited1 = NodeEngine::Reconfigurable;
 
   public:
     explicit AbstractJoinHandler(Join::LogicalJoinDefinitionPtr joinDefinition,
@@ -140,7 +140,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
     uint64_t getMinWatermark(JoinSides side) {
         if (side == leftSide) {
             if (originIdToMaxTsMapLeft.size() == numberOfInputEdgesLeft) {
-                std::map<uint64_t, uint64_t>::iterator min =
+                auto min =
                     std::min_element(originIdToMaxTsMapLeft.begin(),
                                      originIdToMaxTsMapLeft.end(),
                                      [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {
@@ -156,7 +156,7 @@ class AbstractJoinHandler : public detail::virtual_enable_shared_from_this<Abstr
             }
         } else if (side == rightSide) {
             if (originIdToMaxTsMapRight.size() == numberOfInputEdgesRight) {
-                std::map<uint64_t, uint64_t>::iterator min =
+                auto min =
                     std::min_element(originIdToMaxTsMapRight.begin(),
                                      originIdToMaxTsMapRight.end(),
                                      [](const std::pair<uint64_t, uint64_t>& a, const std::pair<uint64_t, uint64_t>& b) -> bool {

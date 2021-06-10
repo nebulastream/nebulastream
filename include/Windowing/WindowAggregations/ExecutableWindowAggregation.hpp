@@ -23,7 +23,7 @@ namespace NES {
 class BinaryOperatorStatement;
 class StructDeclaration;
 class CompoundStatement;
-typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
+using CompoundStatementPtr = std::shared_ptr<CompoundStatement>;
 
 }// namespace NES
 

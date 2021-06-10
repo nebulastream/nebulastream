@@ -26,13 +26,13 @@ namespace NES {
 
 class MonitoringPlan;
 class TupleBuffer;
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
 
 class WorkerRPCClient;
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 /**
  * @brief The MonitoringManager is responsible for managing all global metrics of all nodes in the topology.
@@ -74,7 +74,7 @@ class MonitoringManager {
     TopologyPtr topology;
 };
 
-typedef std::shared_ptr<MonitoringManager> MonitoringManagerPtr;
+using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
 
 }// namespace NES
 

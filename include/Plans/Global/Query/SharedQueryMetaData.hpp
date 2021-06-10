@@ -26,19 +26,19 @@
 namespace NES {
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class GlobalQueryNode;
-typedef std::shared_ptr<GlobalQueryNode> GlobalQueryNodePtr;
+using GlobalQueryNodePtr = std::shared_ptr<GlobalQueryNode>;
 
 class SharedQueryMetaData;
-typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
+using SharedQueryMetaDataPtr = std::shared_ptr<SharedQueryMetaData>;
 
 /**
  * @brief This class holds the meta-data about a collection of QueryPlans.
@@ -116,7 +116,7 @@ class SharedQueryMetaData {
      * @brief Is the query plan for the metadata deployed
      * @return true if deployed else false
      */
-    bool isDeployed() const;
+    [[nodiscard]] bool isDeployed() const;
 
     /**
      * @brief Check if the metadata is empty
@@ -129,7 +129,7 @@ class SharedQueryMetaData {
      * A New metadata is the one which was created by never got deployed before
      * @return true if newly created else false
      */
-    bool isNew() const;
+    [[nodiscard]] bool isNew() const;
 
     /**
      * @brief Get the vector of sink operators sharing common upstream operators
@@ -147,7 +147,7 @@ class SharedQueryMetaData {
      * @brief Get the shared query id
      * @return shared query id
      */
-    SharedQueryId getSharedQueryId() const;
+    [[nodiscard]] SharedQueryId getSharedQueryId() const;
 
     /**
      * @brief Get all query ids part of the SharedMetaData

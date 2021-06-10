@@ -28,7 +28,7 @@ using grpc::Status;
 namespace NES {
 
 class MonitoringAgent;
-typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
+using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 class WorkerRPCServer final : public WorkerRPCService::Service {
   public:

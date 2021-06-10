@@ -22,16 +22,16 @@
 namespace NES {
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 
 class FilterLogicalOperatorNode;
-typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
+using FilterLogicalOperatorNodePtr = std::shared_ptr<FilterLogicalOperatorNode>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class FilterPushDownRule;
-typedef std::shared_ptr<FilterPushDownRule> FilterPushDownRulePtr;
+using FilterPushDownRulePtr = std::shared_ptr<FilterPushDownRule>;
 
 /**
  * @brief This class is responsible for altering the query plan to push down the filter as much as possible.

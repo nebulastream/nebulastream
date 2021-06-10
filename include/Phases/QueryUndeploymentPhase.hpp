@@ -25,19 +25,19 @@
 namespace NES {
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class WorkerRPCClient;
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class ExecutionNode;
-typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class QueryUndeploymentPhase;
-typedef std::shared_ptr<QueryUndeploymentPhase> QueryUndeploymentPhasePtr;
+using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
 
 /**
  * @brief This class is responsible for undeploying and stopping a running query

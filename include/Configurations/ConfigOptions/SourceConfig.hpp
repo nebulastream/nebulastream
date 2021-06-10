@@ -23,13 +23,13 @@
 namespace NES {
 
 class SourceConfig;
-typedef std::shared_ptr<SourceConfig> SourceConfigPtr;
+using SourceConfigPtr = std::shared_ptr<SourceConfig>;
 
 template<class T>
 class ConfigOption;
-typedef std::shared_ptr<ConfigOption<uint32_t>> IntConfigOption;
-typedef std::shared_ptr<ConfigOption<std::string>> StringConfigOption;
-typedef std::shared_ptr<ConfigOption<bool>> BoolConfigOption;
+using IntConfigOption = std::shared_ptr<ConfigOption<uint32_t>>;
+using StringConfigOption = std::shared_ptr<ConfigOption<std::string>>;
+using BoolConfigOption = std::shared_ptr<ConfigOption<bool>>;
 
 /**
  * @brief Configuration object for source config
@@ -59,7 +59,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with sourceType
      */
-    const std::shared_ptr<ConfigOption<std::string>> getSourceType() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<std::string>> getSourceType() const;
 
     /**
      * @brief set the value for sourceType with the appropriate data format
@@ -69,7 +69,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with sourceConfig
      */
-    const std::shared_ptr<ConfigOption<std::string>> getSourceConfig() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<std::string>> getSourceConfig() const;
 
     /**
      * @brief set the value for sourceConfig with the appropriate data format
@@ -79,7 +79,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with sourceFrequency
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<uint32_t>> getSourceFrequency() const;
 
     /**
      * @brief set the value for sourceFrequency with the appropriate data format
@@ -89,7 +89,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with numberOfBuffersToProduce
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
     /**
      * @brief set the value for numberOfBuffersToProduce with the appropriate data format
@@ -99,7 +99,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with numberOfTuplesToProducePerBuffer
      */
-    const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
 
     /**
      * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
@@ -109,7 +109,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with physicalStreamName
      */
-    const std::shared_ptr<ConfigOption<std::string>> getPhysicalStreamName() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<std::string>> getPhysicalStreamName() const;
 
     /**
      * @brief set the value for physicalStreamName with the appropriate data format
@@ -119,7 +119,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with logicalStreamName
      */
-    const std::shared_ptr<ConfigOption<std::string>> getLogicalStreamName() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<std::string>> getLogicalStreamName() const;
 
     /**
      * @brief set the value for logicalStreamName with the appropriate data format
@@ -129,7 +129,7 @@ class SourceConfig {
     /**
      * @brief gets a ConfigOption object with skipHeader
      */
-    const std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
+    [[nodiscard]] const std::shared_ptr<ConfigOption<bool>> getSkipHeader() const;
 
     /**
      * @brief set the value for skipHeader with the appropriate data format

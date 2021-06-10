@@ -18,6 +18,6 @@
 
 namespace NES::Windowing {
 
-Watermark::Watermark() {}
+Watermark::Watermark() = default;
 
 }// namespace NES::Windowing

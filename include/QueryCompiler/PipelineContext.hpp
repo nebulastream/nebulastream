@@ -38,15 +38,15 @@ class PipelineContext {
     BlockScopeStatementPtr createStartScope();
     std::vector<DeclarationPtr> variable_declarations;
 
-    SchemaPtr getInputSchema() const;
-    SchemaPtr getResultSchema() const;
+    [[nodiscard]] SchemaPtr getInputSchema() const;
+    [[nodiscard]] SchemaPtr getResultSchema() const;
     SchemaPtr inputSchema;
     SchemaPtr resultSchema;
     GeneratedCodePtr code;
 
-    const std::vector<PipelineContextPtr>& getNextPipelineContexts() const;
+    [[nodiscard]] const std::vector<PipelineContextPtr>& getNextPipelineContexts() const;
     void addNextPipeline(PipelineContextPtr nextPipeline);
-    bool hasNextPipeline() const;
+    [[nodiscard]] bool hasNextPipeline() const;
 
     RecordHandlerPtr getRecordHandler();
 

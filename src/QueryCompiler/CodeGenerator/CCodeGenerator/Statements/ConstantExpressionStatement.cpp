@@ -21,7 +21,7 @@
 
 namespace NES {
 namespace QueryCompilation {
-ConstantExpressionStatement::~ConstantExpressionStatement() {}
+ConstantExpressionStatement::~ConstantExpressionStatement() = default;
 
 StatementType ConstantExpressionStatement::getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
 

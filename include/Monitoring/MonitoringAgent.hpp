@@ -29,10 +29,10 @@ class MetricCatalog;
 class Schema;
 class MonitoringAgent;
 
-typedef std::shared_ptr<MonitoringPlan> MonitoringPlanPtr;
-typedef std::shared_ptr<MetricCatalog> MetricCatalogPtr;
-typedef std::shared_ptr<Schema> SchemaPtr;
-typedef std::shared_ptr<MonitoringAgent> MonitoringAgentPtr;
+using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
+using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
+using SchemaPtr = std::shared_ptr<Schema>;
+using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 /**
  * @brief The MonitoringAgent which is responsible for collecting metrics on a local level.

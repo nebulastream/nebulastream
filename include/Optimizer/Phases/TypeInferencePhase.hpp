@@ -20,20 +20,20 @@
 namespace NES {
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Node;
-typedef std::shared_ptr<Node> NodePtr;
+using NodePtr = std::shared_ptr<Node>;
 class SourceDescriptor;
-typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
+using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 }// namespace NES
 
 namespace NES::Optimizer {
 
 class TypeInferencePhase;
-typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 /**
  * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.

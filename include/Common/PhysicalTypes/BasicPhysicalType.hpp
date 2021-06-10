@@ -46,13 +46,13 @@ class BasicPhysicalType final : public PhysicalType {
      * @brief Indicates if this is a basic data type.
      * @return true
      */
-    bool isBasicType() const noexcept final { return true; }
+    [[nodiscard]] bool isBasicType() const noexcept final { return true; }
 
     /**
      * @brief Returns the number of bytes occupied by this data type.
      * @return u_int64_t
      */
-    uint64_t size() const override;
+    [[nodiscard]] uint64_t size() const override;
 
     /**
      * @brief Converts the binary representation of this value to a string.
@@ -65,12 +65,12 @@ class BasicPhysicalType final : public PhysicalType {
      * @brief Returns the string representation of this physical data type.
      * @return string
      */
-    std::string toString() const noexcept final;
+    [[nodiscard]] std::string toString() const noexcept final;
 
     NativeType const nativeType;
 };
 
-typedef std::shared_ptr<BasicPhysicalType> BasicPhysicalTypePtr;
+using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;
 
 }// namespace NES
 

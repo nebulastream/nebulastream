@@ -24,7 +24,7 @@
 namespace NES {
 NullOutputSink::NullOutputSink(QuerySubPlanId parentPlanId) : SinkMedium(nullptr, parentPlanId) {}
 
-NullOutputSink::~NullOutputSink() {}
+NullOutputSink::~NullOutputSink() = default;
 
 SinkMediumTypes NullOutputSink::getSinkMediumType() { return NULL_SINK; }
 

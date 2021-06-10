@@ -61,6 +61,6 @@ void ForLoopStatement::addStatement(StatementPtr stmt) {
         body->addStatement(stmt);
 }
 
-ForLoopStatement::~ForLoopStatement() {}
+ForLoopStatement::~ForLoopStatement() = default;
 }// namespace QueryCompilation
 }// namespace NES

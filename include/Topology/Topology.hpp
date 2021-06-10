@@ -26,10 +26,10 @@
 namespace NES {
 
 class TopologyNode;
-typedef std::shared_ptr<TopologyNode> TopologyNodePtr;
+using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 /**
  * @brief This class represents the overall physical infrastructure with different nodes

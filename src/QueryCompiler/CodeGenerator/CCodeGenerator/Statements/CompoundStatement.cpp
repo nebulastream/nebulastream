@@ -39,6 +39,6 @@ void CompoundStatement::addStatement(StatementPtr stmt) {
         statements.push_back(stmt);
 }
 
-CompoundStatement::~CompoundStatement() {}
+CompoundStatement::~CompoundStatement() = default;
 }// namespace QueryCompilation
 }// namespace NES

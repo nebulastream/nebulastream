@@ -18,7 +18,7 @@
 
 namespace NES {
 
-NullOutputSinkDescriptor::NullOutputSinkDescriptor() {}
+NullOutputSinkDescriptor::NullOutputSinkDescriptor() = default;
 
 SinkDescriptorPtr NullOutputSinkDescriptor::create() {
     return std::make_shared<NullOutputSinkDescriptor>(NullOutputSinkDescriptor());

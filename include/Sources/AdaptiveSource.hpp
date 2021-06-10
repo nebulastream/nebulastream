@@ -73,7 +73,7 @@ class AdaptiveSource : public DataSource {
     std::chrono::milliseconds lastGatheringTimeStamp;
 };
 
-typedef std::shared_ptr<AdaptiveSource> AdaptiveSourcePtr;
+using AdaptiveSourcePtr = std::shared_ptr<AdaptiveSource>;
 
 }// namespace NES
 

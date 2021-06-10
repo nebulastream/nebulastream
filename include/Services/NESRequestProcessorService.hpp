@@ -22,51 +22,51 @@
 
 namespace z3 {
 class context;
-typedef std::shared_ptr<context> ContextPtr;
+using ContextPtr = std::shared_ptr<context>;
 }// namespace z3
 
 namespace NES::Optimizer {
 class TypeInferencePhase;
-typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
 class QueryRewritePhase;
-typedef std::shared_ptr<QueryRewritePhase> QueryRewritePhasePtr;
+using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
 class QueryPlacementPhase;
-typedef std::shared_ptr<QueryPlacementPhase> QueryPlacementPhasePtr;
+using QueryPlacementPhasePtr = std::shared_ptr<QueryPlacementPhase>;
 
 class GlobalQueryPlanUpdatePhase;
-typedef std::shared_ptr<GlobalQueryPlanUpdatePhase> GlobalQueryPlanUpdatePhasePtr;
+using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
 }// namespace NES::Optimizer
 
 namespace NES {
 
 class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class QueryDeploymentPhase;
-typedef std::shared_ptr<QueryDeploymentPhase> QueryDeploymentPhasePtr;
+using QueryDeploymentPhasePtr = std::shared_ptr<QueryDeploymentPhase>;
 
 class QueryUndeploymentPhase;
-typedef std::shared_ptr<QueryUndeploymentPhase> QueryUndeploymentPhasePtr;
+using QueryUndeploymentPhasePtr = std::shared_ptr<QueryUndeploymentPhase>;
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class WorkerRPCClient;
-typedef std::shared_ptr<WorkerRPCClient> WorkerRPCClientPtr;
+using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
 class NESRequestQueue;
-typedef std::shared_ptr<NESRequestQueue> NESRequestQueuePtr;
+using NESRequestQueuePtr = std::shared_ptr<NESRequestQueue>;
 
 /**
  * @brief This service is started as a thread and is responsible for accessing the scheduling queue in the query catalog and executing the queries requests.

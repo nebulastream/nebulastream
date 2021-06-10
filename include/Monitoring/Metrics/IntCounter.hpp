@@ -59,7 +59,7 @@ class IntCounter : public Counter {
      *
      * @return current count
      */
-    uint64_t getCount() const;
+    [[nodiscard]] uint64_t getCount() const;
 
   private:
     uint64_t count;

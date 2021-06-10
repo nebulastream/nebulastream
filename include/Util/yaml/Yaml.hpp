@@ -143,13 +143,13 @@ class Exception : public std::runtime_error {
         * @breif Get type of exception.
         *
         */
-    eType Type() const;
+    [[nodiscard]] eType Type() const;
 
     /**
         * @breif Get message of exception.
         *
         */
-    const char* Message() const;
+    [[nodiscard]] const char* Message() const;
 
   private:
     eType m_Type;///< Type of exception.
@@ -276,8 +276,8 @@ class Iterator {
   private:
     enum eType { None, SequenceType, MapType };
 
-    eType m_Type;///< Type of iterator.
-    void* m_pImp;///< Implementation of iterator class.
+    eType m_Type{None};///< Type of iterator.
+    void* m_pImp{nullptr};///< Implementation of iterator class.
 };
 
 /**
@@ -347,8 +347,8 @@ class ConstIterator {
   private:
     enum eType { None, SequenceType, MapType };
 
-    eType m_Type;///< Type of iterator.
-    void* m_pImp;///< Implementation of constant iterator class.
+    eType m_Type{None};///< Type of iterator.
+    void* m_pImp{nullptr};///< Implementation of constant iterator class.
 };
 
 /**
@@ -396,11 +396,11 @@ class Node {
         * @breif Functions for checking type of node.
         *
         */
-    eType Type() const;
-    bool IsNone() const;
-    bool IsSequence() const;
-    bool IsMap() const;
-    bool IsScalar() const;
+    [[nodiscard]] eType Type() const;
+    [[nodiscard]] bool IsNone() const;
+    [[nodiscard]] bool IsSequence() const;
+    [[nodiscard]] bool IsMap() const;
+    [[nodiscard]] bool IsScalar() const;
 
     /**
         * @breif Completely clear node.
@@ -413,7 +413,7 @@ class Node {
         *
         */
     template<typename T>
-    T As() const {
+    [[nodiscard]] [[nodiscard]] [[nodiscard]] [[nodiscard]] T As() const {
         return impl::StringConverter<T>::Get(AsString());
     }
 
@@ -431,7 +431,7 @@ class Node {
         *        Serialization of type None or Scalar will return 0.
         *
         */
-    size_t Size() const;
+    [[nodiscard]] size_t Size() const;
 
     // Sequence operators
 
@@ -489,21 +489,21 @@ class Node {
         *
         */
     Iterator Begin();
-    ConstIterator Begin() const;
+    [[nodiscard]] ConstIterator Begin() const;
 
     /**
         * @breif Get end iterator.
         *
         */
     Iterator End();
-    ConstIterator End() const;
+    [[nodiscard]] ConstIterator End() const;
 
   private:
     /**
         * @breif Get as string. If type is scalar, else empty.
         *
         */
-    const std::string& AsString() const;
+    [[nodiscard]] const std::string& AsString() const;
 
     void* m_pImp;///< Implementation of node class.
 };

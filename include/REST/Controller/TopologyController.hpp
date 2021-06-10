@@ -46,5 +46,5 @@ class TopologyController : public BaseController {
     TopologyPtr topology;
 };
 
-typedef std::shared_ptr<TopologyController> TopologyControllerPtr;
+using TopologyControllerPtr = std::shared_ptr<TopologyController>;
 }// namespace NES

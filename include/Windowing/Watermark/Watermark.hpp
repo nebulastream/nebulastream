@@ -32,6 +32,6 @@ class Watermark {
     virtual uint64_t getWatermark() = 0;
 };
 
-typedef std::shared_ptr<Watermark> WatermarkPtr;
+using WatermarkPtr = std::shared_ptr<Watermark>;
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WATERMARK_WATERMARK_HPP_

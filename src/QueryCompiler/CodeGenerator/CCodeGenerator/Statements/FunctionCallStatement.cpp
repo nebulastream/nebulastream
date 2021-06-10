@@ -18,7 +18,7 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 namespace NES {
 namespace QueryCompilation {
-FunctionCallStatement::~FunctionCallStatement() {}
+FunctionCallStatement::~FunctionCallStatement() = default;
 
 StatementType FunctionCallStatement::getStamentType() const { return FUNC_CALL_STMT; }
 

@@ -43,5 +43,5 @@ class ConnectivityController : public BaseController {
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
 };
 
-typedef std::shared_ptr<ConnectivityController> ConnectivityControllerPtr;
+using ConnectivityControllerPtr = std::shared_ptr<ConnectivityController>;
 }// namespace NES

@@ -30,18 +30,18 @@ class VariableDeclaration : public Declaration {
     static VariableDeclaration create(DataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
     static VariableDeclaration create(GeneratableDataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
 
-    const GeneratableDataTypePtr getType() const override;
-    const std::string getIdentifierName() const override;
+    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] const std::string getIdentifierName() const override;
 
-    const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] const Code getTypeDefinitionCode() const override;
 
-    const Code getCode() const override;
+    [[nodiscard]] const Code getCode() const override;
 
-    const CodeExpressionPtr getIdentifier() const;
+    [[nodiscard]] const CodeExpressionPtr getIdentifier() const;
 
-    const GeneratableDataTypePtr getDataType() const;
+    [[nodiscard]] const GeneratableDataTypePtr getDataType() const;
 
-    const DeclarationPtr copy() const override;
+    [[nodiscard]] const DeclarationPtr copy() const override;
 
     ~VariableDeclaration() override;
 

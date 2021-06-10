@@ -39,19 +39,19 @@ class WatermarkBarrier {
      * @brief Gets the watermark timestamp
      * @return WatermarkTs
      */
-    WatermarkTs getTs() const;
+    [[nodiscard]] WatermarkTs getTs() const;
 
     /**
      * @brief Gets the sequence number
      * @return BarrierSequenceNumber
      */
-    BarrierSequenceNumber getSequenceNumber() const;
+    [[nodiscard]] BarrierSequenceNumber getSequenceNumber() const;
 
     /**
      * @brief Gets the origin id
      * @return OriginId
      */
-    OriginId getOrigin() const;
+    [[nodiscard]] OriginId getOrigin() const;
 
   private:
     WatermarkTs ts;

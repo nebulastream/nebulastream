@@ -23,31 +23,31 @@
 namespace NES {
 
 class RestEngine;
-typedef std::shared_ptr<RestEngine> RestEnginePtr;
+using RestEnginePtr = std::shared_ptr<RestEngine>;
 
 class NesCoordinator;
-typedef std::weak_ptr<NesCoordinator> NesCoordinatorWeakPtr;
+using NesCoordinatorWeakPtr = std::weak_ptr<NesCoordinator>;
 
 class QueryCatalog;
-typedef std::shared_ptr<QueryCatalog> QueryCatalogPtr;
+using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 
 class StreamCatalog;
-typedef std::shared_ptr<StreamCatalog> StreamCatalogPtr;
+using StreamCatalogPtr = std::shared_ptr<StreamCatalog>;
 
 class Topology;
-typedef std::shared_ptr<Topology> TopologyPtr;
+using TopologyPtr = std::shared_ptr<Topology>;
 
 class GlobalExecutionPlan;
-typedef std::shared_ptr<GlobalExecutionPlan> GlobalExecutionPlanPtr;
+using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class QueryService;
-typedef std::shared_ptr<QueryService> QueryServicePtr;
+using QueryServicePtr = std::shared_ptr<QueryService>;
 
 class MonitoringService;
-typedef std::shared_ptr<MonitoringService> MonitoringServicePtr;
+using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
 class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 /**
  * @brief : This class is responsible for starting the REST server.

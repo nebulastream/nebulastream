@@ -66,7 +66,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     bool internal;
 };
 
-typedef std::shared_ptr<ZmqSinkDescriptor> ZmqSinkDescriptorPtr;
+using ZmqSinkDescriptorPtr = std::shared_ptr<ZmqSinkDescriptor>;
 
 }// namespace NES
 

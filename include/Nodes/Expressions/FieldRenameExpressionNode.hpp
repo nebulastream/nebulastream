@@ -63,7 +63,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     std::string newFieldName;
 };
 
-typedef std::shared_ptr<FieldRenameExpressionNode> FieldRenameExpressionNodePtr;
+using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
 
 }// namespace NES
 

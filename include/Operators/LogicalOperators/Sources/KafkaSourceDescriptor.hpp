@@ -91,7 +91,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     uint64_t kafkaConnectTimeout;
 };
 
-typedef std::shared_ptr<KafkaSourceDescriptor> KafkaSourceDescriptorPtr;
+using KafkaSourceDescriptorPtr = std::shared_ptr<KafkaSourceDescriptor>;
 
 }// namespace NES
 

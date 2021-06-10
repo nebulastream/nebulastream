@@ -24,10 +24,10 @@
 namespace NES {
 
 class SourceDescriptor;
-typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
+using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 
 class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+using SchemaPtr = std::shared_ptr<Schema>;
 
 class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor> {
 

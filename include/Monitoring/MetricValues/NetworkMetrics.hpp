@@ -31,11 +31,11 @@ class NetworkMetrics {
   public:
     NetworkMetrics();
 
-    NetworkValues getNetworkValue(uint64_t interfaceNo) const;
+    [[nodiscard]] NetworkValues getNetworkValue(uint64_t interfaceNo) const;
 
     std::vector<std::string> getInterfaceNames();
 
-    uint64_t getInterfaceNum() const;
+    [[nodiscard]] uint64_t getInterfaceNum() const;
 
     void addNetworkValues(NetworkValues&& nwValue);
 
@@ -55,7 +55,7 @@ class NetworkMetrics {
     web::json::value toJson();
 
   private:
-    uint64_t interfaceNum;
+    uint64_t interfaceNum{0};
     std::vector<NetworkValues> networkValues;
 
   public:

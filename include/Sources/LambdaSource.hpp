@@ -69,7 +69,7 @@ class LambdaSource : public GeneratorSource {
     std::function<void(NES::NodeEngine::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
 };
 
-typedef std::shared_ptr<LambdaSource> LambdaSourcePtr;
+using LambdaSourcePtr = std::shared_ptr<LambdaSource>;
 
 }// namespace NES
 #endif /* INCLUDE_SOURCESINK_LambdaSource_HPP_ */

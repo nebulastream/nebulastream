@@ -26,7 +26,7 @@
 namespace NES {
 
 class PhysicalStreamConfig;
-typedef std::shared_ptr<PhysicalStreamConfig> PhysicalStreamConfigPtr;
+using PhysicalStreamConfigPtr = std::shared_ptr<PhysicalStreamConfig>;
 
 /**
  * @brief this struct covers the information about the attached sensor
@@ -54,25 +54,25 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get source config
      * @return string representing source config
      */
-    const std::string getSourceConfig() const;
+    [[nodiscard]] const std::string getSourceConfig() const;
 
     /**
      * @brief get source frequency
      * @return returns the source frequency
      */
-    std::chrono::milliseconds getSourceFrequency() const;
+    [[nodiscard]] std::chrono::milliseconds getSourceFrequency() const;
 
     /**
      * @brief get the number of tuples to produce in a buffer
      * @return returns the number of tuples to produce in a buffer
      */
-    uint32_t getNumberOfTuplesToProducePerBuffer() const;
+    [[nodiscard]] uint32_t getNumberOfTuplesToProducePerBuffer() const;
 
     /**
      * @brief get the number of buffers to produce
      * @return returns the number of buffers to produce
      */
-    uint32_t getNumberOfBuffersToProduce() const;
+    [[nodiscard]] uint32_t getNumberOfBuffersToProduce() const;
 
     /**
      * @brief get physical stream name
@@ -88,7 +88,7 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
 
     const std::string toString() override;
 
-    bool getSkipHeader() const;
+    [[nodiscard]] bool getSkipHeader() const;
 
     SourceDescriptorPtr build(SchemaPtr) override;
 

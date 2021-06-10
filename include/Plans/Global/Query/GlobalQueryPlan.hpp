@@ -30,22 +30,22 @@
 namespace NES {
 
 class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+using OperatorNodePtr = std::shared_ptr<OperatorNode>;
 
 class QueryPlan;
-typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class GlobalQueryPlan;
-typedef std::shared_ptr<GlobalQueryPlan> GlobalQueryPlanPtr;
+using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
 class SourceLogicalOperatorNode;
-typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+using SourceLogicalOperatorNodePtr = std::shared_ptr<SourceLogicalOperatorNode>;
 
 class SinkLogicalOperatorNode;
-typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 
 class SharedQueryMetaData;
-typedef std::shared_ptr<SharedQueryMetaData> SharedQueryMetaDataPtr;
+using SharedQueryMetaDataPtr = std::shared_ptr<SharedQueryMetaData>;
 
 /**
  * @brief This class is responsible for storing all currently running and to be deployed QueryPlans in the NES system.
@@ -112,7 +112,7 @@ class GlobalQueryPlan {
   private:
     GlobalQueryPlan();
 
-    uint64_t freeSharedQueryId;
+    uint64_t freeSharedQueryId{0};
     std::map<QueryId, SharedQueryId> queryIdToSharedQueryIdMap;
     std::map<SharedQueryId, SharedQueryMetaDataPtr> sharedQueryIdToMetaDataMap;
 };

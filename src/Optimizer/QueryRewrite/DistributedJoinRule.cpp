@@ -24,7 +24,7 @@
 
 namespace NES::Optimizer {
 
-DistributeJoinRule::DistributeJoinRule() {}
+DistributeJoinRule::DistributeJoinRule() = default;
 
 DistributeJoinRulePtr DistributeJoinRule::create() { return std::make_shared<DistributeJoinRule>(DistributeJoinRule()); }
 
