@@ -41,10 +41,10 @@ class GlobalQueryPlanUpdatePhaseTest : public testing::Test {
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() { context = std::make_shared<z3::context>(); }
+    void SetUp() override { context = std::make_shared<z3::context>(); }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test case."); }
+    void TearDown() override { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down GlobalQueryPlanUpdatePhaseTest test class."); }

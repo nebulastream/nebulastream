@@ -40,9 +40,9 @@ class StreamCatalogRemoteTest : public testing::Test {
         NES_INFO("Setup StreamCatalogRemoteTest test class.");
     }
 
-    void SetUp() { rpcPort = rpcPort + 30; }
+    void SetUp() override { rpcPort = rpcPort + 30; }
 
-    void TearDown() { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl; }
 };
 TEST_F(StreamCatalogRemoteTest, testAddLogStreamRemote) {
     CoordinatorConfigPtr coordinatorConfig = CoordinatorConfig::create();

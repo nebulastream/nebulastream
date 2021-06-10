@@ -46,10 +46,10 @@ class RenameStreamToProjectOperatorRuleTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() { schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32); }
+    void SetUp() override { schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32); }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup RenameStreamToProjectOperatorRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup RenameStreamToProjectOperatorRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down RenameStreamToProjectOperatorRuleTest test class."); }

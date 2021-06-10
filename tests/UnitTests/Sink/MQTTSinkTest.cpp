@@ -61,7 +61,7 @@ class MQTTTSinkTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES_DEBUG("Setup MQTTTSinkTest test case.");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 3111, conf);
@@ -69,7 +69,7 @@ class MQTTTSinkTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
+    void TearDown() override {
         nodeEngine->stop();
         nodeEngine.reset();
         NES_DEBUG("Setup MQTT test case.");

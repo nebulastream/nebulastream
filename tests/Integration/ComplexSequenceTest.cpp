@@ -31,12 +31,12 @@ class ComplexSequenceTest : public testing::Test {
         NES_INFO("Setup ComplexSequenceTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         restPort = restPort + 2;
         rpcPort = rpcPort + 30;
     }
 
-    void TearDown() { std::cout << "Tear down ComplexSequenceTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down ComplexSequenceTest class." << std::endl; }
 
     uint32_t restPort = 8080;
     uint32_t rpcPort = 4000;

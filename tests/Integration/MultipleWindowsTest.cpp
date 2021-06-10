@@ -39,12 +39,12 @@ class MultipleWindowsTest : public testing::Test {
         NES_INFO("Setup MultipleWindowsTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { NES_INFO("Tear down MultipleWindowsTest class."); }
+    void TearDown() override { NES_INFO("Tear down MultipleWindowsTest class."); }
 };
 
 TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {

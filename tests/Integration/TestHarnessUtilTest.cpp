@@ -27,7 +27,7 @@ class TestHarnessUtilTest : public testing::Test {
         NES_INFO("Setup TestHarnessUtilTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         restPort = restPort + 2;
         rpcPort = rpcPort + 30;
     }

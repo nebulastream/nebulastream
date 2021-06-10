@@ -47,7 +47,7 @@ class ZMQTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES_DEBUG("Setup ZMQTest test case.");
         PhysicalStreamConfigPtr conf = PhysicalStreamConfig::createEmpty();
         nodeEngine = NodeEngine::create("127.0.0.1", 3001, conf);
@@ -62,7 +62,7 @@ class ZMQTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
+    void TearDown() override {
         nodeEngine->stop();
         nodeEngine.reset();
         NES_DEBUG("Setup ZMQTest test case.");

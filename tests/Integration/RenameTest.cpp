@@ -42,12 +42,12 @@ class RenameTest : public testing::Test {
         NES_INFO("Setup RenameTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { std::cout << "Tear down RenameTest class." << std::endl; }
+    void TearDown() override { std::cout << "Tear down RenameTest class." << std::endl; }
 };
 
 TEST_F(RenameTest, testAttributeRenameAndProjection) {

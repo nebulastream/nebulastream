@@ -77,13 +77,13 @@ class OperatorCodeGenerationTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES_DEBUG("Setup OperatorOperatorCodeGenerationTest test case.");
         auto streamConf = PhysicalStreamConfig::createEmpty();
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case."); }
+    void TearDown() override { NES_DEBUG("Tear down OperatorOperatorCodeGenerationTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down OperatorOperatorCodeGenerationTest test class." << std::endl; }
@@ -136,7 +136,7 @@ class SelectionDataGenSource : public GeneratorSource {
                            const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
-    ~SelectionDataGenSource() = default;
+    ~SelectionDataGenSource() override = default;
 
     std::optional<NodeEngine::TupleBuffer> receiveData() override {
         // 10 tuples of size one
@@ -187,7 +187,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
                                         const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
-    ~PredicateTestingDataGeneratorSource() = default;
+    ~PredicateTestingDataGeneratorSource() override = default;
 
     struct __attribute__((packed)) InputTuple {
         uint32_t id;
@@ -247,7 +247,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
                                      const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
-    ~WindowTestingDataGeneratorSource() = default;
+    ~WindowTestingDataGeneratorSource() override = default;
 
     struct __attribute__((packed)) InputTuple {
         uint64_t key;
@@ -286,7 +286,7 @@ class WindowTestingWindowGeneratorSource : public GeneratorSource {
                                        const uint64_t pNum_buffers_to_process)
         : GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process, 1, 12, DataSource::GatheringMode::FREQUENCY_MODE, {}) {}
 
-    ~WindowTestingWindowGeneratorSource() = default;
+    ~WindowTestingWindowGeneratorSource() override = default;
 
     struct __attribute__((packed)) WindowTuple {
         uint64_t start;

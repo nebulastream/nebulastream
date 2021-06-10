@@ -29,13 +29,13 @@ class TopologyTest : public testing::Test {
     /* Will be called before any test in this class are executed. */
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         std::cout << "Setup NesTopologyManager test case." << std::endl;
         NES::setupLogging("NesTopologyManager.log", NES::LOG_DEBUG);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down NesTopologyManager test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down NesTopologyManager test case." << std::endl; }
 };
 /* - Nodes ----------------------------------------------------------------- */
 /**

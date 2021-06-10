@@ -49,9 +49,9 @@ class AddScanAndEmitPhaseTest : public testing::Test {
         NES_INFO("Setup AddScanAndEmitPhase test class.");
     }
 
-    void SetUp() {}
+    void SetUp() override {}
 
-    void TearDown() { NES_DEBUG("Tear down AddScanAndEmitPhase Test."); }
+    void TearDown() override { NES_DEBUG("Tear down AddScanAndEmitPhase Test."); }
 };
 
 /**

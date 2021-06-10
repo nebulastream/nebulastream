@@ -32,9 +32,9 @@ class LogicalExpressionTest : public testing::Test {
         NES_DEBUG("LogicalExpressionTest: Setup QueryCatalogTest test class.");
     }
 
-    void SetUp() {}
+    void SetUp() override {}
 
-    void TearDown() { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test case."); }
+    void TearDown() override { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test case."); }
 
     static void TearDownTestCase() { NES_DEBUG("LogicalExpressionTest: Tear down QueryExecutionTest test class."); }
 

@@ -39,13 +39,13 @@ class ConvertLogicalToPhysicalSourceTest : public testing::Test {
 
     static void TearDownTestCase() { std::cout << "Tear down ConvertLogicalToPhysicalSourceTest test class." << std::endl; }
 
-    void SetUp() {
+    void SetUp() override {
         NES_INFO("Setup ConvertLogicalToPhysicalSourceTest test instance.");
         PhysicalStreamConfigPtr streamConf = PhysicalStreamConfig::createEmpty();
         engine = NodeEngine::NodeEngine::create("127.0.0.1", 9090, streamConf, 1, 4096, 1024, 12, 12);
     }
 
-    void TearDown() {
+    void TearDown() override {
         NES_INFO("TearDown ConvertLogicalToPhysicalSourceTest test instance.");
         engine->stop();
         engine.reset();

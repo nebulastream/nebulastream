@@ -42,14 +42,14 @@ class LogicalSourceExpansionRuleTest : public testing::Test {
     SchemaPtr schema;
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("LogicalSourceExpansionRuleTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup LogicalSourceExpansionRuleTest test case.");
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Setup LogicalSourceExpansionRuleTest test case."); }
+    void TearDown() override { NES_INFO("Setup LogicalSourceExpansionRuleTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down LogicalSourceExpansionRuleTest test class."); }

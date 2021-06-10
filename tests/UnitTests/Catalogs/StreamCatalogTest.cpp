@@ -45,10 +45,10 @@ class StreamCatalogTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() { sourceConfig = SourceConfig::create(); }
+    void SetUp() override { sourceConfig = SourceConfig::create(); }
 
     /* Will be called before a test is executed. */
-    void TearDown() { NES_INFO("Tear down StreamCatalogTest test case."); }
+    void TearDown() override { NES_INFO("Tear down StreamCatalogTest test case."); }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down StreamCatalogTest test class."); }

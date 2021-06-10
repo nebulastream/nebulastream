@@ -47,7 +47,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         NES_INFO("Setup LogicalOperatorNodeTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
@@ -87,7 +87,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         parents.clear();
     }
 
-    void TearDown() { NES_DEBUG("Tear down LogicalOperatorNode Test."); }
+    void TearDown() override { NES_DEBUG("Tear down LogicalOperatorNode Test."); }
 
   protected:
     bool removed;

@@ -44,12 +44,12 @@ class UnionDeploymentTest : public testing::Test {
         NES_INFO("Setup UnionDeploymentTest test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort = rpcPort + 30;
         restPort = restPort + 2;
     }
 
-    void TearDown() { NES_INFO("Tear down UnionDeploymentTest class."); }
+    void TearDown() override { NES_INFO("Tear down UnionDeploymentTest class."); }
 };
 
 /**

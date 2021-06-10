@@ -58,7 +58,7 @@ class ProjectionTest : public testing::Test {
         NES_DEBUG("ProjectionTest: Setup QueryCatalogTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         // create test input buffer
         testSchema = Schema::create()
                          ->addField("test$id", BasicType::INT64)
@@ -69,7 +69,7 @@ class ProjectionTest : public testing::Test {
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() {
+    void TearDown() override {
         NES_DEBUG("ProjectionTest: Tear down ProjectionTest test case.");
         nodeEngine->stop();
         nodeEngine = nullptr;
@@ -271,7 +271,7 @@ class TestSink : public SinkMedium {
         return resultBuffers.size();
     }
 
-    SinkMediumTypes getSinkMediumType() { return SinkMediumTypes::PRINT_SINK; }
+    SinkMediumTypes getSinkMediumType() override { return SinkMediumTypes::PRINT_SINK; }
 
   private:
     void cleanupBuffers() { resultBuffers.clear(); }

@@ -47,12 +47,12 @@
 namespace NES {
 class JoinHandlerTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("JoinHandlerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup JoinHandlerTest test class.");
     }
 
-    void TearDown() { NES_INFO("Tear down JoinHandlerTest test class."); }
+    void TearDown() override { NES_INFO("Tear down JoinHandlerTest test class."); }
 
     const uint64_t buffers_managed = 10;
     const uint64_t buffer_size = 32 * 1024;

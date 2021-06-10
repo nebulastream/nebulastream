@@ -56,7 +56,7 @@ class E2ECoordinatorMultiWorkerTest : public testing::Test {
         NES_INFO("Setup E2e test class.");
     }
 
-    void SetUp() {
+    void SetUp() override {
         rpcPort += 10;
         dataPort += 10;
         restPort += 10;

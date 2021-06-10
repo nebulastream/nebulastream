@@ -32,13 +32,13 @@ class WatermarkManagerTest : public testing::Test {
     static void SetUpTestCase() { std::cout << "Setup WatermarkManagerTest test class." << std::endl; }
 
     /* Will be called before a test is executed. */
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("WatermarkManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup WatermarkManagerTest test case." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down WatermarkManagerTest test case." << std::endl; }
+    void TearDown() override { std::cout << "Tear down WatermarkManagerTest test case." << std::endl; }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down WatermarkManagerTest test class." << std::endl; }

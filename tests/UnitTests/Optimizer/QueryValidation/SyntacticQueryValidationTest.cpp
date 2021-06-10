@@ -24,11 +24,11 @@ namespace NES {
 
 class SyntacticQueryValidationTest : public testing::Test {
   public:
-    void SetUp() {
+    void SetUp() override {
         NES::setupLogging("SyntacticQueryValidationTest.log", NES::LOG_NONE);
         NES_INFO("Setup SyntacticQueryValidationTest class.");
     }
-    void TearDown() { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
+    void TearDown() override { NES_INFO("Tear down SyntacticQueryValidationTest class."); }
 
     void PrintQString(std::string s) { std::cout << std::endl << "QUERY STRING:" << std::endl << s << std::endl; }
 
