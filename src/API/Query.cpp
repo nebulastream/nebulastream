@@ -71,7 +71,7 @@ JoinCondition::JoinCondition(const Query& subQueryRhs, Query& originalQuery, Exp
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
-Query::Query(const Query& query)  = default;
+Query::Query(const Query& query) = default;
 
 Query Query::from(const std::string sourceStreamName) {
     NES_DEBUG("Query: create query for input stream " << sourceStreamName);

@@ -21,8 +21,8 @@
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
-#include <memory>
 #include <limits>
+#include <memory>
 
 namespace NES::NodeEngine {
 

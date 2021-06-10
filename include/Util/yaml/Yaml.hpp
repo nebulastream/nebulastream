@@ -276,7 +276,7 @@ class Iterator {
   private:
     enum eType { None, SequenceType, MapType };
 
-    eType m_Type{None};///< Type of iterator.
+    eType m_Type{None};   ///< Type of iterator.
     void* m_pImp{nullptr};///< Implementation of iterator class.
 };
 
@@ -347,7 +347,7 @@ class ConstIterator {
   private:
     enum eType { None, SequenceType, MapType };
 
-    eType m_Type{None};///< Type of iterator.
+    eType m_Type{None};   ///< Type of iterator.
     void* m_pImp{nullptr};///< Implementation of constant iterator class.
 };
 
