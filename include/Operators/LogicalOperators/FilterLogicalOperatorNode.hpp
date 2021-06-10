@@ -27,7 +27,7 @@ namespace NES {
 class FilterLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit FilterLogicalOperatorNode(const ExpressionNodePtr, OperatorId id);
-    ~FilterLogicalOperatorNode() = default;
+    ~FilterLogicalOperatorNode() override = default;
 
     /**
    * @brief get the filter predicate.

@@ -48,14 +48,14 @@ class NesRuntimeException : virtual public std::exception {
     /** Destructor.
      *  Virtual to allow for subclassing.
      */
-    virtual ~NesRuntimeException() throw() {}
+    ~NesRuntimeException() throw() override {}
 
     /** Returns a pointer to the (constant) error description.
      *  @return A pointer to a const char*. The underlying memory
      *  is in possession of the Except object. Callers must
      *  not attempt to free the memory.
      */
-    virtual const char* what() const throw();
+    const char* what() const throw() override;
 };
 
 }// namespace NES

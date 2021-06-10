@@ -62,7 +62,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
                                                           partialAggregateInitialValue);
     }
 
-    ~AggregationWindowHandler() {
+    ~AggregationWindowHandler() override {
         NES_DEBUG("~AggregationWindowHandler(" << handlerType << "," << id << ")  finished destructor");
         stop();
     }

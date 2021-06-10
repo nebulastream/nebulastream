@@ -28,7 +28,7 @@ namespace NES {
 class UnionLogicalOperatorNode : public LogicalBinaryOperatorNode {
   public:
     explicit UnionLogicalOperatorNode(OperatorId id);
-    ~UnionLogicalOperatorNode() = default;
+    ~UnionLogicalOperatorNode() override = default;
 
     bool isIdentical(NodePtr rhs) const override;
     const std::string toString() const override;

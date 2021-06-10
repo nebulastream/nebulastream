@@ -25,9 +25,9 @@ class StructDeclaration : public Declaration {
   public:
     static StructDeclaration create(const std::string& type_name, const std::string& variable_name);
 
-    virtual const GeneratableDataTypePtr getType() const override;
+    const GeneratableDataTypePtr getType() const override;
 
-    virtual const std::string getIdentifierName() const override;
+    const std::string getIdentifierName() const override;
 
     const Code getTypeDefinitionCode() const override;
 
@@ -48,7 +48,7 @@ class StructDeclaration : public Declaration {
     StructDeclaration& addField(const Declaration& decl);
     StructDeclaration& makeStructCompact();
 
-    ~StructDeclaration();
+    ~StructDeclaration() override;
 
   private:
     StructDeclaration(const std::string& type_name, const std::string& variable_name);

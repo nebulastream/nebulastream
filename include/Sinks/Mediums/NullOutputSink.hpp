@@ -43,7 +43,7 @@ class NullOutputSink : public SinkMedium {
      * @Note this is required by some tests
      * TODO: find out why this is required
      */
-    ~NullOutputSink();
+    ~NullOutputSink() override;
 
     /**
      * @brief setup method for print sink

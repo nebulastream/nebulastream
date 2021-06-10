@@ -48,7 +48,7 @@ class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider {
     explicit LocalBufferPool(BufferManagerPtr bufferManager,
                              std::deque<detail::MemorySegment*>&& availableBuffers,
                              size_t numberOfReservedBuffers);
-    ~LocalBufferPool();
+    ~LocalBufferPool() override;
 
     /**
      * @brief Destroys this buffer pool and returns own buffers to global pool

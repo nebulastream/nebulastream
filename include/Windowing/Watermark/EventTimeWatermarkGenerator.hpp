@@ -31,7 +31,7 @@ class EventTimeWatermarkGenerator : public Watermark {
     * @brief this function returns the watermark value as a event time value
     * @return watermark value
     */
-    uint64_t getWatermark();
+    uint64_t getWatermark() override;
 };
 }// namespace NES::Windowing
 #endif//NES_INCLUDE_WATERMARK_EVENTTIMEWATERMARK_HPP_

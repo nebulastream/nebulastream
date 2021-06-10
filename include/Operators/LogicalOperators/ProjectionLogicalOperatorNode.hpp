@@ -28,7 +28,7 @@ namespace NES {
 class ProjectionLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit ProjectionLogicalOperatorNode(std::vector<ExpressionNodePtr> expressions, OperatorId id);
-    ~ProjectionLogicalOperatorNode() = default;
+    ~ProjectionLogicalOperatorNode() override = default;
 
     /**
      * @brief returns the list of fields that remain in the output schema.

@@ -108,19 +108,19 @@ class TypeImp {
 class SequenceImp : public TypeImp {
 
   public:
-    ~SequenceImp() {
+    ~SequenceImp() override {
         for (auto it = m_Sequence.begin(); it != m_Sequence.end(); it++) {
             delete it->second;
         }
     }
 
-    virtual const std::string& GetData() const { return g_EmptyString; }
+    const std::string& GetData() const override { return g_EmptyString; }
 
-    virtual bool SetData(const std::string&) { return false; }
+    bool SetData(const std::string&) override { return false; }
 
-    virtual size_t GetSize() const { return m_Sequence.size(); }
+    size_t GetSize() const override { return m_Sequence.size(); }
 
-    virtual Node* GetNode(const size_t index) {
+    Node* GetNode(const size_t index) override {
         auto it = m_Sequence.find(index);
         if (it != m_Sequence.end()) {
             return it->second;
@@ -128,9 +128,9 @@ class SequenceImp : public TypeImp {
         return nullptr;
     }
 
-    virtual Node* GetNode(const std::string&) { return nullptr; }
+    Node* GetNode(const std::string&) override { return nullptr; }
 
-    virtual Node* Insert(const size_t index) {
+    Node* Insert(const size_t index) override {
         if (m_Sequence.size() == 0) {
             Node* pNode = new Node;
             m_Sequence.insert({0, pNode});
@@ -159,7 +159,7 @@ class SequenceImp : public TypeImp {
         return pNode;
     }
 
-    virtual Node* PushFront() {
+    Node* PushFront() override {
         for (auto it = m_Sequence.cbegin(); it != m_Sequence.cend(); it++) {
             m_Sequence[it->first + 1] = it->second;
         }
@@ -169,7 +169,7 @@ class SequenceImp : public TypeImp {
         return pNode;
     }
 
-    virtual Node* PushBack() {
+    Node* PushBack() override {
         size_t index = 0;
         if (m_Sequence.size()) {
             auto it = m_Sequence.end();
@@ -182,7 +182,7 @@ class SequenceImp : public TypeImp {
         return pNode;
     }
 
-    virtual void Erase(const size_t index) {
+    void Erase(const size_t index) override {
         auto it = m_Sequence.find(index);
         if (it == m_Sequence.end()) {
             return;
@@ -191,7 +191,7 @@ class SequenceImp : public TypeImp {
         m_Sequence.erase(index);
     }
 
-    virtual void Erase(const std::string&) {}
+    void Erase(const std::string&) override {}
 
     std::map<size_t, Node*> m_Sequence;
 };
@@ -199,21 +199,21 @@ class SequenceImp : public TypeImp {
 class MapImp : public TypeImp {
 
   public:
-    ~MapImp() {
+    ~MapImp() override {
         for (auto it = m_Map.begin(); it != m_Map.end(); it++) {
             delete it->second;
         }
     }
 
-    virtual const std::string& GetData() const { return g_EmptyString; }
+    const std::string& GetData() const override { return g_EmptyString; }
 
-    virtual bool SetData(const std::string&) { return false; }
+    bool SetData(const std::string&) override { return false; }
 
-    virtual size_t GetSize() const { return m_Map.size(); }
+    size_t GetSize() const override { return m_Map.size(); }
 
-    virtual Node* GetNode(const size_t) { return nullptr; }
+    Node* GetNode(const size_t) override { return nullptr; }
 
-    virtual Node* GetNode(const std::string& key) {
+    Node* GetNode(const std::string& key) override {
         auto it = m_Map.find(key);
         if (it == m_Map.end()) {
             Node* pNode = new Node;
@@ -223,15 +223,15 @@ class MapImp : public TypeImp {
         return it->second;
     }
 
-    virtual Node* Insert(const size_t) { return nullptr; }
+    Node* Insert(const size_t) override { return nullptr; }
 
-    virtual Node* PushFront() { return nullptr; }
+    Node* PushFront() override { return nullptr; }
 
-    virtual Node* PushBack() { return nullptr; }
+    Node* PushBack() override { return nullptr; }
 
-    virtual void Erase(const size_t) {}
+    void Erase(const size_t) override {}
 
-    virtual void Erase(const std::string& key) {
+    void Erase(const std::string& key) override {
         auto it = m_Map.find(key);
         if (it == m_Map.end()) {
             return;
@@ -246,30 +246,30 @@ class MapImp : public TypeImp {
 class ScalarImp : public TypeImp {
 
   public:
-    ~ScalarImp() {}
+    ~ScalarImp() override {}
 
-    virtual const std::string& GetData() const { return m_Value; }
+    const std::string& GetData() const override { return m_Value; }
 
-    virtual bool SetData(const std::string& data) {
+    bool SetData(const std::string& data) override {
         m_Value = data;
         return true;
     }
 
-    virtual size_t GetSize() const { return 0; }
+    size_t GetSize() const override { return 0; }
 
-    virtual Node* GetNode(const size_t) { return nullptr; }
+    Node* GetNode(const size_t) override { return nullptr; }
 
-    virtual Node* GetNode(const std::string&) { return nullptr; }
+    Node* GetNode(const std::string&) override { return nullptr; }
 
-    virtual Node* Insert(const size_t) { return nullptr; }
+    Node* Insert(const size_t) override { return nullptr; }
 
-    virtual Node* PushFront() { return nullptr; }
+    Node* PushFront() override { return nullptr; }
 
-    virtual Node* PushBack() { return nullptr; }
+    Node* PushBack() override { return nullptr; }
 
-    virtual void Erase(const size_t) {}
+    void Erase(const size_t) override {}
 
-    virtual void Erase(const std::string&) {}
+    void Erase(const std::string&) override {}
 
     std::string m_Value;
 };
@@ -340,15 +340,15 @@ class IteratorImp {
 class SequenceIteratorImp : public IteratorImp {
 
   public:
-    virtual Node::eType GetType() const { return Node::SequenceType; }
+    Node::eType GetType() const override { return Node::SequenceType; }
 
-    virtual void InitBegin(SequenceImp* pSequenceImp) { m_Iterator = pSequenceImp->m_Sequence.begin(); }
+    void InitBegin(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.begin(); }
 
-    virtual void InitEnd(SequenceImp* pSequenceImp) { m_Iterator = pSequenceImp->m_Sequence.end(); }
+    void InitEnd(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.end(); }
 
-    virtual void InitBegin(MapImp*) {}
+    void InitBegin(MapImp*) override {}
 
-    virtual void InitEnd(MapImp*) {}
+    void InitEnd(MapImp*) override {}
 
     void Copy(const SequenceIteratorImp& it) { m_Iterator = it.m_Iterator; }
 
@@ -358,15 +358,15 @@ class SequenceIteratorImp : public IteratorImp {
 class MapIteratorImp : public IteratorImp {
 
   public:
-    virtual Node::eType GetType() const { return Node::MapType; }
+    Node::eType GetType() const override { return Node::MapType; }
 
-    virtual void InitBegin(SequenceImp*) {}
+    void InitBegin(SequenceImp*) override {}
 
-    virtual void InitEnd(SequenceImp*) {}
+    void InitEnd(SequenceImp*) override {}
 
-    virtual void InitBegin(MapImp* pMapImp) { m_Iterator = pMapImp->m_Map.begin(); }
+    void InitBegin(MapImp* pMapImp) override { m_Iterator = pMapImp->m_Map.begin(); }
 
-    virtual void InitEnd(MapImp* pMapImp) { m_Iterator = pMapImp->m_Map.end(); }
+    void InitEnd(MapImp* pMapImp) override { m_Iterator = pMapImp->m_Map.end(); }
 
     void Copy(const MapIteratorImp& it) { m_Iterator = it.m_Iterator; }
 
@@ -376,15 +376,15 @@ class MapIteratorImp : public IteratorImp {
 class SequenceConstIteratorImp : public IteratorImp {
 
   public:
-    virtual Node::eType GetType() const { return Node::SequenceType; }
+    Node::eType GetType() const override { return Node::SequenceType; }
 
-    virtual void InitBegin(SequenceImp* pSequenceImp) { m_Iterator = pSequenceImp->m_Sequence.begin(); }
+    void InitBegin(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.begin(); }
 
-    virtual void InitEnd(SequenceImp* pSequenceImp) { m_Iterator = pSequenceImp->m_Sequence.end(); }
+    void InitEnd(SequenceImp* pSequenceImp) override { m_Iterator = pSequenceImp->m_Sequence.end(); }
 
-    virtual void InitBegin(MapImp*) {}
+    void InitBegin(MapImp*) override {}
 
-    virtual void InitEnd(MapImp*) {}
+    void InitEnd(MapImp*) override {}
 
     void Copy(const SequenceConstIteratorImp& it) { m_Iterator = it.m_Iterator; }
 
@@ -394,15 +394,15 @@ class SequenceConstIteratorImp : public IteratorImp {
 class MapConstIteratorImp : public IteratorImp {
 
   public:
-    virtual Node::eType GetType() const { return Node::MapType; }
+    Node::eType GetType() const override { return Node::MapType; }
 
-    virtual void InitBegin(SequenceImp*) {}
+    void InitBegin(SequenceImp*) override {}
 
-    virtual void InitEnd(SequenceImp*) {}
+    void InitEnd(SequenceImp*) override {}
 
-    virtual void InitBegin(MapImp* pMapImp) { m_Iterator = pMapImp->m_Map.begin(); }
+    void InitBegin(MapImp* pMapImp) override { m_Iterator = pMapImp->m_Map.begin(); }
 
-    virtual void InitEnd(MapImp* pMapImp) { m_Iterator = pMapImp->m_Map.end(); }
+    void InitEnd(MapImp* pMapImp) override { m_Iterator = pMapImp->m_Map.end(); }
 
     void Copy(const MapConstIteratorImp& it) { m_Iterator = it.m_Iterator; }
 

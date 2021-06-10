@@ -42,7 +42,7 @@ class RunQueryRequest : public NESRequest {
     static RunQueryRequestPtr create(QueryPlanPtr queryPlan, std::string queryPlacementStrategy);
 
     /// Virtual destructor for inheritance
-    virtual ~RunQueryRequest() = default;
+    ~RunQueryRequest() override = default;
 
     /**
      * @brief Get the query plan to run

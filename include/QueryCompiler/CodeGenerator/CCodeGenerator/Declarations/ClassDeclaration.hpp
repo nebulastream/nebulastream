@@ -31,8 +31,8 @@ class ClassDeclaration : public Declaration {
     ClassDeclaration(ClassDefinitionPtr classDefinition);
     static ClassDeclarationPtr create(ClassDefinitionPtr classDefinition);
 
-    virtual const GeneratableDataTypePtr getType() const override;
-    virtual const std::string getIdentifierName() const override;
+    const GeneratableDataTypePtr getType() const override;
+    const std::string getIdentifierName() const override;
 
     const Code getTypeDefinitionCode() const override;
 

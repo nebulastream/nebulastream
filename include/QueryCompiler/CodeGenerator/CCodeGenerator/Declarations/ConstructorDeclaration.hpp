@@ -33,8 +33,8 @@ class ConstructorDeclaration : public Declaration {
     ConstructorDeclaration(Code code);
     static ConstructorDeclarationPtr create(Code code);
 
-    virtual const GeneratableDataTypePtr getType() const override;
-    virtual const std::string getIdentifierName() const override;
+    const GeneratableDataTypePtr getType() const override;
+    const std::string getIdentifierName() const override;
 
     const Code getTypeDefinitionCode() const override;
 

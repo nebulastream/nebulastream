@@ -75,7 +75,7 @@ class ExecutableCompleteAggregationTriggerAction
 
     bool doAction(NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable,
                   uint64_t currentWatermark,
-                  uint64_t lastWatermark) {
+                  uint64_t lastWatermark) override {
         NES_DEBUG("ExecutableCompleteAggregationTriggerAction (id="
                   << id << " " << this->windowDefinition->getDistributionType()->toString()
                   << "): doAction for currentWatermark=" << currentWatermark << " lastWatermark=" << lastWatermark);
@@ -120,7 +120,7 @@ class ExecutableCompleteAggregationTriggerAction
         return true;
     }
 
-    std::string toString() { return "ExecutableCompleteAggregationTriggerAction"; }
+    std::string toString() override { return "ExecutableCompleteAggregationTriggerAction"; }
     /**
   * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
   * which are written to the tuple buffer.

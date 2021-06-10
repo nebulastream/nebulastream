@@ -25,15 +25,15 @@ namespace QueryCompilation {
 
 class ConstantExpressionStatement : public ExpressionStatment {
   public:
-    virtual StatementType getStamentType() const;
+    StatementType getStamentType() const override;
 
-    virtual const CodeExpressionPtr getCode() const;
+    const CodeExpressionPtr getCode() const override;
 
-    virtual const ExpressionStatmentPtr copy() const;
+    const ExpressionStatmentPtr copy() const override;
 
     ConstantExpressionStatement(GeneratableValueTypePtr val);
 
-    virtual ~ConstantExpressionStatement();
+    ~ConstantExpressionStatement() override;
 
   private:
     GeneratableValueTypePtr constantValue;

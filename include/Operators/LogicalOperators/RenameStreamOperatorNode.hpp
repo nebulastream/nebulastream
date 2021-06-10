@@ -28,7 +28,7 @@ namespace NES {
 class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit RenameStreamOperatorNode(const std::string newStreamName, OperatorId id);
-    ~RenameStreamOperatorNode() = default;
+    ~RenameStreamOperatorNode() override = default;
 
     /**
      * @brief check if two operators have the same output schema

@@ -82,7 +82,7 @@ class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryMa
      */
     explicit QueryManager(BufferManagerPtr bufferManager, uint64_t nodeEngineId, uint16_t numThreads);
 
-    ~QueryManager();
+    ~QueryManager() override;
 
     /**
      * @brief register a query by extracting sources, windows and sink and add them to

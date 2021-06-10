@@ -45,9 +45,9 @@ class Predicate : public LegacyExpression {
               bool bracket = true);
     Predicate(const BinaryOperatorType& op, const LegacyExpressionPtr left, const LegacyExpressionPtr right, bool bracket = true);
 
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
-    virtual const std::string toString() const override;
-    virtual LegacyExpressionPtr copy() const override;
+    const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    const std::string toString() const override;
+    LegacyExpressionPtr copy() const override;
     bool equals(const LegacyExpression& rhs) const override;
     BinaryOperatorType getOperatorType() const;
     const LegacyExpressionPtr getLeft() const;
@@ -81,9 +81,9 @@ class PredicateItem : public LegacyExpression {
     PredicateItem(char val);
     PredicateItem(const char* val);
 
-    virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
-    virtual const std::string toString() const override;
-    virtual LegacyExpressionPtr copy() const override;
+    const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
+    const std::string toString() const override;
+    LegacyExpressionPtr copy() const override;
 
     bool equals(const LegacyExpression& rhs) const override;
 

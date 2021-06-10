@@ -30,7 +30,7 @@ class IngestionTimeWatermarkGenerator : public Watermark {
     * @brief this function returns the watermark value as a processing time value
     * @return watermark value
     */
-    uint64_t getWatermark();
+    uint64_t getWatermark() override;
 };
 
 }// namespace NES::Windowing

@@ -274,7 +274,7 @@ class StateVariable : public detail::Destroyable {
     /**
      * @brief Destructor of a state variable. It frees all allocated resources.
      */
-    virtual ~StateVariable() override {
+    ~StateVariable() override {
         NES_DEBUG("~StateVariable()");
         detail::StateVariableDestroyerHelper<Key, Value>::destroy(backend);
     }

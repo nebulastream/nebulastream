@@ -37,7 +37,7 @@ class I2CBus : public GenericBus {
     /**
      * destructor
      */
-    ~I2CBus();
+    ~I2CBus() override;
 
   private:
     /**

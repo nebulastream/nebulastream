@@ -53,7 +53,7 @@ class FieldAccessExpressionNode : public ExpressionNode {
     * @brief Infers the stamp of the expression given the current schema.
     * @param SchemaPtr
     */
-    virtual void inferStamp(SchemaPtr schema) override;
+    void inferStamp(SchemaPtr schema) override;
 
     /**
     * @brief Create a deep copy of this expression node.

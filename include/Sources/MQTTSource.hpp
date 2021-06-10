@@ -63,7 +63,7 @@ class MQTTSource : public DataSource {
      * @brief destructor of mqtt sink that disconnects the queue before deconstruction
      * @note if queue cannot be disconnected, an assertion is raised
      */
-    ~MQTTSource();
+    ~MQTTSource() override;
 
     /**
      * @brief blocking method to receive a buffer from the mqtt source

@@ -62,7 +62,7 @@ class AttributeSortRule : public BaseRewriteRule {
      * @param queryPlan: the original query plan
      * @return updated logical query plan
      */
-    QueryPlanPtr apply(QueryPlanPtr queryPlan);
+    QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
   private:
     /**

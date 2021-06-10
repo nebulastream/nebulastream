@@ -29,7 +29,7 @@ class JsonFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer);
+    std::vector<NodeEngine::TupleBuffer> getData(NodeEngine::TupleBuffer& inputBuffer) override;
 
     //TODO implement this function with an SinkFormatIterator
     /**
@@ -37,25 +37,25 @@ class JsonFormat : public SinkFormat {
     * @param a tuple buffers pointer
     * @return vector of Tuple buffer containing the content of the tuplebuffer
      */
-    FormatIterator getTupleIterator(NodeEngine::TupleBuffer& inputBuffer);
+    FormatIterator getTupleIterator(NodeEngine::TupleBuffer& inputBuffer) override;
 
     /**
     * @brief method to write the schema of the data
     * @return TupleBuffer containing the schema
     */
-    std::optional<NodeEngine::TupleBuffer> getSchema();
+    std::optional<NodeEngine::TupleBuffer> getSchema() override;
 
     /**
      * @brief method to return the format as a string
      * @return format as string
      */
-    std::string toString();
+    std::string toString() override;
 
     /**
      * @brief return sink format
      * @return sink format
      */
-    FormatTypes getSinkFormat();
+    FormatTypes getSinkFormat() override;
 };
 }// namespace NES
 #endif//NES_INCLUDE_SINKS_FORMATS_JSONFORMAT_HPP_

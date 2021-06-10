@@ -88,7 +88,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
-    ~BufferManager();
+    ~BufferManager() override;
 
   private:
     /**

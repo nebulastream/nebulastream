@@ -41,7 +41,7 @@ class NetworkSource : public DataSource {
                   std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors =
                       std::vector<NodeEngine::Execution::SuccessorExecutablePipeline>());
 
-    ~NetworkSource();
+    ~NetworkSource() override;
 
     /**
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
@@ -65,7 +65,7 @@ class NetworkSource : public DataSource {
      * It registers the source on the NetworkManager
      * @return true if registration on the network stack is successful
      */
-    bool start();
+    bool start() override;
 
     /**
      * @brief This method is overridden here to prevent the NetworkSoure to start a thread.
