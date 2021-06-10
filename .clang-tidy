@@ -3,7 +3,8 @@
 # - Also disable modernization to trailing return types because this would cause a lot of unnecessary
 #   refactoring
 # - Implicit conversions sometimes make the code more readable
-Checks:          '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion'
+# - readability-named-parameter does not improve readability
+Checks:          '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion,-readability-named-parameter,-readability-implicit-bool-conversion,-readability-magic-numbers'
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none
