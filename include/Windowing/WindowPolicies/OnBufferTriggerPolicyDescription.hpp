@@ -23,6 +23,7 @@ namespace NES::Windowing {
 class OnBufferTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor {
   public:
     static WindowTriggerPolicyPtr create();
+    virtual ~OnBufferTriggerPolicyDescription() = default;
     TriggerType getPolicyType() override;
     std::string toString() override;
 

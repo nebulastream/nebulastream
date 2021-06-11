@@ -22,6 +22,8 @@ namespace NES::Windowing {
 
 class BaseExecutableWindowTriggerPolicy {
   public:
+
+    virtual ~BaseExecutableWindowTriggerPolicy() = default;
     /**
      * @brief This function starts the trigger policy
      * @return bool indicating success

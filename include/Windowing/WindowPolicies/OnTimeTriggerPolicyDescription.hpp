@@ -24,7 +24,7 @@ class OnTimeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor 
   public:
     static WindowTriggerPolicyPtr create(uint64_t triggerTimeInMs);
 
-    virtual ~OnTimeTriggerPolicyDescription() noexcept = default;
+    ~OnTimeTriggerPolicyDescription() noexcept override = default;
 
     /**
      * @brief method to get the policy type

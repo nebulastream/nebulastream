@@ -30,7 +30,7 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
 
     static ExecutableOnTimeTriggerPtr create(uint64_t triggerTimeInMs);
 
-    ~ExecutableOnTimeTriggerPolicy();
+    virtual ~ExecutableOnTimeTriggerPolicy();
 
     /**
      * @brief This function starts the trigger policy
