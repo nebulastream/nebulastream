@@ -30,6 +30,7 @@ namespace QueryCompilation {
 class GeneratableDataType {
   public:
     GeneratableDataType() = default;
+    virtual ~GeneratableDataType() = default;
 
     /**
     * @brief Generates the code for the native type.

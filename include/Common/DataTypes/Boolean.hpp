@@ -25,6 +25,9 @@ namespace NES {
  */
 class Boolean final : public DataType {
   public:
+
+    virtual ~Boolean() = default;
+
     /**
     * @brief Checks if this data type is Boolean.
     */

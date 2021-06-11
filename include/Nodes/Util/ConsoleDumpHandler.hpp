@@ -29,6 +29,7 @@ using NodePtr = std::shared_ptr<Node>;
 class ConsoleDumpHandler : public DumpHandler {
 
   public:
+    virtual ~ConsoleDumpHandler() = default;
     static std::shared_ptr<ConsoleDumpHandler> create(std::ostream& out);
     explicit ConsoleDumpHandler(std::ostream& out);
     /**

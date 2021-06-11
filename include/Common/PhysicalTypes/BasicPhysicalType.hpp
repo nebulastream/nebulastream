@@ -34,6 +34,8 @@ class BasicPhysicalType final : public PhysicalType {
      */
     BasicPhysicalType(DataTypePtr type, NativeType nativeType);
 
+    virtual ~BasicPhysicalType() = default;
+
     /**
      * @brief Factory function to create a new physical type.
      * @param type

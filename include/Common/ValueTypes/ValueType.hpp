@@ -34,6 +34,8 @@ class [[nodiscard]] ValueType {
   public:
     [[nodiscard]] inline explicit ValueType(DataTypePtr&& type) : dataType(std::move(type)) {}
 
+    virtual ~ValueType() = default;
+
     /// @brief Checks if two values are equal
     [[nodiscard]] virtual bool isEquals(ValueTypePtr valueType) const noexcept = 0;
 

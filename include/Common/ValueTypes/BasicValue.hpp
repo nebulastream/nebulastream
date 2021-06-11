@@ -24,8 +24,11 @@ namespace NES {
 class [[nodiscard]] BasicValue final : public ValueType {
 
   public:
+
     [[nodiscard]] inline BasicValue(DataTypePtr&& type, std::string&& value) noexcept
         : ValueType(std::move(type)), value(std::move(value)) {}
+
+    ~virtual BasicValue() = default;
 
     /// @brief Returns a string representation of this value.
     [[nodiscard]] std::string toString() const noexcept final;

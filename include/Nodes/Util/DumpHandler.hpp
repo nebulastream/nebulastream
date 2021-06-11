@@ -36,6 +36,8 @@ using NodePtr = std::shared_ptr<Node>;
 class DumpHandler {
   public:
     DumpHandler() = default;
+    virtual ~DumpHandler() = default;
+
     /**
     * Dump the specific node and its children.
     */

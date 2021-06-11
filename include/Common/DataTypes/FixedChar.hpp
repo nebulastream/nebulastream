@@ -34,6 +34,8 @@ class FixedChar final : public ArrayType {
      * @param length length of the char
      */
     explicit inline FixedChar(uint64_t length) noexcept : ArrayType(length, DataTypeFactory::createChar()) {}
+
+    virtual ~FixedChar() = default;
 };
 
 }// namespace NES

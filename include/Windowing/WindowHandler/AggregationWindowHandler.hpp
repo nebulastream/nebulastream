@@ -40,7 +40,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
         PartialAggregateType partialAggregateInitialValue)
         : AbstractWindowHandler(std::move(windowDefinition)), executableWindowAggregation(std::move(windowAggregation)),
           executablePolicyTrigger(std::move(executablePolicyTrigger)), executableWindowAction(std::move(executableWindowAction)),
-          id(id), isRunning(false), windowStateVariable(nullptr), partialAggregateInitialValue(partialAggregateInitialValue) {
+          id(id), partialAggregateInitialValue(partialAggregateInitialValue) {
         NES_ASSERT(this->windowDefinition, "invalid definition");
         this->numberOfInputEdges = this->windowDefinition->getNumberOfInputEdges();
         this->lastWatermark = 0;
@@ -281,14 +281,14 @@ class AggregationWindowHandler : public AbstractWindowHandler {
     }
 
   private:
-    NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable;
+    NodeEngine::StateVariable<KeyType, WindowSliceStore<PartialAggregateType>*>* windowStateVariable{nullptr};
     std::shared_ptr<ExecutableWindowAggregation<InputType, PartialAggregateType, FinalAggregateType>> executableWindowAggregation;
     BaseExecutableWindowTriggerPolicyPtr executablePolicyTrigger;
     BaseExecutableWindowActionPtr<KeyType, InputType, PartialAggregateType, FinalAggregateType> executableWindowAction;
     std::string handlerType;
     uint64_t id;
     mutable std::recursive_mutex windowMutex;
-    std::atomic<bool> isRunning;
+    std::atomic<bool> isRunning {false};
     NodeEngine::StateManagerPtr stateManager;
     PartialAggregateType partialAggregateInitialValue;
 };

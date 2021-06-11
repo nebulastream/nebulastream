@@ -92,7 +92,7 @@ class OutputChannel {
     const std::string socketAddr;
     zmq::socket_t zmqSocket;
     const ChannelId channelId;
-    bool isClosed;
+    bool isClosed {false};
 };
 
 }// namespace Network
