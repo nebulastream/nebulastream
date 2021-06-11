@@ -27,7 +27,6 @@ namespace NES {
 
 class SemanticQueryValidationTest : public testing::Test {
   public:
-
     ~SemanticQueryValidationTest() override = default;
     void SetUp() override {
         NES::setupLogging("SemanticQueryValidationTest.log", NES::LOG_NONE);

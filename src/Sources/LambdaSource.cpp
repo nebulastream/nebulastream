@@ -85,8 +85,8 @@ std::optional<NodeEngine::TupleBuffer> LambdaSource::receiveData() {
     if (buffer->getNumberOfTuples() == 0) {
         NES_ASSERT(false, "this should not happen");
         return std::nullopt;
-    }         return buffer;
-   
+    }
+    return buffer;
 }
 
 const std::string LambdaSource::toString() const { return "LambdaSource"; }

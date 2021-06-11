@@ -40,7 +40,8 @@ SinkDescriptorPtr ConvertPhysicalToLogicalSink::createSinkDescriptor(DataSinkPtr
     if (sinkType == "PRINT_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating print sink");
         return PrintSinkDescriptor::create();
-    } if (sinkType == "ZMQ_SINK") {
+    }
+    if (sinkType == "ZMQ_SINK") {
         NES_INFO("ConvertPhysicalToLogicalSink: Creating ZMQ sink");
         ZmqSinkPtr zmqSink = std::dynamic_pointer_cast<ZmqSink>(dataSink);
         return ZmqSinkDescriptor::create(zmqSink->getHost(), zmqSink->getPort());

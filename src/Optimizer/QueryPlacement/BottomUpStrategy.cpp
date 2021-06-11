@@ -251,7 +251,8 @@ BottomUpStrategy::getCandidateQueryPlan(QueryId queryId, OperatorNodePtr operato
             }
             NES_TRACE("BottomUpStrategy: return the updated query plan.");
             return candidateQueryPlan;
-        } if (queryPlansWithChildren.size() == 1) {
+        }
+        if (queryPlansWithChildren.size() == 1) {
             NES_TRACE("BottomUpStrategy: Found only 1 query plan with the child operator of the input logical operator. "
                       "Returning the query plan.");
             return queryPlansWithChildren[0];

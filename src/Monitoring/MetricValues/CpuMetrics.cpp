@@ -68,10 +68,9 @@ CpuMetrics CpuMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuffer& buf
             cpu[n] = CpuValues::fromBuffer(schema, buf, prefix + "CPU[" + std::to_string(n + 1) + "]_");
         }
         return CpuMetrics{totalCpu, numCores, std::move(cpu)};
-
-    }         NES_THROW_RUNTIME_ERROR("CpuMetrics: Prefix " + prefix + " could not be parsed from schema " + schema->toString());
-        throw 0;// just to make the compiler happy
-   
+    }
+    NES_THROW_RUNTIME_ERROR("CpuMetrics: Prefix " + prefix + " could not be parsed from schema " + schema->toString());
+    throw 0;// just to make the compiler happy
 }
 
 web::json::value CpuMetrics::toJson() {

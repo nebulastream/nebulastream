@@ -92,13 +92,13 @@ class BaseController {
     static void handleOptions(http_request request);
 
     static json::value responseNotImpl(const http::method& method, utility::string_t path);
-    static void internalServerErrorImpl(web::http::http_request message) ;
-    static void successMessageImpl(const web::http::http_request& message, const web::json::value& result) ;
-    static void successMessageImpl(const web::http::http_request& message, const utf8string& result) ;
+    static void internalServerErrorImpl(web::http::http_request message);
+    static void successMessageImpl(const web::http::http_request& message, const web::json::value& result);
+    static void successMessageImpl(const web::http::http_request& message, const utf8string& result);
 
-    static void resourceNotFoundImpl(const web::http::http_request& message) ;
-    static void noContentImpl(const web::http::http_request& message) ;
-    static void badRequestImpl(const web::http::http_request& message, const web::json::value& detail) ;
+    static void resourceNotFoundImpl(const web::http::http_request& message);
+    static void noContentImpl(const web::http::http_request& message);
+    static void badRequestImpl(const web::http::http_request& message, const web::json::value& detail);
 
     void handleException(const web::http::http_request& message, const std::exception& exc);
 

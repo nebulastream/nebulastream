@@ -34,7 +34,7 @@ ForLoopStatement::ForLoopStatement(DeclarationPtr varDeclaration,
     for (const auto& stmt : loop_body) {
         if (stmt) {
             body->addStatement(stmt);
-}
+        }
     }
 }
 
@@ -59,7 +59,7 @@ const CodeExpressionPtr ForLoopStatement::getCode() const {
 void ForLoopStatement::addStatement(StatementPtr stmt) {
     if (stmt) {
         body->addStatement(stmt);
-}
+    }
 }
 
 ForLoopStatement::~ForLoopStatement() = default;

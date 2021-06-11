@@ -51,27 +51,27 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request req
         NES_INFO("QueryController:: GET execution-plan");
 
         auto const queryParameter = parameters.find("queryId");
-if ( queryParameter == parameters.end()) {
+        if (queryParameter == parameters.end()) {
             NES_ERROR("QueryController: Unable to find query ID for the GET execution-plan request");
             json::value errorResponse{};
             errorResponse["detail"] = json::value::string("Parameter queryId must be provided");
             badRequestImpl(request, errorResponse);
             return;
-        }             try {
-                // get the queryId from user input
-                QueryId queryId = std::stoi(queryParameter->second);
-                NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
-                // get the execution-plan for given query id
-                auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
-                NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
-                //Prepare the response
-                successMessageImpl(request, executionPlanJson);
-                return;
-            } catch (...) {
-                RuntimeUtils::printStackTrace();
-                internalServerErrorImpl(request);
-            }
-       
+        }
+        try {
+            // get the queryId from user input
+            QueryId queryId = std::stoi(queryParameter->second);
+            NES_DEBUG("QueryController:: execution-plan requested queryId: " << queryId);
+            // get the execution-plan for given query id
+            auto executionPlanJson = PlanJsonGenerator::getExecutionPlanAsJson(globalExecutionPlan, queryId);
+            NES_DEBUG("QueryController:: execution-plan: " << executionPlanJson.serialize());
+            //Prepare the response
+            successMessageImpl(request, executionPlanJson);
+            return;
+        } catch (...) {
+            RuntimeUtils::printStackTrace();
+            internalServerErrorImpl(request);
+        }
 
     } else if (path[1] == "query-plan") {
         //Check if the path contains the query id

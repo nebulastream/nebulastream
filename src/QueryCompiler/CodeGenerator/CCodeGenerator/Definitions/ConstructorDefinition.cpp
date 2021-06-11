@@ -53,7 +53,7 @@ DeclarationPtr ConstructorDefinition::getDeclaration() {
         function << parameters[i].getCode();
         if (i + 1 < parameters.size()) {
             function << ", ";
-}
+        }
     }
     function << ")";
 
@@ -97,7 +97,7 @@ ConstructorDefinitionPtr ConstructorDefinition::addParameter(VariableDeclaration
 ConstructorDefinitionPtr ConstructorDefinition::addStatement(StatementPtr statement) {
     if (statement) {
         statements.emplace_back(statement);
-}
+    }
     return shared_from_this();
 }
 

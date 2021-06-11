@@ -198,7 +198,7 @@ bool MQTTSource::connect() {
             // subscriptions.
             if (!rsp.is_session_present()) {
                 client->subscribe(topic, 1)->wait();
-}
+            }
             connected = client->is_connected();
         } catch (const mqtt::exception& exc) {
             NES_WARNING("\n  " << exc);

@@ -35,8 +35,8 @@ LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggr
                                                  WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
-    triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(nullptr),
-    distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
+      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(nullptr),
+      distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
@@ -49,7 +49,7 @@ LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr on
                                                  WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
     : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
-    triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(onKey)),
+      triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(onKey)),
       distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }

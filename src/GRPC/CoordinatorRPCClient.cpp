@@ -57,10 +57,9 @@ bool CoordinatorRPCClient::registerPhysicalStream(AbstractPhysicalStreamConfigPt
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerPhysicalStream: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error=" << status.error_code() << ": "
-                                                                         << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::registerPhysicalStream error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::string filePath) {
@@ -91,9 +90,9 @@ bool CoordinatorRPCClient::registerLogicalStream(std::string streamName, std::st
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::registerLogicalStream: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream error=" << status.error_code() << ": " << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::registerLogicalStream error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamName, std::string physicalStreamName) {
@@ -113,10 +112,9 @@ bool CoordinatorRPCClient::unregisterPhysicalStream(std::string logicalStreamNam
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::unregisterPhysicalStream: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream error=" << status.error_code() << ": "
-                                                                           << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::unregisterPhysicalStream error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
@@ -135,10 +133,9 @@ bool CoordinatorRPCClient::unregisterLogicalStream(std::string streamName) {
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::unregisterLogicalStream: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream error=" << status.error_code() << ": "
-                                                                          << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::unregisterLogicalStream error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 bool CoordinatorRPCClient::addParent(uint64_t parentId) {
@@ -157,9 +154,9 @@ bool CoordinatorRPCClient::addParent(uint64_t parentId) {
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::addParent: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::addParent error=" << status.error_code() << ": " << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::addParent error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParentId) {
@@ -180,9 +177,9 @@ bool CoordinatorRPCClient::replaceParent(uint64_t oldParentId, uint64_t newParen
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::replaceParent: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::replaceParent error=" << status.error_code() << ": " << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::replaceParent error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 uint64_t CoordinatorRPCClient::getId() { return workerId; }
@@ -203,9 +200,9 @@ bool CoordinatorRPCClient::removeParent(uint64_t parentId) {
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::removeParent: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::removeParent error=" << status.error_code() << ": " << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::removeParent error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 bool CoordinatorRPCClient::unregisterNode() {
@@ -223,9 +220,9 @@ bool CoordinatorRPCClient::unregisterNode() {
     if (status.ok()) {
         NES_DEBUG("CoordinatorRPCClient::unregisterNode: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" CoordinatorRPCClient::unregisterNode error=" << status.error_code() << ": " << status.error_message());
-        return reply.success();
-   
+    }
+    NES_DEBUG(" CoordinatorRPCClient::unregisterNode error=" << status.error_code() << ": " << status.error_message());
+    return reply.success();
 }
 
 bool CoordinatorRPCClient::registerNode(std::string ipAddress,
@@ -261,8 +258,8 @@ bool CoordinatorRPCClient::registerNode(std::string ipAddress,
         NES_DEBUG("CoordinatorRPCClient::registerNode: status ok id=" << reply.id());
         this->workerId = reply.id();
         return true;
-    }         NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
-        return false;
-   
+    }
+    NES_ERROR(" CoordinatorRPCClient::registerNode error=" << status.error_code() << ": " << status.error_message());
+    return false;
 }
 }// namespace NES

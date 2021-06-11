@@ -152,7 +152,7 @@ MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
     int ret = sysinfo(sinfo);
     if (ret == EFAULT) {
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading memory stats");
-}
+    }
 
     MemoryMetrics output{};
     output.TOTAL_RAM = sinfo->totalram;
@@ -180,7 +180,7 @@ DiskMetrics SystemResourcesReader::ReadDiskStats() {
     int ret = statvfs("/", svfs);
     if (ret == EFAULT) {
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading disk stats");
-}
+    }
 
     output.fBsize = svfs->f_bsize;
     output.fFrsize = svfs->f_frsize;

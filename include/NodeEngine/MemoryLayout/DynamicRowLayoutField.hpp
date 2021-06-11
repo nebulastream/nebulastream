@@ -102,8 +102,8 @@ DynamicRowLayoutField<T, boundaryChecks>::create(std::string fieldName, std::sha
     auto fieldIndex = layoutBuffer->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value()) {
         return DynamicRowLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layoutBuffer);
-    }         NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
-   
+    }
+    NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
 }
 
 template<class T, bool boundaryChecks>

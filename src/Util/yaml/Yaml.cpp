@@ -293,9 +293,9 @@ class NodeImp {
 
     void InitSequence() {
         if (m_Type != Node::SequenceType || m_pImp == nullptr) {
-            
-                delete m_pImp;
-            
+
+            delete m_pImp;
+
             m_pImp = new SequenceImp;
             m_Type = Node::SequenceType;
         }
@@ -303,9 +303,9 @@ class NodeImp {
 
     void InitMap() {
         if (m_Type != Node::MapType || m_pImp == nullptr) {
-            
-                delete m_pImp;
-            
+
+            delete m_pImp;
+
             m_pImp = new MapImp;
             m_Type = Node::MapType;
         }
@@ -313,9 +313,9 @@ class NodeImp {
 
     void InitScalar() {
         if (m_Type != Node::ScalarType || m_pImp == nullptr) {
-            
-                delete m_pImp;
-            
+
+            delete m_pImp;
+
             m_pImp = new ScalarImp;
             m_Type = Node::ScalarType;
         }
@@ -829,10 +829,10 @@ class ReaderLine {
         *
         */
     explicit ReaderLine(std::string data = "",
-               const size_t no = 0,
-               const size_t offset = 0,
-               const Node::eType type = Node::None,
-               const unsigned char flags = 0)
+                        const size_t no = 0,
+                        const size_t offset = 0,
+                        const Node::eType type = Node::None,
+                        const unsigned char flags = 0)
         : Data(std::move(data)), No(no), Offset(offset), Type(type), Flags(flags) {}
 
     enum eFlag {
@@ -979,7 +979,8 @@ class ParseImp {
             // End of document.
             if (line == "...") {
                 break;
-            } if (line == "---") {
+            }
+            if (line == "---") {
                 stream.seekg(streamPos);
                 break;
             }
@@ -1213,8 +1214,8 @@ class ParseImp {
             if (!pLine->Data.empty()) {
                 if (pLine->Offset <= parentOffset) {
                     break;
-                }                     lastNotEmpty = it;
-               
+                }
+                lastNotEmpty = it;
             }
             ++it;
         }
@@ -1417,17 +1418,17 @@ class ParseImp {
 
                     ++it;
                     continue;
-                }                     if (blockOffset != pLine->Offset && foldedFlag) {
-                        if (addedSpace) {
-                            data[data.size() - 1] = '\n';
-                            addedSpace = false;
-                        } else {
-                            data += "\n";
-                        }
+                }
+                if (blockOffset != pLine->Offset && foldedFlag) {
+                    if (addedSpace) {
+                        data[data.size() - 1] = '\n';
+                        addedSpace = false;
+                    } else {
+                        data += "\n";
                     }
-                    data += std::string(pLine->Offset - blockOffset, ' ');
-                    data += pLine->Data;
-               
+                }
+                data += std::string(pLine->Offset - blockOffset, ' ');
+                data += pLine->Data;
 
                 // Move to next line
                 ++it;
@@ -1782,8 +1783,8 @@ SerializeLoop(const Node& node, std::iostream& stream, bool useLevel, const size
                     }
                     stream << value << "\n";
                     break;
-                }                     stream << ">";
-               
+                }
+                stream << ">";
             }
 
             if (endNewline == false) {

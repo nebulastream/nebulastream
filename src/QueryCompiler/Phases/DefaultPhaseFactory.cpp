@@ -39,10 +39,10 @@ const PipeliningPhasePtr DefaultPhaseFactory::createPipeliningPhase(QueryCompile
         NES_DEBUG("Create pipelining phase with fuse policy");
         auto operatorFusionPolicy = FuseNonPipelineBreakerPolicy::create();
         return DefaultPipeliningPhase::create(operatorFusionPolicy);
-    }         NES_DEBUG("Create pipelining phase with always break policy");
-        auto operatorFusionPolicy = NeverFusePolicy::create();
-        return DefaultPipeliningPhase::create(operatorFusionPolicy);
-   
+    }
+    NES_DEBUG("Create pipelining phase with always break policy");
+    auto operatorFusionPolicy = NeverFusePolicy::create();
+    return DefaultPipeliningPhase::create(operatorFusionPolicy);
 }
 
 const LowerLogicalToPhysicalOperatorsPtr DefaultPhaseFactory::createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr) {

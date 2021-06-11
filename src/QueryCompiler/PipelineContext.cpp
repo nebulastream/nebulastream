@@ -62,7 +62,7 @@ const uint64_t PipelineContext::getHandlerIndex(NodeEngine::Execution::OperatorH
     for (auto i = 0; i < operatorHandlers.size(); i++) {
         if (operatorHandlers[i] == operatorHandler) {
             return i;
-}
+        }
     }
     NES_FATAL_ERROR("Handler is not registered");
     return 0;

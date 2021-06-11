@@ -187,7 +187,7 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         } else {
             SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperatorNode>()->getInputSchema(),
                                                      serializedOperator->mutable_inputschema());
-}
+        }
     } else {
         SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getLeftInputSchema(),
                                                  serializedOperator->mutable_leftinputschema());
@@ -679,8 +679,9 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             windowDef->setOriginId(windowDetails->origin());
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
                 ->as<CentralWindowOperator>();
-        } if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
-                   || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
+        }
+        if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
+            || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
             auto windowDef = Windowing::LogicalWindowDefinition::create(aggregation,
                                                                         window,
                                                                         distChar,
@@ -715,8 +716,9 @@ WindowOperatorNodePtr OperatorSerializationUtil::deserializeWindowOperator(Seria
             windowDef->setOriginId(windowDetails->origin());
             return LogicalOperatorFactory::createCentralWindowSpecializedOperator(windowDef, operatorId)
                 ->as<CentralWindowOperator>();
-        } if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
-                   || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
+        }
+        if (distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Combining
+            || distrChar.distr() == SerializableOperator_WindowDetails_DistributionCharacteristic_Distribution_Merging) {
             auto windowDef = Windowing::LogicalWindowDefinition::create(keyAccessExpression,
                                                                         aggregation,
                                                                         window,
@@ -1263,7 +1265,8 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
         return PrintSinkDescriptor::create();
-    } if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor>()) {
+    }
+    if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNullOutputSinkDescriptor>()) {
         // de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
         return NullOutputSinkDescriptor::create();
@@ -1393,8 +1396,9 @@ Windowing::WatermarkStrategyDescriptorPtr OperatorSerializationUtil::deserialize
             Windowing::TimeMeasure(serializedEventTimeWatermarkStrategyDescriptor.allowedlateness()),
             Windowing::TimeUnit(serializedEventTimeWatermarkStrategyDescriptor.multiplier()));
         return eventTimeWatermarkStrategyDescriptor;
-    } if (deserializedWatermarkStrategyDescriptor
-                   .Is<SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor>()) {
+    }
+    if (deserializedWatermarkStrategyDescriptor
+            .Is<SerializableOperator_WatermarkStrategyDetails_SerializableIngestionTimeWatermarkStrategyDescriptor>()) {
         return Windowing::IngestionTimeWatermarkStrategyDescriptor::create();
     } else {
         NES_ERROR("OperatorSerializationUtil: Unknown Serialized Watermark Strategy Descriptor Type");

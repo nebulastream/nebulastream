@@ -39,7 +39,8 @@ DataTypePtr Integer::join(DataTypePtr otherDataType) {
         auto newUpperBound = fmax(static_cast<double>(upperBound), otherFloat->upperBound);
         auto newLowerBound = fmin(static_cast<double>(lowerBound), otherFloat->lowerBound);
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
-    } if (otherDataType->isInteger()) {
+    }
+    if (otherDataType->isInteger()) {
         // The other type is an Integer, thus we return a large enough integer.
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());

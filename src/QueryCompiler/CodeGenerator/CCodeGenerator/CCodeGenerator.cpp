@@ -88,8 +88,8 @@ const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclarat
                                                             const AttributeFieldPtr field) {
     if (structDeclaration.getField(field->getName())) {
         return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->getName()));
-    }         return VariableDeclarationPtr();
-   
+    }
+    return VariableDeclarationPtr();
 }
 
 const std::string toString(void*, DataTypePtr) {
@@ -2031,14 +2031,13 @@ std::string CCodeGenerator::generateCode(PipelineContextPtr context) {
 NodeEngine::Execution::ExecutablePipelineStagePtr CCodeGenerator::compile(PipelineContextPtr code) {
     std::string src = generateCode(code);
     auto compiledCode = compiler->compile(src);
-    PipelineStageArity const arity = [&ari=code->arity](){
-    switch (ari) {
-        case PipelineContext::Unary: return Unary;
-        case PipelineContext::BinaryLeft: return BinaryLeft;
-        case PipelineContext::BinaryRight: return BinaryRight;
-        default:
-            NES_FATAL_ERROR(catString("Unknown PipelineContext", ari, ". Terminate."));
-    }
+    PipelineStageArity const arity = [&ari = code->arity]() {
+        switch (ari) {
+            case PipelineContext::Unary: return Unary;
+            case PipelineContext::BinaryLeft: return BinaryLeft;
+            case PipelineContext::BinaryRight: return BinaryRight;
+            default: NES_FATAL_ERROR(catString("Unknown PipelineContext", ari, ". Terminate."));
+        }
     }();
     return CompiledExecutablePipelineStage::create(compiledCode, arity, src);
 }

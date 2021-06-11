@@ -69,7 +69,7 @@ bool MQTTSourceDescriptor::equal(SourceDescriptorPtr other) {
 
     if (!other->instanceOf<MQTTSourceDescriptor>()) {
         return false;
-}
+    }
     auto otherMQTTSource = other->as<MQTTSourceDescriptor>();
     NES_DEBUG("URL= " << serverAddress << " == " << otherMQTTSource->getServerAddress());
     return serverAddress == otherMQTTSource->getServerAddress() && clientId == otherMQTTSource->getClientId()

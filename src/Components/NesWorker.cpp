@@ -188,15 +188,15 @@ bool NesWorker::start(bool blocking, bool withConnect) {
                 NES_DEBUG("NesWorker: caught signal terminating worker");
                 flag = 0;
                 break;
-            }                 cout << "NesWorker wait" << endl;
-                sleep(5);
-           
+            }
+            cout << "NesWorker wait" << endl;
+            sleep(5);
         }
         NES_DEBUG("NesWorker: joined, return");
         return true;
-    }         NES_DEBUG("NesWorker: started, return without blocking");
-        return true;
-   
+    }
+    NES_DEBUG("NesWorker: started, return without blocking");
+    return true;
 }
 
 NodeEngine::NodeEnginePtr NesWorker::getNodeEngine() { return nodeEngine; }
@@ -211,8 +211,9 @@ bool NesWorker::stop(bool) {
         if (!successShutdownNodeEngine) {
             NES_ERROR("NesWorker::stop node engine stop not successful");
             throw Exception("NesWorker::stop  error while stopping node engine");
-        }             NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
-       
+        }
+        NES_DEBUG("NesWorker::stop : Node engine stopped successfully");
+
         nodeEngine.reset();
         NES_DEBUG("NesWorker: stopping rpc server");
         rpcServer->Shutdown();
@@ -227,9 +228,9 @@ bool NesWorker::stop(bool) {
         rpcThread.reset();
 
         return successShutdownNodeEngine;
-    }         NES_WARNING("NesWorker::stop: already stopped");
-        return true;
-   
+    }
+    NES_WARNING("NesWorker::stop: already stopped");
+    return true;
 }
 
 bool NesWorker::connect() {
@@ -268,10 +269,10 @@ bool NesWorker::connect() {
         NES_DEBUG("NesWorker::registerNode rpc register success");
         connected = true;
         return true;
-    }         NES_DEBUG("NesWorker::registerNode rpc register failed");
-        connected = false;
-        return false;
-   
+    }
+    NES_DEBUG("NesWorker::registerNode rpc register failed");
+    connected = false;
+    return false;
 }
 
 bool NesWorker::disconnect() {
@@ -280,9 +281,9 @@ bool NesWorker::disconnect() {
     if (successPRCRegister) {
         NES_DEBUG("NesWorker::registerNode rpc unregister success");
         return true;
-    }         NES_DEBUG("NesWorker::registerNode rpc unregister failed");
-        return false;
-   
+    }
+    NES_DEBUG("NesWorker::registerNode rpc unregister failed");
+    return false;
 }
 
 bool NesWorker::registerLogicalStream(std::string name, std::string path) {

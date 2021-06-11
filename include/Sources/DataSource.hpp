@@ -241,7 +241,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
   private:
     mutable std::mutex startStopMutex;
     std::atomic_bool running{false};
-    std::shared_ptr<std::thread> thread {nullptr};
+    std::shared_ptr<std::thread> thread{nullptr};
 
     /**
     * @brief running routine with a fix frequency

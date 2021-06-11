@@ -175,7 +175,7 @@ class LogicalWindowDefinition {
     FieldAccessExpressionNodePtr onKey;
     DistributionCharacteristicPtr distributionType;
     uint64_t numberOfInputEdges;
-    uint64_t originId {};
+    uint64_t originId{};
     uint64_t allowedLateness;
 
   public:

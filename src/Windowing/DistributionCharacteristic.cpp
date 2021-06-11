@@ -42,7 +42,8 @@ DistributionCharacteristic::Type DistributionCharacteristic::getType() { return 
 std::string DistributionCharacteristic::toString() {
     if (type == Complete) {
         return "Complete";
-    } if (type == Slicing) {
+    }
+    if (type == Slicing) {
         return "Slicing";
     } else if (type == Combining) {
         return "Combining";

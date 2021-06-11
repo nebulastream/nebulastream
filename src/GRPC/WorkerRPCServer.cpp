@@ -47,10 +47,10 @@ Status WorkerRPCServer::RegisterQuery(ServerContext*, const RegisterQueryRequest
         NES_DEBUG("WorkerRPCServer::RegisterQuery: success");
         reply->set_success(true);
         return Status::OK;
-    }         NES_ERROR("WorkerRPCServer::RegisterQuery: failed");
-        reply->set_success(false);
-        return Status::CANCELLED;
-   
+    }
+    NES_ERROR("WorkerRPCServer::RegisterQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryRequest* request, UnregisterQueryReply* reply) {
@@ -60,10 +60,10 @@ Status WorkerRPCServer::UnregisterQuery(ServerContext*, const UnregisterQueryReq
         NES_DEBUG("WorkerRPCServer::UnregisterQuery: success");
         reply->set_success(true);
         return Status::OK;
-    }         NES_ERROR("WorkerRPCServer::UnregisterQuery: failed");
-        reply->set_success(false);
-        return Status::CANCELLED;
-   
+    }
+    NES_ERROR("WorkerRPCServer::UnregisterQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* request, StartQueryReply* reply) {
@@ -73,10 +73,10 @@ Status WorkerRPCServer::StartQuery(ServerContext*, const StartQueryRequest* requ
         NES_DEBUG("WorkerRPCServer::StartQuery: success");
         reply->set_success(true);
         return Status::OK;
-    }         NES_ERROR("WorkerRPCServer::StartQuery: failed");
-        reply->set_success(false);
-        return Status::CANCELLED;
-   
+    }
+    NES_ERROR("WorkerRPCServer::StartQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
 }
 
 Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* request, StopQueryReply* reply) {
@@ -86,10 +86,10 @@ Status WorkerRPCServer::StopQuery(ServerContext*, const StopQueryRequest* reques
         NES_DEBUG("WorkerRPCServer::StopQuery: success");
         reply->set_success(true);
         return Status::OK;
-    }         NES_ERROR("WorkerRPCServer::StopQuery: failed");
-        reply->set_success(false);
-        return Status::CANCELLED;
-   
+    }
+    NES_ERROR("WorkerRPCServer::StopQuery: failed");
+    reply->set_success(false);
+    return Status::CANCELLED;
 }
 
 Status
@@ -100,8 +100,9 @@ WorkerRPCServer::RegisterMonitoring(ServerContext*, const MonitoringRegistration
         auto schema = monitoringAgent->registerMonitoringPlan(plan);
         if (schema) {
             return Status::OK;
-        }             return Status::CANCELLED;
-       
+        }
+        return Status::CANCELLED;
+
     } catch (std::exception& ex) {
         NES_ERROR("WorkerRPCServer: Registering monitoring plan failed: " << ex.what());
         return Status::CANCELLED;

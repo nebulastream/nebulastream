@@ -58,9 +58,8 @@ struct StateVariableDestroyerHelper<Key, T*> {
     static void destroy(cuckoohash_map<Key, T*>& backend) {
         auto locked_table = backend.lock_table();
         for (auto& it : locked_table) {
-            
-                delete it.second;
-            
+
+            delete it.second;
         }
         locked_table.clear();
         locked_table.unlock();
@@ -266,7 +265,7 @@ class StateVariable : public detail::Destroyable {
      * @brief Move Constructor of a state variable
      * @param other the param to move
      */
-    explicit StateVariable(StateVariable<Key, Value>&& other)  noexcept { *this = std::move(other); }
+    explicit StateVariable(StateVariable<Key, Value>&& other) noexcept { *this = std::move(other); }
 
     /**
      * @brief Destructor of a state variable. It frees all allocated resources.
@@ -293,7 +292,7 @@ class StateVariable : public detail::Destroyable {
      * @param other the param to move
      * @return the same state variable
      */
-    StateVariable& operator=(StateVariable<Key, Value>&& other)  noexcept {
+    StateVariable& operator=(StateVariable<Key, Value>&& other) noexcept {
         name = std::move(other.name);
         backend = std::move(other.backend);
         return *this;

@@ -46,7 +46,8 @@ const ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, Work
     auto pipelineStatus = this->pipelineStatus.load();
     if (pipelineStatus == PipelineStatus::PipelineRunning) {
         return executablePipelineStage->execute(inputBuffer, *pipelineContext.get(), workerContext);
-    } if (pipelineStatus == PipelineStatus::PipelineStopped) {
+    }
+    if (pipelineStatus == PipelineStatus::PipelineStopped) {
         return ExecutionResult::Finished;
     }
     NES_ERROR("Cannot execute Pipeline Stage with id=" << querySubPlanId << " originId=" << inputBuffer.getOriginId()

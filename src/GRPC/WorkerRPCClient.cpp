@@ -54,11 +54,11 @@ bool WorkerRPCClient::registerQuery(std::string address, QueryPlanPtr queryPlan)
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" WorkerRPCClient::registerQuery "
-                  "error="
-                  << status.error_code() << ": " << status.error_message());
-        throw Exception("Error while WorkerRPCClient::registerQuery");
-   
+    }
+    NES_DEBUG(" WorkerRPCClient::registerQuery "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw Exception("Error while WorkerRPCClient::registerQuery");
 }
 
 bool WorkerRPCClient::registerQueryAsync(std::string address, QueryPlanPtr queryPlan, CompletionQueuePtr cq) {
@@ -191,11 +191,11 @@ bool WorkerRPCClient::unregisterQuery(std::string address, QueryId queryId) {
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::unregisterQuery: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" WorkerRPCClient::unregisterQuery "
-                  "error="
-                  << status.error_code() << ": " << status.error_message());
-        throw Exception("Error while WorkerRPCClient::unregisterQuery");
-   
+    }
+    NES_DEBUG(" WorkerRPCClient::unregisterQuery "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw Exception("Error while WorkerRPCClient::unregisterQuery");
 }
 
 bool WorkerRPCClient::startQuery(std::string address, QueryId queryId) {
@@ -215,11 +215,11 @@ bool WorkerRPCClient::startQuery(std::string address, QueryId queryId) {
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::startQuery: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_DEBUG(" WorkerRPCClient::startQuery "
-                  "error="
-                  << status.error_code() << ": " << status.error_message());
-        throw Exception("Error while WorkerRPCClient::startQuery");
-   
+    }
+    NES_DEBUG(" WorkerRPCClient::startQuery "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw Exception("Error while WorkerRPCClient::startQuery");
 }
 
 bool WorkerRPCClient::startQueryAsyn(std::string address, QueryId queryId, CompletionQueuePtr cq) {
@@ -270,11 +270,11 @@ bool WorkerRPCClient::stopQuery(std::string address, QueryId queryId) {
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::stopQuery: status ok return success=" << reply.success());
         return reply.success();
-    }         NES_ERROR(" WorkerRPCClient::stopQuery "
-                  "error="
-                  << status.error_code() << ": " << status.error_message());
-        throw Exception("Error while WorkerRPCClient::stopQuery");
-   
+    }
+    NES_ERROR(" WorkerRPCClient::stopQuery "
+              "error="
+              << status.error_code() << ": " << status.error_message());
+    throw Exception("Error while WorkerRPCClient::stopQuery");
 }
 
 bool WorkerRPCClient::stopQueryAsync(std::string address, QueryId queryId, CompletionQueuePtr cq) {
@@ -325,9 +325,10 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, Monitor
     if (status.ok()) {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
         return true;
-    }         NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
-                                + status.error_message());
-   
+    }
+    NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
+                            + status.error_message());
+
     return false;
 }
 
@@ -348,12 +349,12 @@ bool WorkerRPCClient::requestMonitoringData(const std::string& address, NodeEngi
         buf.setNumberOfTuples(1);
         reply.release_buffer();
         return true;
-    } 
-        // We need to release reply's buffer (in case we handle the exception).
-        reply.release_buffer();
-        NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
-                                                                                 << status.error_message());
-   
+    }
+    // We need to release reply's buffer (in case we handle the exception).
+    reply.release_buffer();
+    NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
+                                                                             << status.error_message());
+
     return false;
 }
 

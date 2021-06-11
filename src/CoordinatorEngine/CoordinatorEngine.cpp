@@ -235,9 +235,9 @@ bool CoordinatorEngine::addParent(uint64_t childId, uint64_t parentId) {
         NES_DEBUG("CoordinatorEngine::AddParent: created link successfully new topology is=");
         topology->print();
         return true;
-    }         NES_ERROR("CoordinatorEngine::AddParent: created NOT successfully added");
-        return false;
-   
+    }
+    NES_ERROR("CoordinatorEngine::AddParent: created NOT successfully added");
+    return false;
 }
 
 bool CoordinatorEngine::removeParent(uint64_t childId, uint64_t parentId) {

@@ -101,9 +101,10 @@ MonitoringPlanPtr MonitoringManager::getMonitoringPlan(uint64_t nodeId) {
         if (node) {
             NES_DEBUG("MonitoringManager: No registered plan found. Returning default plan for node " + std::to_string(nodeId));
             return MonitoringPlan::DefaultPlan();
-        }             NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
-                                    + " failed. Node does not exist in topology.");
-       
+        }
+        NES_THROW_RUNTIME_ERROR("MonitoringManager: Retrieving metrics for " + std::to_string(nodeId)
+                                + " failed. Node does not exist in topology.");
+
     } else {
         return monitoringPlanMap[nodeId];
     }

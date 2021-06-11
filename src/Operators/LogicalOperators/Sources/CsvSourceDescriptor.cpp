@@ -93,7 +93,7 @@ uint64_t CsvSourceDescriptor::getFrequencyCount() const { return frequency.count
 bool CsvSourceDescriptor::equal(SourceDescriptorPtr other) {
     if (!other->instanceOf<CsvSourceDescriptor>()) {
         return false;
-}
+    }
     auto otherSource = other->as<CsvSourceDescriptor>();
     return filePath == otherSource->getFilePath() && delimiter == otherSource->getDelimiter()
         && numBuffersToProcess == otherSource->getNumBuffersToProcess() && frequency == otherSource->getFrequency()
