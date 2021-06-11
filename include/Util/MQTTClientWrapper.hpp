@@ -36,10 +36,10 @@ class MQTTClientWrapper {
      * @return MQTTClientWrapper
      */
     MQTTClientWrapper(bool useAsyncClient,
-                      std::string& address,
-                      std::string& clientId,
+                      std::string const &address,
+                      std::string const &clientId,
                       uint64_t maxBufferedMSGs,
-                      std::string& topic,
+                      std::string const& topic,
                       int qualityOfService);
 
     /**

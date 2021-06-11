@@ -25,6 +25,7 @@ namespace QueryCompilation {
 class PipeliningPhase {
   public:
     virtual PipelineQueryPlanPtr apply(QueryPlanPtr queryPlan) = 0;
+    virtual ~PipeliningPhase() = default;
 };
 }// namespace QueryCompilation
 }// namespace NES

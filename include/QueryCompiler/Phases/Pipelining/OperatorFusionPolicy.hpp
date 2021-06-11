@@ -25,6 +25,7 @@ namespace QueryCompilation {
  */
 class OperatorFusionPolicy {
   public:
+    virtual ~OperatorFusionPolicy() = default;
     /**
      * @brief Determines if an particular operator can be fused with other operators.
      * @param physicalOperator a particular physical operator.
