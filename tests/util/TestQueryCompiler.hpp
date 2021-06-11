@@ -60,7 +60,7 @@ class TestSourceDescriptor : public SourceDescriptor {
 
 class TestSinkDescriptor : public SinkDescriptor {
   public:
-    TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(std::move(dataSink))) {}
+    explicit explicit TestSinkDescriptor(DataSinkPtr dataSink) : sink(std::move(std::move(dataSink))) {}
     DataSinkPtr getSink() { return sink; }
     ~TestSinkDescriptor() override = default;
     std::string toString() override { return std::string(); }
@@ -88,7 +88,7 @@ class TestSinkProvider : public QueryCompilation::DataSinkProvider {
 
 class TestSourceProvider : public QueryCompilation::DataSourceProvider {
   public:
-    TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options) : QueryCompilation::DataSourceProvider(options){};
+    explicit explicit TestSourceProvider(QueryCompilation::QueryCompilerOptionsPtr options) : QueryCompilation::DataSourceProvider(options){};
     DataSourcePtr lower(OperatorId operatorId,
                         SourceDescriptorPtr sourceDescriptor,
                         NodeEngine::NodeEnginePtr nodeEngine,
@@ -116,7 +116,7 @@ class TestPhaseProvider : public QueryCompilation::Phases::DefaultPhaseFactory {
     }
 };
 
-QueryCompilation::QueryCompilerPtr createTestQueryCompiler() {
+inline inline QueryCompilation::QueryCompilerPtr createTestQueryCompiler() {
     auto options = QueryCompilation::QueryCompilerOptions::createDefaultOptions();
     auto phaseProvider = std::make_shared<TestPhaseProvider>();
     return QueryCompilation::DefaultQueryCompiler::create(options, phaseProvider);

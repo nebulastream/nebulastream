@@ -65,7 +65,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     //    MyTuple* my_array = (MyTuple*)malloc(5 * sizeof(MyTuple));
     auto my_array = buf.getBuffer<MyTuple>();
     for (unsigned int i = 0; i < 5; ++i) {
-        my_array[i] = MyTuple{i, float(0.5f * i), double(i * 0.2), i * 2, "1234"};
+        my_array[i] = MyTuple{i, float(0.5F * i), double(i * 0.2), i * 2, "1234"};
         std::cout << my_array[i].i64 << "|" << my_array[i].f << "|" << my_array[i].d << "|" << my_array[i].i32 << "|"
                   << std::string(my_array[i].s, 5) << std::endl;
     }

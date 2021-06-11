@@ -98,7 +98,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySource) {
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
     size_t numRecords = memAreaSize / recordSize;
-    for (auto i = 0u; i < numRecords; ++i) {
+    for (auto i = 0U; i < numRecords; ++i) {
         records[i].key = i;
         records[i].timestamp = i;
     }
@@ -208,7 +208,7 @@ TEST_F(MemorySourceIntegrationTest, testMemorySourceFewTuples) {
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
     size_t numRecords = memAreaSize / recordSize;
-    for (auto i = 0u; i < numRecords; ++i) {
+    for (auto i = 0U; i < numRecords; ++i) {
         records[i].key = i;
         records[i].timestamp = i;
     }
@@ -320,7 +320,7 @@ TEST_F(MemorySourceIntegrationTest, DISABLED_testMemorySourceHalfFullBuffer) {
     auto* records = reinterpret_cast<Record*>(memArea);
     size_t recordSize = schema->getSchemaSizeInBytes();
     size_t numRecords = memAreaSize / recordSize;
-    for (auto i = 0u; i < numRecords; ++i) {
+    for (auto i = 0U; i < numRecords; ++i) {
         records[i].key = i;
         records[i].timestamp = i;
     }

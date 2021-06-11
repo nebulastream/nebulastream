@@ -127,12 +127,14 @@ auto eq(QueryCompilation::Array<char, s> const& l, J r) -> bool {
 }
 template<typename T, std::size_t s>
 auto eq(QueryCompilation::Array<T, s> const& l, std::vector<T>&& r) -> bool {
-    if (s != r.size())
+    if (s != r.size()) {
         return false;
+}
 
     for (std::size_t i{0}; i < s; ++i) {
-        if (l[i] != r[i])
+        if (l[i] != r[i]) {
             return false;
+}
     }
     return true;
 }

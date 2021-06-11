@@ -643,7 +643,7 @@ void assertKiller() {
             EXPECT_TRUE(strcmp(exception->what(),
                                "Failed assertion on false error message: this will fail now with a NesRuntimeException")
                         == 0);
-            NodeEngine::onFatalException(std::move(exception), std::move(callstack));
+            NodeEngine::onFatalException(exception, std::move(callstack));
         }
     };
     auto engine = createMockedEngine<MockedNodeEngine>("127.0.0.1", 31340);

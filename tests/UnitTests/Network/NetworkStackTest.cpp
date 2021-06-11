@@ -169,7 +169,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
 
         class InternalListener : public Network::ExchangeProtocolListener {
           public:
-            InternalListener(std::promise<bool>& p) : completed(p) {}
+            explicit InternalListener(std::promise<bool>& p) : completed(p) {}
 
             void onDataBuffer(NesPartition, TupleBuffer&) override {}
             void onEndOfStream(Messages::EndOfStreamMessage) override { completed.set_value(true); }
