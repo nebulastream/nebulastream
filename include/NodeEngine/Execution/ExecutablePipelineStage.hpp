@@ -28,6 +28,8 @@ namespace NES::NodeEngine::Execution {
  */
 class ExecutablePipelineStage {
   public:
+    virtual ~ExecutablePipelineStage() = default;
+
     explicit ExecutablePipelineStage(PipelineStageArity arity = Unary) : arity(arity) {
         // nop
     }
