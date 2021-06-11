@@ -170,6 +170,25 @@ bool ILPStrategy::updateGlobalExecutionPlan(QueryPlanPtr queryPlan){
     if (sat == opt.check()) {
         model m = opt.get_model();
         NES_INFO("ILPStrategy:\n" << m);
+
+        std::map<OperatorNodePtr, TopologyNodePtr> operatorToTopologyNodeMap;
+        for(int i = 0; i< m.num_consts(); i++) {
+            func_decl f = m.get_const_decl(i);
+            std::string variable = f.name().str();
+            NES_INFO("Placement Variable:\n" << variable <<" value: " << m.get_const_interp(f).to_string());
+            int operatorId = (int)std::strtol(variable.substr(0,1).c_str(), nullptr, 10);
+            int topologyNodeId = (int)std::strtol(variable.substr(2,3).c_str(), nullptr, 10);
+            int value = (int)std::strtol(m.get_const_interp(f).to_string().c_str(), nullptr, 10);
+            if(operatorId != 0 && value == 1){
+                OperatorNodePtr operatorNode = queryPlan->getOperatorWithId(operatorId);
+                TopologyNodePtr topologyNode = topology->findNodeWithId(topologyNodeId);
+                operatorToTopologyNodeMap.insert(std::make_pair(operatorNode, topologyNode));
+            }
+        }
+
+        for(auto const& [operatorNode, topologyNode] : operatorToTopologyNodeMap){
+            NES_INFO("\n Operator " << operatorNode->toString() <<" is executed on Topology Node " << topologyNode->toString() "\n");
+        }
     } else {
         NES_INFO("ILPStrategy: Solver failed.");
     }
