@@ -3806,7 +3806,7 @@ class SignalHandling {
         }
 
         for (int posix_signal : posix_signals) {
-            struct sigaction action{};
+            struct sigaction action {};
             memset(&action, 0, sizeof action);
             action.sa_flags = static_cast<int>(SA_SIGINFO | SA_ONSTACK | SA_NODEFER | SA_RESETHAND);
             sigfillset(&action.sa_mask);

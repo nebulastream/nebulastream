@@ -85,7 +85,7 @@ void NesWorker::handleRpcs(WorkerRPCServer& service) {
     CallData call(service, completionQueue.get());
     call.proceed();
     void* tag = nullptr;// uniquely identifies a request.
-    bool ok = 0;  //
+    bool ok = 0;        //
     while (true) {
         // Block waiting to read the next event from the completion queue. The
         // event is uniquely identified by its tag, which in this case is the
