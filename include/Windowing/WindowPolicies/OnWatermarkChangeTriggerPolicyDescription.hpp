@@ -24,6 +24,7 @@ namespace NES::Windowing {
 class OnWatermarkChangeTriggerPolicyDescription : public BaseWindowTriggerPolicyDescriptor {
   public:
     static WindowTriggerPolicyPtr create();
+    ~OnWatermarkChangeTriggerPolicyDescription() override = default;
     TriggerType getPolicyType() override;
     std::string toString() override;
 

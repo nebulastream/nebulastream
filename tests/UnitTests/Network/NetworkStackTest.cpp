@@ -98,7 +98,7 @@ class TestSink : public SinkMedium {
         return true;
     }
 
-    const std::string toString() const override { return ""; }
+    std::string toString() const override { return ""; }
 
     void setup() override{};
 

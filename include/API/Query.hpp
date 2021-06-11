@@ -244,7 +244,7 @@ class Query {
     QueryPlanPtr getQueryPlan();
 
     // creates a new query object
-    explicit Query(QueryPlanPtr queryPlan);
+    Query(QueryPlanPtr queryPlan);
 
   protected:
     // query plan containing the operators.

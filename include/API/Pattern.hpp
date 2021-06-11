@@ -76,7 +76,7 @@ class Pattern : public Query {
 
   private:
     // creates a new pattern object
-    explicit Pattern(QueryPlanPtr queryPlan);
+    Pattern(QueryPlanPtr queryPlan);
 
     std::string patternName;
 };

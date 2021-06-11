@@ -30,7 +30,7 @@ class ExecutableOnWatermarkChangeTriggerPolicy : public BaseExecutableWindowTrig
 
     static ExecutableOnWatermarkChangeTriggerPolicyPtr create();
 
-    ~ExecutableOnWatermarkChangeTriggerPolicy();
+    virtual ~ExecutableOnWatermarkChangeTriggerPolicy();
 
     /**
      * @brief This function starts the trigger policy for a window handler
