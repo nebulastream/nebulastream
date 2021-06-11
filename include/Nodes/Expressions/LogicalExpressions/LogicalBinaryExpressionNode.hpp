@@ -24,6 +24,7 @@ namespace NES {
  */
 class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode {
   public:
+
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr

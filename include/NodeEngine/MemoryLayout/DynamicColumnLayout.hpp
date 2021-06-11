@@ -36,6 +36,7 @@ class DynamicColumnLayout : public DynamicMemoryLayout, public std::enable_share
      * @return copied version
      */
     DynamicMemoryLayoutPtr copy() const override;
+    ~DynamicColumnLayout() override = default;
 
     /**
      * @brief Creates a DynamicColumnLayout as a shared_ptr

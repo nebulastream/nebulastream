@@ -38,6 +38,7 @@ class DynamicMemoryLayout {
      * @param fieldSizes
      */
     DynamicMemoryLayout(bool checkBoundaryFieldChecks, uint64_t recordSize, std::vector<FIELD_SIZE>& fieldSizes);
+    virtual ~DynamicMemoryLayout() = default;
 
     /**
      * @param fieldName
