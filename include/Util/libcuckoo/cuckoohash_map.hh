@@ -856,7 +856,7 @@ private:
         [[nodiscard]] bool is_migrated() const noexcept { return is_migrated_; }
 
         private:
-        std::atomic_flag lock_{}{};
+        std::atomic_flag lock_{};
         counter_type elem_counter_{0};
         bool is_migrated_{true};
     };
@@ -2111,7 +2111,7 @@ private:
     // hashing fails, for example), we check the load factor against this
     // double, and throw an exception if it's lower than this value. It can be
     // used to signal when the hash function is bad or the input adversarial.
-    std::atomic<double> minimum_load_factor_{}{}{}{};
+    std::atomic<double> minimum_load_factor_{};
 
     // stores the maximum hashpower allowed for any expansions. If set to
     // NO_MAXIMUM_HASHPOWER, this limit will be disregarded.

@@ -148,7 +148,7 @@ class Query {
   public:
     Query(const Query&);
 
-    ~Query() = default;
+    virtual ~Query() = default;
 
     friend class JoinOperatorBuilder::JoinCondition;// we need that because we make the original joinWith() private
     friend class WindowOperatorBuilder::WindowedQuery;

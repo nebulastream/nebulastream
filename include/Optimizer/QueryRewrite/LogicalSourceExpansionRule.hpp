@@ -97,6 +97,8 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      */
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
+    virtual ~LogicalSourceExpansionRule() = default;
+
   private:
     explicit LogicalSourceExpansionRule(StreamCatalogPtr);
     StreamCatalogPtr streamCatalog;

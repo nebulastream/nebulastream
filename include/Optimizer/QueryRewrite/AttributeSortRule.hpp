@@ -56,6 +56,7 @@ class AttributeSortRule : public BaseRewriteRule {
   public:
     static AttributeSortRulePtr create();
     AttributeSortRule() = default;
+    virtual ~AttributeSortRule() = default;
 
     /**
      * @brief Apply Attribute Sort rule on input query plan

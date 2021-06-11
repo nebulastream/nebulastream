@@ -22,7 +22,7 @@
 namespace NES {
 
 FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr predicate, uint64_t id)
-    : OperatorNode(id), predicate(predicate), LogicalUnaryOperatorNode(id) {}
+    : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
 

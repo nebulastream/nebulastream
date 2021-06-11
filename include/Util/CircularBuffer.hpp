@@ -118,7 +118,7 @@ class CircularBuffer {
      * @brief The ctor of the circ buffer, takes a size parameter.
      * @param size of the internal buffer
      */
-    explicit CircularBuffer(uint64_t size) : maxSize(size), currentSize(0), head(0), buffer(std::make_unique<T[]>(size)){};
+    explicit CircularBuffer(uint64_t size) : maxSize(size), buffer(std::make_unique<T[]>(size)){};
 
     // copy and move
     CircularBuffer(const CircularBuffer& other) = delete;
@@ -199,13 +199,13 @@ class CircularBuffer {
 
   private:
     // indicates writes
-    uint64_t head;
+    uint64_t head{0};
 
     // maximum size of buffer
     uint64_type maxSize;
 
     // current size of buffer
-    uint64_type currentSize;
+    uint64_type currentSize{0};
 
     // the buffer, of type T[]
     std::unique_ptr<T[]> buffer;

@@ -45,6 +45,7 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
 
   public:
     static BinaryOperatorSortRulePtr create();
+    virtual ~BinaryOperatorSortRule() = default;
 
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
 

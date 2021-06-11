@@ -31,6 +31,7 @@ class RenameStreamToProjectOperatorRule : public BaseRewriteRule {
 
   public:
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
+    virtual ~RenameStreamToProjectOperatorRule() = default;
 
     static RenameStreamToProjectOperatorRulePtr create();
 

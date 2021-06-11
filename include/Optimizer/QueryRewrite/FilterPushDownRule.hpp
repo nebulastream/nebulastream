@@ -48,6 +48,7 @@ class FilterPushDownRule : public BaseRewriteRule {
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
     static FilterPushDownRulePtr create();
+    virtual ~FilterPushDownRule() = default;
 
   private:
     explicit FilterPushDownRule();

@@ -67,7 +67,7 @@ class Z3SignatureBasedPartialQueryMergerRule : public BaseQueryMergerRule {
 
   public:
     static Z3SignatureBasedPartialQueryMergerRulePtr create(z3::ContextPtr context);
-    ~Z3SignatureBasedPartialQueryMergerRule();
+    virtual ~Z3SignatureBasedPartialQueryMergerRule();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
