@@ -24,7 +24,7 @@ namespace NES::Windowing {
 EventTimeWatermarkStrategyDescriptor::EventTimeWatermarkStrategyDescriptor(ExpressionItem onField,
                                                                            TimeMeasure allowedLateness,
                                                                            TimeUnit unit)
-    : onField(onField), allowedLateness(std::move(allowedLateness)), unit(std::move(unit)) {}
+    : onField(onField), unit(std::move(unit)), allowedLateness(std::move(allowedLateness)) {}
 
 WatermarkStrategyDescriptorPtr
 EventTimeWatermarkStrategyDescriptor::create(ExpressionItem onField, TimeMeasure allowedLateness, TimeUnit unit) {

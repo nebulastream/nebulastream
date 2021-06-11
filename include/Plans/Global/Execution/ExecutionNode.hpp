@@ -47,7 +47,7 @@ class ExecutionNode : public Node {
     static ExecutionNodePtr createExecutionNode(TopologyNodePtr physicalNode, QueryId queryId, OperatorNodePtr operatorNode);
     static ExecutionNodePtr createExecutionNode(TopologyNodePtr physicalNode);
 
-    ~ExecutionNode() = default;
+    virtual ~ExecutionNode() = default;
 
     /**
      * Check if a query sub plan with given Id exists or not

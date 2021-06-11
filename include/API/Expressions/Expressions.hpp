@@ -43,21 +43,21 @@ using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressi
  */
 class ExpressionItem {
   public:
-    explicit ExpressionItem(int8_t value);            //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(uint8_t value);           //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(int16_t value);           //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(uint16_t value);          //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(int32_t value);           //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(uint32_t value);          //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(int64_t value);           //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(uint64_t value);          //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(float value);             //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(double value);            //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(bool value);              //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(const char* value);       //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(std::string const& value);//NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(ValueTypePtr value);      //NOLINT(google-explicit-constructor)
-    explicit ExpressionItem(ExpressionNodePtr ref);   //NOLINT()
+    ExpressionItem(int8_t value);            //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint8_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(int16_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint16_t value);          //NOLINT(google-explicit-constructor)
+    ExpressionItem(int32_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint32_t value);          //NOLINT(google-explicit-constructor)
+    ExpressionItem(int64_t value);           //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint64_t value);          //NOLINT(google-explicit-constructor)
+    ExpressionItem(float value);             //NOLINT(google-explicit-constructor)
+    ExpressionItem(double value);            //NOLINT(google-explicit-constructor)
+    ExpressionItem(bool value);              //NOLINT(google-explicit-constructor)
+    ExpressionItem(const char* value);       //NOLINT(google-explicit-constructor)
+    ExpressionItem(std::string const& value);//NOLINT(google-explicit-constructor)
+    ExpressionItem(ValueTypePtr value);      //NOLINT(google-explicit-constructor)
+    ExpressionItem(ExpressionNodePtr ref);
 
     FieldAssignmentExpressionNodePtr operator=(ExpressionItem);
     FieldAssignmentExpressionNodePtr operator=(ExpressionNodePtr);

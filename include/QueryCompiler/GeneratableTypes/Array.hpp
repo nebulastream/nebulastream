@@ -24,8 +24,7 @@
 #include <utility>
 #include <vector>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 /**
  * @brief        Container for fixed size arrays of primitive types.
  *
@@ -43,7 +42,7 @@ class ArrayBase : public std::array<T, s> {
 
     /// @brief Construct from arguments which can be used to construct the underlying std::array `J...`.
     template<typename... J, typename = std::enable_if_t<std::is_constructible_v<std::array<T, size>, std::decay_t<J>...>>>
-    inline explicit ArrayBase(J&&... f) noexcept(noexcept(this->runtimeConstructionTest())) : std::array<T, size>(std::forward<J>(f)...) {
+    inline ArrayBase(J&&... f) noexcept(noexcept(this->runtimeConstructionTest())) : std::array<T, size>(std::forward<J>(f)...) {
         this->runtimeConstructionTest();
     }
 
@@ -51,7 +50,7 @@ class ArrayBase : public std::array<T, s> {
     template<typename... J,
              typename = std::enable_if_t<std::conjunction_v<std::is_same<T, std::decay_t<J>>...> && sizeof...(J) <= size
                                          && (std::is_same_v<T, char> || sizeof...(J) == size)>>
-    inline explicit ArrayBase(J... f) noexcept(sizeof...(J) < size || noexcept(this->runtimeConstructionTest()))
+    inline ArrayBase(J... f) noexcept(sizeof...(J) < size || noexcept(this->runtimeConstructionTest()))
         : std::array<T, size>({std::forward<J>(f)...}) {
         if constexpr (sizeof...(J) == size) {
             this->runtimeConstructionTest();
@@ -59,7 +58,7 @@ class ArrayBase : public std::array<T, s> {
     }
 
     /// @brief Construct from c-style array `val`.
-    constexpr explicit ArrayBase(T const (&val)[size]) noexcept(noexcept(this->runtimeConstructionTest())) : std::array<T, size>() {
+    constexpr ArrayBase(T const (&val)[size]) noexcept(noexcept(this->runtimeConstructionTest())) : std::array<T, size>() {
         this->initializeFrom(val, size, std::make_integer_sequence<std::size_t, size>());
         this->runtimeConstructionTest();
     }
@@ -70,7 +69,7 @@ class ArrayBase : public std::array<T, s> {
      * @throws std::runtime_error if the vector's size does not match `size`.
      *
      */
-    inline explicit ArrayBase(std::vector<T> const& vec) noexcept(false) : std::array<T, size>() {
+    inline ArrayBase(std::vector<T> const& vec) noexcept(false) : std::array<T, size>() {
         this->initializeFrom(vec, vec.size(), std::make_integer_sequence<std::size_t, size>());
         runtimeConstructionTest();
     }
@@ -184,7 +183,7 @@ class Array<char, size> final : public ArrayBase<char, size> {
      *
      * @throws std::runtime_error if the string's size is too large to fit into `size`.
      */
-    constexpr explicit Array(std::string&& str) noexcept(false) : ArrayBase<char, size>(str.c_str(), str.size() + 1, std::false_type{}) {}
+    constexpr Array(std::string&& str) noexcept(false) : ArrayBase<char, size>(str.c_str(), str.size() + 1, std::false_type{}) {}
 };
 
 // Default the operators on ArrayBase to the existing operators on std::array.
@@ -371,7 +370,6 @@ Array(std::array<J, size>&&) -> Array<J, size>;
 /// c-style array
 template<typename J>
 Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>::value>;
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_GENERATABLETYPES_ARRAYTYPE_HPP_

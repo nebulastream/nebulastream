@@ -46,6 +46,8 @@ class MaxAggregationDescriptor : public WindowAggregationDescriptor {
     WindowAggregationPtr copy() override;
     MaxAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 
+    virtual ~MaxAggregationDescriptor() = default;
+
   private:
     explicit MaxAggregationDescriptor(FieldAccessExpressionNodePtr onField);
 };

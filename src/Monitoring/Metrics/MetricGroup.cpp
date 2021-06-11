@@ -31,6 +31,10 @@ bool MetricGroup::add(const std::string& desc, const Metric& metric) {
     return out;
 }
 
+bool MetricGroup::add(const std::string& desc, Metric&& metric) {
+    return metricMap.insert(std::make_pair(desc, std::move(metric))).second;
+}
+
 bool MetricGroup::remove(const std::string& name) { return metricMap.erase(name); }
 
 void MetricGroup::getSample(NodeEngine::TupleBuffer& buf) {

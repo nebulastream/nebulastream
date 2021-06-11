@@ -230,7 +230,7 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
     std::chrono::milliseconds gatheringInterval;
     GatheringMode gatheringMode;
     SourceType type;
-    std::atomic<bool> wasGracefullyStopped;
+    std::atomic<bool> wasGracefullyStopped{false};
 
     /**
      * @brief Emits a tuple buffer to the successors.
@@ -240,8 +240,8 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
 
   private:
     mutable std::mutex startStopMutex;
-    std::atomic_bool running;
-    std::shared_ptr<std::thread> thread;
+    std::atomic_bool running{false};
+    std::shared_ptr<std::thread> thread {nullptr};
 
     /**
     * @brief running routine with a fix frequency

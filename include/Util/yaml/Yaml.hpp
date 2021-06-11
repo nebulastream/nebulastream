@@ -571,8 +571,8 @@ struct SerializeConfig {
     *                           If config is invalid.
     *
     */
-void Serialize(const Node& root, const char* filename, const SerializeConfig& config = {2, 64, false, false});
-void Serialize(const Node& root, std::iostream& stream, const SerializeConfig& config = {2, 64, false, false});
-void Serialize(const Node& root, std::string& string, const SerializeConfig& config = {2, 64, false, false});
+void Serialize(Node const & root, char const * filename, SerializeConfig const &config);
+void Serialize(Node const & root, std::iostream& stream, SerializeConfig const &config);
+void Serialize(Node const & root, std::string& string, SerializeConfig const &config);
 
 }// namespace Yaml

@@ -44,6 +44,8 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
 
     WindowAggregationPtr copy() override;
 
+    virtual ~CountAggregationDescriptor() = default;
+
   private:
     explicit CountAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     CountAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);

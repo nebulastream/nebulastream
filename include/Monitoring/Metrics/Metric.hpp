@@ -55,6 +55,7 @@ class Metric {
     /**
      * @brief The ctor of the metric, which takes an arbitrary value
      * @param arbitrary parameter of any type
+     * @dev too broad to make non-explicit.
      */
     template<typename T>
     explicit Metric(T x) : self(std::make_unique<model<T>>(std::move(x))) {}

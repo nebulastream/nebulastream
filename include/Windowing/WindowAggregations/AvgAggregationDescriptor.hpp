@@ -44,6 +44,8 @@ class AvgAggregationDescriptor : public WindowAggregationDescriptor {
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;
 
+    virtual ~AvgAggregationDescriptor() = default;
+
   private:
     explicit AvgAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     AvgAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);

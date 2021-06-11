@@ -84,7 +84,6 @@ class StateVariable : public detail::Destroyable {
     using KeyValueRangeHandleConstIterator = typename LockedStateBackend::const_iterator;
     using KeyValueRangeHandleIterator = typename LockedStateBackend::iterator;
 
-  private:
     std::string name;
     StateBackend backend;
     std::function<Value(const Key&)> defaultCallback;
@@ -93,12 +92,10 @@ class StateVariable : public detail::Destroyable {
     class KeyValueHandle {
         friend class StateVariable;
 
-      private:
         StateBackendRef backend;
         Key key;
         std::function<Value(const Key&)> defaultCallback;
 
-      private:
         explicit KeyValueHandle(StateBackend& backend, Key key, std::function<Value(const Key&)> defaultCallback)
             : backend(backend), key(key), defaultCallback(std::move(defaultCallback)) {}
 

@@ -41,6 +41,8 @@ class DataSourceProvider {
                                 NodeEngine::NodeEnginePtr nodeEngine,
                                 std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors);
 
+    virtual ~DataSourceProvider() = default;
+
   protected:
     QueryCompilerOptionsPtr compilerOptions;
 };

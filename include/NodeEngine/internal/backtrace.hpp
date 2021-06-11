@@ -572,7 +572,7 @@ class handle {
         _empty = static_cast<bool>(new_val);
     }
 
-    explicit operator const dummy*() const {
+    operator const dummy*() const {
         if (_empty) {
             return nullptr;
         }
@@ -710,7 +710,7 @@ struct ResolvedTrace : public Trace {
     source_locs_t inliners;
 
     ResolvedTrace() : Trace() {}
-    explicit ResolvedTrace(const Trace& mini_trace) : Trace(mini_trace) {}
+    ResolvedTrace(const Trace& mini_trace) : Trace(mini_trace) {}
 };
 
 /*************** STACK TRACE ***************/

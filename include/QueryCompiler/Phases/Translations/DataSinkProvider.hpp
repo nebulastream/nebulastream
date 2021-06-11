@@ -43,6 +43,8 @@ class DataSinkProvider {
                               SchemaPtr schema,
                               NodeEngine::NodeEnginePtr nodeEngine,
                               QuerySubPlanId querySubPlanId);
+
+    virtual ~DataSinkProvider() = default;
 };
 }// namespace QueryCompilation
 }// namespace NES

@@ -43,6 +43,8 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     DataTypePtr getPartialAggregateStamp() override;
     DataTypePtr getFinalAggregateStamp() override;
 
+    virtual ~MinAggregationDescriptor() = default;
+
   private:
     explicit MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
