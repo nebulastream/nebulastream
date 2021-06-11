@@ -84,7 +84,7 @@ class MQTTSourceTest : public testing::Test {
     NodeEngine::BufferManagerPtr bufferManager;
     NodeEngine::QueryManagerPtr queryManager;
     SchemaPtr test_schema;
-    uint64_t buffer_size;
+    uint64_t buffer_size{};
 };
 
 /**

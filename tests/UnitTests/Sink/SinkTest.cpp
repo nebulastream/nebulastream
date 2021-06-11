@@ -40,8 +40,8 @@ using NodeEngine::TupleBuffer;
 class SinkTest : public testing::Test {
   public:
     SchemaPtr test_schema;
-    std::array<uint32_t, 8> test_data;
-    bool write_result;
+    std::array<uint32_t, 8> test_data{};
+    bool write_result{};
     std::string path_to_csv_file;
     std::string path_to_bin_file;
     std::string path_to_osfile_file;

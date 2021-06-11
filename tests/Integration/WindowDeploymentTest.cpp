@@ -203,13 +203,13 @@ TEST_F(WindowDeploymentTest, testYSBWindow) {
                 : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
                   currentMs(currentMs), ip(ip) {}
 
-            uint64_t userId;
-            uint64_t pageId;
-            uint64_t campaignId;
-            uint64_t adType;
-            uint64_t eventType;
-            uint64_t currentMs;
-            uint64_t ip;
+            uint64_t userId{};
+            uint64_t pageId{};
+            uint64_t campaignId{};
+            uint64_t adType{};
+            uint64_t eventType{};
+            uint64_t currentMs{};
+            uint64_t ip{};
 
             // placeholder to reach 78 bytes
             uint64_t dummy1{0};
