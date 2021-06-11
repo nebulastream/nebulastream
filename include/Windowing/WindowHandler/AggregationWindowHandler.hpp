@@ -127,7 +127,7 @@ class AggregationWindowHandler : public AbstractWindowHandler {
 
     void postReconfigurationCallback(NodeEngine::ReconfigurationMessage& task) override {
         AbstractWindowHandler::postReconfigurationCallback(task);
-        auto flushInflightWindows = [this]() {
+        auto flushInflightWindows = []() {
             //            return;
             //            //TODO: this will be removed if we integrate the graceful shutdown
             //            TODO: we keep this code to integrate the other shutdown method

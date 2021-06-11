@@ -37,6 +37,7 @@ class DynamicRowLayout : public DynamicMemoryLayout, public std::enable_shared_f
      * @param schema
      */
     DynamicRowLayout(bool checkBoundaries, const SchemaPtr& schema);
+    ~DynamicRowLayout() override = default;
 
     /**
      * @brief Copies a DynamicMemoryLayoutPtr

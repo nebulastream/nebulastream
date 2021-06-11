@@ -130,6 +130,7 @@ void fillBuffer(TupleBuffer& buf, const NodeEngine::DynamicMemoryLayout::Dynamic
 
 class DummyExchangeProtocolListener : public ExchangeProtocolListener {
   public:
+    ~DummyExchangeProtocolListener() override = default;
     void onDataBuffer(NesPartition, TupleBuffer&) override {}
     void onEndOfStream(Messages::EndOfStreamMessage) override {}
     void onServerError(Messages::ErrorMessage) override {}
@@ -577,11 +578,11 @@ TEST_F(NetworkStackTest, testNetworkSink) {
           public:
             NesPartition nesPartition;
             std::promise<bool>& completed;
-            atomic<int> eosCnt;
+            atomic<int> eosCnt{0};
             atomic<int>& bufferCnt;
 
             ExchangeListener(std::promise<bool>& completed, NesPartition nesPartition, std::atomic<int>& bufferCnt)
-                : completed(completed), nesPartition(nesPartition), bufferCnt(bufferCnt), eosCnt(0) {}
+                : nesPartition(nesPartition), completed(completed), bufferCnt(bufferCnt) {}
 
             void onServerError(Messages::ErrorMessage ex) override {
                 if (ex.getErrorType() != Messages::kPartitionNotRegisteredError) {

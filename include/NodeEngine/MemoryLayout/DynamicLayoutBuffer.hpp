@@ -40,6 +40,8 @@ class DynamicLayoutBuffer {
      */
     DynamicLayoutBuffer(TupleBuffer tupleBuffer, uint64_t capacity);
 
+    virtual ~DynamicLayoutBuffer() = default;
+
     /**
     * @brief This method returns the maximum number of records, so the capacity.
     * @return

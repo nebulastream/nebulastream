@@ -29,7 +29,6 @@
 #include <Services/QueryService.hpp>
 #include <Util/Logger.hpp>
 #include <WorkQueues/NESRequestQueue.hpp>
-#include <grpcpp/grpcpp.h>
 #include <grpcpp/server_builder.h>
 #include <thread>
 
@@ -56,10 +55,10 @@ NesCoordinator::NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig)
     : restIp(coordinatorConfig->getRestIp()->getValue()), restPort(coordinatorConfig->getRestPort()->getValue()),
       rpcIp(coordinatorConfig->getCoordinatorIp()->getValue()), rpcPort(coordinatorConfig->getRpcPort()->getValue()),
       numberOfSlots(coordinatorConfig->getNumberOfSlots()->getValue()),
+      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
       numberOfBuffersInGlobalBufferManager(coordinatorConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
       numberOfBuffersPerPipeline(coordinatorConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(coordinatorConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
-      numberOfWorkerThreads(coordinatorConfig->getNumWorkerThreads()->getValue()),
       bufferSizeInBytes(coordinatorConfig->getBufferSizeInBytes()->getValue()) {
     NES_DEBUG("NesCoordinator() restIp=" << restIp << " restPort=" << restPort << " rpcIp=" << rpcIp << " rpcPort=" << rpcPort);
     MDC::put("threadName", "NesCoordinator");

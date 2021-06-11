@@ -40,6 +40,8 @@ class DynamicColumnLayoutBuffer : public DynamicLayoutBuffer {
                               std::shared_ptr<DynamicColumnLayout> dynamicColLayout,
                               std::vector<COL_OFFSET_SIZE> columnOffsets);
 
+    ~DynamicColumnLayoutBuffer() override = default;
+
     /**
      * @return retrieves the field sizes of the column layout
      */

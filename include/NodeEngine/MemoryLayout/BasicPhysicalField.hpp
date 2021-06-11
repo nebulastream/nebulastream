@@ -29,8 +29,7 @@ template<class ValueType>
 class BasicPhysicalField : public PhysicalField {
   public:
     explicit BasicPhysicalField(uint64_t bufferOffset) : PhysicalField(bufferOffset){};
-    ~BasicPhysicalField() = default;
-    ;
+    ~BasicPhysicalField() override = default;
 
     /**
      * @brief writes a value of type ValueType to a particular position in the buffer.

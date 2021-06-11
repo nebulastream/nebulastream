@@ -39,6 +39,9 @@ template<class InputType, class PartialAggregateType, class FinalAggregateType>
 class ExecutableWindowAggregation {
 
   public:
+
+    virtual ~ExecutableWindowAggregation() = default;
+
     /*
      * @brief maps the input element to an element PartialAggregateType
      * @param input value of the element

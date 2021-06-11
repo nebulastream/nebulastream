@@ -95,7 +95,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
   private:
     std::weak_ptr<BufferManager> bufferManager;
     std::deque<detail::MemorySegment*> exclusiveBuffers;
-    size_t numberOfReservedBuffers;
+    [[maybe_unused]] size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
     std::condition_variable cvar;
     bool isDestroyed;

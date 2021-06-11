@@ -25,7 +25,7 @@ namespace NES {
 class LessEqualsExpressionNode : public LogicalBinaryExpressionNode {
   public:
     LessEqualsExpressionNode() = default;
-    ~LessEqualsExpressionNode() = default;
+    virtual ~LessEqualsExpressionNode() = default;
     /**
     * @brief Create a new less then expression
     */

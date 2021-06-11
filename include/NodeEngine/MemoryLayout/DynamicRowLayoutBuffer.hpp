@@ -31,6 +31,8 @@ namespace NES::NodeEngine::DynamicMemoryLayout {
  */
 class DynamicRowLayoutBuffer : public DynamicLayoutBuffer {
   public:
+    ~DynamicRowLayoutBuffer() override = default;
+
     /**
      * @return retrieves the record size
      */

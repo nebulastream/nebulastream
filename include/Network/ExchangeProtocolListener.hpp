@@ -28,6 +28,9 @@ namespace Network {
  */
 class ExchangeProtocolListener {
   public:
+
+    virtual ~ExchangeProtocolListener() = default;
+
     /**
      * @brief This is called on every data buffer that the network stack receives
      * for a specific nes partition
