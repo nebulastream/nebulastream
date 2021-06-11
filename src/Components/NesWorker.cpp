@@ -109,7 +109,7 @@ void NesWorker::buildAndStartGRPCServer(std::shared_ptr<std::promise<bool>> prom
     builder.AddListeningPort(rpcAddress, grpc::InsecureServerCredentials());
     builder.RegisterService(&service);
     completionQueue = builder.AddCompletionQueue();
-    rpcServer = std::move(builder.BuildAndStart());
+    rpcServer = builder.BuildAndStart();
     prom->set_value(true);
     NES_DEBUG("NesWorker: buildAndStartGRPCServer Server listening on address " << rpcAddress);
     //this call is already blocking

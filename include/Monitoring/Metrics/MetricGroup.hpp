@@ -42,6 +42,7 @@ class MetricGroup {
      * @return true if successful, else false
      */
     bool add(const std::string& desc, const Metric& metric);
+    bool add(const std::string& desc, Metric&& metric);
 
     /**
      * @brief returns a map of the registered metrics

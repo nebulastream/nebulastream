@@ -119,22 +119,22 @@ MetricGroupPtr MonitoringPlan::createMetricGroup(MetricCatalogPtr) const {
     if (cpuMetrics) {
         NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::CPU_METRICS_DESC + " to monitoring plan.");
         Gauge<CpuMetrics> cpuStats = MetricUtils::CPUStats();
-        metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, cpuStats);
+        metricGroup->add(MonitoringPlan::CPU_METRICS_DESC, NES::Metric{cpuStats});
     }
     if (diskMetrics) {
         NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::DISK_METRICS_DESC + " to monitoring plan.");
         Gauge<DiskMetrics> diskStats = MetricUtils::DiskStats();
-        metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, diskStats);
+        metricGroup->add(MonitoringPlan::DISK_METRICS_DESC, NES::Metric{diskStats});
     }
     if (memoryMetrics) {
         NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::MEMORY_METRICS_DESC + " to monitoring plan.");
         Gauge<MemoryMetrics> memStats = MetricUtils::MemoryStats();
-        metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, memStats);
+        metricGroup->add(MonitoringPlan::MEMORY_METRICS_DESC, NES::Metric{memStats});
     }
     if (networkMetrics) {
         NES_DEBUG("MonitoringPlan: Adding " + MonitoringPlan::NETWORK_METRICS_DESC + " to monitoring plan.");
         Gauge<NetworkMetrics> networkStats = MetricUtils::NetworkStats();
-        metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, networkStats);
+        metricGroup->add(MonitoringPlan::NETWORK_METRICS_DESC, NES::Metric{networkStats});
     }
 
     return metricGroup;

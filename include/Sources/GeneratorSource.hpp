@@ -40,12 +40,12 @@ class GeneratorSource : public DataSource {
     GeneratorSource(SchemaPtr schema,
                     NodeEngine::BufferManagerPtr bufferManager,
                     NodeEngine::QueryManagerPtr queryManager,
-                    const uint64_t numbersOfBufferToProduce,
+                    uint64_t numbersOfBufferToProduce,
                     OperatorId operatorId,
                     size_t numSourceLocalBuffers,
                     GatheringMode gatheringMode,
                     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> successors)
-        : DataSource(schema, bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors) {
+        : DataSource(std::move(schema), bufferManager, queryManager, operatorId, numSourceLocalBuffers, gatheringMode, successors) {
         this->numBuffersToProcess = numbersOfBufferToProduce;
     }
     /**
@@ -62,9 +62,6 @@ class GeneratorSource : public DataSource {
     SourceType getType() const override;
 
     ~GeneratorSource() override;
-
-  protected:
-    GeneratorSource() = default;
 };
 
 }// namespace NES

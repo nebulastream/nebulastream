@@ -26,6 +26,7 @@ namespace Phases {
  */
 class DefaultPhaseFactory : public PhaseFactory {
   public:
+    virtual ~DefaultPhaseFactory() = default;
     static PhaseFactoryPtr create();
     const LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
     const PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;

@@ -34,9 +34,9 @@ LogicalWindowDefinition::LogicalWindowDefinition(WindowAggregationPtr windowAggr
                                                  WindowTriggerPolicyPtr triggerPolicy,
                                                  WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
-    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(nullptr),
-      distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(std::move(triggerAction)), allowedLateness(allowedLateness) {
+    : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
+    triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(nullptr),
+    distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 
@@ -48,9 +48,9 @@ LogicalWindowDefinition::LogicalWindowDefinition(FieldAccessExpressionNodePtr on
                                                  WindowTriggerPolicyPtr triggerPolicy,
                                                  WindowActionDescriptorPtr triggerAction,
                                                  uint64_t allowedLateness)
-    : windowAggregation(std::move(windowAggregation)), windowType(std::move(windowType)), onKey(std::move(onKey)),
-      distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), triggerPolicy(std::move(triggerPolicy)),
-      triggerAction(std::move(triggerAction)), allowedLateness(allowedLateness) {
+    : windowAggregation(std::move(windowAggregation)), triggerPolicy(std::move(triggerPolicy)),
+    triggerAction(std::move(triggerAction)), windowType(std::move(windowType)), onKey(std::move(onKey)),
+      distributionType(std::move(distChar)), numberOfInputEdges(numberOfInputEdges), allowedLateness(allowedLateness) {
     NES_TRACE("LogicalWindowDefinition: create new window definition");
 }
 

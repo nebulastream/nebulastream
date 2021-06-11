@@ -24,7 +24,6 @@ namespace NES {
 
 class DefaultSource : public GeneratorSource {
   public:
-    DefaultSource() = default;
     DefaultSource(SchemaPtr schema,
                   NodeEngine::BufferManagerPtr bufferManager,
                   NodeEngine::QueryManagerPtr queryManager,

@@ -25,6 +25,8 @@ namespace NES::Windowing {
  */
 class SumAggregationDescriptor : public WindowAggregationDescriptor {
   public:
+    virtual ~SumAggregationDescriptor() = default;
+
     /**
     * Factory method to creates a sum aggregation on a particular field.
     */

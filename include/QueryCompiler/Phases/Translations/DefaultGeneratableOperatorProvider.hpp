@@ -26,6 +26,7 @@ class DefaultGeneratableOperatorProvider : public GeneratableOperatorProvider {
   public:
     static GeneratableOperatorProviderPtr create();
     void lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) override;
+    virtual ~DefaultGeneratableOperatorProvider() = default;
 
   protected:
     /**
