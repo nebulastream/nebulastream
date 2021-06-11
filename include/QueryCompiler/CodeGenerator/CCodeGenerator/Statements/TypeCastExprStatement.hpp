@@ -19,16 +19,15 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 
 class TypeCastExprStatement : public ExpressionStatment {
   public:
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
     TypeCastExprStatement(const ExpressionStatment& expr, GeneratableDataTypePtr type);
 
@@ -40,7 +39,7 @@ class TypeCastExprStatement : public ExpressionStatment {
 };
 
 using TypeCast = TypeCastExprStatement;
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_TYPECASTEXPRSTATEMENT_HPP_

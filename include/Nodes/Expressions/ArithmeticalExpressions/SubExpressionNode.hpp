@@ -30,9 +30,9 @@ class SubExpressionNode : public ArithmeticalBinaryExpressionNode {
     /**
      * @brief Create a new SUB expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.

@@ -25,13 +25,14 @@ class VarDeclStatement : public ExpressionStatment {
   public:
     explicit VarDeclStatement(const VariableDeclaration& var_decl);
 
-    [[nodiscard]] StatementType getStamentType() const override;
+    ~VarDeclStatement() noexcept override = default;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] StatementType getStamentType() const override { return VAR_DEC_STMT; }
 
-    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    ~VarDeclStatement() override;
+    [[nodiscard]] ExpressionStatmentPtr copy() const override;
+
 
   private:
     std::shared_ptr<VariableDeclaration> variableDeclaration;

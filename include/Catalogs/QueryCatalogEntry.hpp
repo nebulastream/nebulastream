@@ -93,7 +93,7 @@ class QueryCatalogEntry {
      * @brief method to get the query plan
      * @return pointer to the query plan
      */
-    [[nodiscard]] const QueryPlanPtr getQueryPlan() const;
+    [[nodiscard]] QueryPlanPtr getQueryPlan() const;
 
     /**
      * @brief method to get the status of the query
@@ -117,7 +117,7 @@ class QueryCatalogEntry {
       * @brief Get name of the query placement strategy
       * @return query placement strategy
       */
-    [[nodiscard]] const std::string& getQueryPlacementStrategy() const;
+    [[nodiscard]] std::string const & getQueryPlacementStrategy() const;
 
     /**
      * @brief create a copy of query catalog entry.

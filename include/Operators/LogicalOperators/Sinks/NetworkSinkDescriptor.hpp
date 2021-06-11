@@ -54,7 +54,7 @@ class NetworkSinkDescriptor : public SinkDescriptor {
      * @param other
      * @return true if equal, else false
      */
-    bool equal(SinkDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const &other) override;
 
     /**
      * @brief getter for the node location

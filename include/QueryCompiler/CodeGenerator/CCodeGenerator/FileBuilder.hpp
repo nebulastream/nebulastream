@@ -21,8 +21,7 @@
 #include <sstream>
 #include <string>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 class CodeFile {
   public:
@@ -35,8 +34,8 @@ class FileBuilder {
 
   public:
     static FileBuilder create(const std::string& file_name);
-    FileBuilder& addDeclaration(DeclarationPtr&);
+    FileBuilder& addDeclaration(DeclarationPtr const &);
     CodeFile build();
 };
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation

@@ -36,11 +36,11 @@ class CSVSource : public DataSource {
    * @param delimiter inside the file, default ","
    * @param number of buffers to create
    */
-    explicit CSVSource(const SchemaPtr& schema,
+    explicit CSVSource(SchemaPtr schema,
                        NodeEngine::BufferManagerPtr bufferManager,
                        NodeEngine::QueryManagerPtr queryManager,
-                       std::string& filePath,
-                       std::string& delimiter,
+                       std::string const &filePath,
+                       std::string const &delimiter,
                        uint64_t numberOfTuplesToProducePerBuffer,
                        uint64_t numBuffersToProcess,
                        uint64_t frequency,

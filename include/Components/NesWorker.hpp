@@ -185,9 +185,9 @@ class NesWorker {
     CoordinatorRPCClientPtr coordinatorRpcClient;
 
     PhysicalStreamConfigPtr conf;
-    bool connected;
-    bool withRegisterStream;
-    bool withParent;
+    bool connected{false};
+    bool withRegisterStream{false};
+    bool withParent{false};
     std::string parentId;
     std::string rpcAddress;
     std::string coordinatorIp;
@@ -202,8 +202,8 @@ class NesWorker {
     uint32_t numberOfBuffersInSourceLocalBufferPool;
     uint64_t bufferSizeInBytes;
     NesNodeType type;
-    std::atomic<bool> isRunning;
-    TopologyNodeId topologyNodeId;
+    std::atomic<bool> isRunning{false};
+    TopologyNodeId topologyNodeId{INVALID_TOPOLOGY_NODE_ID};
     /**
      * @brief helper method to ensure client is connected before callin rpcs functions
      * @return

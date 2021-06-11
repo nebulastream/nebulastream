@@ -27,7 +27,8 @@ PhysicalOperatorPtr PhysicalDemultiplexOperator::create(SchemaPtr inputSchema) {
 PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema)
     : OperatorNode(id), PhysicalUnaryOperator(id, inputSchema, inputSchema) {}
 
-const std::string PhysicalDemultiplexOperator::toString() const { return "PhysicalDemultiplexOperator"; }
+std::string PhysicalDemultiplexOperator::toString() const { return "PhysicalDemultiplexOperator"; }
+
 OperatorNodePtr PhysicalDemultiplexOperator::copy() { return create(id, inputSchema); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

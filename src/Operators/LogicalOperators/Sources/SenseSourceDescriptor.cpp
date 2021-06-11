@@ -36,7 +36,7 @@ SourceDescriptorPtr SenseSourceDescriptor::create(SchemaPtr schema, std::string 
     return std::make_shared<SenseSourceDescriptor>(SenseSourceDescriptor(std::move(schema), std::move(udfs)));
 }
 
-bool SenseSourceDescriptor::equal(SourceDescriptorPtr other) {
+bool SenseSourceDescriptor::equal(SourceDescriptorPtr const &other) {
     if (!other->instanceOf<SenseSourceDescriptor>()) {
         return false;
     }

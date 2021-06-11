@@ -62,7 +62,7 @@ class Pattern : public Query {
      * @param sourceStreamName name of the stream to monitor. This name has to be registered in the query catalog.
      * @return the pattern
      */
-    static Pattern from(std::string& sourceStreamName);
+    static Pattern from(std::string const & sourceStreamName);
 
     /**
      * @brief Add sink operator for the query.

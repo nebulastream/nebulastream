@@ -43,7 +43,7 @@ std::shared_ptr<LambdaSourceDescriptor> LambdaSourceDescriptor::create(
 }
 std::string LambdaSourceDescriptor::toString() { return "LambdaSourceDescriptor"; }
 
-bool LambdaSourceDescriptor::equal(SourceDescriptorPtr other) {
+bool LambdaSourceDescriptor::equal(SourceDescriptorPtr const &other) {
     if (!other->instanceOf<LambdaSourceDescriptor>()) {
         return false;
     }

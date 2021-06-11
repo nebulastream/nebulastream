@@ -24,9 +24,7 @@
 
 #include <string>
 
-namespace NES {
-
-namespace Network {
+namespace NES::Network {
 
 class NetworkSink : public SinkMedium {
   public:
@@ -40,7 +38,7 @@ class NetworkSink : public SinkMedium {
     explicit NetworkSink(const SchemaPtr& schema,
                          QuerySubPlanId parentPlanId,
                          NetworkManagerPtr networkManager,
-                         NodeLocation& nodeLocation,
+                         NodeLocation const &nodeLocation,
                          NesPartition nesPartition,
                          const NodeEngine::BufferManagerPtr& bufferManager,
                          NodeEngine::QueryManagerPtr queryManager,
@@ -97,7 +95,6 @@ class NetworkSink : public SinkMedium {
     const uint8_t retryTimes;
 };
 
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 
 #endif// NES_NETWORKSINK_HPP

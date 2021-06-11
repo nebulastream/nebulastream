@@ -17,8 +17,7 @@
 #define NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 
 /**
  * @brief General interface for the query compiler interface.
@@ -35,10 +34,11 @@ class QueryCompiler {
     virtual ~QueryCompiler() = default;
 
   protected:
-    explicit QueryCompiler(QueryCompilerOptionsPtr&);
-    const QueryCompilerOptionsPtr queryCompilerOptions;
+    explicit QueryCompiler(QueryCompilerOptionsPtr const &options) noexcept: queryCompilerOptions(options) {}
+
+    QueryCompilerOptionsPtr const queryCompilerOptions;
 };
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

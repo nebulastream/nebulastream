@@ -21,11 +21,11 @@
 namespace NES::QueryCompilation {
 PointerDataType::PointerDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(std::move(baseType)) {}
 
-const CodeExpressionPtr PointerDataType::getCode() const {
+CodeExpressionPtr PointerDataType::getCode() const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "*");
 }
 
-const CodeExpressionPtr PointerDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }
+CodeExpressionPtr PointerDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }
 
 CodeExpressionPtr PointerDataType::getDeclarationCode(std::string identifier) const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "* " + identifier);

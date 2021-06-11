@@ -23,7 +23,7 @@
 
 namespace NES {
 
-SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
+SliceMergingOperator::SliceMergingOperator(Windowing::LogicalWindowDefinitionPtr const &windowDefinition, OperatorId id)
     : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {
     this->windowDefinition->setDistributionCharacteristic(windowDefinition->getDistributionType());
     this->windowDefinition->setNumberOfInputEdges(windowDefinition->getNumberOfInputEdges());
@@ -34,15 +34,15 @@ SliceMergingOperator::SliceMergingOperator(const Windowing::LogicalWindowDefinit
     this->windowDefinition->setOriginId(id);
 }
 
-const std::string SliceMergingOperator::toString() const {
+std::string SliceMergingOperator::toString() const {
     std::stringstream ss;
     ss << "SliceMergingOperator(" << id << ")";
     return ss.str();
 }
 
-bool SliceMergingOperator::isIdentical(NodePtr rhs) const { return equal(rhs) && rhs->as<SliceMergingOperator>()->getId() == id; }
+bool SliceMergingOperator::isIdentical(NodePtr const &rhs) const { return equal(rhs) && rhs->as<SliceMergingOperator>()->getId() == id; }
 
-bool SliceMergingOperator::equal(const NodePtr rhs) const { return rhs->instanceOf<SliceMergingOperator>(); }
+bool SliceMergingOperator::equal(NodePtr const &rhs) const { return rhs->instanceOf<SliceMergingOperator>(); }
 
 OperatorNodePtr SliceMergingOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceMergingSpecializedOperator(windowDefinition, id);

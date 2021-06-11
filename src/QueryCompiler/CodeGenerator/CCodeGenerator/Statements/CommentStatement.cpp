@@ -18,17 +18,15 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 namespace NES::QueryCompilation {
-CommentStatement::CommentStatement(const std::string& comment) : comment(comment) {}
 
 StatementType CommentStatement::getStamentType() const { return RETURN_STMT; }
 
-const CodeExpressionPtr CommentStatement::getCode() const {
+CodeExpressionPtr CommentStatement::getCode() const {
     std::stringstream stmt;
     stmt << "//<<" << comment << " << ";
     return std::make_shared<CodeExpression>(stmt.str());
 }
 
-const StatementPtr CommentStatement::createCopy() const { return std::make_shared<CommentStatement>(*this); }
+StatementPtr CommentStatement::createCopy() const { return std::make_shared<CommentStatement>(*this); }
 
-CommentStatement::~CommentStatement() = default;
 }// namespace NES::QueryCompilation

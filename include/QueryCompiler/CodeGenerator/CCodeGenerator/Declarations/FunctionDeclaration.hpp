@@ -30,13 +30,13 @@ class FunctionDeclaration : public Declaration {
     explicit FunctionDeclaration(Code code);
     static FunctionDeclarationPtr create(const Code& code);
 
-    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
-    [[nodiscard]] const std::string getIdentifierName() const override;
+    [[nodiscard]] GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] std::string getIdentifierName() const override;
 
-    [[nodiscard]] const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] Code getTypeDefinitionCode() const override;
 
-    [[nodiscard]] const Code getCode() const override;
-    [[nodiscard]] const DeclarationPtr copy() const override;
+    [[nodiscard]] Code getCode() const override;
+    [[nodiscard]] DeclarationPtr copy() const override;
 
   private:
     Code functionCode;

@@ -57,7 +57,7 @@ class ExpressionNode : public Node {
      * @brief returns the stamp as the data type which is produced by this expression.
      * @return Stamp
      */
-    const DataTypePtr getStamp() const;
+    DataTypePtr getStamp() const;
 
     /**
      * @brief sets the stamp of this expression.

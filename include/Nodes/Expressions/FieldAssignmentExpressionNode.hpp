@@ -34,8 +34,8 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
      */
     static FieldAssignmentExpressionNodePtr create(const FieldAccessExpressionNodePtr& fieldAccess, const ExpressionNodePtr& expressionNodePtr);
 
-    const std::string toString() const override;
-    bool equal(NodePtr rhs) const override;
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
 
     /**
      * @brief return the field to which a new value is assigned.

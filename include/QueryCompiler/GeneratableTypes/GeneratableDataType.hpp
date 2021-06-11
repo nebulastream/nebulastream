@@ -36,13 +36,13 @@ class GeneratableDataType {
     * For instance int8_t, or uint32_t for BasicTypes or uint32_t[15] for an ArrayType.
     * @return CodeExpressionPtr
     */
-    [[nodiscard]] virtual const CodeExpressionPtr getCode() const = 0;
+    [[nodiscard]] virtual CodeExpressionPtr getCode() const = 0;
 
     /**
      * @brief Generated code for a type definition. This is mainly crucial for structures.
      * @return CodeExpressionPtr
      */
-    [[nodiscard]] virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
+    [[nodiscard]] virtual CodeExpressionPtr getTypeDefinitionCode() const = 0;
 
     /**
     * @brief Generates the code for a type declaration with a specific identifier.

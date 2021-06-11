@@ -87,9 +87,9 @@ class GlobalQueryNode : public Node {
      */
     OperatorNodePtr getOperator();
 
-    bool equal(NodePtr rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
 
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
 
   private:
     explicit GlobalQueryNode(uint64_t id);

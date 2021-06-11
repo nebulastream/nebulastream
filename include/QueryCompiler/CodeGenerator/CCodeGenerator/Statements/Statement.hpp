@@ -55,13 +55,13 @@ class Statement {
      * @brief method to get the code as code expressions
      * @return CodeExpressionPtr
      */
-    [[nodiscard]] virtual const CodeExpressionPtr getCode() const = 0;
+    [[nodiscard]] virtual CodeExpressionPtr getCode() const = 0;
 
     /**
      * @brief method to create a copy of this statement
      * @return copy of statement
      */
-    [[nodiscard]] virtual const StatementPtr createCopy() const = 0;
+    [[nodiscard]] virtual StatementPtr createCopy() const = 0;
 
     /** @brief virtual copy constructor */
     virtual ~Statement();

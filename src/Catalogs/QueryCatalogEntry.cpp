@@ -31,7 +31,7 @@ QueryId QueryCatalogEntry::getQueryId() const noexcept { return queryId; }
 
 std::string QueryCatalogEntry::getQueryString() const { return queryString; }
 
-const QueryPlanPtr QueryCatalogEntry::getQueryPlan() const { return queryPlanPtr; }
+QueryPlanPtr QueryCatalogEntry::getQueryPlan() const { return queryPlanPtr; }
 
 QueryStatus QueryCatalogEntry::getQueryStatus() const { return queryStatus; }
 

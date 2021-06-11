@@ -115,6 +115,7 @@ class VizGraph {
 class VizDumpHandler : public DumpHandler {
 
   public:
+    virtual ~VizDumpHandler() = default;
     /**
      * @brief Creates a new VizDumpHandler.
      * Uses the current working directory as a storage locations.

@@ -34,7 +34,7 @@ ExpressionNodePtr FieldRenameExpressionNode::create(FieldAccessExpressionNodePtr
     return std::make_shared<FieldRenameExpressionNode>(FieldRenameExpressionNode(std::move(originalField), std::move(newFieldName)));
 }
 
-bool FieldRenameExpressionNode::equal(const NodePtr rhs) const {
+bool FieldRenameExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<FieldRenameExpressionNode>()) {
         auto otherFieldRead = rhs->as<FieldRenameExpressionNode>();
         return otherFieldRead->getOriginalField()->equal(getOriginalField())
@@ -43,11 +43,11 @@ bool FieldRenameExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const FieldAccessExpressionNodePtr FieldRenameExpressionNode::getOriginalField() const { return this->originalField; }
+FieldAccessExpressionNodePtr FieldRenameExpressionNode::getOriginalField() const { return this->originalField; }
 
-const std::string FieldRenameExpressionNode::getNewFieldName() { return newFieldName; }
+std::string FieldRenameExpressionNode::getNewFieldName() { return newFieldName; }
 
-const std::string FieldRenameExpressionNode::toString() const {
+std::string FieldRenameExpressionNode::toString() const {
     auto node = getOriginalField();
     return "FieldRenameExpression(" + getOriginalField()->toString() + " => " + newFieldName + " : " + stamp->toString() + ")";
 }

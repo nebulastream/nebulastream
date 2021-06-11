@@ -64,7 +64,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param other the source descriptor to compare against
      * @return true if type, schema, and memory area are equal
      */
-    bool equal(SourceDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
 
     /**
      * @brief returns the shared ptr to the memory area

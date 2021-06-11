@@ -56,11 +56,10 @@ DataSource::DataSource(const SchemaPtr& pSchema,
                        size_t numSourceLocalBuffers,
                        GatheringMode gatheringMode,
                        std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)),
-      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(pSchema), generatedTuples(0),
-      generatedBuffers(0), numBuffersToProcess(UINT64_MAX), numSourceLocalBuffers(numSourceLocalBuffers), gatheringInterval(0),
-      gatheringMode(gatheringMode), NodeEngine::Reconfigurable(), wasGracefullyStopped(false), running(false), thread(nullptr),
-      DataEmitter() {
+    : NodeEngine::Reconfigurable(), DataEmitter(), queryManager(std::move(queryManager)), globalBufferManager(std::move(bufferManager)),
+      executableSuccessors(std::move(executableSuccessors)), operatorId(operatorId), schema(pSchema),
+      numSourceLocalBuffers(numSourceLocalBuffers), gatheringMode(gatheringMode) {
+
     NES_DEBUG("DataSource " << operatorId << ": Init Data Source with schema");
     NES_ASSERT(this->globalBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");

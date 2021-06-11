@@ -73,9 +73,7 @@ NetworkMetrics NetworkMetrics::fromBuffer(const SchemaPtr& schema, NodeEngine::T
 
         for (int n = 0; n < numInt; n++) {
             NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
-
-            auto networkValue = NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_");
-            output.addNetworkValues(networkValue);
+            output.addNetworkValues(NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_"));
         }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetrics: Metrics could not be parsed from schema " + schema->toString());

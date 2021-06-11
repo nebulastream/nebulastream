@@ -58,7 +58,7 @@ void GeneratableJoinBuildOperator::generateExecute(CodeGeneratorPtr codegen, Pip
     codegen->generateCodeForJoinBuild(joinDefinition, context, operatorHandler, buildSide);
 }
 
-const std::string GeneratableJoinBuildOperator::toString() const { return "GeneratableJoinBuildOperator"; }
+std::string GeneratableJoinBuildOperator::toString() const { return "GeneratableJoinBuildOperator"; }
 
 OperatorNodePtr GeneratableJoinBuildOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler, buildSide); }
 

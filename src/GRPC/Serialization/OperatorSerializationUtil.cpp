@@ -1300,15 +1300,15 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(Serializa
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as MQTTSinkDescriptor");
         auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor();
         deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return MQTTSinkDescriptor::create(serializedSinkDescriptor.address(),
-                                          serializedSinkDescriptor.topic(),
-                                          serializedSinkDescriptor.user(),
+        return MQTTSinkDescriptor::create(std::string{serializedSinkDescriptor.address()},
+                                          std::string{serializedSinkDescriptor.topic()},
+                                          std::string{serializedSinkDescriptor.user()},
                                           serializedSinkDescriptor.maxbufferedmsgs(),
                                           (MQTTSinkDescriptor::TimeUnits) serializedSinkDescriptor.timeunit(),
                                           serializedSinkDescriptor.msgdelay(),
                                           (MQTTSinkDescriptor::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
                                           serializedSinkDescriptor.asynchronousclient(),
-                                          serializedSinkDescriptor.clientid());
+                                          std::string{serializedSinkDescriptor.clientid()});
     } else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>()) {
         // de-serialize zmq sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");

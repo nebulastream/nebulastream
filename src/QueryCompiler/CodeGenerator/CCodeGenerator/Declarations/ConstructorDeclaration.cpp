@@ -23,11 +23,11 @@ ConstructorDeclaration::ConstructorDeclaration(Code code) : functionCode(std::mo
 
 ConstructorDeclarationPtr ConstructorDeclaration::create(const Code& code) { return std::make_shared<ConstructorDeclaration>(code); }
 
-const GeneratableDataTypePtr ConstructorDeclaration::getType() const { return GeneratableDataTypePtr(); }
-const std::string ConstructorDeclaration::getIdentifierName() const { return ""; }
+GeneratableDataTypePtr ConstructorDeclaration::getType() const { return GeneratableDataTypePtr(); }
+std::string ConstructorDeclaration::getIdentifierName() const { return ""; }
 
-const Code ConstructorDeclaration::getTypeDefinitionCode() const { return Code(); }
+Code ConstructorDeclaration::getTypeDefinitionCode() const { return Code(); }
 
-const Code ConstructorDeclaration::getCode() const { return functionCode; }
-const DeclarationPtr ConstructorDeclaration::copy() const { return std::make_shared<ConstructorDeclaration>(*this); }
+Code ConstructorDeclaration::getCode() const { return functionCode; }
+DeclarationPtr ConstructorDeclaration::copy() const { return std::make_shared<ConstructorDeclaration>(*this); }
 }// namespace NES::QueryCompilation

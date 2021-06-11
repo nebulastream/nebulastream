@@ -18,9 +18,7 @@
 
 #include <QueryCompiler/Operators/GeneratableOperators/Joining/GeneratableJoinOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace GeneratableOperators {
+namespace NES::QueryCompilation::GeneratableOperators {
 
 /**
  * @brief Defines the code generation for the build side of a join operator.
@@ -56,7 +54,7 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
 
     void generateOpen(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   protected:
@@ -67,7 +65,5 @@ class GeneratableJoinBuildOperator : public GeneratableJoinOperator {
                                  JoinBuildSide buildSide);
     JoinBuildSide buildSide;
 };
-}// namespace GeneratableOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::GeneratableOperators
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_GENERATABLEOPERATORS_GENERATABLEJOINBUILD_HPP_

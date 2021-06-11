@@ -19,28 +19,28 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
+
 class CompoundStatement : public Statement {
   public:
-    CompoundStatement();
+    CompoundStatement() = default;
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const StatementPtr createCopy() const override;
+    [[nodiscard]] StatementPtr createCopy() const override;
 
     void addStatement(const StatementPtr& stmt);
 
     ~CompoundStatement() override;
 
   private:
-    std::vector<StatementPtr> statements;
+    std::vector<StatementPtr> statements{};
 };
 
 using CompoundStatementPtr = std::shared_ptr<CompoundStatement>;
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_COMPOUNDSTATEMENT_HPP_

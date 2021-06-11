@@ -46,8 +46,8 @@ class TestSourceDescriptor : public SourceDescriptor {
         return createSourceFunction(operatorId, std::move(std::move(sourceDescriptor)), std::move(std::move(nodeEngine)), numSourceLocalBuffers, std::move(std::move(successors)));
     }
 
-    std::string toString() override { return std::string(); }
-    bool equal(SourceDescriptorPtr) override { return false; }
+    [[nodiscard]] std::string toString() override { return std::string(); }
+    [[nodiscard]] bool equal(SourceDescriptorPtr const &) override { return false; }
 
   private:
     std::function<DataSourcePtr(OperatorId,
@@ -64,7 +64,7 @@ class TestSinkDescriptor : public SinkDescriptor {
     DataSinkPtr getSink() { return sink; }
     ~TestSinkDescriptor() override = default;
     std::string toString() override { return std::string(); }
-    bool equal(SinkDescriptorPtr) override { return false; }
+    bool equal(SinkDescriptorPtr const &) override { return false; }
 
   private:
     DataSinkPtr sink;

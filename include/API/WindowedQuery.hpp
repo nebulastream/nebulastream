@@ -61,7 +61,7 @@ class WindowedQuery {
    * @brief: Calls internally the original window() function and returns the Query&
    * @param aggregation
    */
-    Query& apply(Windowing::WindowAggregationPtr& aggregation);
+    Query& apply(Windowing::WindowAggregationPtr const& aggregation);
 
   private:
     Query& originalQuery;

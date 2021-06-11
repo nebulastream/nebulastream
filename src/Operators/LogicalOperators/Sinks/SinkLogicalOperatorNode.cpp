@@ -14,7 +14,6 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <utility>
@@ -26,15 +25,15 @@ SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr& sinkDe
 
 SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() { return sinkDescriptor; }
 
-void SinkLogicalOperatorNode::setSinkDescriptor(SinkDescriptorPtr sinkDescriptor) {
-    this->sinkDescriptor = std::move(sinkDescriptor);
+void SinkLogicalOperatorNode::setSinkDescriptor(SinkDescriptorPtr sd) {
+    this->sinkDescriptor = std::move(sd);
 }
 
-bool SinkLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool SinkLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<SinkLogicalOperatorNode>()->getId() == id;
 }
 
-bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool SinkLogicalOperatorNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<SinkLogicalOperatorNode>()) {
         auto sinkOperator = rhs->as<SinkLogicalOperatorNode>();
         return sinkOperator->getSinkDescriptor()->equal(sinkDescriptor);
@@ -49,7 +48,7 @@ bool SinkLogicalOperatorNode::inferSchema() {
     return true;
 }
 
-const std::string SinkLogicalOperatorNode::toString() const {
+std::string SinkLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "SINK(" << id << ")";
     return ss.str();

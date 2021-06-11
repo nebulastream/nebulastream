@@ -25,13 +25,13 @@
 
 namespace NES::Network {
 
-OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, const std::string& address)
-    : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(address), isClosed(false) {
+OutputChannel::OutputChannel(zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string &&address)
+    : zmqSocket(std::move(zmqSocket)), channelId(channelId), socketAddr(std::move(address)), isClosed(false) {
     NES_DEBUG("OutputChannel: Initializing OutputChannel " << channelId);
 }
 
-std::unique_ptr<OutputChannel> OutputChannel::create(const std::shared_ptr<zmq::context_t>& zmqContext,
-                                                     const std::string& socketAddr,
+std::unique_ptr<OutputChannel> OutputChannel::create(std::shared_ptr<zmq::context_t> const &zmqContext,
+                                                     std::string &&socketAddr,
                                                      NesPartition nesPartition,
                                                      ExchangeProtocol& protocol,
                                                      std::chrono::seconds waitTime,
@@ -77,7 +77,7 @@ std::unique_ptr<OutputChannel> OutputChannel::create(const std::shared_ptr<zmq::
 
                     if (serverReadyMsg->isOk() && !serverReadyMsg->isPartitionNotFound()) {
                         NES_INFO("OutputChannel: Connection established with server " << socketAddr << " for " << channelId);
-                        return std::make_unique<OutputChannel>(std::move(zmqSocket), channelId, socketAddr);
+                        return std::make_unique<OutputChannel>(std::move(zmqSocket), channelId, std::move(socketAddr));
                     }
                     protocol.onChannelError(Messages::ErrorMessage(channelId, serverReadyMsg->getErrorType()));
                     break;

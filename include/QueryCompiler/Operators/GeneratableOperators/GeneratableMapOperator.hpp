@@ -48,7 +48,7 @@ class GeneratableMapOperator : public GeneratableOperator {
     static GeneratableOperatorPtr
     create(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:

@@ -47,9 +47,9 @@ class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
     bool stop() override;
 
   private:
-    std::atomic<bool> running;
-    std::shared_ptr<std::thread> thread;
-    std::mutex runningTriggerMutex;
+    std::atomic<bool> running {false};
+    std::shared_ptr<std::thread> thread{nullptr};
+    std::mutex runningTriggerMutex{};
     uint64_t triggerTimeInMs;
 };
 

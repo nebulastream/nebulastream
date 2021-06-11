@@ -280,10 +280,10 @@ class NodeEngine : public Network::ExchangeProtocolListener,
     QueryCompilation::QueryCompilerPtr queryCompiler;
     std::atomic<bool> isRunning{};
     mutable std::recursive_mutex engineMutex;
-    uint64_t nodeEngineId;
-    uint32_t numberOfBuffersInGlobalBufferManager;
-    uint32_t numberOfBuffersInSourceLocalBufferPool;
-    uint32_t numberOfBuffersPerPipeline;
+    [[maybe_unused]] uint64_t nodeEngineId;
+    [[maybe_unused]] uint32_t numberOfBuffersInGlobalBufferManager;
+    [[maybe_unused]] uint32_t numberOfBuffersInSourceLocalBufferPool;
+    [[maybe_unused]] uint32_t numberOfBuffersPerPipeline;
 };
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;

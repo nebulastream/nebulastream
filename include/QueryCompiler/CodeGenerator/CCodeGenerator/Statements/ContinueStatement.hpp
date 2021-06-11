@@ -25,15 +25,16 @@ namespace QueryCompilation {
  */
 class ContinueStatement : public Statement {
   public:
-    ContinueStatement();
+    ContinueStatement() noexcept = default;
+
+    ~ContinueStatement() noexcept override = default;
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const StatementPtr createCopy() const override;
+    [[nodiscard]] StatementPtr createCopy() const override;
 
-    ~ContinueStatement() override;
 
   private:
 };

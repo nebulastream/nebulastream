@@ -27,10 +27,9 @@ NetworkManager::NetworkManager(const std::string& hostname,
                                ExchangeProtocol&& exchangeProtocol,
                                const NodeEngine::BufferManagerPtr& bufferManager,
                                uint16_t numServerThread)
-    : exchangeProtocol(exchangeProtocol),
-      server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)) {
-    bool success = server->start();
-    if (success) {
+    : server(std::make_shared<ZmqServer>(hostname, port, numServerThread, this->exchangeProtocol, bufferManager)), exchangeProtocol(exchangeProtocol) {
+
+    if (bool const success = server->start(); success) {
         NES_INFO("NetworkManager: Server started successfully");
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkManager: Server failed to start on " << hostname << ":" << port);

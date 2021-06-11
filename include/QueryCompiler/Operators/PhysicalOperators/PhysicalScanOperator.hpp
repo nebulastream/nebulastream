@@ -47,7 +47,7 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
      * @param outputSchema output schema
      */
     static PhysicalOperatorPtr create(SchemaPtr outputSchema);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 };
 }// namespace PhysicalOperators

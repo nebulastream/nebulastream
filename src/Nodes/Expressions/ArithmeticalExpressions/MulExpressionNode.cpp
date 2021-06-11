@@ -29,7 +29,7 @@ ExpressionNodePtr MulExpressionNode::create(const ExpressionNodePtr& left, const
     return mulNode;
 }
 
-bool MulExpressionNode::equal(const NodePtr rhs) const {
+bool MulExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<MulExpressionNode>()) {
         auto otherMulNode = rhs->as<MulExpressionNode>();
         return getLeft()->equal(otherMulNode->getLeft()) && getRight()->equal(otherMulNode->getRight());
@@ -37,7 +37,7 @@ bool MulExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string MulExpressionNode::toString() const {
+std::string MulExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "*" << children[1]->toString();
     return ss.str();

@@ -34,14 +34,14 @@ class FieldAccessExpressionNode : public ExpressionNode {
      */
     static ExpressionNodePtr create(std::string fieldName);
 
-    const std::string toString() const override;
-    bool equal(NodePtr rhs) const override;
+    std::string toString() const override;
+    bool equal(NodePtr const &rhs) const override;
 
     /**
      * @brief Get field name
      * @return field name
      */
-    const std::string getFieldName();
+    std::string getFieldName();
 
     /**
      * @brief Updated field name

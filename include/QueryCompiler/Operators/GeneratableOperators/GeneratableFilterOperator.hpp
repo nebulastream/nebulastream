@@ -46,7 +46,7 @@ class GeneratableFilterOperator : public GeneratableOperator {
     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr inputSchema, ExpressionNodePtr predicate);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:

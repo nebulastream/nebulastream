@@ -24,11 +24,11 @@ namespace NES {
 
 UnionLogicalOperatorNode::UnionLogicalOperatorNode(OperatorId id) : OperatorNode(id), LogicalBinaryOperatorNode(id) {}
 
-bool UnionLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool UnionLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<UnionLogicalOperatorNode>()->getId() == id;
 }
 
-const std::string UnionLogicalOperatorNode::toString() const {
+std::string UnionLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "unionWith(" << id << ")";
     return ss.str();
@@ -71,7 +71,7 @@ OperatorNodePtr UnionLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool UnionLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool UnionLogicalOperatorNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<UnionLogicalOperatorNode>()) {
         return true;
     }
@@ -82,9 +82,8 @@ void UnionLogicalOperatorNode::inferStringSignature() {
     NES_TRACE("UnionLogicalOperatorNode: Inferring String signature for " << operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "UnionLogicalOperatorNode: Union should have 2 children.");
     //Infer query signatures for child operators
-    for (auto& child : children) {
-        const LogicalOperatorNodePtr childOperator = child->as<LogicalOperatorNode>();
-        childOperator->inferStringSignature();
+    for (auto&& child : children) {
+        child->as<LogicalOperatorNode>()->inferStringSignature();
     }
     std::stringstream signatureStream;
     signatureStream << "UNION(";

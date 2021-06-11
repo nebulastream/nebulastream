@@ -30,9 +30,9 @@ class ReturnStatement : public Statement {
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const StatementPtr createCopy() const override;
+    [[nodiscard]] StatementPtr createCopy() const override;
 
     ~ReturnStatement() override;
 

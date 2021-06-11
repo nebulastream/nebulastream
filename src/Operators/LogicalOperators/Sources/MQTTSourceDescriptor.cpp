@@ -66,7 +66,7 @@ const std::string MQTTSourceDescriptor::getUser() const { return user; }
 
 const std::string MQTTSourceDescriptor::getTopic() const { return topic; }
 
-bool MQTTSourceDescriptor::equal(SourceDescriptorPtr other) {
+bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const &other) {
 
     if (!other->instanceOf<MQTTSourceDescriptor>()) {
         return false;

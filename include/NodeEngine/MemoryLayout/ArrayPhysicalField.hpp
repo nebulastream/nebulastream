@@ -27,7 +27,7 @@ namespace NES::NodeEngine {
 class ArrayPhysicalField : public PhysicalField {
   public:
     ArrayPhysicalField(PhysicalTypePtr componentField, uint64_t bufferOffset);
-    ~ArrayPhysicalField() = default;
+    ~ArrayPhysicalField() override = default;
     /**
      * @brief Cast the PhysicalField into an ArrayField
      * @return std::shared_ptr<ArrayPhysicalField>

@@ -41,7 +41,7 @@ class PhysicalJoinBuildOperator : public PhysicalJoinOperator, public PhysicalUn
                               SchemaPtr outputSchema,
                               Join::JoinOperatorHandlerPtr operatorHandler,
                               JoinBuildSide buildSide);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
     JoinBuildSide getBuildSide();

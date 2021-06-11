@@ -40,39 +40,32 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return descriptor for MQTT sink
      */
-    static SinkDescriptorPtr create(std::string& address,
-                                    std::string& topic,
-                                    std::string& user,
-                                    uint64_t maxBufferedMSGs,
-                                    TimeUnits timeUnit,
-                                    uint64_t messageDelay,
-                                    ServiceQualities qualityOfService,
-                                    bool asynchronousClient,
-                                    std::string& clientId = "");
+    static SinkDescriptorPtr create( std::string&& address, std::string&& topic, std::string&& user, uint64_t maxBufferedMSGs, TimeUnits timeUnit, uint64_t messageDelay, ServiceQualities qualityOfService, bool asynchronousClient, std::string &&clientId="");
+
 
     /**
      * @brief get address information from a MQTT sink client
      * @return address of MQTT broker
      */
-    const std::string getAddress() const;
+    std::string getAddress() const;
 
     /**
      * @brief get clientId information from a MQTT sink client
      * @return id used by client
      */
-    const std::string getClientId() const;
+    std::string getClientId() const;
 
     /**
      * @brief get topic information from a MQTT sink client
      * @return topic to which MQTT client sends messages
      */
-    const std::string getTopic() const;
+    std::string getTopic() const;
 
     /**
      * @brief get user name for a MQTT sink client
      * @return user name used by MQTT client
      */
-    const std::string getUser() const;
+    std::string getUser() const;
 
     /**
      * @brief get the number of MSGs that can maximally be buffered (default is 60)
@@ -104,10 +97,9 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      */
     bool getAsynchronousClient();
 
-    std::string toString() override;
-    bool equal(SinkDescriptorPtr other) override;
+    [[nodiscard]] std::string toString() override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const &other) override;
 
-  private:
     /**
      * @brief Creates the MQTT sink
      * @param address: address name of MQTT broker
@@ -121,15 +113,16 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param asynchronousClient: determine whether client is async- or synchronous
      * @return MQTT sink
      */
-    explicit MQTTSinkDescriptor(std::string& address,
-                                std::string& clientId,
-                                std::string& topic,
-                                std::string& user,
+    explicit MQTTSinkDescriptor(std::string &&address,
+                                std::string &&clientId,
+                                std::string &&topic,
+                                std::string &&user,
                                 uint64_t maxBufferedMSGs,
                                 TimeUnits timeUnit,
                                 uint64_t messageDelay,
                                 ServiceQualities qualityOfService,
                                 bool asynchronousClient);
+  private:
 
     std::string address;
     std::string clientId;

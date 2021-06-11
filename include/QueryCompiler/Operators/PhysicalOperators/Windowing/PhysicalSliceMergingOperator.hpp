@@ -35,7 +35,7 @@ class PhysicalSliceMergingOperator : public PhysicalWindowOperator, public Abstr
     static PhysicalOperatorPtr
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Windowing::WindowOperatorHandlerPtr& handler);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 };
 }// namespace PhysicalOperators

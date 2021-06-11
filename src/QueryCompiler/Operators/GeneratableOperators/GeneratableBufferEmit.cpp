@@ -35,7 +35,7 @@ GeneratableOperatorPtr GeneratableBufferEmit::create(SchemaPtr outputSchema) {
 void GeneratableBufferEmit::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForEmit(outputSchema, context);
 }
-const std::string GeneratableBufferEmit::toString() const { return "GeneratableBufferEmit"; }
+std::string GeneratableBufferEmit::toString() const { return "GeneratableBufferEmit"; }
 
 OperatorNodePtr GeneratableBufferEmit::copy() { return create(id, outputSchema); }
 

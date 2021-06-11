@@ -55,7 +55,7 @@ void OperatorPipeline::addSuccessor(const OperatorPipelinePtr& pipeline) {
     }
 }
 
-const std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const {
+std::vector<OperatorPipelinePtr> OperatorPipeline::getPredecessors() const {
     std::vector<OperatorPipelinePtr> predecessors;
     for (const auto& predecessor : predecessorPipelines) {
         predecessors.emplace_back(predecessor.lock());
@@ -97,7 +97,7 @@ void OperatorPipeline::clearSuccessors() {
     successorPipelines.clear();
 }
 
-const std::vector<OperatorPipelinePtr> OperatorPipeline::getSuccessors() const { return successorPipelines; }
+std::vector<OperatorPipelinePtr> const &OperatorPipeline::getSuccessors() const { return successorPipelines; }
 
 void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     if (!this->isOperatorPipeline() && this->hasOperators()) {
@@ -106,7 +106,7 @@ void OperatorPipeline::prependOperator(OperatorNodePtr newRootOperator) {
     this->queryPlan->appendOperatorAsNewRoot(std::move(newRootOperator));
 }
 
-const uint64_t OperatorPipeline::getPipelineId() const { return id; }
+uint64_t OperatorPipeline::getPipelineId() const { return id; }
 QueryPlanPtr OperatorPipeline::getQueryPlan() { return queryPlan; }
 
 }// namespace NES::QueryCompilation

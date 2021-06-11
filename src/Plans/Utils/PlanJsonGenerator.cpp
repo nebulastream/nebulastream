@@ -141,7 +141,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& query
     std::vector<web::json::value> nodes{};
     std::vector<web::json::value> edges{};
 
-    const OperatorNodePtr root = queryPlan->getRootOperators()[0];
+    OperatorNodePtr root = queryPlan->getRootOperators()[0];
 
     if (!root) {
         NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is empty");
@@ -177,7 +177,7 @@ web::json::value PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& query
     return result;
 }
 
-void PlanJsonGenerator::getChildren(const OperatorNodePtr& root,
+void PlanJsonGenerator::getChildren(OperatorNodePtr const &root,
                                     std::vector<web::json::value>& nodes,
                                     std::vector<web::json::value>& edges) {
 

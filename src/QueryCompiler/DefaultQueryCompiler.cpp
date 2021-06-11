@@ -13,17 +13,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <NodeEngine/Execution/ExecutablePipeline.hpp>
-#include <NodeEngine/Execution/ExecutableQueryPlan.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/VizDumpHandler.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Phases/ConvertLogicalToPhysicalSink.hpp>
-#include <Phases/ConvertLogicalToPhysicalSource.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryCompiler/DefaultQueryCompiler.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/CodeGenerationPhase.hpp>
@@ -39,15 +33,15 @@
 
 namespace NES::QueryCompilation {
 
-DefaultQueryCompiler::DefaultQueryCompiler(const QueryCompilerOptionsPtr& options, const Phases::PhaseFactoryPtr& phaseFactory)
+DefaultQueryCompiler::DefaultQueryCompiler(QueryCompilerOptionsPtr const &options, Phases::PhaseFactoryPtr const &phaseFactory)
     : QueryCompiler(options), lowerLogicalToPhysicalOperatorsPhase(phaseFactory->createLowerLogicalQueryPlanPhase(options)),
       lowerPhysicalToGeneratableOperatorsPhase(phaseFactory->createLowerPhysicalToGeneratableOperatorsPhase(options)),
+      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)),
       pipeliningPhase(phaseFactory->createPipeliningPhase(options)),
       addScanAndEmitPhase(phaseFactory->createAddScanAndEmitPhase(options)),
-      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)),
-      lowerToExecutableQueryPlanPhase(phaseFactory->createLowerToExecutableQueryPlanPhase(options)) {}
+      codeGenerationPhase(phaseFactory->createCodeGenerationPhase(options)) {}
 
-QueryCompilerPtr DefaultQueryCompiler::create(const QueryCompilerOptionsPtr& options, const Phases::PhaseFactoryPtr& phaseFactory) {
+QueryCompilerPtr DefaultQueryCompiler::create(QueryCompilerOptionsPtr const &options, Phases::PhaseFactoryPtr const &phaseFactory) {
     return std::make_shared<DefaultQueryCompiler>(DefaultQueryCompiler(options, phaseFactory));
 }
 

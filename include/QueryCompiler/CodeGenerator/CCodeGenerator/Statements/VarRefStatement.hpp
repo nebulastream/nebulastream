@@ -25,9 +25,9 @@ class VarRefStatement : public ExpressionStatment {
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
     explicit VarRefStatement(const VariableDeclaration& var_decl);
 

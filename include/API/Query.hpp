@@ -62,7 +62,7 @@ using WindowAggregationPtr = std::shared_ptr<WindowAggregationDescriptor>;
 using namespace NES::API;
 using namespace NES::Windowing;
 
-static const uint64_t defaultTriggerTimeInMs = 1000;
+static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
 namespace JoinOperatorBuilder {
 
@@ -129,7 +129,7 @@ class JoinCondition {
      * @param windowType
      * @return the query with the result of the original joinWith function is returned.
      */
-    [[nodiscard]] Query& window(Windowing::WindowTypePtr& windowType) const;
+    [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
   private:
     const Query& subQueryRhs;
@@ -154,7 +154,7 @@ class Query {
     friend class WindowOperatorBuilder::WindowedQuery;
     friend class WindowOperatorBuilder::KeyedWindowedQuery;
 
-    WindowOperatorBuilder::WindowedQuery window(Windowing::WindowTypePtr& windowType);
+    WindowOperatorBuilder::WindowedQuery window(Windowing::WindowTypePtr const & windowType);
 
     /**
      * @brief can be called on the original query with the query to be joined with and sets this query in the class Join.
@@ -169,7 +169,7 @@ class Query {
      * @param sourceStreamName name of the stream to query. This name has to be registered in the query catalog.
      * @return the query
      */
-    static Query from(std::string& sourceStreamName);
+    static Query from(std::string const & sourceStreamName);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -196,15 +196,7 @@ class Query {
      * @param new stream name
      * @return the query
      */
-    Query& as(std::string& newStreamName);
-
-    /**
-     * @brief Create Query using queryPlan
-     * @param sourceStreamName source stream name
-     * @param queryPlan the input query plan
-     * @return Query instance
-     */
-    static Query createFromQueryPlan(QueryPlanPtr queryPlan);
+    Query& as(std::string const & newStreamName);
 
     /**
      * @brief: Filter records according to the predicate.
@@ -212,7 +204,7 @@ class Query {
      * @param predicate as expression node
      * @return the query
      */
-    Query& filter(ExpressionNodePtr& filterExpression);
+    Query& filter(ExpressionNodePtr const & filterExpression);
 
     /**
      * @brief: Create watermark assginer operator.
@@ -220,7 +212,7 @@ class Query {
      * @param delay timestamp delay of the watermark.
      * @return query.
      */
-    Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor);
+    Query& assignWatermark(Windowing::WatermarkStrategyDescriptorPtr const & watermarkStrategyDescriptor);
 
     /**
      * @brief: Map records according to a map expression.
@@ -228,7 +220,7 @@ class Query {
      * @param map expression
      * @return query
      */
-    Query& map(FieldAssignmentExpressionNodePtr& mapExpression);
+    Query& map(FieldAssignmentExpressionNodePtr const & mapExpression);
 
     /**
      * @brief Add sink operator for the query.
@@ -264,7 +256,7 @@ class Query {
     Query& joinWith(const Query& subQueryRhs,
                     ExpressionItem onLeftKey,
                     ExpressionItem onRightKey,
-                    Windowing::WindowTypePtr& windowType);
+                    Windowing::WindowTypePtr const &windowType);
 
     /**
      * @new change: similar to join, the original window and windowByKey become private --> only internal use
@@ -273,7 +265,7 @@ class Query {
      * @param aggregation Window aggregation function.
      * @return query.
      */
-    Query& window(Windowing::WindowTypePtr& windowType, Windowing::WindowAggregationPtr& aggregation);
+    Query& window(Windowing::WindowTypePtr const & windowType, Windowing::WindowAggregationPtr const& aggregation);
 
     /**
       * @brief: Creates a window aggregation.
@@ -282,8 +274,8 @@ class Query {
       * @return query.
       */
     Query& windowByKey(ExpressionItem onKey,
-                       Windowing::WindowTypePtr& windowType,
-                       Windowing::WindowAggregationPtr& aggregation);
+                       Windowing::WindowTypePtr const & windowType,
+                       Windowing::WindowAggregationPtr const & aggregation);
 };
 
 using QueryPtr = std::shared_ptr<Query>;

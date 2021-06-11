@@ -24,15 +24,15 @@ namespace NES {
 IterationLogicalOperatorNode::IterationLogicalOperatorNode(uint64_t minIterations, uint64_t maxIterations, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), minIterations(minIterations), maxIterations(maxIterations) {}
 
-uint64_t IterationLogicalOperatorNode::getMinIterations() { return minIterations; }
+uint64_t IterationLogicalOperatorNode::getMinIterations() const noexcept { return minIterations; }
 
-uint64_t IterationLogicalOperatorNode::getMaxIterations() { return maxIterations; }
+uint64_t IterationLogicalOperatorNode::getMaxIterations() const noexcept { return maxIterations; }
 
-bool IterationLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool IterationLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<IterationLogicalOperatorNode>()->getId() == id;
 }
 
-bool IterationLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool IterationLogicalOperatorNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<IterationLogicalOperatorNode>()) {
         auto iteration = rhs->as<IterationLogicalOperatorNode>();
         return (minIterations == iteration->minIterations && maxIterations == iteration->maxIterations);
@@ -40,18 +40,14 @@ bool IterationLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 };
 
-const std::string IterationLogicalOperatorNode::toString() const {
+std::string IterationLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "Iteration(" << id << ", minimum iteration=" << minIterations << ", maximum iteration=" << maxIterations << ")";
     return ss.str();
 }
 
 bool IterationLogicalOperatorNode::inferSchema() {
-    // infer the default input and output schema
-    if (!LogicalUnaryOperatorNode::inferSchema()) {
-        return false;
-    }
-    return true;
+    return LogicalUnaryOperatorNode::inferSchema();
 }
 
 OperatorNodePtr IterationLogicalOperatorNode::copy() {

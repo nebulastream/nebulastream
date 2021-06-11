@@ -19,9 +19,9 @@
 #include <QueryCompiler/GeneratableTypes/AnonymousUserDefinedDataType.hpp>
 #include <sstream>
 namespace NES::QueryCompilation {
-AnonymousUserDefinedDataType::AnonymousUserDefinedDataType(const std::string& name) : name(name) {}
+AnonymousUserDefinedDataType::AnonymousUserDefinedDataType(std::string const &name) : name(name) {}
 
-const CodeExpressionPtr AnonymousUserDefinedDataType::getTypeDefinitionCode() const {
+CodeExpressionPtr AnonymousUserDefinedDataType::getTypeDefinitionCode() const {
     return std::make_shared<CodeExpression>(name);
 }
 
@@ -31,5 +31,5 @@ CodeExpressionPtr AnonymousUserDefinedDataType::getDeclarationCode(std::string i
     return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
 }
 
-const CodeExpressionPtr AnonymousUserDefinedDataType::getCode() const { return std::make_shared<CodeExpression>(name); }
+CodeExpressionPtr AnonymousUserDefinedDataType::getCode() const { return std::make_shared<CodeExpression>(name); }
 }// namespace NES::QueryCompilation

@@ -61,9 +61,9 @@ TopologyNodePtr TopologyNode::copy() {
     return copy;
 }
 
-const std::string TopologyNode::getIpAddress() const { return ipAddress; }
+std::string TopologyNode::getIpAddress() const { return ipAddress; }
 
-const std::string TopologyNode::toString() const {
+std::string TopologyNode::toString() const {
     std::stringstream ss;
     ss << "PhysicalNode[id=" + std::to_string(id) + ", ip=" + ipAddress + ", resourceCapacity=" + std::to_string(resources)
             + ", usedResource=" + std::to_string(usedResources) + "]";

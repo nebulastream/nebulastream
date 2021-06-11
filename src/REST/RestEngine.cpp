@@ -72,7 +72,7 @@ void RestEngine::initRestOpHandlers() {
         handleHead(std::forward<decltype(PH1)>(PH1));
     });
     _listener.support(methods::OPTIONS, [this](auto&& PH1) {
-        handlePreflightOptions(std::forward<decltype(PH1)>(PH1));
+        this->handlePreflightOptions(std::forward<decltype(PH1)>(PH1));
     });
 }
 

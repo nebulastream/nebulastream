@@ -19,29 +19,29 @@
 
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 /**
  * @brief this statements allows us to generate code comments
  */
 class CommentStatement : public Statement {
   public:
-    explicit CommentStatement(std::string& comment);
+    explicit inline CommentStatement(const std::string& comment) noexcept: comment(comment) {}
+    explicit inline CommentStatement(std::string&& comment) noexcept: comment(std::move(comment)) {}
+
+    ~CommentStatement() noexcept = default;
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const StatementPtr createCopy() const override;
-
-    ~CommentStatement() override;
+    [[nodiscard]] StatementPtr createCopy() const override;
 
   private:
     std::string comment;
 };
 
 using Comment = CommentStatement;
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_COMMENT_HPP_

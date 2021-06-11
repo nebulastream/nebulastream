@@ -50,7 +50,7 @@ class GeneratableWatermarkAssignmentOperator : public GeneratableOperator {
                                          SchemaPtr outputSchema,
                                          Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:

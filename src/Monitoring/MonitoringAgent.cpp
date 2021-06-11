@@ -27,7 +27,7 @@
 namespace NES {
 
 MonitoringAgent::MonitoringAgent()
-    : catalog(MetricCatalog::NesMetrics()), monitoringPlan(MonitoringPlan::DefaultPlan()),
+    : monitoringPlan(MonitoringPlan::DefaultPlan()), catalog(MetricCatalog::NesMetrics()),
       schema(monitoringPlan->createSchema()) {
     NES_DEBUG("MonitoringAgent: Init with default monitoring plan");
 }

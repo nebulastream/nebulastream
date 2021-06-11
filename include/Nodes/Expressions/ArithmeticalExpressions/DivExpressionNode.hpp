@@ -22,16 +22,16 @@ namespace NES {
 /**
  * @brief This node represents a division expression.
  */
-class DivExpressionNode : public ArithmeticalBinaryExpressionNode {
+class DivExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit DivExpressionNode(DataTypePtr stamp);
-    ~DivExpressionNode() = default;
+    ~DivExpressionNode() noexcept = default;
     /**
      * @brief Create a new DIV expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const &left, ExpressionNodePtr const &right);
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.

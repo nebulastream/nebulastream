@@ -38,7 +38,7 @@ void GeneratableFilterOperator::generateExecute(CodeGeneratorPtr codegen, Pipeli
     codegen->generateCodeForFilter(std::dynamic_pointer_cast<Predicate>(legacyPredicate), context);
 }
 
-const std::string GeneratableFilterOperator::toString() const { return "GeneratableFilterOperator"; }
+std::string GeneratableFilterOperator::toString() const { return "GeneratableFilterOperator"; }
 
 OperatorNodePtr GeneratableFilterOperator::copy() { return create(id, inputSchema, predicate); }
 

@@ -75,7 +75,7 @@ class TopologyNode : public Node {
      * @brief Get ip address of the node
      * @return ip address
      */
-    const std::string getIpAddress() const;
+    std::string getIpAddress() const;
 
     /**
      * @brief Get grpc port for the node
@@ -89,7 +89,7 @@ class TopologyNode : public Node {
      */
     uint32_t getDataPort() const;
 
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Create a shallow copy of the physical node i.e. without copying the parent and child nodes

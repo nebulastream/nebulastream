@@ -19,13 +19,12 @@
 #include <sstream>
 
 namespace NES::QueryCompilation {
-CompoundStatement::CompoundStatement() : statements() {}
 
-const StatementPtr CompoundStatement::createCopy() const { return std::make_shared<CompoundStatement>(*this); }
+StatementPtr CompoundStatement::createCopy() const { return std::make_shared<CompoundStatement>(*this); }
 
 StatementType CompoundStatement::getStamentType() const { return StatementType::COMPOUND_STMT; }
 
-const CodeExpressionPtr CompoundStatement::getCode() const {
+CodeExpressionPtr CompoundStatement::getCode() const {
     std::stringstream code;
     for (const auto& stmt : statements) {
         code << stmt->getCode()->code_ << ";" << std::endl;

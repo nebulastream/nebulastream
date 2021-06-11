@@ -48,7 +48,7 @@ class FileSinkDescriptor : public SinkDescriptor {
     const std::string& getFileName() const;
 
     std::string toString() override;
-    bool equal(SinkDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const &other) override;
 
     std::string getSinkFormatAsString();
 

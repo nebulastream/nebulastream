@@ -21,16 +21,16 @@ namespace NES {
 /**
  * @brief This node represents an ADD expression.
  */
-class AddExpressionNode : public ArithmeticalBinaryExpressionNode {
+class AddExpressionNode final : public ArithmeticalBinaryExpressionNode {
   public:
     explicit AddExpressionNode(DataTypePtr stamp);
     ~AddExpressionNode() = default;
     /**
      * @brief Create a new ADD expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const &left, ExpressionNodePtr const &right);
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.

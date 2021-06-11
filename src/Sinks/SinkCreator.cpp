@@ -35,7 +35,7 @@
 
 namespace NES {
 
-const DataSinkPtr createTextFileSink(const SchemaPtr& schema,
+DataSinkPtr createTextFileSink(const SchemaPtr& schema,
                                      QuerySubPlanId parentPlanId,
                                      const NodeEngine::NodeEnginePtr& nodeEngine,
                                      const std::string& filePath,
@@ -45,7 +45,7 @@ const DataSinkPtr createTextFileSink(const SchemaPtr& schema,
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
+DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                                     QuerySubPlanId parentPlanId,
                                     const NodeEngine::NodeEnginePtr& nodeEngine,
                                     const std::string& filePath,
@@ -54,7 +54,7 @@ const DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
+DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
                                           QuerySubPlanId parentPlanId,
                                           const NodeEngine::NodeEnginePtr& nodeEngine,
                                           const std::string& filePath,
@@ -63,7 +63,7 @@ const DataSinkPtr createBinaryNESFileSink(const SchemaPtr& schema,
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
+DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                      QuerySubPlanId parentPlanId,
                                      const NodeEngine::NodeEnginePtr& nodeEngine,
                                      const std::string& filePath,
@@ -72,7 +72,7 @@ const DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
     return std::make_shared<FileSink>(format, filePath, append, parentPlanId);
 }
 
-const DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
+DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
                                     QuerySubPlanId parentPlanId,
                                     const NodeEngine::NodeEnginePtr& nodeEngine,
                                     const std::string& host,
@@ -81,7 +81,7 @@ const DataSinkPtr createTextZmqSink(const SchemaPtr& schema,
     return std::make_shared<ZmqSink>(format, host, port, false, parentPlanId);
 }
 
-const DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
+DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
                                    QuerySubPlanId parentPlanId,
                                    const NodeEngine::NodeEnginePtr& nodeEngine,
                                    const std::string& host,
@@ -90,7 +90,7 @@ const DataSinkPtr createCSVZmqSink(const SchemaPtr& schema,
     return std::make_shared<ZmqSink>(format, host, port, false, parentPlanId);
 }
 
-const DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
+DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
                                       QuerySubPlanId parentPlanId,
                                       const NodeEngine::NodeEnginePtr& nodeEngine,
                                       const std::string& host,
@@ -100,25 +100,25 @@ const DataSinkPtr createBinaryZmqSink(const SchemaPtr& schema,
     return std::make_shared<ZmqSink>(format, host, port, internal, parentPlanId);
 }
 
-const DataSinkPtr
+DataSinkPtr
 createTextPrintSink(const SchemaPtr& schema, QuerySubPlanId parentPlanId, const NodeEngine::NodeEnginePtr& nodeEngine, std::ostream& out) {
     SinkFormatPtr format = std::make_shared<TextFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
 
-const DataSinkPtr createNullOutputSink(QuerySubPlanId parentPlanId) { return std::make_shared<NullOutputSink>(parentPlanId); }
+DataSinkPtr createNullOutputSink(QuerySubPlanId parentPlanId) { return std::make_shared<NullOutputSink>(parentPlanId); }
 
-const DataSinkPtr
+DataSinkPtr
 createCSVPrintSink(const SchemaPtr& schema, QuerySubPlanId parentPlanId, const NodeEngine::NodeEnginePtr& nodeEngine, std::ostream& out) {
     SinkFormatPtr format = std::make_shared<CsvFormat>(schema, nodeEngine->getBufferManager());
     return std::make_shared<PrintSink>(format, parentPlanId, out);
 }
 
-const DataSinkPtr createNetworkSink(const SchemaPtr& schema,
+DataSinkPtr createNetworkSink(const SchemaPtr& schema,
                                     QuerySubPlanId parentPlanId,
-                                    const Network::NodeLocation& nodeLocation,
+                                    Network::NodeLocation const &nodeLocation,
                                     Network::NesPartition nesPartition,
-                                    const NodeEngine::NodeEnginePtr& nodeEngine,
+                                    NodeEngine::NodeEnginePtr const &nodeEngine,
                                     std::chrono::seconds waitTime,
                                     uint8_t retryTimes) {
     return std::make_shared<Network::NetworkSink>(schema,
@@ -133,14 +133,14 @@ const DataSinkPtr createNetworkSink(const SchemaPtr& schema,
 }
 
 #ifdef ENABLE_KAFKA_BUILD
-const DataSinkPtr
+DataSinkPtr
 createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic, uint64_t kafkaProducerTimeout) {
     return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
 }
 #endif
 
 #ifdef ENABLE_OPC_BUILD
-const DataSinkPtr createOPCSink(SchemaPtr schema,
+DataSinkPtr createOPCSink(SchemaPtr schema,
                                 QuerySubPlanId parentPlanId,
                                 NodeEngine::NodeEnginePtr nodeEngine,
                                 std::string url,
@@ -154,7 +154,7 @@ const DataSinkPtr createOPCSink(SchemaPtr schema,
 #endif
 
 #ifdef ENABLE_MQTT_BUILD
-const DataSinkPtr createMQTTSink(const SchemaPtr& schema,
+DataSinkPtr createMQTTSink(const SchemaPtr& schema,
                                  QuerySubPlanId parentPlanId,
                                  const NodeEngine::NodeEnginePtr& nodeEngine,
                                  const std::string& address,

@@ -44,7 +44,7 @@ void GeneratableProjectionOperator::generateExecute(CodeGeneratorPtr codegen, Pi
     codegen->generateCodeForProjection(expressions, context);
 }
 
-const std::string GeneratableProjectionOperator::toString() const { return "GeneratableProjectionOperator"; }
+std::string GeneratableProjectionOperator::toString() const { return "GeneratableProjectionOperator"; }
 
 OperatorNodePtr GeneratableProjectionOperator::copy() { return create(id, inputSchema, outputSchema, expressions); }
 

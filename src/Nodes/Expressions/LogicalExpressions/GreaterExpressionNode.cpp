@@ -17,8 +17,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
 namespace NES {
-GreaterExpressionNode::GreaterExpressionNode() : LogicalBinaryExpressionNode(){};
-
 GreaterExpressionNode::GreaterExpressionNode(GreaterExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
 ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
@@ -27,7 +25,7 @@ ExpressionNodePtr GreaterExpressionNode::create(const ExpressionNodePtr& left, c
     return greater;
 }
 
-bool GreaterExpressionNode::equal(const NodePtr rhs) const {
+bool GreaterExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<GreaterExpressionNode>()) {
         auto other = rhs->as<GreaterExpressionNode>();
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
@@ -35,7 +33,7 @@ bool GreaterExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string GreaterExpressionNode::toString() const {
+std::string GreaterExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << ">" << children[1]->toString();
     return ss.str();

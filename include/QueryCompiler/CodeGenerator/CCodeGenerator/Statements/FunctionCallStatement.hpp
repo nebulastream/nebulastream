@@ -17,19 +17,26 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FUNCTIONCALLSTATEMENT_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FUNCTIONCALLSTATEMENT_HPP_
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
+
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+#include <memory>
+
+namespace NES::QueryCompilation  {
 class FunctionCallStatement : public ExpressionStatment {
   public:
-    explicit FunctionCallStatement(std::string& functionname);
+    explicit inline FunctionCallStatement(std::string const &f) noexcept : functionName(f) {};
+    explicit inline FunctionCallStatement(std::string &&f) noexcept : functionName(std::move(f)) {};
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
-    static FunctionCallStatementPtr create(std::string& functionname);
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
+    template<typename T, typename = std::enable_if_t<std::is_constructible_v<std::string, T>>>
+    static inline FunctionCallStatementPtr create(T &&f) noexcept {
+        return std::make_shared<FunctionCallStatement>(std::forward<T>(f));
+    }
+
+    [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
     virtual void addParameter(const ExpressionStatment& expr);
     virtual void addParameter(ExpressionStatmentPtr expr);
@@ -40,7 +47,7 @@ class FunctionCallStatement : public ExpressionStatment {
     std::string functionName;
     std::vector<ExpressionStatmentPtr> expressions;
 };
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_FUNCTIONCALLSTATEMENT_HPP_

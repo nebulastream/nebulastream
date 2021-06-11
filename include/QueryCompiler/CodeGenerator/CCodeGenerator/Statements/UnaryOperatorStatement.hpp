@@ -21,9 +21,8 @@
 #include <memory>
 #include <string>
 
-namespace NES {
-namespace QueryCompilation {
-const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
+namespace NES::QueryCompilation  {
+CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
 
 class UnaryOperatorStatement : public ExpressionStatment {
   public:
@@ -31,9 +30,9 @@ class UnaryOperatorStatement : public ExpressionStatment {
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
+    [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
     ~UnaryOperatorStatement() override;
 
@@ -56,5 +55,5 @@ UnaryOperatorStatement operator~(const ExpressionStatment& ref);
 UnaryOperatorStatement operator!(const ExpressionStatment& ref);
 
 UnaryOperatorStatement sizeOf(const ExpressionStatment& ref);
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation

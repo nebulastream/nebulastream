@@ -33,7 +33,7 @@ class PrintSinkDescriptor : public SinkDescriptor {
      */
     static SinkDescriptorPtr create();
     std::string toString() override;
-    bool equal(SinkDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SinkDescriptorPtr const &other) override;
 
   private:
     explicit PrintSinkDescriptor();

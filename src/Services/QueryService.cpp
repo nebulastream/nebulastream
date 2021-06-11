@@ -71,7 +71,7 @@ uint64_t QueryService::validateAndQueueAddRequest(const std::string& queryString
         throw InvalidArgumentException("placementStrategyName", placementStrategyName);
     }
 
-    const QueryPlanPtr queryPlan = query->getQueryPlan();
+    QueryPlanPtr queryPlan = query->getQueryPlan();
     queryPlan->setQueryId(queryId);
 
     // Execute only if the semantic validation flag is enabled

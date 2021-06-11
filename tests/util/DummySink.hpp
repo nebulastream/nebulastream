@@ -22,10 +22,10 @@ namespace NES {
 class DummySink : public SinkDescriptor {
   public:
     static SinkDescriptorPtr create() { return std::make_shared<DummySink>(); }
-    DummySink() : SinkDescriptor(){};
+    DummySink() = default;
     ~DummySink() override = default;
-    std::string toString() override { return std::string(); }
-    bool equal(SinkDescriptorPtr) override { return false; }
+    [[nodiscard]] std::string toString() override { return std::string(); }
+    [[nodiscard]] bool equal(SinkDescriptorPtr const &) override { return false; }
 };
 }// namespace NES
 #endif//NES_TESTS_UTIL_DUMMYSINK_HPP_

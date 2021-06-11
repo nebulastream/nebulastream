@@ -25,13 +25,13 @@ StatementPtr ReturnStatement::create(const StatementPtr& statement) { return std
 
 StatementType ReturnStatement::getStamentType() const { return RETURN_STMT; }
 
-const CodeExpressionPtr ReturnStatement::getCode() const {
+CodeExpressionPtr ReturnStatement::getCode() const {
     std::stringstream stmt;
     stmt << "return " << statement->getCode()->code_ << ";";
     return std::make_shared<CodeExpression>(stmt.str());
 }
 
-const StatementPtr ReturnStatement::createCopy() const { return std::make_shared<ReturnStatement>(*this); }
+StatementPtr ReturnStatement::createCopy() const { return std::make_shared<ReturnStatement>(*this); }
 
 ReturnStatement::~ReturnStatement() = default;
 }// namespace NES::QueryCompilation

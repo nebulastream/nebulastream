@@ -54,25 +54,25 @@ class MemorySourceStreamConfig : public PhysicalStreamConfig {
      * @brief The string representation of the object
      * @return the string representation of the object
      */
-    const std::string toString() override;
+    std::string toString() override;
 
     /**
     * @brief The source type as a string
     * @return The source type as a string
     */
-    const std::string getSourceType() override;
+    std::string getSourceType() override;
 
     /**
      * @brief Provides the physical stream name of the source
      * @return the physical stream name of the source
      */
-    const std::string getPhysicalStreamName() override;
+    std::string getPhysicalStreamName() override;
 
     /**
      * @brief Provides the logical stream name of the source
      * @return the logical stream name of the source
      */
-    const std::string getLogicalStreamName() override;
+    std::string getLogicalStreamName() override;
 
     /**
      * @brief Factory method of MemorySourceStreamConfig

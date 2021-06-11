@@ -28,10 +28,11 @@ class AbsExpressionNode final : public ArithmeticalUnaryExpressionNode {
     /**
      * @brief Create a new ABS expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr& child);
+    [[nodiscard]] static ExpressionNodePtr create(ExpressionNodePtr const & child);
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
+
     void inferStamp(SchemaPtr schema) override;
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.

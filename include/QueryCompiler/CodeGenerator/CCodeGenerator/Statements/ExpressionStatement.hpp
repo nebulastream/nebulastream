@@ -18,30 +18,28 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/Statement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 
 class ExpressionStatment : public Statement {
   public:
     [[nodiscard]] StatementType getStamentType() const override = 0;
-    [[nodiscard]] const CodeExpressionPtr getCode() const override = 0;
+    [[nodiscard]] CodeExpressionPtr getCode() const override = 0;
     /** @brief virtual copy constructor */
-    [[nodiscard]] virtual const ExpressionStatmentPtr copy() const = 0;
+    [[nodiscard]] virtual ExpressionStatmentPtr copy() const = 0;
     /** @brief virtual copy constructor of base class
      *  todo create one unified version, having this twice is problematic
     */
-    [[nodiscard]] const StatementPtr createCopy() const final;
+    [[nodiscard]] StatementPtr createCopy() const final;
 
     BinaryOperatorStatement assign(const ExpressionStatment& ref);
     BinaryOperatorStatement assign(ExpressionStatmentPtr ref);
     BinaryOperatorStatement accessPtr(const ExpressionStatment& ref);
-    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr& ref);
+    BinaryOperatorStatement accessPtr(ExpressionStatmentPtr const & ref);
     BinaryOperatorStatement accessRef(const ExpressionStatment& ref);
     BinaryOperatorStatement accessRef(ExpressionStatmentPtr ref);
     BinaryOperatorStatement operator[](const ExpressionStatment& ref);
 
     ~ExpressionStatment() override;
 };
-}// namespace QueryCompilation
 
-}// namespace NES
+}// namespace NES::QueryCompilation

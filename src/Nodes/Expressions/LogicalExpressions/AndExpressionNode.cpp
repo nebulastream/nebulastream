@@ -28,7 +28,7 @@ ExpressionNodePtr AndExpressionNode::create(const ExpressionNodePtr& left, const
     return andNode;
 }
 
-bool AndExpressionNode::equal(const NodePtr rhs) const {
+bool AndExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<AndExpressionNode>()) {
         auto otherAndNode = rhs->as<AndExpressionNode>();
         return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
@@ -36,7 +36,7 @@ bool AndExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string AndExpressionNode::toString() const {
+std::string AndExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "&&" << children[1]->toString();
     return ss.str();

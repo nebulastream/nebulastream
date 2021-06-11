@@ -42,7 +42,7 @@ class GeneratableBufferEmit : public GeneratableOperator {
     */
     static GeneratableOperatorPtr create(OperatorId id, SchemaPtr outputSchema);
     void generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) override;
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:

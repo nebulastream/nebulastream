@@ -19,9 +19,7 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators {
 
 /**
  * @brief Physical operator for slice pre-aggregation.
@@ -36,11 +34,9 @@ class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator, publi
     static PhysicalOperatorPtr
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Windowing::WindowOperatorHandlerPtr& handler);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::WindowOperatorHandlerPtr handler);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWAGGREGATION_HPP_

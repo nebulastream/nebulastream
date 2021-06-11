@@ -34,17 +34,17 @@ CentralWindowOperator::CentralWindowOperator(const Windowing::LogicalWindowDefin
     windowDefinition->setDistributionCharacteristic(Windowing::DistributionCharacteristic::createCompleteWindowType());
 }
 
-const std::string CentralWindowOperator::toString() const {
+std::string CentralWindowOperator::toString() const {
     std::stringstream ss;
     ss << "CENTRALWINDOW(" << id << ")";
     return ss.str();
 }
 
-bool CentralWindowOperator::isIdentical(NodePtr rhs) const {
+bool CentralWindowOperator::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<CentralWindowOperator>()->getId() == id;
 }
 
-bool CentralWindowOperator::equal(const NodePtr rhs) const {
+bool CentralWindowOperator::equal(NodePtr const &rhs) const {
     return rhs->instanceOf<CentralWindowOperator>()
         && rhs->as<WindowOperatorNode>()->getWindowDefinition() == this->getWindowDefinition();
 }

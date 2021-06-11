@@ -21,12 +21,12 @@
 namespace NES::QueryCompilation {
 ReferenceDataType::ReferenceDataType(GeneratableDataTypePtr baseType) : GeneratableDataType(), baseType(std::move(baseType)) {}
 
-const CodeExpressionPtr ReferenceDataType::getCode() const {
+CodeExpressionPtr ReferenceDataType::getCode() const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "&");
 }
 
 CodeExpressionPtr ReferenceDataType::getDeclarationCode(std::string identifier) const {
     return std::make_shared<CodeExpression>(baseType->getCode()->code_ + "& " + identifier);
 }
-const CodeExpressionPtr ReferenceDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }
+CodeExpressionPtr ReferenceDataType::getTypeDefinitionCode() const { return baseType->getTypeDefinitionCode(); }
 }// namespace NES::QueryCompilation

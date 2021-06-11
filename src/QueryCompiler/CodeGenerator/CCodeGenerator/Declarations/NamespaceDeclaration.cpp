@@ -23,11 +23,11 @@ NamespaceDeclaration::NamespaceDeclaration(Code code) : namespaceCode(std::move(
 
 NamespaceDeclarationPtr NamespaceDeclaration::create(const Code& code) { return std::make_shared<NamespaceDeclaration>(code); }
 
-const GeneratableDataTypePtr NamespaceDeclaration::getType() const { return GeneratableDataTypePtr(); }
-const std::string NamespaceDeclaration::getIdentifierName() const { return ""; }
+GeneratableDataTypePtr NamespaceDeclaration::getType() const { return GeneratableDataTypePtr(); }
+std::string NamespaceDeclaration::getIdentifierName() const { return ""; }
 
-const Code NamespaceDeclaration::getTypeDefinitionCode() const { return Code(); }
+Code NamespaceDeclaration::getTypeDefinitionCode() const { return Code(); }
 
-const Code NamespaceDeclaration::getCode() const { return namespaceCode; }
-const DeclarationPtr NamespaceDeclaration::copy() const { return std::make_shared<NamespaceDeclaration>(*this); }
+Code NamespaceDeclaration::getCode() const { return namespaceCode; }
+DeclarationPtr NamespaceDeclaration::copy() const { return std::make_shared<NamespaceDeclaration>(*this); }
 }// namespace NES::QueryCompilation

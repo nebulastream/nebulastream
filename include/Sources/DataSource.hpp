@@ -218,16 +218,16 @@ class DataSource : public NodeEngine::Reconfigurable, public DataEmitter {
   protected:
     NodeEngine::QueryManagerPtr queryManager;
     NodeEngine::BufferManagerPtr globalBufferManager;
-    NodeEngine::FixedSizeBufferPoolPtr bufferManager;
+    NodeEngine::FixedSizeBufferPoolPtr bufferManager{nullptr};
     std::vector<NodeEngine::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     SchemaPtr schema;
-    uint64_t generatedTuples;
-    uint64_t generatedBuffers;
-    uint64_t numBuffersToProcess;
+    uint64_t generatedTuples = 0;
+    uint64_t generatedBuffers = 0;
+    uint64_t numBuffersToProcess = std::numeric_limits<decltype(numBuffersToProcess)>::max();
     uint64_t numSourceLocalBuffers;
     uint64_t gatheringIngestionRate{};
-    std::chrono::milliseconds gatheringInterval;
+    std::chrono::milliseconds gatheringInterval{0};
     GatheringMode gatheringMode;
     SourceType type;
     std::atomic<bool> wasGracefullyStopped{false};

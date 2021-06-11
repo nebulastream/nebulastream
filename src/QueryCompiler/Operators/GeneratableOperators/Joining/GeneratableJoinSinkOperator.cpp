@@ -50,7 +50,7 @@ void GeneratableJoinSinkOperator::generateOpen(CodeGeneratorPtr codegen, Pipelin
 void GeneratableJoinSinkOperator::generateExecute(CodeGeneratorPtr codegen, PipelineContextPtr context) {
     codegen->generateCodeForScan(outputSchema, outputSchema, context);
 }
-const std::string GeneratableJoinSinkOperator::toString() const { return "GeneratableJoinSinkOperator"; }
+std::string GeneratableJoinSinkOperator::toString() const { return "GeneratableJoinSinkOperator"; }
 
 OperatorNodePtr GeneratableJoinSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 

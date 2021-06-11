@@ -27,7 +27,7 @@ namespace NES {
  */
 class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    explicit RenameStreamOperatorNode(std::string& newStreamName, OperatorId id);
+    explicit RenameStreamOperatorNode(std::string const &newStreamName, OperatorId id);
     ~RenameStreamOperatorNode() override = default;
 
     /**
@@ -35,9 +35,9 @@ class RenameStreamOperatorNode : public LogicalUnaryOperatorNode {
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    bool equal(NodePtr rhs) const override;
-    bool isIdentical(NodePtr rhs) const override;
-    const std::string toString() const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.

@@ -22,21 +22,23 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 
 namespace NES::QueryCompilation {
-const std::string toString(const UnaryOperatorType& type) {
-    const char* const names[] = {"ADDRESS_OF_OP",
-                                 "DEREFERENCE_POINTER_OP",
-                                 "PREFIX_INCREMENT_OP",
-                                 "PREFIX_DECREMENT_OP",
-                                 "POSTFIX_INCREMENT_OP",
-                                 "POSTFIX_DECREMENT_OP",
-                                 "BITWISE_COMPLEMENT_OP",
-                                 "LOGICAL_NOT_OP",
-                                 "SIZE_OF_TYPE_OP",
-                                 "ABS_VALUE_OF_OP"};
-    return std::string(names[type]);
+std::string toString(const UnaryOperatorType& type) {
+    constexpr std::array<char const*, 10> names {
+        "ADDRESS_OF_OP",
+            "DEREFERENCE_POINTER_OP",
+            "PREFIX_INCREMENT_OP",
+            "PREFIX_DECREMENT_OP",
+            "POSTFIX_INCREMENT_OP",
+            "POSTFIX_DECREMENT_OP",
+            "BITWISE_COMPLEMENT_OP",
+            "LOGICAL_NOT_OP",
+            "SIZE_OF_TYPE_OP",
+            "ABS_VALUE_OF_OP"
+    };
+    return names[type];
 }
 
-const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
+CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type) {
     const char* const names[] = {"&", "*", "++", "--", "++", "--", "~", "!", "sizeof", "abs"};
     return std::make_shared<CodeExpression>(names[type]);
 }
@@ -47,7 +49,7 @@ UnaryOperatorStatement::UnaryOperatorStatement(const ExpressionStatment& expr,
     : expr_(expr.copy()), op_(op), bracket_mode_(bracket_mode) {}
 
 StatementType UnaryOperatorStatement::getStamentType() const { return UNARY_OP_STMT; }
-const CodeExpressionPtr UnaryOperatorStatement::getCode() const {
+CodeExpressionPtr UnaryOperatorStatement::getCode() const {
     CodeExpressionPtr code;
     if (POSTFIX_INCREMENT_OP == op_ || POSTFIX_DECREMENT_OP == op_) {
         /* postfix operators */
@@ -69,7 +71,7 @@ const CodeExpressionPtr UnaryOperatorStatement::getCode() const {
     return std::make_shared<CodeExpression>(ret);
 }
 
-const ExpressionStatmentPtr UnaryOperatorStatement::copy() const { return std::make_shared<UnaryOperatorStatement>(*this); }
+ExpressionStatmentPtr UnaryOperatorStatement::copy() const { return std::make_shared<UnaryOperatorStatement>(*this); }
 
 UnaryOperatorStatement::~UnaryOperatorStatement() = default;
 

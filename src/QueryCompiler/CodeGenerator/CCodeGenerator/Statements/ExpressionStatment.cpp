@@ -18,7 +18,7 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-const StatementPtr ExpressionStatment::createCopy() const { return this->copy(); }
+StatementPtr ExpressionStatment::createCopy() const { return this->copy(); }
 
 ExpressionStatment::~ExpressionStatment() = default;
 

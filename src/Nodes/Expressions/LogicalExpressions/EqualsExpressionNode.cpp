@@ -20,15 +20,13 @@ namespace NES {
 
 EqualsExpressionNode::EqualsExpressionNode(EqualsExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-EqualsExpressionNode::EqualsExpressionNode() : LogicalBinaryExpressionNode() {}
-
 ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
     auto equals = std::make_shared<EqualsExpressionNode>();
     equals->setChildren(left, right);
     return equals;
 }
 
-bool EqualsExpressionNode::equal(const NodePtr rhs) const {
+bool EqualsExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<EqualsExpressionNode>()) {
         auto other = rhs->as<EqualsExpressionNode>();
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
@@ -36,7 +34,7 @@ bool EqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string EqualsExpressionNode::toString() const {
+std::string EqualsExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "==" << children[1]->toString();
     return ss.str();

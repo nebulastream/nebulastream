@@ -18,17 +18,15 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 namespace NES::QueryCompilation {
-StdOutStatement::StdOutStatement(const std::string& message) : message(message) {}
 
 StatementType StdOutStatement::getStamentType() const { return RETURN_STMT; }
 
-const CodeExpressionPtr StdOutStatement::getCode() const {
+CodeExpressionPtr StdOutStatement::getCode() const {
     std::stringstream stmt;
     stmt << "std::cout <<" << message << " << std::endl;";
     return std::make_shared<CodeExpression>(stmt.str());
 }
 
-const StatementPtr StdOutStatement::createCopy() const { return std::make_shared<StdOutStatement>(*this); }
+StatementPtr StdOutStatement::createCopy() const { return std::make_shared<StdOutStatement>(*this); }
 
-StdOutStatement::~StdOutStatement() = default;
 }// namespace NES::QueryCompilation

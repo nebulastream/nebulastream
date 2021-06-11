@@ -38,7 +38,7 @@ ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string streamNam
 const std::string& ZmqSourceDescriptor::getHost() const { return host; }
 uint16_t ZmqSourceDescriptor::getPort() const { return port; }
 
-bool ZmqSourceDescriptor::equal(SourceDescriptorPtr other) {
+bool ZmqSourceDescriptor::equal(SourceDescriptorPtr const &other) {
     if (!other->instanceOf<ZmqSourceDescriptor>()) {
         return false;
     }

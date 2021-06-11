@@ -58,7 +58,7 @@ void GeneratableSlicePreAggregationOperator::generateExecute(CodeGeneratorPtr co
     codegen->generateCodeForSlicingWindow(windowDefinition, windowAggregation, context, handler);
 }
 
-const std::string GeneratableSlicePreAggregationOperator::toString() const { return "GeneratableSlicePreAggregationOperator"; }
+std::string GeneratableSlicePreAggregationOperator::toString() const { return "GeneratableSlicePreAggregationOperator"; }
 
 OperatorNodePtr GeneratableSlicePreAggregationOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation);

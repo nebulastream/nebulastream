@@ -40,7 +40,7 @@ void GeneratableBufferScan::generateExecute(CodeGeneratorPtr codegen, PipelineCo
     codegen->generateCodeForScan(inputSchema, inputSchema, context);
 }
 
-const std::string GeneratableBufferScan::toString() const { return "GeneratableBufferScan"; }
+std::string GeneratableBufferScan::toString() const { return "GeneratableBufferScan"; }
 
 OperatorNodePtr GeneratableBufferScan::copy() { return create(id, inputSchema); }
 

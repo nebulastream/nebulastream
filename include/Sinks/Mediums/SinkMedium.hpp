@@ -123,14 +123,14 @@ class SinkMedium : public NodeEngine::Reconfigurable {
 
   protected:
     SinkFormatPtr sinkFormat;
-    bool append;
-    std::atomic_bool schemaWritten;
+    bool append{false};
+    std::atomic_bool schemaWritten {false};
 
     QuerySubPlanId parentPlanId;
 
-    uint64_t sentBuffer;
-    uint64_t sentTuples;
-    std::mutex writeMutex;
+    uint64_t sentBuffer{0};
+    uint64_t sentTuples{0};
+    std::mutex writeMutex{};
 };
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;

@@ -31,7 +31,7 @@ PhysicalMultiplexOperator::PhysicalMultiplexOperator(OperatorId id, const Schema
     ExchangeOperatorNode::setOutputSchema(schema);
 }
 
-const std::string PhysicalMultiplexOperator::toString() const { return "PhysicalMultiplexOperator"; }
+std::string PhysicalMultiplexOperator::toString() const { return "PhysicalMultiplexOperator"; }
 OperatorNodePtr PhysicalMultiplexOperator::copy() { return create(id, inputSchema); }
 
 }// namespace NES::QueryCompilation::PhysicalOperators

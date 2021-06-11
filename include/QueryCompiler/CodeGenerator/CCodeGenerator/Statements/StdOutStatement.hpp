@@ -25,15 +25,15 @@ namespace QueryCompilation {
  */
 class StdOutStatement : public Statement {
   public:
-    explicit StdOutStatement(std::string& message);
+    template<typename T> inline StdOutStatement(T &&m) noexcept : message(std::forward<T>(m)) {}
+
+    ~StdOutStatement() noexcept override = default;
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const StatementPtr createCopy() const override;
-
-    ~StdOutStatement() override;
+    [[nodiscard]] StatementPtr createCopy() const override;
 
   private:
     std::string message;

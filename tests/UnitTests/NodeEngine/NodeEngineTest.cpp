@@ -107,7 +107,7 @@ std::string joinedExpectedOutput10 =
 
 std::string filePath = "file.txt";
 namespace NodeEngine {
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> listener);
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const &listener);
 }
 template<typename MockedNodeEngine>
 std::shared_ptr<MockedNodeEngine>
@@ -266,7 +266,7 @@ class MockedPipelineExecutionContext : public NodeEngine::Execution::PipelineExe
             },
             [sink](TupleBuffer&) {
             },
-            std::move(std::vector<NodeEngine::Execution::OperatorHandlerPtr>()),
+            std::vector<NodeEngine::Execution::OperatorHandlerPtr>{},
             12){
             // nop
         };
@@ -690,6 +690,7 @@ TEST_F(EngineTest, DISABLED_testSemiUnhandledExceptionCrash) {
     };
     class FailingTextExecutablePipeline : public ExecutablePipelineStage {
       public:
+        virtual ~FailingTextExecutablePipeline() = default;
         ExecutionResult execute(TupleBuffer&, PipelineExecutionContext&, WorkerContext&) override {
             NES_DEBUG("Going to throw exception");
             throw std::runtime_error("Catch me if you can!");// :P
