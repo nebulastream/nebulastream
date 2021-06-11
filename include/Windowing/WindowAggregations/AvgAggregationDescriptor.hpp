@@ -45,7 +45,7 @@ class AvgAggregationDescriptor : public WindowAggregationDescriptor {
     DataTypePtr getFinalAggregateStamp() override;
 
   private:
-    AvgAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    explicit AvgAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     AvgAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing

@@ -105,8 +105,8 @@ class MonitoringPlan {
     static const std::string DISK_METRICS_DESC;
 
   private:
-    MonitoringPlan(const std::vector<MetricValueType>& metrics);
-    MonitoringPlan(const SerializableMonitoringPlan& shippable);
+    explicit MonitoringPlan(const std::vector<MetricValueType>& metrics);
+    explicit MonitoringPlan(const SerializableMonitoringPlan& shippable);
 
     //the metrics for monitoring
     bool cpuMetrics;

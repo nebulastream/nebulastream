@@ -35,7 +35,7 @@ class BaseWindowActionDescriptor {
     std::string getTypeAsString();
 
   protected:
-    BaseWindowActionDescriptor(ActionType action);
+    explicit BaseWindowActionDescriptor(ActionType action);
     ActionType action;
 };
 

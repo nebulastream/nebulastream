@@ -26,7 +26,7 @@
 #include <Optimizer/Utils/DataTypeToZ3ExprUtil.hpp>
 #include <Optimizer/Utils/Z3ExprAndFieldMap.hpp>
 #include <Util/Logger.hpp>
-#include <string.h>
+#include <cstring>
 #include <z3++.h>
 
 namespace NES::Optimizer {

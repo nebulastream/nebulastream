@@ -17,7 +17,7 @@
 #ifndef NES_LINKPROPERTY_HPP
 #define NES_LINKPROPERTY_HPP
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief class to store link properties between two topology nodes

@@ -27,7 +27,7 @@ namespace QueryCompilation {
  */
 class NamespaceDeclaration : public Declaration {
   public:
-    NamespaceDeclaration(Code code);
+    explicit NamespaceDeclaration(Code code);
     static NamespaceDeclarationPtr create(Code code);
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;
     [[nodiscard]] const std::string getIdentifierName() const override;

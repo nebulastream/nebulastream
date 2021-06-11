@@ -74,7 +74,7 @@ class TestHarness {
          * @param restPort port for the rest service
          * @param rpcPort for for the grpc
          */
-    TestHarness(std::string queryWithoutSink,
+    explicit TestHarness(std::string queryWithoutSink,
                 uint16_t restPort = 8081,
                 uint16_t rpcPort = 4000,
                 uint64_t memSrcFrequency = 0,

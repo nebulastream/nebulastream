@@ -19,7 +19,7 @@
 
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <string.h>
+#include <cstring>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 

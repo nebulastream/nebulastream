@@ -34,7 +34,7 @@ class LowerPhysicalToGeneratableOperators {
      * @brief Constructor to create a LowerPhysicalToGeneratableOperatorPhase
      * @param provider to lower specific physical operator to generatabale operators
      */
-    LowerPhysicalToGeneratableOperators(GeneratableOperatorProviderPtr provider);
+    explicit LowerPhysicalToGeneratableOperators(GeneratableOperatorProviderPtr provider);
 
     /**
      * @brief Create a LowerPhysicalToGeneratableOperatorPhase

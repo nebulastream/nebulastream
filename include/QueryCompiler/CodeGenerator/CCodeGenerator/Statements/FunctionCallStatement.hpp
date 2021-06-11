@@ -22,7 +22,7 @@ namespace NES {
 namespace QueryCompilation {
 class FunctionCallStatement : public ExpressionStatment {
   public:
-    FunctionCallStatement(const std::string functionname);
+    explicit FunctionCallStatement(const std::string functionname);
 
     [[nodiscard]] StatementType getStamentType() const override;
 

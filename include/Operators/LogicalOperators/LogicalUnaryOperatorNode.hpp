@@ -27,7 +27,7 @@ namespace NES {
 class LogicalUnaryOperatorNode : public LogicalOperatorNode, public UnaryOperatorNode {
 
   public:
-    LogicalUnaryOperatorNode(OperatorId id);
+    explicit LogicalUnaryOperatorNode(OperatorId id);
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.

@@ -31,7 +31,7 @@ using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
  */
 class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    SinkLogicalOperatorNode(OperatorId id);
+    explicit SinkLogicalOperatorNode(OperatorId id);
     SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor, OperatorId id);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
     bool isIdentical(NodePtr rhs) const override;

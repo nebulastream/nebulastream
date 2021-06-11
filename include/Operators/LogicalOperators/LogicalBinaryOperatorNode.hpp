@@ -25,7 +25,7 @@ namespace NES {
  */
 class LogicalBinaryOperatorNode : public LogicalOperatorNode, public BinaryOperatorNode {
   public:
-    LogicalBinaryOperatorNode(OperatorId id);
+    explicit LogicalBinaryOperatorNode(OperatorId id);
 
     /**
     * @brief infers the input and out schema of this operator depending on its child.

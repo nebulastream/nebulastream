@@ -470,8 +470,9 @@ NodePtr Node::findRecursively(const NodePtr root, const NodePtr nodeToFind) {
 }
 
 bool Node::equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2) {
-    if (node1->children.size() != node2->children.size())
+    if (node1->children.size() != node2->children.size()) {
         return false;
+}
 
     auto x = node1->children.begin();
     while (x != node1->children.end()) {
@@ -503,8 +504,9 @@ bool Node::equalWithAllChildren(const NodePtr otherNode) {
 }// namespace NES
 
 bool Node::equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2) {
-    if (node1->parents.size() != node2->parents.size())
+    if (node1->parents.size() != node2->parents.size()) {
         return false;
+}
 
     auto x = node1->parents.begin();
 

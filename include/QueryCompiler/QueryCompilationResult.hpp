@@ -52,8 +52,8 @@ class QueryCompilationResult {
     std::exception_ptr getError();
 
   private:
-    QueryCompilationResult(NodeEngine::Execution::ExecutableQueryPlanPtr executableQueryPlan);
-    QueryCompilationResult(std::exception_ptr exception);
+    explicit QueryCompilationResult(NodeEngine::Execution::ExecutableQueryPlanPtr executableQueryPlan);
+    explicit QueryCompilationResult(std::exception_ptr exception);
     std::optional<NodeEngine::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
     std::optional<std::exception_ptr> exception;
 };

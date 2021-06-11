@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_API_QUERYID_HPP_
 #define NES_INCLUDE_API_QUERYID_HPP_
 
-#include <stdint.h>
+#include <cstdint>
 
 namespace NES {
 

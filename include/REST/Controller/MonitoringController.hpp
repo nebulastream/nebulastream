@@ -28,7 +28,7 @@ using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 class MonitoringController : public BaseController {
 
   public:
-    MonitoringController(MonitoringServicePtr mService);
+    explicit MonitoringController(MonitoringServicePtr mService);
 
     /**
      * Handling the Get requests for the query

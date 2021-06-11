@@ -31,8 +31,9 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
 
         bool nullTerminated = false;
         for (std::size_t i = 0; i < values.size(); ++i) {
-            if (i)
+            if (i) {
                 str << ", ";
+}
 
             auto const v = values[i].size() > 0 ? values[i][0] : 0;
             if (std::isprint(v)) {
@@ -54,8 +55,9 @@ CodeExpressionPtr GeneratableArrayValueType::getCodeExpression() const noexcept 
     } else {
 
         for (std::size_t i = 0; i < values.size(); ++i) {
-            if (i != 0)
+            if (i != 0) {
                 str << ", ";
+}
             str << values.at(i);
         }
     }

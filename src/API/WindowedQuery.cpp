@@ -40,8 +40,8 @@
 #include <Windowing/WindowPolicies/OnRecordTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnTimeTriggerPolicyDescription.hpp>
 #include <Windowing/WindowPolicies/OnWatermarkChangeTriggerPolicyDescription.hpp>
+#include <cstdarg>
 #include <iostream>
-#include <stdarg.h>
 #include <utility>
 
 namespace NES {

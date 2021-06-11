@@ -26,7 +26,7 @@
 #include "cuckoohash_config.hh"
 #include "cuckoohash_util.hh"
 #include "libcuckoo_bucket_container.hh"
-#include "math.h"
+#include <cmath>
 
 /**
  * A concurrent hash table
@@ -99,7 +99,7 @@ public:
      * @param equal equality function instance to use
      * @param alloc allocator instance to use
      */
-    cuckoohash_map(size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
+    explicit cuckoohash_map(size_type n = LIBCUCKOO_DEFAULT_SIZE, const Hash &hf = Hash(),
                    const KeyEqual &equal = KeyEqual(),
                    const Allocator &alloc = Allocator())
             : hash_fn_(hf), eq_fn_(equal),
@@ -178,7 +178,7 @@ public:
      * @param other the map being moved
      */
     cuckoohash_map(cuckoohash_map &&other)
-            : cuckoohash_map(std::move(other), other.get_allocator()) {}
+ noexcept             : cuckoohash_map(std::move(other), other.get_allocator()) {}
 
     /**
      * Move constructor with separate allocator. If the map being moved is being
@@ -266,7 +266,7 @@ public:
      * @param other the map to assign from
      * @return @c *this
      */
-    cuckoohash_map &operator=(cuckoohash_map &&other) {
+    cuckoohash_map &operator=(cuckoohash_map &&other)  noexcept {
         hash_fn_ = std::move(other.hash_fn_);
         eq_fn_ = std::move(other.eq_fn_);
         buckets_ = std::move(other.buckets_);
@@ -839,8 +839,9 @@ private:
         }
 
         void lock() noexcept {
-            while (lock_.test_and_set(std::memory_order_acq_rel))
+            while (lock_.test_and_set(std::memory_order_acq_rel)) {
                 ;
+}
         }
 
         void unlock() noexcept { lock_.clear(std::memory_order_release); }
@@ -958,7 +959,8 @@ private:
     void rehash_lock(size_t l) const noexcept {
         locks_t &locks = get_current_locks();
         spinlock &lock = locks[l];
-        if (lock.is_migrated()) return;
+        if (lock.is_migrated()) { return;
+}
 
         assert(is_data_nothrow_move_constructible());
         assert(locks.size() == kMaxNumLocks);
@@ -1038,12 +1040,15 @@ private:
                                                   normal_mode) const {
         std::array<size_type, 3> l{{lock_ind(i1), lock_ind(i2), lock_ind(i3)}};
         // Lock in order.
-        if (l[2] < l[1])
+        if (l[2] < l[1]) {
             std::swap(l[2], l[1]);
-        if (l[2] < l[0])
+}
+        if (l[2] < l[0]) {
             std::swap(l[2], l[0]);
-        if (l[1] < l[0])
+}
+        if (l[1] < l[0]) {
             std::swap(l[1], l[0]);
+}
         locks_t &locks = get_current_locks();
         locks[l[0]].lock();
         check_hashpower(hp, locks[l[0]]);
@@ -1555,7 +1560,7 @@ private:
     // b_slot holds the information for a BFS path through the table.
     struct b_slot {
         // The bucket of the last item in the path.
-        size_type bucket;
+        size_type bucket{};
         // a compressed representation of the slots for each of the buckets in
         // the path. pathcode is sort of like a base-slot_per_bucket number, and
         // we need to hold at most MAX_BFS_PATH_LEN slots. Thus we need the
@@ -1959,7 +1964,8 @@ private:
             t.join();
         }
         for (std::exception_ptr &eptr : eptrs) {
-            if (eptr) std::rethrow_exception(eptr);
+            if (eptr) { std::rethrow_exception(eptr);
+}
         }
     }
 
@@ -2025,8 +2031,9 @@ private:
     static size_type reserve_calc(const size_type n) {
         const size_type buckets = (n + slot_per_bucket() - 1) / slot_per_bucket();
         size_type blog2;
-        for (blog2 = 0; (size_type(1) << blog2) < buckets; ++blog2)
+        for (blog2 = 0; (size_type(1) << blog2) < buckets; ++blog2) {
             ;
+}
         assert(n <= buckets * slot_per_bucket() && buckets <= hashsize(blog2));
         return blog2;
     }
@@ -2671,7 +2678,7 @@ public:
         // (but expose it to the cuckoohash_map class), since we don't want users
         // calling it. We also complete any remaining rehashing in the table, so
         // that everything is in map.buckets_.
-        locked_table(cuckoohash_map &map) noexcept
+        explicit locked_table(cuckoohash_map &map) noexcept
                 : map_(map),
                   all_locks_manager_(map.lock_all(normal_mode())) {
             map.rehash_with_workers();

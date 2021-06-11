@@ -27,7 +27,7 @@
 
 namespace NES {
 
-NetworkMetrics::NetworkMetrics() {}
+NetworkMetrics::NetworkMetrics() = default;
 
 NetworkValues NetworkMetrics::getNetworkValue(uint64_t interfaceNo) const {
     if (interfaceNo >= getInterfaceNum()) {
@@ -75,7 +75,7 @@ NetworkMetrics NetworkMetrics::fromBuffer(SchemaPtr schema, NodeEngine::TupleBuf
             NES_DEBUG("NetworkMetrics: Parsing buffer for interface " + prefix + "Intfs[" + std::to_string(n + 1) + "]_");
 
             auto networkValue = NetworkValues::fromBuffer(schema, buf, prefix + "Intfs[" + std::to_string(n + 1) + "]_");
-            output.addNetworkValues(std::move(networkValue));
+            output.addNetworkValues(networkValue);
         }
     } else {
         NES_THROW_RUNTIME_ERROR("NetworkMetrics: Metrics could not be parsed from schema " + schema->toString());

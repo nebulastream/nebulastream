@@ -51,8 +51,9 @@ DeclarationPtr ConstructorDefinition::getDeclaration() {
     function << " " << name << "(";
     for (uint64_t i = 0; i < parameters.size(); ++i) {
         function << parameters[i].getCode();
-        if (i + 1 < parameters.size())
+        if (i + 1 < parameters.size()) {
             function << ", ";
+}
     }
     function << ")";
 
@@ -94,8 +95,9 @@ ConstructorDefinitionPtr ConstructorDefinition::addParameter(VariableDeclaration
     return shared_from_this();
 }
 ConstructorDefinitionPtr ConstructorDefinition::addStatement(StatementPtr statement) {
-    if (statement)
+    if (statement) {
         statements.emplace_back(statement);
+}
     return shared_from_this();
 }
 

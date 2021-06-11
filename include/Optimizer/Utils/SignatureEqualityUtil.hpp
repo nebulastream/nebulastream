@@ -43,7 +43,7 @@ class SignatureEqualityUtil {
   public:
     static SignatureEqualityUtilPtr create(z3::ContextPtr context);
 
-    SignatureEqualityUtil(z3::ContextPtr context);
+    explicit SignatureEqualityUtil(z3::ContextPtr context);
 
     /**
      * @brief Check equality of the given signatures

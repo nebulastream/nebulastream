@@ -27,7 +27,7 @@ namespace QueryCompilation {
  */
 class FunctionDeclaration : public Declaration {
   public:
-    FunctionDeclaration(Code code);
+    explicit FunctionDeclaration(Code code);
     static FunctionDeclarationPtr create(Code code);
 
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;

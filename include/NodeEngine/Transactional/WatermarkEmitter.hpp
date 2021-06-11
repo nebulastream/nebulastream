@@ -32,7 +32,7 @@ class WatermarkEmitter {
      * @brief Creates a new watermark emitter, with a specific origin id.
      * @param originId
      */
-    WatermarkEmitter(const OriginId originId);
+    explicit WatermarkEmitter(const OriginId originId);
 
     /**
     * @brief Creates a new watermark emitter, with a specific origin id.

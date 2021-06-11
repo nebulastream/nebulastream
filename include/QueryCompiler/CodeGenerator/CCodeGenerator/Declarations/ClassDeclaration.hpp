@@ -28,7 +28,7 @@ namespace QueryCompilation {
 class ClassDeclaration : public Declaration {
 
   public:
-    ClassDeclaration(ClassDefinitionPtr classDefinition);
+    explicit ClassDeclaration(ClassDefinitionPtr classDefinition);
     static ClassDeclarationPtr create(ClassDefinitionPtr classDefinition);
 
     [[nodiscard]] const GeneratableDataTypePtr getType() const override;

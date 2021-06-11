@@ -42,8 +42,9 @@ const Code StructDeclaration::getTypeDefinitionCode() const {
 const Code StructDeclaration::getCode() const {
     std::stringstream expr;
     expr << "struct ";
-    if (packed_struct_)
+    if (packed_struct_) {
         expr << "__attribute__((packed)) ";
+}
     expr << type_name_ << "{" << std::endl;
     for (auto& decl : decls_) {
         expr << decl->getCode() << ";" << std::endl;
@@ -83,8 +84,9 @@ const bool StructDeclaration::containsField(const std::string& field_name, const
 
 StructDeclaration& StructDeclaration::addField(const Declaration& decl) {
     DeclarationPtr decl_p = decl.copy();
-    if (decl_p)
+    if (decl_p) {
         decls_.push_back(decl_p);
+}
     return *this;
 }
 

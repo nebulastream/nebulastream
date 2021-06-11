@@ -28,7 +28,7 @@ namespace NES::NodeEngine {
 template<class ValueType>
 class BasicPhysicalField : public PhysicalField {
   public:
-    BasicPhysicalField(uint64_t bufferOffset) : PhysicalField(bufferOffset){};
+    explicit BasicPhysicalField(uint64_t bufferOffset) : PhysicalField(bufferOffset){};
     ~BasicPhysicalField() = default;
     ;
 

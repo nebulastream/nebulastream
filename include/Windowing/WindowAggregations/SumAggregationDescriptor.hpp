@@ -45,7 +45,7 @@ class SumAggregationDescriptor : public WindowAggregationDescriptor {
     DataTypePtr getFinalAggregateStamp() override;
 
   private:
-    SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    explicit SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing

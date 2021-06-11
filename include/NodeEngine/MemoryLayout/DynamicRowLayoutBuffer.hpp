@@ -20,7 +20,7 @@
 #include <NodeEngine/MemoryLayout/DynamicLayoutBuffer.hpp>
 #include <NodeEngine/MemoryLayout/DynamicRowLayout.hpp>
 #include <NodeEngine/NodeEngineForwaredRefs.hpp>
-#include <stdint.h>
+#include <cstdint>
 
 namespace NES::NodeEngine::DynamicMemoryLayout {
 

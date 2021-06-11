@@ -32,7 +32,7 @@ class PointerDataType final : public GeneratableDataType {
      * @brief Is constructed by the base of this value type.
      * @param baseType
      */
-    PointerDataType(GeneratableDataTypePtr baseType);
+    explicit PointerDataType(GeneratableDataTypePtr baseType);
 
     /**
     * @brief Generates the code for the native type.

@@ -27,7 +27,7 @@ using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressi
  */
 class FieldAssignmentExpressionNode : public BinaryExpressionNode {
   public:
-    FieldAssignmentExpressionNode(DataTypePtr stamp);
+    explicit FieldAssignmentExpressionNode(DataTypePtr stamp);
 
     /**
      * @brief Create untyped field read.

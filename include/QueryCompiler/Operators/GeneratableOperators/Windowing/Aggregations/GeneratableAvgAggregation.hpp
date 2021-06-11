@@ -23,7 +23,7 @@ namespace GeneratableOperators {
 
 class GeneratableAvgAggregation : public GeneratableWindowAggregation {
   public:
-    GeneratableAvgAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
+    explicit GeneratableAvgAggregation(Windowing::WindowAggregationDescriptorPtr aggregationDescriptor);
 
     /**
      * @brief Factory Method to create a new GeneratableWindowAggregation

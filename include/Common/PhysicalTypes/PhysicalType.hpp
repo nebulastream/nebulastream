@@ -33,7 +33,7 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
  */
 class PhysicalType {
   public:
-    inline PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) {}
+    inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) {}
 
     /**
      * @brief Returns the number of bytes occupied by this data type.

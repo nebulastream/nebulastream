@@ -67,7 +67,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>, public
 
         UnpooledBufferHolder();
 
-        UnpooledBufferHolder(uint32_t size);
+        explicit UnpooledBufferHolder(uint32_t size);
 
         UnpooledBufferHolder(std::unique_ptr<detail::MemorySegment>&& mem, uint32_t size);
 

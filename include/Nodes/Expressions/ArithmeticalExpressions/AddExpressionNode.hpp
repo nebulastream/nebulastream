@@ -23,7 +23,7 @@ namespace NES {
  */
 class AddExpressionNode : public ArithmeticalBinaryExpressionNode {
   public:
-    AddExpressionNode(DataTypePtr stamp);
+    explicit AddExpressionNode(DataTypePtr stamp);
     ~AddExpressionNode() = default;
     /**
      * @brief Create a new ADD expression

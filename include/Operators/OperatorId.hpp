@@ -17,7 +17,7 @@
 #ifndef NES_OPERATORID_HPP
 #define NES_OPERATORID_HPP
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief this alias represent a locally running query execution plan

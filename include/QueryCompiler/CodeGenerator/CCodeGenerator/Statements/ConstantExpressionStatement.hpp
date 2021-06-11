@@ -31,7 +31,7 @@ class ConstantExpressionStatement : public ExpressionStatment {
 
     [[nodiscard]] const ExpressionStatmentPtr copy() const override;
 
-    ConstantExpressionStatement(GeneratableValueTypePtr val);
+    explicit ConstantExpressionStatement(GeneratableValueTypePtr val);
 
     ~ConstantExpressionStatement() override;
 

@@ -17,7 +17,7 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_QUERYEXECUTIONPLANID_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_QUERYEXECUTIONPLANID_HPP_
 
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * @brief this alias represent a locally running query execution plan

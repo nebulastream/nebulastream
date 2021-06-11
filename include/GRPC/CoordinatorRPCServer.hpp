@@ -31,7 +31,7 @@ using CoordinatorEnginePtr = std::shared_ptr<CoordinatorEngine>;
 
 class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
   public:
-    CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine);
+    explicit CoordinatorRPCServer(CoordinatorEnginePtr coordinatorEngine);
 
     /**
      * @brief RPC Call to register a node

@@ -196,8 +196,9 @@ bool MQTTSource::connect() {
             // If there is no session present, then we need to subscribe, but if
             // there is a session, then the server remembers us and our
             // subscriptions.
-            if (!rsp.is_session_present())
+            if (!rsp.is_session_present()) {
                 client->subscribe(topic, 1)->wait();
+}
             connected = client->is_connected();
         } catch (const mqtt::exception& exc) {
             NES_WARNING("\n  " << exc);

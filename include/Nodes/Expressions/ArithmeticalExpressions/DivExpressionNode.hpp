@@ -24,7 +24,7 @@ namespace NES {
  */
 class DivExpressionNode : public ArithmeticalBinaryExpressionNode {
   public:
-    DivExpressionNode(DataTypePtr stamp);
+    explicit DivExpressionNode(DataTypePtr stamp);
     ~DivExpressionNode() = default;
     /**
      * @brief Create a new DIV expression
@@ -40,7 +40,7 @@ class DivExpressionNode : public ArithmeticalBinaryExpressionNode {
     ExpressionNodePtr copy() override;
 
   protected:
-    DivExpressionNode(DivExpressionNode* other);
+    explicit DivExpressionNode(DivExpressionNode* other);
 };
 
 }// namespace NES

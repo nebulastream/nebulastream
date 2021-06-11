@@ -23,7 +23,7 @@ namespace NES {
  */
 class AbsExpressionNode final : public ArithmeticalUnaryExpressionNode {
   public:
-    AbsExpressionNode(DataTypePtr stamp);
+    explicit AbsExpressionNode(DataTypePtr stamp);
     ~AbsExpressionNode() = default;
     /**
      * @brief Create a new ABS expression

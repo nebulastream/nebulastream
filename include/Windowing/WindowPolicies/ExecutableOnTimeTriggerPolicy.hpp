@@ -26,7 +26,7 @@ namespace NES::Windowing {
 
 class ExecutableOnTimeTriggerPolicy : public BaseExecutableWindowTriggerPolicy {
   public:
-    ExecutableOnTimeTriggerPolicy(uint64_t triggerTimeInMs);
+    explicit ExecutableOnTimeTriggerPolicy(uint64_t triggerTimeInMs);
 
     static ExecutableOnTimeTriggerPtr create(uint64_t triggerTimeInMs);
 

@@ -260,7 +260,7 @@ class StateVariable : public detail::Destroyable {
      * @brief Copy Constructor of a state variable
      * @param other the param to copy
      */
-    StateVariable(const StateVariable<Key, Value>& other)
+    explicit StateVariable(const StateVariable<Key, Value>& other)
         : name(other.name), backend(other.backend), defaultCallback(other.defaultCallback) {
         // nop
     }
@@ -269,7 +269,7 @@ class StateVariable : public detail::Destroyable {
      * @brief Move Constructor of a state variable
      * @param other the param to move
      */
-    StateVariable(StateVariable<Key, Value>&& other) { *this = std::move(other); }
+    explicit StateVariable(StateVariable<Key, Value>&& other)  noexcept { *this = std::move(other); }
 
     /**
      * @brief Destructor of a state variable. It frees all allocated resources.
@@ -296,7 +296,7 @@ class StateVariable : public detail::Destroyable {
      * @param other the param to move
      * @return the same state variable
      */
-    StateVariable& operator=(StateVariable<Key, Value>&& other) {
+    StateVariable& operator=(StateVariable<Key, Value>&& other)  noexcept {
         name = std::move(other.name);
         backend = std::move(other.backend);
         return *this;

@@ -26,7 +26,7 @@ namespace QueryCompilation {
 class ReturnStatement : public Statement {
   public:
     static StatementPtr create(StatementPtr statement);
-    ReturnStatement(StatementPtr statement);
+    explicit ReturnStatement(StatementPtr statement);
 
     [[nodiscard]] StatementType getStamentType() const override;
 

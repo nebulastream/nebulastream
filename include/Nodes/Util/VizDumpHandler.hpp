@@ -95,7 +95,7 @@ class VizGraph {
      * @brief Creates a new viz graph object
      * @param name of the graph
      */
-    VizGraph(std::string name);
+    explicit VizGraph(std::string name);
 
     /**
      * @brief Serialize the edge to the nezviz format.
@@ -126,7 +126,7 @@ class VizDumpHandler : public DumpHandler {
      * @brief Creates a new VizDumpHandler
      * @param rootDir directory for the viz dump files.
      */
-    VizDumpHandler(std::string rootDir);
+    explicit VizDumpHandler(std::string rootDir);
 
     void dump(const NodePtr node) override;
 

@@ -45,7 +45,7 @@ class CountAggregationDescriptor : public WindowAggregationDescriptor {
     WindowAggregationPtr copy() override;
 
   private:
-    CountAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    explicit CountAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     CountAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing

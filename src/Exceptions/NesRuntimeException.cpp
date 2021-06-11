@@ -21,7 +21,7 @@ namespace NES {
 
 NesRuntimeException::NesRuntimeException(std::string msg, std::string&& stacktrace) : errorMessage(std::move(msg)) {
     errorMessage.append(":: callstack:\n");
-    errorMessage.append(std::move(stacktrace));
+    errorMessage.append(stacktrace);
 }
 
 NesRuntimeException::NesRuntimeException(std::string msg, const std::string& stacktrace) : errorMessage(std::move(msg)) {

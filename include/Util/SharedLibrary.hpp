@@ -40,7 +40,7 @@ class SharedLibrary {
         return reinterpret_cast<Function>(getSymbol(mangeled_symbol_name));
     }
 
-    SharedLibrary(void* shared_lib);
+    explicit SharedLibrary(void* shared_lib);
 
   private:
     void* shared_lib;

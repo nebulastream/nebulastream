@@ -26,7 +26,7 @@ namespace QueryCompilation {
  */
 class DataSourceProvider {
   public:
-    DataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
+    explicit DataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
     static DataSourceProviderPtr create(QueryCompilerOptionsPtr compilerOptions);
     /**
      * @brief Lowers a source descriptor to a executable data source.

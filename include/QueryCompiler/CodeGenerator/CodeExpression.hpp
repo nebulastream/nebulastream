@@ -27,7 +27,7 @@ namespace NES::QueryCompilation {
 class CodeExpression {
   public:
     template<typename T, typename = std::enable_if_t<std::is_constructible_v<std::string, std::decay_t<T>>>>
-    inline CodeExpression(T&& code) noexcept : code_(std::forward<T>(code)) {}
+    inline explicit CodeExpression(T&& code) noexcept : code_(std::forward<T>(code)) {}
     std::string const code_;
 };
 

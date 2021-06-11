@@ -48,8 +48,9 @@ GeneratableDataTypePtr GeneratableTypesFactory::createDataType(DataTypePtr type)
 }
 
 GeneratableValueTypePtr GeneratableTypesFactory::createValueType(ValueTypePtr valueType) {
-    if (valueType->dataType->isArray())
+    if (valueType->dataType->isArray()) {
         return std::make_shared<GeneratableArrayValueType>(valueType, std::dynamic_pointer_cast<ArrayValue>(valueType)->values);
+}
 
     return std::make_shared<GeneratableBasicValueType>(std::dynamic_pointer_cast<BasicValue>(valueType));
 }

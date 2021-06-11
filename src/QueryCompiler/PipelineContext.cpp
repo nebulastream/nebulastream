@@ -60,8 +60,9 @@ int64_t PipelineContext::registerOperatorHandler(NodeEngine::Execution::Operator
 
 const uint64_t PipelineContext::getHandlerIndex(NodeEngine::Execution::OperatorHandlerPtr operatorHandler) {
     for (auto i = 0; i < operatorHandlers.size(); i++) {
-        if (operatorHandlers[i] == operatorHandler)
+        if (operatorHandlers[i] == operatorHandler) {
             return i;
+}
     }
     NES_FATAL_ERROR("Handler is not registered");
     return 0;

@@ -103,7 +103,7 @@ QueryPtr UtilityFunctions::createQueryFromCodeString(const std::string& queryCod
         code << "Query createQuery(){" << std::endl;
 
         std::string streamName = queryCodeSnippet.substr(queryCodeSnippet.find("::from("));
-        streamName = streamName.substr(7, streamName.find(")") - 7);
+        streamName = streamName.substr(7, streamName.find(')') - 7);
         NES_DEBUG(" UtilityFunctions: stream name = " << streamName);
 
         std::string newQuery = queryCodeSnippet;
@@ -225,8 +225,9 @@ std::string UtilityFunctions::generateIdString() {
 
     std::string res;
     for (bool i : dash) {
-        if (i)
+        if (i) {
             res += "-";
+}
         res += v[dist(rng)];
         res += v[dist(rng)];
     }
@@ -258,8 +259,9 @@ std::vector<std::string> UtilityFunctions::splitWithStringDelimiter(std::string&
         elems.push_back(copy.substr(0, pos));
         copy.erase(0, pos + delim.length());
     }
-    if (!copy.substr(0, pos).empty())
+    if (!copy.substr(0, pos).empty()) {
         elems.push_back(copy.substr(0, pos));
+}
 
     return elems;
 }
@@ -365,8 +367,9 @@ void UtilityFunctions::findAndReplaceAll(std::string& data, std::string toSearch
 const std::string UtilityFunctions::replaceFirst(std::string origin, std::string search, std::string replace) {
     if (origin.find(search) != std::string::npos) {
         return origin.replace(origin.find(search), search.size(), replace);
-    } else
+    } else {
         return origin;
+}
 }
 
 const std::string UtilityFunctions::toCSVString(SchemaPtr schema) {

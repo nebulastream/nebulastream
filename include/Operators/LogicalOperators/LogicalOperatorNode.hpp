@@ -41,7 +41,7 @@ namespace NES {
 class LogicalOperatorNode : public virtual OperatorNode {
 
   public:
-    LogicalOperatorNode(OperatorId id);
+    explicit LogicalOperatorNode(OperatorId id);
 
     /**
      * @brief Get the First Order Logic formula representation by the Z3 expression

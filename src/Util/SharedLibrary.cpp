@@ -17,7 +17,7 @@
 #include <Util/SharedLibrary.hpp>
 
 #include <Util/Logger.hpp>
-#include <assert.h>
+#include <cassert>
 #include <dlfcn.h>
 #include <iostream>
 #include <memory>

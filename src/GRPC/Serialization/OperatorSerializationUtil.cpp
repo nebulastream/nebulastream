@@ -184,9 +184,10 @@ SerializableOperator* OperatorSerializationUtil::serializeOperator(OperatorNodeP
         if (operatorNode->isExchangeOperator()) {
             SchemaSerializationUtil::serializeSchema(operatorNode->as<ExchangeOperatorNode>()->getInputSchema(),
                                                      serializedOperator->mutable_inputschema());
-        } else
+        } else {
             SchemaSerializationUtil::serializeSchema(operatorNode->as<UnaryOperatorNode>()->getInputSchema(),
                                                      serializedOperator->mutable_inputschema());
+}
     } else {
         SchemaSerializationUtil::serializeSchema(operatorNode->as<BinaryOperatorNode>()->getLeftInputSchema(),
                                                  serializedOperator->mutable_leftinputschema());

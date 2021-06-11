@@ -32,7 +32,7 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
 /// @brief Representation of a user-defined constant in the NES type system.
 class [[nodiscard]] ValueType {
   public:
-    [[nodiscard]] inline ValueType(DataTypePtr&& type) : dataType(std::move(type)) {}
+    [[nodiscard]] inline explicit ValueType(DataTypePtr&& type) : dataType(std::move(type)) {}
 
     /// @brief Checks if two values are equal
     [[nodiscard]] virtual bool isEquals(ValueTypePtr valueType) const noexcept = 0;

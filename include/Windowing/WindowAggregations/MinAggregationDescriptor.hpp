@@ -44,7 +44,7 @@ class MinAggregationDescriptor : public WindowAggregationDescriptor {
     DataTypePtr getFinalAggregateStamp() override;
 
   private:
-    MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
+    explicit MinAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     MinAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 }// namespace NES::Windowing

@@ -65,22 +65,22 @@ class Predicate : public LegacyExpression {
 
 class PredicateItem : public LegacyExpression {
   public:
-    PredicateItem(AttributeFieldPtr attribute);
-    PredicateItem(ValueTypePtr value);
+    explicit PredicateItem(AttributeFieldPtr attribute);
+    explicit PredicateItem(ValueTypePtr value);
 
-    PredicateItem(int8_t val);
-    PredicateItem(uint8_t val);
-    PredicateItem(int16_t val);
-    PredicateItem(uint16_t val);
-    PredicateItem(int32_t val);
-    PredicateItem(uint32_t val);
-    PredicateItem(int64_t val);
-    PredicateItem(uint64_t val);
-    PredicateItem(float val);
-    PredicateItem(double val);
-    PredicateItem(bool val);
-    PredicateItem(char val);
-    PredicateItem(const char* val);
+    explicit PredicateItem(int8_t val);
+    explicit PredicateItem(uint8_t val);
+    explicit PredicateItem(int16_t val);
+    explicit PredicateItem(uint16_t val);
+    explicit PredicateItem(int32_t val);
+    explicit PredicateItem(uint32_t val);
+    explicit PredicateItem(int64_t val);
+    explicit PredicateItem(uint64_t val);
+    explicit PredicateItem(float val);
+    explicit PredicateItem(double val);
+    explicit PredicateItem(bool val);
+    explicit PredicateItem(char val);
+    explicit PredicateItem(const char* val);
 
     const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code, RecordHandlerPtr recordHandler) const override;
     [[nodiscard]] const std::string toString() const override;
@@ -104,7 +104,7 @@ using PredicateItemPtr = std::shared_ptr<PredicateItem>;
 
 class Field : public PredicateItem {
   public:
-    Field(AttributeFieldPtr name);
+    explicit Field(AttributeFieldPtr name);
 
   private:
     std::string _name;

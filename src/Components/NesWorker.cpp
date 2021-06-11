@@ -27,8 +27,8 @@
 #include <Monitoring/MonitoringAgent.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
+#include <csignal>
 #include <future>
-#include <signal.h>
 #include <utility>
 
 using namespace std;

@@ -26,7 +26,7 @@ namespace QueryCompilation {
  */
 class CommentStatement : public Statement {
   public:
-    CommentStatement(const std::string comment);
+    explicit CommentStatement(const std::string comment);
 
     [[nodiscard]] StatementType getStamentType() const override;
 

@@ -20,7 +20,7 @@
 #include <Topology/TopologyNode.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <assert.h>
+#include <cassert>
 
 namespace NES {
 

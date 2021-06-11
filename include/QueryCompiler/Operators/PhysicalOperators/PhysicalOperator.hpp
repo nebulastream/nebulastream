@@ -34,7 +34,7 @@ namespace PhysicalOperators {
  */
 class PhysicalOperator : public virtual OperatorNode {
   protected:
-    PhysicalOperator(OperatorId id);
+    explicit PhysicalOperator(OperatorId id);
 };
 
 }// namespace PhysicalOperators

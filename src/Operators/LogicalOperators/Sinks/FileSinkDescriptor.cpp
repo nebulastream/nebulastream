@@ -36,8 +36,9 @@ const std::string& FileSinkDescriptor::getFileName() const { return fileName; }
 std::string FileSinkDescriptor::toString() { return "FileSinkDescriptor()"; }
 
 bool FileSinkDescriptor::equal(SinkDescriptorPtr other) {
-    if (!other->instanceOf<FileSinkDescriptor>())
+    if (!other->instanceOf<FileSinkDescriptor>()) {
         return false;
+}
     auto otherSinkDescriptor = other->as<FileSinkDescriptor>();
     return fileName == otherSinkDescriptor->fileName;
 }

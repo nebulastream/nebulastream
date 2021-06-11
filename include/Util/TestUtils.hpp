@@ -598,7 +598,7 @@ class TestUtils {
 
                 nodeNo = json_return.at("nodes").size();
 
-                if (nodeNo == expectedWorkers + 1u) {
+                if (nodeNo == expectedWorkers + 1U) {
                     NES_INFO("TestUtils: Expected worker number reached correctly " << expectedWorkers);
                     return true;
                 } else {

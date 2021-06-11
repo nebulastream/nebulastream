@@ -139,7 +139,7 @@ NetworkMetrics SystemResourcesReader::ReadNetworkStats() {
         outputValue.tCompressed = tCompressed;
 
         // extension of the wrapper class object
-        output.addNetworkValues(std::move(outputValue));
+        output.addNetworkValues(outputValue);
     }
     fclose(fp);
 
@@ -150,8 +150,9 @@ MemoryMetrics SystemResourcesReader::ReadMemoryStats() {
     auto* sinfo = (struct sysinfo*) malloc(sizeof(struct sysinfo));
 
     int ret = sysinfo(sinfo);
-    if (ret == EFAULT)
+    if (ret == EFAULT) {
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading memory stats");
+}
 
     MemoryMetrics output{};
     output.TOTAL_RAM = sinfo->totalram;
@@ -177,8 +178,9 @@ DiskMetrics SystemResourcesReader::ReadDiskStats() {
     auto* svfs = (struct statvfs*) malloc(sizeof(struct statvfs));
 
     int ret = statvfs("/", svfs);
-    if (ret == EFAULT)
+    if (ret == EFAULT) {
         NES_THROW_RUNTIME_ERROR("SystemResourcesReader: Error reading disk stats");
+}
 
     output.fBsize = svfs->f_bsize;
     output.fFrsize = svfs->f_frsize;

@@ -209,7 +209,7 @@
 #else
 #include <link.h>
 #endif
-#include <signal.h>
+#include <csignal>
 #include <sys/stat.h>
 #include <syscall.h>
 #include <unistd.h>
@@ -381,7 +381,7 @@ typedef SSIZE_T ssize_t;
 #ifdef __CLANG_UNWIND_H
 // In fact, this function still comes from libgcc (on my different linux boxes,
 // clang links against libgcc).
-#include <inttypes.h>
+#include <cinttypes>
 extern "C" uintptr_t _Unwind_GetIPInfo(_Unwind_Context*, int*);
 #endif
 
@@ -539,13 +539,14 @@ class handle {
 
     explicit handle() : _val() {}
     explicit handle(T val) : _val(val), _empty(false) {
-        if (!_val)
+        if (!_val) {
             _empty = true;
+}
     }
 
 #ifdef BACKWARD_ATLEAST_CXX11
-    handle(handle&& from) : _empty(true) { swap(from); }
-    handle& operator=(handle&& from) {
+    handle(handle&& from)  noexcept : _empty(true) { swap(from); }
+    handle& operator=(handle&& from)  noexcept {
         swap(from);
         return *this;
     }
@@ -571,7 +572,7 @@ class handle {
         _empty = static_cast<bool>(new_val);
     }
 
-    operator const dummy*() const {
+    explicit operator const dummy*() const {
         if (_empty) {
             return nullptr;
         }
@@ -615,7 +616,7 @@ struct demangler_impl {
 
 template<>
 struct demangler_impl<system_tag::current_tag> {
-    demangler_impl() {}
+    demangler_impl() = default;
 
     std::string demangle(const char* funcname) {
         using namespace details;
@@ -667,7 +668,7 @@ struct Trace {
     void* addr{nullptr};
     size_t idx{0};
 
-    Trace() {}
+    Trace() = default;
 
     explicit Trace(void* _addr, size_t _idx) : addr(_addr), idx(_idx) {}
 };
@@ -680,7 +681,7 @@ struct ResolvedTrace : public Trace {
         unsigned line{0};
         unsigned col{0};
 
-        SourceLoc() {}
+        SourceLoc() = default;
 
         bool operator==(const SourceLoc& b) const {
             return function == b.function && filename == b.filename && line == b.line && col == b.col;
@@ -709,7 +710,7 @@ struct ResolvedTrace : public Trace {
     source_locs_t inliners;
 
     ResolvedTrace() : Trace() {}
-    ResolvedTrace(const Trace& mini_trace) : Trace(mini_trace) {}
+    explicit ResolvedTrace(const Trace& mini_trace) : Trace(mini_trace) {}
 };
 
 /*************** STACK TRACE ***************/
@@ -728,7 +729,7 @@ class StackTraceImpl {
 
 class StackTraceImplBase {
   public:
-    StackTraceImplBase() {}
+    StackTraceImplBase() = default;
 
     [[nodiscard]] size_t thread_id() const { return _thread_id; }
 
@@ -808,8 +809,9 @@ class Unwinder {
     }
 
     _Unwind_Reason_Code backtrace(_Unwind_Context* ctx) {
-        if (_index >= 0 && static_cast<size_t>(_index) >= _depth)
+        if (_index >= 0 && static_cast<size_t>(_index) >= _depth) {
             return _URC_END_OF_STACK;
+}
 
         int ip_before_instruction = 0;
         uintptr_t ip = _Unwind_GetIPInfo(ctx, &ip_before_instruction);
@@ -874,7 +876,7 @@ class StackTraceImpl<system_tag::current_tag> : public StackTraceImplHolder {
   private:
     struct callback {
         StackTraceImpl& self;
-        callback(StackTraceImpl& _self) : self(_self) {}
+        explicit callback(StackTraceImpl& _self) : self(_self) {}
 
         void operator()(size_t idx, void* addr) { self._stacktrace[idx] = addr; }
     };
@@ -1512,7 +1514,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libbfd> : public TraceResolverL
 template<>
 class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLinuxBase {
   public:
-    TraceResolverLinuxImpl() {}
+    TraceResolverLinuxImpl() = default;
 
     template<class ST>
     void load_stacktrace(ST&) {}
@@ -1704,7 +1706,7 @@ class TraceResolverLinuxImpl<trace_resolver_tag::libdw> : public TraceResolverLi
             };
         }
         ResolvedTrace& trace;
-        inliners_search_cb(ResolvedTrace& t) : trace(t) {}
+        explicit inliners_search_cb(ResolvedTrace& t) : trace(t) {}
     };
 
     static bool die_has_pc(Dwarf_Die* die, Dwarf_Addr pc) {
@@ -3337,7 +3339,7 @@ class SourceFile {
     using lines_t = std::vector<std::pair<unsigned int, std::string>>;
 
     SourceFile() = default;
-    SourceFile(const std::string& path) {
+    explicit SourceFile(const std::string& path) {
         // 1. If BACKWARD_CXX_SOURCE_PREFIXES is set then assume it contains
         //    a colon-separated list of path prefixes.  Try prepending each
         //    to the given path until a valid file is found.
@@ -3346,8 +3348,9 @@ class SourceFile {
             // Double slashes (//) should not be a problem.
             std::string new_path = prefixe + '/' + path;
             _file.reset(new std::ifstream(new_path.c_str()));
-            if (is_open())
+            if (is_open()) {
                 break;
+}
         }
         // 2. If no valid file found then fallback to opening the path as-is.
         if (!_file || !is_open()) {
@@ -3393,8 +3396,9 @@ class SourceFile {
                 return lines;
             }
             if (!started) {
-                if (std::find_if(line.begin(), line.end(), not_isspace()) == line.end())
+                if (std::find_if(line.begin(), line.end(), not_isspace()) == line.end()) {
                     continue;
+}
                 started = true;
             }
             lines.push_back(make_pair(line_idx, line));
@@ -3425,8 +3429,8 @@ class SourceFile {
     void swap(SourceFile& b) { _file.swap(b._file); }
 
 #ifdef BACKWARD_ATLEAST_CXX11
-    SourceFile(SourceFile&& from) : _file(nullptr) { swap(from); }
-    SourceFile& operator=(SourceFile&& from) {
+    SourceFile(SourceFile&& from)  noexcept : _file(nullptr) { swap(from); }
+    SourceFile& operator=(SourceFile&& from)  noexcept {
         swap(from);
         return *this;
     }
@@ -3529,7 +3533,7 @@ enum type { automatic, never, always };
 
 class cfile_streambuf : public std::streambuf {
   public:
-    cfile_streambuf(FILE* _sink) : sink(_sink) {}
+    explicit cfile_streambuf(FILE* _sink) : sink(_sink) {}
     int_type underflow() override { return traits_type::eof(); }
     int_type overflow(int_type ch) override {
         if (traits_type::not_eof(ch) && fwrite(&ch, sizeof ch, 1, sink) == 1) {
@@ -3565,15 +3569,16 @@ enum type { yellow = 33, purple = 35, reset = 39 };
 
 class Colorize {
   public:
-    Colorize(std::ostream& os) : _os(os), _reset(false), _enabled(false) {}
+    explicit Colorize(std::ostream& os) : _os(os), _reset(false), _enabled(false) {}
 
     void activate(ColorMode::type mode) { _enabled = mode == ColorMode::always; }
 
     void activate(ColorMode::type mode, FILE* fp) { activate(mode, fileno(fp)); }
 
     void set_color(Color::type ccode) {
-        if (!_enabled)
+        if (!_enabled) {
             return;
+}
 
         // I assume that the terminal can handle basic colors. Seriously I
         // don't want to deal with all the termcap shit.
@@ -3624,7 +3629,7 @@ class Printer {
 
     Printer()
 
-    {}
+    = default;
 
     template<typename ST>
     FILE* print(ST& st, FILE* fp = stderr) {
@@ -3788,7 +3793,7 @@ class SignalHandling {
         return std::vector<int>(posix_signals, posix_signals + sizeof posix_signals / sizeof posix_signals[0]);
     }
 
-    SignalHandling(const std::vector<int>& posix_signals = make_default_signals()) {
+    explicit SignalHandling(const std::vector<int>& posix_signals = make_default_signals()) {
         bool success = true;
 
         const size_t stack_size = 1024 * 1024 * 8;
@@ -3821,8 +3826,9 @@ class SignalHandling {
 #endif
 
             int r = sigaction(posix_signal, &action, nullptr);
-            if (r < 0)
+            if (r < 0) {
                 success = false;
+}
         }
 
         _loaded = success;
