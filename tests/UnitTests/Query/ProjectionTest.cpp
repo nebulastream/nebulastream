@@ -250,11 +250,9 @@ class TestSink : public SinkMedium {
         return resultBuffers[index];
     }
 
-    const std::string toString() const override { return ""; }
+    std::string toString() const override { return "Test_Sink"; }
 
     void setup() override{};
-
-    static std::string toString() { return "Test_Sink"; }
 
     void shutdown() override {
         std::unique_lock lock(m);
