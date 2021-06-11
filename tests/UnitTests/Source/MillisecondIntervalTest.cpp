@@ -32,11 +32,11 @@ static uint64_t restPort = 8081;
 static uint64_t rpcPort = 4000;
 
 struct __attribute__((packed)) ysbRecord {
-    char user_id[16]{}{};
-    char page_id[16]{}{};
-    char campaign_id[16]{}{};
-    char ad_type[9]{}{};
-    char event_type[9]{}{};
+    char user_id[16]{} {};
+    char page_id[16]{} {};
+    char campaign_id[16]{} {};
+    char ad_type[9]{} {};
+    char event_type[9]{} {};
     int64_t current_ms;
     uint32_t ip;
 
