@@ -18,18 +18,13 @@
 #include <QueryCompiler/CodeGenerator/CodeExpression.hpp>
 #include <sstream>
 namespace NES::QueryCompilation {
-ContinueStatement::ContinueStatement() = default;
 
 StatementType ContinueStatement::getStamentType() const { return RETURN_STMT; }
 
-const CodeExpressionPtr ContinueStatement::getCode() const {
-    std::stringstream stmt;
-    //    stmt << "std::cout << \"call continue\" << std::endl;";
-    stmt << "continue;";
-    return std::make_shared<CodeExpression>(stmt.str());
+CodeExpressionPtr ContinueStatement::getCode() const {
+    return std::make_shared<CodeExpression>("continue;");
 }
 
-const StatementPtr ContinueStatement::createCopy() const { return std::make_shared<ContinueStatement>(*this); }
+StatementPtr ContinueStatement::createCopy() const { return std::make_shared<ContinueStatement>(*this); }
 
-ContinueStatement::~ContinueStatement() = default;
 }// namespace NES::QueryCompilation

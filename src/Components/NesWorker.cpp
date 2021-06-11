@@ -41,21 +41,21 @@ void termFunc(int) {
 
 namespace NES {
 
+
+
 NesWorker::NesWorker(const WorkerConfigPtr& workerConfig, NesNodeType type)
-    : coordinatorIp(std::move(workerConfig->getCoordinatorIp()->getValue())),
+    : conf(PhysicalStreamConfig::createEmpty()),
+      coordinatorIp(workerConfig->getCoordinatorIp()->getValue()),
+      localWorkerIp(workerConfig->getLocalWorkerIp()->getValue()),
       coordinatorPort(workerConfig->getCoordinatorPort()->getValue()),
-      localWorkerIp(std::move(workerConfig->getLocalWorkerIp()->getValue())),
       localWorkerRpcPort(workerConfig->getRpcPort()->getValue()), localWorkerZmqPort(workerConfig->getDataPort()->getValue()),
       numberOfSlots(workerConfig->getNumberOfSlots()->getValue()),
+      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()),
       numberOfBuffersInGlobalBufferManager(workerConfig->getNumberOfBuffersInGlobalBufferManager()->getValue()),
       numberOfBuffersPerPipeline(workerConfig->getnumberOfBuffersPerPipeline()->getValue()),
       numberOfBuffersInSourceLocalBufferPool(workerConfig->getNumberOfBuffersInSourceLocalBufferPool()->getValue()),
       bufferSizeInBytes(workerConfig->getBufferSizeInBytes()->getValue()),
-      numWorkerThreads(workerConfig->getNumWorkerThreads()->getValue()), type(type), conf(PhysicalStreamConfig::createEmpty()),
-      topologyNodeId(INVALID_TOPOLOGY_NODE_ID), isRunning(false) {
-    connected = false;
-    withRegisterStream = false;
-    withParent = false;
+      type(type) {
     MDC::put("threadName", "NesWorker");
     NES_DEBUG("NesWorker: constructed");
 }

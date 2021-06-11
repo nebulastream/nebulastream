@@ -23,9 +23,8 @@
 #include <memory>
 #include <string>
 
-namespace NES {
-namespace QueryCompilation {
-const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
+namespace NES::QueryCompilation  {
+CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 
 class BinaryOperatorStatement : public ExpressionStatment {
   public:
@@ -39,6 +38,8 @@ class BinaryOperatorStatement : public ExpressionStatment {
                             const ExpressionStatment& rhs,
                             BracketMode bracket_mode = NO_BRACKETS);
 
+    ~BinaryOperatorStatement() override = default;
+
     BinaryOperatorStatement
     addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode = NO_BRACKETS);
 
@@ -46,15 +47,9 @@ class BinaryOperatorStatement : public ExpressionStatment {
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
-
-    //  BinaryOperatorStatement operator [](const ExpressionStatment &ref){
-    //    return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
-    //  }
-
-    ~BinaryOperatorStatement() override;
+    [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
   private:
     ExpressionStatmentPtr lhs_;
@@ -102,5 +97,5 @@ BinaryOperatorStatement operator^(const ExpressionStatment& lhs, const Expressio
 BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
 
 BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation

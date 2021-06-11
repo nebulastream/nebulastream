@@ -34,14 +34,14 @@ ClassDeclarationPtr ClassDeclaration::create(const ClassDefinitionPtr& classDefi
     return std::make_shared<ClassDeclaration>(classDefinition);
 }
 
-const GeneratableDataTypePtr ClassDeclaration::getType() const {
+GeneratableDataTypePtr ClassDeclaration::getType() const {
     return GeneratableTypesFactory().createAnonymusDataType(classDefinition->name);
 }
-const std::string ClassDeclaration::getIdentifierName() const { return ""; }
+std::string ClassDeclaration::getIdentifierName() const { return ""; }
 
-const Code ClassDeclaration::getTypeDefinitionCode() const { return Code(); }
+Code ClassDeclaration::getTypeDefinitionCode() const { return Code(); }
 
-const Code ClassDeclaration::getCode() const {
+Code ClassDeclaration::getCode() const {
     std::stringstream classCode;
     classCode << "class " << classDefinition->name;
     classCode << generateBaseClassNames();
@@ -97,5 +97,5 @@ std::string ClassDeclaration::generateBaseClassNames() const {
     return classCode.str();
 }
 
-const DeclarationPtr ClassDeclaration::copy() const { return std::make_shared<ClassDeclaration>(*this); }
+DeclarationPtr ClassDeclaration::copy() const { return std::make_shared<ClassDeclaration>(*this); }
 }// namespace NES::QueryCompilation

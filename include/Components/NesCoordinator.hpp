@@ -78,7 +78,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     using inherited0 = detail::virtual_enable_shared_from_this<NesCoordinator>;
     using inherited1 = ErrorListener;
 
-  public:
+public:
     explicit NesCoordinator(const CoordinatorConfigPtr& coordinatorConfig);
 
     /**
@@ -188,7 +188,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     TopologyPtr topology;
     RestServerPtr restServer;
     std::shared_ptr<std::thread> restThread;
-    std::atomic<bool> isRunning;
+    std::atomic<bool> isRunning{false};
     QueryRequestProcessorServicePtr queryRequestProcessorService;
     QueryServicePtr queryService;
     MonitoringServicePtr monitoringService;

@@ -50,8 +50,8 @@ const std::string toString(const BinaryOperatorType& type) {
     return std::string(names[type]);
 }
 
-const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
-    const char* const names[] = {
+CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type) {
+    constexpr char const * const names[] = {
         "==", "!=", "<", "<=", ">", ">=", "+",  "-", "*",  "/",  "pow(,)", "%",
         "&&", "||", "&", "|",  "^", "<<", ">>", "=", "[]", "->", ".",
     };
@@ -79,7 +79,7 @@ StatementPtr BinaryOperatorStatement::assignToVariable(const VarRefStatement&) {
 
 StatementType BinaryOperatorStatement::getStamentType() const { return BINARY_OP_STMT; }
 
-const CodeExpressionPtr BinaryOperatorStatement::getCode() const {
+CodeExpressionPtr BinaryOperatorStatement::getCode() const {
     CodeExpressionPtr code;
     if (ARRAY_REFERENCE_OP == op_) {
         code = combine(lhs_->getCode(), std::make_shared<CodeExpression>("["));
@@ -104,9 +104,7 @@ const CodeExpressionPtr BinaryOperatorStatement::getCode() const {
     return std::make_shared<CodeExpression>(ret);
 }
 
-const ExpressionStatmentPtr BinaryOperatorStatement::copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
-
-BinaryOperatorStatement::~BinaryOperatorStatement() = default;
+ExpressionStatmentPtr BinaryOperatorStatement::copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
 
 /** \brief small utility operator overloads to make code generation simpler and */
 

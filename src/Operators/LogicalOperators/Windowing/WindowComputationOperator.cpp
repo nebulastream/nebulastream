@@ -34,17 +34,17 @@ WindowComputationOperator::WindowComputationOperator(const Windowing::LogicalWin
     this->windowDefinition->setOriginId(id);
 }
 
-const std::string WindowComputationOperator::toString() const {
+std::string WindowComputationOperator::toString() const {
     std::stringstream ss;
     ss << "WindowComputationOperator(" << id << ")";
     return ss.str();
 }
 
-bool WindowComputationOperator::isIdentical(NodePtr rhs) const {
+bool WindowComputationOperator::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<WindowComputationOperator>()->getId() == id;
 }
 
-bool WindowComputationOperator::equal(const NodePtr rhs) const { return rhs->instanceOf<WindowComputationOperator>(); }
+bool WindowComputationOperator::equal(NodePtr const &rhs) const { return rhs->instanceOf<WindowComputationOperator>(); }
 
 OperatorNodePtr WindowComputationOperator::copy() {
     auto copy = LogicalOperatorFactory::createWindowComputationSpecializedOperator(windowDefinition, id);

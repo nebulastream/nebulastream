@@ -27,6 +27,7 @@ class DefaultPhysicalOperatorProvider : public PhysicalOperatorProvider {
   public:
     static PhysicalOperatorProviderPtr create();
     void lower(QueryPlanPtr queryPlan, LogicalOperatorNodePtr operatorNode) override;
+    virtual ~DefaultPhysicalOperatorProvider() noexcept = default;
 
   protected:
     /**

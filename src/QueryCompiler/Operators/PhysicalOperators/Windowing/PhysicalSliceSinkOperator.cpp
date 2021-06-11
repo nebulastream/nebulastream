@@ -36,7 +36,7 @@ PhysicalSliceSinkOperator::PhysicalSliceSinkOperator(OperatorId id,
                                                      Windowing::WindowOperatorHandlerPtr handler)
     : OperatorNode(id), PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(handler)){};
 
-const std::string PhysicalSliceSinkOperator::toString() const { return "PhysicalSliceSinkOperator"; }
+std::string PhysicalSliceSinkOperator::toString() const { return "PhysicalSliceSinkOperator"; }
 
 OperatorNodePtr PhysicalSliceSinkOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 

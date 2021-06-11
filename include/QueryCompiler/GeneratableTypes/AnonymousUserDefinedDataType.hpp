@@ -22,21 +22,20 @@
 #include <string>
 #include <utility>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation {
 /**
  * @brief A generatable data type that generates code for anonymous user define types.
  * This is usually used to generate code for runtime types, which are not covered by the nes type system.
  */
 class AnonymousUserDefinedDataType final : public GeneratableDataType {
   public:
-    explicit AnonymousUserDefinedDataType(std::string& name);
+    explicit AnonymousUserDefinedDataType(std::string const &name);
 
     /**
      * @brief Generated code for a type definition. This is mainly crucial for structures.
      * @return CodeExpressionPtr
      */
-    [[nodiscard]] const CodeExpressionPtr getTypeDefinitionCode() const final;
+    [[nodiscard]] CodeExpressionPtr getTypeDefinitionCode() const final;
 
     /**
     * @brief Generates the code for a type declaration with a specific identifier.
@@ -50,12 +49,11 @@ class AnonymousUserDefinedDataType final : public GeneratableDataType {
     * For instance int8_t, or uint32_t for BasicTypes or uint32_t[15] for an ArrayType.
     * @return CodeExpressionPtr
     */
-    [[nodiscard]] const CodeExpressionPtr getCode() const final;
+    [[nodiscard]] CodeExpressionPtr getCode() const final;
 
   private:
     const std::string name;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_DATATYPES_ANONYMOUSUSERDEFINEDDATATYPE_HPP_

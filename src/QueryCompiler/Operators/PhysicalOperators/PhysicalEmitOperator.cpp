@@ -27,7 +27,7 @@ PhysicalOperatorPtr PhysicalEmitOperator::create(OperatorId id, const SchemaPtr&
     return std::make_shared<PhysicalEmitOperator>(id, inputSchema);
 }
 
-const std::string PhysicalEmitOperator::toString() const { return "PhysicalEmitOperator"; }
+std::string PhysicalEmitOperator::toString() const { return "PhysicalEmitOperator"; }
 
 OperatorNodePtr PhysicalEmitOperator::copy() { return create(id, inputSchema); }
 

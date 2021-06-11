@@ -50,7 +50,7 @@ void GeneratableMapOperator::generateExecute(CodeGeneratorPtr codegen, PipelineC
     codegen->generateCodeForMap(AttributeField::create(field->getFieldName(), field->getStamp()), legacyMapExpression, context);
 }
 
-const std::string GeneratableMapOperator::toString() const { return "GeneratableMapOperator"; }
+std::string GeneratableMapOperator::toString() const { return "GeneratableMapOperator"; }
 
 OperatorNodePtr GeneratableMapOperator::copy() { return create(id, inputSchema, outputSchema, mapExpression); }
 

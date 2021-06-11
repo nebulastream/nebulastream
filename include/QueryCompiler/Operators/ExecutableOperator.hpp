@@ -47,7 +47,7 @@ class ExecutableOperator : public UnaryOperatorNode {
      * @return std::vector<NodeEngine::Execution::OperatorHandlerPtr>
      */
     std::vector<NodeEngine::Execution::OperatorHandlerPtr> getOperatorHandlers();
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:

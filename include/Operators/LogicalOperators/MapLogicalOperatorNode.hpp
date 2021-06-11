@@ -27,7 +27,7 @@ namespace NES {
  */
 class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
-    MapLogicalOperatorNode(FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id);
+    MapLogicalOperatorNode(FieldAssignmentExpressionNodePtr const &mapExpression, OperatorId id);
 
     /**
     * @brief Returns the expression of this map operator
@@ -44,9 +44,9 @@ class MapLogicalOperatorNode : public LogicalUnaryOperatorNode {
      */
     bool inferSchema() override;
     void inferStringSignature() override;
-    bool equal(NodePtr rhs) const override;
-    bool isIdentical(NodePtr rhs) const override;
-    const std::string toString() const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:

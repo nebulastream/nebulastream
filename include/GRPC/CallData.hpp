@@ -49,7 +49,7 @@ class CallData {
     WorkerRPCServer& service;
 
     // The producer-consumer queue where for asynchronous server notifications.
-    grpc::ServerCompletionQueue* completionQueue;
+    [[maybe_unused]] grpc::ServerCompletionQueue* completionQueue;
 
     // Let's implement a tiny state machine with the following states.
     enum CallStatus { CREATE, PROCESS, FINISH };

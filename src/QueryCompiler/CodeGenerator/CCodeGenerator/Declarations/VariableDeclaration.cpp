@@ -25,10 +25,10 @@
 #include <utility>
 
 namespace NES::QueryCompilation {
-const GeneratableDataTypePtr VariableDeclaration::getType() const { return type_; }
-const std::string VariableDeclaration::getIdentifierName() const { return identifier_; }
+GeneratableDataTypePtr VariableDeclaration::getType() const { return type_; }
+std::string VariableDeclaration::getIdentifierName() const { return identifier_; }
 
-const Code VariableDeclaration::getTypeDefinitionCode() const {
+Code VariableDeclaration::getTypeDefinitionCode() const {
     CodeExpressionPtr code = type_->getTypeDefinitionCode();
     if (code) {
         return code->code_;
@@ -36,7 +36,7 @@ const Code VariableDeclaration::getTypeDefinitionCode() const {
     return Code();
 }
 
-const Code VariableDeclaration::getCode() const {
+Code VariableDeclaration::getCode() const {
     std::stringstream str;
     str << type_->getDeclarationCode(identifier_)->code_;
     if (init_value_) {
@@ -46,13 +46,11 @@ const Code VariableDeclaration::getCode() const {
     return str.str();
 }
 
-const CodeExpressionPtr VariableDeclaration::getIdentifier() const { return std::make_shared<CodeExpression>(identifier_); }
+CodeExpressionPtr VariableDeclaration::getIdentifier() const { return std::make_shared<CodeExpression>(identifier_); }
 
-const GeneratableDataTypePtr VariableDeclaration::getDataType() const { return type_; }
+GeneratableDataTypePtr VariableDeclaration::getDataType() const { return type_; }
 
-const DeclarationPtr VariableDeclaration::copy() const { return std::make_shared<VariableDeclaration>(*this); }
-
-VariableDeclaration::~VariableDeclaration() = default;
+DeclarationPtr VariableDeclaration::copy() const { return std::make_shared<VariableDeclaration>(*this); }
 
 VariableDeclaration::VariableDeclaration(GeneratableDataTypePtr type, std::string identifier, ValueTypePtr value)
     : type_(std::move(type)), identifier_(std::move(identifier)), init_value_(std::move(value)) {}

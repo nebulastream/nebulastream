@@ -20,8 +20,7 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 /**
  * @brief Declaration for a class in the generated code.
  */
@@ -31,13 +30,13 @@ class ClassDeclaration : public Declaration {
     explicit ClassDeclaration(ClassDefinitionPtr classDefinition);
     static ClassDeclarationPtr create(const ClassDefinitionPtr& classDefinition);
 
-    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
-    [[nodiscard]] const std::string getIdentifierName() const override;
+    [[nodiscard]] GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] std::string getIdentifierName() const override;
 
-    [[nodiscard]] const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] Code getTypeDefinitionCode() const override;
 
-    [[nodiscard]] const Code getCode() const override;
-    [[nodiscard]] const DeclarationPtr copy() const override;
+    [[nodiscard]] Code getCode() const override;
+    [[nodiscard]] DeclarationPtr copy() const override;
 
   private:
     static std::string generateFunctions(std::vector<FunctionDefinitionPtr>& functions);
@@ -45,7 +44,6 @@ class ClassDeclaration : public Declaration {
     [[nodiscard]] std::string generateBaseClassNames() const;
     ClassDefinitionPtr classDefinition;
 };
-}// namespace QueryCompilation
-}// namespace NES
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_CLASSDECLARATION_HPP_

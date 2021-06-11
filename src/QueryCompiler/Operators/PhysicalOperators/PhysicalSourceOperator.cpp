@@ -38,7 +38,7 @@ PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, So
 
 SourceDescriptorPtr PhysicalSourceOperator::getSourceDescriptor() { return sourceDescriptor; }
 
-const std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }
+std::string PhysicalSourceOperator::toString() const { return "PhysicalSourceOperator"; }
 
 OperatorNodePtr PhysicalSourceOperator::copy() { return create(id, inputSchema, outputSchema, sourceDescriptor); }
 

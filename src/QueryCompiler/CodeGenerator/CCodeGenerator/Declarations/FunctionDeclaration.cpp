@@ -23,11 +23,11 @@ FunctionDeclaration::FunctionDeclaration(Code code) : functionCode(std::move(cod
 
 FunctionDeclarationPtr FunctionDeclaration::create(const Code& code) { return std::make_shared<FunctionDeclaration>(code); }
 
-const GeneratableDataTypePtr FunctionDeclaration::getType() const { return GeneratableDataTypePtr(); }
-const std::string FunctionDeclaration::getIdentifierName() const { return ""; }
+GeneratableDataTypePtr FunctionDeclaration::getType() const { return GeneratableDataTypePtr(); }
+std::string FunctionDeclaration::getIdentifierName() const { return ""; }
 
-const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
+Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
 
-const Code FunctionDeclaration::getCode() const { return functionCode; }
-const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
+Code FunctionDeclaration::getCode() const { return functionCode; }
+DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
 }// namespace NES::QueryCompilation

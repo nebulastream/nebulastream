@@ -86,7 +86,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
      * @param other
      * @return true if they are the same
      */
-    bool equal(SourceDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
 
     std::string toString() override;
 

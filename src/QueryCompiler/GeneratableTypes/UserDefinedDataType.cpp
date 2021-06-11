@@ -19,11 +19,11 @@
 namespace NES::QueryCompilation {
 UserDefinedDataType::UserDefinedDataType(const StructDeclaration& decl) : declaration(decl) {}
 
-const CodeExpressionPtr UserDefinedDataType::getTypeDefinitionCode() const {
+CodeExpressionPtr UserDefinedDataType::getTypeDefinitionCode() const {
     return std::make_shared<CodeExpression>(declaration.getCode());
 }
 
-const CodeExpressionPtr UserDefinedDataType::getCode() const {
+CodeExpressionPtr UserDefinedDataType::getCode() const {
     return std::make_shared<CodeExpression>(declaration.getTypeName());
 }
 

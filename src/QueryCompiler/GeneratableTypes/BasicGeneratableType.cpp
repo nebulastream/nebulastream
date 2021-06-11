@@ -24,12 +24,12 @@
 namespace NES::QueryCompilation {
 BasicGeneratableType::BasicGeneratableType(BasicPhysicalTypePtr type) : GeneratableDataType(), type(std::move(type)) {}
 
-const CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
+CodeExpressionPtr BasicGeneratableType::getTypeDefinitionCode() const {
     // A basic type need no type definition.
     return std::make_shared<CodeExpression>("");
 }
 
-const CodeExpressionPtr BasicGeneratableType::getCode() const {
+CodeExpressionPtr BasicGeneratableType::getCode() const {
 
     switch (type->nativeType) {
         case BasicPhysicalType::INT_8: return std::make_shared<CodeExpression>("int8_t");

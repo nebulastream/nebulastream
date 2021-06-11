@@ -25,6 +25,6 @@ SinkDescriptorPtr NullOutputSinkDescriptor::create() {
 }
 
 std::string NullOutputSinkDescriptor::toString() { return "NullOutputSinkDescriptor()"; }
-bool NullOutputSinkDescriptor::equal(SinkDescriptorPtr other) { return other->instanceOf<NullOutputSinkDescriptor>(); }
+bool NullOutputSinkDescriptor::equal(SinkDescriptorPtr const &other) { return other->instanceOf<NullOutputSinkDescriptor>(); }
 
 }// namespace NES

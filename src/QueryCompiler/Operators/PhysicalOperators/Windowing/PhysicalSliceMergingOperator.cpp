@@ -36,7 +36,7 @@ PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(OperatorId id,
                                                            Windowing::WindowOperatorHandlerPtr handler)
     : OperatorNode(id), PhysicalWindowOperator(id, std::move(inputSchema), std::move(outputSchema), std::move(handler)){};
 
-const std::string PhysicalSliceMergingOperator::toString() const { return "PhysicalSliceMergingOperator"; }
+std::string PhysicalSliceMergingOperator::toString() const { return "PhysicalSliceMergingOperator"; }
 
 OperatorNodePtr PhysicalSliceMergingOperator::copy() { return create(id, inputSchema, outputSchema, operatorHandler); }
 

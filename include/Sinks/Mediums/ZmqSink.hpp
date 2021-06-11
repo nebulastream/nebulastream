@@ -58,10 +58,10 @@ class ZmqSink : public SinkMedium {
     std::string host;
     uint16_t port;
 
-    bool connected;
-    zmq::context_t context;
-    zmq::socket_t socket;
+    bool connected{false};
     bool internal;
+    zmq::context_t context{zmq::context_t(1)};
+    zmq::socket_t socket{zmq::socket_t(context, ZMQ_PUSH)};
 
     bool connect();
     bool disconnect();

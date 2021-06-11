@@ -24,14 +24,14 @@ namespace NES {
  */
 class GreaterExpressionNode : public LogicalBinaryExpressionNode {
   public:
-    GreaterExpressionNode();
+    GreaterExpressionNode() noexcept= default;
     ~GreaterExpressionNode() = default;
     /**
     * @brief Create a new greater expression
     */
-    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const &left, ExpressionNodePtr const &right);
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.

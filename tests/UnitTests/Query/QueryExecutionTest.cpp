@@ -118,7 +118,7 @@ class WindowSource : public NES::DefaultSource {
                         1,
                         12,
                         std::move(successors)),
-          varyWatermark(varyWatermark), decreaseTime(decreaseTime), timestamp(timestamp) {}
+          timestamp(timestamp), varyWatermark(varyWatermark), decreaseTime(decreaseTime) {}
 
     std::optional<TupleBuffer> receiveData() override {
         auto buffer = bufferManager->getBufferBlocking();

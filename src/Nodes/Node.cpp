@@ -65,7 +65,7 @@ bool Node::addChild(const NodePtr newNode) {
     return true;
 }
 
-bool Node::removeChild(const NodePtr& node) {
+bool Node::removeChild(NodePtr const &node) {
 
     if (!node) {
         NES_ERROR("Node: Can't remove null node");
@@ -110,7 +110,7 @@ bool Node::addParent(const NodePtr newNode) {
     return true;
 }
 
-bool Node::insertBetweenThisAndParentNodes(const NodePtr& newNode) {
+bool Node::insertBetweenThisAndParentNodes(NodePtr const &newNode) {
 
     if (newNode.get() == this) {
         NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
@@ -200,7 +200,7 @@ void Node::removeChildren() {
     }
 }
 
-bool Node::removeParent(const NodePtr& node) {
+bool Node::removeParent(NodePtr const &node) {
 
     if (!node) {
         NES_ERROR("Node: Can't remove null node");
@@ -431,7 +431,7 @@ std::vector<NodePtr> Node::getAllLeafNodes() {
     return leafNodes;
 }
 
-bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind) {
+bool Node::vectorContainsTheNode(std::vector<NodePtr> const &nodes, NES::NodePtr const & nodeToFind) {
     return find(nodes, nodeToFind) != nullptr;
 }
 
@@ -450,7 +450,7 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
     return nullptr;
 }
 
-NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
+NodePtr Node::findRecursively(NodePtr const &root, NodePtr const &nodeToFind) {
     // DFS
     NodePtr resultNode = nullptr;
     // two operator are equal, may not the same object
@@ -638,7 +638,7 @@ bool Node::isCyclicHelper(Node& node) {
     node.recStack = false;
     return false;
 }
-const std::vector<std::string> Node::toMultilineString() {
+std::vector<std::string> Node::toMultilineString() {
     std::vector<std::string> lines;
     lines.push_back(toString());
     return lines;

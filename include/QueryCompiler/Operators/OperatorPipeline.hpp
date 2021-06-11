@@ -82,13 +82,13 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Gets list of all predecessors
      * @return std::vector<OperatorPipelinePtr>
      */
-    const std::vector<OperatorPipelinePtr> getPredecessors() const;
+    std::vector<OperatorPipelinePtr> getPredecessors() const;
 
     /**
      * @brief Gets list of all sucessors
      * @return std::vector<OperatorPipelinePtr>
      */
-    const std::vector<OperatorPipelinePtr> getSuccessors() const;
+    std::vector<OperatorPipelinePtr> const &getSuccessors() const;
 
     /**
      * @brief Removes all predecessors
@@ -110,7 +110,7 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      * @brief Returns the pipeline id
      * @return pipeline id.
      */
-    const uint64_t getPipelineId() const;
+    uint64_t getPipelineId() const;
 
     /**
      * @brief Sets the type of an pipeline to Source, Sink, or Operator

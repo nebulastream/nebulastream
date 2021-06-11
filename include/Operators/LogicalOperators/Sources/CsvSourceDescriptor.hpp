@@ -80,7 +80,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
      */
     bool getSkipHeader() const;
 
-    bool equal(SourceDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
     std::string toString() override;
 
   private:

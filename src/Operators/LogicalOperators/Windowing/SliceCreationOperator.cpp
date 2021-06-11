@@ -37,17 +37,17 @@ SliceCreationOperator::SliceCreationOperator(const Windowing::LogicalWindowDefin
     // this->windowDefinition->setOriginId(id);
 }
 
-const std::string SliceCreationOperator::toString() const {
+std::string SliceCreationOperator::toString() const {
     std::stringstream ss;
     ss << "SliceCreationOperator(" << id << ")";
     return ss.str();
 }
 
-bool SliceCreationOperator::isIdentical(NodePtr rhs) const {
+bool SliceCreationOperator::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<SliceCreationOperator>()->getId() == id;
 }
 
-bool SliceCreationOperator::equal(const NodePtr rhs) const { return rhs->instanceOf<SliceCreationOperator>(); }
+bool SliceCreationOperator::equal(NodePtr const &rhs) const { return rhs->instanceOf<SliceCreationOperator>(); }
 
 OperatorNodePtr SliceCreationOperator::copy() {
     auto copy = LogicalOperatorFactory::createSliceCreationSpecializedOperator(windowDefinition, id);

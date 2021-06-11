@@ -110,11 +110,11 @@ class ExecutionNode : public Node {
      */
     uint32_t getOccupiedResources(QueryId queryId);
 
-    bool equal(NodePtr rhs) const override;
+    bool equal(NodePtr const &rhs) const override;
 
-    const std::string toString() const override;
+    std::string toString() const override;
 
-    const std::vector<std::string> toMultilineString() override;
+    std::vector<std::string> toMultilineString() override;
 
   private:
     explicit ExecutionNode(const TopologyNodePtr& physicalNode, QueryId queryId, OperatorNodePtr operatorNode);

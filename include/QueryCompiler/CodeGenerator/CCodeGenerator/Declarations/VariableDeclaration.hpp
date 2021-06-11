@@ -21,29 +21,30 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 
 class VariableDeclaration : public Declaration {
   public:
-    VariableDeclaration(const VariableDeclaration& var_decl);
+    VariableDeclaration(VariableDeclaration const &var_decl);
+
+    ~VariableDeclaration() override = default;
+
+
     static VariableDeclaration create(DataTypePtr type, const std::string& identifier, ValueTypePtr value = nullptr);
     static VariableDeclaration create(const GeneratableDataTypePtr& type, const std::string& identifier, ValueTypePtr value = nullptr);
 
-    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
-    [[nodiscard]] const std::string getIdentifierName() const override;
+    [[nodiscard]] GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] std::string getIdentifierName() const override;
 
-    [[nodiscard]] const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] Code getTypeDefinitionCode() const override;
 
-    [[nodiscard]] const Code getCode() const override;
+    [[nodiscard]] Code getCode() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getIdentifier() const;
+    [[nodiscard]] CodeExpressionPtr getIdentifier() const;
 
-    [[nodiscard]] const GeneratableDataTypePtr getDataType() const;
+    [[nodiscard]] GeneratableDataTypePtr getDataType() const;
 
-    [[nodiscard]] const DeclarationPtr copy() const override;
-
-    ~VariableDeclaration() override;
+    [[nodiscard]] DeclarationPtr copy() const override;
 
   private:
     VariableDeclaration(GeneratableDataTypePtr type, std::string identifier, ValueTypePtr value = nullptr);
@@ -51,7 +52,7 @@ class VariableDeclaration : public Declaration {
     std::string identifier_;
     ValueTypePtr init_value_;
 };
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_VARIABLEDECLARATION_HPP_

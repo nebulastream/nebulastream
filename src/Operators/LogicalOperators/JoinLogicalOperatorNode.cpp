@@ -30,11 +30,11 @@ namespace NES {
 JoinLogicalOperatorNode::JoinLogicalOperatorNode(Join::LogicalJoinDefinitionPtr joinDefinition, OperatorId id)
     : OperatorNode(id), LogicalBinaryOperatorNode(id), joinDefinition(std::move(joinDefinition)) {}
 
-bool JoinLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool JoinLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<JoinLogicalOperatorNode>()->getId() == id;
 }
 
-const std::string JoinLogicalOperatorNode::toString() const {
+std::string JoinLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "Join(" << id << ")";
     return ss.str();
@@ -143,7 +143,7 @@ OperatorNodePtr JoinLogicalOperatorNode::copy() {
     return copy;
 }
 
-bool JoinLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool JoinLogicalOperatorNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<JoinLogicalOperatorNode>()) {
         return true;
     }

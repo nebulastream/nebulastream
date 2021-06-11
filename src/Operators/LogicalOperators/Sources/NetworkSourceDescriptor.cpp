@@ -27,7 +27,7 @@ SourceDescriptorPtr NetworkSourceDescriptor::create(SchemaPtr schema, NesPartiti
     return std::make_shared<NetworkSourceDescriptor>(NetworkSourceDescriptor(std::move(schema), nesPartition));
 }
 
-bool NetworkSourceDescriptor::equal(SourceDescriptorPtr other) {
+bool NetworkSourceDescriptor::equal(SourceDescriptorPtr const &other) {
     if (!other->instanceOf<NetworkSourceDescriptor>()) {
         return false;
     }

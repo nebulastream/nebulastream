@@ -48,13 +48,13 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief Get the source type
      * @return string representing source type
      */
-    const std::string getSourceType() override;
+    std::string getSourceType() override;
 
     /**
      * @brief get source config
      * @return string representing source config
      */
-    [[nodiscard]] const std::string getSourceConfig() const;
+    [[nodiscard]] std::string getSourceConfig() const;
 
     /**
      * @brief get source frequency
@@ -78,15 +78,15 @@ class PhysicalStreamConfig : public AbstractPhysicalStreamConfig {
      * @brief get physical stream name
      * @return physical stream name
      */
-    const std::string getPhysicalStreamName() override;
+    std::string getPhysicalStreamName() override;
 
     /**
      * @brief get logical stream name
      * @return logical stream name
      */
-    const std::string getLogicalStreamName() override;
+    std::string getLogicalStreamName() override;
 
-    const std::string toString() override;
+    std::string toString() override;
 
     [[nodiscard]] bool getSkipHeader() const;
 

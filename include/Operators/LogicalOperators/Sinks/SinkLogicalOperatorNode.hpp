@@ -32,11 +32,11 @@ using SinkLogicalOperatorNodePtr = std::shared_ptr<SinkLogicalOperatorNode>;
 class SinkLogicalOperatorNode : public LogicalUnaryOperatorNode {
   public:
     explicit SinkLogicalOperatorNode(OperatorId id);
-    SinkLogicalOperatorNode(SinkDescriptorPtr& sinkDescriptor, OperatorId id);
+    SinkLogicalOperatorNode(SinkDescriptorPtr const &sinkDescriptor, OperatorId id);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
-    bool isIdentical(NodePtr rhs) const override;
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
+    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    std::string toString() const override;
     SinkDescriptorPtr getSinkDescriptor();
     void setSinkDescriptor(SinkDescriptorPtr sinkDescriptor);
     OperatorNodePtr copy() override;

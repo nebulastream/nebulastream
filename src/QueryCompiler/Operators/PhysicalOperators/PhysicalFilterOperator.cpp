@@ -35,7 +35,7 @@ PhysicalOperatorPtr PhysicalFilterOperator::create(SchemaPtr inputSchema, Schema
     return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expression));
 }
 
-const std::string PhysicalFilterOperator::toString() const { return "PhysicalFilterOperator"; }
+std::string PhysicalFilterOperator::toString() const { return "PhysicalFilterOperator"; }
 
 OperatorNodePtr PhysicalFilterOperator::copy() { return create(id, inputSchema, outputSchema, getPredicate()); }
 

@@ -32,11 +32,11 @@ NesFormat::NesFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManage
 std::optional<NodeEngine::TupleBuffer> NesFormat::getSchema() {
     auto buf = this->bufferManager->getBufferBlocking();
     SerializableSchemaPtr protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
-    bool success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSize());
+    bool const success = protoBuff->SerializeToArray(buf.getBuffer(), protoBuff->ByteSizeLong());
     NES_ASSERT2_FMT(success, "cannot serialize");
     NES_DEBUG("NesFormat::getSchema: write schema"
               << " success=" << success);
-    buf.setNumberOfTuples(protoBuff->ByteSize());
+    buf.setNumberOfTuples(protoBuff->ByteSizeLong());
     return buf;
 }
 

@@ -40,13 +40,13 @@ LambdaSourceStreamConfig::LambdaSourceStreamConfig(
     this->gatheringValue = gatheringValue;
 }
 
-const std::string LambdaSourceStreamConfig::getSourceType() { return sourceType; }
+std::string LambdaSourceStreamConfig::getSourceType() { return sourceType; }
 
-const std::string LambdaSourceStreamConfig::toString() { return sourceType; }
+std::string LambdaSourceStreamConfig::toString() { return sourceType; }
 
-const std::string LambdaSourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
+std::string LambdaSourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::string LambdaSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+std::string LambdaSourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 SourceDescriptorPtr LambdaSourceStreamConfig::build(SchemaPtr schema) {
     return std::make_shared<LambdaSourceDescriptor>(schema,

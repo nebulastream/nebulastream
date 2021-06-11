@@ -364,6 +364,8 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
         // nop
     }
 
+    virtual ~PoisonPillEntryPointPipelineStage() = default;
+
     ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) override {
         return ExecutionResult::AllFinished;
     }

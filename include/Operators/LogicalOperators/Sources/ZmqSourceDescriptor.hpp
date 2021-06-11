@@ -46,7 +46,7 @@ class ZmqSourceDescriptor : public SourceDescriptor {
      */
     void setPort(uint16_t port);
 
-    bool equal(SourceDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
     std::string toString() override;
 
   private:

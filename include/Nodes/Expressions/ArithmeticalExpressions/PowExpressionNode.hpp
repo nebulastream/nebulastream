@@ -28,9 +28,11 @@ class PowExpressionNode final : public ArithmeticalBinaryExpressionNode {
     /**
      * @brief Create a new POWER expression
      */
-    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
-    bool equal(NodePtr rhs) const final;
-    const std::string toString() const final;
+    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
+
+    [[nodiscard]] bool equal(NodePtr const &rhs) const final;
+
+    [[nodiscard]] std::string toString() const final;
 
     /**
      * @brief Determine returned datatype (-> UInt64/Double/ Throw exception for invalid inputs). Override ArithmeticalBinaryExpressionNode::inferStamp to increase bounds.

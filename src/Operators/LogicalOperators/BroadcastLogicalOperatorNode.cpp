@@ -15,7 +15,6 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/BroadcastLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
@@ -25,18 +24,18 @@ namespace NES {
 BroadcastLogicalOperatorNode::BroadcastLogicalOperatorNode(OperatorId id)
     : OperatorNode(id), ExchangeOperatorNode(id), LogicalOperatorNode(id) {}
 
-bool BroadcastLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool BroadcastLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     return rhs->as<BroadcastLogicalOperatorNode>()->getId() == id;
 }
 
-bool BroadcastLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool BroadcastLogicalOperatorNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<BroadcastLogicalOperatorNode>()) {
         return true;
     }
     return false;
 };
 
-const std::string BroadcastLogicalOperatorNode::toString() const {
+std::string BroadcastLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "BROADCAST(" << outputSchema->toString() << ")";
     return ss.str();

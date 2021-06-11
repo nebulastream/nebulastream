@@ -32,7 +32,8 @@ class ConstantValueExpressionNode : public ExpressionNode {
     /**
      * @brief Factory method to create a ConstantValueExpressionNode.
      */
-    static ExpressionNodePtr create(ValueTypePtr& constantValue);
+    static ExpressionNodePtr create(ValueTypePtr const &constantValue);
+    virtual ~ConstantValueExpressionNode() noexcept = default;
 
     /**
      * @brief Returns the constant value.
@@ -49,14 +50,14 @@ class ConstantValueExpressionNode : public ExpressionNode {
      * @brief Creates a string of the value and the type.
      * @return
      */
-    const std::string toString() const override;
+    std::string toString() const override;
 
     /**
      * @brief Compares if another node is equal to this constant value expression.
      * @param otherNode
      * @return true if they are equal
      */
-    bool equal(NodePtr rhs) const override;
+    bool equal(NodePtr const &rhs) const override;
 
     /**
     * @brief Create a deep copy of this expression node.
@@ -68,7 +69,7 @@ class ConstantValueExpressionNode : public ExpressionNode {
     explicit ConstantValueExpressionNode(ConstantValueExpressionNode* other);
 
   private:
-    explicit ConstantValueExpressionNode(ValueTypePtr& constantValue);
+    explicit ConstantValueExpressionNode(ValueTypePtr const & constantValue);
     // Value of this expression
     ValueTypePtr constantValue;
 };

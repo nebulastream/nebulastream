@@ -16,8 +16,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_DEFAULTQUERYCOMPILER_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_DEFAULTQUERYCOMPILER_HPP_
 #include <QueryCompiler/QueryCompiler.hpp>
-namespace NES {
-namespace QueryCompilation {
+
+namespace NES::QueryCompilation {
 
 /**
  * @brief The default query compiler for NES.
@@ -31,7 +31,7 @@ class DefaultQueryCompiler : public QueryCompiler {
      * @param phaseFactory Factory which allows the injection of query optimization phases.
      * @return QueryCompilerPtr
      */
-    static QueryCompilerPtr create(QueryCompilerOptionsPtr& options, Phases::PhaseFactoryPtr& phaseFactory);
+    static QueryCompilerPtr create(QueryCompilerOptionsPtr const &options, Phases::PhaseFactoryPtr const &phaseFactory);
 
     /**
     * @brief Submits a new query compilation request for compilation.
@@ -41,14 +41,14 @@ class DefaultQueryCompiler : public QueryCompiler {
     QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) override;
 
   protected:
-    DefaultQueryCompiler(QueryCompilerOptionsPtr& options, Phases::PhaseFactoryPtr& phaseFactory);
-    const LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
-    const LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
-    const LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
-    const PipeliningPhasePtr pipeliningPhase;
-    const AddScanAndEmitPhasePtr addScanAndEmitPhase;
-    const CodeGenerationPhasePtr codeGenerationPhase;
+    DefaultQueryCompiler(QueryCompilerOptionsPtr const &options, Phases::PhaseFactoryPtr const &phaseFactory);
+    LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
+    LowerPhysicalToGeneratableOperatorsPtr lowerPhysicalToGeneratableOperatorsPhase;
+    LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
+    PipeliningPhasePtr pipeliningPhase;
+    AddScanAndEmitPhasePtr addScanAndEmitPhase;
+    CodeGenerationPhasePtr codeGenerationPhase;
 };
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 #endif//NES_INCLUDE_QUERYCOMPILER_DEFAULTQUERYCOMPILER_HPP_

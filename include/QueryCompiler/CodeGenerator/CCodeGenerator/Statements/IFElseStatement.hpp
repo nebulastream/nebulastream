@@ -22,11 +22,11 @@ namespace QueryCompilation {
 class IfElseStatement : public Statement {
   public:
     IfElseStatement(const Statement& cond_true, const Statement& cond_false);
+    ~IfElseStatement() noexcept override = default;
 
     [[nodiscard]] StatementType getStamentType() const override;
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
-    [[nodiscard]] const StatementPtr createCopy() const override;
-    ~IfElseStatement() override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
+    [[nodiscard]] StatementPtr createCopy() const override;
 };
 }// namespace QueryCompilation
 }// namespace NES

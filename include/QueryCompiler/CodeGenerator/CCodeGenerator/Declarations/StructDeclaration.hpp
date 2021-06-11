@@ -18,30 +18,29 @@
 #define NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Declarations/Declaration.hpp>
 #include <vector>
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 
 class StructDeclaration : public Declaration {
   public:
     static StructDeclaration create(const std::string& type_name, const std::string& variable_name);
 
-    [[nodiscard]] const GeneratableDataTypePtr getType() const override;
+    [[nodiscard]] GeneratableDataTypePtr getType() const override;
 
-    [[nodiscard]] const std::string getIdentifierName() const override;
+    [[nodiscard]] std::string getIdentifierName() const override;
 
-    [[nodiscard]] const Code getTypeDefinitionCode() const override;
+    [[nodiscard]] Code getTypeDefinitionCode() const override;
 
-    [[nodiscard]] const Code getCode() const override;
+    [[nodiscard]] Code getCode() const override;
 
     [[nodiscard]] static uint32_t getTypeSizeInBytes();
 
-    [[nodiscard]] const std::string getTypeName() const;
+    [[nodiscard]] std::string getTypeName() const;
 
-    [[nodiscard]] const DeclarationPtr copy() const override;
+    [[nodiscard]] DeclarationPtr copy() const override;
 
     [[nodiscard]] DeclarationPtr getField(const std::string& field_name) const;
 
-    [[nodiscard]] const bool containsField(const std::string& field_name, DataTypePtr& dataType) const;
+    [[nodiscard]] bool containsField(const std::string& field_name, DataTypePtr const &dataType) const;
 
     [[nodiscard]] VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
 
@@ -57,7 +56,7 @@ class StructDeclaration : public Declaration {
     std::vector<DeclarationPtr> decls_;
     bool packed_struct_;
 };
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_DECLARATIONS_STRUCTDECLARATION_HPP_

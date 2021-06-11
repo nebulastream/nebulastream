@@ -30,20 +30,20 @@ namespace NES {
 WindowLogicalOperatorNode::WindowLogicalOperatorNode(const Windowing::LogicalWindowDefinitionPtr& windowDefinition, OperatorId id)
     : OperatorNode(id), WindowOperatorNode(windowDefinition, id) {}
 
-const std::string WindowLogicalOperatorNode::toString() const {
+std::string WindowLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "WINDOW(" << id << ")";
     return ss.str();
 }
 
-bool WindowLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool WindowLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     bool eq = equal(rhs);
     bool idCmp = rhs->as<WindowLogicalOperatorNode>()->getId() == id;
     bool typeInfer = rhs->instanceOf<CentralWindowOperator>();
     return eq && idCmp && !typeInfer;
 }
 
-bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const { return rhs->instanceOf<WindowLogicalOperatorNode>(); }
+bool WindowLogicalOperatorNode::equal(NodePtr const &rhs) const { return rhs->instanceOf<WindowLogicalOperatorNode>(); }
 
 OperatorNodePtr WindowLogicalOperatorNode::copy() {
     auto copy = LogicalOperatorFactory::createWindowOperator(windowDefinition, id);

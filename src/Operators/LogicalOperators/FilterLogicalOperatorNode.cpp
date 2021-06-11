@@ -14,23 +14,22 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Optimizer/Utils/QuerySignatureUtil.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-FilterLogicalOperatorNode::FilterLogicalOperatorNode(const ExpressionNodePtr& predicate, uint64_t id)
+FilterLogicalOperatorNode::FilterLogicalOperatorNode(ExpressionNodePtr const &predicate, uint64_t id)
     : OperatorNode(id), LogicalUnaryOperatorNode(id), predicate(predicate) {}
 
 ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() { return predicate; }
 
-bool FilterLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool FilterLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<FilterLogicalOperatorNode>()->getId() == id;
 }
 
-bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool FilterLogicalOperatorNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterOperator = rhs->as<FilterLogicalOperatorNode>();
         return predicate->equal(filterOperator->predicate);
@@ -38,7 +37,7 @@ bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 };
 
-const std::string FilterLogicalOperatorNode::toString() const {
+std::string FilterLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "FILTER(" << id << ")";
     return ss.str();

@@ -38,7 +38,7 @@ class PhysicalMultiplexOperator : public PhysicalOperator, public ExchangeOperat
     PhysicalMultiplexOperator(OperatorId id, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& schema);
     static PhysicalOperatorPtr create(SchemaPtr schema);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 };
 

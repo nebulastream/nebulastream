@@ -93,8 +93,8 @@ bool ExecutableOnTimeTriggerPolicy::stop() {
     return true;
 }
 
-ExecutableOnTimeTriggerPolicy::ExecutableOnTimeTriggerPolicy(uint64_t triggerTimeInMs)
-    : triggerTimeInMs(triggerTimeInMs), running(false), runningTriggerMutex() {}
+ExecutableOnTimeTriggerPolicy::ExecutableOnTimeTriggerPolicy(uint64_t triggerTimeInMs) : triggerTimeInMs(triggerTimeInMs) {}
+
 
 ExecutableOnTimeTriggerPtr ExecutableOnTimeTriggerPolicy::create(uint64_t triggerTimeInMs) {
     return std::make_shared<ExecutableOnTimeTriggerPolicy>(triggerTimeInMs);

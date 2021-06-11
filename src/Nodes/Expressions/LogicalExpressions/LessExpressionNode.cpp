@@ -17,8 +17,6 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
 namespace NES {
-LessExpressionNode::LessExpressionNode() : LogicalBinaryExpressionNode(){};
-
 LessExpressionNode::LessExpressionNode(LessExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
 ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
@@ -27,7 +25,7 @@ ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr& left, cons
     return lessThen;
 }
 
-bool LessExpressionNode::equal(const NodePtr rhs) const {
+bool LessExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<LessExpressionNode>()) {
         auto other = rhs->as<LessExpressionNode>();
         return this->getLeft()->equal(other->getLeft()) && this->getRight()->equal(other->getRight());
@@ -35,7 +33,7 @@ bool LessExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string LessExpressionNode::toString() const {
+std::string LessExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "<" << children[1]->toString();
     return ss.str();

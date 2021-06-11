@@ -69,7 +69,7 @@ const std::string OPCSourceDescriptor::getUser() const { return user; }
 
 const std::string OPCSourceDescriptor::getPassword() const { return password; }
 
-bool OPCSourceDescriptor::equal(SourceDescriptorPtr other) {
+bool OPCSourceDescriptor::equal(SourceDescriptorPtr const &other) {
 
     if (!other->instanceOf<OPCSourceDescriptor>())
         return false;

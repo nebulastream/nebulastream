@@ -29,7 +29,7 @@ ExpressionNodePtr DivExpressionNode::create(const ExpressionNodePtr& left, const
     return divNode;
 }
 
-bool DivExpressionNode::equal(const NodePtr rhs) const {
+bool DivExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<DivExpressionNode>()) {
         auto otherDivNode = rhs->as<DivExpressionNode>();
         return getLeft()->equal(otherDivNode->getLeft()) && getRight()->equal(otherDivNode->getRight());
@@ -37,7 +37,7 @@ bool DivExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string DivExpressionNode::toString() const {
+std::string DivExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "/" << children[1]->toString();
     return ss.str();

@@ -20,18 +20,17 @@
 #include <QueryCompiler/CodeGenerator/CCodeGenerator/Statements/ExpressionStatement.hpp>
 #include <QueryCompiler/CodeGenerator/CodeGeneratorForwardRef.hpp>
 
-namespace NES {
-namespace QueryCompilation {
+namespace NES::QueryCompilation  {
 
 class ConstantExpressionStatement : public ExpressionStatment {
   public:
+    explicit ConstantExpressionStatement(GeneratableValueTypePtr val);
+
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const ExpressionStatmentPtr copy() const override;
-
-    explicit ConstantExpressionStatement(GeneratableValueTypePtr val);
+    [[nodiscard]] ExpressionStatmentPtr copy() const override;
 
     ~ConstantExpressionStatement() override;
 
@@ -40,7 +39,7 @@ class ConstantExpressionStatement : public ExpressionStatment {
 };
 
 using Constant = ConstantExpressionStatement;
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation
 
 #endif//NES_INCLUDE_QUERYCOMPILER_CCODEGENERATOR_CONSTANTEXPRESSIONSTATEMENT_HPP_

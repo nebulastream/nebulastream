@@ -29,7 +29,7 @@ ExpressionNodePtr SubExpressionNode::create(const ExpressionNodePtr& left, const
     return subNode;
 }
 
-bool SubExpressionNode::equal(const NodePtr rhs) const {
+bool SubExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<SubExpressionNode>()) {
         auto otherSubNode = rhs->as<SubExpressionNode>();
         return getLeft()->equal(otherSubNode->getLeft()) && getRight()->equal(otherSubNode->getRight());
@@ -37,7 +37,7 @@ bool SubExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string SubExpressionNode::toString() const {
+std::string SubExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "-" << children[1]->toString();
     return ss.str();

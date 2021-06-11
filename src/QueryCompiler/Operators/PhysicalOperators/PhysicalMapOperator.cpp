@@ -38,7 +38,7 @@ PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, Field
     return create(UtilityFunctions::getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
 }
 
-const std::string PhysicalMapOperator::toString() const { return "PhysicalMapOperator"; }
+std::string PhysicalMapOperator::toString() const { return "PhysicalMapOperator"; }
 
 OperatorNodePtr PhysicalMapOperator::copy() { return create(id, inputSchema, outputSchema, getMapExpression()); }
 

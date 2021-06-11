@@ -31,9 +31,9 @@ namespace NES::QueryCompilation {
 ArrayGeneratableType::ArrayGeneratableType(ArrayPhysicalTypePtr type, GeneratableDataTypePtr component)
     : type(std::move(type)), component(std::move(component)) {}
 
-const CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(""); }
+CodeExpressionPtr ArrayGeneratableType::getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(""); }
 
-const CodeExpressionPtr ArrayGeneratableType::getCode() const {
+CodeExpressionPtr ArrayGeneratableType::getCode() const {
     std::stringstream str;
     str << "NES::QueryCompilation::Array<" << component->getCode()->code_ << ", " << type->length << "> ";
     return std::make_shared<CodeExpression>(str.str());

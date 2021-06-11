@@ -33,14 +33,14 @@ class BasicGeneratableType final : public GeneratableDataType {
       * @brief Generated code for a type definition. This is mainly crucial for structures.
       * @return CodeExpressionPtr
       */
-    [[nodiscard]] const CodeExpressionPtr getTypeDefinitionCode() const final;
+    [[nodiscard]] CodeExpressionPtr getTypeDefinitionCode() const final;
 
     /**
     * @brief Generates the code for the native type.
     * For instance int8_t, or uint32_t for BasicTypes or uint32_t[15] for an ArrayType.
     * @return CodeExpressionPtr
     */
-    [[nodiscard]] const CodeExpressionPtr getCode() const final;
+    [[nodiscard]] CodeExpressionPtr getCode() const final;
 
     /**
     * @brief Generates the code for a type declaration with a specific identifier.

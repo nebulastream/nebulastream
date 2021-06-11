@@ -64,7 +64,7 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
         throw std::bad_cast();
     }
     virtual std::string toString() = 0;
-    virtual bool equal(SinkDescriptorPtr other) = 0;
+    [[nodiscard]] virtual bool equal(SinkDescriptorPtr const &other) = 0;
 };
 
 }// namespace NES

@@ -38,12 +38,12 @@ class JoinLogicalOperatorNode : public LogicalBinaryOperatorNode {
     */
     Join::LogicalJoinDefinitionPtr getJoinDefinition();
 
-    bool isIdentical(NodePtr rhs) const override;
-    const std::string toString() const override;
+    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
     //infer schema of two child operators
     bool inferSchema() override;
     OperatorNodePtr copy() override;
-    bool equal(NodePtr rhs) const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
     void inferStringSignature() override;
 
   private:

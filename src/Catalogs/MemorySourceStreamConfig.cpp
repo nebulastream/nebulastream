@@ -46,13 +46,13 @@ MemorySourceStreamConfig::MemorySourceStreamConfig(std::string sourceType,
     this->gatheringValue = gatheringValue;
 }
 
-const std::string MemorySourceStreamConfig::getSourceType() { return sourceType; }
+std::string MemorySourceStreamConfig::getSourceType() { return sourceType; }
 
-const std::string MemorySourceStreamConfig::toString() { return sourceType; }
+std::string MemorySourceStreamConfig::toString() { return sourceType; }
 
-const std::string MemorySourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
+std::string MemorySourceStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::string MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+std::string MemorySourceStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 SourceDescriptorPtr MemorySourceStreamConfig::build(SchemaPtr ptr) {
     return std::make_shared<MemorySourceDescriptor>(ptr,

@@ -24,14 +24,14 @@ namespace NES {
  */
 class EqualsExpressionNode : public LogicalBinaryExpressionNode {
   public:
-    EqualsExpressionNode();
+    EqualsExpressionNode() noexcept = default;
     ~EqualsExpressionNode() = default;
     /**
     * @brief Create a new equals expression
     */
-    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const & left, ExpressionNodePtr const & right);
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.

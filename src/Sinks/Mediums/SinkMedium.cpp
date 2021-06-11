@@ -23,8 +23,7 @@
 namespace NES {
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, QuerySubPlanId parentPlanId)
-    : sinkFormat(std::move(sinkFormat)), parentPlanId(parentPlanId), sentBuffer(0), sentTuples(0), schemaWritten(false),
-      append(false), writeMutex() {
+    : sinkFormat(std::move(sinkFormat)), parentPlanId(parentPlanId) {
     NES_DEBUG("SinkMedium:Init Data Sink!");
 }
 

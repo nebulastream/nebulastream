@@ -108,11 +108,8 @@ LegacyExpressionPtr TranslateToLegacyExpression::transformArithmeticalExpression
         return Predicate(BinaryOperatorType::POWER_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<AbsExpressionNode>()) {
         // Translate ABS expression node.
-        auto absExpressionNode = expression->as<AbsExpressionNode>();
-        absExpressionNode->toString();
-        (void) absExpressionNode;
-        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expressions not supported in "
-                        "legacy expressions: "
+        auto const str = expression->as<AbsExpressionNode>()->toString();
+        NES_FATAL_ERROR("TranslateToLegacyPhase: Unary expression" << str << "not supported in legacy expressions: "
                         << expression->toString());
         NES_NOT_IMPLEMENTED();
     }

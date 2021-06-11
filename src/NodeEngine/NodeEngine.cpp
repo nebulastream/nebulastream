@@ -39,8 +39,8 @@
 
 namespace NES::NodeEngine {
 
-extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>);
-extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>);
+extern void installGlobalErrorListener(std::shared_ptr<ErrorListener>const &);
+extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener>const &);
 
 NodeEnginePtr create(const std::string& hostname, uint16_t port, PhysicalStreamConfigPtr config) {
     return NodeEngine::create(hostname, port, std::move(config), 1, 4096, 1024, 128, 12);

@@ -72,7 +72,7 @@ void GeneratableWatermarkAssignmentOperator::generateExecute(CodeGeneratorPtr co
     }
 }
 
-const std::string GeneratableWatermarkAssignmentOperator::toString() const { return "GeneratableWatermarkAssignmentOperator"; }
+std::string GeneratableWatermarkAssignmentOperator::toString() const { return "GeneratableWatermarkAssignmentOperator"; }
 
 OperatorNodePtr GeneratableWatermarkAssignmentOperator::copy() {
     return create(id, inputSchema, outputSchema, watermarkStrategyDescriptor);

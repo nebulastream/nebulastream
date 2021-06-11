@@ -21,13 +21,13 @@ OrExpressionNode::OrExpressionNode() : LogicalBinaryExpressionNode(){};
 
 OrExpressionNode::OrExpressionNode(OrExpressionNode* other) : LogicalBinaryExpressionNode(other) {}
 
-ExpressionNodePtr OrExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
+ExpressionNodePtr OrExpressionNode::create(ExpressionNodePtr const &left, ExpressionNodePtr const &right) {
     auto orNode = std::make_shared<OrExpressionNode>();
     orNode->setChildren(left, right);
     return orNode;
 }
 
-bool OrExpressionNode::equal(const NodePtr rhs) const {
+bool OrExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<OrExpressionNode>()) {
         auto otherAndNode = rhs->as<OrExpressionNode>();
         return getLeft()->equal(otherAndNode->getLeft()) && getRight()->equal(otherAndNode->getRight());
@@ -35,7 +35,7 @@ bool OrExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string OrExpressionNode::toString() const {
+std::string OrExpressionNode::toString() const {
     std::stringstream ss;
     ss << children[0]->toString() << "||" << children[1]->toString();
     return ss.str();

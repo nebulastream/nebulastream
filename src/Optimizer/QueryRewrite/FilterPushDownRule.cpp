@@ -139,7 +139,7 @@ void FilterPushDownRule::pushDownFilter(const FilterLogicalOperatorNodePtr& filt
     }
 }
 
-bool FilterPushDownRule::isFieldUsedInFilterPredicate(const FilterLogicalOperatorNodePtr& filterOperator, const std::string& fieldName) {
+bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr const & filterOperator, const std::string& fieldName) {
 
     NES_TRACE("FilterPushDownRule: Create an iterator for traversing the filter predicates");
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();

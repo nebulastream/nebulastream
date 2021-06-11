@@ -40,22 +40,22 @@ class IterationLogicalOperatorNode : public LogicalUnaryOperatorNode {
     * @brief returns the minimal amount of iterations
     * @return amount of iterations
     */
-    uint64_t getMinIterations();
+    uint64_t getMinIterations() const noexcept;
 
     /**
    * @brief returns the maximal amount of iterations
    * @return amount of iterations
    */
-    uint64_t getMaxIterations();
+    uint64_t getMaxIterations() const noexcept;
 
     /**
      * @brief check if two operators of the same class are equivalent, here: equal number of minIterations and maxIterations
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    bool equal(NodePtr rhs) const override;
-    bool isIdentical(NodePtr rhs) const override;
-    const std::string toString() const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
+    [[nodiscard]] bool isIdentical(NodePtr const &rhs) const override;
+    std::string toString() const override;
     void inferStringSignature() override;
     bool inferSchema() override;
     OperatorNodePtr copy() override;

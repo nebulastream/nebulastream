@@ -31,7 +31,7 @@ class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScan
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const SourceDescriptorPtr& sourceDescriptor);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     SourceDescriptorPtr getSourceDescriptor();
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:

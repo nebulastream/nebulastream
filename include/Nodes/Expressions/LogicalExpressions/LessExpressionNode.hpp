@@ -24,14 +24,16 @@ namespace NES {
  */
 class LessExpressionNode : public LogicalBinaryExpressionNode {
   public:
-    LessExpressionNode();
+    LessExpressionNode() = default;
     ~LessExpressionNode() = default;
     /**
     * @brief Create a new less expression
     */
-    static ExpressionNodePtr create(ExpressionNodePtr& left, ExpressionNodePtr& right);
-    bool equal(NodePtr rhs) const override;
-    const std::string toString() const override;
+    static ExpressionNodePtr create(ExpressionNodePtr const &left, ExpressionNodePtr const &right);
+
+    bool equal(NodePtr const &rhs) const override;
+
+    std::string toString() const override;
 
     /**
     * @brief Create a deep copy of this expression node.

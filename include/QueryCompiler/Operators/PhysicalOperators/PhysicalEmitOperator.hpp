@@ -50,7 +50,7 @@ class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOp
      */
     static PhysicalOperatorPtr create(SchemaPtr inputSchema);
 
-    const std::string toString() const override;
+    std::string toString() const override;
 
     OperatorNodePtr copy() override;
 };

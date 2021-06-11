@@ -27,11 +27,11 @@ MapLogicalOperatorNode::MapLogicalOperatorNode(const FieldAssignmentExpressionNo
 
 FieldAssignmentExpressionNodePtr MapLogicalOperatorNode::getMapExpression() { return mapExpression; }
 
-bool MapLogicalOperatorNode::isIdentical(NodePtr rhs) const {
+bool MapLogicalOperatorNode::isIdentical(NodePtr const &rhs) const {
     return equal(rhs) && rhs->as<MapLogicalOperatorNode>()->getId() == id;
 }
 
-bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
+bool MapLogicalOperatorNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<MapLogicalOperatorNode>()) {
         auto mapOperator = rhs->as<MapLogicalOperatorNode>();
         return mapExpression->equal(mapOperator->mapExpression);
@@ -65,7 +65,7 @@ bool MapLogicalOperatorNode::inferSchema() {
     return true;
 }
 
-const std::string MapLogicalOperatorNode::toString() const {
+std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "MAP(" << id << ")";
     return ss.str();

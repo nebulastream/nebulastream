@@ -36,7 +36,7 @@ class BinarySourceDescriptor : public SourceDescriptor {
      */
     const std::string& getFilePath() const;
 
-    bool equal(SourceDescriptorPtr other) override;
+    [[nodiscard]] bool equal(SourceDescriptorPtr const &other) override;
 
     std::string toString() override;
 

@@ -23,7 +23,7 @@ ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(std::move(stamp)) {}
 
 bool ExpressionNode::isPredicate() { return stamp->isBoolean(); }
 
-const DataTypePtr ExpressionNode::getStamp() const { return stamp; }
+DataTypePtr ExpressionNode::getStamp() const { return stamp; }
 
 void ExpressionNode::setStamp(DataTypePtr stamp) { this->stamp = std::move(stamp); }
 

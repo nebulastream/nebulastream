@@ -21,7 +21,7 @@ FunctionCallStatement::~FunctionCallStatement() = default;
 
 StatementType FunctionCallStatement::getStamentType() const { return FUNC_CALL_STMT; }
 
-const CodeExpressionPtr FunctionCallStatement::getCode() const {
+CodeExpressionPtr FunctionCallStatement::getCode() const {
 
     u_int32_t i = 0;
 
@@ -37,15 +37,10 @@ const CodeExpressionPtr FunctionCallStatement::getCode() const {
     return code;
 }
 
-const ExpressionStatmentPtr FunctionCallStatement::copy() const { return std::make_shared<FunctionCallStatement>(*this); }
+ExpressionStatmentPtr FunctionCallStatement::copy() const { return std::make_shared<FunctionCallStatement>(*this); }
 
 void FunctionCallStatement::addParameter(const ExpressionStatment& expr) { expressions.push_back(expr.copy()); }
 
 void FunctionCallStatement::addParameter(ExpressionStatmentPtr expr) { expressions.push_back(expr); }
 
-FunctionCallStatement::FunctionCallStatement(const std::string& functionname) : functionName(functionname) {}
-
-FunctionCallStatementPtr FunctionCallStatement::create(const std::string& functionname) {
-    return std::make_shared<FunctionCallStatement>(functionname);
-}
 }// namespace NES::QueryCompilation

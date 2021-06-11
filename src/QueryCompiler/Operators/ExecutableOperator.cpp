@@ -37,7 +37,7 @@ NodeEngine::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecuta
 
 std::vector<NodeEngine::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers() { return operatorHandlers; }
 
-const std::string ExecutableOperator::toString() const { return "ExecutableOperator"; }
+std::string ExecutableOperator::toString() const { return "ExecutableOperator"; }
 
 OperatorNodePtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
 

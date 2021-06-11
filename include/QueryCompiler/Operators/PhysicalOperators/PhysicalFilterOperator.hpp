@@ -30,7 +30,7 @@ class PhysicalFilterOperator : public PhysicalUnaryOperator {
     PhysicalFilterOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr predicate);
     static PhysicalOperatorPtr create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const ExpressionNodePtr& expression);
     static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, ExpressionNodePtr expression);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
     /**

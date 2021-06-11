@@ -23,6 +23,7 @@ namespace NES {
 class CsvFormat : public SinkFormat {
   public:
     CsvFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
+    virtual ~CsvFormat() noexcept = default;
 
     /**
     * @brief method to write a TupleBuffer

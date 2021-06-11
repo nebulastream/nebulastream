@@ -23,6 +23,7 @@ namespace NES {
 class TextFormat : public SinkFormat {
   public:
     TextFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
+    virtual ~TextFormat() noexcept = default;
 
     /**
     * @brief method to write a TupleBuffer

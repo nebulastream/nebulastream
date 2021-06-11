@@ -35,7 +35,7 @@ class PhysicalMapOperator : public PhysicalUnaryOperator {
     create(OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FieldAssignmentExpressionNodePtr& mapExpression);
     static PhysicalOperatorPtr
     create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
     /**

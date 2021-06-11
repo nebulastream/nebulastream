@@ -43,7 +43,7 @@ PhysicalStreamConfig::PhysicalStreamConfig(const SourceConfigPtr& sourceConfig)
     NES_INFO("PhysicalStreamConfig: Created source with config: " << this->toString());
 };
 
-const std::string PhysicalStreamConfig::toString() {
+std::string PhysicalStreamConfig::toString() {
     std::stringstream ss;
     ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig << " sourceFrequency=" << sourceFrequency.count()
        << "ms"
@@ -53,9 +53,9 @@ const std::string PhysicalStreamConfig::toString() {
     return ss.str();
 }
 
-const std::string PhysicalStreamConfig::getSourceType() { return sourceType; }
+std::string PhysicalStreamConfig::getSourceType() { return sourceType; }
 
-const std::string PhysicalStreamConfig::getSourceConfig() const { return sourceConfig; }
+std::string PhysicalStreamConfig::getSourceConfig() const { return sourceConfig; }
 
 std::chrono::milliseconds PhysicalStreamConfig::getSourceFrequency() const { return sourceFrequency; }
 
@@ -63,9 +63,9 @@ uint32_t PhysicalStreamConfig::getNumberOfTuplesToProducePerBuffer() const { ret
 
 uint32_t PhysicalStreamConfig::getNumberOfBuffersToProduce() const { return numberOfBuffersToProduce; }
 
-const std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
+std::string PhysicalStreamConfig::getPhysicalStreamName() { return physicalStreamName; }
 
-const std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
+std::string PhysicalStreamConfig::getLogicalStreamName() { return logicalStreamName; }
 
 bool PhysicalStreamConfig::getSkipHeader() const { return skipHeader; }
 
@@ -79,9 +79,9 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
     std::string conf = config->getSourceConfig();
     std::chrono::milliseconds frequency = config->getSourceFrequency();
     uint64_t numBuffers = config->getNumberOfBuffersToProduce();
-    bool skipHeader = config->getSkipHeader();
 
-    uint64_t numberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
+    bool const newSkipHeader = config->getSkipHeader();
+    uint64_t newNumberOfTuplesToProducePerBuffer = config->getNumberOfTuplesToProducePerBuffer();
 
     if (type == "DefaultSource") {
         NES_DEBUG("PhysicalStreamConfig: create default source for one buffer");
@@ -93,26 +93,25 @@ SourceDescriptorPtr PhysicalStreamConfig::build(SchemaPtr schema) {
                                            streamName,
                                            conf,
                                            /**delimiter*/ ",",
-                                           numberOfTuplesToProducePerBuffer,
+                                           newNumberOfTuplesToProducePerBuffer,
                                            numBuffers,
                                            frequency.count(),
-                                           skipHeader);
+                                           newSkipHeader);
     } else if (type == "SenseSource") {
         NES_DEBUG("PhysicalStreamConfig: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, streamName, /**udfs*/ conf);
     } else {
         NES_THROW_RUNTIME_ERROR("PhysicalStreamConfig:: source type " + type + " not supported");
+        return nullptr;
     }
-    return nullptr;
 }
-void PhysicalStreamConfig::setSourceFrequency(uint32_t sourceFrequency) {
-    PhysicalStreamConfig::sourceFrequency = std::chrono::milliseconds(sourceFrequency);
-    ;
+void PhysicalStreamConfig::setSourceFrequency(uint32_t sf) {
+    PhysicalStreamConfig::sourceFrequency = std::chrono::milliseconds(sf);
 }
-void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer) {
-    PhysicalStreamConfig::numberOfTuplesToProducePerBuffer = numberOfTuplesToProducePerBuffer;
+void PhysicalStreamConfig::setNumberOfTuplesToProducePerBuffer(uint32_t n) {
+    PhysicalStreamConfig::numberOfTuplesToProducePerBuffer = n;
 }
-void PhysicalStreamConfig::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce) {
-    PhysicalStreamConfig::numberOfBuffersToProduce = numberOfBuffersToProduce;
+void PhysicalStreamConfig::setNumberOfBuffersToProduce(uint32_t n) {
+    PhysicalStreamConfig::numberOfBuffersToProduce = n;
 }
 }// namespace NES

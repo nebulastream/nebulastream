@@ -58,21 +58,21 @@ class DumpContext {
      * @brief Dumps the passed node and its children on all registered dump handlers.
      * @param node
      */
-    void dump(NodePtr& node);
+    void dump(NodePtr const& node);
 
     /**
     * @brief Dumps the passed query plan on all registered dump handlers.
     * @param defines the scope of this plan.
     * @param queryPlan
     */
-    void dump(const std::string& scope, QueryPlanPtr& queryPlan);
+    void dump(std::string const & scope, QueryPlanPtr const & queryPlan);
 
     /**
     * @brief Dumps the passed pipeline query plan on all registered dump handlers.
     * @param defines the scope of this plan.
     * @param queryPlan
     */
-    void dump(const std::string& scope, QueryCompilation::PipelineQueryPlanPtr& queryPlan);
+    void dump(std::string const &scope, QueryCompilation::PipelineQueryPlanPtr const &queryPlan);
 
   private:
     std::string context;

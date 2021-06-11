@@ -31,11 +31,11 @@
 
 namespace NES {
 
-CSVSource::CSVSource(const SchemaPtr& schema,
+CSVSource::CSVSource(SchemaPtr schema,
                      NodeEngine::BufferManagerPtr bufferManager,
                      NodeEngine::QueryManagerPtr queryManager,
-                     const std::string& filePath,
-                     const std::string& delimiter,
+                     std::string const &filePath,
+                     std::string const &delimiter,
                      uint64_t numberOfTuplesToProducePerBuffer,
                      uint64_t numBuffersToProcess,
                      uint64_t frequency,

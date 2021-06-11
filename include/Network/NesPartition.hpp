@@ -19,8 +19,7 @@
 #include <cstdint>
 #include <string>
 
-namespace NES {
-namespace Network {
+namespace NES::Network {
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
 
 using NodeId = uint64_t;
@@ -85,8 +84,7 @@ class NesPartition {
     const PartitionId partitionId;
     const SubpartitionId subpartitionId;
 };
-}// namespace Network
-}// namespace NES
+}// namespace NES::Network
 namespace std {
 template<>
 struct hash<NES::Network::NesPartition> {

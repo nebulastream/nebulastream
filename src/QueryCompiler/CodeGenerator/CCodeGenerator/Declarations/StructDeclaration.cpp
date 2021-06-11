@@ -25,11 +25,11 @@ StructDeclaration StructDeclaration::create(const std::string& type_name, const 
     return StructDeclaration(type_name, variable_name);
 }
 
-const GeneratableDataTypePtr StructDeclaration::getType() const { return GeneratableTypesFactory().createUserDefinedType(*this); }
+GeneratableDataTypePtr StructDeclaration::getType() const { return GeneratableTypesFactory().createUserDefinedType(*this); }
 
-const std::string StructDeclaration::getIdentifierName() const { return variable_name_; }
+std::string StructDeclaration::getIdentifierName() const { return variable_name_; }
 
-const Code StructDeclaration::getTypeDefinitionCode() const {
+Code StructDeclaration::getTypeDefinitionCode() const {
     std::stringstream expr;
     expr << "struct " << type_name_ << "{" << std::endl;
     for (auto& decl : decls_) {
@@ -39,7 +39,7 @@ const Code StructDeclaration::getTypeDefinitionCode() const {
     return expr.str();
 }
 
-const Code StructDeclaration::getCode() const {
+Code StructDeclaration::getCode() const {
     std::stringstream expr;
     expr << "struct ";
     if (packed_struct_) {
@@ -59,12 +59,12 @@ uint32_t StructDeclaration::getTypeSizeInBytes() {
     return 0;
 }
 
-const std::string StructDeclaration::getTypeName() const { return type_name_; }
+std::string StructDeclaration::getTypeName() const { return type_name_; }
 
-const DeclarationPtr StructDeclaration::copy() const { return std::make_shared<StructDeclaration>(*this); }
+DeclarationPtr StructDeclaration::copy() const { return std::make_shared<StructDeclaration>(*this); }
 
 DeclarationPtr StructDeclaration::getField(const std::string& field_name) const {
-    for (auto& decl : decls_) {
+    for (auto&& decl : decls_) {
         if (decl->getIdentifierName() == field_name) {
             return decl;
         }
@@ -72,8 +72,8 @@ DeclarationPtr StructDeclaration::getField(const std::string& field_name) const 
     return DeclarationPtr();
 }
 
-const bool StructDeclaration::containsField(const std::string& field_name, const DataTypePtr&) const {
-    for (auto& decl : decls_) {
+bool StructDeclaration::containsField(const std::string& field_name, const DataTypePtr&) const {
+    for (auto&& decl : decls_) {
         // todo fix equals && decl->getType()->isEqual(dataType)
         if (decl->getIdentifierName() == field_name) {
             return true;

@@ -37,7 +37,7 @@ using OutputChannelPtr = std::unique_ptr<OutputChannel>;
 
 class OutputChannel {
   public:
-    explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string& address);
+    explicit OutputChannel(zmq::socket_t&& zmqSocket, ChannelId channelId, std::string&& address);
 
   public:
     /**
@@ -61,11 +61,12 @@ class OutputChannel {
      * @return
      */
     static OutputChannelPtr create(const std::shared_ptr<zmq::context_t>& zmqContext,
-                                   std::string& socketAddr,
+                                   std::string&& socketAddr,
                                    NesPartition nesPartition,
                                    ExchangeProtocol& protocol,
                                    std::chrono::seconds waitTime,
                                    uint8_t retryTimes);
+
 
     /**
      * @brief Send buffer to the destination defined in the constructor. Note that this method will internally

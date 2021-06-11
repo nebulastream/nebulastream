@@ -42,7 +42,7 @@ class PhysicalJoinSinkOperator : public PhysicalJoinOperator, public PhysicalBin
                              SchemaPtr rightInputSchema,
                              SchemaPtr outputSchema,
                              Join::JoinOperatorHandlerPtr operatorHandler);
-    const std::string toString() const override;
+    [[nodiscard]] std::string toString() const override;
     OperatorNodePtr copy() override;
 };
 }// namespace PhysicalOperators

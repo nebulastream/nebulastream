@@ -31,14 +31,13 @@ class IFStatement : public Statement {
 
     [[nodiscard]] StatementType getStamentType() const override;
 
-    [[nodiscard]] const CodeExpressionPtr getCode() const override;
+    [[nodiscard]] CodeExpressionPtr getCode() const override;
 
-    [[nodiscard]] const StatementPtr createCopy() const override;
+    [[nodiscard]] StatementPtr createCopy() const override;
 
-    const CompoundStatementPtr getCompoundStatement();
+    CompoundStatementPtr getCompoundStatement();
 
-    ~IFStatement() override;
-
+    ~IFStatement() override = default;
   private:
     const StatementPtr conditionalExpression;
     CompoundStatementPtr trueCaseStatement;

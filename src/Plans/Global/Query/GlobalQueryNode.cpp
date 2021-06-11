@@ -41,13 +41,13 @@ OperatorNodePtr GlobalQueryNode::hasOperator(OperatorNodePtr operatorNode) {
     return nullptr;
 }
 
-const std::string GlobalQueryNode::toString() const {
+std::string GlobalQueryNode::toString() const {
     return "Operator [" + operatorNode->toString() + "], Global Query Node Id [" + std::to_string(id) + "]";
 }
 
 OperatorNodePtr GlobalQueryNode::getOperator() { return operatorNode; }
 
-bool GlobalQueryNode::equal(const NodePtr rhs) const {
+bool GlobalQueryNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<GlobalQueryNode>()) {
         return id == rhs->as<GlobalQueryNode>()->getId();
     }

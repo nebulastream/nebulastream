@@ -34,10 +34,10 @@ class FieldRenameExpressionNode : public ExpressionNode {
      */
     static ExpressionNodePtr create(FieldAccessExpressionNodePtr originalField, std::string newFieldName);
 
-    const std::string toString() const override;
-    bool equal(NodePtr rhs) const override;
+    [[nodiscard]] std::string toString() const override;
+    [[nodiscard]] bool equal(NodePtr const &rhs) const override;
 
-    const std::string getNewFieldName();
+    std::string getNewFieldName();
 
     /**
     * @brief Infers the stamp of the expression given the current schema.
@@ -51,7 +51,7 @@ class FieldRenameExpressionNode : public ExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-    const FieldAccessExpressionNodePtr getOriginalField() const;
+    FieldAccessExpressionNodePtr getOriginalField() const;
 
   protected:
     explicit FieldRenameExpressionNode(FieldRenameExpressionNode* other);

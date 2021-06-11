@@ -57,7 +57,7 @@ void GeneratableSliceMergingOperator::generateExecute(CodeGeneratorPtr codegen, 
     codegen->generateCodeForCombiningWindow(windowDefinition, windowAggregation, context, handler);
 }
 
-const std::string GeneratableSliceMergingOperator::toString() const { return "GeneratableSliceMergingOperator"; }
+std::string GeneratableSliceMergingOperator::toString() const { return "GeneratableSliceMergingOperator"; }
 
 OperatorNodePtr GeneratableSliceMergingOperator::copy() {
     return create(id, inputSchema, outputSchema, operatorHandler, windowAggregation);

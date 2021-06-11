@@ -22,7 +22,7 @@ NegateExpressionNode::NegateExpressionNode() : LogicalUnaryExpressionNode() {}
 
 NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other) {}
 
-bool NegateExpressionNode::equal(const NodePtr rhs) const {
+bool NegateExpressionNode::equal(NodePtr const &rhs) const {
     if (rhs->instanceOf<NegateExpressionNode>()) {
         auto other = rhs->as<NegateExpressionNode>();
         return this->getChildren()[0]->equal(other->getChildren()[0]);
@@ -30,13 +30,13 @@ bool NegateExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-const std::string NegateExpressionNode::toString() const {
+std::string NegateExpressionNode::toString() const {
     std::stringstream ss;
     ss << "!" << children[0]->toString();
     return ss.str();
 }
 
-ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr& child) {
+ExpressionNodePtr NegateExpressionNode::create(ExpressionNodePtr const &child) {
     auto equals = std::make_shared<NegateExpressionNode>();
     equals->setChild(child);
     return equals;

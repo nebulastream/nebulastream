@@ -18,9 +18,7 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace QueryCompilation {
-namespace PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators  {
 
 /**
  * @brief Physical projection operator.
@@ -39,14 +37,13 @@ class PhysicalProjectOperator : public PhysicalUnaryOperator {
      * @return  std::vector<ExpressionNodePtr>
      */
     std::vector<ExpressionNodePtr> getExpressions();
-    const std::string toString() const override;
+    std::string toString() const override;
     OperatorNodePtr copy() override;
 
   private:
     std::vector<ExpressionNodePtr> expressions;
 };
-}// namespace PhysicalOperators
-}// namespace QueryCompilation
-}// namespace NES
+
+}// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif//NES_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_

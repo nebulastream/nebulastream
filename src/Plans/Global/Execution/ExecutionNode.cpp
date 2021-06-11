@@ -142,7 +142,7 @@ bool ExecutionNode::updateQuerySubPlans(QueryId queryId, std::vector<QueryPlanPt
     return false;
 }
 
-const std::string ExecutionNode::toString() const {
+std::string ExecutionNode::toString() const {
     return "ExecutionNode(id:" + std::to_string(id) + ", ip:" + topologyNode->getIpAddress()
         + ", topologyNodeId:" + std::to_string(topologyNode->getId()) + ")";
 }
@@ -161,8 +161,8 @@ TopologyNodePtr ExecutionNode::getTopologyNode() { return topologyNode; }
 
 std::map<QueryId, std::vector<QueryPlanPtr>> ExecutionNode::getAllQuerySubPlans() { return mapOfQuerySubPlans; }
 
-bool ExecutionNode::equal(NodePtr rhs) const { return rhs->as<ExecutionNode>()->getId() == id; }
-const std::vector<std::string> ExecutionNode::toMultilineString() {
+bool ExecutionNode::equal(NodePtr const &rhs) const { return rhs->as<ExecutionNode>()->getId() == id; }
+std::vector<std::string> ExecutionNode::toMultilineString() {
     std::vector<std::string> lines;
     lines.push_back(toString());
 

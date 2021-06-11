@@ -41,7 +41,7 @@ SinkDescriptorPtr OPCSinkDescriptor::create(std::string url, UA_NodeId nodeId, s
 
 std::string OPCSinkDescriptor::toString() { return "OPCSinkDescriptor()"; }
 
-bool OPCSinkDescriptor::equal(SinkDescriptorPtr other) {
+bool OPCSinkDescriptor::equal(SinkDescriptorPtr const &other) {
     if (!other->instanceOf<OPCSinkDescriptor>()) {
         NES_DEBUG("Instance of " << other->instanceOf<OPCSinkDescriptor>());
         return false;

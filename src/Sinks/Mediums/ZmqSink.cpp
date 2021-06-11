@@ -33,7 +33,7 @@ namespace NES {
 SinkMediumTypes ZmqSink::getSinkMediumType() { return ZMQ_SINK; }
 
 ZmqSink::ZmqSink(SinkFormatPtr format, const std::string& host, uint16_t port, bool internal, QuerySubPlanId parentPlanId)
-    : SinkMedium(std::move(format), parentPlanId), host(host.substr(0, host.find(':'))), port(port), connected(false), internal(internal),
+    : SinkMedium(std::move(format), parentPlanId), host(host.substr(0, host.find(':'))), port(port), internal(internal),
       context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG("ZmqSink  " << this << ": Init ZMQ Sink to " << host << ":" << port);
 }
@@ -44,6 +44,7 @@ ZmqSink::~ZmqSink() {
     if (success) {
         NES_DEBUG("ZmqSink  " << this << ": Destroy ZMQ Sink");
     } else {
+        /// XXX:
         NES_ERROR("ZmqSink  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected");
         throw Exception("ZMQ Sink destruction failed");
     }

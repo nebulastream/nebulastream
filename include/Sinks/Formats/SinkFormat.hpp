@@ -34,6 +34,7 @@ class SinkFormat {
      * @param append
      */
     SinkFormat(SchemaPtr schema, NodeEngine::BufferManagerPtr bufferManager);
+    virtual ~SinkFormat() noexcept = default;
 
     /**
     * @brief method to write a TupleBuffer
