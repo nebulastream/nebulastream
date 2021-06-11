@@ -147,6 +147,7 @@ createMockedEngine(const std::string& hostname, uint16_t port, uint64_t bufferSi
 
 class TextExecutablePipeline : public ExecutablePipelineStage {
   public:
+    virtual ~TextExecutablePipeline() = default;
     std::atomic<uint64_t> count = 0;
     std::atomic<uint64_t> sum = 0;
     std::promise<bool> completedPromise;
